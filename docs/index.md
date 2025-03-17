@@ -4,7 +4,7 @@ hide:
   - toc
 ---
 
-# fillname
+# constraint_handler
 
 !!! info
-    *fillname* is part of the [Potassco](https://potassco.org) suite.
+    *constraint_handler* is part of the [Potassco](https://potassco.org) suite.

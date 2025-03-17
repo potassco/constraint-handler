@@ -1,8 +1,8 @@
-site_name: fillname
-site_url: https://potassco.org/systems/fillname
+site_name: constraint_handler
+site_url: https://potassco.org/systems/constraint_handler
 site_description:
-repo_name: potassco/fillname
-repo_url: https://github.com/potassco/fillname
+repo_name: potassco/constraint_handler
+repo_url: https://github.com/potassco/constraint_handler
 copyright: Copyright &copy; 2024 Potassco
 
 extra_css:
@@ -61,7 +61,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/potassco/fillname
+      link: https://github.com/potassco/constraint_handler
     - icon: potassco-logo
       link: https://potassco.org
   generator: false

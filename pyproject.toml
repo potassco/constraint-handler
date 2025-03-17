@@ -3,30 +3,38 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fillname"
-authors = [{ name = "Author Fillname", email = "author@fillname.org" }]
+name = "constraint_handler"
+authors = [{ name = "Abdallah Saffidine", email = "abdallah.saffidine@potassco.com" }]
 description = "A template project."
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 readme = "README.md"
 
+dependencies = [
+    "clorm",
+    "clingo==5.7.1",
+]
+
 [project.urls]
-Homepage = "https://fillname.org/"
+Homepage = "https://github.com/potassco/constraint-handler.git/"
 
 [project.optional-dependencies]
 format = ["black", "isort", "autoflake"]
 lint_pylint = ["pylint"]
 typecheck = ["types-setuptools", "mypy"]
-test = ["coverage[toml]"]
+test = ["pytest"]
 doc = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
-dev = ["fillname[test,typecheck,lint_pylint]"]
-
-[project.scripts]
-fillname = "fillname.__main__:main"
+dev = ["constraint_handler[test,typecheck,lint_pylint]"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+constraint_handler = ["data/*.lp"]
 
 [tool.setuptools_scm]
 version_scheme = "python-simplified-semver"
@@ -64,10 +72,3 @@ ignore-signatures = true
 argument-rgx = "^[a-z][a-z0-9]*((_[a-z0-9]+)*_?)?$"
 variable-rgx = "^[a-z][a-z0-9]*((_[a-z0-9]+)*_?)?$"
 good-names = ["_"]
-
-[tool.coverage.run]
-source = ["fillname", "tests"]
-omit = ["*/fillname/__main__.py"]
-
-[tool.coverage.report]
-exclude_lines = ["assert", "nocoverage"]

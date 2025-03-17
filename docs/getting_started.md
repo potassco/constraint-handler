@@ -10,26 +10,16 @@ hide:
 === "Pip"
 
 ```console
-pip install fillname
+pip install constraint_handler
 ```
 
 === "Development mode"
 
 ```console
-git clone https://github.com/potassco/fillname.git/
-cd fillname
+git clone https://github.com/potassco/constraint_handler.git/
+cd constraint_handler
 pip install -e .[all]
 ```
 
 !!! warning
     Use only for development purposes
-
-## Usage
-
-### Command line interface
-
-Details about the command line usage can be found with:
-
-```console
-fillname -h
-```
