@@ -1,5 +1,5 @@
 """
-Test cases for main application functionality.
+Test cases for library functionality.
 """
 
 from clingo import Control
