@@ -3,8 +3,9 @@ Test cases for main application functionality.
 """
 
 from clingo import Control
+from clingo.ast import ProgramBuilder
 
-from constraint_handler import get_encoding
+import constraint_handler
 
 
 def test():
@@ -13,10 +14,12 @@ def test():
     assign(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (constant(int(26)), ()))), (constant(str("Mountain")), (constant(str("Road")), ()))))).
     """
 
-    encoding = get_encoding()
     ctrl = Control("0")
-    ctrl.add("base", [], encoding)
+    pbuilder = ProgramBuilder(ctrl)
+    constraint_handler.add_encoding_to_program_builder(pbuilder)
+
     ctrl.add("base", [], constraint_expr)
+
     ctrl.ground([("base", [])])
     solve_handle = ctrl.solve(yield_=True)
     for model in solve_handle:
@@ -36,10 +39,12 @@ def test_add():
     assign(assign_y, y, operation(plus, (variable(x), (constant(int(10)), ())))).
     """
 
-    encoding = get_encoding()
     ctrl = Control("0")
-    ctrl.add("base", [], encoding)
+    pbuilder = ProgramBuilder(ctrl)
+    constraint_handler.add_encoding_to_program_builder(pbuilder)
+
     ctrl.add("base", [], constraint_expr)
+
     ctrl.ground([("base", [])])
     solve_handle = ctrl.solve(yield_=True)
     for model in solve_handle:
