@@ -13,6 +13,7 @@ DISPLAY_LP = files("constraint_handler.data").joinpath("display.lp")
 FLOATS_LP = files("constraint_handler.data").joinpath("floats.lp")
 GRINGO_EVAL_LP = files("constraint_handler.data").joinpath("gringoEval.lp")
 MAIN_LP = files("constraint_handler.data").joinpath("main.lp")
+INTENSIONAL_SET_LP = files("constraint_handler.data").joinpath("intensionalSet.lp")
 
 enable_python()
 
@@ -28,6 +29,7 @@ def add_encoding_to_program_builder(b: ProgramBuilder):
                 str(FLOATS_LP),
                 str(GRINGO_EVAL_LP),
                 str(MAIN_LP),
+                str(INTENSIONAL_SET_LP),
             ],
             lambda stm: b.add(stm),
         )

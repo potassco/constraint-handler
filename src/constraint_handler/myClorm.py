@@ -98,8 +98,6 @@ def pytocl(v, dtarget=None):
             return clingo.Function("float", [clingo.String(str(v))])
         elif issubclass(target, list):
             return nest([pytocl(e) for e in v])
-        elif issubclass(target, tuple):
-            return clingo.Function("", [pytocl(e) for e in v])
         elif issubclass(target, set):
             return clingo.Function("set", [nest([pytocl(e) for e in v])])
         elif any(issubclass(target, cls) for cls in containers.values()):
@@ -111,6 +109,8 @@ def pytocl(v, dtarget=None):
             name = predicatedefn_default_predicate_name(target.__name__)
             args = [pytocl(getattr(v, field)) for field in target._fields]
             return clingo.Function(name, args)
+        elif issubclass(target, tuple):
+            return clingo.Function("", [pytocl(e) for e in v])
         else:
             print("myclorm pytocl", v, target)
             name = getattr(target, "name", target.__name__)
@@ -200,7 +200,7 @@ def cltopy(func, dtarget=None):
                 # elif any(issubclass(target,t) for t in [int,str,float] + list(containers.values())):
                 elif any(issubclass(target, t) for t in list(baseTypes.values()) + list(containers.values())):
                     value = cltopy(func)
-                    if value != func:
+                    if value != func and isinstance(value, target):
                         return value
                         # return target(value)
                 elif issubclass(typing.get_origin(target), list):
