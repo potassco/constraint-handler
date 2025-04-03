@@ -1,0 +1,106 @@
+\subsection*{Syntax}
+\begin{grammar}
+%% <statement> ::= <ident> `=' <expr>
+%% \alt `for' <ident> `=' <expr> `to' <expr> `do' <statement>
+%% \alt `{' <stat-list> `}'
+%% \alt <empty>
+
+%% <stat-list> ::= <statement> `;' <stat-list> | <statement>
+
+<bool> ::= `true' | `false'
+
+<int> ::= any integer literal
+
+<str> ::= any string literal (enclosed in quotes)
+
+<name> ::= any suitable string
+
+<symbol> ::= <int> | <str> | <function>
+
+<symbols> ::= <symbol> | <symbol> `,' <symbols>
+
+<function> ::= <name> | <name> `(' <symbols> `)'
+
+<constant> ::= `bool' `(' <bool> `)' \alt `int' `(' <int> `)' \alt `float' `(' <str> `)' \alt `string `(' <str> `)' \alt `symbol `(' <symbol> `)'
+
+<operator> ::= `plus' | `minus' | `mult' | `abs' | `max' | `min'
+\alt `conj' | `disj' | `ite'
+\alt `in' | `notin' | `union' | `inter' | `length'
+\alt `if' | `phi' | ... | `python' `(' <expr> `)'
+
+<expr> ::= `constant' `(' <constant> `)' \alt `variable' `(' <symbol> `)' \alt `applyOperator' `(' <operator> `,' <expr-list> `)'
+
+<expr-list> ::= `(' `)' | `(' <expr> `,' <expr-list> `)'
+
+<atom> ::= `assign' `(' <symbol> `,' <symbol> `,' <expr> `)' \alt `ensure' `(' <symbol> `,' <expr> `)'
+\end{grammar}
+
+\subsection*{Examples}
+The following two assignments and two checks
+\begin{align*}
+\pi &\eqdef 3.14159\\
+y &\eqdef (x+2) \times \pi \\
+& y / 3 \geq 10
+& y / 3 \leq 15
+\end{align*}
+\begin{verbatim}
+assign(example1_pi,pi,constant(float("3.14159"))).
+assign(example1_y,y,applyOperator(mult,
+                                 (applyOperator(plus,
+                                               (variable(x),
+                                               (constant(int(2)),()))),
+                                 (variable(pi),())))).
+ensure(example_check1,applyOperator(geq,
+                                   (applyOperator(div,
+                                                 (variable(y),
+                                                 (constant(int(3)),()))),
+                                   (constant(int(10)),())))).
+ensure(example_check2,applyOperator(leq,
+                                   (applyOperator(div,
+                                                 (variable(y),
+                                                 (constant(int(3)),()))),
+                                   (constant(int(15)),())))).
+\end{verbatim}
+
+\paragraph{Other examples}
+
+\begin{verbatim}
+applyOperator(python(constant(string("maths.cos"))),(constant(float("0.1")),()))
+applyOperator(python(constant(string("lambda x,y: x+y*y"))),
+             (variable(v1),
+             (constant(float("0.1")),())))
+
+ensure(c1,applyOperator(eq,
+                       (variable(v1),
+                       (variable(v2),
+                       ()))))
+\end{verbatim}
+
+\paragraph{phi function}
+
+\begin{verbatim}
+assign(assign_x0,x0,constant(int(0))).
+assign(assign_x1,x1,operation(if,(variable(cond),(constant(int(1)),())))).
+assign(assign_y0,y0,applyOperator(phi,(variable(x0),(variable(x1),())))).
+\end{verbatim}
+
+%% \subsection{Semantices}
+%% Work in progress.
+
+%% Let $V = \{ v \suchthat \lit{assign(CNAME,$v$,EXPR)} \}$ be the set of variables.
+%% The value of an expression $e$ is defined as
+%% \lit{assign(CNAME,VAR,EXPR)} means that a variable called \lit{VAR} is assigned the evaluation of \lit{EXPR}; \lit{CNAME} is the name of this assignment constraint.
+%% \lit{ensure(CNAME,EXPR)} means that the evaluation of \lit{EXPR} must be \lit{true} in any model; \lit{CNAME} is the name of this check constraint.
+
+\subsection{Result fact format}
+\begin{grammar}
+<atom> ::= `value' `(' <symbol> `,' <constant> `)'
+\end{grammar}
+
+
+\subsection{Notes}
+
+Difference with, say, Python:
+\begin{itemize}
+\item \texttt{a and False} has value False even if \texttt{a} is undefined.
+\end{itemize}
