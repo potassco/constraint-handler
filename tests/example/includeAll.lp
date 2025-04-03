@@ -1,0 +1,7 @@
+#include "../../src/constraint_handler/data/conditionals.lp".
+#include "../../src/constraint_handler/data/direct.lp".
+#include "../../src/constraint_handler/data/display.lp".
+#include "../../src/constraint_handler/data/floats.lp".
+#include "../../src/constraint_handler/data/gringoEval.lp".
+#include "../../src/constraint_handler/data/intensionalSet.lp".
+#include "../../src/constraint_handler/data/main.lp".
