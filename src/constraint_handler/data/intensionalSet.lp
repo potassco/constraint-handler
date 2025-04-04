@@ -1,4 +1,4 @@
-value(E,intensionalSet,E) :- expression(E), E=operation((makeSet;union;inter;add;rem),L).
+value(E,intensionalSet,E) :- expression(E), E=operation((makeSet;union;inter),L).
 
 %%%%%%%%%%%%%%%%% Extensional
 
