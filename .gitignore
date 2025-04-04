@@ -35,3 +35,13 @@ build
 _build
 _autosummary
 site
+
+docs/fact-format/fact-format-main.pdf
+
+# latex auxiliary files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log

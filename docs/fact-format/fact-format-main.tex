@@ -1,0 +1,65 @@
+\documentclass{article}
+
+\usepackage[centertags,fleqn]{amsmath}
+\setlength{\mathindent}{0pt} % Get equations completely aligned on the left.
+\usepackage{amssymb,amsfonts,xspace}
+\usepackage{booktabs,multirow}
+\usepackage{longtable}
+\usepackage{syntax}
+
+\usepackage{todonotes}
+\newcommand{\todoi}[1]{\todo[inline]{todo: #1}}
+
+\usepackage{tikz}
+
+\usepackage{amsthm}
+\usepackage{mathtools}
+%\usepackage{thmtools}
+%\usepackage{thm-restate}
+%% \declaretheorem[name=Theorem,numberwithin=section]{theorem}
+%% \declaretheorem[name=Lemma,numberwithin=section]{lemma}
+%% \declaretheorem[name=Proposition,numberwithin=section]{proposition}
+%% \declaretheorem[name=Corollary,numberwithin=section]{corollary}
+%% \declaretheorem[name=Conjecture,numberwithin=section]{conjecture}
+\newtheorem{theorem}{Theorem}
+\newtheorem{question}{Question}
+\newtheorem{observation}{Observation}
+%\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+%\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+%\newtheorem{corollary}{Corollary}
+\newtheorem{example}[theorem]{Example}
+%\newtheorem{conjecture}{Conjecture}
+\newtheorem{fact}{Fact}
+
+\usepackage{acronym}
+\acrodef{CSP}{Constraint Satisfaction Problem}
+
+\newcommand{\suchthat}{\mid}
+\newcommand{\eqdef}{\coloneqq}
+\newcommand{\booleans}{\mathbb{B}}
+\newcommand{\tuple}[1]{\left\langle#1\right\rangle}
+\newcommand{\bigo}{\mathcal{O}}
+\newcommand{\abs}[1]{\left\lvert#1\right\rvert}
+\newcommand{\integers}{\mathbb{Z}}
+\newcommand{\nonnegintegers}{\mathbb{Z}_{\geq 0}}
+\newcommand{\floor}[1]{\left\lfloor#1\right\rfloor}
+\newcommand{\ceil}[1]{\left\lceil#1\right\rceil}
+
+\newcommand{\valuations}{\mathit{Val}}
+\newcommand{\domainof}[1]{D(#1)}
+\newcommand{\determination}[1]{G(#1)}
+\newcommand{\scope}[1]{S(#1)}
+\newcommand{\outputs}[1]{O(#1)}
+\newcommand{\inputs}[1]{I(#1)}
+\newcommand{\variables}{X}
+\newcommand{\constraints}{\mathcal{C}}
+
+\begin{document}
+
+%\section{Fact format}
+
+\input{fact-format}
+
+\end{document}
