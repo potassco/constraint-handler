@@ -24,7 +24,7 @@ value(E,symbol,C) :- expression(E), E=constant(symbol(C)).
 
 value(E,T,VAL) :- expression(E), E=variable(VAR), compileAssign(NAME,VAR,E2), value(E2,T,VAL).
 
-value(E,int,V1+V2) :- expression(E), E=operation(plus, (E1,(E2,()))), value(E1,int,V1), value(E2,int,V2).
+value(E,int,V1+V2) :- expression(E), E=operation(add, (E1,(E2,()))), value(E1,int,V1), value(E2,int,V2).
 value(E,int,V1-V2) :- expression(E), E=operation(minus,(E1,(E2,()))), value(E1,int,V1), value(E2,int,V2).
 value(E,int,V1*V2) :- expression(E), E=operation(mult, (E1,(E2,()))), value(E1,int,V1), value(E2,int,V2).
 value(E,int,|V1|)  :- expression(E), E=operation(abs,  (E1,())), value(E1,int,V1).

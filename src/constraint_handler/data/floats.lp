@@ -1,6 +1,6 @@
 value(E,T,V) :- expression(E), E=variable(VAR), compileAssign(NAME,VAR,E2), value(E2,T,V).
 
-floatOperator(abs;sqrt;cos;sin;acos;asin;plus;mult;div;eq;neq;leq;lt;geq;gt;minus).
+floatOperator(abs;sqrt;cos;sin;acos;asin;add;mult;div;eq;neq;leq;lt;geq;gt;minus).
 operataorValue(OE,OE) :- expression(E), E=operation(OE, EL), floatOperator(OE).
 operataorValue(OE,S)  :- expression(E), E=operation(OE, EL), OE=python(EXP), value(EXP,str,S).
 value(E,T,RES) :- stagePythonCall(E,P,L), (T,RES) = @pythonEvalOperator(P,L).

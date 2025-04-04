@@ -14,12 +14,29 @@ class PPEnum(Enum):
         return self.name
 
 
-BaseType = Enum("BaseType", ["int", "float", "string", "symbol", "bool"])
+BaseType = Enum("BaseType", ["int", "float", "str", "symbol", "bool"])
 UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "acos", "asin"])
 BinaryOperator = PPEnum(
-    "BinaryOperator", ["plus", "mult", "div", "eq", "neq", "leq", "lt", "geq", "gt", "isin", "notin", "conj", "disj"]
+    "BinaryOperator",
+    [
+        "add",
+        "mult",
+        "div",
+        "eq",
+        "neq",
+        "leq",
+        "lt",
+        "geq",
+        "gt",
+        "isin",
+        "notin",
+        "conj",
+        "disj",
+        "union",
+        "inter",
+    ],
 )
-OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min"])
+OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "makeSet", "length"])
 
 noPredConstant = bool | float | int | str | clingo.Symbol
 ConstantList = list[noPredConstant]
@@ -35,7 +52,7 @@ class Int(NamedTuple):
     value: int
 
 
-class String(NamedTuple):
+class Str(NamedTuple):
     value: str
 
 
@@ -45,15 +62,10 @@ class Symbol(NamedTuple):
 
 class Constant(NamedTuple):
     # value: noPredConstant
-    value: Bool | Int | Symbol | float | String
+    value: Bool | Int | Symbol | float | Str
 
 
-# class List(NamedTuple):
-#    elts: myClorm.Tuple(default=Expr)
-# class Unop(NamedTuple):
-#    op: UnaryOperator
-#    arg: Expr
-class ApplyOperator(NamedTuple):
+class Operation(NamedTuple):
     op: Operator
     args: list[Expr]
 
@@ -73,7 +85,7 @@ class Python(NamedTuple):
     fn: Expr
 
 
-Expr = Constant | Variable | ApplyOperator
+Expr = Constant | Variable | Operation
 Operator = UnaryOperator | BinaryOperator | OtherOperator | Python
 
 
@@ -149,7 +161,7 @@ def evaluate_unop(o, val):
 def evaluate_binop(o, lval, rval):
     # print(o,l,r,lval,rval)
     match o:
-        case BinaryOperator.plus:
+        case BinaryOperator.add:
             return lval + rval
         case BinaryOperator.mult:
             return lval * rval
@@ -205,6 +217,7 @@ def evaluate_operator(symbols, o, args):
             elif len(args) == 2:
                 return evaluate_binop(o, args[0], args[1])
             else:
+                print("evaluate_operator.py: undefined {o}")
                 assert False
 
 

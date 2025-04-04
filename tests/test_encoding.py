@@ -36,7 +36,7 @@ def test():
 def test_add():
     constraint_expr = """
     assign(assign_x, x, constant(int(20))).
-    assign(assign_y, y, operation(plus, (variable(x), (constant(int(10)), ())))).
+    assign(assign_y, y, operation(add, (variable(x), (constant(int(10)), ())))).
     """
 
     ctrl = Control("0")

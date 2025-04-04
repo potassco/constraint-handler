@@ -25,7 +25,7 @@ value(variable(X),T,V) :- groundingAssign(CNAME,X,EXPR), result(CNAME,T,V).
 
 #script(python)
 
-import constraint_handler.myClorm
+import constraint_handler.myClorm as myClorm
 import constraint_handler.evaluator as evaluator
 
 def pythonCollectVars(clExpr):
