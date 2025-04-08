@@ -1,0 +1,6 @@
+value(variable(b),bool,true)
+value(variable(i),int,42)
+value(variable(y),int,85)
+value(variable(s),str,"foo")
+value(variable(x),str,"foo")
+value(variable(f),float,float("47.1"))
