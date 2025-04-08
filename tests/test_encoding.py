@@ -1,55 +1,37 @@
-"""
-Test cases for main application functionality.
-"""
+import clingo.script
+import clingo.symbol
+from clintest.test import And, Assert
+from clintest.quantifier import All, Any
+from clintest.assertion import Contains
+from clintest.solver import Clingo
 
-from clingo import Control
-from clingo.ast import ProgramBuilder
-
-import constraint_handler
-
-
-def test():
-    constraint_expr = """
-    assign(assign_bike_frame_size, bike_frame_size, constant(int(26))).
-    assign(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (constant(int(26)), ()))), (constant(str("Mountain")), (constant(str("Road")), ()))))).
-    """
-
-    ctrl = Control("0")
-    pbuilder = ProgramBuilder(ctrl)
-    constraint_handler.add_encoding_to_program_builder(pbuilder)
-
-    ctrl.add("base", [], constraint_expr)
-
-    ctrl.ground([("base", [])])
-    solve_handle = ctrl.solve(yield_=True)
-    for model in solve_handle:
-        solution = set()
-        for fact in model.symbols(shown=True):
-            solution.add(fact.__str__())
-
-        assert solution == {
-            "val(bike_frame_size,int,26)",
-            'val(bike_frame_type,str,"Mountain")',
-        }
+clingo.script.enable_python()
 
 
-def test_add():
-    constraint_expr = """
-    assign(assign_x, x, constant(int(20))).
-    assign(assign_y, y, operation(add, (variable(x), (constant(int(10)), ())))).
-    """
+def atoms_from_file(file_name):
+    try:
+        with open(file_name, "r") as f:
+            contents = f.read().split()
+            return [clingo.symbol.parse_term(atom) for atom in contents]
+    except FileNotFoundError:
+        # print("missing file",file_name)
+        return []
 
-    ctrl = Control("0")
-    pbuilder = ProgramBuilder(ctrl)
-    constraint_handler.add_encoding_to_program_builder(pbuilder)
 
-    ctrl.add("base", [], constraint_expr)
+def run_test(name):
+    solver = Clingo("0", "#show value/3.", files=[name + ".lp"])
+    expected_all = atoms_from_file(name + ".expected.all")
+    test_all = And(*(Assert(All(), Contains(a)) for a in expected_all))
+    expected_any = atoms_from_file(name + ".expected.any")
+    test_any = And(*(Assert(Any(), Contains(a)) for a in expected_any))
+    test = And(test_all, test_any)
+    solver.solve(test)
+    test.assert_()
 
-    ctrl.ground([("base", [])])
-    solve_handle = ctrl.solve(yield_=True)
-    for model in solve_handle:
-        solution = set()
-        for fact in model.symbols(shown=True):
-            solution.add(fact.__str__())
 
-        assert solution == {"val(x,int,20)", "val(y,int,30)"}
+def test_basic_assignments():
+    run_test("tests/example/basic_assignments")
+
+
+def test_conditional_assign():
+    run_test("tests/example/conditional_assign")
