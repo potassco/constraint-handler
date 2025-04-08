@@ -91,9 +91,9 @@ Operator = UnaryOperator | BinaryOperator | OtherOperator | Python
 
 def collectVars(expr):
     match expr:
-        case ApplyOperator(Python(f), args):
+        case Operation(Python(f), args):
             return collectVars(f) | set.union(*(collectVars(e) for e in args))
-        case ApplyOperator(o, args):
+        case Operation(o, args):
             return set.union(*(collectVars(e) for e in args))
         case Variable(a):
             return {a}
@@ -224,7 +224,7 @@ def evaluate_operator(symbols, o, args):
 def evaluate_expr(symbols, expr):
     # print("evaluate_expr",symbols,expr)
     match expr:
-        case ApplyOperator(o, eargs):
+        case Operation(o, eargs):
             args = [evaluate_expr(symbols, a) for a in eargs]
             return evaluate_operator(symbols, o, args)
         case Variable(a):
