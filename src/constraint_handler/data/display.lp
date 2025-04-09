@@ -1,6 +1,3 @@
-representation((bool;int;str;float),extensional).
-representation((intensionalSet),intensional).
-
 #show.
 #show val(X,T,V) : eValue(variable(X),T,V), representation(T,extensional).
 

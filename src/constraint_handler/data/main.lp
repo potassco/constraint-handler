@@ -12,3 +12,6 @@ engine(CNAME,ENG) :- defaultEngine(ENG), not requestedEngine(CNAME), assign(CNAM
 engine(CNAME,ENG) :- defaultEngine(ENG), not requestedEngine(CNAME), assignToSet(CNAME,X,EXPR).
 
 value(X,T,V) :- eValue(variable(X),T,V).
+
+representation((bool;int;str;float),extensional).
+representation((intensionalSet),intensional).
