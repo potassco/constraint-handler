@@ -6,7 +6,7 @@ value(E,intensionalSet,E) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1).
 contains(E,T,VAL)    :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), value(E1,T,VAL), representation(T,extensional).
 precontains(E,T,VAL) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), value(E1,T,VAL), representation(T,intensional).
 
-valueInSet(VAR,T,VAL) :- contains(E,T,VAL), E=variable(VAR).
+valueInSet(VAR,T,VAL) :- value(EV,intensionalSet,E), contains(E,T,VAL), EV=variable(VAR).
 
 %%%%%%%%%%%%%%%%% Extensional
 
