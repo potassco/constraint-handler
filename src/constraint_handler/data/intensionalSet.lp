@@ -1,5 +1,8 @@
 value(E,intensionalSet,E) :- expression(E), E=operation((makeSet;union;inter),L).
 
+value(E,int,L) :- expression(E), E=operation(length,(S,())), value(S,intensionalSet,SR),
+    L = #count { V,T : contains(SR,T,V) }.
+
 %%%%%%%%%%%%%%%%% Handling variables
 
 value(E,intensionalSet,E) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1).
