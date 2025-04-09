@@ -1,14 +1,14 @@
 groundingEnsure(CNAME,EXPR) :- ensure(CNAME,EXPR), engine(CNAME,ground).
-groundingAssign(CNAME,VAR,EXPR) :- assign(CNAME,VAR,EXPR), engine(CNAME,ground).
+groundingAssign(CNAME,X,EXPR) :- assign(CNAME,X,EXPR), engine(CNAME,ground).
 
 involvedVars(CNAME,EXPR,@pythonCollectVars(EXPR)) :- groundingEnsure(CNAME,EXPR).
 involvedVars(CNAME,EXPR,@pythonCollectVars(EXPR)) :- groundingAssign(CNAME,X,EXPR).
 
-revMapAux(LNAME,VARS,()) :- involvedVars(CNAME,EXPR,VARS), LNAME=VARS.
-revMapAux(LNAME,VARS,((VAR,VAL),VALS)) :- revMapAux(LNAME,(VAR,VARS),VALS), eValue(variable(VAR),T,VAL).
+revMapAux(LNAME,XS,()) :- involvedVars(CNAME,EXPR,XS), LNAME=XS.
+revMapAux(LNAME,XS,((X,V),VS)) :- revMapAux(LNAME,(X,XS),VS), eValue(variable(X),T,V).
 mapped(LNAME,VS) :- revMapAux(LNAME,(),VS).
 
-result(CNAME,TYPE,VAL) :- involvedVars(CNAME,EXPR,VARS), mapped(VARS,VS), (TYPE,VAL)=@pythonEvalExpr(CNAME,EXPR,VS).
+result(CNAME,TYPE,V) :- involvedVars(CNAME,EXPR,XS), mapped(XS,VS), (TYPE,V)=@pythonEvalExpr(CNAME,EXPR,VS).
 
 :- groundingEnsure(CNAME,EXPR), result(CNAME,bool,false).
 eValue(variable(X),T,V) :- groundingAssign(CNAME,X,EXPR), result(CNAME,T,V).

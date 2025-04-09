@@ -1,4 +1,4 @@
-eValue(E,T,V) :- expression(E), E=variable(VAR), compileAssign(NAME,VAR,E2), eValue(E2,T,V).
+eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
 
 floatOperator(abs;sqrt;cos;sin;acos;asin;add;mult;div;eq;neq;leq;lt;geq;gt;minus).
 operataorValue(OE,OE) :- expression(E), E=operation(OE, EL), floatOperator(OE).
