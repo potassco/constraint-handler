@@ -32,6 +32,13 @@ def run_test(name):
 def test_basic_assignments():
     run_test("tests/example/basic_assignments")
 
-
 def test_conditional_assign():
     run_test("tests/example/conditional_assign")
+
+def test_set_manipulations():
+    run_test("tests/example/set_manipulations")
+
+if __name__ == "__main__":
+    test_basic_assignments()
+    test_conditional_assign()
+    test_set_manipulations()

@@ -8,7 +8,9 @@
 %%% u = s cup t = { 1, 2, 3, true, 89.1 }
 %%% v = s cap t = { true }
 %%% w = { |u|, |v|, b in V, true not in u } = { 1, 5, true, false }
+%%% cu = |u| = 5
 %%% x = { 3, 1+2, u, v, { true } } = { 3, { true }, { 1, 2, 3, true, 89.1 } }
+%%% cx = |x| = 3
 %%% y = add f v = { 47.1 true }
 %%% z = rem true  w = { 1, 5, false }
 %%% a = rem false u = { 1, 2, 3, true, 89.1 } = u
@@ -31,19 +33,22 @@ assign(assign_v, v, operation(inter,
                                   (variable(s),
                                   (variable(t),())))).
 
+assign(assign_cu, cu, operation(length,(variable(u),()))).
+
 assign(assign_w, w, operation(makeSet,
                                   (operation(length,(variable(u),())),
                                   (operation(length,(variable(v),())),
                                   (operation(isin,(variable(b),(variable(v),()))),
                                   (operation(notin,(constant(bool(true)),
                                                        (variable(u),()))),())))))).
-
 assign(assign_x, x, operation(makeSet,
                                   (constant(int(3)),
                                   (operation(add,(constant(int(1)),(constant(int(2)),()))),
                                   (variable(u),
                                   (variable(v),
                                   (operation(makeSet,(constant(bool(true)),())),()))))))).
+
+assign(assign_cx, cx, operation(length,(variable(x),()))).
 
 %assign(assign_y, y, operation(add,
 %                                  (variable(f),
