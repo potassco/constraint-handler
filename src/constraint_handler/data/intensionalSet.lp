@@ -1,53 +1,53 @@
-value(E,intensionalSet,E) :- expression(E), E=operation((makeSet;union;inter),L).
+eValue(E,intensionalSet,E) :- expression(E), E=operation((makeSet;union;inter),L).
 
-value(E,int,L) :- expression(E), E=operation(length,(S,())), value(S,intensionalSet,SR),
+eValue(E,int,L) :- expression(E), E=operation(length,(S,())), eValue(S,intensionalSet,SR),
     L = #count { V,T : contains(SR,T,V) }.
 
 %%%%%%%%%%%%%%%%% Handling variables
 
-value(E,intensionalSet,E) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1).
-contains(E,T,VAL)    :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), value(E1,T,VAL), representation(T,extensional).
-precontains(E,T,VAL) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), value(E1,T,VAL), representation(T,intensional).
+eValue(E,intensionalSet,E) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1).
+contains(E,T,VAL)    :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), eValue(E1,T,VAL), representation(T,extensional).
+precontains(E,T,VAL) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), eValue(E1,T,VAL), representation(T,intensional).
 
-valueInSet(VAR,T,VAL) :- value(EV,intensionalSet,E), contains(E,T,VAL), EV=variable(VAR).
+valueInSet(VAR,T,VAL) :- eValue(EV,intensionalSet,E), contains(E,T,VAL), EV=variable(VAR).
 
 %%%%%%%%%%%%%%%%% Extensional
 
-contains(E,T,V) :- expression(E), E=operation(makeSet,L), E1=@pythonEnumerateElements(L), value(E1,T,V), representation(T,extensional).
+contains(E,T,V) :- expression(E), E=operation(makeSet,L), E1=@pythonEnumerateElements(L), eValue(E1,T,V), representation(T,extensional).
 
-contains(E,T,V) :- expression(E), E=operation(union,L), L=(E1,(E2,())), value(E1,intensionalSet,S1), contains(S1,T,V), representation(T,extensional).
-contains(E,T,V) :- expression(E), E=operation(union,L), L=(E1,(E2,())), value(E2,intensionalSet,S2), contains(S2,T,V), representation(T,extensional).
+contains(E,T,V) :- expression(E), E=operation(union,L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), contains(S1,T,V), representation(T,extensional).
+contains(E,T,V) :- expression(E), E=operation(union,L), L=(E1,(E2,())), eValue(E2,intensionalSet,S2), contains(S2,T,V), representation(T,extensional).
 
-contains(E,T,V) :- expression(E), E=operation(inter,L), L=(E1,(E2,())), value(E1,intensionalSet,S1), contains(S1,T,V), value(E2,intensionalSet,S2), contains(S2,T,V), representation(T,extensional).
+contains(E,T,V) :- expression(E), E=operation(inter,L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), contains(S1,T,V), eValue(E2,intensionalSet,S2), contains(S2,T,V), representation(T,extensional).
 
-value(E,bool,true)  :- expression(E), E=operation(isin,L), L=(E1,(E2,())), value(E1,T,V), value(E2,intensionalSet,S),     contains(S,T,V), representation(T,extensional).
-value(E,bool,false) :- expression(E), E=operation(isin,L), L=(E1,(E2,())), value(E1,T,V), value(E2,intensionalSet,S), not contains(S,T,V), representation(T,extensional).
+eValue(E,bool,true)  :- expression(E), E=operation(isin,L), L=(E1,(E2,())), eValue(E1,T,V), eValue(E2,intensionalSet,S),     contains(S,T,V), representation(T,extensional).
+eValue(E,bool,false) :- expression(E), E=operation(isin,L), L=(E1,(E2,())), eValue(E1,T,V), eValue(E2,intensionalSet,S), not contains(S,T,V), representation(T,extensional).
 
-value(E,bool,true)  :- expression(E), E=operation(notin,L), L=(E1,(E2,())), value(E1,T,V), value(E2,intensionalSet,S), not contains(S,T,V), representation(T,extensional).
-value(E,bool,false) :- expression(E), E=operation(notin,L), L=(E1,(E2,())), value(E1,T,V), value(E2,intensionalSet,S),     contains(S,T,V), representation(T,extensional).
+eValue(E,bool,true)  :- expression(E), E=operation(notin,L), L=(E1,(E2,())), eValue(E1,T,V), eValue(E2,intensionalSet,S), not contains(S,T,V), representation(T,extensional).
+eValue(E,bool,false) :- expression(E), E=operation(notin,L), L=(E1,(E2,())), eValue(E1,T,V), eValue(E2,intensionalSet,S),     contains(S,T,V), representation(T,extensional).
 
 %%%%%%%%%%%%%%%%% Intensional
 
-precontains(E,T,V) :- expression(E), E=operation(makeSet,L), E1=@pythonEnumerateElements(L), value(E1,T,V), representation(T,intensional).
+precontains(E,T,V) :- expression(E), E=operation(makeSet,L), E1=@pythonEnumerateElements(L), eValue(E1,T,V), representation(T,intensional).
 testEqual(T,V1,V2) :- expression(E), precontains(E,T,V1), precontains(E,T,V2), representation(T,intensional), V1 < V2.
 contains(E,T,V1) :- precontains(E,T,V1), representation(T,intensional), #false : precontains(E,T,V2), testedEqual(T,V2,V1).
 
-testEqual(T,V1,V2) :- expression(E), E=operation((union;inter),L), L=(E1,(E2,())), value(E1,intensionalSet,S1), contains(S1,T,V1), value(E2,intensionalSet,S2), contains(S2,T,V2), representation(T,intensional), V1 < V2.
-testEqual(T,V2,V1) :- expression(E), E=operation((union;inter),L), L=(E1,(E2,())), value(E1,intensionalSet,S1), contains(S1,T,V1), value(E2,intensionalSet,S2), contains(S2,T,V2), representation(T,intensional), V2 < V1.
+testEqual(T,V1,V2) :- expression(E), E=operation((union;inter),L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), contains(S1,T,V1), eValue(E2,intensionalSet,S2), contains(S2,T,V2), representation(T,intensional), V1 < V2.
+testEqual(T,V2,V1) :- expression(E), E=operation((union;inter),L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), contains(S1,T,V1), eValue(E2,intensionalSet,S2), contains(S2,T,V2), representation(T,intensional), V2 < V1.
 
 %TODO
-%contains(E,T,V)    :- expression(E), E=operation((union;inter),L), L=(E1,(E2,())), value(E1,intensionalSet,S1), contains(S1,T,V),  value(E2,intensionalSet,S2), contains(S2,T,V),  representation(T,intensional).
-contains(E,T,V1) :- expression(E), E=operation(union,L), L=(E1,(E2,())), value(E1,intensionalSet,S1), contains(S1,T,V1), representation(T,intensional), #false : contains(S2,T,V2), testedEqual(T,V2,V1).
-contains(E,T,V2) :- expression(E), E=operation(union,L), L=(E1,(E2,())), value(E2,intensionalSet,S2), contains(S2,T,V2), representation(T,intensional), #false : contains(S1,T,V1), testedEqual(T,V1,V2).
+%contains(E,T,V)    :- expression(E), E=operation((union;inter),L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), contains(S1,T,V),  eValue(E2,intensionalSet,S2), contains(S2,T,V),  representation(T,intensional).
+contains(E,T,V1) :- expression(E), E=operation(union,L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), contains(S1,T,V1), representation(T,intensional), #false : contains(S2,T,V2), testedEqual(T,V2,V1).
+contains(E,T,V2) :- expression(E), E=operation(union,L), L=(E1,(E2,())), eValue(E2,intensionalSet,S2), contains(S2,T,V2), representation(T,intensional), #false : contains(S1,T,V1), testedEqual(T,V1,V2).
 
 contains(E,T,V) :- expression(E), E=operation(inter,L), L=(E1,(E2,())),
-  value(E1,intensionalSet,S1), contains(S1,T,V), value(E2,intensionalSet,S2), contains(S2,T,V),
+  eValue(E1,intensionalSet,S1), contains(S1,T,V), eValue(E2,intensionalSet,S2), contains(S2,T,V),
   representation(T,intensional).
 contains(E,T,V1) :- expression(E), E=operation(inter,L), L=(E1,(E2,())),
-  value(E1,intensionalSet,S1), contains(S1,T,V1), value(E2,intensionalSet,S2), contains(S2,T,V2),
+  eValue(E1,intensionalSet,S1), contains(S1,T,V1), eValue(E2,intensionalSet,S2), contains(S2,T,V2),
   representation(T,intensional), testedEqual(T,V1,V2).
 contains(E,T,V2) :- expression(E), E=operation(inter,L), L=(E1,(E2,())),
-  value(E1,intensionalSet,S1), contains(S1,T,V1), value(E2,intensionalSet,S2), contains(S2,T,V2),
+  eValue(E1,intensionalSet,S1), contains(S1,T,V1), eValue(E2,intensionalSet,S2), contains(S2,T,V2),
   representation(T,intensional), testedEqual(T,V2,V1).
 %#show contains/3.
 
