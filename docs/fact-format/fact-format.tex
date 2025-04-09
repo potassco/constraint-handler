@@ -25,14 +25,14 @@
 
 <operator> ::= `plus' | `minus' | `mult' | `abs' | `max' | `min'
 \alt `conj' | `disj' | `ite'
-\alt `in' | `notin' | `union' | `inter' | `length'
+\alt `makeSet' | `in' | `notin' | `union' | `inter' | `length'
 \alt `if' | `phi' | ... | `python' `(' <expr> `)'
 
 <expr> ::= `constant' `(' <constant> `)' \alt `variable' `(' <symbol> `)' \alt `applyOperator' `(' <operator> `,' <expr-list> `)'
 
 <expr-list> ::= `(' `)' | `(' <expr> `,' <expr-list> `)'
 
-<atom> ::= `assign' `(' <symbol> `,' <symbol> `,' <expr> `)' \alt `ensure' `(' <symbol> `,' <expr> `)'
+<atom> ::= `assign' `(' <symbol> `,' <symbol> `,' <expr> `)' \alt `assignToSet' `(' <symbol> `,' <symbol> `,' <expr> `)' \alt `ensure' `(' <symbol> `,' <expr> `)'
 \end{grammar}
 
 \subsection*{Examples}
@@ -94,7 +94,10 @@ assign(assign_y0,y0,applyOperator(phi,(variable(x0),(variable(x1),())))).
 
 \subsection{Result fact format}
 \begin{grammar}
-<atom> ::= `value' `(' <symbol> `,' <constant> `)'
+<type> ::= `bool' | `float' | `int' | `string' | `intensionalSet'
+
+<atom> ::= `value' `(' <symbol> `,' <type> `,' <constant> `)'
+\alt `valueInSet' `(' <symbol> `,' <type> `,' <constant> `)'
 \end{grammar}
 
 

@@ -1,8 +1,15 @@
 value(E,intensionalSet,E) :- expression(E), E=operation((makeSet;union;inter),L).
 
+%%%%%%%%%%%%%%%%% Handling variables
+
+value(E,intensionalSet,E) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1).
+contains(E,T,VAL)    :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), value(E1,T,VAL), representation(T,extensional).
+precontains(E,T,VAL) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), value(E1,T,VAL), representation(T,intensional).
+
+valueInSet(VAR,T,VAL) :- contains(E,T,VAL), E=variable(VAR).
+
 %%%%%%%%%%%%%%%%% Extensional
 
-%contains(S,T,V) :- expression(E), E=operation(makeSet,L), S=E, E1=@pythonEnumerateElements(L), value(E1,T,V).
 contains(E,T,V) :- expression(E), E=operation(makeSet,L), E1=@pythonEnumerateElements(L), value(E1,T,V), representation(T,extensional).
 
 contains(E,T,V) :- expression(E), E=operation(union,L), L=(E1,(E2,())), value(E1,intensionalSet,S1), contains(S1,T,V), representation(T,extensional).
@@ -15,17 +22,6 @@ value(E,bool,false) :- expression(E), E=operation(isin,L), L=(E1,(E2,())), value
 
 value(E,bool,true)  :- expression(E), E=operation(notin,L), L=(E1,(E2,())), value(E1,T,V), value(E2,intensionalSet,S), not contains(S,T,V), representation(T,extensional).
 value(E,bool,false) :- expression(E), E=operation(notin,L), L=(E1,(E2,())), value(E1,T,V), value(E2,intensionalSet,S),     contains(S,T,V), representation(T,extensional).
-
-%%%%%%%%%%%%%%%%% Intensional
-
-%precontains(S,T,V) :- expression(E), E=operation(union,L), S=E, L=(E1,(E2,())), value(E1,intensionalSet,S1), contains(S1,T,V), representation(T,intensional).
-%precontains(S,T,V) :- expression(E), E=operation(union,L), S=E, L=(E1,(E2,())), value(E2,intensionalSet,S2), contains(S2,T,V), representation(T,intensional).
-%
-%testEqual(T,V1,V2) :- precontains(S,T,V1), precontains(S,T,V2), V1 < V2, T=intensionalSet.
-%differentSets(S1,S2) :- testEqual(intensionalSet,S1,S2), contains(S1,T,V), not contains(S2,T,V).
-%differentSets(S1,S2) :- testEqual(intensionalSet,S1,S2), contains(S2,T,V), not contains(S1,T,V).
-%smallerRepresentative(T,V1,V2) :- precontains(S,T,V1), precontains(S,T,V2), V1 < V2, not differentSets(V1,V2), TODO.
-%contains(S,T,V1) :- precontains(S,T,V1), #count { V2 : precontains(S,T,V2), smallerRepresentative(T,V2,V1) } 0.
 
 %%%%%%%%%%%%%%%%% Intensional
 
