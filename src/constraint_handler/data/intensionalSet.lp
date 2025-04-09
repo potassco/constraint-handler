@@ -5,11 +5,11 @@ eValue(E,int,L) :- expression(E), E=operation(length,(S,())), eValue(S,intension
 
 %%%%%%%%%%%%%%%%% Handling variables
 
-eValue(E,intensionalSet,E) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1).
-contains(E,T,VAL)    :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), eValue(E1,T,VAL), representation(T,extensional).
-precontains(E,T,VAL) :- E=variable(VAR), compileAssignToSet(NAME,VAR,E1), eValue(E1,T,VAL), representation(T,intensional).
+eValue(E,intensionalSet,E) :- E=variable(X), compileAssignToSet(NAME,X,E1).
+contains(E,T,V)    :- E=variable(X), compileAssignToSet(NAME,X,E1), eValue(E1,T,V), representation(T,extensional).
+precontains(E,T,V) :- E=variable(X), compileAssignToSet(NAME,X,E1), eValue(E1,T,V), representation(T,intensional).
 
-valueInSet(VAR,T,VAL) :- eValue(EV,intensionalSet,E), contains(E,T,VAL), EV=variable(VAR).
+valueInSet(X,T,V) :- eValue(EV,intensionalSet,E), contains(E,T,V), EV=variable(X).
 
 %%%%%%%%%%%%%%%%% Extensional
 

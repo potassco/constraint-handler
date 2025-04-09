@@ -5,16 +5,16 @@
 #defined assignToSet/3.
 #defined ensure/2.
 
-compileEnsure(CNAME,EXPR) :- ensure(CNAME,EXPR), engine(CNAME,compile).
-compileAssign(CNAME,VAR,EXPR) :- assign(CNAME,VAR,EXPR), engine(CNAME,compile).
-compileAssignToSet(CNAME,VAR,EXPR) :- assignToSet(CNAME,VAR,EXPR), engine(CNAME,compile).
+compileEnsure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
+compileAssign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,compile).
+compileAssignToSet(CNAME,X,E) :- assignToSet(CNAME,X,E), engine(CNAME,compile).
 
 
 expression(E)      :- compileEnsure(NAME,E).
-expression(E)      :- compileAssign(NAME,VAR,E).
-expression(EV)     :- compileAssign(NAME,VAR,E), EV=variable(VAR).
-expression(E)      :- compileAssignToSet(NAME,VAR,E).
-expression(EV)     :- compileAssignToSet(NAME,VAR,E), EV=variable(VAR).
+expression(E)      :- compileAssign(NAME,X,E).
+expression(EX)     :- compileAssign(NAME,X,E), EX=variable(X).
+expression(E)      :- compileAssignToSet(NAME,X,E).
+expression(EX)     :- compileAssignToSet(NAME,X,E), EX=variable(X).
 expression(HD)     :- expressionList(EL), EL=(HD,TL).
 expression(OE) :- expression(E), E=operation(python(OE),EL).
 expressionList(EL) :- expression(E), E=operation(OP,EL).
@@ -26,7 +26,7 @@ eValue(E,float, float(C)) :- expression(E), E=constant(float(C)).
 eValue(E,str,C) :- expression(E), E=constant(str(C)).
 eValue(E,symbol,C) :- expression(E), E=constant(symbol(C)).
 
-eValue(E,T,VAL) :- expression(E), E=variable(VAR), compileAssign(NAME,VAR,E2), eValue(E2,T,VAL).
+eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
 
 eValue(E,int,V1+V2) :- expression(E), E=operation(add, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2).
 eValue(E,int,V1-V2) :- expression(E), E=operation(minus,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2).
