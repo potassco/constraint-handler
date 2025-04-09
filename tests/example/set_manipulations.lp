@@ -11,6 +11,14 @@
 %%% cu = |u| = 5
 %%% x = { 3, 1+2, u, v, { true } } = { 3, { true }, { 1, 2, 3, true, 89.1 } }
 %%% cx = |x| = 3
+%%% d.add(1+3), d.add(s), d.add({true, 89.1}), d.add(2+2)  -> d = { 4, { true, 89.1 } }
+%%% cd = 2
+
+%%% numbers = { -2.0, -1, 0, 1, 2 }
+%%% squares = { x*x | x \in numbers, x float or x int } = { 0, 1, 4, 4.0 }
+%%% csquares = |squares| = 4
+
+%%% TODO
 %%% y = add f v = { 47.1 true }
 %%% z = rem true  w = { 1, 5, false }
 %%% a = rem false u = { 1, 2, 3, true, 89.1 } = u
@@ -50,6 +58,31 @@ assign(assign_x, x, operation(makeSet,
 
 assign(assign_cx, cx, operation(length,(variable(x),()))).
 
+assignToSet(assign_d, d, operation(add,(constant(int(1)),(constant(int(3)),())))).
+assignToSet(assign_d, d, variable(s)).
+assignToSet(assign_d, d, operation(add,(constant(int(2)),(constant(int(2)),())))).
+assignToSet(assign_d, d, operation(makeSet,(constant(bool(true)),(constant(float("89.1")),())))).
+
+assign(assign_cd, cd, operation(length,(variable(d),()))).
+
+assign(a_numbers, numbers, operation(makeSet,
+                                    (constant(float("-2.0")),
+                                    (constant(int(-1)),
+                                    (constant(int( 0)),
+                                    (constant(int( 1)),
+                                    (constant(int( 2)),()))))))).
+
+assignToSet(a_squares_int, squares, SQ) :-
+    valueInSet(numbers,int,X),
+    SQ = operation(mult,(EX,(EX,()))),
+    EX = constant(int(X)).
+assignToSet(a_squares_float, squares, SQ) :-
+    valueInSet(numbers,float,X),
+    SQ = operation(mult,(EX,(EX,()))),
+    EX = constant(X).
+
+assign(a_csq, csquares, operation(length,(variable(squares),()))).
+
 %assign(assign_y, y, operation(add,
 %                                  (variable(f),
 %                                  (variable(v),())))).
@@ -60,6 +93,6 @@ assign(assign_cx, cx, operation(length,(variable(x),()))).
 %                                  (constant(bool(false)),
 %                                  (variable(u),())))).
 
-requestEngine(assign_x,compile).
+%requestEngine(assign_x,compile).
 
 %#show expression/1.
