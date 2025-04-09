@@ -1,18 +1,18 @@
-value(E,T,V) :- expression(E), E=variable(VAR), compileAssign(NAME,VAR,E2), value(E2,T,V).
+eValue(E,T,V) :- expression(E), E=variable(VAR), compileAssign(NAME,VAR,E2), eValue(E2,T,V).
 
 floatOperator(abs;sqrt;cos;sin;acos;asin;add;mult;div;eq;neq;leq;lt;geq;gt;minus).
 operataorValue(OE,OE) :- expression(E), E=operation(OE, EL), floatOperator(OE).
-operataorValue(OE,S)  :- expression(E), E=operation(OE, EL), OE=python(EXP), value(EXP,str,S).
-value(E,T,RES) :- stagePythonCall(E,P,L), (T,RES) = @pythonEvalOperator(P,L).
+operataorValue(OE,S)  :- expression(E), E=operation(OE, EL), OE=python(EXP), eValue(EXP,str,S).
+eValue(E,T,RES) :- stagePythonCall(E,P,L), (T,RES) = @pythonEvalOperator(P,L).
 stagePythonCall(E,OP,L) :- expression(E), E=operation(OE, (E1,())),
     operataorValue(OE,OP),
-    value(E1,T1,V1),
+    eValue(E1,T1,V1),
     L = (V1,()),
     #false : T1!=float.
 
 stagePythonCall(E,OP,L) :- expression(E), E=operation(OE, (E1,(E2,()))),
     operataorValue(OE,OP),
-    value(E1,T1,V1), value(E2,T2,V2),
+    eValue(E1,T1,V1), eValue(E2,T2,V2),
     L = (V1,(V2,())),
     #false : T1!=float, T2!=float.
 
