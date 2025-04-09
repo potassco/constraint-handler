@@ -2,15 +2,19 @@
 % #include "floats.lp".
 
 #defined assign/3.
+#defined assignToSet/3.
 #defined ensure/2.
 
 compileEnsure(CNAME,EXPR) :- ensure(CNAME,EXPR), engine(CNAME,compile).
 compileAssign(CNAME,VAR,EXPR) :- assign(CNAME,VAR,EXPR), engine(CNAME,compile).
+compileAssignToSet(CNAME,VAR,EXPR) :- assignToSet(CNAME,VAR,EXPR), engine(CNAME,compile).
 
 
 expression(E)      :- compileEnsure(NAME,E).
 expression(E)      :- compileAssign(NAME,VAR,E).
 expression(EV)     :- compileAssign(NAME,VAR,E), EV=variable(VAR).
+expression(E)      :- compileAssignToSet(NAME,VAR,E).
+expression(EV)     :- compileAssignToSet(NAME,VAR,E), EV=variable(VAR).
 expression(HD)     :- expressionList(EL), EL=(HD,TL).
 expression(OE) :- expression(E), E=operation(python(OE),EL).
 expressionList(EL) :- expression(E), E=operation(OP,EL).
