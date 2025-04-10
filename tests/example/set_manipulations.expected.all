@@ -12,7 +12,7 @@ valueInSet(u,int,3)
 valueInSet(u,int,1)
 valueInSet(u,int,2)
 
-value(variable(cu),int,5)
+value(cu,int,5)
 
 valueInSet(v,bool,true)
 
@@ -25,14 +25,14 @@ valueInSet(x,int,3)
 valueInSet(x,intensionalSet,operation(union,(variable(s),(variable(t),()))))
 valueInSet(x,intensionalSet,operation(inter,(variable(s),(variable(t),()))))
 
-value(variable(cx),int,3)
+value(cx,int,3)
 
 valueInSet(d,int,4)
 
-value(variable(cd),int,2)
+value(cd,int,2)
 
 valueInSet(squares,int,0)
 valueInSet(squares,int,1)
 valueInSet(squares,int,4)
 valueInSet(squares,float,float("4.0"))
-value(variable(csquares),int,4)
+value(csquares,int,4)
