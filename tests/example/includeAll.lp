@@ -1,3 +1,4 @@
+#include "../../src/constraint_handler/data/bool.lp".
 #include "../../src/constraint_handler/data/conditionals.lp".
 #include "../../src/constraint_handler/data/direct.lp".
 #include "../../src/constraint_handler/data/display.lp".

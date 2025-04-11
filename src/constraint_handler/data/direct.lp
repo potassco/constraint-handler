@@ -47,14 +47,5 @@ eValue(E,bool,false) :- expression(E), E=operation(lt, (E1,(E2,()))), eValue(E1,
 eValue(E,bool,false) :- expression(E), E=operation(geq,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 <  V2.
 eValue(E,bool,false) :- expression(E), E=operation(gt, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 <= V2.
 
-eValue(E,bool,true)  :- expression(E), E=operation(conj, (E1,(E2,()))), eValue(E1,bool,true),  eValue(E2,bool,true).
-eValue(E,bool,false) :- expression(E), E=operation(conj, (E1,(E2,()))), eValue(E1,bool,false).
-eValue(E,bool,false) :- expression(E), E=operation(conj, (E1,(E2,()))), eValue(E2,bool,false).
-
-eValue(E,bool,true)  :- expression(E), E=operation(disj, (E1,(E2,()))), eValue(E1,bool,true).
-eValue(E,bool,true)  :- expression(E), E=operation(disj, (E1,(E2,()))), eValue(E2,bool,true).
-eValue(E,bool,false) :- expression(E), E=operation(disj, (E1,(E2,()))), eValue(E1,bool,false), eValue(E2,bool,false).
-
-
 %#show value/3.
 %#show expression/1.
