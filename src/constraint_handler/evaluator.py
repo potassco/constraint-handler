@@ -158,6 +158,7 @@ def evaluate_unop(o, val):
         case UnaryOperator.asin:
             return math.asin(val)
 
+
 def evaluate_logic_operator(o, args):
     match o:
         case LogicOperator.conj:
@@ -177,6 +178,7 @@ def evaluate_logic_operator(o, args):
             return not args[0]
         case LogicOperator.lxor:
             return functools.reduce(operator.xor, args)
+
 
 def evaluate_binop(o, lval, rval):
     # print(o,l,r,lval,rval)
