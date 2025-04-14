@@ -18,7 +18,7 @@ class PPEnum(Enum):
 
 BaseType = Enum("BaseType", ["int", "float", "str", "symbol", "bool"])
 UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "acos", "asin"])
-LogicOperator = PPEnum("LogicOperator", ["conj","disj","ite","leqv","limp","lxor"])
+LogicOperator = PPEnum("LogicOperator", ["conj","disj","ite","leqv","limp","lnot","lxor"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
     [
@@ -172,6 +172,9 @@ def evaluate_logic_operator(o,args):
         case LogicOperator.limp:
             assert len(args) == 2
             return not args[0] or args[1]
+        case LogicOperator.lnot:
+            assert len(args) == 1
+            return not args[0]
         case LogicOperator.lxor:
             return functools.reduce(operator.xor,args)
 
