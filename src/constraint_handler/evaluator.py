@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import functools
 import math
+import operator
 from enum import Enum
 from typing import NamedTuple
 
@@ -16,6 +18,7 @@ class PPEnum(Enum):
 
 BaseType = Enum("BaseType", ["int", "float", "str", "symbol", "bool"])
 UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "acos", "asin"])
+LogicOperator = PPEnum("LogicOperator", ["conj","disj","ite","leqv","limp","lxor"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
     [
@@ -30,8 +33,6 @@ BinaryOperator = PPEnum(
         "gt",
         "isin",
         "notin",
-        "conj",
-        "disj",
         "union",
         "inter",
     ],
@@ -41,7 +42,7 @@ OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "makeSet", "leng
 noPredConstant = bool | float | int | str | clingo.Symbol
 ConstantList = list[noPredConstant]
 
-noPredOperator = UnaryOperator | BinaryOperator | OtherOperator | str
+noPredOperator = UnaryOperator | BinaryOperator | LogicOperator | OtherOperator | str
 
 
 class Bool(NamedTuple):
@@ -86,7 +87,7 @@ class Python(NamedTuple):
 
 
 Expr = Constant | Variable | Operation
-Operator = UnaryOperator | BinaryOperator | OtherOperator | Python
+Operator = UnaryOperator | BinaryOperator | LogicOperator | OtherOperator | Python
 
 
 def collectVars(expr):
@@ -138,7 +139,7 @@ def evaluate_constant(c):
             return i
         case float(f):
             return f
-        case String(s):
+        case Str(s):
             return s
         case Symbol(s):
             return s
@@ -157,6 +158,22 @@ def evaluate_unop(o, val):
         case UnaryOperator.asin:
             return math.asin(val)
 
+def evaluate_logic_operator(o,args):
+    match o:
+        case LogicOperator.conj:
+            return all(args)
+        case LogicOperator.disj:
+            return any(args)
+        case LogicOperator.ite:
+            assert len(args) == 3
+            return args[1] if args[0] else args[2]
+        case LogicOperator.leqv:
+            return not functools.reduce(operator.xor,args)
+        case LogicOperator.limp:
+            assert len(args) == 2
+            return not args[0] or args[1]
+        case LogicOperator.lxor:
+            return functools.reduce(operator.xor,args)
 
 def evaluate_binop(o, lval, rval):
     # print(o,l,r,lval,rval)
@@ -183,10 +200,6 @@ def evaluate_binop(o, lval, rval):
             return lval in rval
         case BinaryOperator.notin:
             return lval not in rval
-        case BinaryOperator.conj:
-            return lval and rval
-        case BinaryOperator.disj:
-            return lval or rval
 
 
 def evaluate_operator(symbols, o, args):
@@ -199,6 +212,8 @@ def evaluate_operator(symbols, o, args):
             call = eval(fn)
             # print(f"{fn}{tuple(vals)} = {}")
             return call(*args)
+        case LogicOperator(o):
+            return evaluate_logic_operator(o,args)
         case OtherOperator.minus:
             assert len(args)
             if len(args) == 1:
