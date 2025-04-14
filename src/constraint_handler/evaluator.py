@@ -18,7 +18,7 @@ class PPEnum(Enum):
 
 BaseType = Enum("BaseType", ["int", "float", "str", "symbol", "bool"])
 UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "acos", "asin"])
-LogicOperator = PPEnum("LogicOperator", ["conj","disj","ite","leqv","limp","lnot","lxor"])
+LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
     [
@@ -158,7 +158,7 @@ def evaluate_unop(o, val):
         case UnaryOperator.asin:
             return math.asin(val)
 
-def evaluate_logic_operator(o,args):
+def evaluate_logic_operator(o, args):
     match o:
         case LogicOperator.conj:
             return all(args)
@@ -168,7 +168,7 @@ def evaluate_logic_operator(o,args):
             assert len(args) == 3
             return args[1] if args[0] else args[2]
         case LogicOperator.leqv:
-            return not functools.reduce(operator.xor,args)
+            return not functools.reduce(operator.xor, args)
         case LogicOperator.limp:
             assert len(args) == 2
             return not args[0] or args[1]
@@ -176,7 +176,7 @@ def evaluate_logic_operator(o,args):
             assert len(args) == 1
             return not args[0]
         case LogicOperator.lxor:
-            return functools.reduce(operator.xor,args)
+            return functools.reduce(operator.xor, args)
 
 def evaluate_binop(o, lval, rval):
     # print(o,l,r,lval,rval)
@@ -216,7 +216,7 @@ def evaluate_operator(symbols, o, args):
             # print(f"{fn}{tuple(vals)} = {}")
             return call(*args)
         case LogicOperator(o):
-            return evaluate_logic_operator(o,args)
+            return evaluate_logic_operator(o, args)
         case OtherOperator.minus:
             assert len(args)
             if len(args) == 1:
