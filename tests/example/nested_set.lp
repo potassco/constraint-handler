@@ -17,6 +17,18 @@
 %%% si = ss1 cap ss2 = { { 2 } }
 %%% se = ss1 cup ss1 = { { 2 }, { 3 } }
 
+%%% e = s1 == s2 and s2 == u and u == i = true
+%%% lsa = |sa| = 2
+%%% lsu = |su| = 3
+%%% lsi = |si| = 1
+%%% lse = |se| = 2
+%%% in4e = s4 \in se = false
+%%% in3e = s3 \in se = true
+%%% in2e = s2 \in se = true
+%%% notin4 = s4 \notin se = true
+%%% notin3 = s3 \notin se = false
+%%% notin2 = s2 \notin se = false
+
 assign(assign_v1, v1, operation(add,(constant(int(1)),(constant(int(1)),())))).
 assign(assign_v2, v2, constant(int(2))).
 assign(assign_s1, s1, operation(makeSet,
@@ -58,3 +70,18 @@ assign(assign_si, si, operation(inter,
 assign(assign_se, se, operation(union,
                                    (variable(ss1),
                                    (variable(ss1),())))).
+
+assign(assign_e, e, operation(conj, (E12,(E2U,(EUI,()))))) :-
+    E12 = operation(eq,(variable(s1),(variable(s2),()))),
+    E2U = operation(eq,(variable(s2),(variable(u),()))),
+    EUI = operation(eq,(variable(u),(variable(i),()))).
+assign(a_lsa, lsa, operation(length,(variable(sa),()))).
+assign(a_lsu, lsu, operation(length,(variable(su),()))).
+assign(a_lsi, lsi, operation(length,(variable(si),()))).
+assign(a_lse, lse, operation(length,(variable(se),()))).
+assign(a_in4, in4e, operation(isin, (variable(s4),(variable(se),())))).
+assign(a_in3, in3e, operation(isin, (variable(s3),(variable(se),())))).
+assign(a_in2, in2e, operation(isin, (variable(s2),(variable(se),())))).
+assign(a_nin4, notin4e, operation(notin, (variable(s4),(variable(se),())))).
+assign(a_nin3, notin3e, operation(notin, (variable(s3),(variable(se),())))).
+assign(a_nin2, notin2e, operation(notin, (variable(s2),(variable(se),())))).
