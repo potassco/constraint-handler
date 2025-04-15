@@ -51,6 +51,20 @@ contains(E,T,V2) :- expression(E), E=operation(inter,L), L=(E1,(E2,())),
   representation(T,intensional), testedEqual(T,V2,V1).
 %#show contains/3.
 
+%%%%%%%%%%%%%%%%% Equality
+
+testEqual(T,V1,V2) :- expression(E), precontains(E,T,V1), precontains(E,T,V2), representation(T,intensional), V1 < V2.
+testEqual(intensionalSet,V1,V2) :- expression(E), E=operation(eq,L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), eValue(E2,intensionalSet,S2).
+eValue(E,bool,true)  :- expression(E), E=operation(eq,L),  L=(E1,(E2,())), eValue(E1,intensionalSet,S1), eValue(E2,intensionalSet,S2), testedEqual(intensionalSet,S1,S2).
+eValue(E,bool,false) :- expression(E), E=operation(eq,L),  L=(E1,(E2,())), eValue(E1,intensionalSet,S1), eValue(E2,intensionalSet,S2), testedDifferent(intensionalSet,S1,S2).
+eValue(E,bool,true)  :- expression(E), E=operation(neq,L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), eValue(E2,intensionalSet,S2), testedDifferent(intensionalSet,S1,S2).
+eValue(E,bool,false) :- expression(E), E=operation(neq,L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), eValue(E2,intensionalSet,S2), testedEqual(intensionalSet,S1,S2).
+
+eValue(E,bool,false) :- expression(E), E=operation(eq,L),  L=(E1,(E2,())), eValue(E1,intensionalSet,S1), eValue(E2,T2,S2), T2 != intensionalSet.
+eValue(E,bool,true)  :- expression(E), E=operation(neq,L), L=(E1,(E2,())), eValue(E1,intensionalSet,S1), eValue(E2,T2,S2), T2 != intensionalSet.
+eValue(E,bool,false) :- expression(E), E=operation(eq,L),  L=(E1,(E2,())), eValue(E1,T1,S1), eValue(E2,intensionalSet,S2), T1 != intensionalSet.
+eValue(E,bool,true)  :- expression(E), E=operation(neq,L), L=(E1,(E2,())), eValue(E1,T1,S1), eValue(E2,intensionalSet,S2), T1 != intensionalSet.
+
 testedDifferent(intensionalSet,S1,S2) :- testEqual(intensionalSet,S1,S2), contains(S1,T,V), not contains(S2,T,V), representation(T,extensional).
 testedDifferent(intensionalSet,S1,S2) :- testEqual(intensionalSet,S1,S2), contains(S2,T,V), not contains(S1,T,V), representation(T,extensional).
 %testedDifferent(intensionalSet,S1,S2) :- testEqual(intensionalSet,S1,S2), contains(S1,T,V1), #count { 1 : contains(S2,T,V2), testedEqual(T,V1,V2) } 0, representation(T,intensional).
@@ -59,6 +73,7 @@ testedDifferent(intensionalSet,S1,S2) :- testEqual(intensionalSet,S1,S2), contai
 
 testEqual(T,V1,V2) :- testEqual(intensionalSet,S1,S2), contains(S1,T,V1), contains(S2,T,V2), representation(T,intensional), V1 < V2.
 testedEqual(intensionalSet,V1,V2) :- testEqual(intensionalSet,V1,V2), not testedDifferent(intensionalSet,V1,V2).
+
 
 %#show testEqual/3.
 %#show testedEqual/3.
