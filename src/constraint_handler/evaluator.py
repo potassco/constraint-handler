@@ -35,6 +35,7 @@ BinaryOperator = PPEnum(
         "notin",
         "union",
         "inter",
+        "subset",
     ],
 )
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "makeSet", "length"])
