@@ -1,0 +1,6 @@
+value(b,bool,true)
+value(i,int,42)
+value(y,int,85)
+value(s,str,"foo")
+value(x,str,"foo")
+value(f,float,float("47.1"))

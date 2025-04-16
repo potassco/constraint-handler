@@ -1,0 +1,6 @@
+value(x,bool,true) value(x,bool,false)
+value(y,bool,true) value(y,bool,false)
+value(f,bool,true) value(f,bool,false)
+value(t,bool,true) value(t,bool,false)
+value(z,bool,true) value(z,bool,false)
+value(u,bool,true) value(u,bool,false)
