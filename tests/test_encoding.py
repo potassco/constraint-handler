@@ -1,9 +1,9 @@
 import clingo.script
 import clingo.symbol
-from clintest.test import And, Assert
-from clintest.quantifier import All, Any
 from clintest.assertion import Contains
+from clintest.quantifier import All, Any
 from clintest.solver import Clingo
+from clintest.test import And, Assert
 
 clingo.script.enable_python()
 
