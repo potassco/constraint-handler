@@ -6,7 +6,6 @@
 %%% s2 = { v2 } = { 2 }
 %%% s3 = { 3 }
 %%% s4 = { 4 }
-%%% a = { s1, s2 } = { { 2 } }
 %%% u = s1 cup s2 = { 2 }
 %%% i = s1 cap s2 = { 2 }
 %%% ss1 = { s1, s3 } = { { 2 }, { 3 } }
@@ -39,15 +38,12 @@ assign(assign_s3, s3, operation(makeSet,
                                    (constant(int(3)),()))).
 assign(assign_s4, s4, operation(makeSet,
                                    (constant(int(4)),()))).
-%assign(assign_a, a, operation(makeSet,
-%                                 (variable(s1),
-%                                 (variable(s2),())))).
-%assign(assign_u, u, operation(union,
-%                                 (variable(s1),
-%                                 (variable(s2),())))).
-%assign(assign_i, i, operation(inter,
-%                                 (variable(s1),
-%                                 (variable(s2),())))).
+assign(assign_u, u, operation(union,
+                                 (variable(s1),
+                                 (variable(s2),())))).
+assign(assign_i, i, operation(inter,
+                                 (variable(s1),
+                                 (variable(s2),())))).
 
 assign(assign_ss1, ss1, operation(makeSet,
                                      (variable(s1),(variable(s3),())))).
