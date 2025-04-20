@@ -10,6 +10,7 @@ engine(CNAME,ENG) :- requestEngine(CNAME,ENG).
 engine(CNAME,ENG) :- defaultEngine(ENG), not requestedEngine(CNAME), ensure(CNAME,EXPR).
 engine(CNAME,ENG) :- defaultEngine(ENG), not requestedEngine(CNAME), assign(CNAME,X,EXPR).
 engine(CNAME,ENG) :- defaultEngine(ENG), not requestedEngine(CNAME), assignToSet(CNAME,X,EXPR).
+engine(CNAME,ENG) :- defaultEngine(ENG), not requestedEngine(CNAME), multimap_assign(CNAME,X,EKEY,EVAL).
 
 value(X,T,V) :- eValue(variable(X),T,V).
 
