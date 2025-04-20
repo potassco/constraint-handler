@@ -109,6 +109,7 @@ eValue(E,bool,false) :- expression(E), E=operation(subset,L), L=(E1,(E2,())),
 #script(python)
 
 import itertools
+import clingo
 
 import constraint_handler.myClorm
 import constraint_handler.evaluator
@@ -116,7 +117,10 @@ import constraint_handler.evaluator
 def pythonListElements(clExpr,clBatchSize = clingo.Number(1)):
     pBatchSize = myClorm.cltopy(clBatchSize,int)
     pL = myClorm.cltopy(clExpr,list[evaluator.Expr])
-    pGroups = itertools.batched(pL,pBatchSize)
+    if pBatchSize == 1:
+        pGroups = pL
+    else:
+        pGroups = itertools.batched(pL,pBatchSize)
     return [myClorm.pytocl(e) for e in pGroups]
 
 
