@@ -6,36 +6,40 @@
 %%%            "usa" : "paris";
 %%%            "belarus" : "brest" }
 
-%%% properDivisors = { 4 : { 1, 2 }, 5 : { 1 }, 6 : { 1, 2, 3} }
+%%% properDivisors = { 4 : { 1, 2 }; 5 : { 1 }; 6 : { 1, 2, 3 } }
 %%% properDivisors2 = { 4 : 1, 2; 5 : 1; 6 : 1, 2, 3 }
 %%% sums = { { 1, 2 } :  3;
 %%%          { 1 } : 1;
 %%%          { 1, 2, 3} : 6 }
 
-%%% nkcaps = #keys capitals
-%%% nkpdi1 = #keys properDivisors
-%%% nkpdi2 = #keys properDivisors
-%%% nksums = #keys sums
-%%% necaps = #entries capitals
-%%% nepdi1 = #entries properDivisors
-%%% nepdi2 = #entries properDivisors2
-%%% nesums = #entries sums
-%%% siecaps = sum int capitals
-%%% siepdi1 = sum int properDivisors
-%%% siepdi2 = sum int properDivisors2
-%%% siesums = sum int sums
+%%% nkcaps = #keys capitals = 3
+%%% nkpdi1 = #keys properDivisors = 3
+%%% nkpdi2 = #keys properDivisors = 3
+%%% nksums = #keys sums = 3
+%%% necaps = #entries capitals = 3
+%%% nepdi1 = #entries properDivisors = 3
+%%% nepdi2 = #entries properDivisors2 = 6
+%%% nesums = #entries sums = 3
+%%% siecaps = sum int capitals = 0
+%%% siepdi1 = sum int properDivisors = 0
+%%% siepdi2 = sum int properDivisors2 = 10
+%%% siesums = sum int sums = 10
 
-%#show multimap_value/5.
-%#show eValue/3.
-%#show expression/1.
-%#show multimapHas/4.
-%#show multimap_entry/5.
-%#show multimap_assign/4.
-%#show compileAssignToMultimap/4.
-%#show representative/5.
-%#show testEqual/3.
-%#show testedEqual/3.
-
+%%% a = { { 1, 2 } : { 2, 4}; { 2, 4 } : { 4, 8 }, { 1, 2 }  }
+%%% b = { { 1, 2 } : { 1+1, 2+2 }; b24 : { 1+1, 1 }, b48 }
+%%%     where b24 = { 2 * 1, 2 * 2 } and b48 = { 4, 8 }
+%%% c = { { 1, 2 } : { 2, 4}; { 2, 4 } : { 4, 7 }, { 1, 2 } }
+%%% d = { { 1, 2 } : { 2, 4}; { 2, 4 } : { 4, 8 } }
+%%% e = { { 1, 2 } : { 2, 4} }
+%%% eab = a == b = true
+%%% eac = a == c = false
+%%% ead = a == d = false
+%%% eae = a == e = false
+%%% nab = a != b = false
+%%% nac = a != c = true
+%%% nad = a != d = true
+%%% nad = a != e = true
+ 
 assign(acap, capitals, operation(multimapMake,
                                 (constant(str("germany")), (constant(str("berlin")),
                                 (constant(str("france")), (constant(str("paris")),
@@ -90,3 +94,57 @@ assign(ankcaps, siecaps, operation(sumIntEntries,(variable(capitals),()))).
 assign(ankpdi1, siepdi1, operation(sumIntEntries,(variable(properDivisors),()))).
 assign(ankpdi2, siepdi2, operation(sumIntEntries,(variable(properDivisors2),()))).
 assign(anksums, siesums, operation(sumIntEntries,(variable(sums),()))).
+
+assign(aa, a, operation(multimapMake,
+                       (operation(makeSet,(constant(int(1)),(constant(int(2)),()))), (operation(makeSet,(constant(int(2)),(constant(int(4)),()))),
+                       (operation(makeSet,(constant(int(2)),(constant(int(4)),()))), (operation(makeSet,(constant(int(4)),(constant(int(8)),()))),
+                       (operation(makeSet,(constant(int(2)),(constant(int(4)),()))), (operation(makeSet,(constant(int(1)),(constant(int(2)),()))),
+                       ())))))))).
+
+multimap_declare(ab,b).
+multimap_assign(ab,b,
+    operation(makeSet,(constant(int(1)),(constant(int(2)),()))),
+    operation(makeSet,
+             (operation(add,(constant(int(1)),(constant(int(1)),()))),
+             (operation(add,(constant(int(2)),(constant(int(2)),()))),())))).
+
+assign(abs,b24,
+    operation(makeSet,
+        (operation(mult,(constant(int(2)),(constant(int(1)),()))),
+        (operation(mult,(constant(int(2)),(constant(int(2)),()))),())))).
+multimap_assign(ab,b,
+    variable(b24),
+    operation(makeSet,
+             (operation(add,(constant(int(1)),(constant(int(1)),()))),
+             (constant(int(1)),
+             ())))).
+
+assignToSet(abs, b48, constant(int(4))).
+assignToSet(abs, b48, constant(int(8))).
+
+multimap_assign(ab,b,
+    variable(b24),
+    variable(b48)).
+
+assign(ac, c, operation(multimapMake,
+                       (operation(makeSet,(constant(int(1)),(constant(int(2)),()))), (operation(makeSet,(constant(int(2)),(constant(int(4)),()))),
+                       (operation(makeSet,(constant(int(2)),(constant(int(4)),()))), (operation(makeSet,(constant(int(4)),(constant(int(7)),()))),
+                       (operation(makeSet,(constant(int(2)),(constant(int(4)),()))), (operation(makeSet,(constant(int(1)),(constant(int(2)),()))),
+                       ())))))))).
+
+assign(ad, d, operation(multimapMake,
+                       (operation(makeSet,(constant(int(1)),(constant(int(2)),()))), (operation(makeSet,(constant(int(2)),(constant(int(4)),()))),
+                       (operation(makeSet,(constant(int(2)),(constant(int(4)),()))), (operation(makeSet,(constant(int(4)),(constant(int(8)),()))),
+                       ())))))).
+assign(ae, e, operation(multimapMake,
+                       (operation(makeSet,(constant(int(1)),(constant(int(2)),()))), (operation(makeSet,(constant(int(2)),(constant(int(4)),()))),
+                       ())))).
+
+assign(aeab, eab, operation(eq, (variable(a),(variable(b),())))).
+assign(aeac, eac, operation(eq, (variable(a),(variable(c),())))).
+assign(aead, ead, operation(eq, (variable(a),(variable(d),())))).
+assign(aeae, eae, operation(eq, (variable(a),(variable(e),())))).
+assign(anab, nab, operation(neq,(variable(a),(variable(b),())))).
+assign(anac, nac, operation(neq,(variable(a),(variable(c),())))).
+assign(anad, nad, operation(neq,(variable(a),(variable(d),())))).
+assign(anae, nae, operation(neq,(variable(a),(variable(e),())))).
