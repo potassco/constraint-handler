@@ -108,16 +108,17 @@ eValue(E,bool,false) :- expression(E), E=operation(subset,L), L=(E1,(E2,())),
 
 #script(python)
 
+import itertools
+
 import constraint_handler.myClorm
 import constraint_handler.evaluator
 
-def pythonListElements(clExpr):
+def pythonListElements(clExpr,clBatchSize = clingo.Number(1)):
+    pBatchSize = myClorm.cltopy(clBatchSize,int)
     pL = myClorm.cltopy(clExpr,list[evaluator.Expr])
-    #test1 = pL[0]
-    #res1 = [myClorm.pytocl(e) for e in pL]
-    #print(pL,res1,len(res1))
-    #print(f"name= {res1.name}, args= {res1.arguments}")
-    return [myClorm.pytocl(e) for e in pL]
+    pGroups = itertools.batched(pL,pBatchSize)
+    return [myClorm.pytocl(e) for e in pGroups]
+
 
 def pythonEnumerateElements(clExpr):
     pL = myClorm.cltopy(clExpr,list[evaluator.Expr])

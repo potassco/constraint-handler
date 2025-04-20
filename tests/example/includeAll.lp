@@ -6,4 +6,5 @@
 #include "../../src/constraint_handler/data/gringoEval.lp".
 #include "../../src/constraint_handler/data/intensionalSet.lp".
 #include "../../src/constraint_handler/data/main.lp".
+#include "../../src/constraint_handler/data/multimap.lp".
 #include "../../src/constraint_handler/data/string.lp".
