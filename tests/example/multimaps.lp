@@ -25,7 +25,7 @@
 %%% siepdi2 = sum int properDivisors2 = 10
 %%% siesums = sum int sums = 10
 
-%%% a = { { 1, 2 } : { 2, 4}; 
+%%% a = { { 1, 2 } : { 2, 4};
 %%%       { 2, 4 } : { 4, 8 }, { 1, 2 }  }
 %%% b = { { 1, 2 } : { 1+1, 2+2 };
 %%%       b24 : { 1+1, 1 }, b48 }
@@ -47,7 +47,7 @@
 
 %%% l = fold(snoc,properDivisors2,())) where snoc(tail,head) = (tail, head)
 %%%   = (((((((),1),2),1),1),2),3)
- 
+
 assign(acap, capitals, operation(multimapMake,
                                 (constant(str("germany")), (constant(str("berlin")),
                                 (constant(str("france")), (constant(str("paris")),
@@ -166,11 +166,3 @@ assign(afoldl, l, operation(fold,(constant(symbol(snoc)),(variable(properDivisor
 computed(snoc,ARGS,TN,VN) :- compute(snoc,ARGS),
     ARGS = (TA,(VA,(TB,(VB,())))),
     TN = TB, VN = (VB, VA).
-
-%#show value(X,T,V) : value(X,T,V), T != multimap.
-%#show value(X,T,V) : value(X,T,V), T != multimap, X=l.
-%#show _multimap_foldStep/4.
-
-%#show.
-%#show multimap_entry/5.
-%#show value/3.
