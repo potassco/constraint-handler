@@ -7,7 +7,7 @@
 %% g = x != y
 %% h = f != g
 %% i = |x|
-%% t = y + x = "barfoo" | |y| == |x| | y == "foobar" | y + y == "blabla"
+%% t = y + x == "barfoo" | |y| == |x| | y == "foobar" | y + y == "blabla"
 
 1 { assign(a_x, x, constant(str("foo"))) ; assign(a_x, x, constant(str("bar"))) } 1.
 1 { assign(a_y, y, constant(str("bla"))) ; assign(a_y, y, constant(str("bar"))) ; assign(a_y, y, constant(str("foobar"))) } 1.

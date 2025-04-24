@@ -14,7 +14,7 @@
 
 %%% nkcaps = #keys capitals = 3
 %%% nkpdi1 = #keys properDivisors = 3
-%%% nkpdi2 = #keys properDivisors = 3
+%%% nkpdi2 = #keys properDivisors2 = 3
 %%% nksums = #keys sums = 3
 %%% necaps = #entries capitals = 3
 %%% nepdi1 = #entries properDivisors = 3
@@ -25,8 +25,10 @@
 %%% siepdi2 = sum int properDivisors2 = 10
 %%% siesums = sum int sums = 10
 
-%%% a = { { 1, 2 } : { 2, 4}; { 2, 4 } : { 4, 8 }, { 1, 2 }  }
-%%% b = { { 1, 2 } : { 1+1, 2+2 }; b24 : { 1+1, 1 }, b48 }
+%%% a = { { 1, 2 } : { 2, 4}; 
+%%%       { 2, 4 } : { 4, 8 }, { 1, 2 }  }
+%%% b = { { 1, 2 } : { 1+1, 2+2 };
+%%%       b24 : { 1+1, 1 }, b48 }
 %%%     where b24 = { 2 * 1, 2 * 2 } and b48 = { 4, 8 }
 %%% c = { { 1, 2 } : { 2, 4}; { 2, 4 } : { 4, 7 }, { 1, 2 } }
 %%% d = { { 1, 2 } : { 2, 4}; { 2, 4 } : { 4, 8 } }
@@ -39,6 +41,12 @@
 %%% nac = a != c = true
 %%% nad = a != d = true
 %%% nad = a != e = true
+
+%%% f = fold(myproduct,properDivisors2,100) where myproduct(x,y) = x*y
+%%%   =  100 * 1 * 2 * 1 * 1 * 2 * 3 = 1200
+
+%%% l = fold(snoc,properDivisors2,())) where snoc(tail,head) = (tail, head)
+%%%   = (((((((),1),2),1),1),2),3)
  
 assign(acap, capitals, operation(multimapMake,
                                 (constant(str("germany")), (constant(str("berlin")),
@@ -148,3 +156,21 @@ assign(anab, nab, operation(neq,(variable(a),(variable(b),())))).
 assign(anac, nac, operation(neq,(variable(a),(variable(c),())))).
 assign(anad, nad, operation(neq,(variable(a),(variable(d),())))).
 assign(anae, nae, operation(neq,(variable(a),(variable(e),())))).
+
+assign(afold, f, operation(fold,(constant(symbol(myproduct)),(variable(properDivisors2),(constant(int(100)),()))))).
+
+computed(myproduct,ARGS,int,VA * VB) :- compute(myproduct,ARGS),
+    ARGS = (int,(VA,(int,(VB,())))).
+
+assign(afoldl, l, operation(fold,(constant(symbol(snoc)),(variable(properDivisors2),(constant(symbol(())),()))))).
+computed(snoc,ARGS,TN,VN) :- compute(snoc,ARGS),
+    ARGS = (TA,(VA,(TB,(VB,())))),
+    TN = TB, VN = (VB, VA).
+
+%#show value(X,T,V) : value(X,T,V), T != multimap.
+%#show value(X,T,V) : value(X,T,V), T != multimap, X=l.
+%#show _multimap_foldStep/4.
+
+%#show.
+%#show multimap_entry/5.
+%#show value/3.

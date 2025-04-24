@@ -1,3 +1,6 @@
+#defined multimap_declare/2.
+#defined multimap_assign/4.
+
 representation(multimap,intensional).
 _multimap_add(E,EK,EV) :- multimap_assign(CNAME,X,EK,EV), engine(CNAME,compile), E = variable(X).
 
@@ -68,29 +71,33 @@ eValue(E,bool,true)  :- expression(E), E=operation(neq,L), L=(E1,(E2,())), eValu
 eValue(E,bool,false) :- expression(E), E=operation(eq,L),  L=(E1,(E2,())), eValue(E1,T1,S1), eValue(E2,multimap,S2), T1 != multimap.
 eValue(E,bool,true)  :- expression(E), E=operation(neq,L), L=(E1,(E2,())), eValue(E1,T1,S1), eValue(E2,multimap,S2), T1 != multimap.
 
-%testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2), multimap_entry(M1,TK,RK,TV,RV), not multimap_entry(M2,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional).
-%testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2), multimap_entry(M2,TK,RK,TV,RV), not multimap_entry(M1,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional).
+%testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+%    multimap_entry(M1,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional),
+%    not multimap_entry(M2,TK,RK,TV,RV).
+%testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+%    multimap_entry(M2,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional),
+%    not multimap_entry(M1,TK,RK,TV,RV).
 
 testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
-    multimap_entry(M1,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional),
-    #false : multimap_entry(M2,TK,RK,TV,RV).
+    multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,extensional), representation(TV,extensional),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), RK1 = RK2, RV1 = RV2.
 testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
-    multimap_entry(M2,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional),
-    #false : multimap_entry(M1,TK,RK,TV,RV).
+    multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,extensional), representation(TV,extensional),
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), RK1 = RK2, RV1 = RV2.
 
 testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
-    multimap_entry(M1,TK,RK1,TV,RV), representation(TK,intensional), representation(TV,extensional),
-    #false : multimap_entry(M2,TK,RK2,TV,RV), testedEqual(TK,RK1,RK2).
+    multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,intensional), representation(TV,extensional),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), testedEqual(TK,RK1,RK2), RV1 = RV2.
 testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
-    multimap_entry(M2,TK,RK2,TV,RV), representation(TK,intensional), representation(TV,extensional),
-    #false : multimap_entry(M1,TK,RK1,TV,RV), testedEqual(TK,RK1,RK2).
+    multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional), representation(TV,extensional),
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), testedEqual(TK,RK1,RK2), RV1 = RV2.
 
 testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
-    multimap_entry(M1,TK,RK,TV,RV1), representation(TK,extensional), representation(TV,intensional),
-    #false : multimap_entry(M2,TK,RK,TV,RV2), testedEqual(TV,RV1,RV2).
+    multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,extensional), representation(TV,intensional),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), RK1 = RK2, testedEqual(TV,RV1,RV2).
 testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
-    multimap_entry(M2,TK,RK,TV,RV2), representation(TK,extensional), representation(TV,intensional),
-    #false : multimap_entry(M1,TK,RK,TV,RV1), testedEqual(TV,RV1,RV2).
+    multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,extensional), representation(TV,intensional),
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), RK1 = RK2, testedEqual(TV,RV1,RV2).
 
 testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,intensional), representation(TV,intensional),
@@ -106,3 +113,34 @@ testEqual(TV,RV1,RV2) :- testEqual(multimap,M1,M2),
     multimap_entry(M1,TK,RK1,TV,RV1),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TV,intensional).
 testedEqual(multimap,V1,V2) :- testEqual(multimap,V1,V2), not testedDifferent(multimap,V1,V2).
+
+%%%%%%%%%%%%%%%%%% Fold
+%%% fold: a -> b -> b
+
+_multimap_makeIndex(EM) :- expression(E), E=operation(fold,(EOP,(MAP,(START,())))), eValue(MAP,multimap,EM).
+_multimap_foldStep(E,0,TB,VB) :- expression(E), E=operation(fold,(EOP,(MAP,(START,())))),
+    eValue(MAP,multimap,EM), eValue(START,TB,VB).
+compute(OP,ARGS) :- expression(E), E=operation(fold,(EOP,(MAP,(START,())))),
+    eValue(MAP,multimap,EM), eValue(EOP,symbol,OP),
+    _multimap_index(EM,I,TK,RK,TA,VA), _multimap_foldStep(E,I,TB,VB),
+    ARGS = (TA,(VA,(TB,(VB,())))).
+_multimap_foldStep(E,I+1,TN,NEXT) :- expression(E), E=operation(fold,(EOP,(MAP,(START,())))),
+    eValue(MAP,multimap,EM), eValue(EOP,symbol,OP),
+    _multimap_foldStep(E,I,TB,VB), _multimap_index(EM,I,TK,RK,TA,VA),
+    ARGS = (TA,(VA,(TB,(VB,())))),
+    computed(OP,ARGS,TN,NEXT).
+eValue(E,TB,VB) :- expression(E), E=operation(fold,(EOP,(MAP,(START,())))),
+    eValue(MAP,multimap,EM),
+    _multimap_foldStep(E,I,TB,VB),
+    _multimap_lastIndex(EM,I).
+
+_multimap_index(EM,0,TK,RK,TV,RV) :- _multimap_makeIndex(EM),
+    multimap_entry(EM,TK,RK,TV,RV),
+    #false : multimap_entry(EM,TK1,RK1,TV1,RV1), (TK1,RK1,TV1,RV1) < (TK,RK,TV,RV).
+
+_multimap_index(EM,I+1,TK,RK,TV,RV) :- _multimap_index(EM,I,TK0,RK0,TV0,RV0),
+    multimap_entry(EM,TK,RK,TV,RV), (TK0,RK0,TV0,RV0) < (TK,RK,TV,RV),
+    #false : multimap_entry(EM,TK1,RK1,TV1,RV1), (TK0,RK0,TV0,RV0) < (TK1,RK1,TV1,RV1), (TK1,RK1,TV1,RV1) < (TK,RK,TV,RV).
+
+_multimap_lastIndex(EM,I+1) :- _multimap_index(EM,I,TK,RK,TV,RV),
+    #false : multimap_entry(EM,TK1,RK1,TV1,RV1), (TK,RK,TV,RV) < (TK1,RK1,TV1,RV1).

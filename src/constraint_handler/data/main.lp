@@ -2,6 +2,7 @@
 % #include "gringoEval.lp".
 % #include "display.lp".
 
+#defined computed/4.
 #defined requestEngine/2.
 defaultEngine(compile).
 
