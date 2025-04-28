@@ -18,6 +18,14 @@
 %%% squares = { x*x | x \in numbers, x float or x int } = { 0, 1, 4, 4.0 }
 %%% csquares = |squares| = 4
 
+%%% tsubu = t subset u = true
+%%% tsubv = t subset v = false
+%%% tsubw = t subset w = false
+%%% usubw = u subset w = false
+%%% vsubw = v subset w = true
+%%% usubx = u subset x = false
+%%% vsubx = v subset x = false
+
 %%% TODO
 %%% y = add f v = { 47.1 true }
 %%% z = rem true  w = { 1, 5, false }
@@ -82,6 +90,14 @@ assignToSet(a_squares_float, squares, SQ) :-
     EX = constant(X).
 
 assign(a_csq, csquares, operation(length,(variable(squares),()))).
+
+assign(test_subset, tsubu, operation(subset,(variable(t),(variable(u),())))).
+assign(test_subset, tsubv, operation(subset,(variable(t),(variable(v),())))).
+assign(test_subset, tsubw, operation(subset,(variable(t),(variable(w),())))).
+assign(test_subset, usubw, operation(subset,(variable(u),(variable(w),())))).
+assign(test_subset, vsubw, operation(subset,(variable(v),(variable(w),())))).
+assign(test_subset, usubx, operation(subset,(variable(u),(variable(x),())))).
+assign(test_subset, vsubx, operation(subset,(variable(v),(variable(x),())))).
 
 %assign(assign_y, y, operation(add,
 %                                  (variable(f),
