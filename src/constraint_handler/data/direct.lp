@@ -37,24 +37,5 @@ eValue(E,TO,VO) :- expression(E), E=operation(OP,ARGS),
     _direct_revMapAux(ARGS,(),VS),
     computed(OP,VS,TO,VO).
 
-eValue(E,int,V1+V2) :- expression(E), E=operation(add, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2).
-eValue(E,int,V1-V2) :- expression(E), E=operation(minus,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2).
-eValue(E,int,V1*V2) :- expression(E), E=operation(mult, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2).
-eValue(E,int,|V1|)  :- expression(E), E=operation(abs,  (E1,())), eValue(E1,int,V1).
-eValue(E,int,-V1)   :- expression(E), E=operation(minus,(E1,())), eValue(E1,int,V1).
-
-eValue(E,bool,true)  :- expression(E), E=operation(eq, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 =  V2.
-eValue(E,bool,true)  :- expression(E), E=operation(neq,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 != V2.
-eValue(E,bool,true)  :- expression(E), E=operation(leq,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 <= V2.
-eValue(E,bool,true)  :- expression(E), E=operation(lt, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 <  V2.
-eValue(E,bool,true)  :- expression(E), E=operation(geq,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 >= V2.
-eValue(E,bool,true)  :- expression(E), E=operation(gt, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 >  V2.
-eValue(E,bool,false) :- expression(E), E=operation(eq, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 != V2.
-eValue(E,bool,false) :- expression(E), E=operation(neq,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 =  V2.
-eValue(E,bool,false) :- expression(E), E=operation(leq,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 >  V2.
-eValue(E,bool,false) :- expression(E), E=operation(lt, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 >= V2.
-eValue(E,bool,false) :- expression(E), E=operation(geq,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 <  V2.
-eValue(E,bool,false) :- expression(E), E=operation(gt, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2), V1 <= V2.
-
 %#show value/3.
 %#show expression/1.
