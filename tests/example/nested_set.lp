@@ -16,7 +16,8 @@
 %%% si = ss1 cap ss2 = { { 2 } }
 %%% se = ss1 cup ss1 = { { 2 }, { 3 } }
 
-%%% e = s1 == s2 and s2 == u and u == i = true
+%%% e = s1 == s2 and s2 == u and u == i and s1 != s4 = true
+%%% n = s1 != s2 or  s2 != u or  u != i or  s1 == s4 = false
 %%% lsa = |sa| = 2
 %%% lsu = |su| = 3
 %%% lsi = |si| = 1
@@ -67,10 +68,16 @@ assign(assign_se, se, operation(union,
                                    (variable(ss1),
                                    (variable(ss1),())))).
 
-assign(assign_e, e, operation(conj, (E12,(E2U,(EUI,()))))) :-
+assign(assign_e, e, operation(conj, (E12,(E2U,(EUI,(N14,())))))) :-
     E12 = operation(eq,(variable(s1),(variable(s2),()))),
     E2U = operation(eq,(variable(s2),(variable(u),()))),
-    EUI = operation(eq,(variable(u),(variable(i),()))).
+    EUI = operation(eq,(variable(u),(variable(i),()))),
+    N14 = operation(neq,(variable(s1),(variable(s4),()))).
+assign(assign_n, n, operation(disj, (N12,(N2U,(NUI,(E14,())))))) :-
+    N12 = operation(neq,(variable(s1),(variable(s2),()))),
+    N2U = operation(neq,(variable(s2),(variable(u),()))),
+    NUI = operation(neq,(variable(u),(variable(i),()))),
+    E14 = operation(eq,(variable(s1),(variable(s4),()))).
 assign(a_lsa, lsa, operation(length,(variable(sa),()))).
 assign(a_lsu, lsu, operation(length,(variable(su),()))).
 assign(a_lsi, lsi, operation(length,(variable(si),()))).

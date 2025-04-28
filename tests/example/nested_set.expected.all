@@ -1,4 +1,5 @@
 value(e,bool,true)
+value(n,bool,false)
 value(lsa,int,2)
 value(lsu,int,3)
 value(lsi,int,1)
