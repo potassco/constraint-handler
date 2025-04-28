@@ -28,6 +28,15 @@ eValue(E,symbol,C) :- expression(E), E=constant(symbol(C)).
 
 eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
 
+_direct_revMapAux(ARGS,ES,()) :- expression(E), E=operation(OP,ARGS),
+    ES=@pythonReversed(ARGS). %,
+_direct_revMapAux(ARGS,ES,(T,(V,(VS)))) :- _direct_revMapAux(ARGS,(E,ES),VS), eValue(E,T,V).
+compute(OP,VS) :- expression(E), E=operation(OP,ARGS),
+    _direct_revMapAux(ARGS,(),VS).
+eValue(E,TO,VO) :- expression(E), E=operation(OP,ARGS),
+    _direct_revMapAux(ARGS,(),VS),
+    computed(OP,VS,TO,VO).
+
 eValue(E,int,V1+V2) :- expression(E), E=operation(add, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2).
 eValue(E,int,V1-V2) :- expression(E), E=operation(minus,(E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2).
 eValue(E,int,V1*V2) :- expression(E), E=operation(mult, (E1,(E2,()))), eValue(E1,int,V1), eValue(E2,int,V2).

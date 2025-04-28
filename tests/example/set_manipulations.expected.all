@@ -22,8 +22,8 @@ valueInSet(w,int,1)
 valueInSet(w,int,5)
 
 valueInSet(x,int,3)
-valueInSet(x,intensionalSet,operation(union,(variable(s),(variable(t),()))))
-valueInSet(x,intensionalSet,operation(inter,(variable(s),(variable(t),()))))
+valueInSet(x,intensionalSet,union((intensionalSet,(makeSet((bool,(true,(float,(float("89.1"),()))))),(intensionalSet,(makeSet((int,(1,(int,(2,(int,(3,(bool,(true,()))))))))),()))))))
+valueInSet(x,intensionalSet,inter((intensionalSet,(makeSet((bool,(true,(float,(float("89.1"),()))))),(intensionalSet,(makeSet((int,(1,(int,(2,(int,(3,(bool,(true,()))))))))),()))))))
 
 value(cx,int,3)
 
