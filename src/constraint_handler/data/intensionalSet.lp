@@ -105,7 +105,7 @@ testedEqual(intensionalSet,V1,V2) :- testEqual(intensionalSet,V1,V2), not tested
 
 _set_testSubset(S1,S2) :- compute(subset,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))).
 _set_testedNonSubset(S1,S2) :- _set_testSubset(S1,S2), contains(S1,T,V), representation(T,extensional), not contains(S2,T,V).
-testEqual(T,V1,V2) :- testSubset(S1,S2), contains(S1,T,V1), contains(S2,T,V2), representation(T,intensional).
+testEqual(T,V1,V2) :- _set_testSubset(S1,S2), contains(S1,T,V1), contains(S2,T,V2), representation(T,intensional).
 _set_testedNonSubset(S1,S2) :- _set_testSubset(S1,S2), contains(S1,T,V1), representation(T,intensional),
     #false : contains(S2,T,V2), testedEqual(T,V1,V2).
 
