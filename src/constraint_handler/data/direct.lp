@@ -7,14 +7,14 @@
 
 compileEnsure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 compileAssign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,compile).
-compileAssignToSet(CNAME,X,E) :- assignToSet(CNAME,X,E), engine(CNAME,compile).
+_set_compileAssign(CNAME,X,E) :- set_assign(CNAME,X,E), engine(CNAME,compile).
 
 
 expression(E)      :- compileEnsure(NAME,E).
 expression(E)      :- compileAssign(NAME,X,E).
 expression(EX)     :- compileAssign(NAME,X,E), EX=variable(X).
-expression(E)      :- compileAssignToSet(NAME,X,E).
-expression(EX)     :- compileAssignToSet(NAME,X,E), EX=variable(X).
+expression(E)      :- _set_compileAssign(NAME,X,E).
+expression(EX)     :- _set_compileAssign(NAME,X,E), EX=variable(X).
 expression(HD)     :- expressionList(EL), EL=(HD,TL).
 expression(OE) :- expression(E), E=operation(python(OE),EL).
 expressionList(EL) :- expression(E), E=operation(OP,EL).

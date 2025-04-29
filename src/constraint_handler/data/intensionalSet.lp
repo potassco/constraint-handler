@@ -1,22 +1,29 @@
+#defined set_delcare/2.
+#defined set_assign/3.
+
 %%%%%%%%%%%%%%%%% length
 
 computed(length,ARGS,int,N) :- compute(length,ARGS),
     ARGS = (intensionalSet,(SET,())),
     N = #count { V,T : contains(SET,T,V) }.
 
-%%%%%%%%%%%%%%%%% assignToSet valueInSet
+%%%%%%%%%%%%%%%%% assignToSet set_value
 
-eValue(E,intensionalSet,E) :- E=variable(X), compileAssignToSet(NAME,X,E1).
-contains(E,T,V)    :- E=variable(X), representation(T,extensional), compileAssignToSet(NAME,X,E1), eValue(E1,T,V).
+%representation(multimap,intensional).
+%_set_add(E,EK) :- set_assign(CNAME,X,EK), engine(CNAME,compile), E = variable(X).
+
+eValue(EX,intensionalSet,EX) :- EX=variable(X), set_declare(NAME,X).
+%eValue(EX,intensionalSet,EX) :- EX=variable(X), _set_compileAssign(NAME,X,E1).
+contains(E,T,V)    :- E=variable(X), representation(T,extensional), _set_compileAssign(NAME,X,E1), eValue(E1,T,V).
 
 testEqual(T,V1,V2) :- E=variable(X), representation(T,intensional),
-    compileAssignToSet(N1,X,E1), eValue(E1,T,V1),
-    compileAssignToSet(N2,X,E2), eValue(E2,T,V2), V1 < V2.
+    _set_compileAssign(N1,X,E1), eValue(E1,T,V1),
+    _set_compileAssign(N2,X,E2), eValue(E2,T,V2), V1 < V2.
 contains(E,T,V1) :- E=variable(X), representation(T,intensional),
-    compileAssignToSet(NAME,X,E1), eValue(E1,T,V1),
-    #false : compileAssignToSet(N2,X,E2), eValue(E2,T,V2), testedEqual(T,V2,V1), V2 < V1.
+    _set_compileAssign(NAME,X,E1), eValue(E1,T,V1),
+    #false : _set_compileAssign(N2,X,E2), eValue(E2,T,V2), testedEqual(T,V2,V1), V2 < V1.
 
-valueInSet(X,T,V) :- eValue(EV,intensionalSet,E), contains(E,T,V), EV=variable(X).
+set_value(X,T,V) :- eValue(EV,intensionalSet,E), contains(E,T,V), EV=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
 
@@ -28,7 +35,6 @@ computed(notin,ARGS,bool,false) :- compute(notin,ARGS), ARGS = (T,(V,(intensiona
     representation(T,extensional),     contains(S,T,V).
 computed(notin,ARGS,bool,true)  :- compute(notin,ARGS), ARGS = (T,(V,(intensionalSet,(S,())))),
     representation(T,extensional), not contains(S,T,V).
-
 
 testEqual(T,V1,V2)  :- compute((isin;notin),ARGS), ARGS = (T,(V1,(intensionalSet,(S,())))),
     representation(T,intensional),     contains(S,T,V2).

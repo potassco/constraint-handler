@@ -67,12 +67,14 @@ multimap_assign(apd, properDivisors, constant(int(4)), operation(makeSet,(consta
 multimap_assign(apd, properDivisors, constant(int(5)), variable(div5)).
 assign(apd, div5,operation(makeSet,(constant(int(1)), ()))).
 multimap_assign(apd, properDivisors, constant(int(6)), variable(div6)).
-assignToSet(apd, div6,constant(int(1))).
-assignToSet(apd, div6,constant(int(2))).
-assignToSet(apd, div6,constant(int(3))).
+set_declare(dpd, div6).
+set_assign(apd, div6,constant(int(1))).
+set_assign(apd, div6,constant(int(2))).
+set_assign(apd, div6,constant(int(3))).
 multimap_assign(apd, properDivisors, constant(int(4)), variable(div4)).
-assignToSet(apd, div4,constant(int(1))).
-assignToSet(apd, div4,constant(int(2))).
+set_declare(dpd, div4).
+set_assign(apd, div4,constant(int(1))).
+set_assign(apd, div4,constant(int(2))).
 
 multimap_declare(ds,sums).
 multimap_assign(as, sums, variable(div4), constant(int(3))).
@@ -127,8 +129,9 @@ multimap_assign(ab,b,
              (constant(int(1)),
              ())))).
 
-assignToSet(abs, b48, constant(int(4))).
-assignToSet(abs, b48, constant(int(8))).
+set_declare(dbs, b48).
+set_assign(abs, b48, constant(int(4))).
+set_assign(abs, b48, constant(int(8))).
 
 multimap_assign(ab,b,
     variable(b24),
