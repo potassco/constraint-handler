@@ -31,13 +31,13 @@ assign(a_t, t, operation(disj, (YXBF, (XY, (YFB, (YYBB,())))))) :-
 %assign(a_t, t, operation(or, (XY, (REST, ())))) :-
     X = variable(x),
     Y = variable(y),
-    YX = operation(add,(Y,(X,()))),
+    YX = operation(concat,(Y,(X,()))),
     BF = constant(str("barfoo")),
     YXBF = operation(eq,(YX,(BF,()))),
     XY = operation(eq,(X,(Y,()))),
     FB = constant(str("foobar")),
     YFB = operation(eq,(Y,(FB,()))),
-    YY = operation(add,(Y,(Y,()))),
+    YY = operation(concat,(Y,(Y,()))),
     BB = constant(str("blabla")),
     YYBB = operation(eq,(YY,(BB,()))),
     REST = operation(or, (YFB, (YYBB,()))).
