@@ -66,10 +66,11 @@ assign(assign_x, x, operation(makeSet,
 
 assign(assign_cx, cx, operation(length,(variable(x),()))).
 
-assignToSet(assign_d, d, operation(add,(constant(int(1)),(constant(int(3)),())))).
-assignToSet(assign_d, d, variable(s)).
-assignToSet(assign_d, d, operation(add,(constant(int(2)),(constant(int(2)),())))).
-assignToSet(assign_d, d, operation(makeSet,(constant(bool(true)),(constant(float("89.1")),())))).
+set_declare(declare_d, d).
+set_assign(assign_d, d, operation(add,(constant(int(1)),(constant(int(3)),())))).
+set_assign(assign_d, d, variable(s)).
+set_assign(assign_d, d, operation(add,(constant(int(2)),(constant(int(2)),())))).
+set_assign(assign_d, d, operation(makeSet,(constant(bool(true)),(constant(float("89.1")),())))).
 
 assign(assign_cd, cd, operation(length,(variable(d),()))).
 
@@ -80,12 +81,13 @@ assign(a_numbers, numbers, operation(makeSet,
                                     (constant(int( 1)),
                                     (constant(int( 2)),()))))))).
 
-assignToSet(a_squares_int, squares, SQ) :-
-    valueInSet(numbers,int,X),
+set_declare(d_squares,squares).
+set_assign(a_squares_int, squares, SQ) :-
+    set_value(numbers,int,X),
     SQ = operation(mult,(EX,(EX,()))),
     EX = constant(int(X)).
-assignToSet(a_squares_float, squares, SQ) :-
-    valueInSet(numbers,float,X),
+set_assign(a_squares_float, squares, SQ) :-
+    set_value(numbers,float,X),
     SQ = operation(mult,(EX,(EX,()))),
     EX = constant(X).
 
