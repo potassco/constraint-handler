@@ -1,10 +1,10 @@
-eValue(E,bool,true)  :- expression(E), E=operation(eq, (E1,(E2,()))), eValue(E1,str,V1), eValue(E2,str,V2), V1 =  V2.
-eValue(E,bool,true)  :- expression(E), E=operation(neq,(E1,(E2,()))), eValue(E1,str,V1), eValue(E2,str,V2), V1 != V2.
-eValue(E,bool,false) :- expression(E), E=operation(eq, (E1,(E2,()))), eValue(E1,str,V1), eValue(E2,str,V2), V1 != V2.
-eValue(E,bool,false) :- expression(E), E=operation(neq,(E1,(E2,()))), eValue(E1,str,V1), eValue(E2,str,V2), V1 =  V2.
+computed(O,ARGS,bool,true)  :- compute(O,ARGS), O=eq,  ARGS = (str,(S1,(str,(S2,())))), S1 =  S2.
+computed(O,ARGS,bool,true)  :- compute(O,ARGS), O=neq, ARGS = (str,(S1,(str,(S2,())))), S1 != S2.
+computed(O,ARGS,bool,false) :- compute(O,ARGS), O=eq,  ARGS = (str,(S1,(str,(S2,())))), S1 != S2.
+computed(O,ARGS,bool,false) :- compute(O,ARGS), O=neq, ARGS = (str,(S1,(str,(S2,())))), S1 =  S2.
 
-eValue(E,int,N)  :- expression(E), E=operation(length,(E1,())), eValue(E1,str,S), N=@pythonStringLength(S).
-eValue(E,str,RES):- expression(E), E=operation(add,(E1,(E2,()))), eValue(E1,str,S1), eValue(E2,str,S2), RES=@pythonStringAdd(S1,S2).
+computed(O,ARGS,int,N) :- compute(O,ARGS), O=length, ARGS = (str,(S,())), N=@pythonStringLength(S).
+computed(O,ARGS,str,R) :- compute(O,ARGS), O=concat, ARGS = (str,(S1,(str,(S2,())))), R=@pythonStringAdd(S1,S2).
 
 #script(python)
 
