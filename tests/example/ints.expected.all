@@ -22,4 +22,3 @@ value(geqatt,bool,true)
 value(gtatt,bool,false)
 value(x,int,20)
 value(y,int,30)
-
