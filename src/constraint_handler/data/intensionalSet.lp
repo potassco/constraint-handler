@@ -5,7 +5,7 @@
 
 computed(length,ARGS,int,N) :- compute(length,ARGS),
     ARGS = (intensionalSet,(SET,())),
-    N = #count { V,T : contains(SET,T,V) }.
+    N = #count { V,T : _set_contains(SET,T,V) }.
 
 %%%%%%%%%%%%%%%%% assignToSet set_value
 
@@ -14,39 +14,39 @@ computed(length,ARGS,int,N) :- compute(length,ARGS),
 
 eValue(EX,intensionalSet,EX) :- EX=variable(X), set_declare(NAME,X).
 %eValue(EX,intensionalSet,EX) :- EX=variable(X), _set_compileAssign(NAME,X,E1).
-contains(E,T,V)    :- E=variable(X), representation(T,extensional), _set_compileAssign(NAME,X,E1), eValue(E1,T,V).
+_set_contains(E,T,V)    :- E=variable(X), representation(T,extensional), _set_compileAssign(NAME,X,E1), eValue(E1,T,V).
 
 compute(eq,(T,(V1,(T,(V2,()))))) :- E=variable(X), representation(T,intensional),
     _set_compileAssign(N1,X,E1), eValue(E1,T,V1),
     _set_compileAssign(N2,X,E2), eValue(E2,T,V2), V1 < V2.
-contains(E,T,V1) :- E=variable(X), representation(T,intensional),
+_set_contains(E,T,V1) :- E=variable(X), representation(T,intensional),
     _set_compileAssign(NAME,X,E1), eValue(E1,T,V1),
     #false : _set_compileAssign(N2,X,E2), eValue(E2,T,V2), computed(eq,(T,(V2,(T,(V1,())))),bool,true), V2 < V1.
 
-set_value(X,T,V) :- eValue(EV,intensionalSet,E), contains(E,T,V), EV=variable(X).
+set_value(X,T,V) :- eValue(EV,intensionalSet,E), _set_contains(E,T,V), EV=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
 
 computed(isin,ARGS,bool,true)  :- compute(isin,ARGS), ARGS = (T,(V,(intensionalSet,(S,())))),
-    representation(T,extensional),     contains(S,T,V).
+    representation(T,extensional),     _set_contains(S,T,V).
 computed(isin,ARGS,bool,false) :- compute(isin,ARGS), ARGS = (T,(V,(intensionalSet,(S,())))),
-    representation(T,extensional), not contains(S,T,V).
+    representation(T,extensional), not _set_contains(S,T,V).
 computed(notin,ARGS,bool,false) :- compute(notin,ARGS), ARGS = (T,(V,(intensionalSet,(S,())))),
-    representation(T,extensional),     contains(S,T,V).
+    representation(T,extensional),     _set_contains(S,T,V).
 computed(notin,ARGS,bool,true)  :- compute(notin,ARGS), ARGS = (T,(V,(intensionalSet,(S,())))),
-    representation(T,extensional), not contains(S,T,V).
+    representation(T,extensional), not _set_contains(S,T,V).
 
 compute(eq,(T,(V1,(T,(V2,())))))  :- compute((isin;notin),ARGS), ARGS = (T,(V1,(intensionalSet,(S,())))),
-    representation(T,intensional), contains(S,T,V2).
+    representation(T,intensional), _set_contains(S,T,V2).
 
 computed(isin,ARGS,bool,true)   :- compute(isin,ARGS), ARGS = (T,(V1,(intensionalSet,(S,())))),
-    representation(T,intensional),     contains(S,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
+    representation(T,intensional),     _set_contains(S,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
 computed(isin,ARGS,bool,false)  :- compute(isin,ARGS), ARGS = (T,(V1,(intensionalSet,(S,())))),
-    representation(T,intensional),     #false : contains(S,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
+    representation(T,intensional),     #false : _set_contains(S,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
 computed(notin,ARGS,bool,false) :- compute(isin,ARGS), ARGS = (T,(V1,(intensionalSet,(S,())))),
-    representation(T,intensional),     contains(S,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
+    representation(T,intensional),     _set_contains(S,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
 computed(notin,ARGS,bool,true)  :- compute(isin,ARGS), ARGS = (T,(V1,(intensionalSet,(S,())))),
-    representation(T,intensional),     #false : contains(S,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
+    representation(T,intensional),     #false : _set_contains(S,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
 
 %%%%%%%%%%%%%%%%% makeSet
 
@@ -54,36 +54,36 @@ computed(makeSet,ARGS,intensionalSet,makeSet(ARGS)) :- compute(makeSet,ARGS).
 compute(eq,(T,(V1,(T,(V2,()))))) :- compute(makeSet,ARGS),
     (T,V1)=@pythonListElements(ARGS,2), (T,V2)=@pythonListElements(ARGS,2),
     representation(T,intensional), V1 < V2.
-contains(makeSet(ARGS),T,V) :- compute(makeSet,ARGS),
+_set_contains(makeSet(ARGS),T,V) :- compute(makeSet,ARGS),
     (T,V)=@pythonListElements(ARGS,2), representation(T,extensional).
-contains(makeSet(ARGS),T,V1) :- compute(makeSet,ARGS), representation(T,intensional),
+_set_contains(makeSet(ARGS),T,V1) :- compute(makeSet,ARGS), representation(T,intensional),
     (T,V1)=@pythonListElements(ARGS,2),
     #false : (T,V2)=@pythonListElements(ARGS,2), computed(eq,(T,(V2,(T,(V1,())))),bool,true), V2 < V1.
 
 %%%%%%%%%%%%%%%%% union inter
 
 compute(eq,(T,(VSMALL,(T,(VBIG,()))))) :- compute((union;inter),ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
-    contains(S1,T,V1), contains(S2,T,V2), representation(T,intensional), (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL < VBIG.
+    _set_contains(S1,T,V1), _set_contains(S2,T,V2), representation(T,intensional), (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL < VBIG.
 
 computed(union,ARGS,intensionalSet,union(ARGS))   :- compute(union,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))).
-contains(union(ARGS),T,V) :- compute(union,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
-    representation(T,extensional), contains((S1;S2),T,V).
+_set_contains(union(ARGS),T,V) :- compute(union,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
+    representation(T,extensional), _set_contains((S1;S2),T,V).
 
-contains(union(ARGS),T,VR) :- compute(union,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
+_set_contains(union(ARGS),T,VR) :- compute(union,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
     representation(T,intensional),
-    (SR,SO)=((S1,S2);(S2,S1)), contains(SR,T,VR),
-    #false : contains(SO,T,VO), computed(eq,(T,(VO,(T,(VR,())))),bool,true), VO < VR.
+    (SR,SO)=((S1,S2);(S2,S1)), _set_contains(SR,T,VR),
+    #false : _set_contains(SO,T,VO), computed(eq,(T,(VO,(T,(VR,())))),bool,true), VO < VR.
 
 computed(inter,ARGS,intensionalSet,inter(ARGS))   :- compute(inter,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))).
-contains(inter(ARGS),T,V) :- compute(inter,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
-    representation(T,extensional), contains(S1,T,V), contains(S2,T,V).
+_set_contains(inter(ARGS),T,V) :- compute(inter,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
+    representation(T,extensional), _set_contains(S1,T,V), _set_contains(S2,T,V).
 
-contains(inter(ARGS),T,V) :- compute(inter,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
+_set_contains(inter(ARGS),T,V) :- compute(inter,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
     representation(T,intensional),
-    contains(S1,T,V), contains(S2,T,V).
-contains(inter(ARGS),T,V) :- compute(inter,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
+    _set_contains(S1,T,V), _set_contains(S2,T,V).
+_set_contains(inter(ARGS),T,V) :- compute(inter,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
     representation(T,intensional),
-    contains(S1,T,V1), contains(S2,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true),
+    _set_contains(S1,T,V1), _set_contains(S2,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true),
     V=(V1;V2), V=V1 : V1 < V2; V=V2 : V2 < V1.
 
 %%%%%%%%%%%%%%%%% Equality
@@ -96,31 +96,31 @@ computed(eq,ARGS,bool,false) :- compute(eq,ARGS),  ARGS = (intensionalSet,(S1,(T
 computed(eq,ARGS,bool,false) :- compute(eq,ARGS),  ARGS = (T1,(S1,(intensionalSet,(S2,())))), T1 != intensionalSet.
 
 computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS=(intensionalSet,(S1,(intensionalSet,(S2,())))),
-    contains(S1,T,V), not contains(S2,T,V), representation(T,extensional).
+    _set_contains(S1,T,V), not _set_contains(S2,T,V), representation(T,extensional).
 computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS=(intensionalSet,(S1,(intensionalSet,(S2,())))),
-    contains(S2,T,V), not contains(S1,T,V), representation(T,extensional).
+    _set_contains(S2,T,V), not _set_contains(S1,T,V), representation(T,extensional).
 computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS=(intensionalSet,(S1,(intensionalSet,(S2,())))),
-    contains(S1,T,V1), representation(T,intensional),
-    #false : contains(S2,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
+    _set_contains(S1,T,V1), representation(T,intensional),
+    #false : _set_contains(S2,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
 computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS=(intensionalSet,(S1,(intensionalSet,(S2,())))),
-    contains(S2,T,V2), representation(T,intensional),
-    #false : contains(S1,T,V1), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
+    _set_contains(S2,T,V2), representation(T,intensional),
+    #false : _set_contains(S1,T,V1), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
 
 compute(eq,(T,(V1,(T,(V2,()))))) :- compute(eq,ARGS), ARGS=(intensionalSet,(S1,(intensionalSet,(S2,())))),
-    contains(S1,T,V1), contains(S2,T,V2), representation(T,intensional).
+    _set_contains(S1,T,V1), _set_contains(S2,T,V2), representation(T,intensional).
 
 %%%%%%%%%%%%%%%%% Subset
 
-_set_testSubset(S1,S2) :- compute(subset,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))).
-_set_testedNonSubset(S1,S2) :- _set_testSubset(S1,S2), contains(S1,T,V), representation(T,extensional), not contains(S2,T,V).
-compute(eq,(T,(V1,(T,(V2,()))))) :- _set_testSubset(S1,S2), contains(S1,T,V1), contains(S2,T,V2), representation(T,intensional).
-_set_testedNonSubset(S1,S2) :- _set_testSubset(S1,S2), contains(S1,T,V1), representation(T,intensional),
-    #false : contains(S2,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
+compute(eq,(T,(V1,(T,(V2,()))))) :- compute(subset,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
+    _set_contains(S1,T,V1), _set_contains(S2,T,V2), representation(T,intensional).
+computed(subset,ARGS,bool,false) :- compute(subset,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
+    _set_contains(S1,T,V), representation(T,extensional), not _set_contains(S2,T,V).
+computed(subset,ARGS,bool,false) :- compute(subset,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
+    _set_contains(S1,T,V1), representation(T,intensional),
+    #false : _set_contains(S2,T,V2), computed(eq,(T,(V1,(T,(V2,())))),bool,true).
 
 computed(subset,ARGS,bool,true)  :- compute(subset,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
-    not _set_testedNonSubset(S1,S2).
-computed(subset,ARGS,bool,false) :- compute(subset,ARGS), ARGS = (intensionalSet,(S1,(intensionalSet,(S2,())))),
-    _set_testedNonSubset(S1,S2).
+    not computed(subset,ARGS,bool,false).
 computed(subset,ARGS,bool,false) :- compute(subset,ARGS), ARGS = (T1,(S1,(T2,(S2,())))),
     (T1;T2) != intensionalSet, (T1;T2) = intensionalSet.
 
