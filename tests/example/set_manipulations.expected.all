@@ -37,6 +37,11 @@ set_value(squares,int,4)
 set_value(squares,float,float("4.0"))
 value(csquares,int,4)
 
+value(eqx3,bool,true)
+value(nqx3,bool,false)
+value(eqx4,bool,false)
+value(nqx4,bool,true)
+
 value(tsubu,bool,true)
 value(tsubv,bool,false)
 value(tsubw,bool,false)
