@@ -21,15 +21,15 @@ _multimap_add(E,EK,EV) :- expression(E), E=operation(multimapMake,L),
 _multimap_has(key,EM,TK,VK) :- _multimap_add(E,EK,EV),
     eValue(E,multimap,EM), eValue(EK,TK,VK).
 
-testEqual(T,V1,V2) :- _multimap_has(D,E,T,V1), _multimap_has(D,E,T,V2),
+compute(eq,(T,(V1,(T,(V2,()))))) :- _multimap_has(D,E,T,V1), _multimap_has(D,E,T,V2),
     representation(T,intensional), V1 < V2.
 _multimap_has(val(RK),EM,TV,VV) :- _multimap_add(E,EK,EV), eValue(E,multimap,EM),
     eValue(EK,TK,VK), eValue(EV,TV,VV),
     representative(key,EM,TK,VK,RK).
 representative(D,E,T,V,R) :- _multimap_has(D,E,T,V),
     representation(T,intensional),
-    _multimap_has(D,E,T,R), R <= V, #false : not testedEqual(T,R,V), R != V;
-    #count { W : _multimap_has(D,E,T,W), W < V, testedEqual(T,W,R) } = 0.
+    _multimap_has(D,E,T,R), R <= V, #false : computed(eq,(T,(R,(T,(V,())))),bool,false), R != V;
+    #count { W : _multimap_has(D,E,T,W), W < V, computed(eq,(T,(W,(T,(R,())))),bool,true) } = 0.
 
 representative(D,E,T,V,V) :- _multimap_has(D,E,T,V),
     representation(T,extensional).
@@ -64,60 +64,54 @@ computed(O,ARGS,T,M) :- compute(O,ARGS), O=minEntries, ARGS=(multimap,(EM,())),
 %%%%%%%%%%%%%%%%%% union inter
 
 %%%%%%%%%%%%%%%%%% Equality
+compute(eq,ARGS) :- compute(neq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))).
+computed(neq,ARGS,bool,NEQ) :- computed(eq,ARGS,bool,EQ), ARGS = (T1,(M1,(T2,(M2,())))), (T1;T2)=multimap, (EQ,NEQ)=((true,false);(false,true)).
+computed(eq,ARGS,bool,true)  :- compute(eq,ARGS),  ARGS = (multimap,(S1,(multimap,(S2,())))), not computed(eq,ARGS,bool,false).
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS),  ARGS = (T1,(S1,(T2,(S2,())))), (T1;T2)=multimap, T1 != T2.
 
-testEqual(multimap,S1,S2) :- compute((eq;neq),ARGS), ARGS = (multimap,(S1,(multimap,(S2,())))).
-computed(eq,ARGS,bool,true)   :- compute(eq,ARGS),  ARGS = (multimap,(S1,(multimap,(S2,())))), testedEqual(multimap,S1,S2).
-computed(eq,ARGS,bool,false)  :- compute(eq,ARGS),  ARGS = (multimap,(S1,(multimap,(S2,())))), testedDifferent(multimap,S1,S2).
-computed(neq,ARGS,bool,true)  :- compute(eq,ARGS),  ARGS = (multimap,(S1,(multimap,(S2,())))), testedDifferent(multimap,S1,S2).
-computed(neq,ARGS,bool,false) :- compute(eq,ARGS),  ARGS = (multimap,(S1,(multimap,(S2,())))), testedEqual(multimap,S1,S2).
-
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS),  ARGS = (multimap,(S1,(T2,(S2,())))), T2 != multimap.
-computed(neq,ARGS,bool,true) :- compute(neq,ARGS), ARGS = (multimap,(S1,(T2,(S2,())))), T2 != multimap.
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS),  ARGS = (T1,(S1,(multimap,(S2,())))), T1 != multimap.
-computed(neq,ARGS,bool,true) :- compute(neq,ARGS), ARGS = (T1,(S1,(multimap,(S2,())))), T1 != multimap.
-
-%testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+%computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
 %    multimap_entry(M1,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional),
 %    not multimap_entry(M2,TK,RK,TV,RV).
-%testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+%computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
 %    multimap_entry(M2,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional),
 %    not multimap_entry(M1,TK,RK,TV,RV).
 
-testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,extensional), representation(TV,extensional),
     #false : multimap_entry(M2,TK,RK2,TV,RV2), RK1 = RK2, RV1 = RV2.
-testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,extensional), representation(TV,extensional),
     #false : multimap_entry(M1,TK,RK1,TV,RV1), RK1 = RK2, RV1 = RV2.
 
-testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,intensional), representation(TV,extensional),
-    #false : multimap_entry(M2,TK,RK2,TV,RV2), testedEqual(TK,RK1,RK2), RV1 = RV2.
-testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), computed(eq,(TK,(RK1,(TK,(RK2,())))),bool,true), RV1 = RV2.
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional), representation(TV,extensional),
-    #false : multimap_entry(M1,TK,RK1,TV,RV1), testedEqual(TK,RK1,RK2), RV1 = RV2.
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), computed(eq,(TK,(RK1,(TK,(RK2,())))),bool,true), RV1 = RV2.
 
-testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,extensional), representation(TV,intensional),
-    #false : multimap_entry(M2,TK,RK2,TV,RV2), RK1 = RK2, testedEqual(TV,RV1,RV2).
-testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), RK1 = RK2, computed(eq,(TV,(RV1,(TV,(RV2,())))),bool,true).
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,extensional), representation(TV,intensional),
-    #false : multimap_entry(M1,TK,RK1,TV,RV1), RK1 = RK2, testedEqual(TV,RV1,RV2).
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), RK1 = RK2, computed(eq,(TV,(RV1,(TV,(RV2,())))),bool,true).
 
-testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,intensional), representation(TV,intensional),
-    #false : multimap_entry(M2,TK,RK2,TV,RV2), testedEqual(TK,RK1,RK2), testedEqual(TV,RV1,RV2).
-testedDifferent(multimap,M1,M2) :- testEqual(multimap,M1,M2),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), computed(eq,(TK,(RK1,(TK,(RK2,())))),bool,true), computed(eq,(TV,(RV1,(TV,(RV2,())))),bool,true).
+computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional), representation(TV,intensional),
-    #false : multimap_entry(M1,TK,RK1,TV,RV1), testedEqual(TV,RK1,RK2), testedEqual(TV,RV1,RV2).
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), computed(eq,(TK,(RK1,(TK,(RK2,())))),bool,true), computed(eq,(TV,(RV1,(TV,(RV2,())))),bool,true).
 
-testEqual(TK,RK1,RK2) :- testEqual(multimap,M1,M2),
+compute(eq,SUBARGS) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M1,TK,RK1,TV,RV1),
-    multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional).
-testEqual(TV,RV1,RV2) :- testEqual(multimap,M1,M2),
+    multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional),
+    SUBARGS=(TK,(RK1,(TK,(RK2,())))).
+compute(eq,SUBARGS) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
     multimap_entry(M1,TK,RK1,TV,RV1),
-    multimap_entry(M2,TK,RK2,TV,RV2), representation(TV,intensional).
-testedEqual(multimap,V1,V2) :- testEqual(multimap,V1,V2), not testedDifferent(multimap,V1,V2).
+    multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional),
+    SUBARGS=(TV,(RV1,(TV,(RV2,())))).
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
