@@ -24,6 +24,10 @@
 %%% siepdi1 = sum int properDivisors = 0
 %%% siepdi2 = sum int properDivisors2 = 10
 %%% siesums = sum int sums = 10
+%%% maxcities = max cities = "potsdam"
+%%% mincities = min cities = "brest"
+%%% maxpdi2 = max properDivisors2 = 3
+%%% minpdi2 = min properDivisors2 = 1
 
 %%% a = { { 1, 2 } : { 2, 4};
 %%%       { 2, 4 } : { 4, 8 }, { 1, 2 }  }
@@ -104,6 +108,11 @@ assign(ankcaps, siecaps, operation(sumIntEntries,(variable(capitals),()))).
 assign(ankpdi1, siepdi1, operation(sumIntEntries,(variable(properDivisors),()))).
 assign(ankpdi2, siepdi2, operation(sumIntEntries,(variable(properDivisors2),()))).
 assign(anksums, siesums, operation(sumIntEntries,(variable(sums),()))).
+
+assign(maxmin, maxcities, operation(maxEntries,(variable(cities),()))).
+assign(maxmin, mincities, operation(minEntries,(variable(cities),()))).
+assign(maxmin, maxpdi2, operation(maxEntries,(variable(properDivisors2),()))).
+assign(maxmin, minpdi2, operation(minEntries,(variable(properDivisors2),()))).
 
 assign(aa, a, operation(multimapMake,
                        (operation(makeSet,(constant(int(1)),(constant(int(2)),()))), (operation(makeSet,(constant(int(2)),(constant(int(4)),()))),
