@@ -1,4 +1,4 @@
-#defined set_delcare/2.
+#defined set_declare/2.
 #defined set_assign/3.
 
 %%%%%%%%%%%%%%%%% length
@@ -145,9 +145,14 @@ def pythonListElements(clExpr,clBatchSize = clingo.Number(1)):
     return [myClorm.pytocl(e) for e in pGroups]
 
 
-def pythonEnumerateElements(clExpr):
-    pL = myClorm.cltopy(clExpr,list[evaluator.Expr])
-    return [myClorm.pytocl(e) for e in enumerate(pL)]
+def pythonEnumerateElements(clExpr,clBatchSize = clingo.Number(1)):
+    pBatchSize = myClorm.cltopy(clBatchSize,int)
+    pL = myClorm.cltopy(clExpr,list)
+    if pBatchSize == 1:
+        pGroups = pL
+    else:
+        pGroups = itertools_batched(pL,pBatchSize)
+    return [myClorm.pytocl(e) for e in enumerate(pGroups)]
 
 # https://docs.python.org/3/library/itertools.html#itertools.batched
 def prepython12_itertools_batched(iterable, n, *, strict=False):
