@@ -138,7 +138,7 @@ assign(tset_neq,nqx4,operation(neq,(variable(x),(X,())))) :-
     FOUR=constant(int(4)),
     TRUE=constant(bool(true)),
     EIGHTYNINE=constant(float("89.1")).
-    
+
 
 assign(test_subset, tsubu, operation(subset,(variable(t),(variable(u),())))).
 assign(test_subset, tsubv, operation(subset,(variable(t),(variable(v),())))).
