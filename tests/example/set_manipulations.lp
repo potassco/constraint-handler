@@ -18,6 +18,11 @@
 %%% squares = { x*x | x \in numbers, x float or x int } = { 0, 1, 4, 4.0 }
 %%% csquares = |squares| = 4
 
+%%% eqx3 = x == { 3, { true }, { 1, 2, 3, true, 89.1 } } = true
+%%% nqx3 = x != { 3, { true }, { 1, 2, 3, true, 89.1 } } = false
+%%% eqx4 = x == { 3, { true }, { 1, 2, 4, true, 89.1 } } = false
+%%% nqx4 = x != { 3, { true }, { 1, 2, 4, true, 89.1 } } = true
+
 %%% tsubu = t subset u = true
 %%% tsubv = t subset v = false
 %%% tsubw = t subset w = false
@@ -92,6 +97,48 @@ set_assign(a_squares_float, squares, SQ) :-
     EX = constant(X).
 
 assign(a_csq, csquares, operation(length,(variable(squares),()))).
+
+%%% eqx = x == { 3, { true }, { 1, 2, 3, true, 89.1 } } = true
+%%% nqx = x == { 3, { true }, { 1, 2, 4, true, 89.1 } } = false
+assign(tset_eq,eqx3,operation(eq,(variable(x),(X,())))) :-
+    X=operation(makeSet,(THREE,(STRUE,(SET,())))),
+    THREE=constant(int(3)),
+    STRUE=operation(makeSet,(TRUE,())),
+    SET=operation(makeSet,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
+    ONE=constant(int(1)),
+    TWO=constant(int(2)),
+    TRUE=constant(bool(true)),
+    EIGHTYNINE=constant(float("89.1")).
+assign(tset_eq,nqx3,operation(neq,(variable(x),(X,())))) :-
+    X=operation(makeSet,(THREE,(STRUE,(SET,())))),
+    THREE=constant(int(3)),
+    STRUE=operation(makeSet,(TRUE,())),
+    SET=operation(makeSet,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
+    ONE=constant(int(1)),
+    TWO=constant(int(2)),
+    TRUE=constant(bool(true)),
+    EIGHTYNINE=constant(float("89.1")).
+assign(tset_neq,eqx4,operation(eq,(variable(x),(X,())))) :-
+    X=operation(makeSet,(THREE,(STRUE,(SET,())))),
+    THREE=constant(int(3)),
+    STRUE=operation(makeSet,(TRUE,())),
+    SET=operation(makeSet,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
+    ONE=constant(int(1)),
+    TWO=constant(int(2)),
+    FOUR=constant(int(4)),
+    TRUE=constant(bool(true)),
+    EIGHTYNINE=constant(float("89.1")).
+assign(tset_neq,nqx4,operation(neq,(variable(x),(X,())))) :-
+    X=operation(makeSet,(THREE,(STRUE,(SET,())))),
+    THREE=constant(int(3)),
+    STRUE=operation(makeSet,(TRUE,())),
+    SET=operation(makeSet,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
+    ONE=constant(int(1)),
+    TWO=constant(int(2)),
+    FOUR=constant(int(4)),
+    TRUE=constant(bool(true)),
+    EIGHTYNINE=constant(float("89.1")).
+    
 
 assign(test_subset, tsubu, operation(subset,(variable(t),(variable(u),())))).
 assign(test_subset, tsubv, operation(subset,(variable(t),(variable(v),())))).
