@@ -37,5 +37,5 @@ eValue(E,TO,VO) :- expression(E), E=operation(OP,ARGS),
     _direct_revMapAux(ARGS,(),VS),
     computed(OP,VS,TO,VO).
 
-%#show value/3.
-%#show expression/1.
+expression(E) :- evaluate(NAME,E).
+evaluated(E,T,V) :- evaluate(NAME,E), eValue(E,T,V).
