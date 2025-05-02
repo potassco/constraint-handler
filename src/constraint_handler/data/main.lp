@@ -16,4 +16,3 @@ engine(CNAME,ENG) :- defaultEngine(ENG), not requestedEngine(CNAME), multimap_as
 value(X,T,V) :- eValue(variable(X),T,V).
 
 representation((bool;int;str;float),extensional).
-representation((intensionalSet),intensional).

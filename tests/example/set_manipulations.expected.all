@@ -22,8 +22,8 @@ set_value(w,int,1)
 set_value(w,int,5)
 
 set_value(x,int,3)
-set_value(x,intensionalSet,union((intensionalSet,(makeSet((bool,(true,(float,(float("89.1"),()))))),(intensionalSet,(makeSet((int,(1,(int,(2,(int,(3,(bool,(true,()))))))))),()))))))
-set_value(x,intensionalSet,inter((intensionalSet,(makeSet((bool,(true,(float,(float("89.1"),()))))),(intensionalSet,(makeSet((int,(1,(int,(2,(int,(3,(bool,(true,()))))))))),()))))))
+set_value(x,set,union((set,(makeSet((bool,(true,(float,(float("89.1"),()))))),(set,(makeSet((int,(1,(int,(2,(int,(3,(bool,(true,()))))))))),()))))))
+set_value(x,set,inter((set,(makeSet((bool,(true,(float,(float("89.1"),()))))),(set,(makeSet((int,(1,(int,(2,(int,(3,(bool,(true,()))))))))),()))))))
 
 value(cx,int,3)
 
