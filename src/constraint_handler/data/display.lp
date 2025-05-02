@@ -1,9 +1,9 @@
 #show.
 #show val(X,T,V) : eValue(variable(X),T,V), representation(T,extensional).
 
-#show val(X,T,IDX) : eValue(variable(X),T,S), T = intensionalSet, IDX = @pythonIndexTerm(S).
+#show val(X,T,IDX) : eValue(variable(X),T,S), T = set, IDX = @pythonIndexTerm(S).
 #show has(IDX,T,V) : contains(S,T,V), representation(T,extensional), IDX = @pythonIndexTerm(S).
-#show has(IDX,T,IDXV) : contains(S,T,V), T = intensionalSet, IDX = @pythonIndexTerm(S), IDXV = @pythonIndexTerm(V).
+#show has(IDX,T,IDXV) : contains(S,T,V), T = set, IDX = @pythonIndexTerm(S), IDXV = @pythonIndexTerm(V).
 
 #script(python)
 
