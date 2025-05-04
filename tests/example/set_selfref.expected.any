@@ -1,0 +1,6 @@
+evaluated(operation(eq,(variable(a),(variable(b),()))),bool,true)
+evaluated(operation(eq,(variable(a),(variable(b),()))),bool,false)
+evaluated(operation(eq,(variable(a),(variable(c),()))),bool,true)
+evaluated(operation(eq,(variable(a),(variable(c),()))),bool,false)
+evaluated(operation(eq,(variable(b),(variable(c),()))),bool,true)
+evaluated(operation(eq,(variable(b),(variable(c),()))),bool,false)
