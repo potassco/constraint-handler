@@ -4,6 +4,7 @@
 #defined assign/3.
 #defined assignToSet/3.
 #defined ensure/2.
+#defined evaluate/2.
 
 compileEnsure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 compileAssign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,compile).
@@ -25,6 +26,8 @@ eValue(E,bool,  C) :- expression(E), E=constant(bool(C)).
 eValue(E,float, float(C)) :- expression(E), E=constant(float(C)).
 eValue(E,str,C) :- expression(E), E=constant(str(C)).
 eValue(E,symbol,C) :- expression(E), E=constant(symbol(C)).
+
+eValue(E,T,V) :- expression(E), E=val(T,V).
 
 eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
 

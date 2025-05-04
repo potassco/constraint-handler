@@ -87,14 +87,10 @@ assign(a_numbers, numbers, operation(makeSet,
                                     (constant(int( 2)),()))))))).
 
 set_declare(d_squares,squares).
-set_assign(a_squares_int, squares, SQ) :-
-    set_value(numbers,int,X),
+set_assign(a_squares, squares, SQ) :-
+    set_value(numbers,T,X),
     SQ = operation(mult,(EX,(EX,()))),
-    EX = constant(int(X)).
-set_assign(a_squares_float, squares, SQ) :-
-    set_value(numbers,float,X),
-    SQ = operation(mult,(EX,(EX,()))),
-    EX = constant(X).
+    EX = val(T,X).
 
 assign(a_csq, csquares, operation(length,(variable(squares),()))).
 
