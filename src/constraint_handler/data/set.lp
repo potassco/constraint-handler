@@ -111,6 +111,19 @@ computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS=(set,(S1,(set,(S2,())))),
 compute(eq,(T,(V1,(T,(V2,()))))) :- compute(eq,ARGS), ARGS=(set,(S1,(set,(S2,())))),
     _set_contains(S1,T,V1), _set_contains(S2,T,V2), representation(T,intensional).
 
+%%%%%%%%%%%%%%%%% Equality axioms
+
+:- computed(eq,(set,(X,(set,(X,())))),bool,false). %%% reflexivity
+:-  computed(eq,(set,(X,(set,(Y,())))),bool,true),
+    computed(eq,(set,(Y,(set,(X,())))),bool,false). %%% symmetry
+:-  computed(eq,(set,(L1,(set,(R1,())))),bool,true),
+    computed(eq,(set,(L2,(set,(R2,())))),bool,true),
+    computed(eq,(set,(L3,(set,(R3,())))),bool,false),
+    X=(L1;R1), Y=(L1;R1),
+    Y=(L2;R2), Z=(L2;R2),
+    X=(L3;R3), Z=(L3;R3),
+    X != Y, Y !=Z, X != Z. %%% transitivity
+
 %%%%%%%%%%%%%%%%% Subset
 
 compute(eq,(T,(V1,(T,(V2,()))))) :- compute(subset,ARGS), ARGS = (set,(S1,(set,(S2,())))),
