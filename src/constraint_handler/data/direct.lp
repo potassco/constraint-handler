@@ -1,6 +1,3 @@
-% #include "conditionals.lp".
-% #include "floats.lp".
-
 #defined assign/3.
 #defined assignToSet/3.
 #defined ensure/2.
@@ -40,5 +37,8 @@ eValue(E,TO,VO) :- expression(E), E=operation(OP,ARGS),
     _direct_revMapAux(ARGS,(),VS),
     computed(OP,VS,TO,VO).
 
-expression(E) :- evaluate(NAME,E).
-evaluated(E,T,V) :- evaluate(NAME,E), eValue(E,T,V).
+expression(E) :- evaluate(OP,ARGS), E=operation(OP,ARGS).
+evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), E=operation(OP,ARGS), eValue(E,T,V).
+
+
+:- compileEnsure(NAME,E), not eValue(E,bool,true).

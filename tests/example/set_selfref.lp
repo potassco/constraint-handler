@@ -1,6 +1,6 @@
 #include "includeAll.lp".
 
-%%% a = {a}
+%%% a = {a} = { { a } } = { { { a } } } = ...
 %%% b = {b}
 %%% c = {c}
 %%% d = {a,b}
@@ -97,32 +97,32 @@ set_assign(set_selfref,os,EX) :-
     set_value(es,int,X-1).
 
 %%% any:
-evaluate(set_selfref,operation(eq,(variable(a),(variable(b),())))).
-evaluate(set_selfref,operation(eq,(variable(a),(variable(c),())))).
-evaluate(set_selfref,operation(eq,(variable(b),(variable(c),())))).
-evaluate(set_selfref,operation(eq,(variable(es),(variable(even),())))).
-evaluate(set_selfref,operation(eq,(variable(os),(variable(odd),())))).
+evaluate(eq,(variable(a),(variable(b),()))).
+evaluate(eq,(variable(a),(variable(c),()))).
+evaluate(eq,(variable(b),(variable(c),()))).
+evaluate(eq,(variable(es),(variable(even),()))).
+evaluate(eq,(variable(os),(variable(odd),()))).
 
 %%% all:
-evaluate(set_selfref,operation(eq,(variable(a),(variable(a),())))).
-evaluate(set_selfref,operation(eq,(variable(e),(variable(a),())))).
-evaluate(set_selfref,operation(leqv,
+evaluate(eq,(variable(a),(variable(a),()))).
+evaluate(eq,(variable(e),(variable(a),()))).
+evaluate(leqv,
     (operation(eq,(variable(a),(variable(b),()))),
-    (operation(eq,(variable(b),(variable(a),()))),())))).
-evaluate(set_selfref,operation(limp,
+    (operation(eq,(variable(b),(variable(a),()))),()))).
+evaluate(limp,
     (operation(conj,
         (operation(eq,(variable(a),(variable(b),()))),
         (operation(eq,(variable(a),(variable(c),()))),()))),
-    (operation(eq,(variable(b),(variable(c),()))),())))).
-evaluate(set_selfref,operation(leqv,
+    (operation(eq,(variable(b),(variable(c),()))),()))).
+evaluate(leqv,
     (operation(eq,(variable(d),(variable(a),()))),
-    (operation(eq,(variable(b),(variable(a),()))),())))).
-evaluate(set_selfref,operation(subset,(variable(a),(variable(d),())))).
-evaluate(set_selfref,operation(subset,(variable(f),(variable(g),())))).
-evaluate(set_selfref,operation(subset,(variable(f),(variable(h),())))).
-evaluate(set_selfref,operation(notin,(constant(int(6)),(variable(odd),())))).
-evaluate(set_selfref,operation(isin,(constant(int(7)),(variable(odd),())))).
+    (operation(eq,(variable(b),(variable(a),()))),()))).
+evaluate(subset,(variable(a),(variable(d),()))).
+evaluate(subset,(variable(f),(variable(g),()))).
+evaluate(subset,(variable(f),(variable(h),()))).
+evaluate(notin,(constant(int(6)),(variable(odd),()))).
+evaluate(isin,(constant(int(7)),(variable(odd),()))).
 %%% even==doubles cap nb
-evaluate(set_selfref,operation(eq,
+evaluate(eq,
     (variable(even),
-    (operation(inter,(variable(doubles),(variable(nb),()))),())))).
+    (operation(inter,(variable(doubles),(variable(nb),()))),()))).
