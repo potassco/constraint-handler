@@ -19,8 +19,8 @@
 %%% not (f->-y)&f)
 
 
-1 { assign(a_x,x,constant(bool(false))) ; assign(a_x,x,constant(bool(true))) } 1.
-1 { assign(a_y,y,constant(bool(false))) ; assign(a_y,y,constant(bool(true))) } 1.
+1 { assign(a_x,x,val(bool,false)) ; assign(a_x,x,val(bool,true)) } 1.
+1 { assign(a_y,y,val(bool,false)) ; assign(a_y,y,val(bool,true)) } 1.
 assign(a_f,f,
     operation(conj,
              (operation(disj,(PX,(PY,()))),

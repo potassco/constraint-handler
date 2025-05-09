@@ -18,9 +18,9 @@
 %%% addtwoten<=addtentwo     not addtwoten<addtentwo
 %%% addtwoten>=addtentwo     not addtwoten>addtentwo
 
-assign(assign_x, x, constant(int(20))).
-assign(a_int, two, constant(int(2))).
-assign(a_int, ten, constant(int(10))).
+assign(assign_x, x, val(int,20)).
+assign(a_int, two, val(int,2)).
+assign(a_int, ten, val(int,10)).
 assign(a_int, addtwoten, operation(add,(variable(two),(variable(ten),())))).
 assign(a_int, addtentwo, operation(add,(variable(ten),(variable(two),())))).
 assign(a_int, multtwoten, operation(mult,(variable(two),(variable(ten),())))).
@@ -33,7 +33,8 @@ assign(a_int, divtentwo, operation(div,(variable(ten),(variable(two),())))).
 assign(a_int, powtwoten, operation(pow,(variable(two),(variable(ten),())))).
 assign(a_int, powtentwo, operation(pow,(variable(ten),(variable(two),())))).
 
-evaluate(add,(variable(x),(constant(int(10)),()))).
+%evaluate(add,(variable(x),(constant(int(10)),()))).
+evaluate(add,(variable(x),(val(int,10),()))).
 evaluate(add,(variable(two),(variable(ten),()))).
 evaluate(add,(variable(ten),(variable(two),()))).
 evaluate(mult,(variable(two),(variable(ten),()))).
