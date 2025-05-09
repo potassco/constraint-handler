@@ -1,8 +1,8 @@
 eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
 
 intToFloatOperator(sqrt;cos;sin;acos;asin).
-floatUnOperator(abs;sqrt;cos;sin;acos;asin;minus).
-floatBinOperator(add;sub;mult;div;eq;neq;leq;lt;geq;gt).
+floatUnOperator(abs;sqrt;cos;sin;tan;acos;asin;atan;minus).
+floatBinOperator(add;sub;mult;div;pow;eq;neq;leq;lt;geq;gt).
 
 computed(OP,ARGS,float,RES) :- compute(OP,ARGS), intToFloatOperator(OP), ARGS = (int,(V,())),
     (float,RES)=@pythonEvalOperator(OP,(V,())).
