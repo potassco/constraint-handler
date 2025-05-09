@@ -1,24 +1,17 @@
 eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
 
 intToFloatOperator(sqrt;cos;sin;acos;asin).
-computed(OP,ARGS,float,RES) :- compute(OP,ARGS), ARGS = (int,(V,())),
-    intToFloatOperator(OP),
-    (float,RES)=@pythonEvalOperator(OP,(V,())).
-floatOperator(abs;sqrt;cos;sin;acos;asin;add;mult;div;eq;neq;leq;lt;geq;gt;minus).
-operataorValue(OE,OE) :- expression(E), E=operation(OE, EL), floatOperator(OE).
-operataorValue(OE,S)  :- expression(E), E=operation(OE, EL), OE=python(EXP), eValue(EXP,str,S).
-eValue(E,T,RES) :- stagePythonCall(E,P,L), (T,RES) = @pythonEvalOperator(P,L).
-stagePythonCall(E,OP,L) :- expression(E), E=operation(OE, (E1,())),
-    operataorValue(OE,OP),
-    eValue(E1,T1,V1),
-    L = (V1,()),
-    #false : T1!=float.
+floatUnOperator(abs;sqrt;cos;sin;acos;asin;minus).
+floatBinOperator(add;sub;mult;div;eq;neq;leq;lt;geq;gt).
 
-stagePythonCall(E,OP,L) :- expression(E), E=operation(OE, (E1,(E2,()))),
-    operataorValue(OE,OP),
-    eValue(E1,T1,V1), eValue(E2,T2,V2),
-    L = (V1,(V2,())),
-    #false : T1!=float, T2!=float.
+computed(OP,ARGS,float,RES) :- compute(OP,ARGS), intToFloatOperator(OP), ARGS = (int,(V,())),
+    (float,RES)=@pythonEvalOperator(OP,(V,())).
+computed(OP,ARGS,T,RES) :- compute(OP,ARGS), floatUnOperator(OP), ARGS=(float,(V,())),
+    L=(V,()), (T,RES) = @pythonEvalOperator(OP,L).
+computed(OP,ARGS,T,RES) :- compute(OP,ARGS), floatBinOperator(OP), ARGS=(T1,(V1,(T2,(V2,())))),
+    (T1;T2)=float, L=(V1,(V2,())), (T,RES) = @pythonEvalOperator(OP,L).
+computed(OP,ARGS,T,RES) :- compute(OP,ARGS), OP=python(E), eValue(E,str,S), 
+    L=@pythonMergeTypes(ARGS), (T,RES) = @pythonEvalOperator(S,L).
 
 #script(python)
 
@@ -45,20 +38,22 @@ pairList = list[tuple[evaluator.BaseType,evaluator.noPredConstant]]
 
 def pythonEvalOperator(clFn,clArgs):
     try:
+        #print(clFn,clArgs)
         pArgs = myClorm.cltopy(clArgs,list[evaluator.noPredConstant])
-        #print("pArgs2",pArgs)
-        #pFn = getFn(clFn)
         pFn = myClorm.cltopy(clFn,evaluator.noPredOperator)
-        #print(pFn,pArgs,type(pArgs[0]))
-        prettyArgs = "(" + ", ".join(str(v) for v in pArgs) + ")"
-        print(f"eval operation: {clFn}{prettyArgs}",end=" ")
         pRes = evaluator.evaluate_operator(dict(),pFn,pArgs)
-        print(pRes)
-        #pRes = pFn(*pArgs)
+        #prettyArgs = "(" + ", ".join(str(v) for v in pArgs) + ")"
+        #print(f"eval operation: {clFn}{prettyArgs}",end=" ")
+        #print(pRes)
         st = evaluator.toPair(pRes)
         return myClorm.pytocl(st)
     except Exception as exn:
         print(f"Python error when evaluating {pFn} on {pArgs}: {exn}.")
         return []
+
+def pythonMergeTypes(clArgs):
+    pArgs = myClorm.cltopy(clArgs,list)
+    skipped = [pArgs[2*i+1] for i in range(int(len(pArgs)/2))]
+    return myClorm.pytocl(skipped)
 
 #end.

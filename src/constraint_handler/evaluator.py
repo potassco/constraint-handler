@@ -124,6 +124,8 @@ def toPair(pRes):
         # r = str(pRes)
     elif isinstance(pRes, str):
         t = BaseType.string
+    elif isinstance(pRes, bool):
+        t = BaseType.bool
     elif isinstance(pRes, int):
         t = BaseType.int
     else:
