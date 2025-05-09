@@ -1,6 +1,8 @@
-computed(OP,ARGS,int,V1+V2) :- compute(OP,ARGS), OP=add,  ARGS = (int,(V1,(int,(V2,())))).
-computed(OP,ARGS,int,V1-V2) :- compute(OP,ARGS), OP=sub,  ARGS = (int,(V1,(int,(V2,())))).
-computed(OP,ARGS,int,V1*V2) :- compute(OP,ARGS), OP=mult, ARGS = (int,(V1,(int,(V2,())))).
+computed(OP,ARGS,int,V1+V2)  :- compute(OP,ARGS), OP=add,  ARGS = (int,(V1,(int,(V2,())))).
+computed(OP,ARGS,int,V1-V2)  :- compute(OP,ARGS), OP=sub,  ARGS = (int,(V1,(int,(V2,())))).
+computed(OP,ARGS,int,V1*V2)  :- compute(OP,ARGS), OP=mult, ARGS = (int,(V1,(int,(V2,())))).
+computed(OP,ARGS,int,V1/V2)  :- compute(OP,ARGS), OP=div,  ARGS = (int,(V1,(int,(V2,())))).
+computed(OP,ARGS,int,V1**V2) :- compute(OP,ARGS), OP=pow,  ARGS = (int,(V1,(int,(V2,())))).
 
 computed(OP,ARGS,int,|V|) :- compute(OP,ARGS), OP=abs,   ARGS = (int,(V,())).
 computed(OP,ARGS,int,-V)  :- compute(OP,ARGS), OP=minus, ARGS = (int,(V,())).
