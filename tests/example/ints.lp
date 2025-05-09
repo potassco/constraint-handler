@@ -1,106 +1,50 @@
 #include "includeAll.lp".
 
-%% two = 2
-%% ten = 10
+%%% x = 20     two = 2     ten = 10
+%%% addtwoten = two+ten = 12     addtentwo = ten+two = 12
+%%% multtwoten = two*ten = 20     multtentwo = ten*two = 20
+%%% subtwoten = two-ten = -8     subtentwo = ten-two = 8
 
-%% addtwoten = two+ten = 12
-%% addtentwo = ten+two = 12
-%% multtwoten = two*ten = 20
-%% multtentwo = ten*two = 20
-%% subtwoten = two-ten = -8
-%% subtentwo = ten-two = 8
-%% eqadds = addtwoten == addtentwo = true
-%% neqmults = multtwoten != multtentwo = false
-%% eqsubs = subtwoten == subtentwo = false
-%% eqmsubs = -subtwoten == subtentwo = true
-%% abssubtwoten = |subtwoten| = 8
-%% abssubtentwo = |subtentwo| = 8
-%% neqmtwoadds  =  -two != two = true
-%% neqmmtwoadds = --two != two = false
-%% leqtwoten = two <= ten = true
-%% lttwoten  = two <  ten = true
-%% geqtwoten = two >= ten = false
-%% gttwoten  = two >  ten = false
-%% leqatt = addtwoten <= addtentwo = true
-%% ltatt  = addtwoten <  addtentwo = false
-%% geqatt = addtwoten >= addtentwo = true
-%% gtatt  = addtwoten >  addtentwo = false
+%%% all:
+%%% x = 20     x+10 = 30     two+ten = 12     ten+two = 12
+%%% two*ten = 20     ten*two = 20     two-ten = -8     ten-two = 8
+%%% addtwoten==addtentwo     not multtwoten!=multtentwo
+%%% not subtwoten==subtentwo     -subtwoten==subtentwo
+%%% |subtwoten| = 8     |subtentwo| = 8
+%%%  -two!=two     --two!=two     two<=ten     two<ten     not two>=ten     not two>ten
+%%% addtwoten<=addtentwo     not addtwoten<addtentwo
+%%% addtwoten>=addtentwo     not addtwoten>addtentwo
 
 assign(assign_x, x, constant(int(20))).
-assign(assign_y, y, operation(add, (variable(x), (constant(int(10)), ())))).
-
 assign(a_int, two, constant(int(2))).
 assign(a_int, ten, constant(int(10))).
+assign(a_int, addtwoten, operation(add,(variable(two),(variable(ten),())))).
+assign(a_int, addtentwo, operation(add,(variable(ten),(variable(two),())))).
+assign(a_int, multtwoten, operation(mult,(variable(two),(variable(ten),())))).
+assign(a_int, multtentwo, operation(mult,(variable(ten),(variable(two),())))).
+assign(a_int, subtwoten, operation(sub,(variable(two),(variable(ten),())))).
+assign(a_int, subtentwo, operation(sub,(variable(ten),(variable(two),())))).
 
-assign(a_int, addtwoten, operation(add,(TWO,(TEN,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-assign(a_int, addtentwo, operation(add,(TEN,(TWO,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-
-assign(a_int, multtwoten, operation(mult,(TWO,(TEN,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-assign(a_int, multtentwo, operation(mult,(TEN,(TWO,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-
-assign(a_int, subtwoten, operation(sub,(TWO,(TEN,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-assign(a_int, subtentwo, operation(sub,(TEN,(TWO,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-
-assign(a_int, eqadds, operation(eq,(TWOTEN,(TENTWO,())))) :-
-    TWOTEN = variable(addtwoten),
-    TENTWO = variable(addtentwo).
-assign(a_int, neqmults, operation(neq,(TWOTEN,(TENTWO,())))) :-
-    TWOTEN = variable(multtwoten),
-    TENTWO = variable(multtentwo).
-assign(a_int, eqsubs, operation(eq,(TWOTEN,(TENTWO,())))) :-
-    TWOTEN  = variable(subtwoten),
-    TENTWO  = variable(subtentwo).
-assign(a_int, eqmsubs, operation(eq,(MTWOTEN,(TENTWO,())))) :-
-    MTWOTEN = operation(minus,(TWOTEN,())),
-    TWOTEN  = variable(subtwoten),
-    TENTWO  = variable(subtentwo).
-
-assign(a_int, abssubtwoten, operation(abs,(TWOTEN,()))) :-
-    TWOTEN = variable(subtwoten).
-assign(a_int, abssubtentwo, operation(abs,(TENTWO,()))) :-
-    TENTWO = variable(subtentwo).
-
-assign(a_int, neqmtwo, operation(neq,(MTWO,(TWO,())))) :-
-    MTWO = operation(minus,(TWO,())),
-    TWO = variable(two).
-assign(a_int, neqmmtwo, operation(neq,(MMTWO,(TWO,())))) :-
-    MMTWO = operation(minus,(MTWO,())),
-    MTWO  = operation(minus,(TWO,())),
-    TWO   = variable(two).
-
-assign(a_int, leqtwoten, operation(leq,(TWO,(TEN,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-assign(a_int, lttwoten, operation(lt,(TWO,(TEN,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-assign(a_int, geqtwoten, operation(geq,(TWO,(TEN,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-assign(a_int, gttwoten, operation(gt,(TWO,(TEN,())))) :-
-    TWO = variable(two),
-    TEN = variable(ten).
-assign(a_int, leqatt, operation(leq,(TWO,(TEN,())))) :-
-    TWO = variable(addtwoten),
-    TEN = variable(addtentwo).
-assign(a_int, ltatt, operation(lt,(TWO,(TEN,())))) :-
-    TWO = variable(addtwoten),
-    TEN = variable(addtentwo).
-assign(a_int, geqatt, operation(geq,(TWO,(TEN,())))) :-
-    TWO = variable(addtwoten),
-    TEN = variable(addtentwo).
-assign(a_int, gtatt, operation(gt,(TWO,(TEN,())))) :-
-    TWO = variable(addtwoten),
-    TEN = variable(addtentwo).
+evaluate(add,(variable(x),(constant(int(10)),()))).
+evaluate(add,(variable(two),(variable(ten),()))).
+evaluate(add,(variable(ten),(variable(two),()))).
+evaluate(mult,(variable(two),(variable(ten),()))).
+evaluate(mult,(variable(ten),(variable(two),()))).
+evaluate(sub,(variable(two),(variable(ten),()))).
+evaluate(sub,(variable(ten),(variable(two),()))).
+evaluate(eq,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(neq,(variable(multtwoten),(variable(multtentwo),()))).
+evaluate(eq,(variable(subtwoten),(variable(subtentwo),()))).
+evaluate(eq,(operation(minus,(variable(subtwoten),())),(variable(subtentwo),()))).
+evaluate(abs,(variable(subtwoten),())).
+evaluate(abs,(variable(subtentwo),())).
+evaluate(neq,(operation(minus,(variable(two),())),(variable(two),()))).
+evaluate(neq,(operation(minus,(operation(minus,(variable(two),())),())),(variable(two),()))).
+evaluate(leq,(variable(two),(variable(ten),()))).
+evaluate(lt,(variable(two),(variable(ten),()))).
+evaluate(geq,(variable(two),(variable(ten),()))).
+evaluate(gt,(variable(two),(variable(ten),()))).
+evaluate(leq,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(lt,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(geq,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(gt,(variable(addtwoten),(variable(addtentwo),()))).
