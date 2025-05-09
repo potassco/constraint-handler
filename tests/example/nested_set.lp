@@ -29,16 +29,16 @@
 %%% notin3 = s3 \notin se = false
 %%% notin2 = s2 \notin se = false
 
-assign(assign_v1, v1, operation(add,(constant(int(1)),(constant(int(1)),())))).
-assign(assign_v2, v2, constant(int(2))).
+assign(assign_v1, v1, operation(add,(val(int,1),(val(int,1),())))).
+assign(assign_v2, v2, val(int,2)).
 assign(assign_s1, s1, operation(makeSet,
                                    (variable(v1),()))).
 assign(assign_s2, s2, operation(makeSet,
                                    (variable(v2),()))).
 assign(assign_s3, s3, operation(makeSet,
-                                   (constant(int(3)),()))).
+                                   (val(int,3),()))).
 assign(assign_s4, s4, operation(makeSet,
-                                   (constant(int(4)),()))).
+                                   (val(int,4),()))).
 assign(assign_u, u, operation(union,
                                  (variable(s1),
                                  (variable(s2),())))).
@@ -52,7 +52,7 @@ assign(assign_ss2, ss2, operation(makeSet,
                                      (variable(s2),(variable(s4),())))).
 assign(assign_ss3, ss3, operation(makeSet,
                                      (variable(s2),
-                                     (operation(makeSet,(constant(int(3)),())),())))).
+                                     (operation(makeSet,(val(int,3),())),())))).
 assign(assign_sa, sa, operation(makeSet,
                                    (variable(ss1),
                                    (variable(ss2),
