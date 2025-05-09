@@ -47,52 +47,52 @@ set_assign(set_selfref,e,SSA) :-
     A = variable(a).
 set_declare(set_selfref,f).
 set_assign(set_selfref,f,variable(f)).
-set_assign(set_selfref,f,constant(int(1))).
+set_assign(set_selfref,f,val(int,1)).
 set_declare(set_selfref,g).
 set_assign(set_selfref,g,variable(g)).
-set_assign(set_selfref,g,constant(int(1))).
-set_assign(set_selfref,g,constant(int(2))).
+set_assign(set_selfref,g,val(int,1)).
+set_assign(set_selfref,g,val(int,2)).
 set_declare(set_selfref,h).
 set_assign(set_selfref,h,variable(f)).
-set_assign(set_selfref,h,constant(int(1))).
-set_assign(set_selfref,h,constant(int(2))).
+set_assign(set_selfref,h,val(int,1)).
+set_assign(set_selfref,h,val(int,2)).
 set_declare(set_selfref,i).
 set_assign(set_selfref,i,variable(i)).
-set_assign(set_selfref,i,constant(int(1))).
-set_assign(set_selfref,i,constant(int(2))).
+set_assign(set_selfref,i,val(int,1)).
+set_assign(set_selfref,i,val(int,2)).
 
 set_declare(set_selfref,nb).
-set_assign(set_selfref,nb,constant(int(0..10))).
+set_assign(set_selfref,nb,val(int,0..10)).
 
 set_declare(set_selfref,even).
-set_assign(set_selfref,even,constant(int(0))).
+set_assign(set_selfref,even,val(int,0)).
 set_assign(set_selfref,even,EX) :-
-    EX = constant(int(X)),
+    EX = val(int,X),
     set_value(nb,int,X),
     set_value(odd,int,X-1).
 
 set_declare(set_selfref,odd).
 set_assign(set_selfref,odd,EX) :-
-    EX = constant(int(X)),
+    EX = val(int,X),
     set_value(nb,int,X),
     set_value(even,int,X-1).
 
 set_declare(set_selfref,doubles).
 set_assign(set_selfref,doubles,TWOX) :-
-    TWO = constant(int(2)),
-    EX = constant(int(X)),
+    TWO = val(int,2),
+    EX = val(int,X),
     TWOX = operation(mult,(TWO,(EX,()))),
     set_value(nb,int,X).
 
 set_declare(set_selfref,es).
 set_assign(set_selfref,es,EX) :-
-    EX = constant(int(X)),
+    EX = val(int,X),
     set_value(nb,int,X),
     not set_value(os,int,X).
 
 set_declare(set_selfref,os).
 set_assign(set_selfref,os,EX) :-
-    EX = constant(int(X)),
+    EX = val(int,X),
     set_value(nb,int,X),
     set_value(es,int,X-1).
 
@@ -120,8 +120,8 @@ evaluate(leqv,
 evaluate(subset,(variable(a),(variable(d),()))).
 evaluate(subset,(variable(f),(variable(g),()))).
 evaluate(subset,(variable(f),(variable(h),()))).
-evaluate(notin,(constant(int(6)),(variable(odd),()))).
-evaluate(isin,(constant(int(7)),(variable(odd),()))).
+evaluate(notin,(val(int,6),(variable(odd),()))).
+evaluate(isin,(val(int,7),(variable(odd),()))).
 %%% even==doubles cap nb
 evaluate(eq,
     (variable(even),

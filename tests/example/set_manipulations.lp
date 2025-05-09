@@ -36,17 +36,17 @@
 %%% z = rem true  w = { 1, 5, false }
 %%% a = rem false u = { 1, 2, 3, true, 89.1 } = u
 
-assign(assign_b, b, constant(bool(true))).
-assign(assign_i, i, constant(int(42))).
-assign(assign_f, f, constant(float("47.1"))).
+assign(assign_b, b, val(bool,true)).
+assign(assign_i, i, val(int,42)).
+assign(assign_f, f, val(float,float("47.1"))).
 assign(assign_s, s, operation(makeSet,
                                   (variable(b),
                                   (operation(add,(variable(i),(variable(f), ()))),())))).
 assign(assign_t, t, operation(makeSet,
-                                  (constant(int(1)),
-                                  (constant(int(2)),
-                                  (constant(int(3)),
-                                  (constant(bool(true)),())))))).
+                                  (val(int,1),
+                                  (val(int,2),
+                                  (val(int,3),
+                                  (val(bool,true),())))))).
 assign(assign_u, u, operation(union,
                                   (variable(s),
                                   (variable(t),())))).
@@ -60,31 +60,31 @@ assign(assign_w, w, operation(makeSet,
                                   (operation(length,(variable(u),())),
                                   (operation(length,(variable(v),())),
                                   (operation(isin,(variable(b),(variable(v),()))),
-                                  (operation(notin,(constant(bool(true)),
+                                  (operation(notin,(val(bool,true),
                                                        (variable(u),()))),())))))).
 assign(assign_x, x, operation(makeSet,
-                                  (constant(int(3)),
-                                  (operation(add,(constant(int(1)),(constant(int(2)),()))),
+                                  (val(int,3),
+                                  (operation(add,(val(int,1),(val(int,2),()))),
                                   (variable(u),
                                   (variable(v),
-                                  (operation(makeSet,(constant(bool(true)),())),()))))))).
+                                  (operation(makeSet,(val(bool,true),())),()))))))).
 
 assign(assign_cx, cx, operation(length,(variable(x),()))).
 
 set_declare(declare_d, d).
-set_assign(assign_d, d, operation(add,(constant(int(1)),(constant(int(3)),())))).
+set_assign(assign_d, d, operation(add,(val(int,1),(val(int,3),())))).
 set_assign(assign_d, d, variable(s)).
-set_assign(assign_d, d, operation(add,(constant(int(2)),(constant(int(2)),())))).
-set_assign(assign_d, d, operation(makeSet,(constant(bool(true)),(constant(float("89.1")),())))).
+set_assign(assign_d, d, operation(add,(val(int,2),(val(int,2),())))).
+set_assign(assign_d, d, operation(makeSet,(val(bool,true),(val(float,float("89.1")),())))).
 
 assign(assign_cd, cd, operation(length,(variable(d),()))).
 
 assign(a_numbers, numbers, operation(makeSet,
-                                    (constant(float("-2.0")),
-                                    (constant(int(-1)),
-                                    (constant(int( 0)),
-                                    (constant(int( 1)),
-                                    (constant(int( 2)),()))))))).
+                                    (val(float,float("-2.0")),
+                                    (val(int,-1),
+                                    (val(int, 0),
+                                    (val(int, 1),
+                                    (val(int, 2),()))))))).
 
 set_declare(d_squares,squares).
 set_assign(a_squares, squares, SQ) :-
@@ -98,42 +98,42 @@ assign(a_csq, csquares, operation(length,(variable(squares),()))).
 %%% nqx = x == { 3, { true }, { 1, 2, 4, true, 89.1 } } = false
 assign(tset_eq,eqx3,operation(eq,(variable(x),(X,())))) :-
     X=operation(makeSet,(THREE,(STRUE,(SET,())))),
-    THREE=constant(int(3)),
+    THREE=val(int,3),
     STRUE=operation(makeSet,(TRUE,())),
     SET=operation(makeSet,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
-    ONE=constant(int(1)),
-    TWO=constant(int(2)),
-    TRUE=constant(bool(true)),
-    EIGHTYNINE=constant(float("89.1")).
+    ONE=val(int,1),
+    TWO=val(int,2),
+    TRUE=val(bool,true),
+    EIGHTYNINE=val(float,float("89.1")).
 assign(tset_eq,nqx3,operation(neq,(variable(x),(X,())))) :-
     X=operation(makeSet,(THREE,(STRUE,(SET,())))),
-    THREE=constant(int(3)),
+    THREE=val(int,3),
     STRUE=operation(makeSet,(TRUE,())),
     SET=operation(makeSet,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
-    ONE=constant(int(1)),
-    TWO=constant(int(2)),
-    TRUE=constant(bool(true)),
-    EIGHTYNINE=constant(float("89.1")).
+    ONE=val(int,1),
+    TWO=val(int,2),
+    TRUE=val(bool,true),
+    EIGHTYNINE=val(float,float("89.1")).
 assign(tset_neq,eqx4,operation(eq,(variable(x),(X,())))) :-
     X=operation(makeSet,(THREE,(STRUE,(SET,())))),
-    THREE=constant(int(3)),
+    THREE=val(int,3),
     STRUE=operation(makeSet,(TRUE,())),
     SET=operation(makeSet,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
-    ONE=constant(int(1)),
-    TWO=constant(int(2)),
-    FOUR=constant(int(4)),
-    TRUE=constant(bool(true)),
-    EIGHTYNINE=constant(float("89.1")).
+    ONE=val(int,1),
+    TWO=val(int,2),
+    FOUR=val(int,4),
+    TRUE=val(bool,true),
+    EIGHTYNINE=val(float,float("89.1")).
 assign(tset_neq,nqx4,operation(neq,(variable(x),(X,())))) :-
     X=operation(makeSet,(THREE,(STRUE,(SET,())))),
-    THREE=constant(int(3)),
+    THREE=val(int,3),
     STRUE=operation(makeSet,(TRUE,())),
     SET=operation(makeSet,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
-    ONE=constant(int(1)),
-    TWO=constant(int(2)),
-    FOUR=constant(int(4)),
-    TRUE=constant(bool(true)),
-    EIGHTYNINE=constant(float("89.1")).
+    ONE=val(int,1),
+    TWO=val(int,2),
+    FOUR=val(int,4),
+    TRUE=val(bool,true),
+    EIGHTYNINE=val(float,float("89.1")).
 
 
 assign(test_subset, tsubu, operation(subset,(variable(t),(variable(u),())))).
