@@ -42,6 +42,11 @@ multimap_entry(EM,TK,RK,TV,RV) :- eValue(E,multimap,EM), _multimap_add(E,EK,EV),
 
 multimap_value(X,TK,VK,TV,VV) :- eValue(E,multimap,EM), multimap_entry(EM,TK,VK,TV,VV), E=variable(X).
 
+%%%%%%%%%%%%%%%%%% find
+
+computed(O,ARGS,TV,RV) :- compute(O,ARGS), O=find, ARGS=(TK,(RK,(multimap,(EM,())))),
+    multimap_entry(EM,TK,RK,TV,RV).
+
 %%%%%%%%%%%%%%%%%% count keys and entries
 
 computed(O,ARGS,int,N) :- compute(O,ARGS), O=countKeys, ARGS=(multimap,(EM,())),
