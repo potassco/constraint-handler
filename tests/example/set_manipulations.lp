@@ -143,17 +143,3 @@ assign(test_subset, usubw, operation(subset,(variable(u),(variable(w),())))).
 assign(test_subset, vsubw, operation(subset,(variable(v),(variable(w),())))).
 assign(test_subset, usubx, operation(subset,(variable(u),(variable(x),())))).
 assign(test_subset, vsubx, operation(subset,(variable(v),(variable(x),())))).
-
-%assign(assign_y, y, operation(add,
-%                                  (variable(f),
-%                                  (variable(v),())))).
-%assign(assign_z, z, operation(rem,
-%                                  (constant(bool(true)),
-%                                  (variable(w),())))).
-%assign(assign_a, a, operation(rem,
-%                                  (constant(bool(false)),
-%                                  (variable(u),())))).
-
-%requestEngine(assign_x,compile).
-
-%#show expression/1.
