@@ -1,6 +1,6 @@
 eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
 
-intToFloatOperator(sqrt;cos;sin;acos;asin).
+intToFloatOperator(sqrt;cos;sin;tan;acos;asin;atan).
 floatUnOperator(abs;sqrt;cos;sin;tan;acos;asin;atan;minus).
 floatBinOperator(add;sub;mult;div;pow;leq;lt;geq;gt).
 
