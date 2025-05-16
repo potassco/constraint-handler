@@ -17,12 +17,13 @@ class PPEnum(Enum):
 
 
 BaseType = Enum("BaseType", ["int", "float", "str", "symbol", "bool"])
-UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan"])
+UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus"])
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
     [
         "add",
+        "sub",
         "mult",
         "div",
         "pow",
@@ -165,6 +166,8 @@ def evaluate_unop(o, val):
             return math.asin(val)
         case UnaryOperator.atan:
             return math.atan(val)
+        case UnaryOperator.minus:
+            return -val
 
 
 def evaluate_logic_operator(o, args):
@@ -193,6 +196,8 @@ def evaluate_binop(o, lval, rval):
     match o:
         case BinaryOperator.add:
             return lval + rval
+        case BinaryOperator.sub:
+            return lval - rval
         case BinaryOperator.mult:
             return lval * rval
         case BinaryOperator.div:
