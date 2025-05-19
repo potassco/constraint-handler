@@ -203,7 +203,7 @@ def evaluate_binop(o, lval, rval):
         case BinaryOperator.div:
             return lval / rval
         case BinaryOperator.pow:
-            return lval ** rval # fmt: ignore
+            return lval ** rval # fmt: skip
         case BinaryOperator.eq:
             return lval == rval
         case BinaryOperator.neq:
