@@ -14,7 +14,7 @@ expression(EX)     :- compileAssign(NAME,X,E), EX=variable(X).
 expression(E)      :- _set_compileAssign(NAME,X,E).
 expression(EX)     :- _set_compileAssign(NAME,X,E), EX=variable(X).
 expression(HD)     :- expressionList(EL), EL=(HD,TL).
-expression(OE) :- expression(E), E=operation(python(OE),EL).
+expression(OE)     :- expression(E), E=operation(python(OE),EL).
 expressionList(EL) :- expression(E), E=operation(OP,EL).
 expressionList(TL) :- expressionList(EL), EL=(HD,TL).
 
@@ -26,7 +26,8 @@ eValue(E,symbol,C) :- expression(E), E=constant(symbol(C)).
 
 eValue(E,T,V) :- expression(E), E=val(T,V).
 
-eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
+%eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
+eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V), usc_active(NAME).
 
 _direct_revMapAux(ARGS,ES,()) :- expression(E), E=operation(OP,ARGS),
     ES=@pythonReversed(ARGS). %,
@@ -40,5 +41,9 @@ eValue(E,TO,VO) :- expression(E), E=operation(OP,ARGS),
 expression(E) :- evaluate(OP,ARGS), E=operation(OP,ARGS).
 evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), E=operation(OP,ARGS), eValue(E,T,V).
 
-
-:- compileEnsure(NAME,E), not eValue(E,bool,true).
+%:- engine(NAME,E), not ensure(NAME,_), not assign(NAME,_,_).
+%:- not engine(NAME,_), ensure(NAME,E).
+#external usc_relax(NAME) : engine(NAME,E).
+{ usc_active(NAME) } :- engine(NAME,E).
+usc_active(NAME) :- engine(NAME,E), not usc_relax(NAME).
+:- compileEnsure(NAME,E), not eValue(E,bool,true), usc_active(NAME).
