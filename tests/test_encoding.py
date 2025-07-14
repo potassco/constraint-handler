@@ -34,6 +34,7 @@ def test_basic_tests():
     run_test("tests/example/ints")
     run_test("tests/example/multimaps")
     run_test("tests/example/nested_set")
+    run_test("tests/example/set_manipulations")
     run_test("tests/example/set_selfref")
     run_test("tests/example/strings")
 
@@ -46,12 +47,7 @@ def test_conditional_assign():
     run_test("tests/example/conditional_assign")
 
 
-def test_set_manipulations():
-    run_test("tests/example/set_manipulations")
-
-
 if __name__ == "__main__":
     test_basic_tests()
     test_basic_assignments()
     test_conditional_assign()
-    test_set_manipulations()

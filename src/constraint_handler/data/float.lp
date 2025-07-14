@@ -48,8 +48,13 @@ def pythonEvalOperator(clFn,clArgs):
         #prettyArgs = "(" + ", ".join(str(v) for v in pArgs) + ")"
         #print(f"eval operation: {clFn}{prettyArgs}",end=" ")
         #print(pRes)
-        st = evaluator.toPair(pRes)
-        return myClorm.pytocl(st)
+        pType = evaluator.get_baseType(pRes)
+        if pRes is None:
+            return []
+        if pType is None:
+            print("float.lp unsupported type",pRes)
+            return []
+        return myClorm.pytocl((pType,pRes))
     except Exception as exn:
         print(f"Python error when evaluating {pFn} on {pArgs}: {exn}.")
         return []

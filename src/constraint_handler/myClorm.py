@@ -192,11 +192,9 @@ def cltopy(func, dtarget=None):
                 if issubclass(target, clingo.Symbol):
                     return func
                 elif issubclass(target, enum.Enum):
-                    members = {
-                        predicatedefn_default_predicate_name(name): val for (name, val) in target.__members__.items()
-                    }
-                    if func.type == clingo.SymbolType.Function and len(func.arguments) == 0 and func.name in members:
-                        return members[func.name]
+                    if func.type == clingo.SymbolType.Function and len(func.arguments) == 0 and func.name in target:
+                        return target(func.name)
+#                    # TODO: make it work with ints as well?
                 # elif any(issubclass(target,t) for t in [int,str,float] + list(containers.values())):
                 elif any(issubclass(target, t) for t in list(baseTypes.values()) + list(containers.values())):
                     value = cltopy(func)

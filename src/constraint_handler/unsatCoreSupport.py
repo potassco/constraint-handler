@@ -1,9 +1,5 @@
-
 import clingo
 from itertools import chain, combinations
-from typing import Dict, Generator, Iterable, Iterator, List, Optional, Set, Tuple, Union
-
-counter = 0
 
 class PowersetExplorer:
     def __init__(self,assumptions):
@@ -19,6 +15,15 @@ class PowersetExplorer:
     def add_unsat(self,assumptions):
         self.found_mucs.append(set(assumptions))
 
+    def explored(self,assumptions):
+        # skip if an already found satisfiable subset is superset
+        if any(set(sat).issuperset(assumptions) for sat in self.found_sat):
+            return True
+        # skip if an already found muc is a subset
+        if any(set(muc).issubset(assumptions) for muc in self.found_mucs):
+            return True
+        return False
+
     def get_query(self):
         while True:
             try:
@@ -27,11 +32,7 @@ class PowersetExplorer:
                 return None
             if len(current_subset) == 0:
                 continue
-            # skip if an already found satisfiable subset is superset
-            if any(set(sat).issuperset(current_subset) for sat in self.found_sat):
-                continue
-            # skip if an already found muc is a subset
-            if any(set(muc).issubset(current_subset) for muc in self.found_mucs):
+            if self.explored(current_subset):
                 continue
             return current_subset
 
@@ -58,6 +59,11 @@ class AspExplorer:
         with self.ctrl.backend() as backend:
             backend.add_rule([],[self.assumption_map[a] for a in assumptions])
 
+    def explored(self,assumptions):
+        literals = [a if assumption in assumptions else -a for assumption,a in self.assumption_map.items()]
+        result = self.ctrl.solve(assumptions=literals)
+        return not result.satisfiable
+
     def get_query(self):
         with self.ctrl.solve(yield_=True) as handle:
             for m in handle:
@@ -69,45 +75,42 @@ class AspExplorer:
                 return None
 
 
-def minimizeCore(prg,literals):
+def minimizeCore(prg,e,literals):
     with prg.solve(assumptions=literals,yield_=True) as handle:
         for m in handle:
             pass
         if handle.get().satisfiable:
-            return (None,{ tuple(literals) })
+            e.add_sat(tuple(literals))
+            return None
         else:
             maybe = [a for a in literals if a in handle.core()]
     include = []
-    sats = set()
     while maybe:
         a = maybe.pop()
         ass = tuple(maybe+include)
-        global counter
-        counter += 1
+        if e.explored(ass):
+            include.append(a)
+            continue
         with prg.solve(assumptions=ass,yield_=True) as handle:
             for m in handle:
                 pass
             if handle.get().satisfiable:
-                sats.add(ass)
+                e.add_sat(ass)
                 include.append(a)
             else:
                 maybe = [a for a in maybe if a in handle.core()]
-    return (include,sats)
+    return include
 
 def enumerate_mus(prg,switchOn):
     e = AspExplorer(switchOn)
     #e = PowersetExplorer(switchOn)
     query = e.get_query()
     while query is not None:
-        (core,sats) = minimizeCore(prg,query)
+        core = minimizeCore(prg,e,query)
         if core is not None:
             yield core
             e.add_unsat(core)
-        for s in sats:
-            e.add_sat(s)
         query = e.get_query()
-    #global counter
-    #print("queries:",counter)
 
 
 def get_assumptions(prg,predicate="usc_active"):

@@ -63,34 +63,38 @@ assign(usc_ec,ec,operation(conj,(variable(e1),(variable(e2),())))).
 assign(usc_ed,ed,operation(disj,(variable(e1),(variable(e2),())))).
 ensure(usc_ee,operation(leqv,(variable(ec),(variable(ed),())))).
 
+#show value/3.
+#show usc_active/1.
 #script (python)
 
 import constraint_handler.unsatCoreSupport as ch_usc
 
-def main(prg):
-    prg.ground()
-    assMap = ch_usc.get_assumptions(prg)
-    symbs = [str(f) for f in assMap.values() if len(f.name) == 6]
-    keys = [k for k,f in assMap.items() if len(f.name) == 6]
-    print(symbs)
-    print(assMap)
-    ch_usc.relax(prg,assMap.values())
-    #ch_usc.relax(prg,symbs)
-    print(assMap)
-    for core in ch_usc.enumerate_mus(prg,assMap.keys()):
-    #for core in ch_usc.enumerate_mus(prg,keys):
-        core_assumptions = [assMap[a] for a in core]
-        print("found core: ",[str(a) for a in core_assumptions])
+#def main(prg):
+#    prg.ground()
+#    assMap = ch_usc.get_assumptions(prg)
+#    symbs = [str(f) for f in assMap.values() if len(f.name) == 6]
+#    keys = [k for k,f in assMap.items() if len(f.name) == 6]
+#    print(symbs)
+#    print(assMap)
+#    ch_usc.relax(prg,assMap.values())
+#    #ch_usc.relax(prg,symbs)
+#    print(assMap)
+#    for core in ch_usc.enumerate_mus(prg,assMap.keys()):
+#    #for core in ch_usc.enumerate_mus(prg,keys):
+#        core_assumptions = [assMap[a] for a in core]
+#        print("found core: ",[str(a) for a in core_assumptions])
 
 def main(prg):
     prg.ground()
     assumptionMap = ch_usc.get_assumptions(prg)
     ch_usc.relax(prg,assumptionMap.values())
     readable = { key : str(val) for key,val in assumptionMap.items() }
-    #print(readable)
+#    print(readable)
+#    ch_usc.relax(prg,[clingo.Function("usc_ae",[]),clingo.Function("usc_a2",[])])
+#    assert False
     for core in ch_usc.enumerate_mus(prg,assumptionMap.keys()):
         print("found core: ",[readable[a] for a in core])
-    #prg.solve()
+    prg.solve()
 
 #def main(prg):
 #    prg.ground()

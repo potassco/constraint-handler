@@ -6,22 +6,13 @@ involvedVars(CNAME,EXPR,@pythonCollectVars(EXPR)) :- groundingAssign(CNAME,X,EXP
 
 revMapAux(LNAME,XS,()) :- involvedVars(CNAME,EXPR,XS), LNAME=XS.
 revMapAux(LNAME,XS,((X,V),VS)) :- revMapAux(LNAME,(X,XS),VS), eValue(variable(X),T,V).
+revMapAux(LNAME,XS,VS) :- revMapAux(LNAME,(X,XS),VS), not conditional_hasValue(variable(X)).
 mapped(LNAME,VS) :- revMapAux(LNAME,(),VS).
 
-result(CNAME,TYPE,V) :- involvedVars(CNAME,EXPR,XS), mapped(XS,VS), (TYPE,V)=@pythonEvalExpr(CNAME,EXPR,VS).
+result(CNAME,EXPR,TYPE,V) :- involvedVars(CNAME,EXPR,XS), mapped(XS,VS), (TYPE,V)=@pythonEvalExpr(CNAME,EXPR,VS).
 
-:- groundingEnsure(CNAME,EXPR), result(CNAME,bool,false).
-eValue(variable(X),T,V) :- groundingAssign(CNAME,X,EXPR), result(CNAME,T,V).
-
-%:- evaluateAssign(CNAME,X,E), engine(CNAME,ground).
-
-%#show value/3.
-%#show evaluateCons/3.
-%#show revMapAux/3.
-%#show result2/4.
-%#show mapped/2.
-%#show result/3.
-%#show involvedVars/3.
+:- groundingEnsure(CNAME,EXPR), result(CNAME,EXPR,bool,false).
+eValue(variable(X),T,V) :- groundingAssign(CNAME,X,EXPR), result(CNAME,EXPR,T,V).
 
 #script(python)
 
@@ -34,7 +25,7 @@ def pythonCollectVars(clExpr):
     #print(pExpr)
     pVars = list(evaluator.collectVars(pExpr))
     clVars = myClorm.pytocl(pVars)
-    #print(clExpr,pExpr,clVars)
+    #print("collect vars",clExpr,pExpr,clVars)
     return clVars
 
 def pythonEvalExpr(clName,clExpr,clArgs):
@@ -44,8 +35,11 @@ def pythonEvalExpr(clName,clExpr,clArgs):
     d = { var : val for (var,val) in pArgs }
     prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
     pRes = evaluator.evaluate_expr(d,pExpr)
-    st = evaluator.toPair(pRes)
-    print(f"eval expr in {pName}: {prettyArgs}{pExpr} = {pRes}")
-    #print(f"eval expr in {clExpr}: result = {pRes}")
-    return myClorm.pytocl(st)
+    #print(f"eval expr in {pName}: {prettyArgs}{pExpr} = {pRes}")
+    if pRes is None:
+        return []
+    pType = evaluator.get_baseType(pRes)
+    #print(f"gringo eval expr in {clExpr}: result = {pRes} with {clArgs}")
+    if pType is not None:
+        return myClorm.pytocl((pType,pRes))
 #end.
