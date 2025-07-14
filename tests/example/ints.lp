@@ -33,7 +33,6 @@ assign(a_int, divtentwo, operation(div,(variable(ten),(variable(two),())))).
 assign(a_int, powtwoten, operation(pow,(variable(two),(variable(ten),())))).
 assign(a_int, powtentwo, operation(pow,(variable(ten),(variable(two),())))).
 
-%evaluate(add,(variable(x),(constant(int(10)),()))).
 evaluate(add,(variable(x),(val(int,10),()))).
 evaluate(add,(variable(two),(variable(ten),()))).
 evaluate(add,(variable(ten),(variable(two),()))).

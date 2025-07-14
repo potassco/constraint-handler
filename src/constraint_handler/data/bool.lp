@@ -14,15 +14,15 @@ computed(lnot,ARGS,bool,false) :- compute(lnot,ARGS), ARGS=(bool,(V1,())), V1=tr
 %% The compute/computed interface is given below the eValue interface
 %% We use the eValue interface because it allows short-circuit evaluation
 
-eValue(E,bool,true)  :- expression(E), E=operation(conj,L), eValue(E1,bool,true) : E1=@pythonListElements(L).
-eValue(E,bool,false) :- expression(E), E=operation(conj,L), eValue(E1,bool,false), E1=@pythonListElements(L).
+eValue(E,bool,true)  :- direct_query(E), E=operation(conj,L), eValue(E1,bool,true) : E1=@pythonListElements(L).
+eValue(E,bool,false) :- direct_query(E), E=operation(conj,L), eValue(E1,bool,false), E1=@pythonListElements(L).
 
-eValue(E,bool,true)  :- expression(E), E=operation(disj,L), eValue(E1,bool,true),  E1=@pythonListElements(L).
-eValue(E,bool,false) :- expression(E), E=operation(disj,L), eValue(E1,bool,false): E1=@pythonListElements(L).
+eValue(E,bool,true)  :- direct_query(E), E=operation(disj,L), eValue(E1,bool,true),  E1=@pythonListElements(L).
+eValue(E,bool,false) :- direct_query(E), E=operation(disj,L), eValue(E1,bool,false): E1=@pythonListElements(L).
 
-eValue(E,bool,true)  :- expression(E), E=operation(limp, (E1,(E2,()))), eValue(E1,bool,false).
-eValue(E,bool,true)  :- expression(E), E=operation(limp, (E1,(E2,()))), eValue(E2,bool,true).
-eValue(E,bool,false) :- expression(E), E=operation(limp, (E1,(E2,()))), eValue(E1,bool,true), eValue(E2,bool,false).
+eValue(E,bool,true)  :- direct_query(E), E=operation(limp, (E1,(E2,()))), eValue(E1,bool,false).
+eValue(E,bool,true)  :- direct_query(E), E=operation(limp, (E1,(E2,()))), eValue(E2,bool,true).
+eValue(E,bool,false) :- direct_query(E), E=operation(limp, (E1,(E2,()))), eValue(E1,bool,true), eValue(E2,bool,false).
 
 %computed(conj,ARGS,bool,true)  :- compute(conj,ARGS), V=true : (bool,V)=@pythonListElements(ARGS,2).
 %computed(conj,ARGS,bool,false) :- compute(conj,ARGS), V=false, (bool,V)=@pythonListElements(ARGS,2).

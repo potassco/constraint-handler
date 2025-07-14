@@ -53,26 +53,6 @@ ConstantList = list[noPredConstant]
 noPredOperator = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | str
 
 
-class Bool(NamedTuple):
-    value: bool
-
-
-class Int(NamedTuple):
-    value: int
-
-
-class Str(NamedTuple):
-    value: str
-
-
-class Symbol(NamedTuple):
-    value: clingo.Symbol
-
-
-class Constant(NamedTuple):
-    # value: noPredConstant
-    value: Bool | Int | Symbol | float | Str
-
 class Val(NamedTuple):
     type_: BaseType | clingo.Symbol
     value: bool | int | float | str | clingo.Symbol
@@ -98,7 +78,7 @@ class Python(NamedTuple):
     fn: Expr
 
 
-Expr = Constant | Variable | Operation | Val
+Expr = Variable | Operation | Val
 Operator = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | Python
 
 class SetDeclare(NamedTuple):
@@ -116,8 +96,6 @@ def collectVars(expr):
             return set.union(*(collectVars(e) for e in args))
         case Variable(a):
             return {a}
-        case Constant(val):
-            return set()
         case Val(t,v):
             return set()
 
@@ -133,20 +111,6 @@ def get_baseType(v):
         return BaseType.int
     else:
         return None
-
-
-def evaluate_constant(c):
-    match c:
-        case Bool(b):
-            return b
-        case Int(i):
-            return i
-        case float(f):
-            return f
-        case Str(s):
-            return s
-        case Symbol(s):
-            return s
 
 
 def evaluate_unop(o, val):
@@ -315,8 +279,6 @@ def evaluate_expr(symbols, expr):
                 return symbols[a]
             else:
                 return None
-        case Constant(val):
-            return evaluate_constant(val)
         case Val(type_,val):
             return val
 

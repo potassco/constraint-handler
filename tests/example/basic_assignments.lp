@@ -9,4 +9,4 @@ assign(assign_y, y, operation(add,(operation(mult,(val(int,2),
                                                   (variable(i), ()))),
                                   (val(int,1), ())))).
 
-%#show expression/1.
+%#show direct_query/1.

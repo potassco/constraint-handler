@@ -8,37 +8,31 @@ compileAssign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,compile).
 _set_compileAssign(CNAME,X,E) :- set_assign(CNAME,X,E), engine(CNAME,compile).
 
 
-expression(E)      :- compileEnsure(NAME,E).
-expression(E)      :- compileAssign(NAME,X,E).
-expression(EX)     :- compileAssign(NAME,X,E), EX=variable(X).
-expression(E)      :- _set_compileAssign(NAME,X,E).
-expression(EX)     :- _set_compileAssign(NAME,X,E), EX=variable(X).
-expression(HD)     :- expressionList(EL), EL=(HD,TL).
-expression(OE)     :- expression(E), E=operation(python(OE),EL).
-expressionList(EL) :- expression(E), E=operation(OP,EL).
-expressionList(TL) :- expressionList(EL), EL=(HD,TL).
+direct_query(E)      :- compileEnsure(NAME,E).
+direct_query(E)      :- compileAssign(NAME,X,E).
+direct_query(EX)     :- compileAssign(NAME,X,E), EX=variable(X).
+direct_query(E)      :- _set_compileAssign(NAME,X,E).
+direct_query(EX)     :- _set_compileAssign(NAME,X,E), EX=variable(X).
+direct_query(HD)     :- direct_queries(EL), EL=(HD,TL).
+direct_query(OE)     :- direct_query(E), E=operation(python(OE),EL).
+direct_queries(EL) :- direct_query(E), E=operation(OP,EL).
+direct_queries(TL) :- direct_queries(EL), EL=(HD,TL).
 
-eValue(E,int,   C) :- expression(E), E=constant(int(C)).
-eValue(E,bool,  C) :- expression(E), E=constant(bool(C)).
-eValue(E,float, float(C)) :- expression(E), E=constant(float(C)).
-eValue(E,str,C) :- expression(E), E=constant(str(C)).
-eValue(E,symbol,C) :- expression(E), E=constant(symbol(C)).
+eValue(E,T,V) :- direct_query(E), E=val(T,V).
 
-eValue(E,T,V) :- expression(E), E=val(T,V).
+%eValue(E,T,V) :- direct_query(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
+eValue(E,T,V) :- direct_query(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V), usc_active(NAME).
 
-%eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
-eValue(E,T,V) :- expression(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V), usc_active(NAME).
-
-_direct_revMapAux(ARGS,ES,()) :- expression(E), E=operation(OP,ARGS),
+_direct_revMapAux(ARGS,ES,()) :- direct_query(E), E=operation(OP,ARGS),
     ES=@pythonReversed(ARGS). %,
 _direct_revMapAux(ARGS,ES,(T,(V,(VS)))) :- _direct_revMapAux(ARGS,(E,ES),VS), eValue(E,T,V).
-compute(OP,VS) :- expression(E), E=operation(OP,ARGS),
+compute(OP,VS) :- direct_query(E), E=operation(OP,ARGS),
     _direct_revMapAux(ARGS,(),VS).
-eValue(E,TO,VO) :- expression(E), E=operation(OP,ARGS),
+eValue(E,TO,VO) :- direct_query(E), E=operation(OP,ARGS),
     _direct_revMapAux(ARGS,(),VS),
     computed(OP,VS,TO,VO).
 
-expression(E) :- evaluate(OP,ARGS), E=operation(OP,ARGS).
+direct_query(E) :- evaluate(OP,ARGS), E=operation(OP,ARGS).
 evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), E=operation(OP,ARGS), eValue(E,T,V).
 
 %:- engine(NAME,E), not ensure(NAME,_), not assign(NAME,_,_).
