@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "constraint_handler"
 authors = [{ name = "Abdallah Saffidine", email = "abdallah.saffidine@potassco.com" }]
 description = "A template project."
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 readme = "README.md"
