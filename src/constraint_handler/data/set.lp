@@ -11,7 +11,6 @@ computed(length,ARGS,int,N) :- compute(length,ARGS),
 
 %%%%%%%%%%%%%%%%% assignToSet set_value
 
-%representation(multimap,intensional).
 %_set_add(E,EK) :- set_assign(CNAME,X,EK), engine(CNAME,compile), E = variable(X).
 
 eValue(EX,set,EX) :- EX=variable(X), set_declare(NAME,X).

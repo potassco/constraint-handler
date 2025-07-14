@@ -8,12 +8,12 @@ domain(0..D-1) :- digits(D).
 maxDepth(3).
 depth(1..K) :- maxDepth(K).
 
-1 { assign(assign_x, x, constant(int(I))) : domain(I) } 1.
+1 { assign(assign_x, x, val(int,I)) : domain(I) } 1.
 
 expr(1,variable(x)).
 expr(K+1,NE) :- expr(K,E), depth(K+1), digits(D),
                 NE=operation(add,(variable(x),(DE,()))),
-                DE=operation(mult,(constant(int(D)),(E,()))).
+                DE=operation(mult,(val(int,D),(E,()))).
 
 assign(assign_y, y, E) :- expr(K,E), maxDepth(K).
 

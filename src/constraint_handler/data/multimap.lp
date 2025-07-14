@@ -4,16 +4,16 @@
 representation(multimap,intensional).
 _multimap_add(E,EK,EV) :- multimap_assign(CNAME,X,EK,EV), engine(CNAME,compile), E = variable(X).
 
-expression(E) :- multimap_declare(NAME,X), E=variable(X).
-expression(E;EK;EV) :- _multimap_add(E,EK,EV).
+direct_query(E) :- multimap_declare(NAME,X), E=variable(X).
+direct_query(E;EK;EV) :- _multimap_add(E,EK,EV).
 
 eValue(E,multimap,symbol(E)) :- E=variable(X), multimap_declare(NAME,X).
 
 
 %%%%%%%%%%%%%%%%% multimapMake
 
-eValue(E,multimap,E) :- expression(E), E=operation(multimapMake,L).
-_multimap_add(E,EK,EV) :- expression(E), E=operation(multimapMake,L),
+eValue(E,multimap,E) :- direct_query(E), E=operation(multimapMake,L).
+_multimap_add(E,EK,EV) :- direct_query(E), E=operation(multimapMake,L),
     (EK,EV)=@pythonListElements(L,2).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value

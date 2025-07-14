@@ -10,8 +10,8 @@ import constraint_handler
 
 def test():
     constraint_expr = """
-    assign(assign_bike_frame_size, bike_frame_size, constant(int(26))).
-    assign(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (constant(int(26)), ()))), (constant(str("Mountain")), (constant(str("Road")), ()))))).
+    assign(assign_bike_frame_size, bike_frame_size, val(int,26)).
+    assign(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(str,"Mountain"), (val(str,"Road"), ()))))).
     """
 
     ctrl = Control("0")
@@ -35,8 +35,8 @@ def test():
 
 def test_add():
     constraint_expr = """
-    assign(assign_x, x, constant(int(20))).
-    assign(assign_y, y, operation(add, (variable(x), (constant(int(10)), ())))).
+    assign(assign_x, x, val(int,20)).
+    assign(assign_y, y, operation(add, (variable(x), (val(int,10), ())))).
     """
 
     ctrl = Control("0")
