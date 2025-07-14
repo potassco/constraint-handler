@@ -5,6 +5,7 @@
 #defined computed/4.
 #defined requestEngine/2.
 defaultEngine(compile).
+%defaultEngine(ground).
 
 requestedEngine(CNAME) :- requestEngine(CNAME,ENG).
 engine(CNAME,ENG) :- requestEngine(CNAME,ENG).
@@ -15,4 +16,4 @@ engine(CNAME,ENG) :- defaultEngine(ENG), not requestedEngine(CNAME), multimap_as
 
 value(X,T,V) :- eValue(variable(X),T,V).
 
-representation((bool;int;str;float),extensional).
+representation((bool;int;str;float;symbol),extensional).

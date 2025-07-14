@@ -12,6 +12,10 @@ import clingo
 
 
 class PPEnum(Enum):
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values):
+        return name
+
     def __str__(self):
         return self.name
 
@@ -32,20 +36,21 @@ BinaryOperator = PPEnum(
         "leq",
         "lt",
         "geq",
-        "gt",
-        "isin",
-        "notin",
-        "union",
-        "inter",
-        "subset",
+        "gt"
     ],
 )
-OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "makeSet", "length"])
+SetOperator = PPEnum("SetOperator", ["makeSet","isin","notin","union","inter","subset"])
+OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
+import enum
+#ConditionalOperator = PPEnum("ConditionalOperator", ["phi", "if"])
+class ConditionalOperator(Enum):
+    phi = "phi"
+    IF = "if"
 
 noPredConstant = bool | float | int | str | clingo.Symbol
 ConstantList = list[noPredConstant]
 
-noPredOperator = UnaryOperator | BinaryOperator | LogicOperator | OtherOperator | str
+noPredOperator = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | str
 
 
 class Bool(NamedTuple):
@@ -68,6 +73,10 @@ class Constant(NamedTuple):
     # value: noPredConstant
     value: Bool | Int | Symbol | float | Str
 
+class Val(NamedTuple):
+    type_: BaseType | clingo.Symbol
+    value: bool | int | float | str | clingo.Symbol
+
 
 class Operation(NamedTuple):
     op: Operator
@@ -89,9 +98,15 @@ class Python(NamedTuple):
     fn: Expr
 
 
-Expr = Constant | Variable | Operation
-Operator = UnaryOperator | BinaryOperator | LogicOperator | OtherOperator | Python
+Expr = Constant | Variable | Operation | Val
+Operator = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | Python
 
+class SetDeclare(NamedTuple):
+    pass
+
+class SetAssign(NamedTuple):
+    type_: BaseType | clingo.Symbol
+    value: bool | int | float | str | clingo.Symbol
 
 def collectVars(expr):
     match expr:
@@ -103,37 +118,21 @@ def collectVars(expr):
             return {a}
         case Constant(val):
             return set()
+        case Val(t,v):
+            return set()
 
 
-def fromPair(t, r):
-    match t:
-        case BaseType.float:
-            return float(r)
-        case BaseType.int:
-            return int(r)
-        case BaseType.string:
-            return str(r)
-        case BaseType.bool:
-            return bool(r)
-        case BaseType.symbol:
-            return r
-
-
-def toPair(pRes):
-    (t, r) = None, pRes
-    if isinstance(pRes, float):
-        t = BaseType.float
-        # r = str(pRes)
-    elif isinstance(pRes, str):
-        t = BaseType.string
-    elif isinstance(pRes, bool):
-        t = BaseType.bool
-    elif isinstance(pRes, int):
-        t = BaseType.int
+def get_baseType(v):
+    if isinstance(v, float):
+        return BaseType.float
+    elif isinstance(v, str):
+        return BaseType.str
+    elif isinstance(v, bool):
+        return BaseType.bool
+    elif isinstance(v, int):
+        return BaseType.int
     else:
-        print(pRes)
-        assert False
-    return (t, r)
+        return None
 
 
 def evaluate_constant(c):
@@ -173,26 +172,63 @@ def evaluate_unop(o, val):
 def evaluate_logic_operator(o, args):
     match o:
         case LogicOperator.conj:
-            return all(args)
+            if False in args:
+                return False
+            elif None in args:
+                return None
+            else:
+                return True
         case LogicOperator.disj:
-            return any(args)
+            if True in args:
+                return True
+            elif None in args:
+                return None
+            else:
+                return False
         case LogicOperator.ite:
             assert len(args) == 3
+            if args[0] is None:
+                return None
             return args[1] if args[0] else args[2]
         case LogicOperator.leqv:
+            if None in args:
+                return None
             return not functools.reduce(operator.xor, args)
         case LogicOperator.limp:
             assert len(args) == 2
-            return not args[0] or args[1]
+            print(args,args[1] if args[0] else args[0])
+            assert False
+            return args[1] if args[0] else args[0]
+#            return not args[0] or args[1]
         case LogicOperator.lnot:
             assert len(args) == 1
+            if None in args:
+                return None
             return not args[0]
         case LogicOperator.lxor:
+            if None in args:
+                return None
             return functools.reduce(operator.xor, args)
 
+def evaluate_set_operator(o, args):
+    match o:
+        case SetOperator.makeSet:
+            return set(args)
+        case SetOperator.isin:
+            return args[0] in args[1]
+        case SetOperator.notin:
+            return args[0] not in args[1]
+        case SetOperator.union:
+            return set().union(*args)
+        case SetOperator.inter:
+            return args[0].intersection(*args[1:])
+        case SetOperator.subset:
+            return args[0].issubset(args[1])
 
 def evaluate_binop(o, lval, rval):
-    # print(o,l,r,lval,rval)
+    if lval is None or rval is None:
+        return None
+    #print(o,lval,rval)
     match o:
         case BinaryOperator.add:
             return lval + rval
@@ -216,11 +252,19 @@ def evaluate_binop(o, lval, rval):
             return lval >= rval
         case BinaryOperator.gt:
             return lval > rval
-        case BinaryOperator.isin:
-            return lval in rval
-        case BinaryOperator.notin:
-            return lval not in rval
 
+def evaluate_conditional_operator(o, args):
+    match o:
+        case ConditionalOperator.phi:
+            if args[0] is not None:
+                return args[0]
+            else:
+                return args[1]
+        case ConditionalOperator.IF:
+            if args[0] == True:
+                return args[1]
+            else:
+                return None
 
 def evaluate_operator(symbols, o, args):
     match o:
@@ -232,8 +276,12 @@ def evaluate_operator(symbols, o, args):
             call = eval(fn)
             # print(f"{fn}{tuple(vals)} = {}")
             return call(*args)
-        case LogicOperator(o):
+        case LogicOperator():
             return evaluate_logic_operator(o, args)
+        case SetOperator():
+            return evaluate_set_operator(o, args)
+        case ConditionalOperator():
+            return evaluate_conditional_operator(o, args)
         case OtherOperator.minus:
             assert len(args)
             if len(args) == 1:
@@ -252,7 +300,7 @@ def evaluate_operator(symbols, o, args):
             elif len(args) == 2:
                 return evaluate_binop(o, args[0], args[1])
             else:
-                print("evaluate_operator.py: undefined {o}")
+                print(f"evaluate_operator.py: undefined {o}")
                 assert False
 
 
@@ -266,15 +314,9 @@ def evaluate_expr(symbols, expr):
             if a in symbols:
                 return symbols[a]
             else:
-                print(a, symbols)
-                print(f"variable {a} is undefined")
-                assert False
-                raise UnboundVariable
-            assert a in self.symbols
-            p = self.symbols[a]
-            if p.defined:
-                return p.assigned
-            else:
-                raise UnboundVariable
+                return None
         case Constant(val):
             return evaluate_constant(val)
+        case Val(type_,val):
+            return val
+
