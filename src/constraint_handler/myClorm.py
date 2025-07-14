@@ -194,7 +194,7 @@ def cltopy(func, dtarget=None):
                 elif issubclass(target, enum.Enum):
                     if func.type == clingo.SymbolType.Function and len(func.arguments) == 0 and func.name in target:
                         return target(func.name)
-#                    # TODO: make it work with ints as well?
+                # TODO: make it work with ints as well?
                 # elif any(issubclass(target,t) for t in [int,str,float] + list(containers.values())):
                 elif any(issubclass(target, t) for t in list(baseTypes.values()) + list(containers.values())):
                     value = cltopy(func)

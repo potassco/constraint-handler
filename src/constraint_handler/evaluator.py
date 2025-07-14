@@ -25,32 +25,24 @@ UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "ac
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
-    [
-        "add",
-        "sub",
-        "mult",
-        "div",
-        "pow",
-        "eq",
-        "neq",
-        "leq",
-        "lt",
-        "geq",
-        "gt"
-    ],
+    ["add", "sub", "mult", "div", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
 )
-SetOperator = PPEnum("SetOperator", ["makeSet","isin","notin","union","inter","subset"])
+SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
-import enum
-#ConditionalOperator = PPEnum("ConditionalOperator", ["phi", "if"])
+
+
+# ConditionalOperator = PPEnum("ConditionalOperator", ["phi", "if"])
 class ConditionalOperator(Enum):
     phi = "phi"
     IF = "if"
 
+
 noPredConstant = bool | float | int | str | clingo.Symbol
 ConstantList = list[noPredConstant]
 
-noPredOperator = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | str
+noPredOperator = (
+    UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | str
+)
 
 
 class Val(NamedTuple):
@@ -81,12 +73,15 @@ class Python(NamedTuple):
 Expr = Variable | Operation | Val
 Operator = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | Python
 
+
 class SetDeclare(NamedTuple):
     pass
+
 
 class SetAssign(NamedTuple):
     type_: BaseType | clingo.Symbol
     value: bool | int | float | str | clingo.Symbol
+
 
 def collectVars(expr):
     match expr:
@@ -96,7 +91,7 @@ def collectVars(expr):
             return set.union(*(collectVars(e) for e in args))
         case Variable(a):
             return {a}
-        case Val(t,v):
+        case Val(t, v):
             return set()
 
 
@@ -160,10 +155,10 @@ def evaluate_logic_operator(o, args):
             return not functools.reduce(operator.xor, args)
         case LogicOperator.limp:
             assert len(args) == 2
-            print(args,args[1] if args[0] else args[0])
+            print(args, args[1] if args[0] else args[0])
             assert False
             return args[1] if args[0] else args[0]
-#            return not args[0] or args[1]
+        #            return not args[0] or args[1]
         case LogicOperator.lnot:
             assert len(args) == 1
             if None in args:
@@ -173,6 +168,7 @@ def evaluate_logic_operator(o, args):
             if None in args:
                 return None
             return functools.reduce(operator.xor, args)
+
 
 def evaluate_set_operator(o, args):
     match o:
@@ -189,10 +185,11 @@ def evaluate_set_operator(o, args):
         case SetOperator.subset:
             return args[0].issubset(args[1])
 
+
 def evaluate_binop(o, lval, rval):
     if lval is None or rval is None:
         return None
-    #print(o,lval,rval)
+    # print(o,lval,rval)
     match o:
         case BinaryOperator.add:
             return lval + rval
@@ -217,6 +214,7 @@ def evaluate_binop(o, lval, rval):
         case BinaryOperator.gt:
             return lval > rval
 
+
 def evaluate_conditional_operator(o, args):
     match o:
         case ConditionalOperator.phi:
@@ -229,6 +227,7 @@ def evaluate_conditional_operator(o, args):
                 return args[1]
             else:
                 return None
+
 
 def evaluate_operator(symbols, o, args):
     match o:
@@ -279,6 +278,5 @@ def evaluate_expr(symbols, expr):
                 return symbols[a]
             else:
                 return None
-        case Val(type_,val):
+        case Val(type_, val):
             return val
-

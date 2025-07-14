@@ -1,21 +1,21 @@
-import clingo
 from itertools import chain, combinations
 
+import clingo
+
+
 class PowersetExplorer:
-    def __init__(self,assumptions):
-        self.powerset = chain.from_iterable(
-            combinations(assumptions, r) for r in reversed(range(len(assumptions) + 1))
-        )
+    def __init__(self, assumptions):
+        self.powerset = chain.from_iterable(combinations(assumptions, r) for r in reversed(range(len(assumptions) + 1)))
         self.found_sat = []
         self.found_mucs = []
 
-    def add_sat(self,assumptions):
+    def add_sat(self, assumptions):
         self.found_sat.append(set(assumptions))
 
-    def add_unsat(self,assumptions):
+    def add_unsat(self, assumptions):
         self.found_mucs.append(set(assumptions))
 
-    def explored(self,assumptions):
+    def explored(self, assumptions):
         # skip if an already found satisfiable subset is superset
         if any(set(sat).issuperset(assumptions) for sat in self.found_sat):
             return True
@@ -38,29 +38,29 @@ class PowersetExplorer:
 
 
 class AspExplorer:
-    def __init__(self,assumptions):
+    def __init__(self, assumptions):
         self.ctrl = clingo.Control(["--heuristic=Domain"])
         self.assumption_map = dict()
         self.symbol_map = dict()
         with self.ctrl.backend() as backend:
             for a in assumptions:
-                symb = clingo.Function("a",[clingo.Number(a)])
+                symb = clingo.Function("a", [clingo.Number(a)])
                 atom = backend.add_atom(symb)
                 self.assumption_map[a] = atom
                 self.symbol_map[symb] = a
-                backend.add_heuristic(atom,clingo.backend.HeuristicType.True_,1,1,[])
-                backend.add_rule([atom],choice=True)
-        
-    def add_sat(self,assumptions):
-        with self.ctrl.backend() as backend:
-            backend.add_rule([],[-a for assumption,a in self.assumption_map.items() if assumption not in assumptions])
+                backend.add_heuristic(atom, clingo.backend.HeuristicType.True_, 1, 1, [])
+                backend.add_rule([atom], choice=True)
 
-    def add_unsat(self,assumptions):
+    def add_sat(self, assumptions):
         with self.ctrl.backend() as backend:
-            backend.add_rule([],[self.assumption_map[a] for a in assumptions])
+            backend.add_rule([], [-a for assumption, a in self.assumption_map.items() if assumption not in assumptions])
 
-    def explored(self,assumptions):
-        literals = [a if assumption in assumptions else -a for assumption,a in self.assumption_map.items()]
+    def add_unsat(self, assumptions):
+        with self.ctrl.backend() as backend:
+            backend.add_rule([], [self.assumption_map[a] for a in assumptions])
+
+    def explored(self, assumptions):
+        literals = [a if assumption in assumptions else -a for assumption, a in self.assumption_map.items()]
         result = self.ctrl.solve(assumptions=literals)
         return not result.satisfiable
 
@@ -75,8 +75,8 @@ class AspExplorer:
                 return None
 
 
-def minimizeCore(prg,e,literals):
-    with prg.solve(assumptions=literals,yield_=True) as handle:
+def minimizeCore(prg, e, literals):
+    with prg.solve(assumptions=literals, yield_=True) as handle:
         for m in handle:
             pass
         if handle.get().satisfiable:
@@ -87,11 +87,11 @@ def minimizeCore(prg,e,literals):
     include = []
     while maybe:
         a = maybe.pop()
-        ass = tuple(maybe+include)
+        ass = tuple(maybe + include)
         if e.explored(ass):
             include.append(a)
             continue
-        with prg.solve(assumptions=ass,yield_=True) as handle:
+        with prg.solve(assumptions=ass, yield_=True) as handle:
             for m in handle:
                 pass
             if handle.get().satisfiable:
@@ -101,25 +101,27 @@ def minimizeCore(prg,e,literals):
                 maybe = [a for a in maybe if a in handle.core()]
     return include
 
-def enumerate_mus(prg,switchOn):
+
+def enumerate_mus(prg, switchOn):
     e = AspExplorer(switchOn)
-    #e = PowersetExplorer(switchOn)
+    # e = PowersetExplorer(switchOn)
     query = e.get_query()
     while query is not None:
-        core = minimizeCore(prg,e,query)
+        core = minimizeCore(prg, e, query)
         if core is not None:
             yield core
             e.add_unsat(core)
         query = e.get_query()
 
 
-def get_assumptions(prg,predicate="usc_active"):
+def get_assumptions(prg, predicate="usc_active"):
     reverseMap = dict()
-    for atom in prg.symbolic_atoms.by_signature(predicate,1):
+    for atom in prg.symbolic_atoms.by_signature(predicate, 1):
         reverseMap[atom.literal] = atom.symbol.arguments[0]
     return reverseMap
 
-def relax(prg,names,predicate="usc_relax"):
+
+def relax(prg, names, predicate="usc_relax"):
     for n in names:
-        symb = clingo.Function (predicate,[n])
-        prg.assign_external(symb,True)
+        symb = clingo.Function(predicate, [n])
+        prg.assign_external(symb, True)
