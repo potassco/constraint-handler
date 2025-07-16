@@ -39,9 +39,14 @@ class ConstraintHandlerPropagator:
     def check(self, ctl: clingo.PropagateControl):
         # return
         print("CHECKING")
-
+        print(f"Is assignment total: {ctl.assignment.is_total}")
+        if not ctl.assignment.is_total:
+            print("Assignment is not total, cannot check ensures")
+            return
+        print(f"Assignment is total({ctl.assignment.is_total}), checking ensures")
         evaluations: Dict[clingo.Symbol, Any] = self.evaluated_solver_assignment(ctl)
         self.check_ensure(evaluations)
+        print("CHECK DONE")
 
     def check_ensure(self, evaluations: Dict[clingo.Symbol, Any]) -> None:
         """
@@ -59,6 +64,8 @@ class ConstraintHandlerPropagator:
             for var in evaluator.collectVars(expr):
                 deps.update(self.get_base_dependencies(var))
             print(f"Base dependencies: {deps}")
+        
+        print("Ensures checked")
     
     def evaluated_solver_assignment(self, ctl: clingo.PropagateControl) -> Dict[clingo.symbol, Any]:
         """
@@ -96,6 +103,7 @@ class ConstraintHandlerPropagator:
                         evaluations[var] = evaluated
                         print(f"temp Evaluated stored: {var} = {evaluated}")
 
+        print(f"Evaluations after {iterations} iterations: {evaluations}")
         return evaluations
 
     def parse_assign(self, symbol: clingo.Symbol):
@@ -148,7 +156,7 @@ class ConstraintHandlerPropagator:
         # Later, we have to also check the solver literal to see if it is a fact or not.
         # Probably, we only want to consider the variables that are NOT facts
         # Since adding facts to the nogood does not bring any value
-        
+
         deps = queue.Queue()
         for dep in self.assign_dependencies[symbol]:
             deps.put(dep)
@@ -161,6 +169,9 @@ class ConstraintHandlerPropagator:
                     deps.put(sub_dep)
 
             else:
-                base_deps.add(dep)
+                for dep_symbol, lit in self.assign_symbol_lit.items():
+                    print("dep ", dep_symbol, lit)
+                if self.assign_symbol_lit[dep] > 1:  # Ignore facts
+                    base_deps.add(dep)
 
         return base_deps
