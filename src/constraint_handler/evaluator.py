@@ -117,7 +117,7 @@ class SetAssign(NamedTuple):
     value: bool | int | float | str | clingo.Symbol
 
 
-def collectVars(expr):
+def collectVars(expr) -> set[clingo.Symbol]:
     match expr:
         case Operation(Variable(ov), args):
             return frozenset.union(*(collectVars(e) for e in args + [ov]))
