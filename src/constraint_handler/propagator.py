@@ -4,18 +4,31 @@ import constraint_handler.evaluator as evaluator
 
 from collections import defaultdict
 
-from typing import Any, Dict
+from typing import Any, Dict, NamedTuple, List, Tuple
 import queue
+
+class Val(NamedTuple):
+    name: clingo.Symbol
+    type_: evaluator.BaseType | None
+    value: bool | int | float | str | clingo.Symbol
+
 
 class ConstraintHandlerPropagator:
 
     def __init__(self):
         self.ensure_symbol_lit: Dict[clingo.symbol,int] = {}
+        self.ensure_symbol_parsed: Dict[clingo.symbol, Tuple[str, evaluator.Expr]] = {}
         self.assign_symbol_lit: Dict[clingo.symbol,int] = {}
+        self.assign_symbol_parsed: Dict[clingo.symbol, Tuple[str, clingo.Symbol, evaluator.Expr]] = {}
 
         self.evaluated: Dict[clingo.symbol, Any] = {}
 
         self.assign_dependencies: Dict[clingo.symbol, set[clingo.symbol]] = defaultdict(set)
+
+        self.reasons: Dict[clingo.symbol, set[int]] = defaultdict(set)
+
+        self.model: List[clingo.Symbol] = []
+
 
     def init(self, ctl: clingo.PropagateInit):
         self.get_ensure(ctl)
@@ -44,28 +57,34 @@ class ConstraintHandlerPropagator:
             print("Assignment is not total, cannot check ensures")
             return
         print(f"Assignment is total({ctl.assignment.is_total}), checking ensures")
+        self.reasons = defaultdict(set)
         evaluations: Dict[clingo.Symbol, Any] = self.evaluated_solver_assignment(ctl)
-        self.check_ensure(evaluations)
-        print("CHECK DONE")
+        print(f"after evaluation, the reasons are {self.reasons}")
+        self.evaluation = evaluations
+        backtrack = self.check_ensure(ctl, evaluations)
+        print(f"CHECK DONE, backtracking {backtrack}")
 
-    def check_ensure(self, evaluations: Dict[clingo.Symbol, Any]) -> None:
+    def check_ensure(self, ctl: clingo.PropagateControl, evaluations: Dict[clingo.Symbol, Any]) -> bool:
         """
         This method checks the ensure constraints in the propagator.
         It evaluates the expressions and checks if they hold true.
         If any ensure constraint is violated, it adds a nogood and propagates
         """
         for symbol, lit in self.ensure_symbol_lit.items():
-            name, expr = self.parse_ensure(symbol)
+            name, expr = self.ensure_symbol_parsed[symbol]
             print(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
             evaluated = evaluator.evaluate_expr(evaluations, expr)
-            # if evaluated is None or not evaluated:
+
             print(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
-            deps = set()
-            for var in evaluator.collectVars(expr):
-                deps.update(self.get_base_dependencies(var))
-            print(f"Base dependencies: {deps}")
+            if not evaluated:
+                nogood = {lit}.union(*(self.reasons[dvar] for dvar in evaluator.collectVars(expr)))
+                print(f"the reason for {expr} being {evaluated} is {nogood} based on vars in {evaluator.collectVars(expr)}")
+                if ctl.add_nogood(list(nogood)):
+                    assert False
+                return False
         
         print("Ensures checked")
+        return True
     
     def evaluated_solver_assignment(self, ctl: clingo.PropagateControl) -> Dict[clingo.symbol, Any]:
         """
@@ -101,11 +120,14 @@ class ConstraintHandlerPropagator:
                     if evaluated is not None:
                         changed = True
                         evaluations[var] = evaluated
-                        print(f"temp Evaluated stored: {var} = {evaluated}")
+                        self.reasons[var] = { lit }
+
+                        self.reasons[var] = self.reasons[var].union(*(self.reasons[dvar] for dvar in list(evaluator.collectVars(expr))))
+                        print(f"the reason for {var} taking value {evaluated} is {self.reasons[var]}")
 
         print(f"Evaluations after {iterations} iterations: {evaluations}")
         return evaluations
-
+    
     def parse_assign(self, symbol: clingo.Symbol):
         name = myClorm.cltopy(symbol.arguments[0])
         var = myClorm.cltopy(symbol.arguments[1])
@@ -119,33 +141,24 @@ class ConstraintHandlerPropagator:
 
     def get_ensure(self, ctl: clingo.PropagateInit):
         for atom in ctl.symbolic_atoms.by_signature("propagator_ensure",2):
-
             self.ensure_symbol_lit[atom.symbol] = ctl.solver_literal(atom.literal)
-            
-            name, expr = self.parse_ensure(atom.symbol)
-            print(f"ensure: {name} := {str(expr)} has literal {atom.literal} and solver literal {self.ensure_symbol_lit[atom.symbol]}")
-            print(f"variables in {str(expr)} are {evaluator.collectVars(expr)}")
-            print(f"Evaluated: {evaluator.evaluate_expr({},expr)}")
-
+            self.ensure_symbol_parsed[atom.symbol] = self.parse_ensure(atom.symbol)
+        
     def get_assign(self, ctl: clingo.PropagateInit):
         for atom in ctl.symbolic_atoms.by_signature("propagator_assign",3):
             self.assign_symbol_lit[atom.symbol] = ctl.solver_literal(atom.literal)
             
             name, var, expr = self.parse_assign(atom.symbol)
-            print(f"assign: {name} and var {var} := {str(expr)} has literal {atom.literal} and solver literal {self.assign_symbol_lit[atom.symbol]}")
-            print(f"variables in {str(expr)} are {evaluator.collectVars(expr)}")
+            self.assign_symbol_parsed[atom.symbol] = (name, var, expr)
 
-            self.assign_dependencies[var] = evaluator.collectVars(expr)
+            self.assign_dependencies[var].update(evaluator.collectVars(expr))
 
             # Any facts assigning to a variable are stored immediately
             # in the evaluated dict
-            print(f"Evaluated dict: {self.evaluated}")
-            print(f"Evaluated: {evaluator.evaluate_expr(self.evaluated, expr)}")
             if ctl.assignment.is_true(ctl.solver_literal(atom.literal)):
                 evaluated = evaluator.evaluate_expr(self.evaluated, expr)
                 if evaluated is not None:
                     self.evaluated[var] = evaluated
-                    print(f"Evaluated stored: {var} = {evaluated}")
 
     def get_base_dependencies(self, symbol: clingo.Symbol) -> set[clingo.Symbol]:
         """
@@ -169,9 +182,18 @@ class ConstraintHandlerPropagator:
                     deps.put(sub_dep)
 
             else:
-                for dep_symbol, lit in self.assign_symbol_lit.items():
-                    print("dep ", dep_symbol, lit)
-                if self.assign_symbol_lit[dep] > 1:  # Ignore facts
-                    base_deps.add(dep)
+                base_deps.add(dep)
 
         return base_deps
+
+    def on_model(self,model):
+        self.model = []
+        for (var, val) in self.evaluation.items():
+            pyAtom = Val(var,evaluator.get_baseType(val),val)
+            print(f"adding atom {pyAtom}",end=" ")
+            clAtom = myClorm.pytocl(pyAtom)
+            print(f"= {clAtom}")
+            if not model.contains(clAtom):
+                model.extend([clAtom])
+                self.model.append(clAtom)
+
