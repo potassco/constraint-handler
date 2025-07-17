@@ -10,8 +10,6 @@
 %%% there should be 2 models: { e1=true, e2=true } and { e1=false, e2=false }
 
 %1 { assign(p_e1,e1,val(bool,(true;false))) } 1.
-#heuristic assign(p_e1,e1,val(bool,(false))). [5,level]
-#heuristic assign(p_e1,e1,val(bool,(false))). [1,sign]
 
 % assign(p_e1,e1,val(bool,(true))).
 
