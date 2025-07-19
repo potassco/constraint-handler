@@ -16,6 +16,9 @@ dependencies = [
     "clingo>=5.7.1",
 ]
 
+[project.scripts]
+clingspector = "clingspector.main:main"
+
 [project.urls]
 Homepage = "https://github.com/potassco/constraint-handler.git/"
 
