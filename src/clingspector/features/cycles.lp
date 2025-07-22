@@ -1,19 +1,13 @@
-% Collect variables involved in cyclic dependencies.
-assign(1, a, variable(c)).
-assign(1, b, operation(add, (variable(a), (variable(e), ())))).
-assign(1, c, variable(b)).
-assign(2, d, variable(b)).
-assign(2, e, variable(d)).
-assign(2, x, variable(y)).
-assign(2, y, variable(x)).
+% Collect information about cyclic dependencies.
 
-assign(2, k, variable(o)).
-assign(2, o, variable(i)).
-assign(2, i, variable(t)).
-assign(2, t, variable(k)).
-
+% if a variable depends on itself or on another variable that depends on it,
+% then there is a cycle
 cs__cycle(X, Y) :- cs__depend(X,Y), cs__depend(Y,X).
+
+% Deduplicate cycles to avoid displaying the same cycle multiple times
 cs__cycle_deduplicated(X, Y) :- cs__cycle(X, Y), cs__cycle(Y, X), X < Y, not cs__cycle_deduplicated(_,X).
+
+% Collect involved variables in order
 cs__cycle_order(X, Y, N) :- cs__cycle_deduplicated(X, Y), #count{Z : cs__cycle_deduplicated(X, Z), Z < Y} = N.
 
 % Prepare lists of involved variables
