@@ -2,7 +2,7 @@ import pytest
 import logging
 import os
 from clingspector.checker import Checker
-from clingspector.diagnostic import DiagnosticType
+from clingspector.diagnostic import CyclicDependencyDiagnostic, DiagnosticType, UndefinedVariableDiagnostic
 from clingspector.utils.log_formatter import LoggingFormatter
 
 logger = logging.getLogger("clingspector")
@@ -31,10 +31,9 @@ def test_undefined_variable(checker: Checker):
     diagnostics = checker.get_diagnostics()
     assert len(diagnostics) == 1
     diag = diagnostics[0]
-    assert diag.type == DiagnosticType.UNDEFINED_VARIABLE
-    # assert isinstance(diag, UndefinedVariableDiagnostic) 
+    assert isinstance(diag, UndefinedVariableDiagnostic)
     assert diag.variable == "x"
-    assert diag.dependent_variable == "y"
+    assert diag.undefined_variable == "y"
 
 def test_cyclic_dependency(checker: Checker):
     file_path = os.path.join(TEST_FILES_DIR, "cycle.lp")
@@ -43,5 +42,5 @@ def test_cyclic_dependency(checker: Checker):
     diagnostics = checker.get_diagnostics()
     assert len(diagnostics) == 1
     diag = diagnostics[0]
-    assert diag.type == DiagnosticType.CYCLIC_DEPENDENCY
+    assert isinstance(diag, CyclicDependencyDiagnostic)
     assert diag.involved_variables == ["x", "y"]
