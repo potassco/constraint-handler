@@ -1,12 +1,40 @@
 """
 Test cases for main library functions.
 """
+from typing import Iterator, Set
 
+from clingo import Symbol
 from clingo import Control
 from clingo.ast import ProgramBuilder
 
 import constraint_handler
+import constraint_handler.propagator as prop
 
+def get_solutions(program: str) -> Iterator[Set[Symbol]]:
+    """
+    Helper function to get the solution from a given program.
+    """
+    ctrl = Control("0")
+    
+    propagator = prop.ConstraintHandlerPropagator()
+    ctrl.register_propagator(propagator)
+
+    pbuilder = ProgramBuilder(ctrl)
+    constraint_handler.add_encoding_to_program_builder(pbuilder)
+    ctrl.add("base", [], program)
+
+    ctrl.ground([("base", [])])
+    with ctrl.solve(yield_=True) as solve_handle:
+        for model in solve_handle:
+            propagator.on_model(model)
+            solution = set()
+            for fact in model.symbols(shown=True):
+                solution.add(fact.__str__())
+
+            for fact in propagator.model:
+                solution.add(fact.__str__())
+
+            yield solution
 
 def test():
     constraint_expr = """
@@ -15,19 +43,7 @@ def test():
     #show value/3.
     """
 
-    ctrl = Control("0")
-    pbuilder = ProgramBuilder(ctrl)
-    constraint_handler.add_encoding_to_program_builder(pbuilder)
-
-    ctrl.add("base", [], constraint_expr)
-
-    ctrl.ground([("base", [])])
-    solve_handle = ctrl.solve(yield_=True)
-    for model in solve_handle:
-        solution = set()
-        for fact in model.symbols(shown=True):
-            solution.add(fact.__str__())
-
+    for solution in get_solutions(constraint_expr):
         assert solution == {
             "value(bike_frame_size,int,26)",
             'value(bike_frame_type,str,"Mountain")',
