@@ -1,6 +1,6 @@
 import argparse
 import logging
-from clingspector.checker import Checker, Flags
+from clingspector.checker import Checker, CheckerFlag
 from clingspector.utils.log_formatter import LoggingFormatter
 
 
@@ -37,7 +37,7 @@ def main():
     args = parse_arguments()
 
     checker = Checker()
-    checker.set_flags(Flags.VERBOSE, args.verbose)
+    checker.set_flags(CheckerFlag.VERBOSE, args.verbose)
     checker.load(args.input_files)
     checker.solve()
 

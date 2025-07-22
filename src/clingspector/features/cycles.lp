@@ -14,6 +14,9 @@ cs__cycle_order(X, Y, N) :- cs__cycle_deduplicated(X, Y), #count{Z : cs__cycle_d
 cs__cycle_dependeny_lists(X,(X, ()), 0) :- cs__cycle_deduplicated(X,_).
 cs__cycle_dependeny_lists(X,(Y, Z), N+1) :- cs__cycle_dependeny_lists(X,Z, N), cs__cycle_order(X, Y, N).
 
+% Special case: A variable directly depends on itself
+cs__cycle_dependeny_lists(X,(X, ()), 0) :- cs__cycle(X, X), #count {Z: cs__cycle(X, Z)} = 1.
+
 % Only get the largest list
 cs_cyclic_dependency(X,Z) :- cs__cycle_dependeny_lists(X,Z, N), not cs__cycle_dependeny_lists(X,_, N+1).
 

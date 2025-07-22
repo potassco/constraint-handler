@@ -7,7 +7,7 @@ from clingspector.diagnostic import Diagnostic
 
 logger = logging.getLogger("clingspector")
 
-class Flags(Enum):
+class CheckerFlag(Enum):
     VERBOSE = 1
 
 class Checker:
@@ -34,9 +34,9 @@ class Checker:
         """Set default flags for the checker."""
         self._verbose = False
 
-    def set_flags(self, option: Flags, value:bool):
+    def set_flags(self, option: CheckerFlag, value:bool):
         match option:
-            case Flags.VERBOSE:
+            case CheckerFlag.VERBOSE:
                 self._verbose = value
 
     def load(self, files):
