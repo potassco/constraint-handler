@@ -2,7 +2,7 @@ import pytest
 import logging
 import os
 from clingspector.checker import Checker
-from clingspector.diagnostics import DiagnosticType
+from clingspector.diagnostic import DiagnosticType
 from clingspector.utils.log_formatter import LoggingFormatter
 
 logger = logging.getLogger("clingspector")

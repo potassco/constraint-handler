@@ -41,14 +41,14 @@ cs_unsupported_operator_type(O) :- cs__expression(E), E=operation(O,_), not cs__
 % but there exists no valid operation with the given types
 
 % Unary
-cs_unsupported_operation_type(O, (ARG_T)) :- cs__expression(E), 
+cs_unsupported_argument_type(O, (ARG_T)) :- cs__expression(E), 
                 E=operation(O, ARGUMENTS), 
                 ARGUMENTS=(ARG, ()),
                 cs__expression_type(ARG, ARG_T),
                 cs__operator(O),
                 not cs__valid_operation(O, (ARG_T, ()), _).
 % Binary
-cs_unsupported_operation_type(O, (ARG_1_T, ARG_2_T)) :- cs__expression(E), 
+cs_unsupported_argument_type(O, (ARG_1_T, ARG_2_T)) :- cs__expression(E), 
                 E=operation(O, ARGUMENTS), 
                 ARGUMENTS=(ARG_1, (ARG_2, ())),
                 cs__expression_type(ARG_1, ARG_1_T),
@@ -62,4 +62,4 @@ cs_unsupported_operation_type(O, (ARG_1_T, ARG_2_T)) :- cs__expression(E),
 #show cs_unsupported_operator_type/1.
 #show eargs/4.
 #show cs_unsupported_type/1.
-#show cs_unsupported_operation_type/2.
+#show cs_unsupported_argument_type/2.

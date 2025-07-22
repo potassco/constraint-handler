@@ -3,7 +3,7 @@ import logging
 import os
 from clingo.control import Control, Model
 
-from clingspector.diagnostics import CyclicDependencyDiagnostic, Diagnostic, UndefinedVariableDiagnostic
+from clingspector.diagnostic import Diagnostic
 
 logger = logging.getLogger("clingspector")
 
@@ -53,26 +53,14 @@ class Checker:
             logger.info("UNSAT")
 
     def _on_model(self, model:Model):
-        cycles = {}
-
         for symbol in model.symbols(shown = True):
-            match symbol.name:
-                case "cs_suspicious_depend":
-                    self._diagnostics.append(UndefinedVariableDiagnostic.from_symbol(symbol))
-                case "cs_cycle_involved":
-                    # involved(a,b) should add b to the list of involved variables for cycle a
-                    if symbol.arguments[0] not in cycles:
-                        cycles[symbol.arguments[0]] = [symbol.arguments[0].name]
-                    cycles[symbol.arguments[0]].append(symbol.arguments[1].name)
-                case _:
-                    pass
+            diagnostic = Diagnostic.from_symbol(symbol)
 
-        if cycles:
-            for involved in cycles.values():
-                self._diagnostics.append(CyclicDependencyDiagnostic(involved))
+            if diagnostic:
+                self._diagnostics.append(diagnostic)
 
         for diagnostic in self._diagnostics:
             logger.warning(str(diagnostic))
 
         if self._verbose:
-            logger.info(', '.join(str(s) for s in model.symbols(shown=True)))
+            logger.info('\n '.join(str(s) for s in model.symbols(shown=True)))
