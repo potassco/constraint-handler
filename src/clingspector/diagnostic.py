@@ -51,8 +51,11 @@ class CyclicDependencyDiagnostic(Diagnostic):
 
     @staticmethod
     def from_symbol(symbol: Symbol):
+        involved_symbols = asp_to_python_list(symbol.arguments[1])
+        involved_symbols.reverse()
+
         return CyclicDependencyDiagnostic(
-            involved_variables=[arg.name for arg in asp_to_python_list(symbol.arguments[1])]
+            involved_variables=[s.name for s in involved_symbols]
         )
 
     def __str__(self):
