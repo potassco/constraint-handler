@@ -13,7 +13,7 @@ cs__expressionList(ES) :- cs__expression(E), E=operation(O,ES).
 cs__expression(HEAD) :- cs__expressionList(ES), ES=(HEAD,TAIL).
 cs__expressionList(TAIL) :- cs__expressionList(ES), ES=(HEAD,TAIL).
 
-% An expression is a sub-expression 
+% An expression is a sub-expression
 % if it is either the head
 % or a sub-expression of the tail in a list of expressions
 cs__subExprs(ES,HEAD) :- cs__expressionList(ES), ES=(HEAD,TAIL).

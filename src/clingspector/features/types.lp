@@ -9,18 +9,18 @@ cs__expression_type(E,T) :- cs__expression(E), E=val(T, _).
 % An expression that is a variable has the type of that variable
 cs__expression_type(E,T) :- cs__expression(E), E=variable(V), cs__variable_type(V,T).
 
-% If an expression is a valid operation, 
+% If an expression is a valid operation,
 % it has the type of that operation's return type
 
 % Unary
-cs__expression_type(E,T) :- cs__expression(E), 
-                E=operation(O, ARGUMENTS), 
+cs__expression_type(E,T) :- cs__expression(E),
+                E=operation(O, ARGUMENTS),
                 ARGUMENTS=(ARG, ()),
                 cs__expression_type(ARG, ARG_T),
                 cs__valid_operation(O, (ARG_T, ()), T).
 % Binary
-cs__expression_type(E,T) :- cs__expression(E), 
-                E=operation(O, ARGUMENTS), 
+cs__expression_type(E,T) :- cs__expression(E),
+                E=operation(O, ARGUMENTS),
                 ARGUMENTS=(ARG_1, (ARG_2, ())),
                 cs__expression_type(ARG_1, ARG_1_T),
                 cs__expression_type(ARG_2, ARG_2_T),
@@ -41,15 +41,15 @@ cs_unsupported_operator_type(O) :- cs__expression(E), E=operation(O,_), not cs__
 % but there exists no valid operation with the given types
 
 % Unary
-cs_unsupported_argument_type(O, (ARG_T)) :- cs__expression(E), 
-                E=operation(O, ARGUMENTS), 
+cs_unsupported_argument_type(O, (ARG_T)) :- cs__expression(E),
+                E=operation(O, ARGUMENTS),
                 ARGUMENTS=(ARG, ()),
                 cs__expression_type(ARG, ARG_T),
                 cs__operator(O),
                 not cs__valid_operation(O, (ARG_T, ()), _).
 % Binary
-cs_unsupported_argument_type(O, (ARG_1_T, ARG_2_T)) :- cs__expression(E), 
-                E=operation(O, ARGUMENTS), 
+cs_unsupported_argument_type(O, (ARG_1_T, ARG_2_T)) :- cs__expression(E),
+                E=operation(O, ARGUMENTS),
                 ARGUMENTS=(ARG_1, (ARG_2, ())),
                 cs__expression_type(ARG_1, ARG_1_T),
                 cs__expression_type(ARG_2, ARG_2_T),
