@@ -24,6 +24,10 @@ class ConstraintHandlerPropagator:
         # holds evaluations of assignments in the root level
         self.evaluated: Dict[clingo.symbol, Any] = {}
 
+        # holds the evuluations after checking on a complete assignment
+        # Used to add symbols to the model
+        self.final_eval: Dict[clingo.symbol, Any] = {}
+
         self.reasons: Dict[clingo.symbol, set[int]] = defaultdict(set)
 
         self.model: List[clingo.Symbol] = []
@@ -33,25 +37,39 @@ class ConstraintHandlerPropagator:
         self.get_ensure(ctl)
         self.get_assign(ctl)
 
+        ctl.check_mode = clingo.PropagatorCheckMode.Both
+
         print("INIT DONE")
         print("#"*50)
 
     def check(self, ctl: clingo.PropagateControl):
         # return
         print("CHECKING")
-        print(f"Is assignment total: {ctl.assignment.is_total}")
-        if not ctl.assignment.is_total:
-            print("Assignment is not total, cannot check ensures")
-            return
-        print(f"Assignment is total({ctl.assignment.is_total}), checking ensures")
+        # print(f"Is assignment total: {ctl.assignment.is_total}")
+        # if not ctl.assignment.is_total:
+        #     print("Assignment is not total, cannot check ensures")
+        #     return
+        # print(f"Assignment is total({ctl.assignment.is_total}), checking ensures")
 
         self.reasons = defaultdict(set)
         evaluations: Dict[clingo.Symbol, Any] = self.evaluated_solver_assignment(ctl)
         print(f"after evaluation, the reasons are {self.reasons}")
-        self.evaluation = evaluations
         
         backtrack = self.check_ensure(ctl, evaluations)
         print(f"CHECK DONE, backtracking {backtrack}")
+        if backtrack:
+            return
+        
+        if ctl.assignment.is_total:
+            self.final_eval = evaluations
+
+    # def propagate(self, ctl: clingo.PropagateControl):
+    #     self.reasons = defaultdict(set)
+    #     evaluations: Dict[clingo.Symbol, Any] = self.evaluated_solver_assignment(ctl)
+    #     print(f"after evaluation, the reasons are {self.reasons}")
+    
+    #     backtrack = self.check_ensure(ctl, evaluations)
+    #     print(f"PROPAGATION DONE, backtracking {backtrack}")
 
     def check_ensure(self, ctl: clingo.PropagateControl, evaluations: Dict[clingo.Symbol, Any]) -> bool:
         """
@@ -69,7 +87,7 @@ class ConstraintHandlerPropagator:
                 nogood = {lit}.union(*(self.reasons[dvar] for dvar in evaluator.collectVars(expr)))
                 print(f"the reason for {expr} being {evaluated} is {nogood} based on vars in {evaluator.collectVars(expr)}")
                 if ctl.add_nogood(list(nogood)):
-                    assert False
+                    assert False, "Added violated constraint but solver did not detect it"
                 return False
         
         print("Ensures checked")
@@ -143,7 +161,7 @@ class ConstraintHandlerPropagator:
 
     def on_model(self,model):
         self.model = []
-        for (var, val) in self.evaluation.items():
+        for (var, val) in self.final_eval.items():
             pyAtom = Val(var,evaluator.get_baseType(val),val)
             print(f"adding atom {pyAtom}",end=" ")
             clAtom = myClorm.pytocl(pyAtom)
