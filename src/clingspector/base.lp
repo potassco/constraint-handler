@@ -47,7 +47,7 @@ cs__logic_operator(conj; disj; ite; leqv; limp; lnot; lxor).
 cs__comparison_operator(eq; neq; leq; lt; geq; gt).
 cs__binary_operator(add; sub; mult; div; pow).
 cs__set_operator(makeSet; isin; notin; union; inter; subset).
-cs__other_operator(minus; max; min; length).
+cs__other_operator(minus; max; min; length; concat).
 
 cs__operator(O) :- cs__unary_operator(O).
 cs__operator(O) :- cs__logic_operator(O).
@@ -59,7 +59,13 @@ cs__operator(O) :- cs__other_operator(O).
 % Operations
 %
 
+% Valid operations for bools
+cs__valid_operation(lnot, (bool, ()), bool).
+cs__valid_operation(eq;neq, (bool, (bool, ())), bool).
+cs__valid_operation(O, (bool, (bool, ())), bool) :- cs__logic_operator(O), O != (lnot, ite).
+
 % Valid operations for ints
+cs__valid_operation(max;min;abs;minus, (int, ()), int).
 cs__valid_operation(O, (int, (int, ())), int) :- cs__binary_operator(O).
 cs__valid_operation(O, (int, (int, ())), bool) :- cs__comparison_operator(O).
 
@@ -67,3 +73,8 @@ cs__valid_operation(O, (int, (int, ())), bool) :- cs__comparison_operator(O).
 cs__valid_operation(O, (float, ()), float) :- cs__unary_operator(O).
 cs__valid_operation(O, (float, (float, ())), float) :- cs__binary_operator(O).
 cs__valid_operation(O, (float, (float, ())), bool) :- cs__comparison_operator(O).
+
+% Valid operations for str
+cs__valid_operation(eq;neq, (str, ()), bool).
+cs__valid_operation(length, (str, ()), int).
+cs__valid_operation(concat, (str, (str, ())), str).
