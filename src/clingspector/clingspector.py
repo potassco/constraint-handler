@@ -1,7 +1,9 @@
 """ This module contains the Clingspector class for checking Clingo logic programs.
 
 """
+
 from __future__ import annotations
+
 import logging
 import os
 from enum import Enum
@@ -12,15 +14,16 @@ from clingspector.diagnostic import Diagnostic
 
 logger = logging.getLogger("clingspector")
 
+
 class Clingspector:
-    """ Clingspector class for validating Clingo logic programs and reporting errors."""
+    """Clingspector class for validating Clingo logic programs and reporting errors."""
 
     class Option(Enum):
-        """ Options for the Clingspector."""
+        """Options for the Clingspector."""
 
         VERBOSE = 1
         """ Enable verbose output.
-        
+
             This includes the clingo model output.
         """
 
@@ -59,7 +62,7 @@ class Clingspector:
             self._ctl.load(file)
 
     def run(self) -> None:
-        """ Run the Clingspector to check the loaded Clingo files."""
+        """Run the Clingspector to check the loaded Clingo files."""
 
         self._ctl.ground([("base", [])])
         ret = self._ctl.solve(on_model=self._on_model)
