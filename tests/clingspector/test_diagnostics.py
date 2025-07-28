@@ -14,6 +14,7 @@ from clingspector.diagnostic import (
     UndefinedDependencyDiagnostic,
     UnsupportedArgumentTypeDiagnostic,
     UnsupportedOperatorDiagnostic,
+    UnsupportedTypeDiagnostic,
 )
 from clingspector.utils.log_formatter import LoggingFormatter
 
@@ -130,6 +131,20 @@ def test_unsupported_argument_type():
     assert isinstance(diag, UnsupportedArgumentTypeDiagnostic)
     assert diag.operator == "add"
     assert diag.arguments == ["int", "float"]
+
+
+def test_unsupported_type():
+    """Test a program with an unsupported type.
+
+    This should produce a diagnostic indicating the unsupported type.
+    """
+
+    diagnostics = get_diagnostics("unsupported_type.lp")
+
+    assert len(diagnostics) == 1
+    diag = diagnostics[0]
+    assert isinstance(diag, UnsupportedTypeDiagnostic)
+    assert diag.type == "some_unsupported_type"
 
 
 def test_set_not_declared():

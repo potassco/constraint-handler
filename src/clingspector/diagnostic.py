@@ -154,6 +154,22 @@ class UnsupportedArgumentTypeDiagnostic(Diagnostic):
 
 
 @dataclass
+class UnsupportedTypeDiagnostic(Diagnostic):
+    """Diagnostic for unsupported types."""
+
+    type: str
+    """ The unsupported type."""
+
+    @staticmethod
+    def from_symbol(symbol: Symbol):
+        """Create an UnsupportedTypeDiagnostic from a Clingo symbol."""
+        return UnsupportedTypeDiagnostic(type=str(symbol.arguments[0]))
+
+    def __str__(self):
+        return f"Unsupported type: [{self.type}]."
+
+
+@dataclass
 class TypeMismatchDiagnostic(Diagnostic):
     """Diagnostic for type mismatches in variables."""
 
@@ -189,6 +205,7 @@ def register_diagnostics(cls):
         DiagnosticType.CYCLIC_DEPENDENCY: CyclicDependencyDiagnostic,
         DiagnosticType.UNSUPPORTED_OPERATOR_TYPE: UnsupportedOperatorDiagnostic,
         DiagnosticType.UNSUPPORTED_ARGUMENT_TYPE: UnsupportedArgumentTypeDiagnostic,
+        DiagnosticType.UNSUPPORTED_TYPE: UnsupportedTypeDiagnostic,
         DiagnosticType.TYPE_MISMATCH: TypeMismatchDiagnostic,
     }
     return cls
