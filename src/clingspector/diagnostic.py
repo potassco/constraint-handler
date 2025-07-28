@@ -20,6 +20,7 @@ class DiagnosticType(Enum):
     UNSUPPORTED_OPERATOR_TYPE = "cs_unsupported_operator_type"
     UNSUPPORTED_ARGUMENT_TYPE = "cs_unsupported_argument_type"
     UNSUPPORTED_TYPE = "cs_unsupported_type"
+    TYPE_MISMATCH = "cs_type_mismatch"
 
 
 @dataclass
@@ -152,6 +153,30 @@ class UnsupportedArgumentTypeDiagnostic(Diagnostic):
         return f"Unsupported argument types for ({self.operator}): [{", ".join(self.arguments)}]"
 
 
+@dataclass
+class TypeMismatchDiagnostic(Diagnostic):
+    """Diagnostic for type mismatches in variables."""
+
+    variable: str
+    """ The variable with a type mismatch."""
+    expected_type: str
+    """ The expected type of the variable."""
+    actual_type: str
+    """ The actual type of the variable."""
+
+    @staticmethod
+    def from_symbol(symbol: Symbol):
+        """Create a TypeMismatchDiagnostic from a Clingo symbol."""
+        return TypeMismatchDiagnostic(
+            variable=str(symbol.arguments[0]),
+            expected_type=str(symbol.arguments[1]),
+            actual_type=str(symbol.arguments[2]),
+        )
+
+    def __str__(self):
+        return f"Type mismatch for '{self.variable}': expected [{self.expected_type}], got [{self.actual_type}]."
+
+
 def register_diagnostics(cls):
     """Decorator to attach _registry to Diagnostic after subclasses are defined.
 
@@ -164,6 +189,7 @@ def register_diagnostics(cls):
         DiagnosticType.CYCLIC_DEPENDENCY: CyclicDependencyDiagnostic,
         DiagnosticType.UNSUPPORTED_OPERATOR_TYPE: UnsupportedOperatorDiagnostic,
         DiagnosticType.UNSUPPORTED_ARGUMENT_TYPE: UnsupportedArgumentTypeDiagnostic,
+        DiagnosticType.TYPE_MISMATCH: TypeMismatchDiagnostic,
     }
     return cls
 

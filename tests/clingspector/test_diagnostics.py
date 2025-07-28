@@ -9,6 +9,7 @@ from clingspector.clingspector import Clingspector
 from clingspector.diagnostic import (
     CyclicDependencyDiagnostic,
     Diagnostic,
+    TypeMismatchDiagnostic,
     UndefinedAssignmentDiagnostic,
     UndefinedDependencyDiagnostic,
     UnsupportedArgumentTypeDiagnostic,
@@ -144,3 +145,19 @@ def test_set_not_declared():
     diag = diagnostics[0]
     assert isinstance(diag, UndefinedAssignmentDiagnostic)
     assert diag.variable == "b"
+
+
+def test_type_mismatch():
+    """Test a program with a type mismatch.
+
+    This should produce a diagnostic indicating the type mismatch.
+    """
+
+    diagnostics = get_diagnostics("type_mismatch.lp")
+
+    assert len(diagnostics) == 1
+    diag = diagnostics[0]
+    assert isinstance(diag, TypeMismatchDiagnostic)
+    assert diag.variable == "b"
+    assert diag.expected_type == "set"
+    assert diag.actual_type == "int"

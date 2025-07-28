@@ -77,13 +77,15 @@ cs_unsupported_argument_type(O, (ARG_1_T, ARG_2_T)) :- cs__expression(E),
                 cs__expression_type(ARG_2, ARG_2_T),
                 cs__operator(O),
                 not cs__valid_operation(O, (ARG_1_T, (ARG_2_T, ())), _).
+%
+% Type Mismatches
+%
+cs_type_mismatch(X, T_1, T_2) :- cs__variable_type(X, T_1), cs__variable_type(X, T_2), T_1 != T_2.
+cs_type_mismatch(X, set, T) :- set_assign(_,X,_), cs__defined(X), not cs__defined_set(X), cs__variable_type(X, T).
+cs_type_mismatch(X, multimap, T) :- multimap_assign(_,X,_,_), cs__defined(X), not cs__defined_multimap(X), cs__variable_type(X, T).
 
-% cs__assign_non_set(X) :- set_assign(_,X,_), cs__defined(X), not cs__defined_set(X).
-
-% #show cs__expression/1.
-% #show cs__expression_type/2.
-% #show cs__variable_type/2.
 #show cs_unsupported_operator_type/1.
 #show eargs/4.
 #show cs_unsupported_type/1.
 #show cs_unsupported_argument_type/2.
+#show cs_type_mismatch/3.
