@@ -8,9 +8,17 @@
 % - it is declared as one
 cs__defined_set(X) :- set_declare(_,X).
 % - a set has been assigned to it
-cs__defined_set(X) :- assign(_,X, variable(Y)), cs__defined_set(Y).
+cs__defined_set(X) :- assign(_, X, variable(Y)), cs__defined_set(Y).
 % - it was assigned using an operation with return type set
-cs__defined_set(X) :- assign(_,X, O), O=operation(OP,_), cs__valid_operation(OP, _, set).
+cs__defined_set(X) :- assign(_, X, O), O=operation(OP, _), cs__valid_operation(OP, _, set).
+
+% A variable is defined as a set if:
+% - it is declared as one
+cs__defined_multimap(X) :- multimap_declare(_, X).
+% - a multimap has been assigned to it
+cs__defined_multimap(X) :- assign(_, X, variable(Y)), cs__defined_multimap(Y).
+% - it was assigned using an operation with return type multimap
+cs__defined_multimap(X) :- assign(_, X, O), O=operation(OP, _), cs__valid_operation(OP, _, multimap).
 
 % A variable is defined if it has an assignment or is a defined set
 cs__defined(X) :- assign(_,X,_).
@@ -23,6 +31,8 @@ cs__defined(X) :- cs__defined_set(X).
 % Expressions are defined in assignments and ensures
 cs__expression(E) :- assign(_,X,E).
 cs__expression(E) :- set_assign(_,X,E).
+cs__expression(E) :- multimap_assign(_,X,E,_).
+cs__expression(E) :- multimap_assign(_,X,_,E).
 cs__expression(E) :- ensure(_,E).
 
 % Expressions can be lists of sub-expressions
