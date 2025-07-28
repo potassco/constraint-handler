@@ -1,11 +1,28 @@
 % This encoding is supposed to collect and define the basis for other features
 
 %
+% Variables
+%
+
+% A variable is defined as a set if:
+% - it is declared as one
+cs__defined_set(X) :- set_declare(_,X).
+% - a set has been assigned to it
+cs__defined_set(X) :- assign(_,X, variable(Y)), cs__defined_set(Y).
+% - it was assigned using an operation with return type set
+cs__defined_set(X) :- assign(_,X, O), O=operation(OP,_), cs__valid_operation(OP, _, set).
+
+% A variable is defined if it has an assignment or is a defined set
+cs__defined(X) :- assign(_,X,_).
+cs__defined(X) :- cs__defined_set(X).
+
+%
 % Expressions
 %
 
 % Expressions are defined in assignments and ensures
 cs__expression(E) :- assign(_,X,E).
+cs__expression(E) :- set_assign(_,X,E).
 cs__expression(E) :- ensure(_,E).
 
 % Expressions can be lists of sub-expressions
@@ -31,6 +48,7 @@ cs__dependExpr(E,Y) :- cs__expression(E), E=operation(O,ES), cs__dependExpr(SUB,
 
 % Variable dependency
 cs__depend(X,Y) :- assign(_,X,E), cs__dependExpr(E,Y).
+cs__depend(X,Y) :- set_assign(_,X,E), cs__dependExpr(E,Y).
 cs__depend(X,Y) :- cs__depend(X,Z), cs__depend(Z,Y).
 
 %
@@ -61,11 +79,11 @@ cs__operator(O) :- cs__other_operator(O).
 
 % Valid operations for bools
 cs__valid_operation(lnot, (bool, ()), bool).
-cs__valid_operation(eq;neq, (bool, (bool, ())), bool).
-cs__valid_operation(O, (bool, (bool, ())), bool) :- cs__logic_operator(O), O != (lnot, ite).
+cs__valid_operation((eq;neq), (bool, (bool, ())), bool).
+cs__valid_operation(O, (bool, (bool, ())), bool) :- cs__logic_operator(O), O != (lnot; ite).
 
 % Valid operations for ints
-cs__valid_operation(max;min;abs;minus, (int, ()), int).
+cs__valid_operation((max;min;abs;minus), (int, ()), int).
 cs__valid_operation(O, (int, (int, ())), int) :- cs__binary_operator(O).
 cs__valid_operation(O, (int, (int, ())), bool) :- cs__comparison_operator(O).
 
@@ -75,6 +93,11 @@ cs__valid_operation(O, (float, (float, ())), float) :- cs__binary_operator(O).
 cs__valid_operation(O, (float, (float, ())), bool) :- cs__comparison_operator(O).
 
 % Valid operations for str
-cs__valid_operation(eq;neq, (str, ()), bool).
+cs__valid_operation((eq;neq), (str, ()), bool).
 cs__valid_operation(length, (str, ()), int).
 cs__valid_operation(concat, (str, (str, ())), str).
+
+% Valid operations for set
+cs__valid_operation(makeSet, (T, ()), set) :- cs__type(T).
+cs__valid_operation((isin; notin), (set, (set, ())), bool).
+cs__valid_operation((union; inter; subset), (set, (set, ())), set).

@@ -3,6 +3,9 @@
 % A variable has the type of its defining expression
 cs__variable_type(V,T) :- assign(_, V, E), cs__expression_type(E,T).
 
+% A variable is a set if it was declared as one
+cs__variable_type(V,set) :- cs__defined_set(_, V).
+
 % An expression that is a value has the type of that value
 cs__expression_type(E,T) :- cs__expression(E), E=val(T, _).
 
@@ -55,6 +58,8 @@ cs_unsupported_argument_type(O, (ARG_1_T, ARG_2_T)) :- cs__expression(E),
                 cs__expression_type(ARG_2, ARG_2_T),
                 cs__operator(O),
                 not cs__valid_operation(O, (ARG_1_T, (ARG_2_T, ())), _).
+
+% cs__assign_non_set(X) :- set_assign(_,X,_), cs__defined(X), not cs__defined_set(X).
 
 % #show cs__expression/1.
 % #show cs__expression_type/2.
