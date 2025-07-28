@@ -16,7 +16,7 @@ class DiagnosticType(Enum):
 
     UNDEFINED_VARIABLE = "cs_undefined_variable"
     CYCLIC_DEPENDENCY = "cs_cyclic_dependency"
-    UNSUPPORTED_OPERATOR = "cs_unsupported_operator"
+    UNSUPPORTED_OPERATOR_TYPE = "cs_unsupported_operator_type"
     UNSUPPORTED_ARGUMENT_TYPE = "cs_unsupported_argument_type"
     UNSUPPORTED_TYPE = "cs_unsupported_type"
 
@@ -141,7 +141,7 @@ def register_diagnostics(cls):
     cls._registry = {
         DiagnosticType.UNDEFINED_VARIABLE: UndefinedVariableDiagnostic,
         DiagnosticType.CYCLIC_DEPENDENCY: CyclicDependencyDiagnostic,
-        DiagnosticType.UNSUPPORTED_OPERATOR: UnsupportedOperatorDiagnostic,
+        DiagnosticType.UNSUPPORTED_OPERATOR_TYPE: UnsupportedOperatorDiagnostic,
         DiagnosticType.UNSUPPORTED_ARGUMENT_TYPE: UnsupportedArgumentTypeDiagnostic,
     }
     return cls
