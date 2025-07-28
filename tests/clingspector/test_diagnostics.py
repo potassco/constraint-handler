@@ -6,7 +6,14 @@ import os
 import pytest
 
 from clingspector.clingspector import Clingspector
-from clingspector.diagnostic import CyclicDependencyDiagnostic, Diagnostic, UndefinedVariableDiagnostic, UnsupportedArgumentTypeDiagnostic, UnsupportedOperatorDiagnostic
+from clingspector.diagnostic import (
+    CyclicDependencyDiagnostic,
+    Diagnostic,
+    UndefinedAssignmentDiagnostic,
+    UndefinedDependencyDiagnostic,
+    UnsupportedArgumentTypeDiagnostic,
+    UnsupportedOperatorDiagnostic,
+)
 from clingspector.utils.log_formatter import LoggingFormatter
 
 logger = logging.getLogger("clingspector")
@@ -28,7 +35,7 @@ def get_diagnostics(file_name: str) -> list[Diagnostic]:
     diagnostics = clingspector.get_diagnostics()
 
     return diagnostics
-    
+
 
 def test_valid():
     """Test a valid program that should not produce any diagnostics."""
@@ -47,7 +54,7 @@ def test_undefined_variable():
 
     assert len(diagnostics) == 1
     diag = diagnostics[0]
-    assert isinstance(diag, UndefinedVariableDiagnostic)
+    assert isinstance(diag, UndefinedDependencyDiagnostic)
     assert diag.variable == "x"
     assert diag.undefined_variable == "y"
 
@@ -94,6 +101,7 @@ def test_overlapping_cycles():
     assert isinstance(diag, CyclicDependencyDiagnostic)
     assert diag.involved_variables == ["a", "b", "c", "d", "e"]
 
+
 def test_unsupported_operator():
     """Test a program with an unsupported operator.
 
@@ -106,6 +114,7 @@ def test_unsupported_operator():
     diag = diagnostics[0]
     assert isinstance(diag, UnsupportedOperatorDiagnostic)
     assert diag.operator == "nonsense"
+
 
 def test_unsupported_argument_type():
     """Test a program with an unsupported argument type.
@@ -120,3 +129,18 @@ def test_unsupported_argument_type():
     assert isinstance(diag, UnsupportedArgumentTypeDiagnostic)
     assert diag.operator == "add"
     assert diag.arguments == ["int", "float"]
+
+
+def test_set_not_declared():
+    """Test a program with a set that is not declared.
+
+    This should produce a diagnostic indicating the set variable
+    is assigned to but not defined.
+    """
+
+    diagnostics = get_diagnostics("set_not_declared.lp")
+
+    assert len(diagnostics) == 1
+    diag = diagnostics[0]
+    assert isinstance(diag, UndefinedAssignmentDiagnostic)
+    assert diag.variable == "b"

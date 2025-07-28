@@ -14,7 +14,8 @@ from clingspector.utils.asp import asp_to_python_list
 class DiagnosticType(Enum):
     """Diagnostic types for Clingspector."""
 
-    UNDEFINED_VARIABLE = "cs_undefined_variable"
+    UNDEFINED_DEPENDENCY = "cs_undefined_dependency"
+    UNDEFINED_ASSIGNMENT = "cs_undefined_assignment"
     CYCLIC_DEPENDENCY = "cs_cyclic_dependency"
     UNSUPPORTED_OPERATOR_TYPE = "cs_unsupported_operator_type"
     UNSUPPORTED_ARGUMENT_TYPE = "cs_unsupported_argument_type"
@@ -47,8 +48,8 @@ class Diagnostic:
 
 
 @dataclass
-class UndefinedVariableDiagnostic(Diagnostic):
-    """Diagnostic for undefined variables."""
+class UndefinedDependencyDiagnostic(Diagnostic):
+    """Diagnostic for variables depending on undefined variables."""
 
     variable: str
     """ The variable depending on some other, undefined, variable."""
@@ -60,7 +61,7 @@ class UndefinedVariableDiagnostic(Diagnostic):
     def from_symbol(symbol: Symbol):
         """Create an UndefinedVariableDiagnostic from a Clingo symbol."""
 
-        return UndefinedVariableDiagnostic(
+        return UndefinedDependencyDiagnostic(
             variable=str(symbol.arguments[0]), undefined_variable=str(symbol.arguments[1])
         )
 
@@ -69,6 +70,25 @@ class UndefinedVariableDiagnostic(Diagnostic):
             f"Variable '{self.variable}' depends on '{self.undefined_variable}', "
             f"but '{self.undefined_variable}' is not defined."
         )
+
+
+@dataclass
+class UndefinedAssignmentDiagnostic(Diagnostic):
+    """Diagnostic for assigning to undefined variables."""
+
+    variable: str
+    """ The variable that is undefined but still assigned to."""
+
+    @staticmethod
+    def from_symbol(symbol: Symbol):
+        """Create an UndefinedAssignmentDiagnostic from a Clingo symbol."""
+
+        return UndefinedAssignmentDiagnostic(
+            variable=str(symbol.arguments[0]),
+        )
+
+    def __str__(self):
+        return f"Tried to assign value to '{self.variable}', " f"but '{self.variable}' is not defined."
 
 
 @dataclass
@@ -139,7 +159,8 @@ def register_diagnostics(cls):
     and is used to create instances of diagnostics based on Clingo symbols.
     """
     cls._registry = {
-        DiagnosticType.UNDEFINED_VARIABLE: UndefinedVariableDiagnostic,
+        DiagnosticType.UNDEFINED_DEPENDENCY: UndefinedDependencyDiagnostic,
+        DiagnosticType.UNDEFINED_ASSIGNMENT: UndefinedAssignmentDiagnostic,
         DiagnosticType.CYCLIC_DEPENDENCY: CyclicDependencyDiagnostic,
         DiagnosticType.UNSUPPORTED_OPERATOR_TYPE: UnsupportedOperatorDiagnostic,
         DiagnosticType.UNSUPPORTED_ARGUMENT_TYPE: UnsupportedArgumentTypeDiagnostic,
