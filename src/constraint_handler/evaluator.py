@@ -20,8 +20,8 @@ class PPEnum(Enum):
         return self.name
 
 
-BaseType = Enum("BaseType", ["int", "float", "str", "symbol", "bool"])
-UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus"])
+BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function","multimap"])
+UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
@@ -29,6 +29,8 @@ BinaryOperator = PPEnum(
 )
 SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
+
+MultimapOperator = PPEnum("MultimapOperator", ["find"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["phi", "if"])
@@ -40,8 +42,14 @@ class ConditionalOperator(Enum):
 noPredConstant = bool | float | int | str | clingo.Symbol
 ConstantList = list[noPredConstant]
 
+
+class CustomOperator(NamedTuple):
+    name: clingo.Symbol
+
+
+Operator0 = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | MultimapOperator | OtherOperator | ConditionalOperator
 noPredOperator = (
-    UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | str
+    Operator0 | str
 )
 
 
@@ -65,13 +73,16 @@ class Variable(NamedTuple):
     def __repr__(self):
         return f"{self.arg}"
 
+class Lambda(NamedTuple):
+    vars: list[clingo.Symbol]
+    expr: Expr
 
 class Python(NamedTuple):
     fn: Expr
 
 
-Expr = Variable | Operation | Val
-Operator = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | OtherOperator | ConditionalOperator | Python
+Expr = Variable | Operation | Val | Lambda
+Operator = Operator0 | Python | Variable
 
 
 class SetDeclare(NamedTuple):
@@ -93,6 +104,8 @@ def collectVars(expr):
             return {a}
         case Val(t, v):
             return set()
+        case Lambda(vars, expr):
+            return collectVars(exp) - set(vars)
 
 
 def get_baseType(v):
@@ -126,6 +139,8 @@ def evaluate_unop(o, val):
             return math.atan(val)
         case UnaryOperator.minus:
             return -val
+        case UnaryOperator.floor:
+            return math.floor(val)
 
 
 def evaluate_logic_operator(o, args):
@@ -239,6 +254,14 @@ def evaluate_operator(symbols, o, args):
             call = eval(fn)
             # print(f"{fn}{tuple(vals)} = {}")
             return call(*args)
+        case Lambda(vars,expr):
+            if len(vars) != len(args):
+                print(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
+                assert False
+            symbols2 = dict(symbols)
+            for (v,e) in zip(vars,args):
+                symbols2[v] = e
+            return evaluate_expr(symbols2, expr)
         case LogicOperator():
             return evaluate_logic_operator(o, args)
         case SetOperator():
@@ -280,3 +303,22 @@ def evaluate_expr(symbols, expr):
                 return None
         case Val(type_, val):
             return val
+        case Lambda(vars, body):
+            assert False
+            # TODO
+
+def beta_reduction(symbols, expr):
+    match expr:
+        case Operation(o, eargs):
+            args = [beta_reduction(symbols, e) for e in eargs]
+            return Operation(o, args)
+        case Variable(a):
+            if a in symbols:
+                return symbols[a]
+            else:
+                return expr
+        case Val(type_, val):
+            return expr
+        case Lambda(vars, body):
+            assert False
+            # TODO

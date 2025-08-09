@@ -18,6 +18,7 @@ MAIN_LP = files("constraint_handler.data").joinpath("main.lp")
 MULTIMAP_LP = files("constraint_handler.data").joinpath("multimap.lp")
 SET_LP = files("constraint_handler.data").joinpath("set.lp")
 STRING_LP = files("constraint_handler.data").joinpath("string.lp")
+SYMBOL_LP = files("constraint_handler.data").joinpath("symbol.lp")
 
 enable_python()
 
@@ -38,6 +39,7 @@ def add_encoding_to_program_builder(b: ProgramBuilder):
                 str(MULTIMAP_LP),
                 str(SET_LP),
                 str(STRING_LP),
+                str(SYMBOL_LP),
             ],
             lambda stm: b.add(stm),
         )

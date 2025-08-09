@@ -32,6 +32,7 @@ def run_test(name):
 def test_basic_tests():
     run_test("tests/example/booleans")
     run_test("tests/example/ints")
+    run_test("tests/example/lambdas")
     run_test("tests/example/multimaps")
     run_test("tests/example/nested_set")
     run_test("tests/example/set_manipulations")

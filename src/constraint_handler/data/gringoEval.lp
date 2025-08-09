@@ -28,6 +28,41 @@ def pythonCollectVars(clExpr):
     #print("collect vars",clExpr,pExpr,clVars)
     return clVars
 
+def pythonBetaReduction(clExpr,clVars,clArgs):
+    #print(f"pythonEvalExprFromPairs: enter")
+    pVars = myClorm.cltopy(clVars)
+    pArgs = myClorm.cltopy(clArgs,list[evaluator.Expr])
+    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+    if len(pVars) != len(pArgs):
+        print(f"pythonEvalExprFromPairs: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
+        return []
+    #print(f"pythonEvalExprFromPairs: consistent argument lengths for {pExpr}: {pVars} = {pArgs}")
+    d = { var : val for (var,val) in zip(pVars,pArgs) }
+    prettyArgs = ", ".join(f"{str(var)}={val}" for (var,val) in d.items())
+    pRes = evaluator.beta_reduction(d,pExpr)
+    #print(f"pythonEvalExprFromPairs: {pExpr}({prettyArgs}) = {pRes}")
+    #assert False
+    return myClorm.pytocl(pRes)
+
+def pythonMergeTypes2(clArgs):
+    pArgs = myClorm.cltopy(clArgs,list)
+    skipped = [(pArgs[2*i],pArgs[2*i+1]) for i in range(int(len(pArgs)/2))]
+    return myClorm.pytocl(skipped)
+
+def pythonBetaReduction2(clExpr,clVars,clArgs):
+    pVars = myClorm.cltopy(clVars)
+    pArgs = myClorm.cltopy(clArgs,list[tuple[evaluator.BaseType,bool | int | float | str | clingo.Symbol]])
+    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+    if len(pVars) != len(pArgs):
+        print(f"pythonEvalExprFromPairs2: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
+        return []
+    d = { var : evaluator.Val(t,val) for (var,(t,val)) in zip(pVars,pArgs) }
+    #print(d)
+    prettyArgs = ", ".join(f"{str(var)}={val}" for (var,val) in d.items())
+    pRes = evaluator.beta_reduction(d,pExpr)
+    #print(f"pythonEvalExprFromPairs2: {pExpr}({prettyArgs}) = {pRes}")
+    return myClorm.pytocl(pRes)
+
 def pythonEvalExpr(clName,clExpr,clArgs):
     pName = myClorm.cltopy(clName)
     pArgs = myClorm.cltopy(clArgs)

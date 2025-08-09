@@ -7,7 +7,7 @@
 
 %% <stat-list> ::= <statement> `;' <stat-list> | <statement>
 
-<type> ::= `bool' | `float' | `int' | `string' | `symbol' | `set'
+<type> ::= `bool' | `float' | `int' | `string' | `symbol' | `function' | `set'
 
 <bool> ::= `true' | `false'
 
@@ -17,15 +17,19 @@
 
 <name> ::= any suitable string
 
-<symbol> ::= <int> | <str> | <function>
+<term> ::= <int> | <str> | <symbol>
 
-<symbols> ::= <symbol> | <symbol> `,' <symbols>
+<terms> ::= <term> | <term> `,' <terms>
 
-<function> ::= <name> | <name> `(' <symbols> `)'
+<symbol> ::= <name> | <name> `(' <terms> `)'
 
-%<constant> ::= `bool' `(' <bool> `)' \alt `int' `(' <int> `)' \alt `float' `(' <str> `)' \alt `string `(' <str> `)' \alt `symbol `(' <symbol> `)'
+<tterm-list> ::= `(' `)' | `(' <term> `,' <term-list> `)'
+
+%<constant> ::= `bool' `(' <bool> `)' \alt `int' `(' <int> `)' \alt `float' `(' <str> `)' \alt `string `(' <str> `)' \alt `symbol `(' <term> `)'
 
 <operator> ::= `python' `(' <expr> `)'
+\alt <lambda-expr>
+\alt <variable>
 \alt <bool-operator>
 \alt <conditional-operator>
 \alt <float-operator>
@@ -43,29 +47,32 @@
 <conditional-operator> ::= `if' | `phi' | `ite'
 
 <float-operator> ::= <comp-operator> | `sqrt' | `cos' | `sin' | `tan' | `acos' | `asin' | `atan' | `abs' | `minus'
-| `add' | `sub' | `mult' | `div' | `pow' | `leq' | `lt' | `geq' | `gt'
+| `add' | `sub' | `mult' | `div' | `pow' | `floor'
 
 <int-operator> ::= <comp-operator> | `add' | `sub' | `mult' | `div' | `pow' | `abs' | `minus' | `max' | `min'
 
 <multimap-operator> ::= TODO
 
-<set-operator> ::= <eq-operator> | `union' | `inter' | `subset' | `makeSet' | `isin' | `notin' | `length'
+<set-operator> ::= <eq-operator> | `union' | `inter' | `subset' | `makeSet' | `isin' | `notin' | `length' | `fold'
 
 <string-operator> ::= <eq-operator> | `concat' | `length'
 
+<lambda-expr> ::= `lambda' `(' <term-list> `,' <expr> `)'
+
 <expr> ::=
-`val' `(' <type> `,' <symbol> `)'
-\alt `variable' `(' <symbol> `)'
+`val' `(' <type> `,' <term> `)'
+\alt `variable' `(' <term> `)'
 \alt `operation' `(' <operator> `,' <expr-list> `)'
+\alt <lambda-expr>
 
 <expr-list> ::= `(' `)' | `(' <expr> `,' <expr-list> `)'
 
-<atom> ::= `assign' `(' <symbol> `,' <symbol> `,' <expr> `)'
-\alt `ensure' `(' <symbol> `,' <expr> `)'
-\alt `set_declare' `(' <symbol> `,' <symbol> `)'
-\alt `set_assign' `(' <symbol> `,' <symbol> `,' <expr> `)'
-\alt `compute' `(' <symbol> `,' <val-list> `)'
-\alt `computed' `(' <symbol> `,' <val-list> `,' <type> `,' <symbol> `)'
+<atom> ::= `assign' `(' <term> `,' <term> `,' <expr> `)'
+\alt `ensure' `(' <term> `,' <expr> `)'
+\alt `set_declare' `(' <term> `,' <term> `)'
+\alt `set_assign' `(' <term> `,' <term> `,' <expr> `)'
+\alt `compute' `(' <term> `,' <val-list> `)'
+\alt `computed' `(' <term> `,' <val-list> `,' <type> `,' <term> `)'
 \end{grammar}
 
 \subsection*{Examples}
@@ -128,8 +135,8 @@ assign(assign_y0,y0,operation(phi,(variable(x0),(variable(x1),())))).
 \subsection{Result fact format}
 \begin{grammar}
 
-<atom> ::= `value' `(' <symbol> `,' <type> `,' <symbol> `)'
-\alt `set_value' `(' <symbol> `,' <type> `,' <symbol> `)'
+<atom> ::= `value' `(' <term> `,' <type> `,' <term> `)'
+\alt `set_value' `(' <term> `,' <type> `,' <term> `)'
 \end{grammar}
 
 

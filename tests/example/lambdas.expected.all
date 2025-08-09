@@ -1,0 +1,8 @@
+evaluated(variable(myfactorial),(val(int,5),()),int,120)
+value(nb_squares,int,2)
+evaluated(variable(isSquare),(val(multimap,a),()),bool,false)
+evaluated(variable(isSquare),(val(multimap,b),()),bool,false)
+evaluated(variable(isSquare),(val(multimap,c),()),bool,true)
+evaluated(variable(isSquare),(val(multimap,d),()),bool,false)
+evaluated(variable(isSquare),(val(multimap,e),()),bool,true)
+value(nb_squares2,int,2)
