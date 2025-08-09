@@ -1,12 +1,12 @@
 #include "../../src/constraint_handler/data/bool.lp".
 #include "../../src/constraint_handler/data/conditionals.lp".
 #include "../../src/constraint_handler/data/direct.lp".
-%#include "../../src/constraint_handler/data/display.lp".
 #include "../../src/constraint_handler/data/float.lp".
 #include "../../src/constraint_handler/data/gringoEval.lp".
 #include "../../src/constraint_handler/data/int.lp".
 #include "../../src/constraint_handler/data/main.lp".
 #include "../../src/constraint_handler/data/multimap.lp".
+#include "../../src/constraint_handler/data/pythonHelper.lp".
 #include "../../src/constraint_handler/data/set.lp".
 #include "../../src/constraint_handler/data/string.lp".
 #include "../../src/constraint_handler/data/symbol.lp".
