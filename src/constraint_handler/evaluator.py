@@ -25,12 +25,12 @@ UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "ac
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
-    ["add", "sub", "mult", "div", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
+    ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
 )
-SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset"])
+SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset","fold"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 
-MultimapOperator = PPEnum("MultimapOperator", ["find"])
+MultimapOperator = PPEnum("MultimapOperator", ["find","multimapMake"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["phi", "if"])
@@ -104,8 +104,8 @@ def collectVars(expr):
             return {a}
         case Val(t, v):
             return set()
-        case Lambda(vars, expr):
-            return collectVars(exp) - set(vars)
+        case Lambda(vars, body):
+            return collectVars(body) - set(vars)
 
 
 def get_baseType(v):
@@ -117,6 +117,8 @@ def get_baseType(v):
         return BaseType.bool
     elif isinstance(v, int):
         return BaseType.int
+    elif isinstance(v, clingo.Symbol):
+        return BaseType.symbol
     else:
         return None
 
@@ -185,6 +187,24 @@ def evaluate_logic_operator(o, args):
             return functools.reduce(operator.xor, args)
 
 
+def evaluate_multimap_operator(o, args):
+    match o:
+        case MultimapOperator.find:
+            assert len(args) == 2
+            return args[1][args[0]]
+        case MultimapOperator.multimapMake:
+            pairs = [(args[2*i],args[2*i+1]) for i in range(int(len(args)/2))]
+            return { key : value for (key,value) in pairs }
+
+
+def set_fold(f,s,start):
+    print("fold",f,s,start)
+    accu = start
+    for e in s:
+        accu = f(e,accu)
+    return accu
+
+
 def evaluate_set_operator(o, args):
     match o:
         case SetOperator.makeSet:
@@ -199,6 +219,8 @@ def evaluate_set_operator(o, args):
             return args[0].intersection(*args[1:])
         case SetOperator.subset:
             return args[0].issubset(args[1])
+        case SetOperator.fold:
+            return set_fold(args[0],args[1],args[2])
 
 
 def evaluate_binop(o, lval, rval):
@@ -213,6 +235,8 @@ def evaluate_binop(o, lval, rval):
         case BinaryOperator.mult:
             return lval * rval
         case BinaryOperator.div:
+            return lval // rval
+        case BinaryOperator.fdiv:
             return lval / rval
         case BinaryOperator.pow:
             return lval ** rval  # fmt: skip
@@ -264,6 +288,8 @@ def evaluate_operator(symbols, o, args):
             return evaluate_expr(symbols2, expr)
         case LogicOperator():
             return evaluate_logic_operator(o, args)
+        case MultimapOperator():
+            return evaluate_multimap_operator(o, args)
         case SetOperator():
             return evaluate_set_operator(o, args)
         case ConditionalOperator():
@@ -290,6 +316,12 @@ def evaluate_operator(symbols, o, args):
                 assert False
 
 
+def evaluate_lambda(symbols,vars,args,body):
+    # print("evaluate_lambda",symbols,vars,args,body)
+    d = dict(symbols)
+    return evaluate_expr(d,body)
+
+
 def evaluate_expr(symbols, expr):
     # print("evaluate_expr",symbols,expr)
     match expr:
@@ -304,6 +336,7 @@ def evaluate_expr(symbols, expr):
         case Val(type_, val):
             return val
         case Lambda(vars, body):
+            return lambda **args: evaluate_lambda(symbols,vars,args,body)
             assert False
             # TODO
 
@@ -320,5 +353,4 @@ def beta_reduction(symbols, expr):
         case Val(type_, val):
             return expr
         case Lambda(vars, body):
-            assert False
-            # TODO
+            return expr

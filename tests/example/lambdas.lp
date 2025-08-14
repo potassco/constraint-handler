@@ -38,7 +38,8 @@ set_declare(d_s,shapes).
 set_assign(a_s,shapes,val(multimap,M)) :- value(S,multimap,M), S=(a;b;c;d;e).
 
 assign(dummy,ooo(M),E) :-
-  E = operation(find,(val(symbol,kind),(M,()))),
+  E = operation(find,(val(symbol,kind),(MAP,()))),
+    MAP=val(multimap,M),
     value(a,multimap,M).
 
 assign(dummy,nb_squares,E) :-
