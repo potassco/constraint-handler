@@ -14,6 +14,7 @@ jobs:
     name: deploy
     needs: test
     permissions:
+      contents: read
       id-token: write
     environment: release
     runs-on: ubuntu-latest
