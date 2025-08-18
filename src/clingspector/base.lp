@@ -23,7 +23,7 @@ cs__defined_multimap(X) :- assign(_, X, O), O=operation(OP, _), cs__valid_operat
 % A variable is defined if it has an assignment or is a defined set
 cs__defined(X) :- assign(_,X,_).
 cs__defined(X) :- cs__defined_set(X).
-
+cs__defined(X) :- cs__defined_multimap(X).
 %
 % Expressions
 %
@@ -111,3 +111,12 @@ cs__valid_operation(concat, (str, (str, ())), str).
 cs__valid_operation(makeSet, (T, ()), set) :- cs__type(T).
 cs__valid_operation((isin; notin), (set, (set, ())), bool).
 cs__valid_operation((union; inter; subset), (set, (set, ())), set).
+
+% Disable processing of constraints
+requestEngine(CNAME,none) :- assign(CNAME,X,EXPR).
+requestEngine(CNAME,none) :- set_assign(CNAME,X,EXPR).
+requestEngine(CNAME,none) :- multimap_assign(CNAME,X,EXPR,EXPR_2).
+requestEngine(CNAME,none) :- ensure(CNAME,EXPR).
+requestEngine(CNAME,none) :- set_declare(CNAME,X).
+requestEngine(CNAME,none) :- multimap_declare(CNAME,X).
+

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 import os
+import clingo.script
 from enum import Enum
 
 from clingo.control import Control, Model
@@ -13,7 +14,6 @@ from clingo.control import Control, Model
 from clingspector.diagnostic import Diagnostic
 
 logger = logging.getLogger("clingspector")
-
 
 class Clingspector:
     """Clingspector class for validating Clingo logic programs and reporting errors."""
@@ -30,6 +30,7 @@ class Clingspector:
     def __init__(self) -> None:
         self._diagnostics: list[Diagnostic] = []
         self._ctl = Control(["--warn=none"])
+        clingo.script.enable_python()
         self._verbose = False
 
         features_directory = "src/clingspector/features"
