@@ -63,7 +63,7 @@ cs_unsupported_operator_type(O) :- cs__expression(E), E=operation(O,_), not cs__
 % but there exists no valid operation with the given types
 
 % Unary
-cs_unsupported_argument_type(O, (ARG_T)) :- cs__expression(E),
+cs_unsupported_argument_type(O, (ARG_T,)) :- cs__expression(E),
                 E=operation(O, ARGUMENTS),
                 ARGUMENTS=(ARG, ()),
                 cs__expression_type(ARG, ARG_T),
@@ -80,12 +80,11 @@ cs_unsupported_argument_type(O, (ARG_1_T, ARG_2_T)) :- cs__expression(E),
 %
 % Type Mismatches
 %
-cs_type_mismatch(X, T_1, T_2) :- cs__variable_type(X, T_1), cs__variable_type(X, T_2), T_1 != T_2.
+cs_type_mismatch(X, T_1, T_2) :- cs__variable_type(X, T_1), cs__variable_type(X, T_2), T_1 < T_2.
 cs_type_mismatch(X, set, T) :- set_assign(_,X,_), cs__defined(X), not cs__defined_set(X), cs__variable_type(X, T).
 cs_type_mismatch(X, multimap, T) :- multimap_assign(_,X,_,_), cs__defined(X), not cs__defined_multimap(X), cs__variable_type(X, T).
 
 #show cs_unsupported_operator_type/1.
-#show eargs/4.
 #show cs_unsupported_type/1.
 #show cs_unsupported_argument_type/2.
 #show cs_type_mismatch/3.
