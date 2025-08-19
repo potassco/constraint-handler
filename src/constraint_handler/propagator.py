@@ -37,7 +37,7 @@ class ConstraintHandlerPropagator:
         self.get_ensure(ctl)
         self.get_assign(ctl)
 
-        ctl.check_mode = clingo.PropagatorCheckMode.Both
+        # ctl.check_mode = clingo.PropagatorCheckMode.Both
 
         print("INIT DONE")
         print("#"*50)
@@ -83,6 +83,9 @@ class ConstraintHandlerPropagator:
             evaluated = evaluator.evaluate_expr(evaluations, expr)
 
             print(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
+            if evaluated is None:
+                continue
+
             if not evaluated:
                 nogood = {lit}.union(*(self.reasons[dvar] for dvar in evaluator.collectVars(expr)))
                 print(f"the reason for {expr} being {evaluated} is {nogood} based on vars in {evaluator.collectVars(expr)}")
