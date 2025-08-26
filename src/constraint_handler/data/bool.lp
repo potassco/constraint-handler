@@ -6,9 +6,17 @@ computed(OP,ARGS,bool,true)  :- compute(OP,ARGS), OP=neq, ARGS = (bool,(V1,(bool
 computed(OP,ARGS,bool,false) :- compute(OP,ARGS), OP=neq, ARGS = (bool,(V1,(bool,(V2,())))), V1 =  V2.
 
 %%%%%%%%%%%%%%%%% lnot
+%% logical negation
 
 computed(lnot,ARGS,bool,true)  :- compute(lnot,ARGS), ARGS=(bool,(V1,())), V1=false.
 computed(lnot,ARGS,bool,false) :- compute(lnot,ARGS), ARGS=(bool,(V1,())), V1=true.
+
+%%%%%%%%%%%%%%%%% dnot
+%% default negation
+
+eValue(E,bool,false) :- direct_query(E), E=operation(dnot,(E1,())), eValue(E1,bool,true).
+eValue(E,bool,true)  :- direct_query(E), E=operation(dnot,(E1,())), eValue(E1,bool,false).
+eValue(E,bool,false) :- direct_query(E), E=operation(dnot,(E1,())), conditional_hasNoValue(E1).
 
 %%%%%%%%%%%%%%%%% conj disj limp
 %% The compute/computed interface is given below the eValue interface
