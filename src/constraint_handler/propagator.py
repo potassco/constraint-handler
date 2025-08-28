@@ -16,6 +16,7 @@ class AtomNames:
     SET_DECLARE: str = "set_declare"
     SET_ASSIGN: str = "set_assign"
 
+
 class Val(NamedTuple):
     name: clingo.Symbol
     type_: evaluator.BaseType | None
@@ -24,58 +25,98 @@ class Val(NamedTuple):
 
 class VariableValue:
 
-    def __init__(self, expr: evaluator.Expr):
+    def __init__(self, expr: evaluator.Expr, lit: int):
         self.expr = expr
         self.value: Any = None
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any]) -> bool:
+        self.literal: int = lit
+
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
         """Evaluate the expression and return True if the value has changed."""
+        if not ctl.assignment.is_true(self.literal):
+            return False
+
         value = evaluator.evaluate_expr(evaluations, self.expr)
+        
+        if type(value) == set:
+            if None in value:
+                # if something in the set is undefined
+                # we do not add it to as a value
+                value.remove(None)
+            value = frozenset(value)
+
         if value == self.value:
             return False
+        
         self.value = value
         return True
+
+    def reset(self):
+        self.value = None
 
     def __eq__(self, other):
         if not isinstance(other, VariableValue):
             return False
         return self.expr == other.expr
 
+    def __hash__(self):
+        return hash(str(self.expr))
+
 class Variable:
     """
         A variable with a name and a value expression.
         This is supposed to mirror the assign/3 atom(also propagator_assign/3) in the ASP encoding.
     """
-    def __init__(self, name: clingo.Symbol, expr: clingo.Symbol):
+    def __init__(self, name: str, var: clingo.Symbol, lit: int, expr: clingo.Symbol):
         self.name = name
-        self.value: VariableValue = VariableValue(expr)
+        self.var = var
+        self.value: VariableValue = VariableValue(expr, lit)
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any]) -> bool:
-        """Evaluate the expression and return True if the value has changed."""
-        return self.value.evaluate(evaluations)
+        self.decision_level: int = float('inf')
+
+    @property
+    def literal(self) -> int:
+        return self.value.literal
+
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
+        """Evaluate the expression and return True if the value has changed."""        
+        if self.value.evaluate(evaluations, ctl):
+            self.decision_level = ctl.assignment.decision_level
+            return True
+        return False
+
+    def vars(self) -> set[clingo.Symbol]:
+        return evaluator.collectVars(self.value.expr)
 
     def get_value(self) -> Any:
         return self.value.value
 
+    def reset(self):
+        self.value.reset()
+        self.decision_level = float('inf')
+
     def __eq__(self, other):
         if not isinstance(other, Variable):
             assert False, "Variable can only be compared to another Variable"
-        return self.name == other.name and self.value == other.value
+        return self.var == other.var and self.value == other.value
 
+    def __hash__(self):
+        return hash((self.var, self.value))
 
 class SetVariable:
     """
         A set variable with a name and a set of value expressions.
         This is supposed to mirror the set_declare/2 and set_assign/3 atom in the ASP encoding.
     """
-    def __init__(self, name: clingo.Symbol, args: List[evaluator.Expr] = None):
+    def __init__(self, name: str, var: clingo.Symbol, lit: int):
         self.name = name
-        self.value: set[Any] = set()
-        if args is not None:
-            self.value = {VariableValue(arg) for arg in args}
+        self.var = var
+        self.literal = lit
+        self.value: set[VariableValue] = set()
+        self.decision_level: int = float('inf')
 
-    def add_argument(self, arg: evaluator.Expr) -> None:
-        self.value.add(VariableValue(arg))
+    def add_argument(self, arg: evaluator.Expr, lit: int) -> None:
+        self.value.add(VariableValue(arg, lit))
 
     def __contains__(self, item):
         return item in self.value
@@ -83,73 +124,77 @@ class SetVariable:
     def get_value(self) -> set[Any]:
         return {arg.value for arg in self.value if arg.value is not None}
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any]) -> bool:
+    def vars(self) -> set[clingo.Symbol]:
+        return set.union(*(evaluator.collectVars(arg.expr) for arg in self.value))
+
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
         """Evaluate all arguments and return True if any value has changed."""
+        if not ctl.assignment.is_true(self.literal):
+            return False
+
         changed = False
         for arg in self.value:
-            changed |= arg.evaluate(evaluations)
+            changed |= arg.evaluate(evaluations, ctl)
+
+        if changed:
+            self.decision_level = ctl.assignment.decision_level
+
         return changed
+
+    def reset(self):
+        for arg in self.value:
+            arg.reset()
+        self.decision_level = float('inf')
 
     def __eq__(self, value):
         if not isinstance(value, SetVariable):
             assert False, "SetVariable can only be compared to another SetVariable"
-        return self.name == value.name and self.value == value.value
+        return self.var == value.var and self.value == value.value
+    
+    def __hash__(self):
+        return hash((self.var, frozenset(self.value)))
+
 
 def make_dict_from_set_variables(variables: Sequence[SetVariable]) -> Dict[clingo.Symbol, set[Any]]:
     result: Dict[clingo.Symbol, set[Any]] = {}
     for var in variables:
-        result[var.name] = var.get_value()
+        result[var.var] = var.get_value()
     return result
 
-def make_dict_from_variable(variables: Sequence[Variable]) -> Dict[clingo.Symbol, Any]:
-    result: Dict[clingo.Symbol, Any] = {}
+def make_dict_from_variables(variables: Sequence[Variable | SetVariable]) -> Dict[clingo.Symbol, Any | set[Any]]:
+    result: Dict[clingo.Symbol, Any | set[Any]] = {}
     for var in variables:
         if var.get_value() is not None:
-            result[var.name] = var.get_value()
+            result[var.var] = var.get_value()
     return result
 
 class ConstraintHandlerPropagator:
 
     def __init__(self):
-        self.ensure_symbol_lit: Dict[clingo.symbol,int] = {}
-        self.ensure_symbol_parsed: Dict[clingo.symbol, Tuple[str, evaluator.Expr]] = {}
-        self.assign_symbol_lit: Dict[clingo.symbol,int] = {}
-        self.assign_symbol_parsed: Dict[clingo.symbol, Tuple[str, clingo.Symbol, evaluator.Expr]] = {}
+        self.symbol2var: Dict[clingo.Symbol, Variable | SetVariable] = {}
+        self.assign2symbol_var: Dict[clingo.Symbol, clingo.Symbol] = {}
+        self.evaluated: set[Variable] = set()
+        self.evaluated_sets: set[SetVariable] = set()
 
-        # holds evaluations of assignments in the root level
-        self.evaluated: Dict[clingo.symbol, Any] = {}
-        self.evaluated_sets: Dict[clingo.symbol, set[Any]] = {}
-        self.evaluation_level: Dict[clingo.symbol, int] = {}
-        self.evaluation_level_sets: Dict[Tuple[clingo.symbol, Any], int] = {}
+        self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
+        self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]]
 
-        # holds the evuluations after checking on a complete assignment
-        # Used to add symbols to the model
-        self.final_eval: Dict[clingo.symbol, Any] = {}
-
+        # maybe reasons should also be inside the Variable classes?
         self.reasons: Dict[clingo.symbol, set[int]] = defaultdict(set)
 
         self.model: List[clingo.Symbol] = []
 
-
     def init(self, ctl: clingo.PropagateInit):
         self.get_ensure(ctl)
         self.get_assign(ctl)
-        self.set_declarations(ctl)
-        # ctl.check_mode = clingo.PropagatorCheckMode.Both
+        self.get_set_declarations(ctl)
 
         print("INIT DONE")
         print("#"*50)
 
     def check(self, ctl: clingo.PropagateControl):
-        # return
         print("CHECKING")
-        # print(f"Is assignment total: {ctl.assignment.is_total}")
-        # if not ctl.assignment.is_total:
-        #     print("Assignment is not total, cannot check ensures")
-        #     return
-        # print(f"Assignment is total({ctl.assignment.is_total}), checking ensures")
 
-        self.reasons = defaultdict(set)
         self.evaluated_solver_assignment(ctl)
         print(f"after evaluation, the reasons are {self.reasons}")
 
@@ -213,20 +258,16 @@ class ConstraintHandlerPropagator:
         while changed and iterations < max_iterations:
             iterations += 1
             changed = False
-            print(f"Evaluating... Iteration {iterations}\nCurrent evaluations: {self.evaluated | self.evaluated_sets}")
-            for symbol, lit in self.assign_symbol_lit.items():
-                _, var, expr = self.assign_symbol_parsed[symbol]
-                # if var in self.evaluated:
-                #     # this only triggers for non set variables
-                #     continue
-                print(f"Looking at variable {var} with expression {expr} and literal {lit} with assignment {ctl.assignment.is_true(lit)}")
+            print(f"Evaluating... Iteration {iterations}\nCurrent evaluations: {make_dict_from_variables(self.evaluated.union(self.evaluated_sets))}")
+            for var in self.symbol2var.values():
+                print(f"Looking at variable {var}")
 
-                evaluated = self.evaluate_expr(ctl, symbol, lit)
-                if evaluated is not None:
-                    print(f"expression {expr} evaluated to {evaluated} for variable {var} (True literal {lit})")
+                evaluated = var.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
+                if evaluated:
+                    print(f"Var {var} evaluated to {evaluated}")
                     changed = True
-                    self.reasons[var] = { lit }
-                    self.reasons[var] = self.reasons[var].union(*(self.reasons[dvar] for dvar in list(evaluator.collectVars(expr))))
+                    self.reasons[var] = { var.literal }
+                    self.reasons[var] = self.reasons[var].union(*(self.reasons[dvar] for dvar in var.vars()))
                     print(f"the reason(s) for {var} taking value {evaluated} is {self.reasons[var]}")
     
     def undo(self, thread_id: int, assignment: clingo.Assignment, changes: Sequence[int]) -> None:
@@ -234,33 +275,14 @@ class ConstraintHandlerPropagator:
         Resets the evaluations and reasons based on the current assignment.
         """
         print(f"UNDOING for decision level {assignment.decision_level} with changes {changes}")
-        to_del = set()
-        for var, level in self.evaluation_level.items():
-            if level >= assignment.decision_level:
-                print(f"Removing {var} from evaluated and reasons due to decision level {level} >= {assignment.decision_level}")
-                if var in self.evaluated:
-                    del self.evaluated[var]
-                if var in self.reasons:
-                    del self.reasons[var]
-
-                to_del.add(var)
-
-        for var in to_del:
-            del self.evaluation_level[var]
-
-        
-        for var, level in self.evaluation_level_sets.items():
-            if level >= assignment.decision_level:
-                print(f"Removing {var} from evaluated and reasons due to decision level {level} >= {assignment.decision_level}")
-                if var in self.evaluated_sets:
-                    del self.evaluated_sets[var]
-                if var in self.reasons:
-                    del self.reasons[var]
-
-                to_del.add(var)
-
-        for var in to_del:
-            del self.evaluation_level_sets[var]
+        for var in self.symbol2var.values():
+            if var.decision_level >= assignment.decision_level:
+                print(f"Resetting {var} and its reasons due to decision level {var.decision_level} >= {assignment.decision_level}")
+                var.reset()
+                if var.var in self.reasons:
+                    del self.reasons[var.var]
+                # else:
+                #     assert False, f"Variable {var} not in reasons but should be"
 
     def parse_assign(self, symbol: clingo.Symbol) -> Tuple[str, clingo.Symbol, evaluator.Expr]:
         name = myClorm.cltopy(symbol.arguments[0])
@@ -280,73 +302,39 @@ class ConstraintHandlerPropagator:
         
     def get_assign(self, ctl: clingo.PropagateInit):
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.ASSIGN,3):
-            self.initial_assign_eval(ctl, atom)
+            literal = ctl.solver_literal(atom.literal)        
+            name, var, expr = self.parse_assign(atom.symbol)
+            variable = Variable(name, var, literal, expr)
+            self.evaluated.add(variable)
+            self.symbol2var[atom.symbol] = variable
+            self.assign2symbol_var[atom.symbol] = var
+            ctl.add_watch(ctl.solver_literal(atom.literal))
 
-    def set_declarations(self, ctl: clingo.PropagateInit):
+            variable.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
 
+    def get_set_declarations(self, ctl: clingo.PropagateInit):
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_DECLARE, 2):
-            # name = myClorm.cltopy(atom.symbol.arguments[0])
+            name = myClorm.cltopy(atom.symbol.arguments[0])
             var = myClorm.cltopy(atom.symbol.arguments[1])
-            self.evaluated[var] = set()
+            variable = SetVariable(name, var, ctl.solver_literal(atom.literal)) 
+            self.evaluated_sets.add(variable)
+            self.symbol2var[var] = variable
+            self.assign2symbol_var[atom.symbol] = var
+            ctl.add_watch(ctl.solver_literal(atom.literal))
 
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_ASSIGN, 3):
-            self.initial_assign_eval(ctl, atom)
+            name, var, expr = self.parse_assign(atom.symbol)
+            self.symbol2var[var].add_argument(expr, ctl.solver_literal(atom.literal))
+            self.assign2symbol_var[atom.symbol] = var
+            ctl.add_watch(ctl.solver_literal(atom.literal))
 
-    def initial_assign_eval(self, ctl, atom):
-        literal = ctl.solver_literal(atom.literal)
-        self.assign_symbol_lit[atom.symbol] = literal
-        
-        name, var, expr = self.parse_assign(atom.symbol)
-        self.assign_symbol_parsed[atom.symbol] = (name, var, expr)
-
-        # Any facts assigning to a variable are stored immediately
-        # in the evaluated dict
-
-        self.evaluate_expr(ctl, atom.symbol, literal)
-
-    def evaluate_expr(self, ctl, symbol, literal):
-        evaluated = None
-        name, var, expr = self.assign_symbol_parsed[symbol]
-        if ctl.assignment.is_true(literal):
-            evaluated = evaluator.evaluate_expr(self.evaluated | self.evaluated_sets, expr)
-            if evaluated is not None:
-                if type(evaluated) == set:
-                        if None in evaluated:
-                            # if something in the set is undefined
-                            # we do not add it to as a value
-                            evaluated.remove(None)
-                        evaluated = frozenset(evaluated)
-
-                if symbol.name == AtomNames.SET_ASSIGN:
-                    if var not in self.evaluated_sets:
-                        self.evaluated_sets[var] = set()
-                    if evaluated in self.evaluated_sets[var]:
-                        # the value is already in the set, nothing to do
-                        return None
-                    print(f"initially adding to set {var} the value {evaluated}")
-                    self.evaluated_sets[var].add(evaluated)
-                    # add both so we know at which level the value was added to the set
-                    # if it was not evaluated before, set it to the current level
-                    self.evaluation_level_sets[(symbol, evaluated)] = min(ctl.assignment.decision_level, 
-                                                                          self.evaluation_level_sets.get((symbol, evaluated), 100000000))
-                elif symbol.name == AtomNames.ASSIGN:
-                    if evaluated == self.evaluated.get(var, None):
-                        print(f"the variable already has value {evaluated}, nothing to do")
-                        return None
-                    self.evaluated[var] = evaluated
-                    self.evaluation_level[symbol] = ctl.assignment.decision_level
-                else:
-                    assert False, "Unknown atom name in initial assignment evaluation"
-        else:
-            # if not a fact, we watch it
-            ctl.add_watch(literal)
-
-        return evaluated
+        for var in self.evaluated_sets:
+            var.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
 
     def on_model(self,model):
         self.model = []
-        for (var, val) in self.evaluated.items():
-            pyAtom = Val(var,evaluator.get_baseType(val),val)
+        for var in self.evaluated.union(self.evaluated_sets):
+            pyAtom = Val(var.var,evaluator.get_baseType(var.get_value()),var.get_value())
             print(f"adding atom {pyAtom}",end=" ")
             clAtom = myClorm.pytocl(pyAtom)
             print(f"= {clAtom}")
