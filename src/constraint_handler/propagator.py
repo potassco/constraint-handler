@@ -62,6 +62,9 @@ class VariableValue:
     def __hash__(self):
         return hash(str(self.expr))
 
+    def __str__(self):
+        return f"VariableValue({self.expr}, {self.value})"
+
 class Variable:
     """
         A variable with a name and a value expression.
@@ -73,6 +76,7 @@ class Variable:
         self.value: VariableValue = VariableValue(expr, lit)
 
         self.decision_level: int = float('inf')
+        self.parents: List[Variable | SetVariable] = []
 
     @property
     def literal(self) -> int:
@@ -103,6 +107,12 @@ class Variable:
     def __hash__(self):
         return hash((self.var, self.value))
 
+    def __str__(self):
+        return f"Variable({self.name}, {self.var})"
+    
+    def __repr__(self):
+        return f"Variable({self.name}, {self.var}, {self.value.literal}, {self.value.expr})"
+
 class SetVariable:
     """
         A set variable with a name and a set of value expressions.
@@ -113,7 +123,9 @@ class SetVariable:
         self.var = var
         self.literal = lit
         self.value: set[VariableValue] = set()
+
         self.decision_level: int = float('inf')
+        self.parents: List[Variable | SetVariable] = []
 
     def add_argument(self, arg: evaluator.Expr, lit: int) -> None:
         self.value.add(VariableValue(arg, lit))
@@ -153,6 +165,9 @@ class SetVariable:
     
     def __hash__(self):
         return hash((self.var, frozenset(self.value)))
+    
+    def __str__(self):
+        return f"SetVariable({self.name}, {self.var})"
 
 
 def make_dict_from_set_variables(variables: Sequence[SetVariable]) -> Dict[clingo.Symbol, set[Any]]:
@@ -173,6 +188,8 @@ class ConstraintHandlerPropagator:
     def __init__(self):
         self.symbol2var: Dict[clingo.Symbol, Variable | SetVariable] = {}
         self.assign2symbol_var: Dict[clingo.Symbol, clingo.Symbol] = {}
+        self.literal2var: Dict[int, list[Variable | SetVariable]] = {}
+
         self.evaluated: set[Variable] = set()
         self.evaluated_sets: set[SetVariable] = set()
 
@@ -188,6 +205,7 @@ class ConstraintHandlerPropagator:
         self.get_ensure(ctl)
         self.get_assign(ctl)
         self.get_set_declarations(ctl)
+        self.set_parents()
 
         print("INIT DONE")
         print("#"*50)
@@ -195,8 +213,7 @@ class ConstraintHandlerPropagator:
     def check(self, ctl: clingo.PropagateControl):
         print("CHECKING")
 
-        self.evaluated_solver_assignment(ctl)
-        print(f"after evaluation, the reasons are {self.reasons}")
+        self.evaluated_solver_assignment(ctl, set(self.symbol2var.values()))
 
         backtrack = self.check_ensure(ctl)
         print(f"CHECK DONE, backtracking {backtrack}")
@@ -212,7 +229,7 @@ class ConstraintHandlerPropagator:
         for symbol, lit in self.ensure_symbol_lit.items():
             name, expr = self.ensure_symbol_parsed[symbol]
             print(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
-            evaluated = evaluator.evaluate_expr(self.evaluated | self.evaluated_sets, expr)
+            evaluated = evaluator.evaluate_expr(make_dict_from_variables(self.evaluated | self.evaluated_sets), expr)
 
             print(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
             if evaluated is None:
@@ -236,40 +253,46 @@ class ConstraintHandlerPropagator:
         """
         # return
         print(f"PROPAGATING with changes: {changes} and decision level {ctl.assignment.decision_level}")
-        self.evaluated_solver_assignment(ctl)
-        print(f"Evaluated assignments: {self.evaluated | self.evaluated_sets}")
+        to_evaluate: set[Variable | SetVariable] = set()
+        for lit in changes:
+            if lit in self.literal2var:
+                to_evaluate.update(self.literal2var[lit])
+
+        self.evaluated_solver_assignment(ctl, to_evaluate)
+        print(f"Evaluated assignments: {make_dict_from_variables(self.evaluated | self.evaluated_sets)}")
+
         backtrack = self.check_ensure(ctl)
         print(f"PROPAGATION DONE, backtracking {backtrack}")
         if backtrack:
             return
 
-    def evaluated_solver_assignment(self, ctl: clingo.PropagateControl) -> Dict[clingo.symbol, Any]:
+    def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[Variable | SetVariable]) -> None:
         """
-        This method evaluates the expressions assigned to variables in the propagator.
-        It uses the current solver assignment to determine which expressions to evaluate.
-        It returns a dictionary with the evaluated variables and their values.
+        This method evaluates the variables given using the current solver assignment.
+        If a variable's value changes, it also evaluates its parents.
         """
-        changed: bool = True
-        max_iterations: int = 10 # these 2 are just for safety in the testing phase
-        iterations: int = 0
-        
-        # Each loop evaluates the assignments
-        # and updates the evaluations dictionary
-        while changed and iterations < max_iterations:
-            iterations += 1
-            changed = False
-            print(f"Evaluating... Iteration {iterations}\nCurrent evaluations: {make_dict_from_variables(self.evaluated.union(self.evaluated_sets))}")
-            for var in self.symbol2var.values():
-                print(f"Looking at variable {var}")
+        while len(to_evaluate) > 0:
+            var = to_evaluate.pop()
+            print(f"Evaluating variable {var} at decision level {ctl.assignment.decision_level}")
 
-                evaluated = var.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
-                if evaluated:
-                    print(f"Var {var} evaluated to {evaluated}")
-                    changed = True
-                    self.reasons[var] = { var.literal }
-                    self.reasons[var] = self.reasons[var].union(*(self.reasons[dvar] for dvar in var.vars()))
-                    print(f"the reason(s) for {var} taking value {evaluated} is {self.reasons[var]}")
+            if self.evaluate_variable(ctl, var):
+                for parent in var.parents:
+                    to_evaluate.add(parent)
     
+    def evaluate_variable(self, ctl: clingo.PropagateControl, var: Variable | SetVariable) -> bool:
+        """
+        This method evaluates a variable in the propagator.
+        It uses the current solver assignment to determine its value.
+        """
+        evaluated = var.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
+        if evaluated:
+            print(f"Var {var} evaluated to {var.get_value()} at decision level {var.decision_level}")
+            self.reasons[var.var] = { var.literal }
+            self.reasons[var.var] = self.reasons[var.var].union(*(self.reasons[dvar] for dvar in var.vars()))
+            print(f"the reason(s) for {var} taking value {var.get_value()} is {self.reasons[var.var]}")
+
+        return evaluated
+
     def undo(self, thread_id: int, assignment: clingo.Assignment, changes: Sequence[int]) -> None:
         """
         Resets the evaluations and reasons based on the current assignment.
@@ -285,51 +308,102 @@ class ConstraintHandlerPropagator:
                 #     assert False, f"Variable {var} not in reasons but should be"
 
     def parse_assign(self, symbol: clingo.Symbol) -> Tuple[str, clingo.Symbol, evaluator.Expr]:
+        """
+        Parses an assign atom and returns its name, variable, and expression.
+        """
+
         name = myClorm.cltopy(symbol.arguments[0])
         var = myClorm.cltopy(symbol.arguments[1])
         expr = myClorm.cltopy(symbol.arguments[2],evaluator.Expr)
         return name, var, expr
 
     def parse_ensure(self, symbol: clingo.Symbol) -> Tuple[str, evaluator.Expr]:
+        """
+        Parses an ensure atom and returns its name and expression.
+        """
         name = myClorm.cltopy(symbol.arguments[0])
         expr = myClorm.cltopy(symbol.arguments[1],evaluator.Expr)
         return name, expr
 
     def get_ensure(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the ensure constraints from the ASP encoding.
+        It reads the propagator_ensure atoms and stores their literals and parsed expressions.
+        """
+
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.ENSURE,2):
             self.ensure_symbol_lit[atom.symbol] = ctl.solver_literal(atom.literal)
             self.ensure_symbol_parsed[atom.symbol] = self.parse_ensure(atom.symbol)
-        
+
     def get_assign(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the variables from the ASP encoding.
+        It reads the propagator_assign atoms and creates Variable instances.
+        """
+
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.ASSIGN,3):
             literal = ctl.solver_literal(atom.literal)        
-            name, var, expr = self.parse_assign(atom.symbol)
-            variable = Variable(name, var, literal, expr)
+            name, symbol_var, expr = self.parse_assign(atom.symbol)
+            variable = Variable(name, symbol_var, literal, expr)
+
             self.evaluated.add(variable)
-            self.symbol2var[atom.symbol] = variable
-            self.assign2symbol_var[atom.symbol] = var
+            self.symbol2var[symbol_var] = variable
+            self.assign2symbol_var[atom.symbol] = symbol_var
+            if literal not in self.literal2var:
+                self.literal2var[literal] = []
+            self.literal2var[literal].append(variable)
+
             ctl.add_watch(ctl.solver_literal(atom.literal))
 
             variable.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the set variables from the ASP encoding.
+        It reads the set_declare and set_assign atoms and creates SetVariable instances.
+        """
+
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_DECLARE, 2):
+            literal = ctl.solver_literal(atom.literal)
             name = myClorm.cltopy(atom.symbol.arguments[0])
-            var = myClorm.cltopy(atom.symbol.arguments[1])
-            variable = SetVariable(name, var, ctl.solver_literal(atom.literal)) 
+            symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
+            variable = SetVariable(name, symbol_var, literal)
+
             self.evaluated_sets.add(variable)
-            self.symbol2var[var] = variable
-            self.assign2symbol_var[atom.symbol] = var
-            ctl.add_watch(ctl.solver_literal(atom.literal))
+            self.symbol2var[symbol_var] = variable
+            self.assign2symbol_var[atom.symbol] = symbol_var
+            if literal not in self.literal2var:
+                self.literal2var[literal] = []
+            self.literal2var[literal].append(variable)
+
+            ctl.add_watch(literal)
 
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_ASSIGN, 3):
-            name, var, expr = self.parse_assign(atom.symbol)
-            self.symbol2var[var].add_argument(expr, ctl.solver_literal(atom.literal))
-            self.assign2symbol_var[atom.symbol] = var
-            ctl.add_watch(ctl.solver_literal(atom.literal))
+            literal = ctl.solver_literal(atom.literal)
+            name, symbol_var, expr = self.parse_assign(atom.symbol)
+            setvar = self.symbol2var[symbol_var]
+            setvar.add_argument(expr, literal)
+            self.assign2symbol_var[atom.symbol] = symbol_var
+            if literal not in self.literal2var:
+                self.literal2var[literal] = []
+            self.literal2var[literal].append(setvar)
 
-        for var in self.evaluated_sets:
-            var.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
+            ctl.add_watch(literal)
+
+        for symbol_var in self.evaluated_sets:
+            symbol_var.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
+
+    def set_parents(self):
+        """
+        Sets the parents of each variable based on the variables they depend on.
+        """
+        for var in self.symbol2var.values():
+            for symbol_var in var.vars():
+                if symbol_var not in self.symbol2var:
+                    print(self.symbol2var.keys())
+                    print(type(symbol_var), symbol_var)
+                    assert False, f"Variable {symbol_var} not found in symbol2var"
+                self.symbol2var[symbol_var].parents.append(var)
 
     def on_model(self,model):
         self.model = []
