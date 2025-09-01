@@ -1,14 +1,16 @@
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 import clingo
 import clingo.symbol
 import clintest.solver
 import clintest.test
 
-from clintest.assertion import Contains
+import clintest.assertion
 from clintest.quantifier import All, Any
 from clintest.test import And, Assert
 
+import constraint_handler.evaluator as evaluator
+import constraint_handler.myClorm as myClorm
 
 def atoms_from_file(file_name):
     try:
@@ -21,28 +23,23 @@ def atoms_from_file(file_name):
 
 def build_expectations(name):
     expected_all = atoms_from_file(name + ".expected.all")
-    test_all = And(*(Assert(All(), Contains(a)) for a in expected_all))
+    contains = lambda a: clintest.assertion.Or(*(clintest.assertion.Contains(a),TheoryContains(a)))
+    test_all = And(*(Assert(All(), contains(a)) for a in expected_all))
     expected_any = atoms_from_file(name + ".expected.any")
-    test_any = And(*(Assert(Any(), Contains(a)) for a in expected_any))
+    test_any = And(*(Assert(Any(), contains(a)) for a in expected_any))
     return And(test_all, test_any)
 
-class PropPrint(clingo.propagator.Propagator):
-    def __init__(self):
-        print("creation")
-        pass
+class TheoryContains(clintest.assertion.Assertion):
+    def __init__(self, symbol: Union[clingo.Symbol, str]) -> None:
+        #self.__symbol = _into_symbol(symbol)
+        self.__symbol = symbol
 
-    def init(self, init):
-        print("init")
-        pass
+    def __repr__(self):
+        name = self.__class__.__name__
+        return f"{name}(\"{self.__symbol}\")"
 
-    def propagate(self, ctl, changes):
-        for a in changes:
-            print(a,end=" ")
-        print()
-
-    def check(self, ctl):
-        print("check",len(ctl.assignment.trail))
-
+    def holds_for(self, model: clingo.solving.Model) -> bool:
+        return self.__symbol in model.symbols(theory=True) 
 
 class SolverWithPropagators(clintest.solver.Solver):
 
@@ -95,3 +92,30 @@ class SolverWithPropagators(clintest.solver.Solver):
         files = repr(self.__files)
         props = repr(self.__propagators)
         return f"{name}({arguments}, {program}, {files}, {props})"
+
+class PropPrint(clingo.propagator.Propagator):
+    def __init__(self):
+        print("creation")
+        pass
+
+    def init(self, init):
+        print("init")
+        pass
+
+    def propagate(self, ctl, changes):
+        for a in changes:
+            print(a,end=" ")
+        print()
+
+    def check(self, ctl):
+        print("check",len(ctl.assignment.trail))
+
+    def on_model(self,_model):
+        value_map = { "b":True, "i":42, "y":85, "s":"foo", "x":"foo", "f":47.1 }
+        for (var,val) in value_map.items():
+            x = clingo.Function(var)
+            t = myClorm.pytocl(evaluator.get_baseType(val))
+            v = myClorm.pytocl(val)
+            fact = clingo.Function("value",[x,t,v])
+            print(f"extending with {fact}")
+            _model.extend([fact])

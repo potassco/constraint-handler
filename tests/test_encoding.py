@@ -45,7 +45,8 @@ def test_engine_ground():
 
 def test_engine_propagator():
     extra = []
-    unsupported = ["basic_assignments","booleans","conditional_assign","floats","ints","lambdas","multimaps","nested_set","set_manipulations","set_selfref","strings"]
+    #supported = ["basic_assignments"]
+    unsupported = ["booleans","conditional_assign","floats","ints","lambdas","multimaps","nested_set","set_manipulations","set_selfref","strings"]
     for test in base_tests + extra:
         if test not in unsupported:
             run_test_propagator(test)
@@ -53,6 +54,6 @@ def test_engine_propagator():
 
 
 if __name__ == "__main__":
-    test_basic_tests()
+    test_engine_compile()
     test_engine_ground()
     test_engine_propagator()
