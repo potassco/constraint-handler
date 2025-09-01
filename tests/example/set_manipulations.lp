@@ -11,7 +11,7 @@
 %%% cu = |u| = 5
 %%% x = { 3, 1+2, u, v, { true } } = { 3, { true }, { 1, 2, 3, true, 89.1 } }
 %%% cx = |x| = 3
-%%% d.add(1+3), d.add(s), d.add({true, 89.1}), d.add(2+2)  -> d = { 4, { true, 89.1 } }
+%%% set d, d.add(1+3), d.add(s), d.add({true, 89.1}), d.add(2+2)  -> d = { 4, { true, 89.1 } }
 %%% cd = 2
 
 %%% numbers = { -2.0, -1, 0, 1, 2 }
@@ -30,6 +30,9 @@
 %%% vsubw = v subset w = true
 %%% usubx = u subset x = false
 %%% vsubx = v subset x = false
+
+%%% declare empty
+%%% fold(+,empty,0) = 0
 
 %%% TODO
 %%% y = add f v = { 47.1 true }
@@ -143,3 +146,6 @@ assign(test_subset, usubw, operation(subset,(variable(u),(variable(w),())))).
 assign(test_subset, vsubw, operation(subset,(variable(v),(variable(w),())))).
 assign(test_subset, usubx, operation(subset,(variable(u),(variable(x),())))).
 assign(test_subset, vsubx, operation(subset,(variable(v),(variable(x),())))).
+
+set_declare(d_empty,empty).
+evaluate(fold,(val(function,plus),(variable(empty),(val(int,0),())))).

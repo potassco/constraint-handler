@@ -1,0 +1,89 @@
+#include "includeAll.lp".
+
+define(dmf,myfactorial,(n,()),EXP) :-
+  VAR = variable(n),
+  ONE = val(int,1),
+  MIN = operation(sub,(VAR,(ONE,()))),
+  REC = operation(variable(myfactorial),(MIN,())),
+  PRO = operation(mult,(VAR,(REC,()))),
+  EQ1 = operation(leq,(VAR,(ONE,()))),
+  EXP = operation(ite,(EQ1,(ONE,(PRO,())))).
+
+evaluate(variable(myfactorial),(val(int,5),())).
+
+multimap_declare(dummy,a).
+multimap_assign(dummy,a,val(symbol,kind),val(symbol,rectangle)).
+multimap_assign(dummy,a,val(symbol,width),val(int,2)).
+multimap_assign(dummy,a,val(symbol,height),val(int,3)).
+
+multimap_declare(dummy,b).
+multimap_assign(dummy,b,val(symbol,kind),val(symbol,rectangle)).
+multimap_assign(dummy,b,val(symbol,width),val(int,5)).
+multimap_assign(dummy,b,val(symbol,height),val(int,4)).
+
+multimap_declare(dummy,c).
+multimap_assign(dummy,c,val(symbol,kind),val(symbol,square)).
+multimap_assign(dummy,c,val(symbol,side),val(int,5)).
+
+multimap_declare(dummy,d).
+multimap_assign(dummy,d,val(symbol,kind),val(symbol,circle)).
+multimap_assign(dummy,d,val(symbol,radius),val(int,4)).
+
+multimap_declare(dummy,e).
+multimap_assign(dummy,e,val(symbol,kind),val(symbol,rectangle)).
+multimap_assign(dummy,e,val(symbol,width),val(int,1)).
+multimap_assign(dummy,e,val(symbol,height),val(int,1)).
+
+set_declare(d_s,shapes).
+set_assign(a_s,shapes,val(multimap,M)) :- value(S,multimap,M), S=(a;b;c;d;e).
+
+assign(dummy,ooo(M),E) :-
+  E = operation(find,(val(symbol,kind),(MAP,()))),
+    MAP=val(multimap,M),
+    value(a,multimap,M).
+
+assign(dummy,nb_squares,E) :-
+  E    = operation(fold,(LAMB,(SET,(START,())))),
+  SET  = variable(shapes),
+  ACCU = variable(accu),
+  START= val(int,0),
+  VARS = (shape,(accu,())),
+  SHAP = variable(shape),
+  KIND = operation(find,(val(symbol,kind),(SHAP,()))),
+  WIDT = operation(find,(val(symbol,width),(SHAP,()))),
+  HEIG = operation(find,(val(symbol,height),(SHAP,()))),
+  SQUA = operation(eq,(KIND,(val(symbol,square),()))),
+  RECT = operation(eq,(KIND,(val(symbol,rectangle),()))),
+  SREC = operation(conj,(RECT,(operation(eq,(WIDT,(HEIG,()))),()))),
+  ISSQ = operation(disj,(SQUA,(SREC,()))),
+  MONE = operation(ite,(ISSQ,(val(int,1),(val(int,0),())))),
+  PLUS = operation(add,(MONE,(ACCU,()))),
+  LAMB = lambda(VARS,PLUS).
+
+define(dis,isSquare,(shape,()),ISSQ) :-
+  SHAP = variable(shape),
+  KIND = operation(find,(val(symbol,kind),(SHAP,()))),
+  WIDT = operation(find,(val(symbol,width),(SHAP,()))),
+  HEIG = operation(find,(val(symbol,height),(SHAP,()))),
+  SQUA = operation(eq,(KIND,(val(symbol,square),()))),
+  RECT = operation(eq,(KIND,(val(symbol,rectangle),()))),
+  SREC = operation(conj,(RECT,(operation(eq,(WIDT,(HEIG,()))),()))),
+  ISSQ = operation(disj,(SQUA,(SREC,()))).
+
+evaluate(variable(isSquare),(val(multimap,a),())).
+evaluate(variable(isSquare),(val(multimap,b),())).
+evaluate(variable(isSquare),(val(multimap,c),())).
+evaluate(variable(isSquare),(val(multimap,d),())).
+evaluate(variable(isSquare),(val(multimap,e),())).
+
+assign(dummy,nb_squares2,E) :-
+  E    = operation(fold,(LAMB,(SET,(START,())))),
+  SET  = variable(shapes),
+  ACCU = variable(accu),
+  START= val(int,0),
+  VARS = (shape,(accu,())),
+  SHAP = variable(shape),
+  ISSQ = operation(variable(isSquare),(SHAP,())),
+  MONE = operation(ite,(ISSQ,(val(int,1),(val(int,0),())))),
+  PLUS = operation(add,(MONE,(ACCU,()))),
+  LAMB = lambda(VARS,PLUS).

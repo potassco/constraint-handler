@@ -7,7 +7,7 @@ _multimap_add(E,EK,EV) :- multimap_assign(CNAME,X,EK,EV), engine(CNAME,compile),
 direct_query(E) :- multimap_declare(NAME,X), E=variable(X).
 direct_query(E;EK;EV) :- _multimap_add(E,EK,EV).
 
-eValue(E,multimap,symbol(E)) :- E=variable(X), multimap_declare(NAME,X).
+eValue(E,multimap,X) :- E=variable(X), multimap_declare(NAME,X).
 
 
 %%%%%%%%%%%%%%%%% multimapMake
@@ -121,16 +121,16 @@ compute(eq,SUBARGS) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,()))
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
 
-_multimap_makeIndex(VM) :- compute(fold,ARGS), ARGS = (symbol,(VO,(multimap,(VM,(TACC,(VACC,())))))).
-_multimap_foldStep(fold,ARGS,0,TACC,VACC) :- compute(fold,ARGS), ARGS = (symbol,(VO,(multimap,(VM,(TACC,(VACC,())))))).
-compute(VO,SUBARGS) :- compute(fold,ARGS), ARGS = (symbol,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
+_multimap_makeIndex(VM) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TACC,(VACC,())))))).
+_multimap_foldStep(fold,ARGS,0,TACC,VACC) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TACC,(VACC,())))))).
+compute(VO,SUBARGS) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
     _multimap_index(VM,I,TK,RK,TI,VI), _multimap_foldStep(fold,ARGS,I,TB,VB),
     SUBARGS = (TI,(VI,(TB,(VB,())))).
-_multimap_foldStep(fold,ARGS,I+1,TN,NEXT) :- compute(fold,ARGS), ARGS = (symbol,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
+_multimap_foldStep(fold,ARGS,I+1,TN,NEXT) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
     _multimap_foldStep(fold,ARGS,I,TB,VB), _multimap_index(VM,I,TK,RK,TI,VI),
     SUBARGS = (TI,(VI,(TB,(VB,())))),
     computed(VO,SUBARGS,TN,NEXT).
-computed(fold,ARGS,TB,VB) :- compute(fold,ARGS), ARGS = (symbol,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
+computed(fold,ARGS,TB,VB) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
     _multimap_foldStep(fold,ARGS,I,TB,VB),
     _multimap_lastIndex(VM,I).
 
@@ -144,3 +144,6 @@ _multimap_index(EM,I+1,TK,RK,TV,RV) :- _multimap_index(EM,I,TK0,RK0,TV0,RV0),
 
 _multimap_lastIndex(EM,I+1) :- _multimap_index(EM,I,TK,RK,TV,RV),
     #false : multimap_entry(EM,TK1,RK1,TV1,RV1), (TK,RK,TV,RV) < (TK1,RK1,TV1,RV1).
+
+_multimap_lastIndex(EM,0) :- _multimap_makeIndex(EM),
+    #false : multimap_entry(EM,TK,RK,TV,RV).

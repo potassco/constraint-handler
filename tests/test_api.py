@@ -12,6 +12,7 @@ def test():
     constraint_expr = """
     assign(assign_bike_frame_size, bike_frame_size, val(int,26)).
     assign(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(str,"Mountain"), (val(str,"Road"), ()))))).
+    #show value/3.
     """
 
     ctrl = Control("0")
@@ -28,8 +29,8 @@ def test():
             solution.add(fact.__str__())
 
         assert solution == {
-            "val(bike_frame_size,int,26)",
-            'val(bike_frame_type,str,"Mountain")',
+            "value(bike_frame_size,int,26)",
+            'value(bike_frame_type,str,"Mountain")',
         }
 
 
@@ -37,6 +38,7 @@ def test_add():
     constraint_expr = """
     assign(assign_x, x, val(int,20)).
     assign(assign_y, y, operation(add, (variable(x), (val(int,10), ())))).
+    #show value/3.
     """
 
     ctrl = Control("0")
@@ -52,4 +54,4 @@ def test_add():
         for fact in model.symbols(shown=True):
             solution.add(fact.__str__())
 
-        assert solution == {"val(x,int,20)", "val(y,int,30)"}
+        assert solution == {"value(x,int,20)", "value(y,int,30)"}

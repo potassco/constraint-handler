@@ -61,6 +61,39 @@ _set_contains(makeSet(ARGS),T,V1) :- compute(makeSet,ARGS), representation(T,int
     (T,V1)=@pythonListElements(ARGS,2),
     #false : (T,V2)=@pythonListElements(ARGS,2), computed(eq,(T,(V2,(T,(V1,())))),bool,true), V2 < V1.
 
+%%%%%%%%%%%%%%%%% filter
+%%% TODO
+%%%eValue(EXPR,bool,true)  :- direct_query(EXPR), E=operation(filter,(EF,(ESET,()))),
+%%%
+%%%.
+%%%set_value(X,T,V) :- eValue(EV,set,E), _set_contains(E,T,V), EV=variable(X).
+%%%
+%%%
+%%%
+%%%direct_query(E) :- compute(filter,ARGS), ARGS = (function,(F,(set,(S,())))),
+%%%    _set_contains(S,T,V),
+%%%    E = operation(val(function,F),val(T,V)).
+
+%%%%%%%%%%%%%%%%%% add
+%%% TODO
+%compute(eq,(T,(VSMALL,(T,(VBIG,()))))) :- compute(add,ARGS), ARGS = (set,(S1,(T,(V2,())))),
+%    _set_contains(S1,T,V1), representation(T,intensional), (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL < VBIG.
+%
+%computed(add,ARGS,set,add(ARGS))   :- compute(add,ARGS), ARGS = (set,(S1,(T,(V2,())))).
+%_set_contains(add(ARGS),T,V) :- compute(add,ARGS), ARGS = (set,(S1,(T2,(V2,())))),
+%    representation(T,extensional), _set_contains(S1,T,V).
+%_set_contains(add(ARGS),T,V) :- compute(add,ARGS), ARGS = (set,(S1,(T,(V,())))),
+%    representation(T,extensional).
+%
+%%%%%_set_contains(union(ARGS),T,VR) :- compute(union,ARGS), ARGS = (set,(S1,(T,(V2,())))),
+%%%%%    representation(T,intensional),
+%%%%%    _set_contains(S1,T,VR),
+%%%%%    #false : computed(eq,(T,(VO,(T,(VR,())))),bool,true), VO < VR.
+%%%%%_set_contains(union(ARGS),T,VR) :- compute(union,ARGS), ARGS = (set,(S1,(T,(V2,())))),
+%%%%%    representation(T,intensional),
+%%%%%    (SR,SO)=((S1,S2);(S2,S1)), _set_contains(SR,T,VR),
+%%%%%    #false : _set_contains(SO,T,VO), computed(eq,(T,(VO,(T,(VR,())))),bool,true), VO < VR.
+
 %%%%%%%%%%%%%%%%% union inter
 
 compute(eq,(T,(VSMALL,(T,(VBIG,()))))) :- compute((union;inter),ARGS), ARGS = (set,(S1,(set,(S2,())))),
@@ -138,49 +171,32 @@ computed(subset,ARGS,bool,true)  :- compute(subset,ARGS), ARGS = (set,(S1,(set,(
 computed(subset,ARGS,bool,false) :- compute(subset,ARGS), ARGS = (T1,(S1,(T2,(S2,())))),
     (T1;T2) != set, (T1;T2) = set.
 
-#script(python)
+%%%%%%%%%%%%%%%%%% Fold
+%%% set_fold: a -> b -> b
 
-import itertools
-import clingo
+_set_makeIndex(VM) :- compute(fold,ARGS), ARGS = (function,(VO,(set,(VM,(TACC,(VACC,())))))).
+_set_foldStep(fold,ARGS,0,TACC,VACC) :- compute(fold,ARGS), ARGS = (function,(VO,(set,(VM,(TACC,(VACC,())))))).
+compute(VO,SUBARGS) :- compute(fold,ARGS), ARGS = (function,(VO,(set,(VM,(TSTART,(VSTART,())))))),
+    _set_index(VM,I,TI,VI), _set_foldStep(fold,ARGS,I,TB,VB),
+    SUBARGS = (TI,(VI,(TB,(VB,())))).
+_set_foldStep(fold,ARGS,I+1,TN,NEXT) :- compute(fold,ARGS), ARGS = (function,(VO,(set,(VM,(TSTART,(VSTART,())))))),
+    _set_foldStep(fold,ARGS,I,TB,VB), _set_index(VM,I,TI,VI),
+    SUBARGS = (TI,(VI,(TB,(VB,())))),
+    computed(VO,SUBARGS,TN,NEXT).
+computed(fold,ARGS,TB,VB) :- compute(fold,ARGS), ARGS = (function,(VO,(set,(VM,(TSTART,(VSTART,())))))),
+    _set_foldStep(fold,ARGS,I,TB,VB),
+    _set_lastIndex(VM,I).
 
-import constraint_handler.myClorm
-import constraint_handler.evaluator
+_set_index(EM,0,TV,RV) :- _set_makeIndex(EM),
+    _set_contains(EM,TV,RV),
+    #false : _set_contains(EM,TV1,RV1), (TV1,RV1) < (TV,RV).
 
-def pythonReversed(clExpr):
-    pL = myClorm.cltopy(clExpr,list)
-    pRL = list(reversed(pL))
-    return myClorm.pytocl(pRL)
+_set_index(EM,I+1,TV,RV) :- _set_index(EM,I,TV0,RV0),
+    _set_contains(EM,TV,RV), (TV0,RV0) < (TV,RV),
+    #false : _set_contains(EM,TV1,RV1), (TV0,RV0) < (TV1,RV1), (TV1,RV1) < (TV,RV).
 
-def pythonListElements(clExpr,clBatchSize = clingo.Number(1)):
-    pBatchSize = myClorm.cltopy(clBatchSize,int)
-    pL = myClorm.cltopy(clExpr,list)
-    if pBatchSize == 1:
-        pGroups = pL
-    else:
-        pGroups = itertools_batched(pL,pBatchSize)
-    return [myClorm.pytocl(e) for e in pGroups]
+_set_lastIndex(EM,I+1) :- _set_index(EM,I,TV,RV),
+    #false : _set_contains(EM,TV1,RV1), (TV,RV) < (TV1,RV1).
 
-
-def pythonEnumerateElements(clExpr,clBatchSize = clingo.Number(1)):
-    pBatchSize = myClorm.cltopy(clBatchSize,int)
-    pL = myClorm.cltopy(clExpr,list)
-    if pBatchSize == 1:
-        pGroups = pL
-    else:
-        pGroups = itertools_batched(pL,pBatchSize)
-    return [myClorm.pytocl(e) for e in enumerate(pGroups)]
-
-# https://docs.python.org/3/library/itertools.html#itertools.batched
-def prepython12_itertools_batched(iterable, n, *, strict=False):
-    # batched('ABCDEFG', 3) → ABC DEF G
-    if n < 1:
-        raise ValueError('n must be at least one')
-    iterator = iter(iterable)
-    while batch := tuple(itertools.islice(iterator, n)):
-        if strict and len(batch) != n:
-            raise ValueError('batched(): incomplete batch')
-        yield batch
-
-itertools_batched = itertools.batched if hasattr(itertools,'batched') else prepython12_itertools_batched
-
-#end.
+_set_lastIndex(EM,0) :- _set_makeIndex(EM),
+    #false : _set_contains(EM,TV,RV).
