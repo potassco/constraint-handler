@@ -5,4 +5,3 @@ evaluated(neq,(variable(z),(variable(t),())),bool,true)
 evaluated(conj,(operation(limp,(variable(f),(operation(lnot,(variable(y),())),()))),(variable(f),())),bool,false)
 evaluated(dnot,(variable(b),()),bool,false)
 evaluated(lnot,(operation(dnot,(variable(b),())),()),bool,true)
-

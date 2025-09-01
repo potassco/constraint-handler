@@ -87,4 +87,3 @@ assign(dummy,nb_squares2,E) :-
   MONE = operation(ite,(ISSQ,(val(int,1),(val(int,0),())))),
   PLUS = operation(add,(MONE,(ACCU,()))),
   LAMB = lambda(VARS,PLUS).
-

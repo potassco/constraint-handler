@@ -20,17 +20,17 @@ class PPEnum(Enum):
         return self.name
 
 
-BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function","multimap"])
+BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function", "multimap"])
 UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "dnot", "ite", "leqv", "limp", "lnot", "lxor"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
     ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
 )
-SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset","fold"])
+SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "fold"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 
-MultimapOperator = PPEnum("MultimapOperator", ["find","multimapMake"])
+MultimapOperator = PPEnum("MultimapOperator", ["find", "multimapMake"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["phi", "if"])
@@ -47,10 +47,16 @@ class CustomOperator(NamedTuple):
     name: clingo.Symbol
 
 
-Operator0 = UnaryOperator | BinaryOperator | LogicOperator | SetOperator | MultimapOperator | OtherOperator | ConditionalOperator
-noPredOperator = (
-    Operator0 | str
+Operator0 = (
+    UnaryOperator
+    | BinaryOperator
+    | LogicOperator
+    | SetOperator
+    | MultimapOperator
+    | OtherOperator
+    | ConditionalOperator
 )
+noPredOperator = Operator0 | str
 
 
 class Val(NamedTuple):
@@ -73,9 +79,11 @@ class Variable(NamedTuple):
     def __repr__(self):
         return f"{self.arg}"
 
+
 class Lambda(NamedTuple):
     vars: list[clingo.Symbol]
     expr: Expr
+
 
 class Python(NamedTuple):
     fn: Expr
@@ -198,15 +206,15 @@ def evaluate_multimap_operator(o, args):
             assert len(args) == 2
             return args[1][args[0]]
         case MultimapOperator.multimapMake:
-            pairs = [(args[2*i],args[2*i+1]) for i in range(int(len(args)/2))]
-            return { key : value for (key,value) in pairs }
+            pairs = [(args[2 * i], args[2 * i + 1]) for i in range(int(len(args) / 2))]
+            return {key: value for (key, value) in pairs}
 
 
-def set_fold(f,s,start):
-    print("fold",f,s,start)
+def set_fold(f, s, start):
+    print("fold", f, s, start)
     accu = start
     for e in s:
-        accu = f(e,accu)
+        accu = f(e, accu)
     return accu
 
 
@@ -225,7 +233,7 @@ def evaluate_set_operator(o, args):
         case SetOperator.subset:
             return args[0].issubset(args[1])
         case SetOperator.fold:
-            return set_fold(args[0],args[1],args[2])
+            return set_fold(args[0], args[1], args[2])
 
 
 def evaluate_binop(o, lval, rval):
@@ -283,12 +291,12 @@ def evaluate_operator(symbols, o, args):
             call = eval(fn)
             # print(f"{fn}{tuple(vals)} = {}")
             return call(*args)
-        case Lambda(vars,expr):
+        case Lambda(vars, expr):
             if len(vars) != len(args):
                 print(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
                 assert False
             symbols2 = dict(symbols)
-            for (v,e) in zip(vars,args):
+            for v, e in zip(vars, args):
                 symbols2[v] = e
             return evaluate_expr(symbols2, expr)
         case LogicOperator():
@@ -321,10 +329,10 @@ def evaluate_operator(symbols, o, args):
                 assert False
 
 
-def evaluate_lambda(symbols,vars,args,body):
+def evaluate_lambda(symbols, vars, args, body):
     # print("evaluate_lambda",symbols,vars,args,body)
     d = dict(symbols)
-    return evaluate_expr(d,body)
+    return evaluate_expr(d, body)
 
 
 def evaluate_expr(symbols, expr):
@@ -341,9 +349,10 @@ def evaluate_expr(symbols, expr):
         case Val(type_, val):
             return val
         case Lambda(vars, body):
-            return lambda **args: evaluate_lambda(symbols,vars,args,body)
+            return lambda **args: evaluate_lambda(symbols, vars, args, body)
             assert False
             # TODO
+
 
 def beta_reduction(symbols, expr):
     match expr:
