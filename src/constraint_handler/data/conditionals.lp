@@ -12,3 +12,6 @@ eValue(E,T,V)   :- direct_query(E), E=operation(phi, (E1,(E2,()))), not conditio
 
 conditional_hasValue(E) :- eValue(E,T,V).
 conditional_hasNoValue(E) :- direct_query(E), not conditional_hasValue(E).
+
+eValue(E,bool,true) :- direct_query(E), E=operation(hasValue, (E1,())), conditional_hasValue(E1).
+eValue(E,bool,false) :- direct_query(E), E=operation(hasValue, (E1,())), conditional_hasNoValue(E1).
