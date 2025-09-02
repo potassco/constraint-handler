@@ -39,6 +39,7 @@ class ConditionalOperator(Enum):
     IF = "if"
     hasValue = "hasValue"
 
+
 noPredConstant = bool | float | int | str | clingo.Symbol
 ConstantList = list[noPredConstant]
 
