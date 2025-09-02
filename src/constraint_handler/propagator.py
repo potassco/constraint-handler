@@ -229,7 +229,7 @@ class ConstraintHandlerPropagator:
         for symbol, lit in self.ensure_symbol_lit.items():
             name, expr = self.ensure_symbol_parsed[symbol]
             print(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
-            evaluated = evaluator.evaluate_expr(make_dict_from_variables(self.evaluated | self.evaluated_sets), expr)
+            evaluated = evaluator.evaluate_expr(make_dict_from_variables(self.symbol2var.values()), expr)
 
             print(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
             if evaluated is None:
@@ -259,7 +259,7 @@ class ConstraintHandlerPropagator:
                 to_evaluate.update(self.literal2var[lit])
 
         self.evaluated_solver_assignment(ctl, to_evaluate)
-        print(f"Evaluated assignments: {make_dict_from_variables(self.evaluated | self.evaluated_sets)}")
+        print(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
 
         backtrack = self.check_ensure(ctl)
         print(f"PROPAGATION DONE, backtracking {backtrack}")
@@ -284,7 +284,7 @@ class ConstraintHandlerPropagator:
         This method evaluates a variable in the propagator.
         It uses the current solver assignment to determine its value.
         """
-        evaluated = var.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
+        evaluated = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
         if evaluated:
             print(f"Var {var} evaluated to {var.get_value()} at decision level {var.decision_level}")
             self.reasons[var.var] = { var.literal }
@@ -355,7 +355,7 @@ class ConstraintHandlerPropagator:
 
             ctl.add_watch(ctl.solver_literal(atom.literal))
 
-            variable.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
+            variable.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
         """
@@ -391,7 +391,7 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
 
         for symbol_var in self.evaluated_sets:
-            symbol_var.evaluate(make_dict_from_variables(self.evaluated.union(self.evaluated_sets)), ctl)
+            symbol_var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
 
     def set_parents(self):
         """
@@ -399,6 +399,10 @@ class ConstraintHandlerPropagator:
         """
         for var in self.symbol2var.values():
             for symbol_var in var.vars():
+                if symbol_var == var.var:
+                    # don't add self as parent 
+                    # for self referencing variables
+                    continue
                 if symbol_var not in self.symbol2var:
                     print(self.symbol2var.keys())
                     print(type(symbol_var), symbol_var)
@@ -408,6 +412,8 @@ class ConstraintHandlerPropagator:
     def on_model(self,model):
         self.model = []
         for var in self.evaluated.union(self.evaluated_sets):
+            if var.get_value() is None:
+                continue
             pyAtom = Val(var.var,evaluator.get_baseType(var.get_value()),var.get_value())
             print(f"adding atom {pyAtom}",end=" ")
             clAtom = myClorm.pytocl(pyAtom)
