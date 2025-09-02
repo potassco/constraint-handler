@@ -37,7 +37,7 @@ MultimapOperator = PPEnum("MultimapOperator", ["find", "multimapMake"])
 class ConditionalOperator(Enum):
     phi = "phi"
     IF = "if"
-
+    hasValue = "hasValue"
 
 noPredConstant = bool | float | int | str | clingo.Symbol
 ConstantList = list[noPredConstant]
@@ -279,6 +279,8 @@ def evaluate_conditional_operator(o, args):
                 return args[1]
             else:
                 return None
+        case ConditionalOperator.hasValue:
+            return args[0] is not None
 
 
 def evaluate_operator(symbols, o, args):
