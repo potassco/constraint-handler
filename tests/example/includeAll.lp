@@ -12,3 +12,4 @@
 #include "../../src/constraint_handler/data/set.lp".
 #include "../../src/constraint_handler/data/string.lp".
 #include "../../src/constraint_handler/data/symbol.lp".
+#include "../../src/constraint_handler/data/propagator.lp".

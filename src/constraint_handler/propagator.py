@@ -9,6 +9,12 @@ from dataclasses import dataclass
 
 import queue
 
+DEBUG_PRINT = False
+
+def myprint(*args, **kwargs):
+    if DEBUG_PRINT:
+        print(*args, **kwargs)
+
 @dataclass
 class AtomNames:
     ASSIGN: str = "propagator_assign"
@@ -17,7 +23,7 @@ class AtomNames:
     SET_ASSIGN: str = "set_assign"
 
 
-class Val(NamedTuple):
+class Value(NamedTuple):
     name: clingo.Symbol
     type_: evaluator.BaseType | None
     value: bool | int | float | str | clingo.Symbol
@@ -207,16 +213,16 @@ class ConstraintHandlerPropagator:
         self.get_set_declarations(ctl)
         self.set_parents()
 
-        print("INIT DONE")
-        print("#"*50)
+        myprint("INIT DONE")
+        myprint("#"*50)
 
     def check(self, ctl: clingo.PropagateControl):
-        print("CHECKING")
+        myprint("CHECKING")
 
         self.evaluated_solver_assignment(ctl, set(self.symbol2var.values()))
 
         backtrack = self.check_ensure(ctl)
-        print(f"CHECK DONE, backtracking {backtrack}")
+        myprint(f"CHECK DONE, backtracking {backtrack}")
         if backtrack:
             return
 
@@ -228,21 +234,21 @@ class ConstraintHandlerPropagator:
         """
         for symbol, lit in self.ensure_symbol_lit.items():
             name, expr = self.ensure_symbol_parsed[symbol]
-            print(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
+            myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
             evaluated = evaluator.evaluate_expr(make_dict_from_variables(self.symbol2var.values()), expr)
 
-            print(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
+            myprint(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
             if evaluated is None:
                 continue
 
             if not evaluated:
                 nogood = {lit}.union(*(self.reasons[dvar] for dvar in evaluator.collectVars(expr)))
-                print(f"the reason for {expr} being {evaluated} is {nogood} based on vars in {evaluator.collectVars(expr)}")
+                myprint(f"the reason for {expr} being {evaluated} is {nogood} based on vars in {evaluator.collectVars(expr)}")
                 if ctl.add_nogood(list(nogood)):
                     assert False, "Added violated constraint but solver did not detect it"
                 return True
         
-        print("Ensures checked")
+        myprint("Ensures checked")
         return False
     
     def propagate(self, ctl: clingo.PropagateControl, changes: Sequence[int]) -> None:
@@ -252,17 +258,17 @@ class ConstraintHandlerPropagator:
         If any ensure constraint is violated, it adds a nogood and propagates.
         """
         # return
-        print(f"PROPAGATING with changes: {changes} and decision level {ctl.assignment.decision_level}")
+        myprint(f"PROPAGATING with changes: {changes} and decision level {ctl.assignment.decision_level}")
         to_evaluate: set[Variable | SetVariable] = set()
         for lit in changes:
             if lit in self.literal2var:
                 to_evaluate.update(self.literal2var[lit])
 
         self.evaluated_solver_assignment(ctl, to_evaluate)
-        print(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
+        myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
 
         backtrack = self.check_ensure(ctl)
-        print(f"PROPAGATION DONE, backtracking {backtrack}")
+        myprint(f"PROPAGATION DONE, backtracking {backtrack}")
         if backtrack:
             return
 
@@ -273,7 +279,7 @@ class ConstraintHandlerPropagator:
         """
         while len(to_evaluate) > 0:
             var = to_evaluate.pop()
-            print(f"Evaluating variable {var} at decision level {ctl.assignment.decision_level}")
+            myprint(f"Evaluating variable {var} at decision level {ctl.assignment.decision_level}")
 
             if self.evaluate_variable(ctl, var):
                 for parent in var.parents:
@@ -286,10 +292,10 @@ class ConstraintHandlerPropagator:
         """
         evaluated = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
         if evaluated:
-            print(f"Var {var} evaluated to {var.get_value()} at decision level {var.decision_level}")
+            myprint(f"Var {var} evaluated to {var.get_value()} at decision level {var.decision_level}")
             self.reasons[var.var] = { var.literal }
             self.reasons[var.var] = self.reasons[var.var].union(*(self.reasons[dvar] for dvar in var.vars()))
-            print(f"the reason(s) for {var} taking value {var.get_value()} is {self.reasons[var.var]}")
+            myprint(f"the reason(s) for {var} taking value {var.get_value()} is {self.reasons[var.var]}")
 
         return evaluated
 
@@ -297,10 +303,10 @@ class ConstraintHandlerPropagator:
         """
         Resets the evaluations and reasons based on the current assignment.
         """
-        print(f"UNDOING for decision level {assignment.decision_level} with changes {changes}")
+        myprint(f"UNDOING for decision level {assignment.decision_level} with changes {changes}")
         for var in self.symbol2var.values():
             if var.decision_level >= assignment.decision_level:
-                print(f"Resetting {var} and its reasons due to decision level {var.decision_level} >= {assignment.decision_level}")
+                myprint(f"Resetting {var} and its reasons due to decision level {var.decision_level} >= {assignment.decision_level}")
                 var.reset()
                 if var.var in self.reasons:
                     del self.reasons[var.var]
@@ -404,8 +410,8 @@ class ConstraintHandlerPropagator:
                     # for self referencing variables
                     continue
                 if symbol_var not in self.symbol2var:
-                    print(self.symbol2var.keys())
-                    print(type(symbol_var), symbol_var)
+                    myprint(self.symbol2var.keys())
+                    myprint(type(symbol_var), symbol_var)
                     assert False, f"Variable {symbol_var} not found in symbol2var"
                 self.symbol2var[symbol_var].parents.append(var)
 
@@ -414,10 +420,10 @@ class ConstraintHandlerPropagator:
         for var in self.evaluated.union(self.evaluated_sets):
             if var.get_value() is None:
                 continue
-            pyAtom = Val(var.var,evaluator.get_baseType(var.get_value()),var.get_value())
-            print(f"adding atom {pyAtom}",end=" ")
+            pyAtom = Value(var.var,evaluator.get_baseType(var.get_value()),var.get_value())
+            myprint(f"adding atom {pyAtom}",end=" ")
             clAtom = myClorm.pytocl(pyAtom)
-            print(f"= {clAtom}")
+            myprint(f"= {clAtom}")
             if not model.contains(clAtom):
                 model.extend([clAtom])
                 self.model.append(clAtom)
