@@ -28,6 +28,7 @@ BinaryOperator = PPEnum(
     ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
 )
 SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "fold"])
+StringOperator = PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 
 MultimapOperator = PPEnum("MultimapOperator", ["find", "multimapMake"])
@@ -53,11 +54,16 @@ Operator0 = (
     | BinaryOperator
     | LogicOperator
     | SetOperator
+    | StringOperator
     | MultimapOperator
     | OtherOperator
     | ConditionalOperator
 )
 noPredOperator = Operator0 | str
+
+
+class Set(NamedTuple):
+    value: list[noPredConstant]
 
 
 class Val(NamedTuple):
@@ -191,10 +197,7 @@ def evaluate_logic_operator(o, args):
             return not functools.reduce(operator.xor, args)
         case LogicOperator.limp:
             assert len(args) == 2
-            print(args, args[1] if args[0] else args[0])
-            assert False
             return args[1] if args[0] else args[0]
-        #            return not args[0] or args[1]
         case LogicOperator.lnot:
             assert len(args) == 1
             if None in args:
@@ -240,6 +243,17 @@ def evaluate_set_operator(o, args):
             return args[0].issubset(args[1])
         case SetOperator.fold:
             return set_fold(args[0], args[1], args[2])
+
+
+def evaluate_string_operator(o, args):
+    if None in args:
+        return None
+    match o:
+        case StringOperator.length:
+            assert len(args) == 1
+            return len(args[0])
+        case StringOperator.concat:
+            return "".join(args)
 
 
 def evaluate_binop(o, lval, rval):
@@ -313,6 +327,8 @@ def evaluate_operator(symbols, o, args):
             return evaluate_multimap_operator(o, args)
         case SetOperator():
             return evaluate_set_operator(o, args)
+        case StringOperator():
+            return evaluate_string_operator(o, args)
         case ConditionalOperator():
             return evaluate_conditional_operator(o, args)
         case OtherOperator.minus:
