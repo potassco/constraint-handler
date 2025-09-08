@@ -15,10 +15,18 @@ def myprint(*args, **kwargs):
     if DEBUG_PRINT:
         print(*args, **kwargs)
 
+class ValueNotSet:
+    # this represents a value for a literal that has not been set yet
+    # or a false literal
+    pass
+
+VALUE_NOT_SET = ValueNotSet()
+
 @dataclass
 class AtomNames:
     ASSIGN: str = "propagator_assign"
     ENSURE: str = "propagator_ensure"
+    EVALUATE: str = "evaluate"
     SET_DECLARE: str = "set_declare"
     SET_ASSIGN: str = "set_assign"
 
@@ -29,36 +37,80 @@ class Value(NamedTuple):
     value: bool | int | float | str | clingo.Symbol
 
 
-class VariableValue:
+class Evaluated(NamedTuple):
+    name: evaluator.Operator
+    expr: list[evaluator.Expr]
+    value: bool | int | float | str | clingo.Symbol
 
-    def __init__(self, expr: evaluator.Expr, lit: int):
-        self.expr = expr
-        self.value: Any = None
+class EvaluateVariable:
 
-        self.literal: int = lit
+    def __init__(self, op:evaluator.Operator, args: list[evaluator.Expr], literal: int = -1):
+        self.op: evaluator.Operator = op
+        self.args: list[evaluator.Expr] = args
+        self.value: Any = VALUE_NOT_SET
+        self.literal: int = literal
 
     def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         if not ctl.assignment.is_true(self.literal):
             return False
+        print("Starting evaluate")
+        value = evaluator.evaluate_expr(evaluations, evaluator.Operation(self.op, self.args))
+        myprint(f"Evaluated {self.op}({self.args}) to {value}")
+        # if type(value) == set:
+        #     if None in value:
+        #         # if something in the set is undefined
+        #         # we do not assign a value
+        #         return False
+        #     value = frozenset(value)
 
+        self.value = value
+        return True
+    
+    def __eq__(self, other):
+        if not isinstance(other, EvaluateVariable):
+            return False
+        return self.op == other.op and self.args == other.args and self.literal == other.literal
+
+    def __hash__(self):
+        return hash((str(self.op),str(self.args),self.literal))
+
+class VariableValue:
+
+    def __init__(self, expr: evaluator.Expr, lit: int):
+        self.expr = expr
+        self.value: Any = VALUE_NOT_SET
+
+        self.literal: int = lit
+        self.assigned: bool | None = None
+        self.decision_level: int = float('inf')
+
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
+        """Evaluate the expression and return True if the value has changed."""
+        self.assigned = ctl.assignment.value(self.literal)
+        if not ctl.assignment.is_true(self.literal):
+            return False
+        myprint(f"Evaluating {self.expr}")
         value = evaluator.evaluate_expr(evaluations, self.expr)
-        
+        myprint(f"{self.expr} evaluated to {value}")
         if type(value) == set:
             if None in value:
                 # if something in the set is undefined
-                # we do not add it to as a value
-                value.remove(None)
+                # we do not assign a value
+                return False
             value = frozenset(value)
 
         if value == self.value:
             return False
-        
+
+        self.decision_level = ctl.assignment.level(self.literal)
         self.value = value
         return True
 
     def reset(self):
-        self.value = None
+        self.value = VALUE_NOT_SET
+        self.decision_level = float('inf')
+        self.assigned = None
 
     def __eq__(self, other):
         if not isinstance(other, VariableValue):
@@ -76,48 +128,88 @@ class Variable:
         A variable with a name and a value expression.
         This is supposed to mirror the assign/3 atom(also propagator_assign/3) in the ASP encoding.
     """
-    def __init__(self, name: str, var: clingo.Symbol, lit: int, expr: clingo.Symbol):
+    def __init__(self, name: str, var: clingo.Symbol):
         self.name = name
         self.var = var
-        self.value: VariableValue = VariableValue(expr, lit)
-
-        self.decision_level: int = float('inf')
+        self.expressions: set[VariableValue] = set()
+        self.value: Any = VALUE_NOT_SET
         self.parents: List[Variable | SetVariable] = []
 
-    @property
-    def literal(self) -> int:
-        return self.value.literal
+    def add_value(self, expr: evaluator.Expr, lit: int) -> None:
+        self.expressions.add(VariableValue(expr, lit))
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
-        """Evaluate the expression and return True if the value has changed."""        
-        if self.value.evaluate(evaluations, ctl):
-            self.decision_level = ctl.assignment.decision_level
-            return True
-        return False
+    @property
+    def literals(self) -> set[int]:
+        lits = set()
+        lits.update({value.literal for value in self.expressions if value.assigned})
+        return lits
+
+    def has_unassigned(self) -> bool:
+        return any(arg.assigned is None for arg in self.expressions)
+    
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> tuple[bool, bool]:
+        """
+        Evaluate the expression and return a tuple (changed, conflict).
+        changed is True if the value has changed.
+        conflict is True if there is a conflict (multiple values assigned).
+        """
+
+        changed = False
+        for value in self.expressions:
+            changed |= value.evaluate(evaluations, ctl)
+
+        if not changed:
+            return False, False
+
+        # if some value changed, we need to discern the new value
+        val = set(value.value for value in self.expressions if value.value != VALUE_NOT_SET)
+        if len(val) > 1:
+            # multiple values assigned to the same variable
+            myprint(f"Variable vals: {val}")
+            return True, True
+        elif len(val) == 0:
+            val = None
+        elif len(val) == 1:
+            if val == self.value:
+                # same value as before
+                return False, False
+
+        self.value = val.pop()
+        return True, False
 
     def vars(self) -> set[clingo.Symbol]:
-        return evaluator.collectVars(self.value.expr)
+        vars = set()
+        for value in self.expressions:
+            vars.update(evaluator.collectVars(value.expr))
+        return vars
 
     def get_value(self) -> Any:
-        return self.value.value
+        return self.value
+    
+    @property
+    def decision_level(self) -> int:
+        if self.value is VALUE_NOT_SET:
+            return float('inf')
+        return min(value.decision_level for value in self.expressions)
 
     def reset(self):
-        self.value.reset()
-        self.decision_level = float('inf')
+        self.value = VALUE_NOT_SET
+        for value in self.expressions:
+            value.reset()
 
     def __eq__(self, other):
         if not isinstance(other, Variable):
             assert False, "Variable can only be compared to another Variable"
-        return self.var == other.var and self.value == other.value
+        return self.var == other.var and self.expressions == other.expressions
 
     def __hash__(self):
-        return hash((self.var, self.value))
+        return hash((self.var, frozenset(self.expressions)))
 
     def __str__(self):
         return f"Variable({self.name}, {self.var})"
     
     def __repr__(self):
-        return f"Variable({self.name}, {self.var}, {self.value.literal}, {self.value.expr})"
+        return f"Variable({self.name}, {self.var}, {self.expressions.literal}, {self.expressions.expr})"
 
 class SetVariable:
     """
@@ -127,7 +219,7 @@ class SetVariable:
     def __init__(self, name: str, var: clingo.Symbol, lit: int):
         self.name = name
         self.var = var
-        self.literal = lit
+        self.literals: set[int] = {lit}
         self.value: set[VariableValue] = set()
 
         self.decision_level: int = float('inf')
@@ -140,15 +232,30 @@ class SetVariable:
         return item in self.value
     
     def get_value(self) -> set[Any]:
+        """
+        If there is an unassigned value, return None.
+        Otherwise return the set of assigned values without the None values.
+        """
+        if self.has_unassigned():
+            return None
+        
         return {arg.value for arg in self.value if arg.value is not None}
+
+    def has_unassigned(self) -> bool:
+        return any(arg.assigned is None for arg in self.value)
 
     def vars(self) -> set[clingo.Symbol]:
         return set.union(*(evaluator.collectVars(arg.expr) for arg in self.value))
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
-        """Evaluate all arguments and return True if any value has changed."""
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> tuple[bool, bool]:
+        """
+        Evaluate the expression and return a tuple (changed, conflict).
+        changed is True if the value has changed.
+        conflict is True if there is a conflict.
+        For sets, there should never be a conflict.
+        """
         if not ctl.assignment.is_true(self.literal):
-            return False
+            return False, False
 
         changed = False
         for arg in self.value:
@@ -157,7 +264,7 @@ class SetVariable:
         if changed:
             self.decision_level = ctl.assignment.decision_level
 
-        return changed
+        return changed, False
 
     def reset(self):
         for arg in self.value:
@@ -175,18 +282,18 @@ class SetVariable:
     def __str__(self):
         return f"SetVariable({self.name}, {self.var})"
 
-
-def make_dict_from_set_variables(variables: Sequence[SetVariable]) -> Dict[clingo.Symbol, set[Any]]:
-    result: Dict[clingo.Symbol, set[Any]] = {}
-    for var in variables:
-        result[var.var] = var.get_value()
-    return result
-
 def make_dict_from_variables(variables: Sequence[Variable | SetVariable]) -> Dict[clingo.Symbol, Any | set[Any]]:
     result: Dict[clingo.Symbol, Any | set[Any]] = {}
     for var in variables:
-        if var.get_value() is not None:
+        if var.get_value() is not None and var.get_value() is not VALUE_NOT_SET:
             result[var.var] = var.get_value()
+        else:
+            # here value is none so we check to see if it is still possible to get a value
+            # if not, we set it to none
+            # if yes, then we just skip it
+            if not var.has_unassigned():
+                result[var.var] = None
+
     return result
 
 class ConstraintHandlerPropagator:
@@ -196,8 +303,7 @@ class ConstraintHandlerPropagator:
         self.assign2symbol_var: Dict[clingo.Symbol, clingo.Symbol] = {}
         self.literal2var: Dict[int, list[Variable | SetVariable]] = {}
 
-        self.evaluated: set[Variable] = set()
-        self.evaluated_sets: set[SetVariable] = set()
+        self.evaluatevars: list[EvaluateVariable] = []
 
         self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
         self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]]
@@ -213,6 +319,8 @@ class ConstraintHandlerPropagator:
         self.get_set_declarations(ctl)
         self.set_parents()
 
+        self.get_evaluate(ctl)
+
         myprint("INIT DONE")
         myprint("#"*50)
 
@@ -221,10 +329,21 @@ class ConstraintHandlerPropagator:
 
         self.evaluated_solver_assignment(ctl, set(self.symbol2var.values()))
 
+        myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
         backtrack = self.check_ensure(ctl)
-        myprint(f"CHECK DONE, backtracking {backtrack}")
+        myprint(f"backtracking {backtrack}")
         if backtrack:
             return
+        
+        self.check_evaluate(ctl)
+
+        myprint("CHECK DONE!")
+
+    def check_evaluate(self, ctl: clingo.PropagateControl):
+        myprint("Checking evaluate atoms")
+        myprint(f"Evaluated assignments before evaluate: {make_dict_from_variables(self.symbol2var.values())}")
+        for var in self.evaluatevars:
+            var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
 
     def check_ensure(self, ctl: clingo.PropagateControl) -> bool:
         """
@@ -272,7 +391,7 @@ class ConstraintHandlerPropagator:
         if backtrack:
             return
 
-    def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[Variable | SetVariable]) -> None:
+    def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[Variable | SetVariable]) -> bool:
         """
         This method evaluates the variables given using the current solver assignment.
         If a variable's value changes, it also evaluates its parents.
@@ -281,21 +400,34 @@ class ConstraintHandlerPropagator:
             var = to_evaluate.pop()
             myprint(f"Evaluating variable {var} at decision level {ctl.assignment.decision_level}")
 
-            if self.evaluate_variable(ctl, var):
+            result = self.evaluate_variable(ctl, var)
+            if result is None:
+                # variable had issue, stop propagation!
+                return False
+            elif result:
+                # variable changed, evaluate parents
                 for parent in var.parents:
                     to_evaluate.add(parent)
-    
-    def evaluate_variable(self, ctl: clingo.PropagateControl, var: Variable | SetVariable) -> bool:
+                    
+    def evaluate_variable(self, ctl: clingo.PropagateControl, var: Variable | SetVariable) -> bool | None:
         """
         This method evaluates a variable in the propagator.
         It uses the current solver assignment to determine its value.
         """
-        evaluated = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
-        if evaluated:
+        evaluated, conflict = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+        myprint(f"Variable {var} is: {evaluated}, conflict: {conflict}")
+        if evaluated or conflict:
             myprint(f"Var {var} evaluated to {var.get_value()} at decision level {var.decision_level}")
-            self.reasons[var.var] = { var.literal }
+            self.reasons[var.var] = var.literals
             self.reasons[var.var] = self.reasons[var.var].union(*(self.reasons[dvar] for dvar in var.vars()))
             myprint(f"the reason(s) for {var} taking value {var.get_value()} is {self.reasons[var.var]}")
+            if conflict:
+                myprint(f"Var {var} is in conflict at decision level {var.decision_level}")
+                ng = self.reasons[var.var].union(var.literals)
+                myprint(f"Adding nogood {ng}")
+                if ctl.add_nogood(ng):
+                    assert False, "Added violated constraint but solver did not detect it"
+                return None
 
         return evaluated
 
@@ -310,14 +442,11 @@ class ConstraintHandlerPropagator:
                 var.reset()
                 if var.var in self.reasons:
                     del self.reasons[var.var]
-                # else:
-                #     assert False, f"Variable {var} not in reasons but should be"
 
     def parse_assign(self, symbol: clingo.Symbol) -> Tuple[str, clingo.Symbol, evaluator.Expr]:
         """
         Parses an assign atom and returns its name, variable, and expression.
         """
-
         name = myClorm.cltopy(symbol.arguments[0])
         var = myClorm.cltopy(symbol.arguments[1])
         expr = myClorm.cltopy(symbol.arguments[2],evaluator.Expr)
@@ -330,6 +459,17 @@ class ConstraintHandlerPropagator:
         name = myClorm.cltopy(symbol.arguments[0])
         expr = myClorm.cltopy(symbol.arguments[1],evaluator.Expr)
         return name, expr
+
+    def parse_evaluate(self, symbol: clingo.Symbol) -> evaluator.Expr:
+        """
+        Parses an evaluate atom and returns its expression.
+        """
+        op = myClorm.cltopy(symbol.arguments[0], evaluator.Operator)
+        args = []
+        for s in myClorm.unnest(symbol.arguments[1]):
+            args.append(myClorm.cltopy(s,evaluator.Expr))
+
+        return op, args
 
     def get_ensure(self, ctl: clingo.PropagateInit):
         """
@@ -350,10 +490,13 @@ class ConstraintHandlerPropagator:
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.ASSIGN,3):
             literal = ctl.solver_literal(atom.literal)        
             name, symbol_var, expr = self.parse_assign(atom.symbol)
-            variable = Variable(name, symbol_var, literal, expr)
-
-            self.evaluated.add(variable)
-            self.symbol2var[symbol_var] = variable
+            if symbol_var in self.symbol2var:
+                variable = self.symbol2var[symbol_var]
+            else:
+                variable = Variable(name, symbol_var)
+                self.symbol2var[symbol_var] = variable
+                
+            variable.add_value(expr, literal)
             self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
@@ -362,6 +505,19 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(ctl.solver_literal(atom.literal))
 
             variable.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+
+    def get_evaluate(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the variables from the ASP encoding.
+        It reads the propagator_assign atoms and creates Variable instances.
+        """
+
+        for atom in ctl.symbolic_atoms.by_signature(AtomNames.EVALUATE,2):
+            literal = ctl.solver_literal(atom.literal)        
+            op, args = self.parse_evaluate(atom.symbol)
+
+            var = EvaluateVariable(op, args, literal)
+            self.evaluatevars.append(var)
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
         """
@@ -375,7 +531,6 @@ class ConstraintHandlerPropagator:
             symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
             variable = SetVariable(name, symbol_var, literal)
 
-            self.evaluated_sets.add(variable)
             self.symbol2var[symbol_var] = variable
             self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
@@ -396,9 +551,6 @@ class ConstraintHandlerPropagator:
 
             ctl.add_watch(literal)
 
-        for symbol_var in self.evaluated_sets:
-            symbol_var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
-
     def set_parents(self):
         """
         Sets the parents of each variable based on the variables they depend on.
@@ -417,11 +569,22 @@ class ConstraintHandlerPropagator:
 
     def on_model(self,model):
         self.model = []
-        for var in self.evaluated.union(self.evaluated_sets):
-            if var.get_value() is None:
+        for var in self.symbol2var.values():
+            if var.get_value() is None or var.get_value() is VALUE_NOT_SET:
                 continue
             pyAtom = Value(var.var,evaluator.get_baseType(var.get_value()),var.get_value())
             myprint(f"adding atom {pyAtom}",end=" ")
+            clAtom = myClorm.pytocl(pyAtom)
+            myprint(f"= {clAtom}")
+            if not model.contains(clAtom):
+                model.extend([clAtom])
+                self.model.append(clAtom)
+        
+        for var in self.evaluatevars:
+            # if var.value is None or var.value is VALUE_NOT_SET:
+            #     continue
+            pyAtom = Evaluated(var.op,var.args,var.value)
+            myprint(f"adding evaluate atom {pyAtom}",end=" ")
             clAtom = myClorm.pytocl(pyAtom)
             myprint(f"= {clAtom}")
             if not model.contains(clAtom):
