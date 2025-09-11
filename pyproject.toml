@@ -13,7 +13,7 @@ readme = "README.md"
 
 dependencies = [
     "clorm",
-    "clingo==5.7.1",
+    "clingo>=5.7.1",
 ]
 
 [project.urls]
