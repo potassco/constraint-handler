@@ -159,7 +159,8 @@ def cltopy(func, dtarget=None):
     rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
     # print(f"ctp disj trying '{func}' with rows '{rows}'")
     for target in rows:
-        #      print(f"ctp {target} {type(target)}")
+        # print(f"ctp {target} {type(target)}")
+        utarget = typing.get_origin(target) or target # unsubscripted_target
         try:
             if target == typing.Any:
                 return func
@@ -183,33 +184,30 @@ def cltopy(func, dtarget=None):
                         return target(*args)
             # elif any(isinstance(target,t) for t in [bool,int,str,float,list,clingo.Symbol]): # + list(containers.values())):
             elif any(
-                isinstance(target, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]
+                isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]
             ):  # + list(containers.values())):
                 if cltopy(func) == target:
                     return target
-            elif isinstance(typing.get_origin(target), type) or isinstance(target, type):
+            elif isinstance(utarget, type):
                 # print(f"myclorm type {func},{target},{typing.get_origin(target)}")
-                if issubclass(target, clingo.Symbol):
+                if issubclass(utarget, clingo.Symbol):
                     return func
-                elif issubclass(target, enum.Enum):
+                elif issubclass(utarget, enum.Enum):
                     if func.type == clingo.SymbolType.Function and len(func.arguments) == 0 and func.name in target:
                         return target(func.name)
                 # TODO: make it work with ints as well?
-                # elif any(issubclass(target,t) for t in [int,str,float] + list(containers.values())):
-                elif any(issubclass(target, t) for t in list(baseTypes.values()) + list(containers.values())):
+                elif any(issubclass(utarget, t) for t in list(baseTypes.values())):
                     value = cltopy(func)
-                    if value != func and isinstance(value, target):
+                    if value != func and isinstance(value, utarget):
                         return value
-                        # return target(value)
-                elif issubclass(typing.get_origin(target), list):
-                    # print("hello list")
+                elif issubclass(utarget, list):
                     subtarget = typing.get_args(target)
                     # print("subt",target,subtarget)
                     # return [cltopy(e,subtarget[0]) for e in unnest(func)] if subtarget else [cltopyNoTarget(e) for e in unnest(func)]
                     un = unnest(func)
                     result = [cltopy(e, subtarget[0]) for e in un] if subtarget else [cltopyNoTarget(e) for e in un]
                     return result
-                elif issubclass(typing.get_origin(target), tuple):
+                elif issubclass(utarget, tuple):
                     # print(f"myclorm tuple {func},{target}")
                     subtargets = typing.get_args(target)
                     if (
@@ -221,15 +219,6 @@ def cltopy(func, dtarget=None):
                         zipped = list(itertools.zip_longest(func.arguments, subtargets))
                         result = tuple(cltopy(symb, subt) for (symb, subt) in zipped)
                         # print(f"tuple result {result} {func} {getattr(target,'_default',None)}")
-                        return result
-                    return clorm.Raw(func)
-                elif False and issubclass(target, tuple):
-                    print(f"myclorm tuple {func},{target}")
-                    if func.type == clingo.SymbolType.Function and func.name == "":
-                        # print(f"myclorm tuple {func},{target}")
-                        subtarget = getattr(target, "_default", None)
-                        result = tuple(cltopy(symb, subtarget) for symb in func.arguments)
-                        # print(f"result {result} {func} {getattr(target,'_default',None)}")
                         return result
                     return clorm.Raw(func)
             ### Missing is instance of NamedTuple
