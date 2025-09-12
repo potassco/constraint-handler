@@ -160,7 +160,7 @@ def cltopy(func, dtarget=None):
     # print(f"ctp disj trying '{func}' with rows '{rows}'")
     for target in rows:
         # print(f"ctp {target} {type(target)}")
-        utarget = typing.get_origin(target) or target # unsubscripted_target
+        utarget = typing.get_origin(target) or target  # unsubscripted_target
         try:
             if target == typing.Any:
                 return func
