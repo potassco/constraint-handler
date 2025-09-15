@@ -36,10 +36,15 @@ class Value(NamedTuple):
     type_: evaluator.BaseType | None
     value: bool | int | float | str | clingo.Symbol
 
+class Set_Value(NamedTuple):
+    name: clingo.Symbol
+    type_: evaluator.BaseType | None
+    value: bool | int | float | str | clingo.Symbol
 
 class Evaluated(NamedTuple):
     name: evaluator.Operator
     expr: list[evaluator.Expr]
+    type_: evaluator.BaseType | None
     value: bool | int | float | str | clingo.Symbol
 
 class EvaluateVariable:
@@ -54,9 +59,9 @@ class EvaluateVariable:
         """Evaluate the expression and return True if the value has changed."""
         if not ctl.assignment.is_true(self.literal):
             return False
-        print("Starting evaluate")
+        # print(f"Evaluating {self.op}({self.args})")
         value = evaluator.evaluate_expr(evaluations, evaluator.Operation(self.op, self.args))
-        myprint(f"Evaluated {self.op}({self.args}) to {value}")
+        # print(f"Evaluated {self.op}({self.args}) to {value}")
         # if type(value) == set:
         #     if None in value:
         #         # if something in the set is undefined
@@ -66,7 +71,10 @@ class EvaluateVariable:
 
         self.value = value
         return True
-    
+
+    def get_value(self) -> Any:
+        return self.value
+
     def __eq__(self, other):
         if not isinstance(other, EvaluateVariable):
             return False
@@ -220,16 +228,16 @@ class SetVariable:
         self.name = name
         self.var = var
         self.literals: set[int] = {lit}
-        self.value: set[VariableValue] = set()
+        self.values: set[VariableValue] = set()
 
         self.decision_level: int = float('inf')
         self.parents: List[Variable | SetVariable] = []
 
     def add_argument(self, arg: evaluator.Expr, lit: int) -> None:
-        self.value.add(VariableValue(arg, lit))
+        self.values.add(VariableValue(arg, lit))
 
     def __contains__(self, item):
-        return item in self.value
+        return item in self.values
     
     def get_value(self) -> set[Any]:
         """
@@ -239,13 +247,16 @@ class SetVariable:
         if self.has_unassigned():
             return None
         
-        return {arg.value for arg in self.value if arg.value is not None}
+        return {arg.value for arg in self.values if arg.value is not None}
 
     def has_unassigned(self) -> bool:
-        return any(arg.assigned is None for arg in self.value)
+        return any(arg.assigned is None for arg in self.values)
 
     def vars(self) -> set[clingo.Symbol]:
-        return set.union(*(evaluator.collectVars(arg.expr) for arg in self.value))
+        vars = set()
+        for arg in self.values:
+            vars.update(evaluator.collectVars(arg.expr))
+        return vars
 
     def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> tuple[bool, bool]:
         """
@@ -254,11 +265,13 @@ class SetVariable:
         conflict is True if there is a conflict.
         For sets, there should never be a conflict.
         """
-        if not ctl.assignment.is_true(self.literal):
+        lit = self.literals.pop()
+        self.literals.add(lit)
+        if not ctl.assignment.is_true(lit):
             return False, False
 
         changed = False
-        for arg in self.value:
+        for arg in self.values:
             changed |= arg.evaluate(evaluations, ctl)
 
         if changed:
@@ -267,17 +280,17 @@ class SetVariable:
         return changed, False
 
     def reset(self):
-        for arg in self.value:
+        for arg in self.values:
             arg.reset()
         self.decision_level = float('inf')
 
     def __eq__(self, value):
         if not isinstance(value, SetVariable):
             assert False, "SetVariable can only be compared to another SetVariable"
-        return self.var == value.var and self.value == value.value
+        return self.var == value.var and self.values == value.values
     
     def __hash__(self):
-        return hash((self.var, frozenset(self.value)))
+        return hash((self.var, frozenset(self.values)))
     
     def __str__(self):
         return f"SetVariable({self.name}, {self.var})"
@@ -334,7 +347,7 @@ class ConstraintHandlerPropagator:
         myprint(f"backtracking {backtrack}")
         if backtrack:
             return
-        
+
         self.check_evaluate(ctl)
 
         myprint("CHECK DONE!")
@@ -502,8 +515,8 @@ class ConstraintHandlerPropagator:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(variable)
 
-            ctl.add_watch(ctl.solver_literal(atom.literal))
-
+            ctl.add_watch(literal)
+ 
             variable.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
 
     def get_evaluate(self, ctl: clingo.PropagateInit):
@@ -564,29 +577,45 @@ class ConstraintHandlerPropagator:
                 if symbol_var not in self.symbol2var:
                     myprint(self.symbol2var.keys())
                     myprint(type(symbol_var), symbol_var)
+                    continue
                     assert False, f"Variable {symbol_var} not found in symbol2var"
                 self.symbol2var[symbol_var].parents.append(var)
 
     def on_model(self,model):
         self.model = []
         for var in self.symbol2var.values():
-            if var.get_value() is None or var.get_value() is VALUE_NOT_SET:
+            final_value = var.get_value()
+            if final_value is None or final_value is VALUE_NOT_SET:
                 continue
-            pyAtom = Value(var.var,evaluator.get_baseType(var.get_value()),var.get_value())
-            myprint(f"adding atom {pyAtom}",end=" ")
-            clAtom = myClorm.pytocl(pyAtom)
-            myprint(f"= {clAtom}")
-            if not model.contains(clAtom):
-                model.extend([clAtom])
-                self.model.append(clAtom)
+            if type(final_value) == frozenset:
+                for value in final_value:
+                    if value is None or value is VALUE_NOT_SET:
+                        continue
+                    pyAtom = Set_Value(var.var,evaluator.get_baseType(value),value)
+                    myprint(f"adding set atom {pyAtom}",end=" ")
+                    clAtom = myClorm.pytocl(pyAtom)
+                    myprint(f"= {clAtom}")
+                    if not model.contains(clAtom):
+                        model.extend([clAtom])
+                        self.model.append(clAtom)
+            else:
+                pyAtom = Value(var.var,evaluator.get_baseType(final_value),final_value)
+                myprint(f"adding atom {pyAtom}",end=" ")
+                clAtom = myClorm.pytocl(pyAtom)
+                myprint(f"= {clAtom}")
+
+                if not model.contains(clAtom):
+                    model.extend([clAtom])
+                    self.model.append(clAtom)
+
         
         for var in self.evaluatevars:
             # if var.value is None or var.value is VALUE_NOT_SET:
             #     continue
-            pyAtom = Evaluated(var.op,var.args,var.value)
+            pyAtom = Evaluated(var.op, var.args, evaluator.get_baseType(var.get_value()), var.get_value())
             myprint(f"adding evaluate atom {pyAtom}",end=" ")
             clAtom = myClorm.pytocl(pyAtom)
-            myprint(f"= {clAtom}")
+            print(f"= {clAtom}")
             if not model.contains(clAtom):
                 model.extend([clAtom])
                 self.model.append(clAtom)

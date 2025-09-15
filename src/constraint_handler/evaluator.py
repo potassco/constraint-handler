@@ -25,7 +25,7 @@ UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "ac
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
-    ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
+    ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt", "concat"],
 )
 SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "fold"])
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
@@ -168,7 +168,12 @@ def evaluate_unop(o, val):
             return -val
         case UnaryOperator.floor:
             return math.floor(val)
-
+        case UnaryOperator.abs:
+            return abs(val)
+        case UnaryOperator.length:
+            if val is None:
+                return None
+            return len(val)
 
 def evaluate_logic_operator(o, args):
     match o:
@@ -297,6 +302,9 @@ def evaluate_binop(o, lval, rval):
             return lval >= rval
         case BinaryOperator.gt:
             return lval > rval
+        case BinaryOperator.concat:
+            # TODO: maybe type check?
+            return str(lval) + str(rval)
 
 
 def evaluate_conditional_operator(o, args):
