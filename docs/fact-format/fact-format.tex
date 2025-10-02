@@ -1,13 +1,9 @@
-\subsection*{Syntax}
+\section{Syntax}
+
+\subsection{Basic terms}
 \begin{grammar}
-%% <statement> ::= <ident> `=' <expr>
-%% \alt `for' <ident> `=' <expr> `to' <expr> `do' <statement>
-%% \alt `{' <stat-list> `}'
-%% \alt <empty>
 
-%% <stat-list> ::= <statement> `;' <stat-list> | <statement>
-
-<type> ::= `bool' | `float' | `int' | `string' | `symbol' | `function' | `set'
+<type> ::= `bool' | `float' | `int' | `string' | `symbol' | `function' | `set' | `multimap'
 
 <bool> ::= `true' | `false'
 
@@ -23,11 +19,16 @@
 
 <symbol> ::= <name> | <name> `(' <terms> `)'
 
-<tterm-list> ::= `(' `)' | `(' <term> `,' <term-list> `)'
+<term-list> ::= `(' `)' | `(' <term> `,' <term-list> `)'
 
 %<constant> ::= `bool' `(' <bool> `)' \alt `int' `(' <int> `)' \alt `float' `(' <str> `)' \alt `string `(' <str> `)' \alt `symbol `(' <term> `)'
 
-<operator> ::= `python' `(' <expr> `)'
+\end{grammar}
+
+\subsection{Building expression terms}
+\begin{grammar}
+
+<operator> ::= `python' `(' <expression> `)'
 \alt <lambda-expr>
 \alt <variable>
 \alt <bool-operator>
@@ -57,22 +58,58 @@
 
 <string-operator> ::= <eq-operator> | `concat' | `length'
 
-<lambda-expr> ::= `lambda' `(' <term-list> `,' <expr> `)'
+<lambda-expr> ::= `lambda' `(' <term-list> `,' <expression> `)'
 
-<expr> ::=
+<expression> ::=
 `val' `(' <type> `,' <term> `)'
 \alt `variable' `(' <term> `)'
-\alt `operation' `(' <operator> `,' <expr-list> `)'
+\alt `operation' `(' <operator> `,' <expression-list> `)'
 \alt <lambda-expr>
 
-<expr-list> ::= `(' `)' | `(' <expr> `,' <expr-list> `)'
+<expression-list> ::= `(' `)' | `(' <expression> `,' <expression-list> `)'
 
-<atom> ::= `assign' `(' <term> `,' <term> `,' <expr> `)'
-\alt `ensure' `(' <term> `,' <expr> `)'
-\alt `set_declare' `(' <term> `,' <term> `)'
-\alt `set_assign' `(' <term> `,' <term> `,' <expr> `)'
+\end{grammar}
+
+\subsection{Building statement terms}
+
+\begin{grammar}
+<statement> ::=
+`assign' `(' <term> `,' <statement> `)'
+\alt `if' `(' <expression> `,' <statement> `,' <statement> `)'
+\alt `noop'
+\alt `python' `(' <str> `,' <term-list> `,' <term-list> `)'
+\alt `seq2' `(' <statement> `,' <statement> `)'
+\alt `while' `(' <int> `,' <expression> `,' <statement> `)'
+
+<multimap-atom> ::=
+ `multimap_declare' `(' <term> `,' <term> `)'
+\alt `multimap_assign' `(' <term> `,' <term> `,' <expression> `,' <expression> `)'
+
+<set-atom> ::=
+ `set_declare' `(' <term> `,' <term> `)'
+\alt `set_assign' `(' <term> `,' <term> `,' <expression> `)'
+
+<execution-atom> ::=
+ `execution_declare' `(' <term> `,' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
+\alt `execution_run' `(' <term> `,' <term> `)'
+
+<atom> ::=
+ `assign' `(' <term> `,' <term> `,' <expression> `)'
+\alt `ensure' `(' <term> `,' <expression> `)'
 \alt `compute' `(' <term> `,' <val-list> `)'
 \alt `computed' `(' <term> `,' <val-list> `,' <type> `,' <term> `)'
+\alt <multimap-atom>
+\alt <set-atom>
+\alt <execution-atom>
+\end{grammar}
+
+\subsection{Result fact format}
+\begin{grammar}
+
+<atom> ::= `value' `(' <term> `,' <type> `,' <term> `)'
+\alt `set_value' `(' <term> `,' <type> `,' <term> `)'
+\alt `multimap_value' `(' <term> `,' <type> `,' <term> `,' <type> `,' <term> `)'
+\alt `warning' `(' <term> `)'
 \end{grammar}
 
 \subsection*{Examples}
@@ -132,12 +169,6 @@ assign(assign_y0,y0,operation(phi,(variable(x0),(variable(x1),())))).
 %% \lit{assign(CNAME,VAR,EXPR)} means that a variable called \lit{VAR} is assigned the evaluation of \lit{EXPR}; \lit{CNAME} is the name of this assignment constraint.
 %% \lit{ensure(CNAME,EXPR)} means that the evaluation of \lit{EXPR} must be \lit{true} in any model; \lit{CNAME} is the name of this check constraint.
 
-\subsection{Result fact format}
-\begin{grammar}
-
-<atom> ::= `value' `(' <term> `,' <type> `,' <term> `)'
-\alt `set_value' `(' <term> `,' <type> `,' <term> `)'
-\end{grammar}
 
 
 \subsection{Notes}
