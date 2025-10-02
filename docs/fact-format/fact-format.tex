@@ -82,19 +82,19 @@
 \alt `while' `(' <int> `,' <expression> `,' <statement> `)'
 
 <multimap-atom> ::=
- `multimap_declare' `(' <term> `,' <term> `)'
+~\alt `multimap_declare' `(' <term> `,' <term> `)'
 \alt `multimap_assign' `(' <term> `,' <term> `,' <expression> `,' <expression> `)'
 
 <set-atom> ::=
- `set_declare' `(' <term> `,' <term> `)'
+~\alt `set_declare' `(' <term> `,' <term> `)'
 \alt `set_assign' `(' <term> `,' <term> `,' <expression> `)'
 
 <execution-atom> ::=
- `execution_declare' `(' <term> `,' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
+~\alt `execution_declare' `(' <term> `,' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
 \alt `execution_run' `(' <term> `,' <term> `)'
 
 <atom> ::=
- `assign' `(' <term> `,' <term> `,' <expression> `)'
+~\alt`assign' `(' <term> `,' <term> `,' <expression> `)'
 \alt `ensure' `(' <term> `,' <expression> `)'
 \alt `compute' `(' <term> `,' <val-list> `)'
 \alt `computed' `(' <term> `,' <val-list> `,' <type> `,' <term> `)'
