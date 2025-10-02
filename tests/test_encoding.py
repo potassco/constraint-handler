@@ -48,7 +48,7 @@ base_tests = [
 
 
 def test_engine_compile():
-    extra = []
+    extra = ["executions"]
     unsupported = []
     for test in base_tests + extra:
         if test not in unsupported:

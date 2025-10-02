@@ -1,0 +1,5 @@
+value(execution_input(absolut,x),int,-2)
+value(execution_input(absolut,x),int,0)
+value(execution_input(absolut,x),int,2)
+value(execution_output(absolut,y),int,0)
+value(execution_output(absolut,y),int,2)
