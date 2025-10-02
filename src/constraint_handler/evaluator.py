@@ -20,7 +20,7 @@ class PPEnum(Enum):
         return self.name
 
 
-BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function", "multimap"])
+BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function", "multimap", "set"])
 UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "dnot", "ite", "leqv", "limp", "lnot", "lxor"])
 BinaryOperator = PPEnum(
@@ -62,7 +62,10 @@ noPredOperator = Operator0 | str
 
 class Val(NamedTuple):
     type_: BaseType | clingo.Symbol
-    value: bool | int | float | str | clingo.Symbol
+    value: bool | int | float | str | set | clingo.Symbol
+
+class Error(NamedTuple):
+    message: str
 
 
 class Operation(NamedTuple):
@@ -126,6 +129,8 @@ def get_baseType(v):
         return BaseType.bool
     elif isinstance(v, int):
         return BaseType.int
+    elif isinstance(v, set):
+        return BaseType.set
     elif isinstance(v, clingo.Symbol):
         return BaseType.symbol
     else:
