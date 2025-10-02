@@ -10,6 +10,7 @@ from clingo.script import enable_python
 BOOL_LP = files("constraint_handler.data").joinpath("bool.lp")
 CONDITIONALS_LP = files("constraint_handler.data").joinpath("conditionals.lp")
 DIRECT_LP = files("constraint_handler.data").joinpath("direct.lp")
+EXECUTION_LP = files("constraint_handler.data").joinpath("execution.lp")
 FLOAT_LP = files("constraint_handler.data").joinpath("float.lp")
 GRINGO_EVAL_LP = files("constraint_handler.data").joinpath("gringoEval.lp")
 INT_LP = files("constraint_handler.data").joinpath("int.lp")
@@ -31,6 +32,7 @@ def add_encoding_to_program_builder(b: ProgramBuilder):
                 str(BOOL_LP),
                 str(CONDITIONALS_LP),
                 str(DIRECT_LP),
+                str(EXECUTION_LP),
                 str(FLOAT_LP),
                 str(GRINGO_EVAL_LP),
                 str(INT_LP),

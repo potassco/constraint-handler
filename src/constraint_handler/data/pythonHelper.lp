@@ -100,6 +100,28 @@ def pythonEvalOperator(clFn,clArgs):
         print(f"Python error when evaluating {pFn} on {pArgs}: {exn}.")
         return []
 
+def pythonExecStmt(clCode,clEnv,clOuts):
+    try:
+        #print(clFn,clArgs)
+        pCode = myClorm.cltopy(clCode,str)
+        pEnv  = myClorm.cltopy(clEnv,list[tuple[str,evaluator.Val]])
+        pOuts = myClorm.cltopy(clOuts,list[str])
+    except Exception as exn:
+        print(f"pythonExecStmt: error when converting {(clCode,clEnv,clOuts)}: {exn}.")
+        return myClorm.pytocl(evaluator.Error(str(exn)))
+    try:
+        globals = dict()
+        locals = { x:v.value for (x,v) in pEnv }
+        exec(pCode,globals,locals)
+        results = [(x,locals[x]) for x in pOuts if x in locals]
+        pResults = [(x,evaluator.Val(evaluator.get_baseType(v),v)) for (x,v) in results] + [True]
+        clResults = [myClorm.pytocl(r) for r in pResults]
+        #print(pEnv,pCode,clResults)
+        return clResults
+    except Exception as exn:
+        #print(f"pythonExecStmt: error in environment {pEnv} and output {pOuts} when evaluating\n{pCode}\nThe error was '{exn}'.")
+        return myClorm.pytocl(evaluator.Error(str(exn)))
+
 def pythonMergeTypes(clArgs):
     pArgs = myClorm.cltopy(clArgs,list)
     skipped = [pArgs[2*i+1] for i in range(int(len(pArgs)/2))]
@@ -137,6 +159,10 @@ def pythonEnumerateElements(clExpr,clBatchSize = clingo.Number(1)):
     else:
         pGroups = itertools_batched(pL,pBatchSize)
     return [myClorm.pytocl(e) for e in enumerate(pGroups)]
+
+def pythonListLength(clExpr):
+    pL = myClorm.cltopy(clExpr,list)
+    return myClorm.pytocl(len(pL))
 
 # https://docs.python.org/3/library/itertools.html#itertools.batched
 def prepython12_itertools_batched(iterable, n, *, strict=False):
