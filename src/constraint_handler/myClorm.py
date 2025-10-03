@@ -54,7 +54,7 @@ def Tuple(name="", args=None, default=None):
     return Wrapper
 
 
-baseTypes = {"bool": bool, "int": int, "float": float, "str": str, "none" : type(None) }
+baseTypes = {"bool": bool, "int": int, "float": float, "str": str, "none": type(None)}
 # containers = { "set": set, "list": list, "tuple" : tuple }
 containers = {"set": set, "list": list}
 

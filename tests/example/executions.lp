@@ -81,5 +81,3 @@ execution_declare(dummy,pyt,STMT,("x",()),("x",(y,()))) :-
     STMT  = seq2(STMT1,seq2(STMT2,STMT3)).
 assign(dummy,execution_input(pyt,"x"),val(int,10)).
 execution_run(dummy,pyt).
-
-
