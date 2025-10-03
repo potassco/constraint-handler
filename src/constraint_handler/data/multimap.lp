@@ -1,6 +1,9 @@
 #defined multimap_declare/2.
 #defined multimap_assign/4.
 
+engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multimap_declare(CNAME,X).
+engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multimap_assign(CNAME,X,EKEY,EVAL).
+
 representation(multimap,intensional).
 _multimap_add(E,EK,EV) :- multimap_assign(CNAME,X,EK,EV), engine(CNAME,compile), E = variable(X).
 
