@@ -63,7 +63,12 @@ noPredOperator = Operator0 | str
 
 
 class Set(NamedTuple):
-    value: list[noPredConstant]
+    value: list[constant]
+
+
+constant = bool | float | int | str | Set | clingo.Symbol
+optConstant = type(None) | constant
+ConstantList = list[optConstant]
 
 
 class Val(NamedTuple):
@@ -115,15 +120,15 @@ class SetAssign(NamedTuple):
 def collectVars(expr):
     match expr:
         case Operation(Python(f), args):
-            return collectVars(f) | set.union(*(collectVars(e) for e in args))
+            return collectVars(f) | frozenset.union(*(collectVars(e) for e in args))
         case Operation(o, args):
-            return set.union(*(collectVars(e) for e in args))
+            return frozenset.union(*(collectVars(e) for e in args))
         case Variable(a):
-            return {a}
+            return frozenset({a})
         case Val(t, v):
-            return set()
+            return frozenset()
         case Lambda(vars, body):
-            return collectVars(body) - set(vars)
+            return collectVars(body) - frozenset(vars)
 
 
 def get_baseType(v):
@@ -228,15 +233,17 @@ def set_fold(f, s, start):
 
 
 def evaluate_set_operator(o, args):
+    if None in args:
+        return None
     match o:
         case SetOperator.makeSet:
-            return set(args)
+            return frozenset(args)
         case SetOperator.isin:
             return args[0] in args[1]
         case SetOperator.notin:
             return args[0] not in args[1]
         case SetOperator.union:
-            return set().union(*args)
+            return frozenset().union(*args)
         case SetOperator.inter:
             return args[0].intersection(*args[1:])
         case SetOperator.subset:
@@ -360,7 +367,6 @@ def evaluate_lambda(symbols, vars, args, body):
 
 
 def evaluate_expr(symbols, expr):
-    # print("evaluate_expr",symbols,expr)
     match expr:
         case Operation(o, eargs):
             args = [evaluate_expr(symbols, a) for a in eargs]
