@@ -41,6 +41,7 @@ base_tests = [
     "lambdas",
     "multimaps",
     "nested_set",
+    "set_iterations",
     "set_manipulations",
     "set_selfref",
     "strings",
@@ -57,7 +58,7 @@ def test_engine_compile():
 
 def test_engine_ground():
     extra = []
-    unsupported = ["lambdas", "multimaps", "nested_set", "set_manipulations", "set_selfref"]
+    unsupported = ["lambdas", "multimaps", "nested_set", "set_iterations", "set_manipulations", "set_selfref"]
     for test in base_tests + extra:
         if test not in unsupported:
             run_test_ground(test)
@@ -74,6 +75,7 @@ def test_engine_propagator():
         "lambdas",
         "multimaps",
         "nested_set",
+        "set_iterations",
         "set_manipulations",
         "set_selfref",
         "strings",
