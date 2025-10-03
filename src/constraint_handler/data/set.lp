@@ -1,5 +1,9 @@
 #defined set_declare/2.
 #defined set_assign/3.
+
+engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_declare(CNAME,X).
+engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_assign(CNAME,X,EXPR).
+
 _direct_set_assign(CNAME,X,E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
 _direct_set_declare(CNAME,X) :- engine(CNAME,compile), set_declare(CNAME,X).
 
@@ -11,7 +15,7 @@ computed(length,ARGS,int,N) :- compute(length,ARGS),
     ARGS = (set,(SET,())),
     N = #count { V,T : _set_contains(SET,T,V) }.
 
-%%%%%%%%%%%%%%%%% assignToSet set_value
+%%%%%%%%%%%%%%%%% set_declare set_assign set_value
 
 %_set_add(E,EK) :- set_assign(CNAME,X,EK), engine(CNAME,compile), E = variable(X).
 
