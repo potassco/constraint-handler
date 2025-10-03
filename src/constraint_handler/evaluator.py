@@ -79,6 +79,7 @@ class Val(NamedTuple):
     type_: BaseType | clingo.Symbol
     value: bool | int | float | str | set | clingo.Symbol
 
+
 class Error(NamedTuple):
     message: str
 
@@ -102,8 +103,6 @@ class Variable(NamedTuple):
 class Lambda(NamedTuple):
     vars: list[clingo.Symbol]
     expr: Expr
-
-
 
 
 Expr = Variable | Operation | Val | Lambda
@@ -369,7 +368,7 @@ def evaluate_lambda(symbols, vars, args, body):
 def evaluate_expr(symbols, expr):
     match expr:
         case Operation(Variable(ov), eargs):
-            assert False# TODO: handle variable operator
+            assert False  # TODO: handle variable operator
         case Operation(o, eargs):
             args = [evaluate_expr(symbols, a) for a in eargs]
             return evaluate_operator(symbols, o, args)
@@ -400,6 +399,6 @@ def beta_reduction(symbols, expr):
         case Val(type_, val):
             return expr
         case Lambda(vars, body):
-            return expr # TODO should we do replacements inside body?
+            return expr  # TODO should we do replacements inside body?
         case Operator:
             return expr
