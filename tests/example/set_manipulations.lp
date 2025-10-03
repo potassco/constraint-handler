@@ -15,10 +15,6 @@
 %%% cd = 2
 %%% true notin d      true notin x     true isin t
 
-%%% numbers = { -2.0, -1, 0, 1, 2 }
-%%% squares = { x*x | x \in numbers, x float or x int } = { 0, 1, 4, 4.0 }
-%%% csquares = |squares| = 4
-
 %%% eqx3 = x == { 3, { true }, { 1, 2, 3, true, 89.1 } } = true
 %%% nqx3 = x != { 3, { true }, { 1, 2, 3, true, 89.1 } } = false
 %%% eqx4 = x == { 3, { true }, { 1, 2, 4, true, 89.1 } } = false
@@ -31,9 +27,6 @@
 %%% vsubw = v subset w = true
 %%% usubx = u subset x = false
 %%% vsubx = v subset x = false
-
-%%% declare empty
-%%% fold(+,empty,0) = 0
 
 %%% TODO
 %%% y = add f v = { 47.1 true }
@@ -87,21 +80,6 @@ evaluate(notin,(val(bool,true),(variable(d),()))).
 evaluate(notin,(val(bool,true),(variable(x),()))).
 evaluate(isin,(val(bool,true),(variable(t),()))).
 
-assign(a_numbers, numbers, operation(makeSet,
-                                    (val(float,float("-2.0")),
-                                    (val(int,-1),
-                                    (val(int, 0),
-                                    (val(int, 1),
-                                    (val(int, 2),()))))))).
-
-set_declare(d_squares,squares).
-set_assign(a_squares, squares, SQ) :-
-    set_value(numbers,T,X),
-    SQ = operation(mult,(EX,(EX,()))),
-    EX = val(T,X).
-
-assign(a_csq, csquares, operation(length,(variable(squares),()))).
-
 %%% eqx = x == { 3, { true }, { 1, 2, 3, true, 89.1 } } = true
 %%% nqx = x == { 3, { true }, { 1, 2, 4, true, 89.1 } } = false
 assign(tset_eq,eqx3,operation(eq,(variable(x),(X,())))) :-
@@ -151,6 +129,3 @@ assign(test_subset, usubw, operation(subset,(variable(u),(variable(w),())))).
 assign(test_subset, vsubw, operation(subset,(variable(v),(variable(w),())))).
 assign(test_subset, usubx, operation(subset,(variable(u),(variable(x),())))).
 assign(test_subset, vsubx, operation(subset,(variable(v),(variable(x),())))).
-
-set_declare(d_empty,empty).
-evaluate(fold,(val(function,plus),(variable(empty),(val(int,0),())))).
