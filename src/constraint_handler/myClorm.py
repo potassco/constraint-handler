@@ -54,7 +54,7 @@ def Tuple(name="", args=None, default=None):
     return Wrapper
 
 
-baseTypes = {"bool": bool, "int": int, "float": float, "str": str}  # TODO handle bools
+baseTypes = {"bool": bool, "int": int, "float": float, "str": str, "none" : type(None) }
 # containers = { "set": set, "list": list, "tuple" : tuple }
 containers = {"set": set, "list": list}
 
@@ -155,9 +155,7 @@ def cltopyNoTarget(func):
         return func
 
 
-def cltopy(func, dtarget=None):
-    if dtarget == None:
-        return cltopyNoTarget(func)
+def cltopy(func, dtarget=typing.Any):
     rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
     # print(f"ctp disj trying '{func}' with rows '{rows}'")
     for target in rows:
@@ -165,7 +163,7 @@ def cltopy(func, dtarget=None):
         utarget = typing.get_origin(target) or target  # unsubscripted_target
         try:
             if target == typing.Any:
-                return func
+                return cltopyNoTarget(func)
             elif getattr(target, "cltopy", None):
                 return target.cltopy(func)
             elif getattr(target, "_fields", None) is not None:
