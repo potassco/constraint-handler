@@ -101,7 +101,7 @@ class Lambda(NamedTuple):
 
 
 class Python(NamedTuple):
-    fn: Expr
+    fn: str
 
 
 Expr = Variable | Operation | Val | Lambda
@@ -119,8 +119,6 @@ class SetAssign(NamedTuple):
 
 def collectVars(expr):
     match expr:
-        case Operation(Python(f), args):
-            return collectVars(f) | frozenset.union(*(collectVars(e) for e in args))
         case Operation(o, args):
             return frozenset.union(*(collectVars(e) for e in args))
         case Variable(a):
@@ -315,8 +313,7 @@ def evaluate_operator(symbols, o, args):
         case str(fn):
             call = eval(fn)
             return call(*args)
-        case Python(efn):
-            fn = evaluate_expr(symbols, efn)
+        case Python(fn):
             call = eval(fn)
             # print(f"{fn}{tuple(vals)} = {}")
             return call(*args)
