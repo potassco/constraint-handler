@@ -1,5 +1,7 @@
 #defined set_declare/2.
 #defined set_assign/3.
+_direct_set_assign(CNAME,X,E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
+_direct_set_declare(CNAME,X) :- engine(CNAME,compile), set_declare(CNAME,X).
 
 representation(set,intensional).
 
@@ -13,16 +15,16 @@ computed(length,ARGS,int,N) :- compute(length,ARGS),
 
 %_set_add(E,EK) :- set_assign(CNAME,X,EK), engine(CNAME,compile), E = variable(X).
 
-eValue(EX,set,EX) :- EX=variable(X), set_declare(NAME,X).
-%eValue(EX,set,EX) :- EX=variable(X), _set_compileAssign(NAME,X,E1).
-_set_contains(E,T,V)    :- E=variable(X), representation(T,extensional), _set_compileAssign(NAME,X,E1), eValue(E1,T,V).
+eValue(EX,set,EX) :- EX=variable(X), _direct_set_declare(NAME,X).
+%eValue(EX,set,EX) :- EX=variable(X), _direct_set_assign(NAME,X,E1).
+_set_contains(E,T,V)    :- E=variable(X), representation(T,extensional), _direct_set_assign(NAME,X,E1), eValue(E1,T,V).
 
 compute(eq,(T,(V1,(T,(V2,()))))) :- E=variable(X), representation(T,intensional),
-    _set_compileAssign(N1,X,E1), eValue(E1,T,V1),
-    _set_compileAssign(N2,X,E2), eValue(E2,T,V2), V1 < V2.
+    _direct_set_assign(N1,X,E1), eValue(E1,T,V1),
+    _direct_set_assign(N2,X,E2), eValue(E2,T,V2), V1 < V2.
 _set_contains(E,T,V1) :- E=variable(X), representation(T,intensional),
-    _set_compileAssign(NAME,X,E1), eValue(E1,T,V1),
-    #false : _set_compileAssign(N2,X,E2), eValue(E2,T,V2), computed(eq,(T,(V2,(T,(V1,())))),bool,true), V2 < V1.
+    _direct_set_assign(NAME,X,E1), eValue(E1,T,V1),
+    #false : _direct_set_assign(N2,X,E2), eValue(E2,T,V2), computed(eq,(T,(V2,(T,(V1,())))),bool,true), V2 < V1.
 
 set_value(X,T,V) :- eValue(EV,set,E), _set_contains(E,T,V), EV=variable(X).
 
