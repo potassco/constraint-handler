@@ -49,7 +49,11 @@ class CustomOperator(NamedTuple):
     name: clingo.Symbol
 
 
-Operator0 = (
+class Python(NamedTuple):
+    fn: str
+
+
+Operator = (
     UnaryOperator
     | BinaryOperator
     | LogicOperator
@@ -58,8 +62,8 @@ Operator0 = (
     | MultimapOperator
     | OtherOperator
     | ConditionalOperator
+    | Python
 )
-noPredOperator = Operator0 | str
 
 
 class Set(NamedTuple):
@@ -80,7 +84,7 @@ class Error(NamedTuple):
 
 
 class Operation(NamedTuple):
-    op: Operator
+    op: Operator | Variable
     args: list[Expr]
 
     def __repr__(self):
@@ -100,12 +104,9 @@ class Lambda(NamedTuple):
     expr: Expr
 
 
-class Python(NamedTuple):
-    fn: str
 
 
 Expr = Variable | Operation | Val | Lambda
-Operator = Operator0 | Python | Variable
 
 
 class SetDeclare(NamedTuple):
@@ -119,6 +120,8 @@ class SetAssign(NamedTuple):
 
 def collectVars(expr):
     match expr:
+        case Operation(Variable(ov), args):
+            return frozenset.union(*(collectVars(e) for e in args + [ov]))
         case Operation(o, args):
             return frozenset.union(*(collectVars(e) for e in args))
         case Variable(a):
@@ -365,6 +368,8 @@ def evaluate_lambda(symbols, vars, args, body):
 
 def evaluate_expr(symbols, expr):
     match expr:
+        case Operation(Variable(ov), eargs):
+            assert False# TODO: handle variable operator
         case Operation(o, eargs):
             args = [evaluate_expr(symbols, a) for a in eargs]
             return evaluate_operator(symbols, o, args)
@@ -383,7 +388,8 @@ def evaluate_expr(symbols, expr):
 
 def beta_reduction(symbols, expr):
     match expr:
-        case Operation(o, eargs):
+        case Operation(eo, eargs):
+            o = beta_reduction(symbols, eo)
             args = [beta_reduction(symbols, e) for e in eargs]
             return Operation(o, args)
         case Variable(a):
@@ -394,4 +400,6 @@ def beta_reduction(symbols, expr):
         case Val(type_, val):
             return expr
         case Lambda(vars, body):
+            return expr # TODO should we do replacements inside body?
+        case Operator:
             return expr

@@ -10,4 +10,3 @@ stageCompute(OP,ARGS,L) :- compute(OP,ARGS), OP=(eq;neq), ARGS=(T1,(V1,(T2,(V2,(
     T1=float, T2=float.
 
 computed(OP,ARGS,T,RES) :- stageCompute(OP,ARGS,L), (T,RES) = @pythonEvalOperator(OP,L).
-computed(OP,ARGS,T,RES) :- compute(OP,ARGS), OP=python(S), L=@pythonMergeTypes(ARGS), (T,RES) = @pythonEvalOperator(S,L).

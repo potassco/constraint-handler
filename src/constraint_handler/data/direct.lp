@@ -6,13 +6,13 @@
 compileEnsure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 compileAssign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,compile).
 
-direct_query(E)      :- compileEnsure(NAME,E).
-direct_query(E)      :- compileAssign(NAME,X,E).
-direct_query(EX)     :- compileAssign(NAME,X,E), EX=variable(X).
-direct_query(E)      :- _direct_set_assign(NAME,X,E).
-direct_query(EX)     :- _direct_set_assign(NAME,X,E), EX=variable(X).
-direct_query(HD)     :- direct_queries(EL), EL=(HD,TL).
-direct_query(OE)     :- direct_query(E), E=operation(python(OE),EL).
+direct_query(E)    :- compileEnsure(NAME,E).
+direct_query(E)    :- compileAssign(NAME,X,E).
+direct_query(EX)   :- compileAssign(NAME,X,E), EX=variable(X).
+direct_query(E)    :- _direct_set_assign(NAME,X,E).
+direct_query(EX)   :- _direct_set_assign(NAME,X,E), EX=variable(X).
+direct_query(HD)   :- direct_queries(EL), EL=(HD,TL).
+direct_query(OE)   :- direct_query(E), E=operation(python(OE),EL).
 direct_queries(EL) :- direct_query(E), E=operation(OP,EL), not _direct_lazy(OP).
 direct_queries(TL) :- direct_queries(EL), EL=(HD,TL).
 
@@ -20,15 +20,6 @@ eValue(E,T,V) :- direct_query(E), E=val(T,V).
 
 
 eValue(E,function,E) :- direct_query(E), E=lambda(VARS,ERES).
-
-_lambda_aux(LAMB,ARGS,RED) :- compute(LAMB,ARGS),
-    LAMB=lambda(VARS,ERES),
-    L=@pythonMergeTypes2(ARGS),
-    RED=@pythonBetaReduction2(ERES,VARS,L).
-
-direct_query(RED) :- _lambda_aux(LAMB,ARGS,RED).
-computed(LAMB,ARGS,TO,VO) :- _lambda_aux(LAMB,ARGS,RED), eValue(RED,TO,VO).
-
 
 %eValue(E,T,V) :- direct_query(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V).
 eValue(E,T,V) :- direct_query(E), E=variable(X), compileAssign(NAME,X,E2), eValue(E2,T,V), usc_active(NAME).
@@ -43,6 +34,19 @@ eValue(E,TO,VO) :- direct_query(E), E=operation(OP,ARGS),
     computed(OP,VS,TO,VO).
 
 
+%%%%%%%%%%%%%%%%% lambda
+_lambda_aux(LAMB,ARGS,RED) :- compute(LAMB,ARGS),
+    LAMB=lambda(VARS,ERES),
+    RED=@pythonBetaReduction2(ERES,VARS,ARGS).
+
+direct_query(RED) :- _lambda_aux(LAMB,ARGS,RED).
+computed(LAMB,ARGS,TO,VO) :- _lambda_aux(LAMB,ARGS,RED), eValue(RED,TO,VO).
+
+%%%%%%%%%%%%%%%%% python
+computed(OP,ARGS,T,RES) :- compute(OP,ARGS), OP=python(S), L=@pythonMergeTypes(ARGS), (T,RES) = @pythonEvalOperator(OP,L).
+
+
+%%%%%%%%%%%%%%%%% variable (define)
 beta_reduction(E,ER) :- direct_query(E), E=operation(variable(OP),ARGS),
   define(_,OP,VARS,EXPR),
   ER = @pythonBetaReduction(EXPR,VARS,ARGS).
