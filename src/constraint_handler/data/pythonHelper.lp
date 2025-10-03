@@ -3,6 +3,13 @@
 import constraint_handler.myClorm as myClorm
 import constraint_handler.evaluator as evaluator
 
+def pythonExpressionVariable(clExpr):
+    print("pythonExpressionVariable",clExpr)
+    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+    pVars = list(evaluator.collectVars(pExpr))
+    clVars = [myClorm.pytocl(var) for var in pVars]
+    return clVars
+
 def pythonCollectVars(clExpr):
     # print("pythonCollectVars",clExpr)
     pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
@@ -45,17 +52,16 @@ def pythonBetaReduction2(clExpr,clVars,clArgs):
     #print(f"pythonEvalExprFromPairs2: {pExpr}({prettyArgs}) = {pRes}")
     return myClorm.pytocl(pRes)
 
-def pythonEvalExpr(clName,clExpr,clArgs):
-    # print("pythonEvalExpr",clName,clExpr,clArgs)
-    pName = myClorm.cltopy(clName)
+def pythonEvalExpr(clExpr,clArgs):
+    # print("pythonEvalExpr",clExpr,clArgs)
     pArgs = myClorm.cltopy(clArgs)
     pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
     d = { var : val for (var,val) in pArgs }
     prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
     pRes = evaluator.evaluate_expr(d,pExpr)
-    # print(f"eval expr in {pName}: {prettyArgs}{pExpr} = {pRes}")
+    # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
     if pRes is None:
-        return []
+        return myClorm.pytocl((None,None))
     pType = evaluator.get_baseType(pRes)
     # print(f"gringo eval expr in {clExpr}: result = {pRes} with {clArgs}")
     # print(f"gringo eval expr in {clExpr}: result = {myClorm.pytocl((pType,pRes))}")
