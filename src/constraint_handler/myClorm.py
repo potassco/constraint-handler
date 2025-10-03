@@ -98,7 +98,7 @@ def pytocl(v, dtarget=None):
             return clingo.Function("float", [clingo.String(str(v))])
         elif issubclass(target, list):
             return nest([pytocl(e) for e in v])
-        elif issubclass(target, set):
+        elif issubclass(target, set) or issubclass(target, frozenset):
             return clingo.Function("set", [nest([pytocl(e) for e in v])])
         elif any(issubclass(target, cls) for cls in containers.values()):
             assert False
@@ -140,6 +140,8 @@ def cltopyNoTarget(func):
         return func.name == "true"
     elif func.name == "none" and len(func.arguments) == 0:
         return None
+    elif func.name == "set" and len(func.arguments) == 1 and unnest(func.arguments[0]) is not None:
+        return frozenset(cltopyNoTarget(e) for e in unnest(func.arguments[0]))
     elif unnest(func) is not None:
         # print("hella",func,list(unnest(func)))
         return [cltopyNoTarget(e) for e in unnest(func)]

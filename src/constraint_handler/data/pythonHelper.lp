@@ -61,6 +61,10 @@ def pythonEvalExpr(clName,clExpr,clArgs):
     # print(f"gringo eval expr in {clExpr}: result = {myClorm.pytocl((pType,pRes))}")
     if pType is not None:
         return myClorm.pytocl((pType,pRes))
+    if isinstance(pRes,set):
+        val = set(list(pRes))
+        type_ = clingo.Function("set")
+        return myClorm.pytocl((type_,val))
 #end.
 #script(python)
 
@@ -81,12 +85,12 @@ def getFn(clFn):
     return pFn
 
 
-pairList = list[tuple[evaluator.BaseType,evaluator.noPredConstant]]
+pairList = list[tuple[evaluator.BaseType,evaluator.optConstant]]
 
 def pythonEvalOperator(clFn,clArgs):
     try:
         #print(clFn,clArgs)
-        pArgs = myClorm.cltopy(clArgs,list[evaluator.noPredConstant])
+        pArgs = myClorm.cltopy(clArgs,list[evaluator.optConstant])
         pFn = myClorm.cltopy(clFn,evaluator.noPredOperator)
         pRes = evaluator.evaluate_operator(dict(),pFn,pArgs)
         pType = evaluator.get_baseType(pRes)
