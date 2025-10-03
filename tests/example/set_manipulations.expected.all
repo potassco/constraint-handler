@@ -31,6 +31,10 @@ set_value(d,int,4)
 
 value(cd,int,2)
 
+evaluated(notin,(val(bool,true),(variable(d),())),bool,true)
+evaluated(notin,(val(bool,true),(variable(x),())),bool,true)
+evaluated(isin,(val(bool,true),(variable(t),())),bool,true)
+
 set_value(squares,int,0)
 set_value(squares,int,1)
 set_value(squares,int,4)

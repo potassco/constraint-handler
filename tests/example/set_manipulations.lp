@@ -13,6 +13,7 @@
 %%% cx = |x| = 3
 %%% set d, d.add(1+3), d.add(s), d.add({true, 89.1}), d.add(2+2)  -> d = { 4, { true, 89.1 } }
 %%% cd = 2
+%%% true notin d      true notin x     true isin t
 
 %%% numbers = { -2.0, -1, 0, 1, 2 }
 %%% squares = { x*x | x \in numbers, x float or x int } = { 0, 1, 4, 4.0 }
@@ -81,6 +82,10 @@ set_assign(assign_d, d, operation(add,(val(int,2),(val(int,2),())))).
 set_assign(assign_d, d, operation(makeSet,(val(bool,true),(val(float,float("89.1")),())))).
 
 assign(assign_cd, cd, operation(length,(variable(d),()))).
+
+evaluate(notin,(val(bool,true),(variable(d),()))).
+evaluate(notin,(val(bool,true),(variable(x),()))).
+evaluate(isin,(val(bool,true),(variable(t),()))).
 
 assign(a_numbers, numbers, operation(makeSet,
                                     (val(float,float("-2.0")),
