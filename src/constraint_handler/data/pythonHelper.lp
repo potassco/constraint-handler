@@ -79,18 +79,6 @@ import operator
 import clingo
 import constraint_handler.evaluator as evaluator
 
-def getFn(clFn):
-    cFn = myClorm.cltopy(clFn)
-    pFn = None
-    if cFn.type == clingo.SymbolType.String:
-        pFn = eval(cFn.str)
-    elif cFn.type == clingo.SymbolType.Function and cFn.name == "str":
-        pFn = eval(cFn.arguments[0].str)
-    else:
-        print(f"python call isn't a str {cFn}")
-    return pFn
-
-
 pairList = list[tuple[evaluator.BaseType,evaluator.optConstant]]
 
 def pythonEvalOperator(clFn,clArgs):
