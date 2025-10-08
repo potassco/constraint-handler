@@ -31,8 +31,9 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
 
 def pythonBetaReduction2(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars)
-    pPairs = myClorm.cltopy(clArgs,list)
-    pArgs = [evaluator.Val(pPairs[2*i],pPairs[2*i+1]) for i in range(int(len(pPairs)/2))]
+    pArgs = myClorm.cltopy(clArgs,list[evaluator.Val])
+    #pPairs = myClorm.cltopy(clArgs,list)
+    #pArgs = [evaluator.Val(pPairs[2*i],pPairs[2*i+1]) for i in range(int(len(pPairs)/2))]
     pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
     if len(pVars) != len(pArgs):
         print(f"pythonEvalExprFromPairs2: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
@@ -113,8 +114,8 @@ def pythonExecStmt(clCode,clEnv,clOuts):
         return myClorm.pytocl(evaluator.Error(str(exn)))
 
 def pythonMergeTypes(clArgs):
-    pArgs = myClorm.cltopy(clArgs,list)
-    skipped = [pArgs[2*i+1] for i in range(int(len(pArgs)/2))]
+    pArgs = myClorm.cltopy(clArgs,list[evaluator.Val])
+    skipped = [val.value for val in pArgs]
     return myClorm.pytocl(skipped)
 
 #end.

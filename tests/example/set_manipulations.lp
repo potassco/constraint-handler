@@ -79,6 +79,7 @@ assign(assign_cd, cd, operation(length,(variable(d),()))).
 evaluate(notin,(val(bool,true),(variable(d),()))).
 evaluate(notin,(val(bool,true),(variable(x),()))).
 evaluate(isin,(val(bool,true),(variable(t),()))).
+evaluate(isin,(val(int,17),(variable(t),()))).
 
 %%% eqx = x == { 3, { true }, { 1, 2, 3, true, 89.1 } } = true
 %%% nqx = x == { 3, { true }, { 1, 2, 4, true, 89.1 } } = false
