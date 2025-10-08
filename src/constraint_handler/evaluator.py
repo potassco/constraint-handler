@@ -34,9 +34,9 @@ OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 MultimapOperator = PPEnum("MultimapOperator", ["find", "multimapMake"])
 
 
-# ConditionalOperator = PPEnum("ConditionalOperator", ["phi", "if"])
+# ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
 class ConditionalOperator(Enum):
-    phi = "phi"
+    default = "default"
     IF = "if"
     hasValue = "hasValue"
 
@@ -296,7 +296,7 @@ def evaluate_binop(o, lval, rval):
 
 def evaluate_conditional_operator(o, args):
     match o:
-        case ConditionalOperator.phi:
+        case ConditionalOperator.default:
             if args[0] is not None:
                 return args[0]
             else:

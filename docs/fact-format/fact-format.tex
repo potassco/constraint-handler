@@ -45,7 +45,7 @@
 
 <bool-operator> ::= <eq-operator> | `dnot' | `lnot' | `conj' | `disj' | `limp' | `lxor' | `leqv'
 
-<conditional-operator> ::= `if' | `phi' | `ite' | `hasValue'
+<conditional-operator> ::= `if' | `default' | `ite' | `hasValue'
 
 <float-operator> ::= <comp-operator> | `sqrt' | `cos' | `sin' | `tan' | `acos' | `asin' | `atan' | `abs' | `minus'
 | `add' | `sub' | `mult' | `fdiv' | `pow' | `floor'
@@ -153,12 +153,12 @@ ensure(c1,operation(eq,
                    ()))))
 \end{verbatim}
 
-\paragraph{phi function}
+\paragraph{default function}
 
 \begin{verbatim}
 assign(assign_x0,x0,val(int,0)).
 assign(assign_x1,x1,operation(if,(variable(cond),(val(int,1),())))).
-assign(assign_y0,y0,operation(phi,(variable(x0),(variable(x1),())))).
+assign(assign_y0,y0,operation(default,(variable(x0),(variable(x1),())))).
 \end{verbatim}
 
 %% \subsection{Semantices}
