@@ -1,10 +1,10 @@
-computed(O,ARGS,bool,true)  :- compute(O,ARGS), O=eq,  ARGS = (str,(S1,(str,(S2,())))), S1 =  S2.
-computed(O,ARGS,bool,true)  :- compute(O,ARGS), O=neq, ARGS = (str,(S1,(str,(S2,())))), S1 != S2.
-computed(O,ARGS,bool,false) :- compute(O,ARGS), O=eq,  ARGS = (str,(S1,(str,(S2,())))), S1 != S2.
-computed(O,ARGS,bool,false) :- compute(O,ARGS), O=neq, ARGS = (str,(S1,(str,(S2,())))), S1 =  S2.
+computed(O,ARGS,val(bool,true))  :- compute(O,ARGS), O=eq,  ARGS = (val(str,S1),(val(str,S2),())), S1 =  S2.
+computed(O,ARGS,val(bool,true))  :- compute(O,ARGS), O=neq, ARGS = (val(str,S1),(val(str,S2),())), S1 != S2.
+computed(O,ARGS,val(bool,false)) :- compute(O,ARGS), O=eq,  ARGS = (val(str,S1),(val(str,S2),())), S1 != S2.
+computed(O,ARGS,val(bool,false)) :- compute(O,ARGS), O=neq, ARGS = (val(str,S1),(val(str,S2),())), S1 =  S2.
 
-computed(O,ARGS,int,N) :- compute(O,ARGS), O=length, ARGS = (str,(S,())), N=@pythonStringLength(S).
-computed(O,ARGS,str,R) :- compute(O,ARGS), O=concat, ARGS = (str,(S1,(str,(S2,())))), R=@pythonStringAdd(S1,S2).
+computed(O,ARGS,val(int,N)) :- compute(O,ARGS), O=length, ARGS = (val(str,S),()), N=@pythonStringLength(S).
+computed(O,ARGS,val(str,R)) :- compute(O,ARGS), O=concat, ARGS = (val(str,S1),(val(str,S2),())), R=@pythonStringAdd(S1,S2).
 
 #script(python)
 

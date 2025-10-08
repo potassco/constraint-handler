@@ -24,15 +24,15 @@ _multimap_add(E,EK,EV) :- direct_query(E), E=operation(multimapMake,L),
 _multimap_has(key,EM,TK,VK) :- _multimap_add(E,EK,EV),
     eValue(E,multimap,EM), eValue(EK,TK,VK).
 
-compute(eq,(T,(V1,(T,(V2,()))))) :- _multimap_has(D,E,T,V1), _multimap_has(D,E,T,V2),
+compute(eq,(val(T,V1),(val(T,V2),()))) :- _multimap_has(D,E,T,V1), _multimap_has(D,E,T,V2),
     representation(T,intensional), V1 < V2.
 _multimap_has(val(RK),EM,TV,VV) :- _multimap_add(E,EK,EV), eValue(E,multimap,EM),
     eValue(EK,TK,VK), eValue(EV,TV,VV),
     representative(key,EM,TK,VK,RK).
 representative(D,E,T,V,R) :- _multimap_has(D,E,T,V),
     representation(T,intensional),
-    _multimap_has(D,E,T,R), R <= V, #false : computed(eq,(T,(R,(T,(V,())))),bool,false), R != V;
-    #count { W : _multimap_has(D,E,T,W), W < V, computed(eq,(T,(W,(T,(R,())))),bool,true) } = 0.
+    _multimap_has(D,E,T,R), R <= V, #false : computed(eq,(val(T,R),(val(T,V),())),val(bool,false)), R != V;
+    #count { W : _multimap_has(D,E,T,W), W < V, computed(eq,(val(T,W),(val(T,R),())),val(bool,true)) } = 0.
 
 representative(D,E,T,V,V) :- _multimap_has(D,E,T,V),
     representation(T,extensional).
@@ -47,24 +47,24 @@ multimap_value(X,TK,VK,TV,VV) :- eValue(E,multimap,EM), multimap_entry(EM,TK,VK,
 
 %%%%%%%%%%%%%%%%%% find
 
-computed(O,ARGS,TV,RV) :- compute(O,ARGS), O=find, ARGS=(TK,(RK,(multimap,(EM,())))),
+computed(O,ARGS,val(TV,RV)) :- compute(O,ARGS), O=find, ARGS=(val(TK,RK),(val(multimap,EM),())),
     multimap_entry(EM,TK,RK,TV,RV).
 
 %%%%%%%%%%%%%%%%%% count keys and entries
 
-computed(O,ARGS,int,N) :- compute(O,ARGS), O=countKeys, ARGS=(multimap,(EM,())),
+computed(O,ARGS,val(int,N)) :- compute(O,ARGS), O=countKeys, ARGS=(val(multimap,EM),()),
     N = #count { TK,RK : multimap_entry(EM,TK,RK,TV,RV) }.
 
-computed(O,ARGS,int,N) :- compute(O,ARGS), O=countEntries, ARGS=(multimap,(EM,())),
+computed(O,ARGS,val(int,N)) :- compute(O,ARGS), O=countEntries, ARGS=(val(multimap,EM),()),
     N = #count { TK,RK,TV,RV : multimap_entry(EM,TK,RK,TV,RV) }.
 
-computed(O,ARGS,int,N) :- compute(O,ARGS), O=sumIntEntries, ARGS=(multimap,(EM,())),
+computed(O,ARGS,val(int,N)) :- compute(O,ARGS), O=sumIntEntries, ARGS=(val(multimap,EM),()),
     N = #sum { RV,TK,RK : multimap_entry(EM,TK,RK,int,RV) }.
 
-computed(O,ARGS,T,M) :- compute(O,ARGS), O=maxEntries, ARGS=(multimap,(EM,())),
+computed(O,ARGS,val(T,M)) :- compute(O,ARGS), O=maxEntries, ARGS=(val(multimap,EM),()),
     (M,T) = #max { (RV,TV) : multimap_entry(EM,TK,RK,TV,RV) }.
 
-computed(O,ARGS,T,M) :- compute(O,ARGS), O=minEntries, ARGS=(multimap,(EM,())),
+computed(O,ARGS,val(T,M)) :- compute(O,ARGS), O=minEntries, ARGS=(val(multimap,EM),()),
     (M,T) = #min { (RV,TV) : multimap_entry(EM,TK,RK,TV,RV) }.
 
 %%%%%%%%%%%%%%%%%% isin notin
@@ -72,68 +72,61 @@ computed(O,ARGS,T,M) :- compute(O,ARGS), O=minEntries, ARGS=(multimap,(EM,())),
 %%%%%%%%%%%%%%%%%% union inter
 
 %%%%%%%%%%%%%%%%%% Equality
-compute(eq,ARGS) :- compute(neq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))).
-computed(neq,ARGS,bool,NEQ) :- computed(eq,ARGS,bool,EQ), ARGS = (T1,(M1,(T2,(M2,())))), (T1;T2)=multimap, (EQ,NEQ)=((true,false);(false,true)).
-computed(eq,ARGS,bool,true)  :- compute(eq,ARGS),  ARGS = (multimap,(S1,(multimap,(S2,())))), not computed(eq,ARGS,bool,false).
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS),  ARGS = (T1,(S1,(T2,(S2,())))), (T1;T2)=multimap, T1 != T2.
+compute(eq,ARGS) :- compute(neq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())).
+computed(neq,ARGS,val(bool,NEQ)) :- computed(eq,ARGS,val(bool,EQ)), ARGS = (val(T1,M1),(val(T2,M2),())), (T1;T2)=multimap, (EQ,NEQ)=((true,false);(false,true)).
+computed(eq,ARGS,val(bool,true))  :- compute(eq,ARGS),  ARGS = (val(multimap,S1),(val(multimap,S2),())), not computed(eq,ARGS,val(bool,false)).
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS),  ARGS = (val(T1,S1),(val(T2,S2),())), (T1;T2)=multimap, T1 != T2.
 
-%computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
-%    multimap_entry(M1,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional),
-%    not multimap_entry(M2,TK,RK,TV,RV).
-%computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
-%    multimap_entry(M2,TK,RK,TV,RV), representation(TK,extensional), representation(TV,extensional),
-%    not multimap_entry(M1,TK,RK,TV,RV).
-
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,extensional), representation(TV,extensional),
     #false : multimap_entry(M2,TK,RK2,TV,RV2), RK1 = RK2, RV1 = RV2.
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(vam(multimap,M2),())),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,extensional), representation(TV,extensional),
     #false : multimap_entry(M1,TK,RK1,TV,RV1), RK1 = RK2, RV1 = RV2.
 
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,intensional), representation(TV,extensional),
-    #false : multimap_entry(M2,TK,RK2,TV,RV2), computed(eq,(TK,(RK1,(TK,(RK2,())))),bool,true), RV1 = RV2.
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), computed(eq,(val(TK,RK1),(val(TK,RK2),())),val(bool,true)), RV1 = RV2.
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional), representation(TV,extensional),
-    #false : multimap_entry(M1,TK,RK1,TV,RV1), computed(eq,(TK,(RK1,(TK,(RK2,())))),bool,true), RV1 = RV2.
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), computed(eq,(val(TK,RK1),(val(TK,RK2),())),val(bool,true)), RV1 = RV2.
 
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,extensional), representation(TV,intensional),
-    #false : multimap_entry(M2,TK,RK2,TV,RV2), RK1 = RK2, computed(eq,(TV,(RV1,(TV,(RV2,())))),bool,true).
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), RK1 = RK2, computed(eq,(val(TV,RV1),(val(TV,RV2),())),val(bool,true)).
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,extensional), representation(TV,intensional),
-    #false : multimap_entry(M1,TK,RK1,TV,RV1), RK1 = RK2, computed(eq,(TV,(RV1,(TV,(RV2,())))),bool,true).
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), RK1 = RK2, computed(eq,(val(TV,RV1),(val(TV,RV2),())),val(bool,true)).
 
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M1,TK,RK1,TV,RV1), representation(TK,intensional), representation(TV,intensional),
-    #false : multimap_entry(M2,TK,RK2,TV,RV2), computed(eq,(TK,(RK1,(TK,(RK2,())))),bool,true), computed(eq,(TV,(RV1,(TV,(RV2,())))),bool,true).
-computed(eq,ARGS,bool,false) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+    #false : multimap_entry(M2,TK,RK2,TV,RV2), computed(eq,(val(TK,RK1),(val(TK,RK2),())),val(bool,true)), computed(eq,(val(TV,RV1),(val(TV,RV2),())),val(bool,true)).
+computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional), representation(TV,intensional),
-    #false : multimap_entry(M1,TK,RK1,TV,RV1), computed(eq,(TK,(RK1,(TK,(RK2,())))),bool,true), computed(eq,(TV,(RV1,(TV,(RV2,())))),bool,true).
+    #false : multimap_entry(M1,TK,RK1,TV,RV1), computed(eq,(val(TK,RK1),(val(TK,RK2),())),val(bool,true)), computed(eq,(val(TV,RV1),(val(TV,RV2),())),val(bool,true)).
 
-compute(eq,SUBARGS) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+compute(eq,SUBARGS) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M1,TK,RK1,TV,RV1),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional),
-    SUBARGS=(TK,(RK1,(TK,(RK2,())))).
-compute(eq,SUBARGS) :- compute(eq,ARGS), ARGS = (multimap,(M1,(multimap,(M2,())))),
+    SUBARGS=(val(TK,RK1),(val(TK,RK2),())).
+compute(eq,SUBARGS) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
     multimap_entry(M1,TK,RK1,TV,RV1),
     multimap_entry(M2,TK,RK2,TV,RV2), representation(TK,intensional),
-    SUBARGS=(TV,(RV1,(TV,(RV2,())))).
+    SUBARGS=(val(TV,RV1),(val(TV,RV2),())).
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
 
-_multimap_makeIndex(VM) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TACC,(VACC,())))))).
-_multimap_foldStep(fold,ARGS,0,TACC,VACC) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TACC,(VACC,())))))).
-compute(VO,SUBARGS) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
+_multimap_makeIndex(VM) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TACC,VACC),()))).
+_multimap_foldStep(fold,ARGS,0,TACC,VACC) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TACC,VACC),()))).
+compute(VO,SUBARGS) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
     _multimap_index(VM,I,TK,RK,TI,VI), _multimap_foldStep(fold,ARGS,I,TB,VB),
-    SUBARGS = (TI,(VI,(TB,(VB,())))).
-_multimap_foldStep(fold,ARGS,I+1,TN,NEXT) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
+    SUBARGS = (val(TI,VI),(val(TB,VB),())).
+_multimap_foldStep(fold,ARGS,I+1,TN,NEXT) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
     _multimap_foldStep(fold,ARGS,I,TB,VB), _multimap_index(VM,I,TK,RK,TI,VI),
-    SUBARGS = (TI,(VI,(TB,(VB,())))),
-    computed(VO,SUBARGS,TN,NEXT).
-computed(fold,ARGS,TB,VB) :- compute(fold,ARGS), ARGS = (function,(VO,(multimap,(VM,(TSTART,(VSTART,())))))),
+    SUBARGS = (val(TI,VI),(val(TB,VB),())),
+    computed(VO,SUBARGS,val(TN,NEXT)).
+computed(fold,ARGS,val(TB,VB)) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
     _multimap_foldStep(fold,ARGS,I,TB,VB),
     _multimap_lastIndex(VM,I).
 
