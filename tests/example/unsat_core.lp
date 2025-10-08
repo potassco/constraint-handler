@@ -15,12 +15,12 @@
 %%% usc_d(1): d(1) = true
 %%% usc_d(2): d(2) = true
 %%% usc_dd: dd = d(1) | d(2)
-%%% usc_de: ensure phi(\lnot dd, true)
+%%% usc_de: ensure default(\lnot dd, true)
 
 %%% usc_ba: b(1) = true
 %%% usc_ba: b(2) = true
 %%% usc_bd: bd = b(1) | b(2)
-%%% usc_be: ensure phi(\lnot bd, true)
+%%% usc_be: ensure default(\lnot bd, true)
 
 %%% usc_e1: e1 = guess true or false
 %%% usc_e2: e2 = guess true or false
@@ -48,14 +48,16 @@ ensure(usc_ce2,operation(lnot,(variable(c2),()))).
 assign(usc_d(1),d(1),val(bool,true)).
 assign(usc_d(2),d(2),val(bool,true)).
 assign(usc_dd,dd,operation(disj,(variable(d(1)),(variable(d(2)),())))).
-ensure(usc_de,operation(phi,(operation(lnot,(variable(dd),())),
-                            (val(bool,true),())))).
+ensure(usc_de,operation(default,
+                       (operation(lnot,(variable(dd),())),
+                       (val(bool,true),())))).
 
 assign(usc_ba,b(1),val(bool,true)).
 assign(usc_ba,b(2),val(bool,true)).
 assign(usc_bd,bd,operation(disj,(variable(b(1)),(variable(b(2)),())))).
-ensure(usc_be,operation(phi,(operation(lnot,(variable(bd),())),
-                            (val(bool,true),())))).
+ensure(usc_be,operation(default,
+                       (operation(lnot,(variable(bd),())),
+                       (val(bool,true),())))).
 
 1 { assign(usc_e1,e1,val(bool,(true;false))) } 1.
 1 { assign(usc_e2,e2,val(bool,(true;false))) } 1.
