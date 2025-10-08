@@ -14,3 +14,5 @@ evaluate(eq,(variable(y),(operation(fdiv,(variable(x),(variable(z),()))),()))).
 evaluate(eq,(variable(z),(operation(fdiv,(variable(x),(variable(y),()))),()))).
 evaluate(neq,(variable(z),(operation(fdiv,(variable(x),(variable(z),()))),()))).
 evaluate(neq,(variable(y),(operation(fdiv,(variable(x),(variable(y),()))),()))).
+
+evaluate(python("int"),(variable(y),())).

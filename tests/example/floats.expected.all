@@ -2,3 +2,4 @@ evaluated(eq,(variable(y),(operation(fdiv,(variable(x),(variable(z),()))),())),b
 evaluated(eq,(variable(z),(operation(fdiv,(variable(x),(variable(y),()))),())),bool,true)
 evaluated(neq,(variable(z),(operation(fdiv,(variable(x),(variable(z),()))),())),bool,true)
 evaluated(neq,(variable(y),(operation(fdiv,(variable(x),(variable(y),()))),())),bool,true)
+evaluated(python("int"),(variable(y),()),int,2)
