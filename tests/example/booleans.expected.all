@@ -3,5 +3,6 @@ evaluated(leqv,(variable(f),(operation(conj,(operation(lnot,(variable(x),())),(v
 evaluated(eq,(variable(z),(operation(leqv,(variable(x),(variable(y),()))),())),bool,true)
 evaluated(neq,(variable(z),(variable(t),())),bool,true)
 evaluated(conj,(operation(limp,(variable(f),(operation(lnot,(variable(y),())),()))),(variable(f),())),bool,false)
-evaluated(dnot,(variable(b),()),bool,false)
-evaluated(lnot,(operation(dnot,(variable(b),())),()),bool,true)
+evaluated(snot,(variable(b),()),bool,false)
+evaluated(lnot,(operation(snot,(variable(b),())),()),bool,true)
+evaluated(wnot,(variable(a),()),bool,true)
