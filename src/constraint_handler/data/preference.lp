@@ -8,7 +8,7 @@ warning((unsupported,"multiple scores for the same expression",E,K,L)) :- _prefe
 
 _preference_expressionScore(EQ, 1) :- preference_variable(X,E), EQ = operation(eq,(variable(X),(E,()))).
 _preference_expressionScore(EQ, K) :- preference_variable(X,E,K), K > 0, EQ = operation(eq,(variable(X),(E,()))).
-_preference_expressionScore(NE,-K) :- preference_variable(X,E,K), K < 0, 
+_preference_expressionScore(NE,-K) :- preference_variable(X,E,K), K < 0,
     EQ = operation(eq,(variable(X),(E,()))),
     NE = operation(wnot,(EQ,())).
 

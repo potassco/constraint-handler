@@ -217,7 +217,6 @@ def evaluate_logic_operator(o, args):
             if None in args:
                 return True
             return not args[0]
-        
 
 
 def evaluate_multimap_operator(o, args):
