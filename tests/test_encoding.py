@@ -8,7 +8,7 @@ clingo.script.enable_python()
 
 def run_test_compile(name):
     name = "tests/example/" + name
-    solver = Clingo("0", "defaultEngine(compile).", files=[name + ".lp"])
+    solver = Clingo(["0","--heuristic=Domain"], "defaultEngine(compile).", files=[name + ".lp"])
     test = chut.build_expectations(name)
     solver.solve(test)
     test.assert_()
@@ -16,7 +16,7 @@ def run_test_compile(name):
 
 def run_test_ground(name):
     name = "tests/example/" + name
-    solver = Clingo("0", "defaultEngine(ground).", files=[name + ".lp"])
+    solver = Clingo(["0","--heuristic=Domain"], "defaultEngine(ground).", files=[name + ".lp"])
     test = chut.build_expectations(name)
     solver.solve(test)
     test.assert_()
@@ -25,7 +25,7 @@ def run_test_ground(name):
 def run_test_propagator(name):
     name = "tests/example/" + name
     solver = chut.SolverWithPropagators(
-        "0", "defaultEngine(propagator).", files=[name + ".lp"], propagators=[chut.PropPrint]
+        ["0","--heuristic=Domain"], "defaultEngine(propagator).", files=[name + ".lp"], propagators=[chut.PropPrint]
     )
     test = chut.build_expectations(name)
     solver.solve(test)
@@ -49,7 +49,7 @@ base_tests = [
 
 
 def test_engine_compile():
-    extra = ["executions"]
+    extra = ["executions","preferences"]
     unsupported = []
     for test in base_tests + extra:
         if test not in unsupported:

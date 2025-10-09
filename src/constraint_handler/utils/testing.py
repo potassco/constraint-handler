@@ -5,7 +5,7 @@ import clingo.symbol
 import clintest.assertion
 import clintest.solver
 import clintest.test
-from clintest.quantifier import All, Any
+from clintest.quantifier import All, Any, First
 from clintest.test import And, Assert
 
 import constraint_handler.evaluator as evaluator
@@ -23,11 +23,13 @@ def atoms_from_file(file_name):
 
 
 def build_expectations(name):
-    expected_all = atoms_from_file(name + ".expected.all")
     contains = lambda a: clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
+    expected_all = atoms_from_file(name + ".expected.all")
     test_all = And(*(Assert(All(), contains(a)) for a in expected_all))
     expected_any = atoms_from_file(name + ".expected.any")
     test_any = And(*(Assert(Any(), contains(a)) for a in expected_any))
+    expected_any = atoms_from_file(name + ".expected.first")
+    test_any = And(*(Assert(First(), contains(a)) for a in expected_any))
     return And(test_all, test_any)
 
 
