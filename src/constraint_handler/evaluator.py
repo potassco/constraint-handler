@@ -22,7 +22,7 @@ class PPEnum(Enum):
 
 BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function", "multimap", "set"])
 UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
-LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "dnot", "ite", "leqv", "limp", "lnot", "lxor"])
+LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
     ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
@@ -186,11 +186,6 @@ def evaluate_logic_operator(o, args):
                 return None
             else:
                 return False
-        case LogicOperator.dnot:
-            assert len(args) == 1
-            if None in args:
-                return False
-            return not args[0]
         case LogicOperator.ite:
             assert len(args) == 3
             if args[0] is None:
@@ -212,6 +207,17 @@ def evaluate_logic_operator(o, args):
             if None in args:
                 return None
             return functools.reduce(operator.xor, args)
+        case LogicOperator.snot:
+            assert len(args) == 1
+            if None in args:
+                return False
+            return not args[0]
+        case LogicOperator.wnot:
+            assert len(args) == 1
+            if None in args:
+                return True
+            return not args[0]
+        
 
 
 def evaluate_multimap_operator(o, args):

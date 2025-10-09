@@ -13,7 +13,8 @@
 %%% any:
 %%% x     not x     y     not y     f     not f     t     not t     z     not z
 %%% f->-y     -(f->-y)
-%%% dnot a == true   dnot a == false
+%%% snot a == true   snot a == false
+%%% wnot b == true   wnot b == false
 
 %%% all:
 %%% f->-x
@@ -21,8 +22,9 @@
 %%% z==(x<->y)
 %%% z!=t
 %%% not (f->-y)&f)
-%%% dnot b == false
-%%% not (dnot b) == true
+%%% snot b == false
+%%% not (snot b) == true
+%%% wnot a == true
 
 1 { assign(a_x,x,val(bool,false)) ; assign(a_x,x,val(bool,true)) } 1.
 1 { assign(a_y,y,val(bool,false)) ; assign(a_y,y,val(bool,true)) } 1.
@@ -47,6 +49,8 @@ evaluate(eq,(variable(z),(operation(leqv,(variable(x),(variable(y),()))),()))).
 evaluate(neq,(variable(z),(variable(t),()))).
 evaluate(limp,(variable(f),(operation(lnot,(variable(y),())),()))).
 evaluate(conj,(operation(limp,(variable(f),(operation(lnot,(variable(y),())),()))),(variable(f),()))).
-evaluate(dnot,(variable(a),())).
-evaluate(dnot,(variable(b),())).
-evaluate(lnot,(operation(dnot,(variable(b),())),())).
+evaluate(snot,(variable(a),())).
+evaluate(snot,(variable(b),())).
+evaluate(lnot,(operation(snot,(variable(b),())),())).
+evaluate(wnot,(variable(a),())).
+evaluate(wnot,(variable(b),())).
