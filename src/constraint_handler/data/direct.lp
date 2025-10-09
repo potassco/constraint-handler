@@ -33,25 +33,6 @@ compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),
 eValue(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS),
     computed(OP,VS,val(TO,VO)).
 
-%:- not evaluated(limp,(operation(conj,(operation(eq,(variable(a),(variable(b),()))),(operation(eq,(variable(a),(variable(c),()))),()))),(operation(eq,(variable(b),(variable(c),()))),())),bool,false).
-%#show compute/2.
-%#show computed/3.
-%#show eValue/3.
-%#show set_value/3.
-%#show multimap_value/5.
-%#show _set_contains/3.
-%#show multimap_value/5.
-%#show value/3.
-%#show direct_query/1.
-%#show evaluate/2.
-%#show evaluated/4.
-
-%_direct_revMapAux(ARGS,ES,(T,(V,(VS)))) :- _direct_revMapAux(ARGS,(E,ES),VS), eValue(E,T,V).
-%dompute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS).
-%eValue(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS),
-%    domputed(OP,VS,TO,VO).
-
-
 %%%%%%%%%%%%%%%%% lambda
 _lambda_aux(LAMB,ARGS,RED) :- compute(LAMB,ARGS),
     LAMB=lambda(VARS,ERES),
