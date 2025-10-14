@@ -170,8 +170,6 @@ def evaluate_unop(o, val):
             return -val
         case UnaryOperator.floor:
             return math.floor(val)
-        case UnaryOperator.abs:
-            return abs(val)
         case _:
             print("unknown operator", o, val)
             assert False
@@ -237,8 +235,7 @@ def evaluate_multimap_operator(o, args):
             assert len(args) == 2
             return args[1][args[0]]
         case MultimapOperator.multimapMake:
-            pairs = [(args[2 * i], args[2 * i + 1]) for i in range(int(len(args) / 2))]
-            return HashableDict({key: value for (key, value) in pairs})
+            return HashableDict({key: value for (key, value) in args})
 
 
 def set_fold(f, s, start):
@@ -332,12 +329,8 @@ def evaluate_conditional_operator(o, args):
 
 def evaluate_operator(symbols, o, args):
     match o:
-        case str(fn):
-            call = eval(fn)
-            return call(*args)
         case Python(fn):
             call = eval(fn)
-            # print(f"{fn}{tuple(vals)} = {}")
             return call(*args)
         case Lambda(vars, expr):
             if len(vars) != len(args):
