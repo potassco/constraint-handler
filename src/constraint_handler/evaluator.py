@@ -328,11 +328,12 @@ def evaluate_conditional_operator(o, args):
 
 
 def evaluate_python_operator(fn, args):
-    #globals = dict()
-    #locals = dict()
-    #call = eval(fn,globals,locals)
+    # globals = dict()
+    # locals = dict()
+    # call = eval(fn,globals,locals)
     call = eval(fn)
     return call(*args)
+
 
 def evaluate_operator(symbols, o, args):
     match o:
