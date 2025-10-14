@@ -57,7 +57,7 @@ def pythonEvalExpr(clExpr,clArgs):
             type_ = clingo.Function("set")
             return myClorm.pytocl(evaluator.Val(type_,val))
     except Exception as exn:
-        print(f"pythonEvalExpr: error when evaluating {pExpr} over {clArgs}:\n{exn}.")
+        # print(f"pythonEvalExpr: error when evaluating {pExpr} over {clArgs}:\n{exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
 
 
