@@ -2,6 +2,9 @@
 
 import constraint_handler.myClorm as myClorm
 import constraint_handler.evaluator as evaluator
+import operator
+import clingo
+
 
 def pythonExpressionVariable(clExpr):
     print("pythonExpressionVariable",clExpr)
@@ -10,33 +13,15 @@ def pythonExpressionVariable(clExpr):
     clVars = [myClorm.pytocl(var) for var in pVars]
     return clVars
 
-def pythonCollectVars(clExpr):
-    # print("pythonCollectVars",clExpr)
-    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
-    pVars = list(evaluator.collectVars(pExpr))
-    clVars = myClorm.pytocl(pVars)
-    return clVars
 
 def pythonBetaReduction(clExpr,clVars,clArgs):
-    pVars = myClorm.cltopy(clVars)
-    pArgs = myClorm.cltopy(clArgs,list[evaluator.Expr])
-    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
-    if len(pVars) != len(pArgs):
-        print(f"pythonBetaReduction: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
-        return []
-    d = { var : val for (var,val) in zip(pVars,pArgs) }
-    prettyArgs = ", ".join(f"{str(var)}={val}" for (var,val) in d.items())
-    pRes = evaluator.beta_reduction(d,pExpr)
-    return myClorm.pytocl(pRes)
-
-def pythonBetaReduction2(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars)
     pArgs = myClorm.cltopy(clArgs,list[evaluator.Val])
     #pPairs = myClorm.cltopy(clArgs,list)
     #pArgs = [evaluator.Val(pPairs[2*i],pPairs[2*i+1]) for i in range(int(len(pPairs)/2))]
     pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
     if len(pVars) != len(pArgs):
-        print(f"pythonEvalExprFromPairs2: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
+        print(f"pythonBetaReduction: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
         return []
     d = { var : val for (var,val) in zip(pVars,pArgs) }
     #print(d)
@@ -52,44 +37,19 @@ def pythonEvalExpr(clExpr,clArgs):
     d = { var : val for (var,val) in pArgs }
     prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
     pRes = evaluator.evaluate_expr(d,pExpr)
-    # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
+    print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
     if pRes is None:
-        return myClorm.pytocl((None,None))
+        return myClorm.pytocl(evaluator.Val(None,None))
     pType = evaluator.get_baseType(pRes)
     # print(f"gringo eval expr in {clExpr}: result = {pRes} with {clArgs}")
     # print(f"gringo eval expr in {clExpr}: result = {myClorm.pytocl((pType,pRes))}")
     if pType is not None:
-        return myClorm.pytocl((pType,pRes))
+        return myClorm.pytocl(evaluator.Val(pType,pRes))
     if isinstance(pRes,set):
         val = set(list(pRes))
         type_ = clingo.Function("set")
-        return myClorm.pytocl((type_,val))
-#end.
-#script(python)
+        return myClorm.pytocl(evaluator.Val(type_,val))
 
-import constraint_handler.myClorm
-import operator
-import clingo
-import constraint_handler.evaluator as evaluator
-
-pairList = list[tuple[evaluator.BaseType,evaluator.optConstant]]
-
-def pythonEvalOperator(clFn,clArgs):
-    try:
-        #print(clFn,clArgs)
-        pArgs = myClorm.cltopy(clArgs,list[evaluator.optConstant])
-        pFn = myClorm.cltopy(clFn,evaluator.Operator)
-        pRes = evaluator.evaluate_operator(dict(),pFn,pArgs)
-        pType = evaluator.get_baseType(pRes)
-        if pRes is None:
-            return []
-        if pType is None:
-            print("float.lp unsupported type",pRes)
-            return []
-        return myClorm.pytocl((pType,pRes))
-    except Exception as exn:
-        print(f"Python error when evaluating {pFn} on {pArgs}: {exn}.")
-        return []
 
 def pythonExecStmt(clCode,clEnv,clOuts):
     try:
@@ -112,11 +72,6 @@ def pythonExecStmt(clCode,clEnv,clOuts):
     except Exception as exn:
         #print(f"pythonExecStmt: error in environment {pEnv} and output {pOuts} when evaluating\n{pCode}\nThe error was '{exn}'.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
-
-def pythonMergeTypes(clArgs):
-    pArgs = myClorm.cltopy(clArgs,list[evaluator.Val])
-    skipped = [val.value for val in pArgs]
-    return myClorm.pytocl(skipped)
 
 #end.
 #script(python)
@@ -167,5 +122,39 @@ def prepython12_itertools_batched(iterable, n, *, strict=False):
         yield batch
 
 itertools_batched = itertools.batched if hasattr(itertools,'batched') else prepython12_itertools_batched
+
+#end.
+
+#script(python)
+
+import typing
+import constraint_handler.myClorm as myClorm
+import constraint_handler.evaluator as evaluator
+
+
+class Local(typing.NamedTuple):
+    name: typing.Any
+    var: evaluator.Variable
+
+
+def pythonDebug(clExpr):
+    #print("debug: ",clExpr)
+    return clExpr
+
+def pythonStop(clExpr):
+    #print("stop: ",clExpr)
+    pExpr = myClorm.cltopy(clExpr)
+    if pExpr < -5:
+        assert False
+    return clExpr
+
+def pythonTagVars(clExpr,clName):
+    # print("pythonEvalExpr",clName,clExpr,clArgs)
+    pName = myClorm.cltopy(clName)
+    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+    vars = evaluator.collectVars(pExpr)
+    map = { var : Local(pName,var) for var in vars }
+    pExp2 = evaluator.beta_reduction(map,pExpr)
+    return myClorm.pytocl(pExp2)
 
 #end.
