@@ -13,11 +13,6 @@ _execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), execution_r
 
 _execution_in(NAME,X,val(T,V)) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), eValue(variable(execution_input(NAME,X)),T,V).
 
-%direct_query(E) :- _execution_run(NAME,STMT), execution_assign(NAME,X,E).
-%execution_input(NAME,X,val(T,V)) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), execution_assign(NAME,X,E), eValue(E,T,V).
-%_execution_in(NAME,X,val(T,V)) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), execution_assign(NAME,X,E), eValue(E,T,V).
-%execution_output(NAME,X,val(T,V)) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_result(NAME,STMT,success), _execution_ou(NAME,X,val(T,V)).
-%execution_output(NAME,X,val(T,V)) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_result(NAME,STMT,success), _execution_in(NAME,X,val(T,V)), not _execution_ou_proj(NAME,X).
 eValue(variable(execution_output(NAME,X)),T,V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_result(NAME,STMT,success), _execution_ou(NAME,X,val(T,V)).
 eValue(variable(execution_output(NAME,X)),T,V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_result(NAME,STMT,success), _execution_in(NAME,X,val(T,V)), not _execution_ou_proj(NAME,X).
 
