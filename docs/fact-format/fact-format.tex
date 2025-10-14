@@ -60,13 +60,18 @@
 
 <lambda-expr> ::= `lambda' `(' <term-list> `,' <expression> `)'
 
+<tuple-expr> ::= `(' `)' | `(' <expressions> `)'
+
 <expression> ::=
 `val' `(' <type> `,' <term> `)'
 \alt `variable' `(' <term> `)'
 \alt `operation' `(' <operator> `,' <expression-list> `)'
 \alt <lambda-expr>
+\alt <tuple-expr>
 
 <expression-list> ::= `(' `)' | `(' <expression> `,' <expression-list> `)'
+
+<expressions> ::= <expression> | <expression> `,' <expressions>
 
 \end{grammar}
 

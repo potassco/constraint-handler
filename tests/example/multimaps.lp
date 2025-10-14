@@ -46,9 +46,9 @@
 %%%   = (((((((),1),2),1),1),2),3)
 
 assign(acap, capitals, operation(multimapMake,
-                                (val(str,"germany"), (val(str,"berlin"),
-                                (val(str,"france"), (val(str,"paris"),
-                                (val(str,"belarus"), (val(str,"minsk"),())))))))).
+                                ((val(str,"germany"), val(str,"berlin")),
+                                ((val(str,"france"), val(str,"paris")),
+                                ((val(str,"belarus"), val(str,"minsk")),()))))).
 
 multimap_declare(dc,cities).
 multimap_assign(ac,cities,val(str,"germany"),val(str,"berlin")).
@@ -108,10 +108,10 @@ evaluate(maxEntries,(variable(properDivisors2),())).
 evaluate(minEntries,(variable(properDivisors2),())).
 
 assign(aa, a, operation(multimapMake,
-                       (operation(makeSet,(val(int,1),(val(int,2),()))),(operation(makeSet,(val(int,2),(val(int,4),()))),
-                       (operation(makeSet,(val(int,2),(val(int,4),()))),(operation(makeSet,(val(int,4),(val(int,8),()))),
-                       (operation(makeSet,(val(int,2),(val(int,4),()))),(operation(makeSet,(val(int,1),(val(int,2),()))),
-                       ())))))))).
+                       ((operation(makeSet,(val(int,1),(val(int,2),()))),operation(makeSet,(val(int,2),(val(int,4),())))),
+                       ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,4),(val(int,8),())))),
+                       ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,1),(val(int,2),())))),
+                       ()))))).
 
 multimap_declare(ab,b).
 multimap_assign(ab,b,
@@ -140,18 +140,18 @@ multimap_assign(ab,b,
     variable(b48)).
 
 assign(ac, c, operation(multimapMake,
-                       (operation(makeSet,(val(int,1),(val(int,2),()))), (operation(makeSet,(val(int,2),(val(int,4),()))),
-                       (operation(makeSet,(val(int,2),(val(int,4),()))), (operation(makeSet,(val(int,4),(val(int,7),()))),
-                       (operation(makeSet,(val(int,2),(val(int,4),()))), (operation(makeSet,(val(int,1),(val(int,2),()))),
-                       ())))))))).
+                       ((operation(makeSet,(val(int,1),(val(int,2),()))), operation(makeSet,(val(int,2),(val(int,4),())))),
+                       ((operation(makeSet,(val(int,2),(val(int,4),()))), operation(makeSet,(val(int,4),(val(int,7),())))),
+                       ((operation(makeSet,(val(int,2),(val(int,4),()))), operation(makeSet,(val(int,1),(val(int,2),())))),
+                       ()))))).
 
 assign(ad,d,operation(multimapMake,
-                     (operation(makeSet,(val(int,1),(val(int,2),()))),(operation(makeSet,(val(int,2),(val(int,4),()))),
-                     (operation(makeSet,(val(int,2),(val(int,4),()))),(operation(makeSet,(val(int,4),(val(int,8),()))),
-                     ())))))).
-assign(ae,e,operation(multimapMake,
-                     (operation(makeSet,(val(int,1),(val(int,2),()))), (operation(makeSet,(val(int,2),(val(int,4),()))),
+                     ((operation(makeSet,(val(int,1),(val(int,2),()))),operation(makeSet,(val(int,2),(val(int,4),())))),
+                     ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,4),(val(int,8),())))),
                      ())))).
+assign(ae,e,operation(multimapMake,
+                     ((operation(makeSet,(val(int,1),(val(int,2),()))), operation(makeSet,(val(int,2),(val(int,4),())))),
+                     ()))).
 
 evaluate(eq,(variable(a),(variable(b),()))).
 evaluate(eq,(variable(a),(variable(c),()))).

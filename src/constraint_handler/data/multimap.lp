@@ -17,7 +17,7 @@ eValue(E,multimap,X) :- E=variable(X), multimap_declare(NAME,X).
 
 eValue(E,multimap,E) :- direct_query(E), E=operation(multimapMake,L).
 _multimap_add(E,EK,EV) :- direct_query(E), E=operation(multimapMake,L),
-    (EK,EV)=@pythonListElements(L,2).
+    (EK,EV)=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value
 

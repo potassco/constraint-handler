@@ -105,7 +105,7 @@ class Lambda(NamedTuple):
     expr: Expr
 
 
-Expr = Variable | Operation | Val | Lambda
+type Expr = Variable | Operation | Val | Lambda | tuple[Expr]
 
 
 class SetDeclare(NamedTuple):
@@ -129,6 +129,8 @@ def collectVars(expr) -> set[clingo.Symbol]:
             return frozenset()
         case Lambda(vars, body):
             return collectVars(body) - frozenset(vars)
+        case tuple(args):
+            return frozenset.union(*(collectVars(e) for e in args))
 
 
 def get_baseType(v):
@@ -401,6 +403,9 @@ def evaluate_expr(symbols, expr):
             return lambda **args: evaluate_lambda(symbols, vars, args, body)
             assert False
             # TODO
+        case tuple(eargs):
+            args = tuple(evaluate_expr(symbols, a) for a in eargs)
+            return args
 
 
 def beta_reduction(symbols, expr):
@@ -418,5 +423,8 @@ def beta_reduction(symbols, expr):
             return expr
         case Lambda(vars, body):
             return expr  # TODO should we do replacements inside body?
+        case tuple(eargs):
+            args = tuple(beta_reduction(symbols, e) for e in eargs)
+            return args
         case Operator:
             return expr
