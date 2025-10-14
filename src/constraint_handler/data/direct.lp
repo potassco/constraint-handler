@@ -36,13 +36,13 @@ eValue(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,()
 %%%%%%%%%%%%%%%%% lambda
 _lambda_aux(LAMB,ARGS,RED) :- compute(LAMB,ARGS),
     LAMB=lambda(VARS,ERES),
-    RED=@pythonBetaReduction2(ERES,VARS,ARGS).
+    RED=@pythonBetaReduction(ERES,VARS,ARGS).
 
 direct_query(RED) :- _lambda_aux(LAMB,ARGS,RED).
 computed(LAMB,ARGS,val(TO,VO)) :- _lambda_aux(LAMB,ARGS,RED), eValue(RED,TO,VO).
 
 %%%%%%%%%%%%%%%%% python
-computed(OP,ARGS,val(T,RES)) :- compute(OP,ARGS), OP=python(S), L=@pythonMergeTypes(ARGS), (T,RES) = @pythonEvalOperator(OP,L).
+computed(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), RES = @pythonEvalExpr(operation(OP,ARGS),()).
 
 
 %%%%%%%%%%%%%%%%% function definitions
