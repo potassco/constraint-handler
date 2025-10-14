@@ -327,11 +327,17 @@ def evaluate_conditional_operator(o, args):
             return args[0] is not None
 
 
+def evaluate_python_operator(fn, args):
+    #globals = dict()
+    #locals = dict()
+    #call = eval(fn,globals,locals)
+    call = eval(fn)
+    return call(*args)
+
 def evaluate_operator(symbols, o, args):
     match o:
         case Python(fn):
-            call = eval(fn)
-            return call(*args)
+            return evaluate_python_operator(fn, args)
         case Lambda(vars, expr):
             if len(vars) != len(args):
                 print(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
