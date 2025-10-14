@@ -45,5 +45,6 @@ ge_mapAux(EXPR,0,()) :- ge_expressionQuery(EXPR).
 ge_mapAux(EXPR,I+1,((X,VX),M)) :- ge_mapAux(EXPR,I,M), ge_indexVar(EXPR,X,I), ge_value(X,TX,VX).
 ge_mapped(EXPR,M) :- ge_mapAux(EXPR,I,M), ge_nbVars(EXPR,I).
 
-
-ge_result(EXPR,TYPE,V) :- ge_mapped(EXPR,M), val(TYPE,V)=@pythonEvalExpr(EXPR,M).
+_ge_eval_exec(EXPR,RES) :- ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M).
+ge_result(EXPR,TYPE,V) :- _ge_eval_exec(EXPR,val(TYPE,V)).
+warning((EXPR,M,MSG)) :- ge_mapped(EXPR,M), _ge_eval_exec(EXPR,error(MSG)).
