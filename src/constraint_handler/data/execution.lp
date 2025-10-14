@@ -100,4 +100,3 @@ _execution_run(BNAME,BSTMT) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,
 _execution_in(BNAME,X,V) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_in(NAME,X,V), _execution_branch(NAME,BNAME,BSTMT).
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_branch(NAME,BNAME,BSTMT), _execution_ou(BNAME,X,V), _execution_result(BNAME,BSTMT,success).
 _execution_result(NAME,STMT,success) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_branch(NAME,BNAME,BSTMT), _execution_result(BNAME,BSTMT,success).
-

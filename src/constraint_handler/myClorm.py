@@ -156,7 +156,7 @@ def cltopyNoTarget(func):
 
 
 def cltopy(func, dtarget=typing.Any):
-    if isinstance(dtarget,typing.TypeAliasType):
+    if isinstance(dtarget, typing.TypeAliasType):
         return cltopy(func, dtarget.__value__)
     rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
     # print(f"ctp disj trying '{func}' with rows '{rows}'")
