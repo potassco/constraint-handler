@@ -1,9 +1,12 @@
 #script(python)
 
-import constraint_handler.myClorm as myClorm
-import constraint_handler.evaluator as evaluator
+import itertools
 import operator
+
 import clingo
+
+import constraint_handler.myClorm
+import constraint_handler.evaluator
 
 
 def pythonExpressionVariable(clExpr):
@@ -17,8 +20,6 @@ def pythonExpressionVariable(clExpr):
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars)
     pArgs = myClorm.cltopy(clArgs,list[evaluator.Val])
-    #pPairs = myClorm.cltopy(clArgs,list)
-    #pArgs = [evaluator.Val(pPairs[2*i],pPairs[2*i+1]) for i in range(int(len(pPairs)/2))]
     pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
     if len(pVars) != len(pArgs):
         print(f"pythonBetaReduction: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
@@ -73,14 +74,7 @@ def pythonExecStmt(clCode,clEnv,clOuts):
         #print(f"pythonExecStmt: error in environment {pEnv} and output {pOuts} when evaluating\n{pCode}\nThe error was '{exn}'.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
 
-#end.
-#script(python)
 
-import itertools
-import clingo
-
-import constraint_handler.myClorm
-import constraint_handler.evaluator
 
 def pythonReversed(clExpr):
     pL = myClorm.cltopy(clExpr,list)
@@ -88,13 +82,11 @@ def pythonReversed(clExpr):
     return myClorm.pytocl(pRL)
 
 def pythonListElements(clExpr):
-    pBatchSize = 1 #myClorm.cltopy(clBatchSize,int)
     pL = myClorm.cltopy(clExpr,list)
     return [myClorm.pytocl(e) for e in pL]
 
 
 def pythonEnumerateElements(clExpr):
-    pBatchSize = 1 #myClorm.cltopy(clBatchSize,int)
     pL = myClorm.cltopy(clExpr,list)
     return [myClorm.pytocl(e) for e in enumerate(pL)]
 
