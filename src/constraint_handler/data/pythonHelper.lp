@@ -2,11 +2,12 @@
 
 import itertools
 import operator
+import typing
 
 import clingo
 
-import constraint_handler.myClorm
-import constraint_handler.evaluator
+import constraint_handler.myClorm as myClorm
+import constraint_handler.evaluator as evaluator
 
 
 def pythonExpressionVariable(clExpr):
@@ -38,7 +39,7 @@ def pythonEvalExpr(clExpr,clArgs):
     d = { var : val for (var,val) in pArgs }
     prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
     pRes = evaluator.evaluate_expr(d,pExpr)
-    print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
+    # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
     if pRes is None:
         return myClorm.pytocl(evaluator.Val(None,None))
     pType = evaluator.get_baseType(pRes)
@@ -93,14 +94,6 @@ def pythonEnumerateElements(clExpr):
 def pythonListLength(clExpr):
     pL = myClorm.cltopy(clExpr,list)
     return myClorm.pytocl(len(pL))
-
-#end.
-
-#script(python)
-
-import typing
-import constraint_handler.myClorm as myClorm
-import constraint_handler.evaluator as evaluator
 
 
 class Local(typing.NamedTuple):
