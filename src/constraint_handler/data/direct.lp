@@ -43,7 +43,7 @@ computed(LAMB,ARGS,val(TO,VO)) :- _lambda_aux(LAMB,ARGS,RED), eValue(RED,TO,VO).
 
 %%%%%%%%%%%%%%%%% python
 _expression_eval_exec(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), RES = @pythonEvalExpr(operation(OP,ARGS),()).
-computed(OP,ARGS,RES) :- _expression_eval_exec(OP,ARGS,RES), not warning((OP,ARGS,_)).
+computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
 warning((OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(MSG)).
 
 %%%%%%%%%%%%%%%%% function definitions
