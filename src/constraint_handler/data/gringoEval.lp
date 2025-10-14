@@ -1,13 +1,13 @@
-%ge_value(X,val(T,V)) :- engine(CNAME,ground), assign(CNAME,X,EXPR), ge_result(EXPR,T,V).
+%ge_value(X,val(T,V)) :- engine(CNAME,ground), assign(CNAME,X,EXPR), ge_result(EXPR,val(T,V)).
 %ge_value(X,val(T,V)) :- ge_vQuery(X), value(X,T,V), representation(T,extensional).
-ge_value(X,T,V) :- engine(CNAME,ground), assign(CNAME,X,EXPR), ge_result(EXPR,T,V).
+ge_value(X,T,V) :- engine(CNAME,ground), assign(CNAME,X,EXPR), ge_result(EXPR,val(T,V)).
 ge_value(X,T,V) :- ge_vQuery(X), value(X,T,V), representation(T,extensional).
-ge_value(X,T,V) :- assign(CNAME,X,EXPR), ge_result(EXPR,T,V).
+ge_value(X,T,V) :- assign(CNAME,X,EXPR), ge_result(EXPR,val(T,V)).
 
 value(X,T,V) :- ge_value(X,T,V), representation(T,extensional).
 value(X,set,V) :- ge_value(X,set,V).
 %set_value(X,T,V) :- ge_value(X,set,V), representation(T,extensional). % TODO: explode set
-evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(E,T,V). % TODO ???? E=EXPR?
+evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(E,val(T,V)). % TODO ???? E=EXPR?
 
 ge_expressionQuery(EXPR) :- _main_defaultEngine(ground), evaluate(OP,ARGS), EXPR=operation(OP,ARGS).
 ge_expressionQuery(EXPR) :- engine(CNAME,ground), ensure(CNAME,EXPR).
@@ -30,8 +30,8 @@ ge_nbSetAssigns(X,N) :- ge_set_declare(X),
   N = #count { E : ge_set_assign(X,E) }.
 
 ge_indexSetValue(X,0,()) :- ge_set_declare(X).
-ge_indexSetValue(X,I+1,(V,L)) :- ge_indexSetValue(X,I,L), ge_indexSetAssign(X,E,I), ge_result(E,T,V), T != none.
-ge_indexSetValue(X,I+1,L) :- ge_indexSetValue(X,I,L), ge_indexSetAssign(X,E,I), ge_result(E,none,V).
+ge_indexSetValue(X,I+1,(V,L)) :- ge_indexSetValue(X,I,L), ge_indexSetAssign(X,E,I), ge_result(E,val(T,V)), T != none.
+ge_indexSetValue(X,I+1,L) :- ge_indexSetValue(X,I,L), ge_indexSetAssign(X,E,I), ge_result(E,val(none,V)).
 ge_value(X,set,set(L)) :- ge_indexSetValue(X,I,L), ge_nbSetAssigns(X,I).
 
 ge_indexVar(EXPR,#inf,-1) :- ge_expressionQuery(EXPR).
@@ -46,5 +46,5 @@ ge_mapAux(EXPR,I+1,((X,VX),M)) :- ge_mapAux(EXPR,I,M), ge_indexVar(EXPR,X,I), ge
 ge_mapped(EXPR,M) :- ge_mapAux(EXPR,I,M), ge_nbVars(EXPR,I).
 
 _ge_eval_exec(EXPR,M,RES) :- ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M).
-ge_result(EXPR,val(TYPE,V)) :- _ge_eval_exec(EXPR,M,val(TYPE,V)).
+ge_result(EXPR,val(T,V)) :- _ge_eval_exec(EXPR,M,val(T,V)).
 warning((EXPR,M,MSG)) :- _ge_eval_exec(EXPR,M,error(MSG)).
