@@ -7,7 +7,7 @@ ge_value(X,T,V) :- assign(CNAME,X,EXPR), ge_result(EXPR,T,V).
 value(X,T,V) :- ge_value(X,T,V), representation(T,extensional).
 value(X,set,V) :- ge_value(X,set,V).
 %set_value(X,T,V) :- ge_value(X,set,V), representation(T,extensional). % TODO: explode set
-evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(E,T,V).
+evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(E,T,V). % TODO ???? E=EXPR?
 
 ge_expressionQuery(EXPR) :- _main_defaultEngine(ground), evaluate(OP,ARGS), EXPR=operation(OP,ARGS).
 ge_expressionQuery(EXPR) :- engine(CNAME,ground), ensure(CNAME,EXPR).
@@ -46,4 +46,4 @@ ge_mapAux(EXPR,I+1,((X,VX),M)) :- ge_mapAux(EXPR,I,M), ge_indexVar(EXPR,X,I), ge
 ge_mapped(EXPR,M) :- ge_mapAux(EXPR,I,M), ge_nbVars(EXPR,I).
 
 
-ge_result(EXPR,TYPE,V) :- ge_mapped(EXPR,M), (TYPE,V)=@pythonEvalExpr(EXPR,M).
+ge_result(EXPR,TYPE,V) :- ge_mapped(EXPR,M), val(TYPE,V)=@pythonEvalExpr(EXPR,M).

@@ -77,7 +77,7 @@ ConstantList = list[optConstant]
 
 class Val(NamedTuple):
     type_: BaseType | clingo.Symbol
-    value: bool | int | float | str | set | clingo.Symbol
+    value: optConstant
 
 
 class Error(NamedTuple):
