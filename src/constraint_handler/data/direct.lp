@@ -42,8 +42,9 @@ direct_query(RED) :- _lambda_aux(LAMB,ARGS,RED).
 computed(LAMB,ARGS,val(TO,VO)) :- _lambda_aux(LAMB,ARGS,RED), eValue(RED,TO,VO).
 
 %%%%%%%%%%%%%%%%% python
-computed(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), RES = @pythonEvalExpr(operation(OP,ARGS),()).
-
+_expression_eval_exec(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), RES = @pythonEvalExpr(operation(OP,ARGS),()).
+computed(OP,ARGS,RES) :- _expression_eval_exec(OP,ARGS,RES), not warning((OP,ARGS,_)).
+warning((OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(MSG)).
 
 %%%%%%%%%%%%%%%%% function definitions
 assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).

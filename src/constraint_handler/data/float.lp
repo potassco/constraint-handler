@@ -9,5 +9,6 @@ stageCompute(OP,ARGS,L) :- compute(OP,ARGS), floatBinOperator(OP), ARGS=(val(T1,
 stageCompute(OP,ARGS,L) :- compute(OP,ARGS), OP=(eq;neq), ARGS=(val(T1,V1),(val(T2,V2),())), L=(V1,(V2,())),
     T1=float, T2=float.
 
-computed(OP,ARGS,RES) :- stageCompute(OP,ARGS,L), RES = @pythonEvalExpr(operation(OP,ARGS),()).
-
+_expression_eval_exec(OP,ARGS,RES) :- stageCompute(OP,ARGS,L), RES = @pythonEvalExpr(operation(OP,ARGS),()).
+computed(OP,ARGS,RES) :- _expression_eval_exec(OP,ARGS,RES), not warning((OP,ARGS,_)).
+warning((OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(MSG)).

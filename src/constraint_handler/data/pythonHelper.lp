@@ -34,23 +34,31 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
 
 def pythonEvalExpr(clExpr,clArgs):
     # print("pythonEvalExpr",clExpr,clArgs)
-    pArgs = myClorm.cltopy(clArgs)
-    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
-    d = { var : val for (var,val) in pArgs }
-    prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
-    pRes = evaluator.evaluate_expr(d,pExpr)
-    # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
-    if pRes is None:
-        return myClorm.pytocl(evaluator.Val(None,None))
-    pType = evaluator.get_baseType(pRes)
-    # print(f"gringo eval expr in {clExpr}: result = {pRes} with {clArgs}")
-    # print(f"gringo eval expr in {clExpr}: result = {myClorm.pytocl((pType,pRes))}")
-    if pType is not None:
-        return myClorm.pytocl(evaluator.Val(pType,pRes))
-    if isinstance(pRes,set):
-        val = set(list(pRes))
-        type_ = clingo.Function("set")
-        return myClorm.pytocl(evaluator.Val(type_,val))
+    try:
+        pArgs = myClorm.cltopy(clArgs)
+        pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+    except Exception as exn:
+        print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {exn}.")
+        return myClorm.pytocl(evaluator.Error(str(exn)))
+    try:
+        d = { var : val for (var,val) in pArgs }
+        prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
+        pRes = evaluator.evaluate_expr(d,pExpr)
+        # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
+        if pRes is None:
+            return myClorm.pytocl(evaluator.Val(None,None))
+        pType = evaluator.get_baseType(pRes)
+        # print(f"gringo eval expr in {clExpr}: result = {pRes} with {clArgs}")
+        # print(f"gringo eval expr in {clExpr}: result = {myClorm.pytocl((pType,pRes))}")
+        if pType is not None:
+            return myClorm.pytocl(evaluator.Val(pType,pRes))
+        if isinstance(pRes,set):
+            val = set(list(pRes))
+            type_ = clingo.Function("set")
+            return myClorm.pytocl(evaluator.Val(type_,val))
+    except Exception as exn:
+        print(f"pythonEvalExpr: error when evaluating {pExpr} over {clArgs}:\n{exn}.")
+        return myClorm.pytocl(evaluator.Error(str(exn)))
 
 
 def pythonExecStmt(clCode,clEnv,clOuts):
