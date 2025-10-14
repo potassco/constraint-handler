@@ -87,41 +87,20 @@ def pythonReversed(clExpr):
     pRL = list(reversed(pL))
     return myClorm.pytocl(pRL)
 
-def pythonListElements(clExpr,clBatchSize = clingo.Number(1)):
-    pBatchSize = myClorm.cltopy(clBatchSize,int)
+def pythonListElements(clExpr):
+    pBatchSize = 1 #myClorm.cltopy(clBatchSize,int)
     pL = myClorm.cltopy(clExpr,list)
-    if pBatchSize == 1:
-        pGroups = pL
-    else:
-        pGroups = itertools_batched(pL,pBatchSize)
-    return [myClorm.pytocl(e) for e in pGroups]
+    return [myClorm.pytocl(e) for e in pL]
 
 
-def pythonEnumerateElements(clExpr,clBatchSize = clingo.Number(1)):
-    pBatchSize = myClorm.cltopy(clBatchSize,int)
+def pythonEnumerateElements(clExpr):
+    pBatchSize = 1 #myClorm.cltopy(clBatchSize,int)
     pL = myClorm.cltopy(clExpr,list)
-    if pBatchSize == 1:
-        pGroups = pL
-    else:
-        pGroups = itertools_batched(pL,pBatchSize)
-    return [myClorm.pytocl(e) for e in enumerate(pGroups)]
+    return [myClorm.pytocl(e) for e in enumerate(pL)]
 
 def pythonListLength(clExpr):
     pL = myClorm.cltopy(clExpr,list)
     return myClorm.pytocl(len(pL))
-
-# https://docs.python.org/3/library/itertools.html#itertools.batched
-def prepython12_itertools_batched(iterable, n, *, strict=False):
-    # batched('ABCDEFG', 3) → ABC DEF G
-    if n < 1:
-        raise ValueError('n must be at least one')
-    iterator = iter(iterable)
-    while batch := tuple(itertools.islice(iterator, n)):
-        if strict and len(batch) != n:
-            raise ValueError('batched(): incomplete batch')
-        yield batch
-
-itertools_batched = itertools.batched if hasattr(itertools,'batched') else prepython12_itertools_batched
 
 #end.
 
