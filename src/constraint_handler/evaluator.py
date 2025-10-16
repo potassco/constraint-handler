@@ -160,6 +160,8 @@ def evaluate_unop(o, val):
             return math.sin(val)
         case UnaryOperator.tan:
             return math.tan(val)
+        case UnaryOperator.abs:
+            return abs(val)
         case UnaryOperator.acos:
             return math.acos(val)
         case UnaryOperator.asin:
@@ -171,8 +173,7 @@ def evaluate_unop(o, val):
         case UnaryOperator.floor:
             return math.floor(val)
         case _:
-            print("unknown operator", o, val)
-            assert False
+            raise NotImplemented(o)
 
 
 def evaluate_logic_operator(o, args):
@@ -222,6 +223,8 @@ def evaluate_logic_operator(o, args):
             if None in args:
                 return True
             return not args[0]
+        case _:
+            raise NotImplemented(o)
 
 
 class HashableDict(dict):
@@ -236,6 +239,8 @@ def evaluate_multimap_operator(o, args):
             return args[1][args[0]]
         case MultimapOperator.multimapMake:
             return HashableDict({key: value for (key, value) in args})
+        case _:
+            raise NotImplemented(o)
 
 
 def set_fold(f, s, start):
@@ -264,6 +269,8 @@ def evaluate_set_operator(o, args):
             return args[0].issubset(args[1])
         case SetOperator.fold:
             return set_fold(args[0], args[1], args[2])
+        case _:
+            raise NotImplemented(o)
 
 
 def evaluate_string_operator(o, args):
@@ -275,6 +282,8 @@ def evaluate_string_operator(o, args):
             return len(args[0])
         case StringOperator.concat:
             return "".join(args)
+        case _:
+            raise NotImplemented(o)
 
 
 def evaluate_binop(o, lval, rval):
@@ -307,8 +316,7 @@ def evaluate_binop(o, lval, rval):
         case BinaryOperator.gt:
             return lval > rval
         case _:
-            print("unknown operator", o, lval, rval)
-            assert False
+            raise NotImplemented(o)
 
 
 def evaluate_conditional_operator(o, args):
@@ -325,6 +333,8 @@ def evaluate_conditional_operator(o, args):
                 return None
         case ConditionalOperator.hasValue:
             return args[0] is not None
+        case _:
+            raise NotImplemented(o)
 
 
 def evaluate_python_operator(fn, args):
