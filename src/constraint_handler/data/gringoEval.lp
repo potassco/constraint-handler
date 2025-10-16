@@ -7,7 +7,7 @@ ge_value(X,T,V) :- assign(CNAME,X,EXPR), ge_result(EXPR,val(T,V)).
 value(X,T,V) :- ge_value(X,T,V), representation(T,extensional).
 value(X,set,V) :- ge_value(X,set,V).
 %set_value(X,T,V) :- ge_value(X,set,V), representation(T,extensional). % TODO: explode set
-evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(E,val(T,V)). % TODO ???? E=EXPR?
+evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(EXPR,val(T,V)).
 
 ge_expressionQuery(EXPR) :- _main_defaultEngine(ground), evaluate(OP,ARGS), EXPR=operation(OP,ARGS).
 ge_expressionQuery(EXPR) :- engine(CNAME,ground), ensure(CNAME,EXPR).
