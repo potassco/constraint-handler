@@ -11,7 +11,7 @@ import constraint_handler.evaluator as evaluator
 
 
 def pythonExpressionVariable(clExpr):
-    print("pythonExpressionVariable",clExpr)
+    # print("pythonExpressionVariable",clExpr)
     pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
     pVars = list(evaluator.collectVars(pExpr))
     clVars = [myClorm.pytocl(var) for var in pVars]
