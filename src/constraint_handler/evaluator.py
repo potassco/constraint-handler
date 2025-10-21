@@ -365,18 +365,23 @@ def evaluate_conditional_operator(o, args):
             raise NotImplemented(o)
 
 
-def evaluate_python_operator(fn, args):
+def evaluate_python_operator(fn, args,python_eval=eval):
     # globals = dict()
     # locals = dict()
     # call = eval(fn,globals,locals)
-    call = eval(fn)
-    return call(*args)
+    try:
+        call = python_eval(fn)
+        result = call(*args)
+    except Exception as exn:
+        print(exn)
+        raise exn
+    return result
 
 
-def evaluate_operator(symbols, o, args):
+def evaluate_operator(symbols, o, args, python_eval=eval):
     match o:
         case Python(fn):
-            return evaluate_python_operator(fn, args)
+            return evaluate_python_operator(fn, args, python_eval)
         case Lambda(vars, expr):
             if len(vars) != len(args):
                 print(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
@@ -384,7 +389,7 @@ def evaluate_operator(symbols, o, args):
             symbols2 = dict(symbols)
             for v, e in zip(vars, args):
                 symbols2[v] = e
-            return evaluate_expr(symbols2, expr)
+            return evaluate_expr(symbols2, expr, python_eval)
         case LogicOperator():
             return evaluate_logic_operator(o, args)
         case MultimapOperator():
@@ -417,19 +422,19 @@ def evaluate_operator(symbols, o, args):
                 assert False
 
 
-def evaluate_lambda(symbols, vars, args, body):
+def evaluate_lambda(symbols, vars, args, body, python_eval=eval):
     # print("evaluate_lambda",symbols,vars,args,body)
     d = dict(symbols)
-    return evaluate_expr(d, body)
+    return evaluate_expr(d, body, python_eval)
 
 
-def evaluate_expr(symbols, expr):
+def evaluate_expr(symbols, expr, python_eval=eval):
     match expr:
         case Operation(Variable(ov), eargs):
             assert False  # TODO: handle variable operator
         case Operation(o, eargs):
-            args = [evaluate_expr(symbols, a) for a in eargs]
-            return evaluate_operator(symbols, o, args)
+            args = [evaluate_expr(symbols, a, python_eval) for a in eargs]
+            return evaluate_operator(symbols, o, args, python_eval)
         case Variable(a):
             if a in symbols:
                 return symbols[a]
@@ -438,11 +443,11 @@ def evaluate_expr(symbols, expr):
         case Val(type_, val):
             return val
         case Lambda(vars, body):
-            return lambda **args: evaluate_lambda(symbols, vars, args, body)
+            return lambda **args: evaluate_lambda(symbols, vars, args, body, python_eval)
             assert False
             # TODO
         case tuple(eargs):
-            args = tuple(evaluate_expr(symbols, a) for a in eargs)
+            args = tuple(evaluate_expr(symbols, a, python_eval) for a in eargs)
             return args
 
 
