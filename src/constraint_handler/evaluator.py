@@ -5,6 +5,7 @@ import math
 import operator
 from enum import Enum
 from typing import NamedTuple
+import typing
 
 import clingo
 
@@ -112,9 +113,9 @@ class SetDeclare(NamedTuple):
     pass
 
 
-class SetAssign(NamedTuple):
-    type_: BaseType | clingo.Symbol
-    value: bool | int | float | str | clingo.Symbol
+class SetMember(NamedTuple):
+    set: frozenset
+    value: optConstant
 
 
 def collectVars(expr) -> set[clingo.Symbol]:
@@ -142,12 +143,39 @@ def get_baseType(v):
         return BaseType.bool
     elif isinstance(v, int):
         return BaseType.int
-    elif isinstance(v, set):
+    elif isinstance(v, frozenset):
         return BaseType.set
     elif isinstance(v, clingo.Symbol):
         return BaseType.symbol
     else:
         return None
+
+def explodeVal(v):
+    if isinstance(v, float):
+        return [Val(BaseType.float,v)]
+    elif isinstance(v, str):
+        return [Val(BaseType.str,v)]
+    elif isinstance(v, bool):
+        return [Val(BaseType.bool,v)]
+    elif isinstance(v, int):
+        return [Val(BaseType.int,v)]
+    elif isinstance(v, clingo.Symbol):
+        return [Val(BaseType.symbol,v)]
+    elif isinstance(v, type(None)):
+        return []
+    elif isinstance(v, frozenset):
+        l = [Val(BaseType.set,v)]
+        return l
+        for x in v:
+            l.append(SetMember(v,x))
+        for x in v:
+            l += explodeVal(x)
+        # TODO
+        return l
+    elif isinstance(v, set):
+        assert False
+    else:
+        assert False
 
 
 def evaluate_unop(o, val):

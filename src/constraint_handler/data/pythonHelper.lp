@@ -50,12 +50,12 @@ def pythonEvalExpr(clExpr,clArgs):
         pType = evaluator.get_baseType(pRes)
         # print(f"gringo eval expr in {clExpr}: result = {pRes} with {clArgs}")
         # print(f"gringo eval expr in {clExpr}: result = {myClorm.pytocl((pType,pRes))}")
+        if isinstance(pRes, frozenset):
+            val = set(list(pRes))
+            return myClorm.pytocl(evaluator.Val(pType_,val))
         if pType is not None:
             return myClorm.pytocl(evaluator.Val(pType,pRes))
-        if isinstance(pRes,set):
-            val = set(list(pRes))
-            type_ = clingo.Function("set")
-            return myClorm.pytocl(evaluator.Val(type_,val))
+        assert False
     except Exception as exn:
         # print(f"pythonEvalExpr: error when evaluating {pExpr} over {clArgs}:\n{exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
