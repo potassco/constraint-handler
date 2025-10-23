@@ -22,9 +22,6 @@ set_value(w,int,1)
 set_value(w,int,5)
 
 set_value(x,int,3)
-set_value(x,set,union((val(set,makeSet((val(bool,true),(val(float,float("89.1")),())))),(val(set,makeSet((val(int,1),(val(int,2),(val(int,3),(val(bool,true),())))))),()))))
-set_value(x,set,inter((val(set,makeSet((val(bool,true),(val(float,float("89.1")),())))),(val(set,makeSet((val(int,1),(val(int,2),(val(int,3),(val(bool,true),())))))),()))))
-
 value(cx,int,3)
 
 set_value(d,int,4)
