@@ -143,14 +143,9 @@ def cltopyNoTarget(func):
     elif func.name == "set" and len(func.arguments) == 1 and unnest(func.arguments[0]) is not None:
         return frozenset(cltopyNoTarget(e) for e in unnest(func.arguments[0]))
     elif unnest(func) is not None:
-        # print("hella",func,list(unnest(func)))
         return [cltopyNoTarget(e) for e in unnest(func)]
     elif func.name == "":
         return tuple([cltopyNoTarget(e) for e in func.arguments])
-    #    elif func.name in containers and len(func.arguments) == 1:
-    #        l = unnest(func.arguments[0])
-    #        if l is not None:
-    #            return containers[func.name]([cltopyNoTarget(e) for e in l])
     else:
         return func
 
@@ -209,6 +204,16 @@ def cltopy(func, dtarget=typing.Any):
                     un = unnest(func)
                     result = [cltopy(e, subtarget[0]) for e in un] if subtarget else [cltopyNoTarget(e) for e in un]
                     return result
+                elif issubclass(utarget, set) or issubclass(utarget, frozenset):
+                    subtarget = typing.get_args(target)
+                    if (
+                        func.type == clingo.SymbolType.Function
+                        and func.name == "set"
+                        and len(func.arguments) == 1
+                    ):
+                        un = unnest(func.arguments[0])
+                        result = frozenset(cltopy(e, subtarget[0]) for e in un) if subtarget else frozenset(cltopyNoTarget(e) for e in un)
+                        return result
                 elif issubclass(utarget, tuple):
                     # print(f"myclorm tuple {func},{target}")
                     subtargets = typing.get_args(target)
@@ -222,7 +227,6 @@ def cltopy(func, dtarget=typing.Any):
                         result = tuple(cltopy(symb, subt) for (symb, subt) in zipped)
                         # print(f"tuple result {result} {func} {getattr(target,'_default',None)}")
                         return result
-                    return clorm.Raw(func)
             ### Missing is instance of NamedTuple
             ######
             # elif issubclass(target,int):

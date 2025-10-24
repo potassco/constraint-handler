@@ -67,11 +67,7 @@ Operator = (
 )
 
 
-class Set(NamedTuple):
-    value: list[constant]
-
-
-constant = bool | float | int | str | Set | clingo.Symbol
+constant = bool | float | int | str | frozenset | clingo.Symbol
 optConstant = type(None) | constant
 ConstantList = list[optConstant]
 
@@ -106,7 +102,7 @@ class Lambda(NamedTuple):
     expr: Expr
 
 
-type Expr = Variable | Operation | Val | Lambda | tuple[Expr]
+type Expr = Variable | Operation | Val | Lambda | tuple[Expr] | frozenset[Expr]
 
 
 class SetDeclare(NamedTuple):
@@ -272,7 +268,7 @@ def evaluate_multimap_operator(o, args):
 
 
 def set_fold(f, s, start):
-    print("fold", f, s, start)
+    # print("fold", f, s, start)
     accu = start
     for e in s:
         accu = f(e, accu)
@@ -448,6 +444,9 @@ def evaluate_expr(symbols, expr, python_eval=eval):
             # TODO
         case tuple(eargs):
             args = tuple(evaluate_expr(symbols, a, python_eval) for a in eargs)
+            return args
+        case set(eargs) | frozenset(eargs):
+            args = frozenset(evaluate_expr(symbols, a, python_eval) for a in eargs)
             return args
 
 
