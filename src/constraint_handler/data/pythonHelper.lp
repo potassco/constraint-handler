@@ -65,17 +65,17 @@ def pythonExecStmt(clCode,clEnv,clOuts):
     try:
         #print(clFn,clArgs)
         pCode = myClorm.cltopy(clCode,str)
-        pEnv  = myClorm.cltopy(clEnv,list[tuple[str,evaluator.Val]])
+        pEnv  = myClorm.cltopy(clEnv,list[tuple[str,evaluator.ReducedExpr]])
         pOuts = myClorm.cltopy(clOuts,list[str])
     except Exception as exn:
         print(f"pythonExecStmt: error when converting {(clCode,clEnv,clOuts)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
         globals = dict()
-        locals = { x:v.value for (x,v) in pEnv }
+        locals = { x:evaluator.evaluate_expr(dict(),v) for (x,v) in pEnv }
         exec(pCode,globals,locals)
         results = [(x,locals[x]) for x in pOuts if x in locals]
-        pResults = [(x,evaluator.Val(evaluator.get_baseType(v),v)) for (x,v) in results] + [True]
+        pResults = [(x,evaluator.Val(evaluator.get_baseType(v),v)) for (x,v) in results] + [True] # TODO incorrect for set results
         clResults = [myClorm.pytocl(r) for r in pResults]
         #print(pEnv,pCode,clResults)
         return clResults

@@ -62,8 +62,9 @@ _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _ex
 
 %%%%%%%%%%%%%%%%% python
 _execution_indexVar(NAME,I,X) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), (I,X)=@pythonEnumerateElements(INS).
+_direct_implode(V) :- _execution_indexVar(NAME,I,X), _execution_in(NAME,X,V).
 _execution_mapAux(NAME,N,()) :- _execution_run(NAME,STMT), STMT = python(STR,INS,OUTS), N=@pythonListLength(INS).
-_execution_mapAux(NAME,I,((X,V),M)) :- _execution_mapAux(NAME,I+1,M), _execution_indexVar(NAME,I,X), _execution_in(NAME,X,V).
+_execution_mapAux(NAME,I,K) :- _execution_mapAux(NAME,I+1,M), _execution_indexVar(NAME,I,X), _execution_in(NAME,X,V), _direct_imploded(V,W), K=((X,W),M).
 _execution_mapped(NAME,M) :- _execution_mapAux(NAME,0,M).
 
 _execution_exec(NAME,R) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_mapped(NAME,M), R=@pythonExecStmt(STR,M,OUTS).

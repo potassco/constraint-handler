@@ -101,7 +101,7 @@ class Lambda(NamedTuple):
     vars: list[clingo.Symbol]
     expr: Expr
 
-
+type ReducedExpr = Val | tuple[ReducedExpr] | frozenset[ReducedExpr] # TODO handle Lambda
 type Expr = Variable | Operation | Val | Lambda | tuple[Expr] | frozenset[Expr]
 
 
