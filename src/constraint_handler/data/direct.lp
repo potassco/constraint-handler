@@ -42,7 +42,13 @@ direct_query(RED) :- _lambda_aux(LAMB,ARGS,RED).
 computed(LAMB,ARGS,val(TO,VO)) :- _lambda_aux(LAMB,ARGS,RED), eValue(RED,TO,VO).
 
 %%%%%%%%%%%%%%%%% python
-_expression_eval_exec(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), RES = @pythonEvalExpr(operation(OP,ARGS),()).
+_direct_implode_args_aux(ARGS,N,()) :- compute(OP,ARGS), OP=python(S), N=@pythonListLength(ARGS).
+_direct_implode_arg(OP,ARGS,ARG,IDX) :- compute(OP,ARGS), OP=python(S), (IDX,ARG)=@pythonEnumerateElements(ARGS).
+_direct_implode(ARG) :- _direct_implode_arg(OP,ARGS,ARG,IDX).
+_direct_implode_args_aux(ARGS,IDX,K) :- _direct_implode_args_aux(ARGS,IDX+1,L),
+    _direct_implode_arg(OP,ARGS,ARG,IDX),
+    _direct_imploded(ARG,IMP), K=(IMP,L).
+_expression_eval_exec(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L), RES = @pythonEvalExpr(operation(OP,L),()).
 computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
 warning((OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(MSG)).
 
@@ -51,6 +57,8 @@ assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).
 %direct_query(ER) :- direct_query(E), beta_reduction(E,ER).
 %eValue(E,T,V) :- direct_query(E), beta_reduction(E,ER), eValue(ER,T,V).
 
+%%%%%%%%%%%%%%%%% implode
+_direct_imploded(E,val(T,V)) :- _direct_implode(E), E=val(T,V), representation(T,extensional).
 
 
 %:- engine(NAME,E), not ensure(NAME,_), not assign(NAME,_,_).
