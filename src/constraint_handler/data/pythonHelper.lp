@@ -35,27 +35,17 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
 def pythonEvalExpr(clExpr,clArgs):
     # print("pythonEvalExpr",clExpr,clArgs)
     try:
-        pArgs = myClorm.cltopy(clArgs)
+        pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,evaluator.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
     except Exception as exn:
         print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
-        d = { var : val for (var,val) in pArgs }
+        d = { var : evaluator.evaluate_expr(dict(),val) for (var,val) in pArgs }
         prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
         pRes = evaluator.evaluate_expr(d,pExpr)
         # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
-        if pRes is None:
-            return myClorm.pytocl(evaluator.Val(None,None))
-        pType = evaluator.get_baseType(pRes)
-        # print(f"gringo eval expr in {clExpr}: result = {pRes} with {clArgs}")
-        # print(f"gringo eval expr in {clExpr}: result = {myClorm.pytocl((pType,pRes))}")
-        if isinstance(pRes, frozenset):
-            val = set(list(pRes))
-            return myClorm.pytocl(evaluator.Val(pType_,val))
-        if pType is not None:
-            return myClorm.pytocl(evaluator.Val(pType,pRes))
-        assert False
+        return myClorm.pytocl(evaluator.reducedExpr(pRes))
     except Exception as exn:
         # print(f"pythonEvalExpr: error when evaluating {pExpr} over {clArgs}:\n{exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
