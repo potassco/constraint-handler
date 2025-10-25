@@ -9,8 +9,6 @@ import typing
 
 import clingo
 
-# import myPropagators as mp
-
 
 class PPEnum(Enum):
     @staticmethod
@@ -42,10 +40,6 @@ class ConditionalOperator(Enum):
     hasValue = "hasValue"
 
 
-noPredConstant = bool | float | int | str | clingo.Symbol
-ConstantList = list[noPredConstant]
-
-
 class CustomOperator(NamedTuple):
     name: clingo.Symbol
 
@@ -67,14 +61,12 @@ Operator = (
 )
 
 
-constant = bool | float | int | str | frozenset | clingo.Symbol
-optConstant = type(None) | constant
-ConstantList = list[optConstant]
+constant = bool | float | int | str | clingo.Symbol
 
 
 class Val(NamedTuple):
     type_: BaseType | clingo.Symbol
-    value: optConstant
+    value: constant
 
 
 class Error(NamedTuple):
@@ -101,8 +93,8 @@ class Lambda(NamedTuple):
     vars: list[clingo.Symbol]
     expr: Expr
 
-type ReducedExpr = Val | tuple[ReducedExpr] | frozenset[ReducedExpr] # TODO handle Lambda
-type Expr = Variable | Operation | Val | Lambda | tuple[Expr] | frozenset[Expr]
+type ReducedExpr = type(None) | Val | tuple[ReducedExpr] | frozenset[ReducedExpr] # TODO handle Lambda
+type Expr = Variable | Operation | type(None) | Val | Lambda | tuple[Expr] | frozenset[Expr]
 
 
 class SetDeclare(NamedTuple):
@@ -128,6 +120,8 @@ def collectVars(expr) -> set[clingo.Symbol]:
             return collectVars(body) - frozenset(vars)
         case tuple(args):
             return frozenset.union(*(collectVars(e) for e in args))
+        case _:
+            assert False
 
 
 def get_baseType(v):
@@ -146,30 +140,22 @@ def get_baseType(v):
     else:
         return None
 
-def explodeVal(v):
+
+def reducedExpr(v):
     if isinstance(v, float):
-        return [Val(BaseType.float,v)]
+        return Val(BaseType.float,v)
     elif isinstance(v, str):
-        return [Val(BaseType.str,v)]
+        return Val(BaseType.str,v)
     elif isinstance(v, bool):
-        return [Val(BaseType.bool,v)]
+        return Val(BaseType.bool,v)
     elif isinstance(v, int):
-        return [Val(BaseType.int,v)]
+        return Val(BaseType.int,v)
     elif isinstance(v, clingo.Symbol):
-        return [Val(BaseType.symbol,v)]
+        return Val(BaseType.symbol,v)
     elif isinstance(v, type(None)):
-        return []
-    elif isinstance(v, frozenset):
-        l = [Val(BaseType.set,v)]
-        return l
-        for x in v:
-            l.append(SetMember(v,x))
-        for x in v:
-            l += explodeVal(x)
-        # TODO
-        return l
-    elif isinstance(v, set):
-        assert False
+        return None
+    elif isinstance(v, frozenset) or isinstance(v, set):
+        return { reducedExpr(x) for x in v }
     else:
         assert False
 
@@ -448,6 +434,11 @@ def evaluate_expr(symbols, expr, python_eval=eval):
         case set(eargs) | frozenset(eargs):
             args = frozenset(evaluate_expr(symbols, a, python_eval) for a in eargs)
             return args
+        case None:
+            return None
+        case _:
+            print(expr)
+            assert False
 
 
 def beta_reduction(symbols, expr):
