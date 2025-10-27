@@ -223,6 +223,9 @@ def evaluate_logic_operator(o, args):
                 return True
             return not args[0]
 
+class HashableDict(dict):
+    def __hash__(self):
+        return hash(frozenset(self.items()))
 
 def evaluate_multimap_operator(o, args):
     match o:
@@ -231,7 +234,7 @@ def evaluate_multimap_operator(o, args):
             return args[1][args[0]]
         case MultimapOperator.multimapMake:
             pairs = [(args[2 * i], args[2 * i + 1]) for i in range(int(len(args) / 2))]
-            return {key: value for (key, value) in pairs}
+            return HashableDict({key: value for (key, value) in pairs})
 
 
 def set_fold(f, s, start):
