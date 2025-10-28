@@ -732,7 +732,6 @@ class ConstraintHandlerPropagator:
             symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
             variable = DictVariable(name, symbol_var, literal)
             self.symbol2var[symbol_var] = variable
-            print(symbol_var, variable, self.symbol2var)
             self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
