@@ -1,6 +1,6 @@
 intToFloatOperator(sqrt;cos;sin;tan;acos;asin;atan).
 floatUnOperator(abs;sqrt;cos;sin;tan;acos;asin;atan;minus;floor).
-floatBinOperator(add;sub;mult;div;fdiv;pow;leq;lt;geq;gt).
+floatBinOperator(add;sub;mult;div;fdiv;pow;leq;lt;geq;gt;max).
 
 stageCompute(OP,ARGS,L) :- compute(OP,ARGS), intToFloatOperator(OP), ARGS = (val(int,V),()), L=(V,()).
 stageCompute(OP,ARGS,L) :- compute(OP,ARGS), floatUnOperator(OP), ARGS=(val(float,V),()), L=(V,()).
