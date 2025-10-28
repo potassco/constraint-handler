@@ -21,7 +21,7 @@ class PPEnum(Enum):
 
 
 BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function", "multimap", "set"])
-UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
+UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor", "length"])
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
