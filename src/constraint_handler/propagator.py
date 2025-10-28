@@ -342,7 +342,7 @@ class SetVariable:
 
         return changed, False
 
-    def reset(self, dl: int):
+    def reset(self, dl: int) -> None:
         self.values.reset(dl)
         if self.decision_level > dl: 
             self.decision_level = float('inf')
@@ -433,7 +433,7 @@ class DictVariable:
         
         return changed, False
 
-    def reset(self, dl: int):
+    def reset(self, dl: int) -> None:
         for value in self.values.values():
             value.reset(dl)
 
@@ -597,6 +597,7 @@ class ConstraintHandlerPropagator:
         return evaluated
 
     def get_reasons(self, var: Variable | SetVariable | DictVariable) -> set[int]:
+        # TODO: optimize this in the future?
         reasons = var.literals
         reasons = reasons.union(*(self.symbol2var[dvar].literals for dvar in var.vars()))
         return reasons
