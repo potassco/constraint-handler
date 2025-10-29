@@ -8,8 +8,6 @@ from collections import defaultdict
 from typing import Any, Dict, NamedTuple, List, Sequence, Tuple
 from dataclasses import dataclass
 
-import queue
-
 DEBUG_PRINT = True
 
 def myprint(*args, **kwargs):
@@ -17,8 +15,7 @@ def myprint(*args, **kwargs):
         print(*args, **kwargs)
 
 # enum for value_not_set, assignment_is_false, and value_is_none
-@enum
-class ValueStatus:
+class ValueStatus(enum.Enum):
     NOT_SET = "value_not_set"
     ASSIGNMENT_IS_FALSE = "assignment_is_false"
 
@@ -386,10 +383,7 @@ class SetVariable:
         For sets, there should never be a conflict.
         """
         self.truth_value = ctl.assignment.value(self.literal)
-        self.decision_level = ctl.assignment.level(self.literal)
-
-        if self.truth_value is None:
-            
+        self.decision_level = ctl.assignment.level(self.literal)            
 
         if self.truth_value is not None and not self.truth_value: # if it is not assigned or false
             return False, False
