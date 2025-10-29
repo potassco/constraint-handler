@@ -111,7 +111,7 @@ def collectVars(expr) -> set[clingo.Symbol]:
         case Operation(Variable(ov), args):
             return frozenset.union(*(collectVars(e) for e in args + [ov]))
         case Operation(o, args):
-            return frozenset.union(*(collectVars(e) for e in args))
+            return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
         case Variable(a):
             return frozenset({a})
         case Val(t, v):
@@ -119,9 +119,9 @@ def collectVars(expr) -> set[clingo.Symbol]:
         case Lambda(vars, body):
             return collectVars(body) - frozenset(vars)
         case tuple(args):
-            return frozenset.union(*(collectVars(e) for e in args))
+            return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
         case set(args) | frozenset(args):
-            return frozenset.union(*(collectVars(e) for e in args))
+            return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
         case _:
             print("collectVars",expr)
             assert False
