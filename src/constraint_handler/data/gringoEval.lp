@@ -1,37 +1,40 @@
-%ge_value(X,val(T,V)) :- engine(CNAME,ground), assign(CNAME,X,EXPR), ge_result(EXPR,val(T,V)).
-%ge_value(X,val(T,V)) :- ge_vQuery(X), value(X,T,V), representation(T,extensional).
-ge_value(X,V) :- engine(CNAME,ground), assign(CNAME,X,EXPR), ge_result(EXPR,V).
+%%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
+_ge_ensure(CNAME,E) :- engine(CNAME,ground), ensure(CNAME,E).
+_ge_assign(CNAME,X,E) :- engine(CNAME,ground), assign(CNAME,X,E).
+_ge_set_assign(CNAME,X,E) :- engine(CNAME,ground), set_assign(CNAME,X,E).
+_ge_set_declare(CNAME,X) :- engine(CNAME,ground), set_declare(CNAME,X).
+%%% TODO: make sure set assign doesn't get broken down across different engines
+
+ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
 ge_value(X,val(T,V)) :- ge_vQuery(X), value(X,T,V), representation(T,extensional).
 
 value(X,T,V) :- ge_value(X,val(T,V)), representation(T,extensional).
-value(X,set,V) :- ge_value(X,set(V)).
-%set_value(X,T,V) :- ge_value(X,set,V), representation(T,extensional). % TODO: explode set
+value(X,set,V) :- ge_value(X,V), V=set(S).
+set_value(X,T,V) :- ge_value(X,VS), VS=set(S), val(T,V)=@pythonListElements(S).
 evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(EXPR,val(T,V)).
 
 ge_expressionQuery(EXPR) :- _main_defaultEngine(ground), evaluate(OP,ARGS), EXPR=operation(OP,ARGS).
-ge_expressionQuery(EXPR) :- engine(CNAME,ground), ensure(CNAME,EXPR).
-ge_expressionQuery(EXPR) :- engine(CNAME,ground), assign(CNAME,X,EXPR).
-ge_expressionQuery(EXPR) :- engine(CNAME,ground), set_assign(CNAME,X,EXPR).
+ge_expressionQuery(EXPR) :- _ge_ensure(CNAME,EXPR).
+ge_expressionQuery(EXPR) :- _ge_assign(CNAME,X,EXPR).
+
 
 involvedVars(EXPR,@pythonExpressionVariable(EXPR)) :- ge_expressionQuery(EXPR).
 ge_vQuery(X) :- involvedVars(EXPR,X).
 
 ge_value(X,none) :- ge_vQuery(X), not assign(_,X,_), not multimap_assign(_,X,_,_) , not set_assign(_,X,_).
 
+_direct_implode(val(T,V)) :- ge_vQuery(X), eValue(variable(X),T,V).
+ge_value(X,VAL) :- ge_vQuery(X), E=variable(X), eValue(E,T,V), _direct_imploded(E,VAL).
 
-ge_set_declare(X) :- set_declare(CNAME,X), engine(CNAME,ground).
-ge_set_assign(X,E) :- set_assign(CNAME,X,E), engine(CNAME,ground).
 
-ge_indexSetAssign(X,#inf,-1) :- ge_set_declare(X).
-ge_indexSetAssign(X,F,I+1) :- ge_indexSetAssign(X,E,I), ge_set_assign(X,F), E < F,
-   0 = #count { G : ge_set_assign(X,G), E < G, G < F }.
-ge_nbSetAssigns(X,N) :- ge_set_declare(X),
-  N = #count { E : ge_set_assign(X,E) }.
+_ge_setAssignsAux(X,#inf,()) :- _ge_set_declare(CNAME,X).
+_ge_setAssignsAux(X,F,K) :- _ge_setAssignsAux(X,E,L), _ge_set_assign(CNAME,X,F), E < F,
+    0 = #count { G : _ge_set_assign(CNAME,X,G), E < G, G < F },
+K = (F,L).
+_ge_setAssigns(X,L) :- _ge_setAssignsAux(X,E,L),
+    0 = #count { G : _ge_set_assign(CNAME,X,G), E < G }.
 
-ge_indexSetValue(X,0,()) :- ge_set_declare(X).
-ge_indexSetValue(X,I+1,(V,L)) :- ge_indexSetValue(X,I,L), ge_indexSetAssign(X,E,I), ge_result(E,V), V!=none.
-ge_indexSetValue(X,I+1,L) :- ge_indexSetValue(X,I,L), ge_indexSetAssign(X,E,I), ge_result(E,none).
-ge_value(X,set(L)) :- ge_indexSetValue(X,I,L), ge_nbSetAssigns(X,I).
+_ge_assign(CNAME,X,EXPR) :- _ge_set_declare(CNAME,X), _ge_setAssigns(X,L), EXPR=set(L).
 
 ge_indexVar(EXPR,#inf,-1) :- ge_expressionQuery(EXPR).
 ge_indexVar(EXPR,Y,I+1) :- ge_indexVar(EXPR,X,I), involvedVars(EXPR,Y), X < Y,
