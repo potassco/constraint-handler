@@ -1,14 +1,15 @@
 """
 Test cases for main library functions.
 """
+
 from typing import Iterator, Set
 
-from clingo import Symbol
-from clingo import Control
+from clingo import Control, Symbol
 from clingo.ast import ProgramBuilder
 
 import constraint_handler
 import constraint_handler.propagator as prop
+
 
 def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
     """
@@ -31,10 +32,11 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
             if use_prop:
                 propagator.on_model(model)
             solution = set()
-            for fact in model.symbols(shown=True,theory=True):
+            for fact in model.symbols(shown=True, theory=True):
                 solution.add(fact.__str__())
 
             yield solution
+
 
 def test_prop():
     constraint_expr = """
@@ -43,11 +45,12 @@ def test_prop():
     #show value/3.
     """
 
-    for solution in get_solutions(constraint_expr,True):
+    for solution in get_solutions(constraint_expr, True):
         assert solution == {
             "value(bike_frame_size,int,26)",
             'value(bike_frame_type,str,"Mountain")',
         }
+
 
 def test_noprop():
     constraint_expr = """
@@ -61,6 +64,7 @@ def test_noprop():
             "value(bike_frame_size,int,26)",
             'value(bike_frame_type,str,"Mountain")',
         }
+
 
 def test_add():
     constraint_expr = """

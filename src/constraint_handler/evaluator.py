@@ -174,6 +174,7 @@ def evaluate_unop(o, val):
             print("unknown operator", o, val)
             assert False
 
+
 def evaluate_logic_operator(o, args):
     match o:
         case LogicOperator.conj:
@@ -222,9 +223,11 @@ def evaluate_logic_operator(o, args):
                 return True
             return not args[0]
 
+
 class HashableDict(dict):
     def __hash__(self):
         return hash(frozenset(self.items()))
+
 
 def evaluate_multimap_operator(o, args):
     match o:

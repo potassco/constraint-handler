@@ -1,8 +1,8 @@
 import clingo.script
 from clintest.solver import Clingo
 
-import constraint_handler.utils.testing as chut
 import constraint_handler.propagator as prop
+import constraint_handler.utils.testing as chut
 
 clingo.script.enable_python()
 
@@ -26,7 +26,10 @@ def run_test_ground(name):
 def run_test_propagator(name):
     name = "tests/example/" + name
     solver = chut.SolverWithPropagators(
-        ["0", "--heuristic=Domain"], "defaultEngine(propagator).", files=[name + ".lp"], propagators=[prop.ConstraintHandlerPropagator]
+        ["0", "--heuristic=Domain"],
+        "defaultEngine(propagator).",
+        files=[name + ".lp"],
+        propagators=[prop.ConstraintHandlerPropagator],
     )
     test = chut.build_expectations(name)
     solver.solve(test)
@@ -69,18 +72,18 @@ def test_engine_propagator():
     extra = []
     # supported = ["basic_assignments"]
     unsupported = [
-        #"basic_assignments",
-        #"booleans",
-        #"conditional_assign",
-        #"floats",
-        #"ints",
+        # "basic_assignments",
+        # "booleans",
+        # "conditional_assign",
+        # "floats",
+        # "ints",
         "lambdas",
         "multimaps",
         "nested_set",
         "set_iterations",
         "set_manipulations",
         "set_selfref",
-        #"strings",
+        # "strings",
     ]
     for test in base_tests + extra:
         if test not in unsupported:
