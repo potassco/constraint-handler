@@ -31,12 +31,8 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
             if use_prop:
                 propagator.on_model(model)
             solution = set()
-            for fact in model.symbols(shown=True):
+            for fact in model.symbols(shown=True,theory=True):
                 solution.add(fact.__str__())
-
-            if use_prop:
-                for fact in propagator.model:
-                    solution.add(fact.__str__())
 
             yield solution
 

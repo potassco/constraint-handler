@@ -478,8 +478,6 @@ class ConstraintHandlerPropagator:
         self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
         self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]]
 
-        self.model: List[clingo.Symbol] = []
-
     def init(self, ctl: clingo.PropagateInit):
         self.get_ensure(ctl)
         self.get_assign(ctl)
@@ -772,7 +770,6 @@ class ConstraintHandlerPropagator:
                 self.symbol2var[symbol_var].parents.append(var)
 
     def on_model(self,model):
-        self.model = []
         for var in self.symbol2var.values():
             final_value = var.get_value()
             myprint(var.var, final_value, type(final_value))
@@ -788,7 +785,6 @@ class ConstraintHandlerPropagator:
                     myprint(f"= {clAtom}")
                     if not model.contains(clAtom):
                         model.extend([clAtom])
-                        self.model.append(clAtom)
             elif type(final_value) == evaluator.HashableDict or type(final_value) == dict:
                 for key, value in final_value.items():
                     if value is None or value is VALUE_NOT_SET:
@@ -799,7 +795,6 @@ class ConstraintHandlerPropagator:
                     myprint(f"= {clAtom}")
                     if not model.contains(clAtom):
                         model.extend([clAtom])
-                        self.model.append(clAtom)
             else:
                 pyAtom = Value(var.var,evaluator.get_baseType(final_value),final_value)
                 myprint(f"adding atom {pyAtom}",end=" ")
@@ -808,7 +803,6 @@ class ConstraintHandlerPropagator:
 
                 if not model.contains(clAtom):
                     model.extend([clAtom])
-                    self.model.append(clAtom)
 
         
         for var in self.evaluatevars:
@@ -820,5 +814,4 @@ class ConstraintHandlerPropagator:
             print(f"= {clAtom}")
             if not model.contains(clAtom):
                 model.extend([clAtom])
-                self.model.append(clAtom)
 
