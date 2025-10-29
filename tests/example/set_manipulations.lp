@@ -4,21 +4,21 @@
 %%% i = 42
 %%% f = 47.1
 %%% s = { b, i+f } = { true, 89.1 }
-%%% t = { 1, 2, 3, true }
-%%% u = s cup t = { 1, 2, 3, true, 89.1 }
+%%% t = { 10, 2, 3, true }
+%%% u = s cup t = { 10, 2, 3, true, 89.1 }
 %%% v = s cap t = { true }
-%%% w = { |u|, |v|, b in V, true not in u } = { 1, 5, true, false }
+%%% w = { |u|+1, |v|, b in V, true not in u } = { Z, 5, true, false }
 %%% cu = |u| = 5
-%%% x = { 3, 1+2, u, v, { true } } = { 3, { true }, { 1, 2, 3, true, 89.1 } }
+%%% x = { 3, 1+2, u, v, { true } } = { 3, { true }, { 10, 2, 3, true, 89.1 } }
 %%% cx = |x| = 3
 %%% set d, d.add(1+3), d.add(s), d.add({true, 89.1}), d.add(2+2)  -> d = { 4, { true, 89.1 } }
 %%% cd = 2
 %%% true notin d      true notin x     true isin t
 
-%%% eqx3 = x == { 3, { true }, { 1, 2, 3, true, 89.1 } } = true
-%%% nqx3 = x != { 3, { true }, { 1, 2, 3, true, 89.1 } } = false
-%%% eqx4 = x == { 3, { true }, { 1, 2, 4, true, 89.1 } } = false
-%%% nqx4 = x != { 3, { true }, { 1, 2, 4, true, 89.1 } } = true
+%%% eqx3 = x == { 3, { true }, { 10, 2, 3, true, 89.1 } } = true
+%%% nqx3 = x != { 3, { true }, { 10, 2, 3, true, 89.1 } } = false
+%%% eqx4 = x == { 3, { true }, { 10, 2, 4, true, 89.1 } } = false
+%%% nqx4 = x != { 3, { true }, { 10, 2, 4, true, 89.1 } } = true
 
 %%% tsubu = t subset u = true
 %%% tsubv = t subset v = false
@@ -40,7 +40,7 @@ assign(assign_s, s, operation(makeSet,
                                   (variable(b),
                                   (operation(add,(variable(i),(variable(f), ()))),())))).
 assign(assign_t, t, operation(makeSet,
-                                  (val(int,1),
+                                  (val(int,10),
                                   (val(int,2),
                                   (val(int,3),
                                   (val(bool,true),())))))).
@@ -55,7 +55,7 @@ assign(assign_cu, cu, operation(length,(variable(u),()))).
 
 assign(assign_w, w, operation(makeSet,
                                   (operation(length,(variable(u),())),
-                                  (operation(length,(variable(v),())),
+                                  (operation(add,(operation(length,(variable(v),())),(val(int,1),()))),
                                   (operation(isin,(variable(b),(variable(v),()))),
                                   (operation(notin,(val(bool,true),
                                                        (variable(u),()))),())))))).
@@ -81,14 +81,14 @@ evaluate(notin,(val(bool,true),(variable(x),()))).
 evaluate(isin,(val(bool,true),(variable(t),()))).
 evaluate(isin,(val(int,17),(variable(t),()))).
 
-%%% eqx = x == { 3, { true }, { 1, 2, 3, true, 89.1 } } = true
-%%% nqx = x == { 3, { true }, { 1, 2, 4, true, 89.1 } } = false
+%%% eqx = x == { 3, { true }, { 10, 2, 3, true, 89.1 } } = true
+%%% nqx = x == { 3, { true }, { 10, 2, 4, true, 89.1 } } = false
 assign(tset_eq,eqx3,operation(eq,(variable(x),(X,())))) :-
     X=operation(makeSet,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
     STRUE=operation(makeSet,(TRUE,())),
     SET=operation(makeSet,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
-    ONE=val(int,1),
+    ONE=val(int,10),
     TWO=val(int,2),
     TRUE=val(bool,true),
     EIGHTYNINE=val(float,float("89.1")).
@@ -97,7 +97,7 @@ assign(tset_eq,nqx3,operation(neq,(variable(x),(X,())))) :-
     THREE=val(int,3),
     STRUE=operation(makeSet,(TRUE,())),
     SET=operation(makeSet,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
-    ONE=val(int,1),
+    ONE=val(int,10),
     TWO=val(int,2),
     TRUE=val(bool,true),
     EIGHTYNINE=val(float,float("89.1")).
@@ -106,7 +106,7 @@ assign(tset_neq,eqx4,operation(eq,(variable(x),(X,())))) :-
     THREE=val(int,3),
     STRUE=operation(makeSet,(TRUE,())),
     SET=operation(makeSet,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
-    ONE=val(int,1),
+    ONE=val(int,10),
     TWO=val(int,2),
     FOUR=val(int,4),
     TRUE=val(bool,true),
@@ -116,7 +116,7 @@ assign(tset_neq,nqx4,operation(neq,(variable(x),(X,())))) :-
     THREE=val(int,3),
     STRUE=operation(makeSet,(TRUE,())),
     SET=operation(makeSet,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
-    ONE=val(int,1),
+    ONE=val(int,10),
     TWO=val(int,2),
     FOUR=val(int,4),
     TRUE=val(bool,true),
