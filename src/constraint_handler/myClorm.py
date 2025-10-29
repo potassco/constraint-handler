@@ -54,6 +54,10 @@ def Tuple(name="", args=None, default=None):
     return Wrapper
 
 
+class HashableList(list):
+    def __hash__(self):
+        return hash(tuple(self))
+
 baseTypes = {"bool": bool, "int": int, "float": float, "str": str, "none": type(None)}
 # containers = { "set": set, "list": list, "tuple" : tuple }
 containers = {"set": set, "list": list}
@@ -143,7 +147,7 @@ def cltopyNoTarget(func):
     elif func.name == "set" and len(func.arguments) == 1 and unnest(func.arguments[0]) is not None:
         return frozenset(cltopyNoTarget(e) for e in unnest(func.arguments[0]))
     elif unnest(func) is not None:
-        return [cltopyNoTarget(e) for e in unnest(func)]
+        return HashableList([cltopyNoTarget(e) for e in unnest(func)])
     elif func.name == "":
         return tuple([cltopyNoTarget(e) for e in func.arguments])
     else:
@@ -203,7 +207,7 @@ def cltopy(func, dtarget=typing.Any):
                     # return [cltopy(e,subtarget[0]) for e in unnest(func)] if subtarget else [cltopyNoTarget(e) for e in unnest(func)]
                     un = unnest(func)
                     result = [cltopy(e, subtarget[0]) for e in un] if subtarget else [cltopyNoTarget(e) for e in un]
-                    return result
+                    return HashableList(result)
                 elif issubclass(utarget, set) or issubclass(utarget, frozenset):
                     subtarget = typing.get_args(target)
                     if (
