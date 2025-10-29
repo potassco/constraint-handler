@@ -120,7 +120,10 @@ def collectVars(expr) -> set[clingo.Symbol]:
             return collectVars(body) - frozenset(vars)
         case tuple(args):
             return frozenset.union(*(collectVars(e) for e in args))
+        case set(args) | frozenset(args):
+            return frozenset.union(*(collectVars(e) for e in args))
         case _:
+            print("collectVars",expr)
             assert False
 
 
@@ -155,7 +158,7 @@ def reducedExpr(v):
     elif isinstance(v, type(None)):
         return None
     elif isinstance(v, frozenset) or isinstance(v, set):
-        return { reducedExpr(x) for x in v }
+        return frozenset({ reducedExpr(x) for x in v })
     else:
         assert False
 
