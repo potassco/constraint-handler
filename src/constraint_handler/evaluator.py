@@ -21,11 +21,11 @@ class PPEnum(Enum):
 
 
 BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function", "multimap", "set"])
-UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor", "length"])
+UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
-    ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt", "concat"],
+    ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
 )
 SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "fold"])
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
@@ -170,10 +170,9 @@ def evaluate_unop(o, val):
             return math.floor(val)
         case UnaryOperator.abs:
             return abs(val)
-        case UnaryOperator.length:
-            if val is None:
-                return None
-            return len(val)
+        case _:
+            print("unknown operator", o, val)
+            assert False
 
 def evaluate_logic_operator(o, args):
     match o:
@@ -305,9 +304,9 @@ def evaluate_binop(o, lval, rval):
             return lval >= rval
         case BinaryOperator.gt:
             return lval > rval
-        case BinaryOperator.concat:
-            # TODO: maybe type check?
-            return str(lval) + str(rval)
+        case _:
+            print("unknown operator", o, lval, rval)
+            assert False
 
 
 def evaluate_conditional_operator(o, args):
