@@ -53,7 +53,7 @@ base_tests = [
 
 
 def test_engine_compile():
-    extra = ["executions", "preferences"]
+    extra = ["executions", "multimap_basics", "preferences"]
     unsupported = []
     for test in base_tests + extra:
         if test not in unsupported:
