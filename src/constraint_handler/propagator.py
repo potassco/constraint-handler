@@ -8,7 +8,7 @@ from collections import defaultdict
 from typing import Any, Dict, NamedTuple, List, Sequence, Tuple
 from dataclasses import dataclass
 
-DEBUG_PRINT = True
+DEBUG_PRINT = False
 
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
