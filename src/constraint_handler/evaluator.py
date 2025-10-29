@@ -201,7 +201,7 @@ def evaluate_logic_operator(o, args):
             return not functools.reduce(operator.xor, args)
         case LogicOperator.limp:
             assert len(args) == 2
-            return args[1] if args[0] else args[0]
+            return args[1] if args[0] else True
         case LogicOperator.lnot:
             assert len(args) == 1
             if None in args:
