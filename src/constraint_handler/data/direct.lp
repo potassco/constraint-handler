@@ -60,6 +60,7 @@ assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).
 %%%%%%%%%%%%%%%%% implode
 _direct_imploded(E,val(T,V)) :- _direct_implode(E), E=val(T,V), representation(T,extensional).
 
+_direct_imploded(E,val(T,V)) :- _direct_implode(E), E=variable(X), eValue(E,T,V).
 
 %:- engine(NAME,E), not ensure(NAME,_), not assign(NAME,_,_).
 %:- not engine(NAME,_), ensure(NAME,E).
