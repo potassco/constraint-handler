@@ -69,17 +69,18 @@ def test_engine_propagator():
     extra = []
     # supported = ["basic_assignments"]
     unsupported = [
-        "booleans",
-        # "conditional_assign",
-        # "floats",
-        # "ints",
+        #"basic_assignments",
+        #"booleans",
+        #"conditional_assign",
+        #"floats",
+        #"ints",
         "lambdas",
         "multimaps",
         "nested_set",
         "set_iterations",
         "set_manipulations",
         "set_selfref",
-        # "strings",
+        #"strings",
     ]
     for test in base_tests + extra:
         if test not in unsupported:
