@@ -58,6 +58,7 @@ class HashableList(list):
     def __hash__(self):
         return hash(tuple(self))
 
+
 baseTypes = {"bool": bool, "int": int, "float": float, "str": str, "none": type(None)}
 # containers = { "set": set, "list": list, "tuple" : tuple }
 containers = {"set": set, "list": list}
@@ -210,18 +211,18 @@ def cltopy(func, dtarget=typing.Any):
                     return HashableList(result)
                 elif issubclass(utarget, set) or issubclass(utarget, frozenset):
                     subtarget = typing.get_args(target)
-                    if (
-                        func.type == clingo.SymbolType.Function
-                        and func.name == "set"
-                        and len(func.arguments) == 1
-                    ):
+                    if func.type == clingo.SymbolType.Function and func.name == "set" and len(func.arguments) == 1:
                         un = unnest(func.arguments[0])
-                        result = frozenset(cltopy(e, subtarget[0]) for e in un) if subtarget else frozenset(cltopyNoTarget(e) for e in un)
+                        result = (
+                            frozenset(cltopy(e, subtarget[0]) for e in un)
+                            if subtarget
+                            else frozenset(cltopyNoTarget(e) for e in un)
+                        )
                         return result
                 elif issubclass(utarget, tuple):
                     subtargets = typing.get_args(target)
                     if len(subtargets) >= 2 and subtargets[-1] == Ellipsis:
-                        subtargets = subtargets[:-1] + tuple(subtargets[-2] for _ in range(len(func.arguments)-1))
+                        subtargets = subtargets[:-1] + tuple(subtargets[-2] for _ in range(len(func.arguments) - 1))
                     if (
                         func.type == clingo.SymbolType.Function
                         and func.name == ""
