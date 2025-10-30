@@ -17,6 +17,7 @@ INT_LP = files("constraint_handler.data").joinpath("int.lp")
 MAIN_LP = files("constraint_handler.data").joinpath("main.lp")
 MULTIMAP_LP = files("constraint_handler.data").joinpath("multimap.lp")
 PREFERENCE_LP = files("constraint_handler.data").joinpath("preference.lp")
+PROPAGATOR_LP = files("constraint_handler.data").joinpath("propagator.lp")
 PYTHON_HELPER_LP = files("constraint_handler.data").joinpath("pythonHelper.lp")
 SET_LP = files("constraint_handler.data").joinpath("set.lp")
 STRING_LP = files("constraint_handler.data").joinpath("string.lp")
@@ -41,6 +42,7 @@ def add_encoding_to_program_builder(b: ProgramBuilder):
                 str(MULTIMAP_LP),
                 str(PREFERENCE_LP),
                 str(PYTHON_HELPER_LP),
+                str(PROPAGATOR_LP),
                 str(SET_LP),
                 str(STRING_LP),
                 str(SYMBOL_LP),

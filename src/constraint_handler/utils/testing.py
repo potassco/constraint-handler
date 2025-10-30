@@ -78,7 +78,7 @@ class SolverWithPropagators(clintest.solver.Solver):
             ctl.load(file)
 
         ctl.ground([("base", [])])
-        props = [prop(ctl) for prop in self.__propgators]
+        props = [prop() for prop in self.__propgators]
         for prop in props:
             ctl.register_propagator(prop)
 
@@ -101,7 +101,7 @@ class SolverWithPropagators(clintest.solver.Solver):
 
 
 class PropPrint(clingo.propagator.Propagator):
-    def __init__(self, ctl):
+    def __init__(self):
         print("creation")
 
     def init(self, init):

@@ -117,7 +117,7 @@ class SetAssign(NamedTuple):
     value: bool | int | float | str | clingo.Symbol
 
 
-def collectVars(expr):
+def collectVars(expr) -> set[clingo.Symbol]:
     match expr:
         case Operation(Variable(ov), args):
             return frozenset.union(*(collectVars(e) for e in args + [ov]))
@@ -168,6 +168,11 @@ def evaluate_unop(o, val):
             return -val
         case UnaryOperator.floor:
             return math.floor(val)
+        case UnaryOperator.abs:
+            return abs(val)
+        case _:
+            print("unknown operator", o, val)
+            assert False
 
 
 def evaluate_logic_operator(o, args):
@@ -197,7 +202,7 @@ def evaluate_logic_operator(o, args):
             return not functools.reduce(operator.xor, args)
         case LogicOperator.limp:
             assert len(args) == 2
-            return args[1] if args[0] else args[0]
+            return args[1] if args[0] else True
         case LogicOperator.lnot:
             assert len(args) == 1
             if None in args:
@@ -219,6 +224,11 @@ def evaluate_logic_operator(o, args):
             return not args[0]
 
 
+class HashableDict(dict):
+    def __hash__(self):
+        return hash(frozenset(self.items()))
+
+
 def evaluate_multimap_operator(o, args):
     match o:
         case MultimapOperator.find:
@@ -226,7 +236,7 @@ def evaluate_multimap_operator(o, args):
             return args[1][args[0]]
         case MultimapOperator.multimapMake:
             pairs = [(args[2 * i], args[2 * i + 1]) for i in range(int(len(args) / 2))]
-            return {key: value for (key, value) in pairs}
+            return HashableDict({key: value for (key, value) in pairs})
 
 
 def set_fold(f, s, start):
@@ -297,6 +307,9 @@ def evaluate_binop(o, lval, rval):
             return lval >= rval
         case BinaryOperator.gt:
             return lval > rval
+        case _:
+            print("unknown operator", o, lval, rval)
+            assert False
 
 
 def evaluate_conditional_operator(o, args):
