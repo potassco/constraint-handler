@@ -45,7 +45,8 @@ def pythonEvalExpr(clExpr,clArgs):
         prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
         pRes = evaluator.evaluate_expr(d,pExpr)
         # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
-        return myClorm.pytocl(evaluator.reducedExpr(pRes))
+        pRed = evaluator.reducedExpr(pRes)
+        return myClorm.pytocl(pRed)
     except Exception as exn:
         # print(f"pythonEvalExpr: error when evaluating {pExpr} over {clArgs}:\n{exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))

@@ -159,8 +159,10 @@ def reducedExpr(v):
         return None
     elif isinstance(v, frozenset) or isinstance(v, set):
         return frozenset({ reducedExpr(x) for x in v })
+    elif isinstance(v, dict):
+        raise NotImplementedError("reducedExpr is not implemented for",dict,v)
     else:
-        assert False
+        raise NotImplementedError("reducedExpr is not implemented for",v)
 
 
 def evaluate_unop(o, val):
@@ -186,7 +188,7 @@ def evaluate_unop(o, val):
         case UnaryOperator.floor:
             return math.floor(val)
         case _:
-            raise NotImplemented(o)
+            raise NotImplementedError("evaluate_unop",o)
 
 
 def evaluate_logic_operator(o, args):
@@ -237,7 +239,7 @@ def evaluate_logic_operator(o, args):
                 return True
             return not args[0]
         case _:
-            raise NotImplemented(o)
+            raise NotImplementedError("logic_operator",o)
 
 
 class HashableDict(dict):
@@ -246,14 +248,16 @@ class HashableDict(dict):
 
 
 def evaluate_multimap_operator(o, args):
+    if None in args:
+        return None
     match o:
         case MultimapOperator.find:
             assert len(args) == 2
-            return args[1][args[0]]
+            return args[1][args[0]] if args[0] in args[1] else None
         case MultimapOperator.multimapMake:
             return HashableDict({key: value for (key, value) in args})
         case _:
-            raise NotImplemented(o)
+            raise NotImplementedError("multimap_operator",o)
 
 
 def set_fold(f, s, start):
@@ -283,7 +287,7 @@ def evaluate_set_operator(o, args):
         case SetOperator.fold:
             return set_fold(args[0], args[1], args[2])
         case _:
-            raise NotImplemented(o)
+            raise NotImplementedError("set_operator",o)
 
 
 def evaluate_string_operator(o, args):
@@ -296,7 +300,7 @@ def evaluate_string_operator(o, args):
         case StringOperator.concat:
             return "".join(args)
         case _:
-            raise NotImplemented(o)
+            raise NotImplementedError("string operator",o)
 
 
 def evaluate_binop(o, lval, rval):
@@ -329,7 +333,7 @@ def evaluate_binop(o, lval, rval):
         case BinaryOperator.gt:
             return lval > rval
         case _:
-            raise NotImplemented(o)
+            raise NotImplementedError("binary operator",o)
 
 
 def evaluate_conditional_operator(o, args):
@@ -347,7 +351,7 @@ def evaluate_conditional_operator(o, args):
         case ConditionalOperator.hasValue:
             return args[0] is not None
         case _:
-            raise NotImplemented(o)
+            raise NotImplementedError("conditional operator",o)
 
 
 def evaluate_python_operator(fn, args,python_eval=eval):
