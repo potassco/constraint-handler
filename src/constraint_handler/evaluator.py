@@ -5,7 +5,6 @@ import math
 import operator
 from enum import Enum
 from typing import NamedTuple
-import typing
 
 import clingo
 
@@ -93,8 +92,9 @@ class Lambda(NamedTuple):
     vars: list[clingo.Symbol]
     expr: Expr
 
-type ReducedExpr = type(None) | Val | tuple[ReducedExpr,...] | frozenset[ReducedExpr] # TODO handle Lambda
-type Expr = Variable | Operation | type(None) | Val | Lambda | tuple[Expr,...] | frozenset[Expr]
+
+type ReducedExpr = type(None) | Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TODO handle Lambda
+type Expr = Variable | Operation | type(None) | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
 
 
 class SetDeclare(NamedTuple):
@@ -123,7 +123,7 @@ def collectVars(expr) -> set[clingo.Symbol]:
         case set(args) | frozenset(args):
             return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
         case _:
-            print("collectVars",expr)
+            print("collectVars", expr)
             assert False
 
 
@@ -146,23 +146,23 @@ def get_baseType(v):
 
 def reducedExpr(v):
     if isinstance(v, float):
-        return Val(BaseType.float,v)
+        return Val(BaseType.float, v)
     elif isinstance(v, str):
-        return Val(BaseType.str,v)
+        return Val(BaseType.str, v)
     elif isinstance(v, bool):
-        return Val(BaseType.bool,v)
+        return Val(BaseType.bool, v)
     elif isinstance(v, int):
-        return Val(BaseType.int,v)
+        return Val(BaseType.int, v)
     elif isinstance(v, clingo.Symbol):
-        return Val(BaseType.symbol,v)
+        return Val(BaseType.symbol, v)
     elif isinstance(v, type(None)):
         return None
     elif isinstance(v, frozenset) or isinstance(v, set):
-        return frozenset({ reducedExpr(x) for x in v })
+        return frozenset({reducedExpr(x) for x in v})
     elif isinstance(v, dict):
-        raise NotImplementedError("reducedExpr is not implemented for",dict,v)
+        raise NotImplementedError("reducedExpr is not implemented for", dict, v)
     else:
-        raise NotImplementedError("reducedExpr is not implemented for",v)
+        raise NotImplementedError("reducedExpr is not implemented for", v)
 
 
 def evaluate_unop(o, val):
@@ -188,7 +188,7 @@ def evaluate_unop(o, val):
         case UnaryOperator.floor:
             return math.floor(val)
         case _:
-            raise NotImplementedError("evaluate_unop",o)
+            raise NotImplementedError("evaluate_unop", o)
 
 
 def evaluate_logic_operator(o, args):
@@ -239,7 +239,7 @@ def evaluate_logic_operator(o, args):
                 return True
             return not args[0]
         case _:
-            raise NotImplementedError("logic_operator",o)
+            raise NotImplementedError("logic_operator", o)
 
 
 class HashableDict(dict):
@@ -257,7 +257,7 @@ def evaluate_multimap_operator(o, args):
         case MultimapOperator.multimapMake:
             return HashableDict({key: value for (key, value) in args})
         case _:
-            raise NotImplementedError("multimap_operator",o)
+            raise NotImplementedError("multimap_operator", o)
 
 
 def set_fold(f, s, start):
@@ -287,7 +287,7 @@ def evaluate_set_operator(o, args):
         case SetOperator.fold:
             return set_fold(args[0], args[1], args[2])
         case _:
-            raise NotImplementedError("set_operator",o)
+            raise NotImplementedError("set_operator", o)
 
 
 def evaluate_string_operator(o, args):
@@ -300,7 +300,7 @@ def evaluate_string_operator(o, args):
         case StringOperator.concat:
             return "".join(args)
         case _:
-            raise NotImplementedError("string operator",o)
+            raise NotImplementedError("string operator", o)
 
 
 def evaluate_binop(o, lval, rval):
@@ -333,7 +333,7 @@ def evaluate_binop(o, lval, rval):
         case BinaryOperator.gt:
             return lval > rval
         case _:
-            raise NotImplementedError("binary operator",o)
+            raise NotImplementedError("binary operator", o)
 
 
 def evaluate_conditional_operator(o, args):
@@ -351,10 +351,10 @@ def evaluate_conditional_operator(o, args):
         case ConditionalOperator.hasValue:
             return args[0] is not None
         case _:
-            raise NotImplementedError("conditional operator",o)
+            raise NotImplementedError("conditional operator", o)
 
 
-def evaluate_python_operator(fn, args,python_eval=eval):
+def evaluate_python_operator(fn, args, python_eval=eval):
     # globals = dict()
     # locals = dict()
     # call = eval(fn,globals,locals)
