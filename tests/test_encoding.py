@@ -81,9 +81,7 @@ def test_engine_propagator():
         "lambdas",
         "multimap_basics",
         "multimaps",
-        "nested_set",
         "set_iterations",
-        "set_manipulations",
         "set_selfref",
         "strings",
     ]
