@@ -3,12 +3,10 @@
 
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_declare(CNAME,X).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_assign(CNAME,X,EXPR).
-
 _set_assign(CNAME,X,E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
 _set_declare(CNAME,X) :- engine(CNAME,compile), set_declare(CNAME,X).
 
 direct_query(E)    :- _set_assign(NAME,X,E).
-direct_query(EX)   :- _set_assign(NAME,X,E), EX=variable(X).
 
 representation(set,intensional).
 
@@ -20,8 +18,7 @@ computed(length,ARGS,val(int,N)) :- compute(length,ARGS),
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
 
-%eValue(EX,set,EX) :- EX=variable(X), _set_declare(NAME,X).
-eValue(EX,set,ER) :- EX=variable(X), ER=ref(variable(X)), _set_declare(NAME,X).
+eValue(EX,set,ER) :- _set_declare(NAME,X), EX=variable(X), ER=ref(EX).
 _set_contains(ER,T,V) :- representation(T,extensional), _set_assign(NAME,X,EV), eValue(variable(X),set,ER), eValue(EV,T,V).
 
 compute(eq,(val(T,V1),(val(T,V2),()))) :- representation(T,intensional),
@@ -189,10 +186,6 @@ _set_lastIndex(EM,0) :- _set_makeIndex(EM),
     #false : _set_contains(EM,TV,RV).
 
 %%%%%%%%%%%%%%%%% _set_implode
-%_set_implode(REF) :- _direct_implode(val(set,REF)).
-%_set_implode(ref(REF)) :- _direct_implode(E), eValue(E,set,ref(REF)).
-%_direct_imploded(E,V) :- _direct_implode(E), eValue(E,set,ref(REF)), _set_imploded(ref(REF),V).
-
 _set_implode(REF) :- _direct_implode(val(set,REF)).
 _set_implode(REF) :- _direct_implode(E), eValue(E,set,REF).
 _direct_imploded(E,V) :- _direct_implode(E), E=val(set,REF), _set_imploded(REF,V).
@@ -202,5 +195,4 @@ _direct_implode(val(TV,RV)) :- _set_implode(EM), _set_contains(EM,TV,RV).
 _set_makeIndex(EM) :- _set_implode(EM).
 _set_as_list_aux(EM,0,()) :- _set_implode(EM).
 _set_as_list_aux(EM,IDX+1,K) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,TV,RV), _direct_imploded(val(TV,RV),V), K=(V,L).
-%_set_as_list_aux(EM,IDX+1,K) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,TV,RV), K=(val(TV,RV),L). %% TODO, TV,RV should be imploded too
 _set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
