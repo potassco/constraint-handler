@@ -219,17 +219,16 @@ def cltopy(func, dtarget=typing.Any):
                         result = frozenset(cltopy(e, subtarget[0]) for e in un) if subtarget else frozenset(cltopyNoTarget(e) for e in un)
                         return result
                 elif issubclass(utarget, tuple):
-                    # print(f"myclorm tuple {func},{target}")
                     subtargets = typing.get_args(target)
+                    if len(subtargets) >= 2 and subtargets[-1] == Ellipsis:
+                        subtargets = subtargets[:-1] + tuple(subtargets[-2] for _ in range(len(func.arguments)-1))
                     if (
                         func.type == clingo.SymbolType.Function
                         and func.name == ""
                         and len(subtargets) <= len(func.arguments)
                     ):
-                        # print(f"myclorm tuple {func},{target}")
                         zipped = list(itertools.zip_longest(func.arguments, subtargets))
                         result = tuple(cltopy(symb, subt) for (symb, subt) in zipped)
-                        # print(f"tuple result {result} {func} {getattr(target,'_default',None)}")
                         return result
             ### Missing is instance of NamedTuple
             ######

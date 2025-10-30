@@ -93,8 +93,8 @@ class Lambda(NamedTuple):
     vars: list[clingo.Symbol]
     expr: Expr
 
-type ReducedExpr = type(None) | Val | tuple[ReducedExpr] | frozenset[ReducedExpr] # TODO handle Lambda
-type Expr = Variable | Operation | type(None) | Val | Lambda | tuple[Expr] | frozenset[Expr]
+type ReducedExpr = type(None) | Val | tuple[ReducedExpr,...] | frozenset[ReducedExpr] # TODO handle Lambda
+type Expr = Variable | Operation | type(None) | Val | Lambda | tuple[Expr,...] | frozenset[Expr]
 
 
 class SetDeclare(NamedTuple):
