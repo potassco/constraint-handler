@@ -493,7 +493,7 @@ class DictVariable:
         Returns a dictionary mapping keys to their assigned values.
         If any value is unassigned, returns None for that key.
         """
-        if self.truth_value:
+        if self.assigned:
             result = {}
             for key, value in self.expressions.items():
                 val = value.get_value()
@@ -921,7 +921,7 @@ class ConstraintHandlerPropagator:
             if final_value is None:
                 continue
 
-            if type(final_value) == frozenset:
+            if type(final_value) in (set, frozenset):
                 for value in final_value:
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
@@ -931,10 +931,11 @@ class ConstraintHandlerPropagator:
                     myprint(f"= {clAtom}")
                     if not model.contains(clAtom):
                         model.extend([clAtom])
-            elif type(final_value) == evaluator.HashableDict or type(final_value) == dict:
+            elif type(final_value) in (evaluator.HashableDict, dict):
                 for key, value in final_value.items():
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
+                    
                     pyAtom = Multimap_Value(
                         var.var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
                     )
