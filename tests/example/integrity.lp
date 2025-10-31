@@ -5,5 +5,3 @@
 1 { assign(assign_z,z,val(bool,(true;false))) } 1.
 
 ensure(dummy,operation(conj,(variable(x),(operation(lnot,(variable(y),())),())))).
-
-%:-.
