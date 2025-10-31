@@ -606,7 +606,7 @@ class ConstraintHandlerPropagator:
         self.evaluatevars: list[EvaluateVariable] = []
 
         self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
-        self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]]
+        self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]] = {}
 
         self.check_only = check_only
 
@@ -631,7 +631,7 @@ class ConstraintHandlerPropagator:
         self.evaluated_solver_assignment(ctl, set(self.symbol2var.values()))
 
         myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
-        backtrack = self.check_ensure(ctl)
+        backtrack = self.check_ensure(ctl, True)
         myprint(f"backtracking {backtrack}")
         if backtrack:
             return
@@ -646,7 +646,7 @@ class ConstraintHandlerPropagator:
         for var in self.evaluatevars:
             var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
 
-    def check_ensure(self, ctl: clingo.PropagateControl) -> bool:
+    def check_ensure(self, ctl: clingo.PropagateControl, is_total: bool = False) -> bool:
         """
         This method checks the ensure constraints in the propagator.
         It evaluates the expressions and checks if they hold true.
@@ -658,11 +658,13 @@ class ConstraintHandlerPropagator:
             evaluated = evaluator.evaluate_expr(make_dict_from_variables(self.symbol2var.values()), expr)
 
             myprint(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
-            if evaluated is None:
+
+            if evaluated is None and not is_total:
                 continue
 
             if not evaluated:
-                nogood = {lit}.union(*(self.get_reasons(dvar) for dvar in evaluator.collectVars(expr)))
+                #  False (or None in total check mode)
+                nogood = {lit}.union(*(self.get_reasons(self.symbol2var[dvar]) for dvar in evaluator.collectVars(expr)))
                 myprint(
                     f"the reason for {expr} being {evaluated} is {nogood} based on vars in {evaluator.collectVars(expr)}"
                 )
@@ -690,8 +692,6 @@ class ConstraintHandlerPropagator:
 
         backtrack = self.check_ensure(ctl)
         myprint(f"PROPAGATION DONE, backtracking {backtrack}")
-        if backtrack:
-            return
 
     def evaluated_solver_assignment(
         self, ctl: clingo.PropagateControl, to_evaluate: set[Variable | SetVariable]
@@ -923,7 +923,7 @@ class ConstraintHandlerPropagator:
             if final_value is ValueStatus.NOT_SET:
                 assert False, f"Variable {var} has no value set in on_model!"
 
-            if final_value is None:
+            if final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
                 continue
 
             if type(final_value) in (set, frozenset):

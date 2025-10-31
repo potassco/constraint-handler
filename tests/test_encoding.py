@@ -75,7 +75,6 @@ def test_engine_propagator():
     extra = []
     unsupported = [
         "executions",
-        "integrity",
         "lambdas",
         "multimap_basics",
         "multimaps",
