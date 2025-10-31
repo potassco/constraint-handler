@@ -76,7 +76,6 @@ def test_engine_propagator():
     unsupported = [
         "executions",
         "lambdas",
-        "multimap_basics",
         "multimaps",
         "set_iterations",
         "set_selfref",
