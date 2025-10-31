@@ -8,7 +8,7 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 
 DEBUG_PRINT = False
-
+FALSE_ASSIGNMENTS = "FALSE_ASSIGNMENTS"
 
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
@@ -124,12 +124,12 @@ class VariableValue:
 
         elif ctl.assignment.is_false(self.literal):
             # Assignment is false, so value is None
-            self.value = None
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return True
 
         for var in self.vars():
-            if var not in evaluations:
+            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.value == ValueStatus.NOT_SET
@@ -228,8 +228,8 @@ class Variable:
                 # so we cannot determine the value yet
                 val = {ValueStatus.NOT_SET}
             else:
-                # if all values are set and none are true, then it is None
-                val = {None}
+                # if all values are set and none are true, then it is set to false assignment
+                val = {ValueStatus.ASSIGNMENT_IS_FALSE}
         elif len(val) == 1:
             if val == self.value:
                 # same value as before
@@ -240,7 +240,7 @@ class Variable:
         return True, False
 
     def get_values(self) -> set[Any]:
-        vals = set(value.value for value in self.expressions if value.value != ValueStatus.NOT_SET)
+        vals = set(value.value for value in self.expressions if value.value != ValueStatus.NOT_SET and value.value != ValueStatus.ASSIGNMENT_IS_FALSE)
         return vals
 
     @property
@@ -272,8 +272,8 @@ class Variable:
                 # so we cannot determine the value yet
                 self.value = ValueStatus.NOT_SET
             else:
-                # if all values are set and none are true, then it is None
-                self.value = None
+                # if all values are set and none are true, then it is set to false assignment
+                self.value = ValueStatus.ASSIGNMENT_IS_FALSE
         elif len(val) == 1:
             self.value = val.pop()
         else:
@@ -322,7 +322,7 @@ class SetVariableValue:
         if self.has_unassigned():
             return ValueStatus.NOT_SET
         # Note that we let None be a part of the set!
-        return {arg.value for arg in self.values}
+        return {arg.value for arg in self.values if arg.value != ValueStatus.ASSIGNMENT_IS_FALSE}
 
     def has_unassigned(self) -> bool:
         return any(arg.value == ValueStatus.NOT_SET for arg in self.values)
@@ -419,8 +419,8 @@ class SetVariable:
             return False, False
 
         elif ctl.assignment.is_false(self.literal):
-            # Assignment is false, so value is None
-            self.value = None
+            # Assignment is false, so value is set to false assignment
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return True, False
 
@@ -497,10 +497,15 @@ class DictVariable:
             result = {}
             for key, value in self.expressions.items():
                 val = value.get_value()
-                if val is ValueStatus.NOT_SET:
+                if val == ValueStatus.NOT_SET:
                     # If any value is not set,
                     # then whole dict is not set
                     return ValueStatus.NOT_SET
+                elif val == ValueStatus.ASSIGNMENT_IS_FALSE or len(val) == 0:                    
+                    # If the value is false assignment or empty set,
+                    # then we treat it as not present in the dict
+                    # TODO: check if this is the desired behavior
+                    continue
                 result[key] = val
             return result
 
@@ -574,20 +579,18 @@ class DictVariable:
 def make_dict_from_variables(
     variables: Sequence[Variable | SetVariable | DictVariable],
 ) -> Dict[clingo.Symbol, Any | set[Any] | Dict[Any, Any]]:
-    result: Dict[clingo.Symbol, Any | set[Any] | Dict[Any, Any]] = {}
+    result: Dict[clingo.Symbol, Any | set[Any] | Dict[Any, Any]] = {"FALSE_ASSIGNMENTS": []}
     for var in variables:
         value = var.get_value()
-        if isinstance(var, Variable):
-            if value is not ValueStatus.NOT_SET:
-                result[var.var] = value
-        elif isinstance(var, SetVariable) or isinstance(var, DictVariable):
-            if value == ValueStatus.NOT_SET:
-                continue
-            elif value is not None:
-                result[var.var] = value
-            elif not var.has_unassigned():
-                result[var.var] = None
-    # print(f"make_dict_from_variables: {result}")
+        
+        if value == ValueStatus.NOT_SET:
+            continue
+
+        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
+            result[FALSE_ASSIGNMENTS].append(var.var)
+
+        else:
+            result[var.var] = value
     return result
 
 
