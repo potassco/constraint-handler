@@ -5,6 +5,7 @@ _ge_set_assign(CNAME,X,E) :- engine(CNAME,ground), set_assign(CNAME,X,E).
 _ge_set_declare(CNAME,X) :- engine(CNAME,ground), set_declare(CNAME,X).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 
+:- _ge_ensure(CNAME,EXPR), not ge_result(EXPR,val(bool,true)).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
 ge_value(X,val(T,V)) :- ge_vQuery(X), value(X,T,V), representation(T,extensional).
 
