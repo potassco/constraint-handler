@@ -255,7 +255,23 @@ def evaluate_multimap_operator(o, args):
             assert len(args) == 2
             return args[1][args[0]] if args[0] in args[1] else None
         case MultimapOperator.multimapMake:
-            return HashableDict({key: value for (key, value) in args})
+            d = dict()
+            for key, value in args:
+                if key not in d:
+                    d[key] = {value}
+                else:
+                    d[key].add(value)
+            # make sure that singular items are not wrapped in a set?
+            # TODO: Is this desired?
+            hd = HashableDict()
+            for key, value in d.items():
+                if len(value) == 1:
+                    hd[key] = value.pop()
+                else:
+                    hd[key] = frozenset(value)
+            return hd
+                
+            # return HashableDict({key: value for (key, value) in args})
         case _:
             raise NotImplementedError("multimap_operator", o)
 
