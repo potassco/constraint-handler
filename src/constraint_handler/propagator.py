@@ -115,7 +115,7 @@ class VariableValue:
         self.assigned = ctl.assignment.value(self.literal)
 
         if ctl.assignment.value(self.literal) is None:
-            # self.value = ValueStatus.NOT_SET
+            assert self.value == ValueStatus.NOT_SET
             return False
 
         if self.value != ValueStatus.NOT_SET:
@@ -123,7 +123,7 @@ class VariableValue:
             return False
 
         elif ctl.assignment.is_false(self.literal):
-            # Assignment is false, so value is None
+            # Assignment is false, so value is false assignment
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return True
@@ -391,10 +391,12 @@ class SetVariable:
         If there is an unassigned value, return None.
         Otherwise return the set of assigned values without the None values.
         """
-        if self.assigned:
-            return self.expressions.get_value()
+        # if self.assigned:
+        #     return self.expressions.get_value()
 
-        return None
+        # return ValueStatus.NOT_SET
+
+        return self.value
 
     def has_unassigned(self) -> bool:
         return self.expressions.has_unassigned()
@@ -427,7 +429,7 @@ class SetVariable:
         changed = self.expressions.evaluate(evaluations, ctl)
 
         if changed:
-            self.value = self.get_value()
+            self.value = self.expressions.get_value()
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
@@ -917,7 +919,7 @@ class ConstraintHandlerPropagator:
     def on_model(self, model):
         for var in self.symbol2var.values():
             final_value = var.get_value()
-            myprint(var.var, final_value, type(final_value))
+            # myprint(var.var, final_value, type(final_value))
             if final_value is ValueStatus.NOT_SET:
                 assert False, f"Variable {var} has no value set in on_model!"
 
@@ -929,7 +931,7 @@ class ConstraintHandlerPropagator:
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
                     pyAtom = Set_Value(var.var, evaluator.get_baseType(value), value)
-                    myprint(f"adding set atom {pyAtom}", end=" ")
+                    # myprint(f"adding set atom {pyAtom}", end=" ")
                     clAtom = myClorm.pytocl(pyAtom)
                     myprint(f"= {clAtom}")
                     if not model.contains(clAtom):
@@ -942,14 +944,14 @@ class ConstraintHandlerPropagator:
                     pyAtom = Multimap_Value(
                         var.var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
                     )
-                    myprint(f"adding multimap atom {pyAtom}", end=" ")
+                    # myprint(f"adding multimap atom {pyAtom}", end=" ")
                     clAtom = myClorm.pytocl(pyAtom)
                     myprint(f"= {clAtom}")
                     if not model.contains(clAtom):
                         model.extend([clAtom])
             else:
                 pyAtom = Value(var.var, evaluator.get_baseType(final_value), final_value)
-                myprint(f"adding atom {pyAtom}", end=" ")
+                # myprint(f"adding atom {pyAtom}", end=" ")
                 clAtom = myClorm.pytocl(pyAtom)
                 myprint(f"= {clAtom}")
 
@@ -960,7 +962,7 @@ class ConstraintHandlerPropagator:
             # if var.value is None or var.value is VALUE_NOT_SET:
             #     continue
             pyAtom = Evaluated(var.op, var.args, evaluator.get_baseType(var.get_value()), var.get_value())
-            myprint(f"adding evaluate atom {pyAtom}", end=" ")
+            # myprint(f"adding evaluate atom {pyAtom}", end=" ")
             clAtom = myClorm.pytocl(pyAtom)
             myprint(f"= {clAtom}")
             if not model.contains(clAtom):

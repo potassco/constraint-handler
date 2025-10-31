@@ -74,8 +74,6 @@ def test_engine_ground():
 def test_engine_propagator():
     extra = []
     unsupported = [
-        "booleans",
-        "conditional_assign",
         "executions",
         "integrity",
         "lambdas",
