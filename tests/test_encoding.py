@@ -40,9 +40,12 @@ base_tests = [
     "basic_assignments",
     "booleans",
     "conditional_assign",
+    "executions", 
     "floats",
     "ints",
+    "integrity",
     "lambdas",
+    "multimap_basics", 
     "multimaps",
     "nested_set",
     "set_iterations",
@@ -53,7 +56,7 @@ base_tests = [
 
 
 def test_engine_compile():
-    extra = ["executions", "multimap_basics", "preferences"]
+    extra = ["preferences"]
     unsupported = []
     for test in base_tests + extra:
         if test not in unsupported:
@@ -62,7 +65,7 @@ def test_engine_compile():
 
 def test_engine_ground():
     extra = []
-    unsupported = ["lambdas", "multimaps", "set_iterations", "set_selfref"]
+    unsupported = ["executions", "lambdas", "multimap_basics", "multimaps", "set_iterations", "set_selfref"]
     for test in base_tests + extra:
         if test not in unsupported:
             run_test_ground(test)
@@ -71,7 +74,10 @@ def test_engine_ground():
 def test_engine_propagator():
     extra = []
     unsupported = [
+        "executions",
+        "integrity",
         "lambdas",
+        "multimap_basics", 
         "multimaps",
         "nested_set",
         "set_iterations",

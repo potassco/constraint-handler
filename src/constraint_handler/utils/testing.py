@@ -28,9 +28,9 @@ def build_expectations(name):
     test_all = And(*(Assert(All(), contains(a)) for a in expected_all))
     expected_any = atoms_from_file(name + ".expected.any")
     test_any = And(*(Assert(Any(), contains(a)) for a in expected_any))
-    expected_any = atoms_from_file(name + ".expected.first")
-    test_any = And(*(Assert(First(), contains(a)) for a in expected_any))
-    return And(test_all, test_any)
+    expected_first = atoms_from_file(name + ".expected.first")
+    test_first = And(*(Assert(First(), contains(a)) for a in expected_first))
+    return And(test_all, test_any, test_first)
 
 
 class TheoryContains(clintest.assertion.Assertion):
