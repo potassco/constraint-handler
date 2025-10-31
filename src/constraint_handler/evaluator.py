@@ -281,7 +281,7 @@ def evaluate_set_operator(o, args):
         case SetOperator.union:
             return frozenset().union(*args)
         case SetOperator.inter:
-            return args[0].intersection(*args[1:])
+            return frozenset(args[0].intersection(*args[1:]))
         case SetOperator.subset:
             return args[0].issubset(args[1])
         case SetOperator.fold:
