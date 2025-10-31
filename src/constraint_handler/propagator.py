@@ -97,7 +97,9 @@ class EvaluateVariable:
 
 
 class VariableValue:
-
+    """
+    This class corresponds to a single expression appearing in some assingment atom
+    """
     def __init__(self, expr: evaluator.Expr, lit: int):
         self.expr = expr
         self.value: Any = ValueStatus.NOT_SET
@@ -391,11 +393,6 @@ class SetVariable:
         If there is an unassigned value, return None.
         Otherwise return the set of assigned values without the None values.
         """
-        # if self.assigned:
-        #     return self.expressions.get_value()
-
-        # return ValueStatus.NOT_SET
-
         return self.value
 
     def has_unassigned(self) -> bool:
@@ -466,7 +463,7 @@ class DictVariable:
     def __init__(self, name: str, var: clingo.Symbol, lit: int):
         self.name = name
         self.var = var
-        self.expressions: Dict[clingo.Symbol, SetVariableValue] = {}
+        self.expressions: Dict[VariableValue, SetVariableValue] = {}
 
         self.value = ValueStatus.NOT_SET
 
@@ -476,10 +473,13 @@ class DictVariable:
 
         self.parents: List[Variable | SetVariable | DictVariable] = []
 
-    def add_value(self, key: clingo.Symbol, expr: evaluator.Expr, lit: int) -> None:
-        if key not in self.expressions:
-            self.expressions[key] = SetVariableValue()
-        self.expressions[key].add_value(expr, lit)
+    def add_value(self, key: evaluator.Expr, expr: evaluator.Expr, lit: int) -> None:
+        # setting lit for key to 1 since it does not have its own literal
+        # the literal is bound for the value!
+        key_val = VariableValue(key, 1)
+        if key_val not in self.expressions:
+            self.expressions[key_val] = SetVariableValue()
+        self.expressions[key_val].add_value(expr, lit)
 
     @property
     def literals(self) -> set[int]:
@@ -490,28 +490,31 @@ class DictVariable:
 
         return lits
 
-    def get_value(self) -> Dict[clingo.Symbol, Any]:
+    def get_value(self) -> Dict[clingo.Symbol, Any]:        
+        return self.value
+    
+    def discern_value(self) -> Dict[clingo.Symbol, Any] | None:
         """
         Returns a dictionary mapping keys to their assigned values.
         If any value is unassigned, returns None for that key.
         """
-        if self.assigned:
-            result = {}
-            for key, value in self.expressions.items():
-                val = value.get_value()
-                if val == ValueStatus.NOT_SET:
-                    # If any value is not set,
-                    # then whole dict is not set
-                    return ValueStatus.NOT_SET
-                elif val == ValueStatus.ASSIGNMENT_IS_FALSE or len(val) == 0:                    
-                    # If the value is false assignment or empty set,
-                    # then we treat it as not present in the dict
-                    # TODO: check if this is the desired behavior
-                    continue
-                result[key] = val
-            return result
-
-        return None
+        result = {}
+        for key, value in self.expressions.items():
+            key_val = key.value
+            val = value.get_value()
+            if val == ValueStatus.NOT_SET or key_val == ValueStatus.NOT_SET:
+                # If any value is not set,
+                # then whole dict is not set
+                return ValueStatus.NOT_SET
+            elif val == ValueStatus.ASSIGNMENT_IS_FALSE or len(val) == 0:                    
+                # If the value is false assignment or empty set,
+                # then we treat it as not present in the dict
+                # TODO: check if this is the desired behavior
+                continue
+            if len(val) == 1:
+                val = val.pop()
+            result[key_val] = val
+        return result
 
     def has_unassigned(self) -> bool:
         return any(value.has_unassigned() for value in self.expressions.values())
@@ -540,16 +543,17 @@ class DictVariable:
 
         elif ctl.assignment.is_false(self.literal):
             # Assignment is false, so value is None
-            self.value = None
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return True, False
 
         changed = False
-        for value in self.expressions.values():
+        for key, value in self.expressions.items():
+            changed |= key.evaluate(evaluations, ctl)
             changed |= value.evaluate(evaluations, ctl)
 
         if changed:
-            self.value = self.get_value()
+            self.value = self.discern_value()
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
@@ -799,9 +803,9 @@ class ConstraintHandlerPropagator:
             literal = ctl.solver_literal(atom.literal)
             name, symbol_var, expr = self.parse_assign(atom.symbol)
             if symbol_var in self.symbol2var:
-                variable = self.symbol2var[symbol_var]
+                variable: Variable = self.symbol2var[symbol_var]
             else:
-                variable = Variable(name, symbol_var)
+                variable: Variable = Variable(name, symbol_var)
                 self.symbol2var[symbol_var] = variable
 
             variable.add_value(expr, literal)
@@ -852,7 +856,7 @@ class ConstraintHandlerPropagator:
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_ASSIGN, 3):
             literal = ctl.solver_literal(atom.literal)
             name, symbol_var, expr = self.parse_assign(atom.symbol)
-            setvar = self.symbol2var[symbol_var]
+            setvar: SetVariable = self.symbol2var[symbol_var]
             setvar.add_value(expr, literal)
             self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
@@ -887,10 +891,10 @@ class ConstraintHandlerPropagator:
             literal = ctl.solver_literal(atom.literal)
             name = myClorm.cltopy(atom.symbol.arguments[0])
             symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
-            key = myClorm.cltopy(atom.symbol.arguments[2])
+            key_expr = myClorm.cltopy(atom.symbol.arguments[2], evaluator.Expr)
             expr = myClorm.cltopy(atom.symbol.arguments[3], evaluator.Expr)
             dictvar: DictVariable = self.symbol2var[symbol_var]
-            dictvar.add_value(key, expr, literal)
+            dictvar.add_value(key_expr, expr, literal)
             self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
