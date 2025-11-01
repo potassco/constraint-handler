@@ -29,7 +29,7 @@ SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 
-MultimapOperator = PPEnum("MultimapOperator", ["find", "multimapMake"])
+MultimapOperator = PPEnum("MultimapOperator", ["find", "isin", "multimapMake"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
@@ -251,6 +251,9 @@ def evaluate_multimap_operator(o, args):
     if None in args:
         return None
     match o:
+        case MultimapOperator.isin:
+            assert len(args) == 2
+            return args[0] in args[1]
         case MultimapOperator.find:
             assert len(args) == 2
             return args[1][args[0]] if args[0] in args[1] else None

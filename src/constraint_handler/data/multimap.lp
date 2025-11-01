@@ -145,3 +145,10 @@ _multimap_lastIndex(EM,I+1) :- _multimap_index(EM,I,TK,RK,TV,RV),
 
 _multimap_lastIndex(EM,0) :- _multimap_makeIndex(EM),
     #false : _multimap_entry(EM,TK,RK,TV,RV).
+
+%%%%%%%%%%%%%%%%%% isin
+
+computed(O,ARGS,val(bool,true)) :- compute(O,ARGS), O=isin, ARGS=(val(TK,RK),(val(multimap,EM),())),
+    _multimap_entry(EM,TK,RK,TV,RV).
+computed(O,ARGS,val(bool,false)) :- compute(O,ARGS), O=isin, ARGS=(val(TK,RK),(val(multimap,EM),())),
+    #false : _multimap_entry(EM,TK,RK,TV,RV).
