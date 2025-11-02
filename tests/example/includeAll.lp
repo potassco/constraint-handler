@@ -7,6 +7,7 @@
 #include "../../src/constraint_handler/data/int.lp".
 #include "../../src/constraint_handler/data/main.lp".
 #include "../../src/constraint_handler/data/multimap.lp".
+#include "../../src/constraint_handler/data/optimize.lp".
 #include "../../src/constraint_handler/data/preference.lp".
 #include "../../src/constraint_handler/data/pythonHelper.lp".
 #include "../../src/constraint_handler/data/set.lp".

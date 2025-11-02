@@ -16,6 +16,7 @@ GRINGO_EVAL_LP = files("constraint_handler.data").joinpath("gringoEval.lp")
 INT_LP = files("constraint_handler.data").joinpath("int.lp")
 MAIN_LP = files("constraint_handler.data").joinpath("main.lp")
 MULTIMAP_LP = files("constraint_handler.data").joinpath("multimap.lp")
+OPTIMIZE_LP = files("constraint_handler.data").joinpath("optimize.lp")
 PREFERENCE_LP = files("constraint_handler.data").joinpath("preference.lp")
 PROPAGATOR_LP = files("constraint_handler.data").joinpath("propagator.lp")
 PYTHON_HELPER_LP = files("constraint_handler.data").joinpath("pythonHelper.lp")
@@ -40,6 +41,7 @@ def add_encoding_to_program_builder(b: ProgramBuilder):
                 str(INT_LP),
                 str(MAIN_LP),
                 str(MULTIMAP_LP),
+                str(OPTIMIZE_LP),
                 str(PREFERENCE_LP),
                 str(PYTHON_HELPER_LP),
                 str(PROPAGATOR_LP),
