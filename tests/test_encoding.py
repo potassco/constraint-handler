@@ -48,6 +48,9 @@ base_tests = [
     "multimap_basics",
     "multimaps",
     "nested_set",
+    "optimize_bools",
+    "optimize_floats",
+    "optimize_ints",
     "set_iterations",
     "set_manipulations",
     "set_selfref",
@@ -57,7 +60,7 @@ base_tests = [
 
 def test_engine_compile():
     extra = ["preferences"]
-    unsupported = []
+    unsupported = ["optimize_bools","optimize_floats","optimize_ints"]
     for test in base_tests + extra:
         if test not in unsupported:
             run_test_compile(test)
@@ -65,7 +68,7 @@ def test_engine_compile():
 
 def test_engine_ground():
     extra = []
-    unsupported = ["executions", "lambdas", "multimap_basics", "multimaps", "set_iterations", "set_selfref"]
+    unsupported = ["executions", "lambdas", "multimap_basics", "multimaps", "optimize_bools","optimize_floats","optimize_ints", "set_iterations", "set_selfref"]
     for test in base_tests + extra:
         if test not in unsupported:
             run_test_ground(test)
@@ -77,6 +80,9 @@ def test_engine_propagator():
         "executions",
         "lambdas",
         "multimaps",
+        "optimize_bools",
+        "optimize_floats",
+        "optimize_ints",
         "set_iterations",
         "set_selfref",
         "strings",
