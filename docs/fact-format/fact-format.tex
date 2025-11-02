@@ -100,6 +100,10 @@
 ~\alt `execution_declare' `(' <term> `,' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
 \alt `execution_run' `(' <term> `,' <term> `)'
 
+<optimization-atom> ::=
+~\alt `optimize_maximizeSum' `(' <term> `,' <expression> `,' <term> `)'
+\alt `optimize_precision' `(' <expression>  `)'
+
 <atom> ::=
 ~\alt`assign' `(' <term> `,' <term> `,' <expression> `)'
 \alt `ensure' `(' <term> `,' <expression> `)'
@@ -108,6 +112,7 @@
 \alt <multimap-atom>
 \alt <set-atom>
 \alt <execution-atom>
+\alt <optimization-atom>
 \end{grammar}
 
 \subsection{Result fact format}
