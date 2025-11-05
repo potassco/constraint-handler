@@ -273,7 +273,7 @@ def evaluate_multimap_operator(o, args):
                 else:
                     hd[key] = frozenset(value)
             return hd
-                
+
             # return HashableDict({key: value for (key, value) in args})
         case _:
             raise NotImplementedError("multimap_operator", o)
