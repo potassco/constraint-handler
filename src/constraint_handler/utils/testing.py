@@ -6,7 +6,6 @@ import clintest.assertion
 import clintest.solver
 import clintest.test
 from clintest.quantifier import All, Any, First
-from clintest.test import And, Assert
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
@@ -24,13 +23,15 @@ def atoms_from_file(file_name):
 
 def build_expectations(name):
     contains = lambda a: clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
+    # opt_contains = lambda a: clintest.assertion.Implies(clintest.assertion.Optimal(), contains(a)) # TODO: this should work
+    opt_contains = contains
     expected_all = atoms_from_file(name + ".expected.all")
-    test_all = And(*(Assert(All(), contains(a)) for a in expected_all))
+    test_all = clintest.test.And(*(clintest.test.Assert(All(), opt_contains(a)) for a in expected_all))
     expected_any = atoms_from_file(name + ".expected.any")
-    test_any = And(*(Assert(Any(), contains(a)) for a in expected_any))
+    test_any = clintest.test.And(*(clintest.test.Assert(Any(), opt_contains(a)) for a in expected_any))
     expected_first = atoms_from_file(name + ".expected.first")
-    test_first = And(*(Assert(First(), contains(a)) for a in expected_first))
-    return And(test_all, test_any, test_first)
+    test_first = clintest.test.And(*(clintest.test.Assert(First(), contains(a)) for a in expected_first))
+    return clintest.test.And(test_all, test_any, test_first)
 
 
 class TheoryContains(clintest.assertion.Assertion):
