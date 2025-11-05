@@ -10,6 +10,7 @@ import constraint_handler.myClorm as myClorm
 DEBUG_PRINT = False
 FALSE_ASSIGNMENTS = "FALSE_ASSIGNMENTS"
 
+
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
         print(*args, **kwargs)
@@ -100,6 +101,7 @@ class VariableValue:
     """
     This class corresponds to a single expression appearing in some assingment atom
     """
+
     def __init__(self, expr: evaluator.Expr, lit: int):
         self.expr = expr
         self.value: Any = ValueStatus.NOT_SET
@@ -242,7 +244,11 @@ class Variable:
         return True, False
 
     def get_values(self) -> set[Any]:
-        vals = set(value.value for value in self.expressions if value.value != ValueStatus.NOT_SET and value.value != ValueStatus.ASSIGNMENT_IS_FALSE)
+        vals = set(
+            value.value
+            for value in self.expressions
+            if value.value != ValueStatus.NOT_SET and value.value != ValueStatus.ASSIGNMENT_IS_FALSE
+        )
         return vals
 
     @property
@@ -490,9 +496,9 @@ class DictVariable:
 
         return lits
 
-    def get_value(self) -> Dict[clingo.Symbol, Any]:        
+    def get_value(self) -> Dict[clingo.Symbol, Any]:
         return self.value
-    
+
     def discern_value(self) -> Dict[clingo.Symbol, Any] | None:
         """
         Returns a dictionary mapping keys to their assigned values.
@@ -506,7 +512,7 @@ class DictVariable:
                 # If any value is not set,
                 # then whole dict is not set
                 return ValueStatus.NOT_SET
-            elif val == ValueStatus.ASSIGNMENT_IS_FALSE or len(val) == 0:                    
+            elif val == ValueStatus.ASSIGNMENT_IS_FALSE or len(val) == 0:
                 # If the value is false assignment or empty set,
                 # then we treat it as not present in the dict
                 # TODO: check if this is the desired behavior
@@ -588,7 +594,7 @@ def make_dict_from_variables(
     result: Dict[clingo.Symbol, Any | set[Any] | Dict[Any, Any]] = {"FALSE_ASSIGNMENTS": []}
     for var in variables:
         value = var.get_value()
-        
+
         if value == ValueStatus.NOT_SET:
             continue
 
@@ -944,7 +950,7 @@ class ConstraintHandlerPropagator:
                 for key, value in final_value.items():
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
-                    
+
                     pyAtom = Multimap_Value(
                         var.var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
                     )
