@@ -530,7 +530,7 @@ def beta_reduction(symbols, expr):
 type Stmt = Assign | If | Noop | PythonStmt | Seq2 | While
 
 
-def run_python_stmt(symbols, code, invs, outvs):
+def run_python_stmt(code, symbols, invs, outvs):
     try:
         globals = dict()
         locals = dict()
@@ -544,27 +544,27 @@ def run_python_stmt(symbols, code, invs, outvs):
         return Error(str(exn))
 
 
-def run_stmt(symbols, stmt, python_exec=exec):
+def run_stmt(stmt, symbols, python_exec=exec):
     match stmt:
         case Assign(var, expr):
             symbols[var] = evaluate_expr(symbols, expr) #TODO eval?
         case If(cond, stmt1, stmt2):
             if evaluate_expr(symbols, cond): #TODO eval?
-                run_stmt(symbols, stmt1, python_exec)
+                run_stmt(stmt1, symbols, python_exec)
             else:
-                run_stmt(symbols, stmt2, python_exec)
+                run_stmt(stmt2, symbols, python_exec)
         case Noop():
             pass
         case PythonStmt(code, invs, outvs):
-            run_python_stmt(symbols, code, invs, outvs)
+            run_python_stmt(code, symbols, invs, outvs)
         case Seq2(stmt1, stmt2):
-            run_stmt(symbols, stmt1, python_exec)
-            run_stmt(symbols, stmt2, python_exec)
+            run_stmt(stmt1, symbols, python_exec)
+            run_stmt(stmt2, symbols, python_exec)
         case While(maxiter, cond, body):
             iter = 0
             while evaluate_expr(symbols, cond) and iter < maxiter:
                 iter += 1
-                run_stmt(symbols, body, python_exec)
+                run_stmt(body, symbols, python_exec)
         case _:
             print(stmt)
             assert False

@@ -64,7 +64,7 @@ def pythonExec(clStmt,clEnv,clOuts):
         globals = dict()
         pDict = { x:evaluator.evaluate_expr(dict(),v) for (x,v) in pEnv }
         locals = dict(pDict)
-        evaluator.run_stmt(locals,pStmt,exec)
+        evaluator.run_stmt(pStmt,locals,exec)
         results = [True]
         for x in pOuts:
             val = locals[x] if x in locals else None
