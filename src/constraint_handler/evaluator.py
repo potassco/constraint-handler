@@ -562,7 +562,7 @@ def run_stmt(symbols, stmt, python_exec=exec):
             run_stmt(symbols, stmt2, python_exec)
         case While(maxiter, cond, body):
             iter = 0
-            while evaluate_expr(symbols, expr) and iter < maxiter:
+            while evaluate_expr(symbols, cond) and iter < maxiter:
                 iter += 1
                 run_stmt(symbols, body, python_exec)
         case _:
