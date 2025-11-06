@@ -17,7 +17,4 @@ warning(("error running",NAME,MSG)) :- _gex_exec(NAME,error(MSG)).
 
 value(EX,T,V) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), _gex_exec(NAME,(X,val(T,V))).
 
-%#show _direct_implode/1.
-%#show _direct_imploded/2.
-%#show eValue/3.
-_direct_imploded(variable(X),V) :- ge_value(X,V), _direct_implode(variable(X)).
+_direct_imploded(variable(X),V) :- ge_value(X,V), _direct_implode(variable(X)). % TODO double check
