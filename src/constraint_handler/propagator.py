@@ -73,7 +73,7 @@ class EvaluateVariable:
         if not ctl.assignment.is_true(self.literal):
             return False
         # print(f"Evaluating {self.op}({self.args})")
-        value = evaluator.evaluate_expr(evaluations, evaluator.Operation(self.op, self.args))
+        value = evaluator.evaluate_expr(evaluator.Operation(self.op, self.args), evaluations)
         # print(f"Evaluated {self.op}({self.args}) to {value}")
         # if type(value) == set:
         #     if None in value:
@@ -139,7 +139,7 @@ class VariableValue:
                 assert self.value == ValueStatus.NOT_SET
                 return False
 
-        self.value = evaluator.evaluate_expr(evaluations, self.expr)
+        self.value = evaluator.evaluate_expr(self.expr, evaluations)
         myprint(f"{self.expr} evaluated to {self.value}")
 
         self.decision_level = ctl.assignment.decision_level
@@ -665,7 +665,7 @@ class ConstraintHandlerPropagator:
         for symbol, lit in self.ensure_symbol_lit.items():
             name, expr = self.ensure_symbol_parsed[symbol]
             myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
-            evaluated = evaluator.evaluate_expr(make_dict_from_variables(self.symbol2var.values()), expr)
+            evaluated = evaluator.evaluate_expr(expr, make_dict_from_variables(self.symbol2var.values()))
 
             myprint(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
 

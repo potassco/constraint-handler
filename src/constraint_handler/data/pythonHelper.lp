@@ -41,9 +41,9 @@ def pythonEvalExpr(clExpr,clArgs):
         print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
-        d = { var : evaluator.evaluate_expr(dict(),val) for (var,val) in pArgs }
+        d = { var : evaluator.evaluate_expr(val,dict()) for (var,val) in pArgs }
         prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
-        pRes = evaluator.evaluate_expr(d,pExpr)
+        pRes = evaluator.evaluate_expr(pExpr, d)
         # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
         pRed = evaluator.reducedExpr(pRes)
         return myClorm.pytocl(pRed)
@@ -62,7 +62,7 @@ def pythonExec(clStmt,clEnv,clOuts):
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
         globals = dict()
-        pDict = { x:evaluator.evaluate_expr(dict(),v) for (x,v) in pEnv }
+        pDict = { x:evaluator.evaluate_expr(v,dict()) for (x,v) in pEnv }
         locals = dict(pDict)
         evaluator.run_stmt(pStmt,locals,exec)
         results = [True]
