@@ -67,7 +67,7 @@ _execution_mapAux(NAME,N,()) :- _execution_run(NAME,STMT), STMT = python(STR,INS
 _execution_mapAux(NAME,I,K) :- _execution_mapAux(NAME,I+1,M), _execution_indexVar(NAME,I,X), _execution_in(NAME,X,V), _direct_imploded(V,W), K=((X,W),M).
 _execution_mapped(NAME,M) :- _execution_mapAux(NAME,0,M).
 
-_execution_exec(NAME,R) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_mapped(NAME,M), R=@pythonExecStmt(STR,M,OUTS).
+_execution_exec(NAME,R) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_mapped(NAME,M), R=@pythonExec(STMT,M,OUTS).
 _execution_ou(NAME,X,V) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,(X,V)).
 _execution_result(NAME,STMT,success) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,true).
 warning(("error running",NAME,STMT,MSG)) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,error(MSG)).
