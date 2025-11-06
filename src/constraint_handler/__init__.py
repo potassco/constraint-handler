@@ -13,6 +13,7 @@ DIRECT_LP = files("constraint_handler.data").joinpath("direct.lp")
 EXECUTION_LP = files("constraint_handler.data").joinpath("execution.lp")
 FLOAT_LP = files("constraint_handler.data").joinpath("float.lp")
 GRINGO_EVAL_LP = files("constraint_handler.data").joinpath("gringoEval.lp")
+GROUND_EXEC_LP = files("constraint_handler.data").joinpath("groundExec.lp")
 INT_LP = files("constraint_handler.data").joinpath("int.lp")
 MAIN_LP = files("constraint_handler.data").joinpath("main.lp")
 MULTIMAP_LP = files("constraint_handler.data").joinpath("multimap.lp")
@@ -38,6 +39,7 @@ def add_encoding_to_program_builder(b: ProgramBuilder):
                 str(EXECUTION_LP),
                 str(FLOAT_LP),
                 str(GRINGO_EVAL_LP),
+                str(GROUND_EXEC_LP),
                 str(INT_LP),
                 str(MAIN_LP),
                 str(MULTIMAP_LP),

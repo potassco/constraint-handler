@@ -70,7 +70,6 @@ def test_engine_compile():
 def test_engine_ground():
     extra = []
     unsupported = [
-        "executions",
         "execution_recursive",
         "lambdas",
         "multimap_basics",

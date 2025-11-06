@@ -4,6 +4,7 @@
 #include "../../src/constraint_handler/data/execution.lp".
 #include "../../src/constraint_handler/data/float.lp".
 #include "../../src/constraint_handler/data/gringoEval.lp".
+#include "../../src/constraint_handler/data/groundExec.lp".
 #include "../../src/constraint_handler/data/int.lp".
 #include "../../src/constraint_handler/data/main.lp".
 #include "../../src/constraint_handler/data/multimap.lp".
