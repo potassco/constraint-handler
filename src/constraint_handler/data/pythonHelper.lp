@@ -66,7 +66,7 @@ def pythonExecStmt(clCode,clEnv,clOuts):
         locals = { x:evaluator.evaluate_expr(dict(),v) for (x,v) in pEnv }
         exec(pCode,globals,locals)
         results = [(x,locals[x]) for x in pOuts if x in locals]
-        pResults = [(x,evaluator.Val(evaluator.get_baseType(v),v)) for (x,v) in results] + [True] # TODO incorrect for set results
+        pResults = [(x,evaluator.reducedExpr(v)) for (x,v) in results] + [True] # TODO incorrect for set results?
         clResults = [myClorm.pytocl(r) for r in pResults]
         #print(pEnv,pCode,clResults)
         return clResults
@@ -74,6 +74,27 @@ def pythonExecStmt(clCode,clEnv,clOuts):
         #print(f"pythonExecStmt: error in environment {pEnv} and output {pOuts} when evaluating\n{pCode}\nThe error was '{exn}'.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
 
+
+def pythonExec(clStmt,clEnv,clOuts):
+    try:
+        pStmt = myClorm.cltopy(clStmt,evaluator.Stmt)
+        pEnv  = myClorm.cltopy(clEnv,list[tuple[evaluator.constant,evaluator.ReducedExpr]])
+        pOuts = myClorm.cltopy(clOuts,list[evaluator.constant])
+    except Exception as exn:
+        print(f"pythonExec: error when converting {(clStmt,clEnv,clOuts)}: {exn}.")
+        return myClorm.pytocl(evaluator.Error(str(exn)))
+    try:
+        globals = dict()
+        pDict = { x:evaluator.evaluate_expr(dict(),v) for (x,v) in pEnv }
+        locals = dict(pDict)
+        evaluator.run_stmt(locals,pStmt,exec)
+        results = [True]
+        for x in pOuts:
+            val = locals[x] if x in locals else None
+            results.append((x,evaluator.reducedExpr(val))) # TODO incorrect for set results?
+        return map(myClorm.pytocl,results)
+    except Exception as exn:
+        return myClorm.pytocl(evaluator.Error(str(exn)))
 
 
 def pythonReversed(clExpr):

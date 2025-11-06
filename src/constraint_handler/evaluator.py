@@ -5,6 +5,7 @@ import math
 import operator
 from enum import Enum
 from typing import NamedTuple
+from collections import namedtuple
 
 import clingo
 
@@ -82,7 +83,7 @@ class Operation(NamedTuple):
 
 
 class Variable(NamedTuple):
-    arg: clingo.Symbol
+    arg: constant
 
     def __repr__(self):
         return f"{self.arg}"
@@ -95,6 +96,43 @@ class Lambda(NamedTuple):
 
 type ReducedExpr = type(None) | Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TODO handle Lambda
 type Expr = Variable | Operation | type(None) | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
+
+
+class Assign(NamedTuple):
+    var: constant
+    expr: Expr
+
+
+class If(NamedTuple):
+    cond: Expr
+    then: Stmt
+    else_: Stmt
+
+
+class Noop(NamedTuple):
+    pass
+
+
+PythonStmt = namedtuple("Python",["code", "in_vars", "out_vars"])
+PythonStmt.__annotations__ = { "code": str, "in_vars": list[constant], "out_vars": list[constant] }
+#class PythonStmt(NamedTuple):
+#    code: str
+#    in_vars: list[clingo.Symbol]
+#    out_vars: list[clingo.Symbol]
+
+
+class Seq2(NamedTuple):
+    fst: Stmt
+    snd: Stmt
+
+
+class While(NamedTuple):
+    max_iterations: int
+    cond: Expr
+    body: Stmt
+
+
+type Stmt = Assign | If | Noop | PythonStmt | Seq2 | While
 
 
 class SetDeclare(NamedTuple):
@@ -487,3 +525,46 @@ def beta_reduction(symbols, expr):
             return args
         case Operator:
             return expr
+
+
+type Stmt = Assign | If | Noop | PythonStmt | Seq2 | While
+
+
+def run_python_stmt(symbols, code, invs, outvs):
+    try:
+        globals = dict()
+        locals = dict()
+        for x in invs:
+            locals[x] = symbols[x] if x in symbols else None
+        exec(code,globals,locals)
+        for x in outvs:
+            symbols[x] = locals[x] if x in locals else None
+        return True
+    except Exception as exn:
+        return Error(str(exn))
+
+
+def run_stmt(symbols, stmt, python_exec=exec):
+    match stmt:
+        case Assign(var, expr):
+            symbols[var] = evaluate_expr(symbols, expr) #TODO eval?
+        case If(cond, stmt1, stmt2):
+            if evaluate_expr(symbols, cond): #TODO eval?
+                run_stmt(symbols, stmt1, python_exec)
+            else:
+                run_stmt(symbols, stmt2, python_exec)
+        case Noop():
+            pass
+        case PythonStmt(code, invs, outvs):
+            run_python_stmt(symbols, code, invs, outvs)
+        case Seq2(stmt1, stmt2):
+            run_stmt(symbols, stmt1, python_exec)
+            run_stmt(symbols, stmt2, python_exec)
+        case While(maxiter, cond, body):
+            iter = 0
+            while evaluate_expr(symbols, expr) and iter < maxiter:
+                iter += 1
+                run_stmt(symbols, body, python_exec)
+        case _:
+            print(stmt)
+            assert False

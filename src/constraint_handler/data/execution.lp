@@ -18,7 +18,7 @@ eValue(variable(execution_output(NAME,X)),T,V) :- _execution_output_var(NAME,X),
 
 
 _execution_ou_proj(NAME,X) :- _execution_ou(NAME,X,V).
-_execution_indexVar_proj(NAME,I) :- _execution_indexVar(NAME,I,X).
+_execution_indexVar_proj(NAME,I) :- _execution_indexVar(NAME,I,X). %%% DEAD
 
 %%%%%%%%%%%%%%%%% _execution_query,
 _execution_query(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS).
