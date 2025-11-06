@@ -435,7 +435,7 @@ def evaluate_operator(symbols, o, args, python_eval=eval):
             symbols2 = dict(symbols)
             for v, e in zip(vars, args):
                 symbols2[v] = e
-            return evaluate_expr(symbols2, expr, python_eval)
+            return evaluate_expr(expr, symbols2, python_eval)
         case LogicOperator():
             return evaluate_logic_operator(o, args)
         case MultimapOperator():
@@ -471,15 +471,15 @@ def evaluate_operator(symbols, o, args, python_eval=eval):
 def evaluate_lambda(symbols, vars, args, body, python_eval=eval):
     # print("evaluate_lambda",symbols,vars,args,body)
     d = dict(symbols)
-    return evaluate_expr(d, body, python_eval)
+    return evaluate_expr(body, d, python_eval)
 
 
-def evaluate_expr(symbols, expr, python_eval=eval):
+def evaluate_expr(expr, symbols, python_eval=eval):
     match expr:
         case Operation(Variable(ov), eargs):
             assert False  # TODO: handle variable operator
         case Operation(o, eargs):
-            args = [evaluate_expr(symbols, a, python_eval) for a in eargs]
+            args = [evaluate_expr(a, symbols, python_eval) for a in eargs]
             return evaluate_operator(symbols, o, args, python_eval)
         case Variable(a):
             if a in symbols:
@@ -493,10 +493,10 @@ def evaluate_expr(symbols, expr, python_eval=eval):
             assert False
             # TODO
         case tuple(eargs):
-            args = tuple(evaluate_expr(symbols, a, python_eval) for a in eargs)
+            args = tuple(evaluate_expr(a, symbols, python_eval) for a in eargs)
             return args
         case set(eargs) | frozenset(eargs):
-            args = frozenset(evaluate_expr(symbols, a, python_eval) for a in eargs)
+            args = frozenset(evaluate_expr(a, symbols, python_eval) for a in eargs)
             return args
         case None:
             return None
@@ -547,9 +547,9 @@ def run_python_stmt(code, symbols, invs, outvs):
 def run_stmt(stmt, symbols, python_exec=exec):
     match stmt:
         case Assign(var, expr):
-            symbols[var] = evaluate_expr(symbols, expr) #TODO eval?
+            symbols[var] = evaluate_expr(expr, symbols) #TODO eval?
         case If(cond, stmt1, stmt2):
-            if evaluate_expr(symbols, cond): #TODO eval?
+            if evaluate_expr(cond, symbols): #TODO eval?
                 run_stmt(stmt1, symbols, python_exec)
             else:
                 run_stmt(stmt2, symbols, python_exec)
@@ -562,7 +562,7 @@ def run_stmt(stmt, symbols, python_exec=exec):
             run_stmt(stmt2, symbols, python_exec)
         case While(maxiter, cond, body):
             iter = 0
-            while evaluate_expr(symbols, cond) and iter < maxiter:
+            while evaluate_expr(cond, symbols) and iter < maxiter:
                 iter += 1
                 run_stmt(body, symbols, python_exec)
         case _:
