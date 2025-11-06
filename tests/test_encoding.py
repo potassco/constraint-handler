@@ -41,7 +41,7 @@ base_tests = [
     "booleans",
     "conditional_assign",
     "executions",
-    "execution_recursive",
+    "execution_loop",
     "floats",
     "ints",
     "integrity",
@@ -70,7 +70,6 @@ def test_engine_compile():
 def test_engine_ground():
     extra = []
     unsupported = [
-        "execution_recursive",
         "lambdas",
         "multimap_basics",
         "multimaps",
@@ -89,7 +88,7 @@ def test_engine_propagator():
     extra = []
     unsupported = [
         "executions",
-        "execution_recursive",
+        "execution_loop",
         "lambdas",
         "multimaps",
         "optimize_bools",
