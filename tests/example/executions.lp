@@ -48,26 +48,6 @@ evaluate(eq,(variable(execution_output(swap,x)),(variable(execution_input(swap,y
 evaluate(eq,(variable(execution_output(swap,y)),(variable(execution_input(swap,x)),()))).
 
 
-%% factorial(input: n, output: f):
-%%     f := 1
-%%     while n >=1:
-%%         f := n*f
-%%         n := n-1
-execution_declare(dummy,factorial,STMT,(n,()),(f,())) :-
-    GEQ  = operation(geq,(variable(n),(val(int,1),()))),
-    INIT = assign(f,val(int,1)),
-    MULT = assign(f,operation(mult,(variable(n),(variable(f),())))),
-    DECR = assign(n,operation(sub,(variable(n),(val(int,1),())))),
-    BODY = seq2(MULT,DECR),
-    LOOP = while(8,GEQ,BODY),    %%%% CHEATING
-    STMT = seq2(INIT,LOOP).
-assign(dummy,execution_input(factorial,n),val(int,5)).
-execution_run(dummy,factorial).
-
-
-
-
-
 
 %% pyt(input: "x", output: "x",y, internal: z):
 %%     z := 1+"x"
