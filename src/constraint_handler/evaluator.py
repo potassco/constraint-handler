@@ -411,12 +411,13 @@ def evaluate_conditional_operator(o, args):
             raise NotImplementedError("conditional operator", o)
 
 
-def evaluate_python_operator(fn, args, python_eval=eval):
+def evaluate_python_operator(fn, args, globals=None):
     # globals = dict()
     # locals = dict()
     # call = eval(fn,globals,locals)
     try:
-        call = python_eval(fn)
+        globals = globals if globals else dict()
+        call = eval(fn,globals)
         result = call(*args)
     except Exception as exn:
         print(exn)
@@ -424,10 +425,10 @@ def evaluate_python_operator(fn, args, python_eval=eval):
     return result
 
 
-def evaluate_operator(symbols, o, args, python_eval=eval):
+def evaluate_operator(symbols, o, args, globals=None):
     match o:
         case Python(fn):
-            return evaluate_python_operator(fn, args, python_eval)
+            return evaluate_python_operator(fn, args, globals)
         case Lambda(vars, expr):
             if len(vars) != len(args):
                 print(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
@@ -435,7 +436,7 @@ def evaluate_operator(symbols, o, args, python_eval=eval):
             symbols2 = dict(symbols)
             for v, e in zip(vars, args):
                 symbols2[v] = e
-            return evaluate_expr(expr, symbols2, python_eval)
+            return evaluate_expr(expr, symbols2, globals)
         case LogicOperator():
             return evaluate_logic_operator(o, args)
         case MultimapOperator():
@@ -468,19 +469,19 @@ def evaluate_operator(symbols, o, args, python_eval=eval):
                 assert False
 
 
-def evaluate_lambda(symbols, vars, args, body, python_eval=eval):
+def evaluate_lambda(symbols, vars, args, body, globals=None):
     # print("evaluate_lambda",symbols,vars,args,body)
     d = dict(symbols)
-    return evaluate_expr(body, d, python_eval)
+    return evaluate_expr(body, d, globals)
 
 
-def evaluate_expr(expr, symbols, python_eval=eval):
+def evaluate_expr(expr, symbols, globals=None):
     match expr:
         case Operation(Variable(ov), eargs):
             assert False  # TODO: handle variable operator
         case Operation(o, eargs):
-            args = [evaluate_expr(a, symbols, python_eval) for a in eargs]
-            return evaluate_operator(symbols, o, args, python_eval)
+            args = [evaluate_expr(a, symbols, globals) for a in eargs]
+            return evaluate_operator(symbols, o, args, globals)
         case Variable(a):
             if a in symbols:
                 return symbols[a]
@@ -489,14 +490,14 @@ def evaluate_expr(expr, symbols, python_eval=eval):
         case Val(type_, val):
             return val
         case Lambda(vars, body):
-            return lambda **args: evaluate_lambda(symbols, vars, args, body, python_eval)
+            return lambda **args: evaluate_lambda(symbols, vars, args, body, globals)
             assert False
             # TODO
         case tuple(eargs):
-            args = tuple(evaluate_expr(a, symbols, python_eval) for a in eargs)
+            args = tuple(evaluate_expr(a, symbols, globals) for a in eargs)
             return args
         case set(eargs) | frozenset(eargs):
-            args = frozenset(evaluate_expr(a, symbols, python_eval) for a in eargs)
+            args = frozenset(evaluate_expr(a, symbols, globals) for a in eargs)
             return args
         case None:
             return None
@@ -530,9 +531,9 @@ def beta_reduction(symbols, expr):
 type Stmt = Assign | If | Noop | PythonStmt | Seq2 | While
 
 
-def run_python_stmt(code, symbols, invs, outvs):
+def run_python_stmt(code, symbols, invs, outvs, globals=None):
     try:
-        globals = dict()
+        globals = globals if globals else dict()
         locals = dict()
         for x in invs:
             locals[x] = symbols[x] if x in symbols else None
@@ -544,27 +545,27 @@ def run_python_stmt(code, symbols, invs, outvs):
         return Error(str(exn))
 
 
-def run_stmt(stmt, symbols, python_exec=exec):
+def run_stmt(stmt, symbols, globals=None):
     match stmt:
         case Assign(var, expr):
-            symbols[var] = evaluate_expr(expr, symbols) #TODO eval?
+            symbols[var] = evaluate_expr(expr, symbols, globals) #TODO eval?
         case If(cond, stmt1, stmt2):
-            if evaluate_expr(cond, symbols): #TODO eval?
-                run_stmt(stmt1, symbols, python_exec)
+            if evaluate_expr(cond, symbols, globals): #TODO eval?
+                run_stmt(stmt1, symbols, globals)
             else:
-                run_stmt(stmt2, symbols, python_exec)
+                run_stmt(stmt2, symbols, globals)
         case Noop():
             pass
         case PythonStmt(code, invs, outvs):
-            run_python_stmt(code, symbols, invs, outvs)
+            run_python_stmt(code, symbols, invs, outvs, globals)
         case Seq2(stmt1, stmt2):
-            run_stmt(stmt1, symbols, python_exec)
-            run_stmt(stmt2, symbols, python_exec)
+            run_stmt(stmt1, symbols, globals)
+            run_stmt(stmt2, symbols, globals)
         case While(maxiter, cond, body):
             iter = 0
-            while evaluate_expr(cond, symbols) and iter < maxiter:
+            while evaluate_expr(cond, symbols, globals) and iter < maxiter:
                 iter += 1
-                run_stmt(body, symbols, python_exec)
+                run_stmt(body, symbols, globals)
         case _:
             print(stmt)
             assert False
