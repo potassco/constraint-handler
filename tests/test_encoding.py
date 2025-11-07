@@ -40,6 +40,7 @@ base_tests = [
     "basic_assignments",
     "booleans",
     "conditional_assign",
+    "custom_globals",
     "executions",
     "execution_loop",
     "floats",
@@ -70,6 +71,7 @@ def test_engine_compile():
 def test_engine_ground():
     extra = []
     unsupported = [
+        "custom_globals",
         "lambdas",
         "multimap_basics",
         "multimaps",
@@ -87,6 +89,7 @@ def test_engine_ground():
 def test_engine_propagator():
     extra = []
     unsupported = [
+        "custom_globals",
         "executions",
         "execution_loop",
         "lambdas",

@@ -43,7 +43,7 @@ def pythonEvalExpr(clExpr,clArgs):
     try:
         d = { var : evaluator.evaluate_expr(val,dict()) for (var,val) in pArgs }
         prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
-        pRes = evaluator.evaluate_expr(pExpr, d)
+        pRes = evaluator.evaluate_expr(pExpr, d, get_globals())
         # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
         pRed = evaluator.reducedExpr(pRes)
         return myClorm.pytocl(pRed)
@@ -61,10 +61,9 @@ def pythonExec(clStmt,clEnv,clOuts):
         print(f"pythonExec: error when converting {(clStmt,clEnv,clOuts)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
-        globals = dict()
         pDict = { x:evaluator.evaluate_expr(v,dict()) for (x,v) in pEnv }
         locals = dict(pDict)
-        evaluator.run_stmt(pStmt,locals,exec)
+        evaluator.run_stmt(pStmt, locals, get_globals())
         results = [True]
         for x in pOuts:
             val = locals[x] if x in locals else None
@@ -117,5 +116,9 @@ def pythonTagVars(clExpr,clName):
     map = { var : Local(pName,var) for var in vars }
     pExp2 = evaluator.beta_reduction(map,pExpr)
     return myClorm.pytocl(pExp2)
+
+
+def get_globals():
+    return ch_globals_dict if "ch_globals_dict" in globals() else None
 
 #end.
