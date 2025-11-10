@@ -12,7 +12,7 @@ cs__defined_set(X) :- assign(_, X, variable(Y)), cs__defined_set(Y).
 % - it was assigned using an operation with return type set
 cs__defined_set(X) :- assign(_, X, O), O=operation(OP, _), cs__valid_operation(OP, _, set).
 
-% A variable is defined as a set if:
+% A variable is defined as a map if:
 % - it is declared as one
 cs__defined_multimap(X) :- multimap_declare(_, X).
 % - a multimap has been assigned to it
@@ -20,7 +20,7 @@ cs__defined_multimap(X) :- assign(_, X, variable(Y)), cs__defined_multimap(Y).
 % - it was assigned using an operation with return type multimap
 cs__defined_multimap(X) :- assign(_, X, O), O=operation(OP, _), cs__valid_operation(OP, _, multimap).
 
-% A variable is defined if it has an assignment or is a defined set
+% A variable is defined if it has an assignment or is a defined set or map
 cs__defined(X) :- assign(_,X,_).
 cs__defined(X) :- cs__defined_set(X).
 cs__defined(X) :- cs__defined_multimap(X).
