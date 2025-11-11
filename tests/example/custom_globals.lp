@@ -20,6 +20,6 @@ main_solverIdentifier(3).
 #script (python)
 
 ch_globals_dict = { "myths": __import__("math"), "math": None }
-ch_globals_dictS = { 3: ch_globals_dict }
+ch_globals_dicts = { 3: ch_globals_dict }
 
 #end.

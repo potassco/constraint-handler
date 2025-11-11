@@ -133,8 +133,7 @@ def get_globals(identifier):
         if identifier in ch_globals_dicts:
             globs.update(ch_globals_dicts[identifier])
         else:
-            print(f"undeclared globals for {dentifier}")
-    print("hello")
+            print(f"undeclared globals for {identifier}")
     return globs
     #return ch_globals_dict if "ch_globals_dict" in globals() else None
 
