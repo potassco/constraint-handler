@@ -126,15 +126,11 @@ def pythonInit(clX):
     return []
 
 def get_globals(identifier):
-    globs = { "math": __import__("math") }
-    if "ch_globals_dict" in globals():
-        globs.update(ch_globals_dict)
-    if "ch_globals_dicts" in globals():
-        if identifier in ch_globals_dicts:
-            globs.update(ch_globals_dicts[identifier])
-        else:
-            print(f"undeclared globals for {identifier}")
+    globs = dict(evaluator.shared_environment)
+    if identifier in evaluator.solver_environment:
+        globs.update(evaluator.solver_environment[identifier])
+    else:
+        print(f"undeclared globals for {identifier}")
     return globs
-    #return ch_globals_dict if "ch_globals_dict" in globals() else None
 
 #end.
