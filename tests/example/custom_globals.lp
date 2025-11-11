@@ -19,7 +19,6 @@ main_solverIdentifier(3).
 
 #script (python)
 
-ch_globals_dict = { "myths": __import__("math"), "math": None }
-ch_globals_dicts = { 3: ch_globals_dict }
+evaluator.solver_environment[3] = { "myths": __import__("math"), "math": None }
 
 #end.

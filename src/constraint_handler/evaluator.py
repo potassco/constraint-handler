@@ -9,6 +9,8 @@ from collections import namedtuple
 
 import clingo
 
+shared_environment = { "math": __import__("math") }
+solver_environment = dict()
 
 class PPEnum(Enum):
     @staticmethod
