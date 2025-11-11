@@ -17,7 +17,7 @@ def pythonExpressionVariable(clExpr):
     clVars = [myClorm.pytocl(var) for var in pVars]
     return clVars
 
-
+ # TODO: dead?
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars)
     pArgs = myClorm.cltopy(clArgs,list[evaluator.Val])
@@ -32,18 +32,19 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
     #print(f"pythonEvalExprFromPairs2: {pExpr}({prettyArgs}) = {pRes}")
     return myClorm.pytocl(pRes)
 
-def pythonEvalExpr(clExpr,clArgs):
+def pythonEvalExpr(clExpr,clArgs,clId):
     # print("pythonEvalExpr",clExpr,clArgs)
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,evaluator.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+        pId   = myClorm.cltopy(clId)
     except Exception as exn:
         print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
         d = { var : evaluator.evaluate_expr(val,dict()) for (var,val) in pArgs }
         prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
-        pRes = evaluator.evaluate_expr(pExpr, d, get_globals())
+        pRes = evaluator.evaluate_expr(pExpr, d, get_globals(pId))
         # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
         pRed = evaluator.reducedExpr(pRes)
         return myClorm.pytocl(pRed)
@@ -52,18 +53,19 @@ def pythonEvalExpr(clExpr,clArgs):
         return myClorm.pytocl(evaluator.Error(str(exn)))
 
 
-def pythonExec(clStmt,clEnv,clOuts):
+def pythonExec(clStmt,clEnv,clOuts,clId):
     try:
         pStmt = myClorm.cltopy(clStmt,evaluator.Stmt)
         pEnv  = myClorm.cltopy(clEnv,list[tuple[evaluator.constant,evaluator.ReducedExpr]])
         pOuts = myClorm.cltopy(clOuts,list[evaluator.constant])
+        pId   = myClorm.cltopy(clId)
     except Exception as exn:
         print(f"pythonExec: error when converting {(clStmt,clEnv,clOuts)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
         pDict = { x:evaluator.evaluate_expr(v,dict()) for (x,v) in pEnv }
         locals = dict(pDict)
-        evaluator.run_stmt(pStmt, locals, get_globals())
+        evaluator.run_stmt(pStmt, locals, get_globals(pId))
         results = [True]
         for x in pOuts:
             val = locals[x] if x in locals else None
@@ -118,7 +120,22 @@ def pythonTagVars(clExpr,clName):
     return myClorm.pytocl(pExp2)
 
 
-def get_globals():
-    return ch_globals_dict if "ch_globals_dict" in globals() else None
+def pythonInit(clX):
+    pX = myClorm.cltopy(clX)
+    print("init",pX)
+    return []
+
+def get_globals(identifier):
+    globs = { "math": __import__("math") }
+    if "ch_globals_dict" in globals():
+        globs.update(ch_globals_dict)
+    if "ch_globals_dicts" in globals():
+        if identifier in ch_globals_dicts:
+            globs.update(ch_globals_dicts[identifier])
+        else:
+            print(f"undeclared globals for {dentifier}")
+    print("hello")
+    return globs
+    #return ch_globals_dict if "ch_globals_dict" in globals() else None
 
 #end.

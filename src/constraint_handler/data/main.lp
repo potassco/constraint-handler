@@ -5,12 +5,16 @@
 #defined computed/4.
 #defined requestEngine/2.
 #defined defaultEngine/1.
+#defined main_solverIdentifier/1.
 
 %%%%%%%%%%%%%%%%% engines
 %%% compile
 %%% ground
 %%% propagator
 %%% none
+
+_main_solverIdentifier(X) :- main_solverIdentifier(X).
+_main_solverIdentifier(none) :- not main_solverIdentifier(_).
 
 _main_defaultEngine(ENG) :- defaultEngine(ENG).
 _main_defaultEngine(compile) :- not defaultEngine(_).

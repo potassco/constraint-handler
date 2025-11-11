@@ -48,7 +48,7 @@ _direct_implode_args_aux(ARGS,N,()) :- compute(OP,ARGS), OP=python(S), N=@python
 _direct_implode_args_aux(ARGS,IDX,K) :- _direct_implode_args_aux(ARGS,IDX+1,L),
     _direct_implode_arg(OP,ARGS,IDX,ARG),
     _direct_imploded(ARG,IMP), K=(IMP,L).
-_expression_eval_exec(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L), RES = @pythonEvalExpr(operation(OP,L),()).
+_expression_eval_exec(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L), RES = @pythonEvalExpr(operation(OP,L),(),ID), _main_solverIdentifier(ID).
 computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
 warning((OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(MSG)).
 
