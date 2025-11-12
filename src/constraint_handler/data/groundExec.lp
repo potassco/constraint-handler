@@ -14,6 +14,7 @@ _gex_mapped(NAME,M) :- _gex_mapAux(NAME,0,M).
 
 _gex_exec(NAME,R) :- _gex_run(NAME,STMT,INS,OUTS), _gex_mapped(NAME,M), R=@pythonExec(STMT,M,OUTS,ID), _main_solverIdentifier(ID).
 warning(("error running",NAME,MSG)) :- _gex_exec(NAME,error(MSG)).
+:- _gex_exec(NAME,failIntegrity).
 
 value(EX,T,V) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), _gex_exec(NAME,(X,val(T,V))).
 

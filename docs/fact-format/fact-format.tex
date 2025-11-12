@@ -81,7 +81,8 @@
 
 \begin{grammar}
 <statement> ::=
-`assign' `(' <term> `,' <expression> `)'
+`assert' `(' <expression> `)'
+\alt `assign' `(' <term> `,' <expression> `)'
 \alt `if' `(' <expression> `,' <statement> `,' <statement> `)'
 \alt `noop'
 \alt `python' `(' <str> `,' <term-list> `,' <term-list> `)'
