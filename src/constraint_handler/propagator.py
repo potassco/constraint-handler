@@ -31,6 +31,7 @@ class AtomNames:
     SET_ASSIGN: str = "propagator_set_assign"
     MULTIMAP_DECLARE: str = "propagator_multimap_declare"
     MULTIMAP_ASSIGN: str = "propagator_multimap_assign"
+    SOLVER_ID: str = "_main_solverIdentifier"
 
 
 class Value(NamedTuple):
@@ -68,12 +69,12 @@ class EvaluateVariable:
         self.value: Any = ValueStatus.NOT_SET
         self.literal: int = literal
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         if not ctl.assignment.is_true(self.literal):
             return False
         # print(f"Evaluating {self.op}({self.args})")
-        value = evaluator.evaluate_expr(evaluator.Operation(self.op, self.args), evaluations)
+        value = evaluator.evaluate_expr(evaluator.Operation(self.op, self.args), evaluations, env)
         # print(f"Evaluated {self.op}({self.args}) to {value}")
         # if type(value) == set:
         #     if None in value:
@@ -110,7 +111,7 @@ class VariableValue:
         self.assigned: bool | None = None
         self.decision_level: int = float("inf")
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> bool:
         """
         Evaluate the expression and return True if the value has changed.
         We assume that a value can only be evaluated if all its variables are assigned.
@@ -138,8 +139,7 @@ class VariableValue:
                 # value should not be set yet
                 assert self.value == ValueStatus.NOT_SET
                 return False
-
-        self.value = evaluator.evaluate_expr(self.expr, evaluations)
+        self.value = evaluator.evaluate_expr(self.expr, evaluations, env)
         myprint(f"{self.expr} evaluated to {self.value}")
 
         self.decision_level = ctl.assignment.decision_level
@@ -207,7 +207,7 @@ class Variable:
             vars.update(value.vars())
         return vars
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> tuple[bool, bool]:
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> tuple[bool, bool]:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -215,7 +215,7 @@ class Variable:
         """
         changed = False
         for value in self.expressions:
-            changed |= value.evaluate(evaluations, ctl)
+            changed |= value.evaluate(evaluations, ctl, env)
 
         if not changed:
             return False, False
@@ -341,11 +341,11 @@ class SetVariableValue:
             vars.update(arg.vars())
         return vars
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         changed = False
         for arg in self.values:
-            changed |= arg.evaluate(evaluations, ctl)
+            changed |= arg.evaluate(evaluations, ctl, env)
 
         return changed
 
@@ -407,7 +407,7 @@ class SetVariable:
     def vars(self) -> set[clingo.Symbol]:
         return self.expressions.vars()
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> tuple[bool, bool]:
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> tuple[bool, bool]:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -429,7 +429,7 @@ class SetVariable:
             self.decision_level = ctl.assignment.decision_level
             return True, False
 
-        changed = self.expressions.evaluate(evaluations, ctl)
+        changed = self.expressions.evaluate(evaluations, ctl, env)
 
         if changed:
             self.value = self.expressions.get_value()
@@ -532,7 +532,7 @@ class DictVariable:
             vars.update(value.vars())
         return vars
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control) -> tuple[bool, bool]:
+    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> tuple[bool, bool]:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
@@ -555,8 +555,8 @@ class DictVariable:
 
         changed = False
         for key, value in self.expressions.items():
-            changed |= key.evaluate(evaluations, ctl)
-            changed |= value.evaluate(evaluations, ctl)
+            changed |= key.evaluate(evaluations, ctl, env)
+            changed |= value.evaluate(evaluations, ctl, env)
 
         if changed:
             self.value = self.discern_value()
@@ -618,11 +618,15 @@ class ConstraintHandlerPropagator:
         self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
         self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]] = {}
 
+        self.environment: Dict[Any, Any] = {}
+
         self.check_only = check_only
 
     def init(self, ctl: clingo.PropagateInit):
         if self.check_only:
             ctl.check_mode = clingo.PropagatorCheckMode.Total
+
+        self.get_solver_identifier(ctl)
 
         self.get_ensure(ctl)
         self.get_assign(ctl)
@@ -654,7 +658,7 @@ class ConstraintHandlerPropagator:
         myprint("Checking evaluate atoms")
         myprint(f"Evaluated assignments before evaluate: {make_dict_from_variables(self.symbol2var.values())}")
         for var in self.evaluatevars:
-            var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+            var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
 
     def check_ensure(self, ctl: clingo.PropagateControl, is_total: bool = False) -> bool:
         """
@@ -665,7 +669,7 @@ class ConstraintHandlerPropagator:
         for symbol, lit in self.ensure_symbol_lit.items():
             name, expr = self.ensure_symbol_parsed[symbol]
             myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
-            evaluated = evaluator.evaluate_expr(expr, make_dict_from_variables(self.symbol2var.values()))
+            evaluated = evaluator.evaluate_expr(expr, make_dict_from_variables(self.symbol2var.values()), self.environment)
 
             myprint(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
 
@@ -731,7 +735,7 @@ class ConstraintHandlerPropagator:
         This method evaluates a variable in the propagator.
         It uses the current solver assignment to determine its value.
         """
-        changed, conflict = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+        changed, conflict = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
         myprint(f"Variable {var} is changed: {changed}, conflict: {conflict}")
 
         if conflict:
@@ -823,7 +827,7 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-            variable.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+            variable.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
 
     def get_evaluate(self, ctl: clingo.PropagateInit):
         """
@@ -837,6 +841,17 @@ class ConstraintHandlerPropagator:
 
             var = EvaluateVariable(op, args, literal)
             self.evaluatevars.append(var)
+
+    def get_solver_identifier(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the solver identifier from the ASP encoding.
+        """
+
+        for atom in ctl.symbolic_atoms.by_signature(AtomNames.SOLVER_ID, 1):
+            arg = atom.symbol.arguments[0]
+            id = myClorm.cltopy(arg)
+            self.environment = evaluator.get_environment(id)
+            # print("hello",self.environment)
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
         """
