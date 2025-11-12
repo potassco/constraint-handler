@@ -19,6 +19,10 @@ main_solverIdentifier(3).
 
 #script (python)
 
-evaluator.solver_environment[3] = { "myths": __import__("math"), "math": None }
+import constraint_handler.evaluator as evaluator
+
+if "math" in evaluator.shared_environment:
+    del evaluator.shared_environment["math"]
+evaluator.solver_environment[3] = { "myths": __import__("math") }
 
 #end.
