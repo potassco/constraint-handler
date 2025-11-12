@@ -50,14 +50,16 @@ _execution_evaled(NAME,STMT,EXPR,V) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2),
 
 
 %%%%%%%%%%%%%%%%% assign
-%_execution_equery(NAME,EXPR) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR).
 _execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR).
 _execution_result(NAME,STMT,success) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR).
 %_execution_ou(NAME,Y,V) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_in(NAME,Y,V), X != Y. % TODO:???
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_evaled(NAME,STMT,EXPR,V).
 
-%:- run(NAME,seq()).
-%:- run(NAME,assert()).
+
+%%%%%%%%%%%%%%%%% assert
+_execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = assert(EXPR).
+:- _execution_run(NAME,STMT), STMT = assert(EXPR), not _execution_evaled(NAME,STMT,EXPR,val(bool,true)).
+_execution_result(NAME,STMT,success) :- _execution_run(NAME,STMT), STMT = assert(EXPR).
 
 
 %%%%%%%%%%%%%%%%% python
@@ -68,6 +70,7 @@ _execution_mapAux(NAME,I,K) :- _execution_mapAux(NAME,I+1,M), _execution_indexVa
 _execution_mapped(NAME,M) :- _execution_mapAux(NAME,0,M).
 
 _execution_exec(NAME,R) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_mapped(NAME,M), R=@pythonExec(STMT,M,OUTS,ID), _main_solverIdentifier(ID).
+:- _execution_exec(NAME,failIntegrity).
 _execution_ou(NAME,X,V) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,(X,V)).
 _execution_result(NAME,STMT,success) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,true).
 warning(("error running",NAME,STMT,MSG)) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,error(MSG)).

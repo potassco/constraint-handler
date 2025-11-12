@@ -71,6 +71,8 @@ def pythonExec(clStmt,clEnv,clOuts,clId):
             val = locals[x] if x in locals else None
             results.append((x,evaluator.reducedExpr(val))) # TODO incorrect for set results?
         return map(myClorm.pytocl,results)
+    except evaluator.FailIntegrityExn:
+        return myClorm.pytocl(evaluator.FailIntegrity())
     except Exception as exn:
         return myClorm.pytocl(evaluator.Error(str(exn)))
 

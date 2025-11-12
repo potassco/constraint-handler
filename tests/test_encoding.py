@@ -42,6 +42,7 @@ base_tests = [
     "conditional_assign",
     "custom_globals",
     "executions",
+    "execution_assert",
     "execution_loop",
     "floats",
     "ints",
@@ -91,6 +92,7 @@ def test_engine_propagator():
     unsupported = [
         "custom_globals",
         "executions",
+        "execution_assert",
         "execution_loop",
         "lambdas",
         "multimaps",

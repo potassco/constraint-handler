@@ -12,6 +12,9 @@ import clingo
 shared_environment = { "math": __import__("math") }
 solver_environment = dict()
 
+class FailIntegrityExn(Exception):
+    pass
+
 class PPEnum(Enum):
     @staticmethod
     def _generate_next_value_(name, start, count, last_values):
@@ -75,6 +78,10 @@ class Error(NamedTuple):
     message: str
 
 
+class FailIntegrity(NamedTuple):
+    pass
+
+
 class Operation(NamedTuple):
     op: Operator | Variable
     args: list[Expr]
@@ -98,6 +105,10 @@ class Lambda(NamedTuple):
 
 type ReducedExpr = type(None) | Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TODO handle Lambda
 type Expr = Variable | Operation | type(None) | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
+
+
+class Assert(NamedTuple):
+    expr: Expr
 
 
 class Assign(NamedTuple):
@@ -134,7 +145,7 @@ class While(NamedTuple):
     body: Stmt
 
 
-type Stmt = Assign | If | Noop | PythonStmt | Seq2 | While
+type Stmt = Assert | Assign | If | Noop | PythonStmt | Seq2 | While
 
 
 class SetDeclare(NamedTuple):
@@ -530,8 +541,6 @@ def beta_reduction(symbols, expr):
             return expr
 
 
-type Stmt = Assign | If | Noop | PythonStmt | Seq2 | While
-
 
 def run_python_stmt(code, symbols, invs, outvs, globals=None):
     try:
@@ -549,6 +558,10 @@ def run_python_stmt(code, symbols, invs, outvs, globals=None):
 
 def run_stmt(stmt, symbols, globals=None):
     match stmt:
+        case Assert(expr):
+            condition = evaluate_expr(expr, symbols, globals)
+            if condition != True:
+                raise FailIntegrityExn
         case Assign(var, expr):
             symbols[var] = evaluate_expr(expr, symbols, globals) #TODO eval?
         case If(cond, stmt1, stmt2):
