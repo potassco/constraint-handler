@@ -571,3 +571,15 @@ def run_stmt(stmt, symbols, globals=None):
         case _:
             print(stmt)
             assert False
+
+def get_environment(identifier):
+    global shared_environment
+    global solver_environment
+    globs = dict(shared_environment)
+    if identifier is not None:
+        if identifier in solver_environment:
+            globs.update(solver_environment[identifier])
+        else:
+            print(f"undeclared globals for {identifier}")
+    return globs
+

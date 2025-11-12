@@ -44,7 +44,7 @@ def pythonEvalExpr(clExpr,clArgs,clId):
     try:
         d = { var : evaluator.evaluate_expr(val,dict()) for (var,val) in pArgs }
         prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
-        pRes = evaluator.evaluate_expr(pExpr, d, get_globals(pId))
+        pRes = evaluator.evaluate_expr(pExpr, d, evaluator.get_environment(pId))
         # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
         pRed = evaluator.reducedExpr(pRes)
         return myClorm.pytocl(pRed)
@@ -65,7 +65,7 @@ def pythonExec(clStmt,clEnv,clOuts,clId):
     try:
         pDict = { x:evaluator.evaluate_expr(v,dict()) for (x,v) in pEnv }
         locals = dict(pDict)
-        evaluator.run_stmt(pStmt, locals, get_globals(pId))
+        evaluator.run_stmt(pStmt, locals, evaluator.get_environment(pId))
         results = [True]
         for x in pOuts:
             val = locals[x] if x in locals else None
@@ -124,13 +124,5 @@ def pythonInit(clX):
     pX = myClorm.cltopy(clX)
     print("init",pX)
     return []
-
-def get_globals(identifier):
-    globs = dict(evaluator.shared_environment)
-    if identifier in evaluator.solver_environment:
-        globs.update(evaluator.solver_environment[identifier])
-    else:
-        print(f"undeclared globals for {identifier}")
-    return globs
 
 #end.
