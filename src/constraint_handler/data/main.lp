@@ -30,4 +30,4 @@ engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multi
 
 value(X,T,V) :- eValue(variable(X),T,V).
 
-representation((bool;int;str;float;symbol),extensional).
+representation((bool;int;str;float;symbol;none),extensional).

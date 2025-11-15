@@ -24,14 +24,31 @@ eValue(E,function,E) :- direct_query(E), E=lambda(VARS,ERES).
 
 eValue(E,T,V) :- direct_query(E), E=variable(X), _se_assign(NAME,X,E2), eValue(E2,T,V), usc_active(NAME).
 
+
+
+
+
+%%%%%%%%%%%%%%%%% computedIdx operators
+_direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
+_direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), eValue(EOP,function,OP).
+computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
+_direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
+computeIdx(E,IDX,val(T,V)) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), eValue(ARG,T,V).
+computeIdx(E,IDX,val(none,none)) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), conditional_hasNoValue(ARG).
+eValue(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), computedIdx(E,val(TO,VO)).
+
 %%%%%%%%%%%%%%%%% computed operators
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), eValue(EOP,function,OP).
+%% _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
+%% _direct_compMapAux(ARGS,N,()) :- _direct_queryArgsValues(E,OP,ARGS), N=@pythonListLength(ARGS).
+%% _direct_compMapAux(ARGS,IDX,K) :- _direct_compMapAux(ARGS,IDX+1,L), _direct_compArg(ARGS,IDX,ARG), eValue(ARG,T,V), K=(val(T,V),L).
+%% compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS).
+%% eValue(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS), computed(OP,VS,val(TO,VO)).
 _direct_revMapAux(ARGS,ES,()) :- _direct_queryArgsValues(E,OP,ARGS), ES=@pythonReversed(ARGS).
 _direct_revMapAux(ARGS,ES,(val(T,V),VS)) :- _direct_revMapAux(ARGS,(E,ES),VS), eValue(E,T,V).
 compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS).
-eValue(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS),
-    computed(OP,VS,val(TO,VO)).
+eValue(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS), computed(OP,VS,val(TO,VO)).
 
 %%%%%%%%%%%%%%%%% lambda
 _lambda_aux(LAMB,ARGS,RED) :- compute(LAMB,ARGS),

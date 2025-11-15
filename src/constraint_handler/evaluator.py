@@ -24,7 +24,7 @@ class PPEnum(Enum):
         return self.name
 
 
-BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "function", "multimap", "set"])
+BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
 UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 BinaryOperator = PPEnum(
@@ -66,7 +66,7 @@ Operator = (
 )
 
 
-constant = bool | float | int | str | clingo.Symbol
+constant = bool | float | int | str | type(None) | clingo.Symbol
 
 
 class Val(NamedTuple):
@@ -103,8 +103,8 @@ class Lambda(NamedTuple):
     expr: Expr
 
 
-type ReducedExpr = type(None) | Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TODO handle Lambda
-type Expr = Variable | Operation | type(None) | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
+type ReducedExpr = Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TODO handle Lambda
+type Expr = Variable | Operation | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
 
 
 class Assert(NamedTuple):
@@ -207,7 +207,7 @@ def reducedExpr(v):
     elif isinstance(v, clingo.Symbol):
         return Val(BaseType.symbol, v)
     elif isinstance(v, type(None)):
-        return None
+        return Val(BaseType.none, None)
     elif isinstance(v, frozenset) or isinstance(v, set):
         return frozenset({reducedExpr(x) for x in v})
     elif isinstance(v, dict):

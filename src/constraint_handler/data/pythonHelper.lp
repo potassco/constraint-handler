@@ -43,9 +43,9 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
         d = { var : evaluator.evaluate_expr(val,dict()) for (var,val) in pArgs }
-        prettyArgs = "assuming " + ", ".join(f"{str(var)}={val}" for (var,val) in pArgs) + ", " if pArgs else ""
+        prettyD = { str(var) : val for (var,val) in d.items() }
         pRes = evaluator.evaluate_expr(pExpr, d, evaluator.get_environment(pId))
-        # print(f"eval expr: {prettyArgs}{pExpr} = {pRes}")
+        # print(f"eval expr: {pExpr} = {pRes} assuming {prettyD}")
         pRed = evaluator.reducedExpr(pRes)
         return myClorm.pytocl(pRed)
     except Exception as exn:
