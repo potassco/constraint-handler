@@ -198,10 +198,27 @@ def cltopy(func, dtarget=typing.Any):
                     if func.type == clingo.SymbolType.Function and len(func.arguments) == 0 and func.name in target:
                         return target(func.name)
                 # TODO: make it work with ints as well?
-                elif any(issubclass(utarget, t) for t in list(baseTypes.values())):
-                    value = cltopy(func)
-                    if value != func and isinstance(value, utarget):
-                        return value
+                elif issubclass(utarget, bool):
+                    if func.type == clingo.SymbolType.Function and func.name in ["true", "false"] and len(func.arguments) == 0:
+                        return func.name == "true"
+                elif issubclass(utarget, int):
+                    if func.type == clingo.SymbolType.Number:
+                        return func.number
+                elif issubclass(utarget, str):
+                    if func.type == clingo.SymbolType.String:
+                        return func.string
+                elif issubclass(utarget, float):
+                    if (
+                        func.type == clingo.SymbolType.Function
+                        and func.name == "float"
+                        and len(func.arguments) == 1
+                        and func.arguments[0].type in [clingo.SymbolType.String, clingo.SymbolType.Number]
+                    ):
+                        arg = func.arguments[0]
+                        return float(arg.string if arg.type == clingo.SymbolType.String else arg.number)
+                elif issubclass(utarget, type(None)):
+                    if func.name == "none" and len(func.arguments) == 0:
+                        return None
                 elif issubclass(utarget, list):
                     subtarget = typing.get_args(target)
                     # print("subt",target,subtarget)

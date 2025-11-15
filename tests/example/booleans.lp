@@ -28,8 +28,8 @@
 
 1 { assign(a_x,x,val(bool,false)) ; assign(a_x,x,val(bool,true)) } 1.
 1 { assign(a_y,y,val(bool,false)) ; assign(a_y,y,val(bool,true)) } 1.
-{ assign(a_a,a,val(bool,false)) }.
-{ assign(a_b,b,val(bool,true))  }.
+1 { assign(a_a,a,V) : V = (val(bool,false); val(none,none)) } 1.
+1 { assign(a_b,b,V) : V = (val(bool,true);  val(none,none)) } 1.
 assign(a_f,f,
     operation(conj,
              (operation(disj,(PX,(PY,()))),
