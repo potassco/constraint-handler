@@ -3,7 +3,9 @@
 \subsection{Basic terms}
 \begin{grammar}
 
-<type> ::= `bool' | `float' | `int' | `string' | `symbol' | `function' | `set' | `multimap'
+<type> ::=
+~\alt `bool' | `float' | `int' | `none' | `string' | `symbol'
+\alt `function' | `set' | `multimap'
 
 <bool> ::= `true' | `false'
 
@@ -28,7 +30,8 @@
 \subsection{Building expression terms}
 \begin{grammar}
 
-<operator> ::= `python' `(' <str> `)'
+<operator> ::= 
+~\alt `python' `(' <str> `)'
 \alt <lambda-expr>
 \alt <variable>
 \alt <bool-operator>
@@ -43,20 +46,29 @@
 
 <comp-operator> ::= <eq-operator> | `leq' | `lt' | `geq' | `gt'
 
-<bool-operator> ::= <eq-operator> | `conj' | `disj' | `leqv' | `limp' | `lnot' | `lxor' | `snot' | `wnot'
+<bool-operator> ::= 
+~\alt <eq-operator> | `conj' | `disj' | `leqv'
+\alt `limp' | `lnot' | `lxor' | `snot' | `wnot'
 
 <conditional-operator> ::= `if' | `default' | `ite' | `hasValue'
 
-<float-operator> ::= <comp-operator> | `sqrt' | `cos' | `sin' | `tan' | `acos' | `asin' | `atan' | `abs' | `minus'
-| `add' | `sub' | `mult' | `fdiv' | `pow' | `floor'
+<float-operator> ::=
+~\alt <comp-operator> | `sqrt' | `cos' | `sin' | `tan'
+\alt `acos' | `asin' | `atan' | `abs' | `minus'
+\alt `add' | `sub' | `mult' | `fdiv' | `pow' | `floor'
 
-<int-operator> ::= <comp-operator> | `add' | `sub' | `mult' | `div' | `pow' | `abs' | `minus' | `max' | `min'
+<int-operator> ::=
+~\alt <comp-operator> | `add' | `sub' | `mult'
+\alt `div' | `pow' | `abs' | `minus' | `max' | `min'
 
-<multimap-operator> ::= <eq-operator> | `find' | `fold' | `isin' | `multimapMake'
+<multimap-operator> ::= 
+~\alt <eq-operator> | `find' | `fold' | `isin' | `multimapMake'
 \alt `countKeys' | `countEntries' |`sumIntEntries'
 \alt `maxEntries' | `minEntries'
 
-<set-operator> ::= <eq-operator> | `union' | `inter' | `subset' | `makeSet' | `isin' | `notin' | `length' | `fold'
+<set-operator> ::=
+~\alt <eq-operator> | `union' | `inter' | `subset' | `makeSet'
+\alt `isin' | `notin' | `length' | `fold'
 
 <string-operator> ::= <eq-operator> | `concat' | `length'
 
@@ -65,7 +77,7 @@
 <tuple-expr> ::= `(' `)' | `(' <expressions> `)'
 
 <expression> ::=
-`val' `(' <type> `,' <term> `)'
+~\alt `val' `(' <type> `,' <term> `)'
 \alt `variable' `(' <term> `)'
 \alt `operation' `(' <operator> `,' <expression-list> `)'
 \alt <lambda-expr>
@@ -81,13 +93,21 @@
 
 \begin{grammar}
 <statement> ::=
-`assert' `(' <expression> `)'
+~\alt `assert' `(' <expression> `)'
 \alt `assign' `(' <term> `,' <expression> `)'
 \alt `if' `(' <expression> `,' <statement> `,' <statement> `)'
 \alt `noop'
 \alt `python' `(' <str> `,' <term-list> `,' <term-list> `)'
 \alt `seq2' `(' <statement> `,' <statement> `)'
 \alt `while' `(' <int> `,' <expression> `,' <statement> `)'
+
+<domain> ::= `bool' | `fromFacts' | `fromList' `(' <expression-list> `)'
+
+<variable-atom> ::=
+~\alt `variable_declare' `(' <term> `,' <term> `,' <domain> `)'
+\alt `variable_declareOptional' `(' <term> `)'
+\alt `variable_define' `(' <term> `,' <term> `,' <expression> `)'
+\alt `variable_domain' `(' <term> `,' <expression> `)'
 
 <multimap-atom> ::=
 ~\alt `multimap_declare' `(' <term> `,' <term> `)'
@@ -110,6 +130,7 @@
 \alt `ensure' `(' <term> `,' <expression> `)'
 \alt `compute' `(' <term> `,' <val-list> `)'
 \alt `computed' `(' <term> `,' <val-list> `,' <type> `,' <term> `)'
+\alt <variable-atom>
 \alt <multimap-atom>
 \alt <set-atom>
 \alt <execution-atom>
@@ -119,7 +140,8 @@
 \subsection{Result fact format}
 \begin{grammar}
 
-<atom> ::= `value' `(' <term> `,' <type> `,' <term> `)'
+<atom> ::=
+~\alt `value' `(' <term> `,' <type> `,' <term> `)'
 \alt `set_value' `(' <term> `,' <type> `,' <term> `)'
 \alt `multimap_value' `(' <term> `,' <type> `,' <term> `,' <type> `,' <term> `)'
 \alt `warning' `(' <term> `)'

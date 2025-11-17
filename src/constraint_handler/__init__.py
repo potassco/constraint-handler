@@ -24,6 +24,7 @@ PYTHON_HELPER_LP = files("constraint_handler.data").joinpath("pythonHelper.lp")
 SET_LP = files("constraint_handler.data").joinpath("set.lp")
 STRING_LP = files("constraint_handler.data").joinpath("string.lp")
 SYMBOL_LP = files("constraint_handler.data").joinpath("symbol.lp")
+VARIABLE_LP = files("constraint_handler.data").joinpath("variable.lp")
 
 enable_python()
 
@@ -50,6 +51,7 @@ def add_encoding_to_program_builder(b: ProgramBuilder):
                 str(SET_LP),
                 str(STRING_LP),
                 str(SYMBOL_LP),
+                str(VARIABLE_LP),
             ],
             lambda stm: b.add(stm),
         )
