@@ -7,6 +7,7 @@ import constraint_handler.myClorm as myClorm
 from constraint_handler.PropagatorConstants import ValueStatus, AtomNames, DEBUG_PRINT
 from constraint_handler.PropagatorVariables import Variable, SetVariable, DictVariable, EvaluateVariable, OptimizationSum, make_dict_from_variables
 
+VariableType = Variable | SetVariable | DictVariable
 
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
@@ -43,13 +44,14 @@ class Evaluated(NamedTuple):
 class ConstraintHandlerPropagator:
 
     def __init__(self, check_only: bool = False):
-        self.symbol2var: Dict[clingo.Symbol, Variable | SetVariable | DictVariable] = {}
+        self.symbol2var: Dict[clingo.Symbol, VariableType] = {}
         self.assign2symbol_var: Dict[clingo.Symbol, clingo.Symbol] = {}
-        self.literal2var: Dict[int, list[Variable | SetVariable | DictVariable]] = {}
+        self.literal2var: Dict[int, list[VariableType]] = {}
 
         self.evaluatevars: list[EvaluateVariable] = []
 
         self.optimization_sum: OptimizationSum = OptimizationSum()
+        self.best_value: int | float = 0
 
         self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
         self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]] = {}
@@ -139,7 +141,7 @@ class ConstraintHandlerPropagator:
         If any ensure constraint is violated, it adds a nogood and propagates.
         """
         myprint(f"PROPAGATING with changes: {changes} and decision level {ctl.assignment.decision_level}")
-        to_evaluate: set[Variable | SetVariable] = set()
+        to_evaluate: set[VariableType] = set()
         for rlit in changes:
             lit = abs(rlit)
             if lit in self.literal2var:
@@ -160,7 +162,7 @@ class ConstraintHandlerPropagator:
         print(f"Optimization sum evaluated to {self.optimization_sum.value}")
 
     def evaluated_solver_assignment(
-        self, ctl: clingo.PropagateControl, to_evaluate: set[Variable | SetVariable]
+        self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]
     ) -> bool:
         """
         This method evaluates the variables given using the current solver assignment.
@@ -181,7 +183,7 @@ class ConstraintHandlerPropagator:
                     to_evaluate.add(parent)
 
     def evaluate_variable(
-        self, ctl: clingo.PropagateControl, var: Variable | SetVariable | DictVariable
+        self, ctl: clingo.PropagateControl, var: VariableType
     ) -> bool | None:
         """
         This method evaluates a variable in the propagator.
@@ -200,7 +202,7 @@ class ConstraintHandlerPropagator:
 
         return changed
 
-    def get_reasons(self, var: Variable | SetVariable | DictVariable) -> set[int]:
+    def get_reasons(self, var: VariableType) -> set[int]:
         # TODO: optimize this in the future?
         reasons = var.literals
         reasons = reasons.union(*(self.symbol2var[dvar].literals for dvar in var.vars()))
