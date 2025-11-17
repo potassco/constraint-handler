@@ -5,7 +5,7 @@ import clingo
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 from constraint_handler.PropagatorConstants import ValueStatus, AtomNames, DEBUG_PRINT
-from constraint_handler.PropagatorVariables import Variable, SetVariable, DictVariable, EvaluateVariable, make_dict_from_variables
+from constraint_handler.PropagatorVariables import Variable, SetVariable, DictVariable, EvaluateVariable, OptimizationSum, make_dict_from_variables
 
 
 def myprint(*args, **kwargs):
@@ -49,6 +49,8 @@ class ConstraintHandlerPropagator:
 
         self.evaluatevars: list[EvaluateVariable] = []
 
+        self.optimization_sum: OptimizationSum = OptimizationSum()
+
         self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
         self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]] = {}
 
@@ -66,6 +68,7 @@ class ConstraintHandlerPropagator:
         self.get_assign(ctl)
         self.get_set_declarations(ctl)
         self.get_multimap_declarations(ctl)
+        self.get_optimization_sums(ctl)
         self.set_parents()
 
         self.get_evaluate(ctl)
@@ -85,6 +88,10 @@ class ConstraintHandlerPropagator:
             return
 
         self.check_evaluate(ctl)
+
+        self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+
+        print(f"Optimization sum value: {self.optimization_sum.value}")
 
         myprint("CHECK DONE!")
 
@@ -133,7 +140,8 @@ class ConstraintHandlerPropagator:
         """
         myprint(f"PROPAGATING with changes: {changes} and decision level {ctl.assignment.decision_level}")
         to_evaluate: set[Variable | SetVariable] = set()
-        for lit in changes:
+        for rlit in changes:
+            lit = abs(rlit)
             if lit in self.literal2var:
                 to_evaluate.update(self.literal2var[lit])
 
@@ -142,6 +150,14 @@ class ConstraintHandlerPropagator:
 
         backtrack = self.check_ensure(ctl)
         myprint(f"PROPAGATION DONE, backtracking {backtrack}")
+
+        if backtrack:
+            return
+        
+        # If not backtracking, check optimization sums
+        self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+
+        print(f"Optimization sum evaluated to {self.optimization_sum.value}")
 
     def evaluated_solver_assignment(
         self, ctl: clingo.PropagateControl, to_evaluate: set[Variable | SetVariable]
@@ -200,6 +216,8 @@ class ConstraintHandlerPropagator:
                 f"Resetting {var} and its reasons due to decision level {var.decision_level} >= {assignment.decision_level}"
             )
             var.reset(assignment.decision_level)
+
+        self.optimization_sum.reset(assignment.decision_level)
 
     def parse_assign(self, symbol: clingo.Symbol) -> Tuple[str, clingo.Symbol, evaluator.Expr]:
         """
@@ -288,6 +306,20 @@ class ConstraintHandlerPropagator:
             id = myClorm.cltopy(arg)
             self.environment = evaluator.get_environment(id)
             # print("hello",self.environment)
+            
+    def get_optimization_sums(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the optimization sum from the ASP encoding.
+        It reads the optimize_maximizeSum atoms and creates an OptimizationSum instance.
+        """
+
+        for atom in ctl.symbolic_atoms.by_signature(AtomNames.OPTIMIZE_SUM, 3):
+            literal = ctl.solver_literal(atom.literal)
+            name = myClorm.cltopy(atom.symbol.arguments[0])
+            expr = myClorm.cltopy(atom.symbol.arguments[1], evaluator.Expr)
+            symbol = myClorm.cltopy(atom.symbol.arguments[2])
+
+            self.optimization_sum.add_value(symbol, expr, literal)
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
         """

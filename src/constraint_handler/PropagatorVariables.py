@@ -555,3 +555,69 @@ def make_dict_from_variables(
         else:
             result[var.var] = value
     return result
+
+
+
+class OptimizationSum:
+    def __init__(self):
+
+        self.expressions: list[tuple[clingo.Symbol, VariableValue]] = []
+        self.value: Any = ValueStatus.NOT_SET
+
+        self.decision_level: int = float("inf")
+
+    def add_value(self, var: clingo.Symbol, expr: evaluator.Expr, lit: int) -> None:
+        self.expressions.append((var, VariableValue(expr, lit)))
+
+    @property
+    def literals(self) -> set[int]:
+        lits = set()
+        for var, expr in self.expressions:
+            if expr.value != ValueStatus.NOT_SET:
+                if expr.assigned:
+                    lits.add(expr.literal)
+                else:
+                    lits.add(-expr.literal)
+        return lits
+
+    def get_value(self) -> Any:
+        vals = set()
+        for var, expr in self.expressions:
+            print(expr, expr.value)
+            if expr.value != ValueStatus.NOT_SET and expr.value != ValueStatus.ASSIGNMENT_IS_FALSE and expr.value is not None:
+                vals.add((var, expr.value))
+        
+        return sum(value for var, value in vals)
+    
+    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
+        """Evaluate the expression and return True if the value has changed."""
+        changed = False
+        # print(evaluations)
+        for var, expr in self.expressions:
+            changed |= expr.evaluate(evaluations, ctl)
+
+        if changed:
+            total = self.get_value()
+            if total != self.value:
+                self.decision_level = ctl.assignment.decision_level
+                self.value = total
+                return True
+        
+        return False
+    
+    def vars(self) -> set[clingo.Symbol]:
+        vars = set()
+        for var, expr in self.expressions:
+            vars.update(expr.vars())
+        return vars
+    
+    def reset(self, dl: int):
+        for var, expr in self.expressions:
+            expr.reset(dl)
+
+        if self.decision_level >= dl:
+            self.decision_level = float("inf")
+            self.value = ValueStatus.NOT_SET
+
+    def has_unassigned(self) -> bool:
+        return any(expr.value == ValueStatus.NOT_SET for var, expr in self.expressions)
