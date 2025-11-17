@@ -58,6 +58,7 @@ base_tests = [
     "set_manipulations",
     "set_selfref",
     "strings",
+    "variables",
 ]
 
 
@@ -102,6 +103,7 @@ def test_engine_propagator():
         "set_iterations",
         "set_selfref",
         "strings",
+        "variables",
     ]
     for test in base_tests + extra:
         if test not in unsupported:

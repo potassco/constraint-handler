@@ -29,8 +29,9 @@ UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "ac
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
-    ["add", "sub", "mult", "div", "fdiv", "pow", "eq", "neq", "leq", "lt", "geq", "gt"],
+    ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
 )
+EqOperator = PPEnum("LogicOperator", ["eq", "neq"])
 SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "fold"])
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
@@ -56,6 +57,7 @@ class Python(NamedTuple):
 Operator = (
     UnaryOperator
     | BinaryOperator
+    | EqOperator
     | LogicOperator
     | SetOperator
     | StringOperator
@@ -390,10 +392,6 @@ def evaluate_binop(o, lval, rval):
             return lval / rval
         case BinaryOperator.pow:
             return lval ** rval  # fmt: skip
-        case BinaryOperator.eq:
-            return lval == rval
-        case BinaryOperator.neq:
-            return lval != rval
         case BinaryOperator.leq:
             return lval <= rval
         case BinaryOperator.lt:
@@ -404,6 +402,15 @@ def evaluate_binop(o, lval, rval):
             return lval > rval
         case _:
             raise NotImplementedError("binary operator", o)
+
+def evaluate_eq_operator(o, lval, rval):
+    match o:
+        case EqOperator.eq:
+            return lval == rval
+        case EqOperator.neq:
+            return lval != rval
+        case _:
+            raise NotImplementedError("equality operator", o)
 
 
 def evaluate_conditional_operator(o, args):
@@ -450,6 +457,8 @@ def evaluate_operator(symbols, o, args, globals=None):
             for v, e in zip(vars, args):
                 symbols2[v] = e
             return evaluate_expr(expr, symbols2, globals)
+        case EqOperator() and len(args) == 2:
+            return evaluate_eq_operator(o, args[0], args[1])
         case LogicOperator():
             return evaluate_logic_operator(o, args)
         case MultimapOperator():
