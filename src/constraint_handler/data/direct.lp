@@ -34,7 +34,6 @@ _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), eV
 computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 computeIdx(E,IDX,val(T,V)) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), eValue(ARG,T,V).
-computeIdx(E,IDX,val(none,none)) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), conditional_hasNoValue(ARG).
 eValue(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), computedIdx(E,val(TO,VO)).
 
 %%%%%%%%%%%%%%%%% computed operators
