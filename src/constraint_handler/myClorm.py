@@ -4,13 +4,11 @@ import itertools
 import types
 import typing
 
-import clorm
-import clorm.clingo as clingo
-import clorm.orm.core
+import clingo
 
 
 def predicatedefn_default_predicate_name(name):
-    return clorm.orm.core._predicatedefn_default_predicate_name(name) if name else ""
+    return name[0].lower() + name[1:] if name else ""
 
 
 def nest(l, cons="", nil=""):
@@ -80,12 +78,8 @@ def pytocl(v, dtarget=None):
             return v
         elif not isinstance(v, target):
             pass
-        elif issubclass(target, clorm.Predicate):
-            return target._field.pytocl(v)
         elif getattr(target, "pytocl", None):
             return target.pytocl(v)
-        elif issubclass(target, clorm.Raw):
-            return v.symbol
         elif issubclass(target, clingo.Symbol):
             return v
         elif issubclass(target, enum.Enum):
@@ -286,16 +280,3 @@ def cltopy(func, dtarget=typing.Any):
     # print(f"ctp disj failed all {func,dtarget}")
     raise TypeError(f"'{func}' is not of type {dtarget}")
 
-
-def define_adt_field(
-    entry,
-    *,
-    name: str = "",
-) -> typing.Type[clorm.BaseField]:
-
-    subclass_name = name if name else "AnonymousADTField"
-
-    # Support function - to check input values
-
-    newclass = type(subclass_name, (clorm.BaseField,), {"pytocl": pytocl, "cltopy": lambda func: cltopy(func, entry)})
-    return newclass

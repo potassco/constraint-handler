@@ -12,7 +12,6 @@ dynamic = ["version"]
 readme = "README.md"
 
 dependencies = [
-    "clorm",
     "clingo>=5.7.1",
 ]
 

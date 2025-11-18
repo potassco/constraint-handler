@@ -40,13 +40,13 @@ class Value(NamedTuple):
     value: bool | int | float | str | clingo.Symbol
 
 
-class Set_Value(NamedTuple):
+class Set_value(NamedTuple):
     name: clingo.Symbol
     type_: evaluator.BaseType | None
     value: bool | int | float | str | clingo.Symbol
 
 
-class Multimap_Value(NamedTuple):
+class Multimap_value(NamedTuple):
     name: clingo.Symbol
     key_type: evaluator.BaseType | None
     value_type: evaluator.BaseType | None
@@ -955,7 +955,7 @@ class ConstraintHandlerPropagator:
                 for value in final_value:
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
-                    pyAtom = Set_Value(var.var, evaluator.get_baseType(value), value)
+                    pyAtom = Set_value(var.var, evaluator.get_baseType(value), value)
                     # myprint(f"adding set atom {pyAtom}", end=" ")
                     clAtom = myClorm.pytocl(pyAtom)
                     myprint(f"= {clAtom}")
@@ -966,7 +966,7 @@ class ConstraintHandlerPropagator:
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
 
-                    pyAtom = Multimap_Value(
+                    pyAtom = Multimap_value(
                         var.var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
                     )
                     # myprint(f"adding multimap atom {pyAtom}", end=" ")
