@@ -457,8 +457,11 @@ def evaluate_operator(symbols, o, args, globals=None):
             for v, e in zip(vars, args):
                 symbols2[v] = e
             return evaluate_expr(expr, symbols2, globals)
-        case EqOperator() and len(args) == 2:
-            return evaluate_eq_operator(o, args[0], args[1])
+        case EqOperator():
+            if len(args) == 2:
+                return evaluate_eq_operator(o, args[0], args[1])
+            else:
+                assert False
         case LogicOperator():
             return evaluate_logic_operator(o, args)
         case MultimapOperator():
