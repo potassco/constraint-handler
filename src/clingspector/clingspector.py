@@ -6,14 +6,15 @@ from __future__ import annotations
 
 import logging
 import os
-import clingo.script
 from enum import Enum
 
+import clingo.script
 from clingo.control import Control, Model
 
 from clingspector.diagnostic import Diagnostic
 
 logger = logging.getLogger("clingspector")
+
 
 class Clingspector:
     """Clingspector class for validating Clingo logic programs and reporting errors."""

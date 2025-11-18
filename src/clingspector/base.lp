@@ -119,4 +119,3 @@ requestEngine(CNAME,none) :- multimap_assign(CNAME,X,EXPR,EXPR_2).
 requestEngine(CNAME,none) :- ensure(CNAME,EXPR).
 requestEngine(CNAME,none) :- set_declare(CNAME,X).
 requestEngine(CNAME,none) :- multimap_declare(CNAME,X).
-
