@@ -31,5 +31,3 @@ evaluate(neq,(variable(gx),(variable(gy),()))).
 %#show eValue/3.
 %#show direct_query/1.
 #show evaluated/4.
-
-

@@ -3,17 +3,19 @@ from __future__ import annotations
 import functools
 import math
 import operator
+from collections import namedtuple
 from enum import Enum
 from typing import NamedTuple
-from collections import namedtuple
 
 import clingo
 
-shared_environment = { "math": __import__("math") }
+shared_environment = {"math": __import__("math")}
 solver_environment = dict()
+
 
 class FailIntegrityExn(Exception):
     pass
+
 
 class PPEnum(Enum):
     @staticmethod
@@ -151,9 +153,9 @@ class Noop(NamedTuple):
     pass
 
 
-PythonStmt = namedtuple("Python",["code", "in_vars", "out_vars"])
-PythonStmt.__annotations__ = { "code": str, "in_vars": list[constant], "out_vars": list[constant] }
-#class PythonStmt(NamedTuple):
+PythonStmt = namedtuple("Python", ["code", "in_vars", "out_vars"])
+PythonStmt.__annotations__ = {"code": str, "in_vars": list[constant], "out_vars": list[constant]}
+# class PythonStmt(NamedTuple):
 #    code: str
 #    in_vars: list[clingo.Symbol]
 #    out_vars: list[clingo.Symbol]
@@ -227,7 +229,7 @@ class Optimize_precision(NamedTuple):
 class Value(NamedTuple):
     name: constant
     type_: BaseType | clingo.Symbol
-    cst: constant # ReducedExpr
+    cst: constant  # ReducedExpr
 
 
 class Set_value(NamedTuple):
@@ -246,6 +248,8 @@ class Multimap_value(NamedTuple):
 
 class Warning(NamedTuple):
     content: constant
+
+
 # class SetMember(NamedTuple):
 #     set: frozenset
 #     value: optConstant
@@ -504,6 +508,7 @@ def evaluate_binop(o, lval, rval):
         case _:
             raise NotImplementedError("binary operator", o)
 
+
 def evaluate_eq_operator(o, lval, rval):
     match o:
         case EqOperator.eq:
@@ -538,7 +543,7 @@ def evaluate_python_operator(fn, args, globals=None):
     # call = eval(fn,globals,locals)
     try:
         globals = globals if globals else dict()
-        call = eval(fn,globals)
+        call = eval(fn, globals)
         result = call(*args)
     except Exception as exn:
         print(exn)
@@ -654,14 +659,13 @@ def beta_reduction(symbols, expr):
             return expr
 
 
-
 def run_python_stmt(code, symbols, invs, outvs, globals=None):
     try:
         globals = globals if globals else dict()
         locals = dict()
         for x in invs:
             locals[x] = symbols[x] if x in symbols else None
-        exec(code,globals,locals)
+        exec(code, globals, locals)
         for x in outvs:
             symbols[x] = locals[x] if x in locals else None
         return True
@@ -676,9 +680,9 @@ def run_stmt(stmt, symbols, globals=None):
             if condition != True:
                 raise FailIntegrityExn
         case Assign(var, expr):
-            symbols[var] = evaluate_expr(expr, symbols, globals) #TODO eval?
+            symbols[var] = evaluate_expr(expr, symbols, globals)  # TODO eval?
         case If(cond, stmt1, stmt2):
-            if evaluate_expr(cond, symbols, globals): #TODO eval?
+            if evaluate_expr(cond, symbols, globals):  # TODO eval?
                 run_stmt(stmt1, symbols, globals)
             else:
                 run_stmt(stmt2, symbols, globals)
@@ -698,6 +702,7 @@ def run_stmt(stmt, symbols, globals=None):
             print(stmt)
             assert False
 
+
 def get_environment(identifier):
     global shared_environment
     global solver_environment
@@ -708,4 +713,3 @@ def get_environment(identifier):
         else:
             print(f"undeclared globals for {identifier}")
     return globs
-

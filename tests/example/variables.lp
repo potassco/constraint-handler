@@ -24,4 +24,3 @@ ensure(e_gp,operation(neq,(variable(g),(variable(p),())))).
 ensure(e_bp,operation(neq,(variable(b),(variable(p),())))).
 
 variable_define(d_s,g_is_green,operation(eq,(variable(g),(val(symbol,green),())))).
-
