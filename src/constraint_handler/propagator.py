@@ -207,7 +207,9 @@ class Variable:
             vars.update(value.vars())
         return vars
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> tuple[bool, bool]:
+    def evaluate(
+        self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]
+    ) -> tuple[bool, bool]:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -407,7 +409,9 @@ class SetVariable:
     def vars(self) -> set[clingo.Symbol]:
         return self.expressions.vars()
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> tuple[bool, bool]:
+    def evaluate(
+        self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]
+    ) -> tuple[bool, bool]:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -532,7 +536,9 @@ class DictVariable:
             vars.update(value.vars())
         return vars
 
-    def evaluate(self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]) -> tuple[bool, bool]:
+    def evaluate(
+        self, evaluations: Dict[clingo.Symbol, Any], ctl: clingo.Control, env: Dict[Any, Any]
+    ) -> tuple[bool, bool]:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
@@ -669,7 +675,9 @@ class ConstraintHandlerPropagator:
         for symbol, lit in self.ensure_symbol_lit.items():
             name, expr = self.ensure_symbol_parsed[symbol]
             myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
-            evaluated = evaluator.evaluate_expr(expr, make_dict_from_variables(self.symbol2var.values()), self.environment)
+            evaluated = evaluator.evaluate_expr(
+                expr, make_dict_from_variables(self.symbol2var.values()), self.environment
+            )
 
             myprint(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
 

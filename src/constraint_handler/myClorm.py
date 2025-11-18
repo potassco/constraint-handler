@@ -193,7 +193,11 @@ def cltopy(func, dtarget=typing.Any):
                         return target(func.name)
                 # TODO: make it work with ints as well?
                 elif issubclass(utarget, bool):
-                    if func.type == clingo.SymbolType.Function and func.name in ["true", "false"] and len(func.arguments) == 0:
+                    if (
+                        func.type == clingo.SymbolType.Function
+                        and func.name in ["true", "false"]
+                        and len(func.arguments) == 0
+                    ):
                         return func.name == "true"
                 elif issubclass(utarget, int):
                     if func.type == clingo.SymbolType.Number:
@@ -279,4 +283,3 @@ def cltopy(func, dtarget=typing.Any):
             raise exn
     # print(f"ctp disj failed all {func,dtarget}")
     raise TypeError(f"'{func}' is not of type {dtarget}")
-

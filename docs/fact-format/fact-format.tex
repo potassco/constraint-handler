@@ -30,7 +30,7 @@
 \subsection{Building expression terms}
 \begin{grammar}
 
-<operator> ::= 
+<operator> ::=
 ~\alt `python' `(' <str> `)'
 \alt <lambda-expr>
 \alt <variable>
@@ -46,7 +46,7 @@
 
 <comp-operator> ::= <eq-operator> | `leq' | `lt' | `geq' | `gt'
 
-<bool-operator> ::= 
+<bool-operator> ::=
 ~\alt <eq-operator> | `conj' | `disj' | `leqv'
 \alt `limp' | `lnot' | `lxor' | `snot' | `wnot'
 
@@ -61,7 +61,7 @@
 ~\alt <comp-operator> | `add' | `sub' | `mult'
 \alt `div' | `pow' | `abs' | `minus' | `max' | `min'
 
-<multimap-operator> ::= 
+<multimap-operator> ::=
 ~\alt <eq-operator> | `find' | `fold' | `isin' | `multimapMake'
 \alt `countKeys' | `countEntries' |`sumIntEntries'
 \alt `maxEntries' | `minEntries'
