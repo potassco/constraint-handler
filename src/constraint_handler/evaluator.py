@@ -109,6 +109,29 @@ type ReducedExpr = Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TOD
 type Expr = Variable | Operation | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
 
 
+class Set_declare(NamedTuple):
+    label: constant
+    name: constant
+
+
+class Set_assign(NamedTuple):
+    label: constant
+    name: constant
+    member: Expr
+
+
+class Multimap_declare(NamedTuple):
+    label: constant
+    name: constant
+
+
+class Multimap_assign(NamedTuple):
+    label: constant
+    name: constant
+    key: Expr
+    val: Expr
+
+
 class Assert(NamedTuple):
     expr: Expr
 
@@ -150,13 +173,91 @@ class While(NamedTuple):
 type Stmt = Assert | Assign | If | Noop | PythonStmt | Seq2 | While
 
 
-class SetDeclare(NamedTuple):
+class Execution_declare(NamedTuple):
+    label: constant
+    name: constant
+    body: Stmt
+    inputs_vars: list[constant]
+    outputs_vars: list[constant]
+
+
+class Execution_run(NamedTuple):
+    label: constant
+    name: constant
+
+
+class FromFacts(NamedTuple):
     pass
 
 
-class SetMember(NamedTuple):
-    set: frozenset
-    value: optConstant
+class FromList(NamedTuple):
+    elements: list[Expr]
+
+
+type Domain = bool | FromFacts | FromList
+
+
+class Variable_declare(NamedTuple):
+    label: constant
+    name: constant
+    domain: Domain
+
+
+class Variable_define(NamedTuple):
+    label: constant
+    name: constant
+    value: Expr
+
+
+class Variable_domain(NamedTuple):
+    name: constant
+    value: Expr
+
+
+class Optimize_maximizeSum(NamedTuple):
+    label: constant
+    value: Expr
+    id: constant
+
+
+class Optimize_precision(NamedTuple):
+    value: Expr
+
+
+class Value(NamedTuple):
+    name: constant
+    type_: BaseType | clingo.Symbol
+    cst: constant # ReducedExpr
+
+
+class Set_value(NamedTuple):
+    name: constant
+    elt_type_: BaseType | clingo.Symbol
+    elt_cst: constant
+
+
+class Multimap_value(NamedTuple):
+    name: constant
+    key_type_: BaseType | clingo.Symbol
+    key_value: constant
+    cst_type_: BaseType | clingo.Symbol
+    cst_value: constant
+
+
+class Warning(NamedTuple):
+    content: constant
+# class SetMember(NamedTuple):
+#     set: frozenset
+#     value: optConstant
+
+
+type SetAtom = Set_declare | Set_assign
+type MultimapAtom = Multimap_declare | Multimap_assign
+type ExecutionAtom = Execution_declare | Execution_run
+type VariableAtom = Variable_declare | Variable_define | Variable_domain
+type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
+type Atom = ExecutionAtom | MultimapAtom | OptimizeAtom | SetAtom | VariableAtom
+type ResultAtom = Value | Set_value | Multimap_value | Warning
 
 
 def collectVars(expr) -> set[clingo.Symbol]:
