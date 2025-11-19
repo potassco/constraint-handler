@@ -197,7 +197,7 @@ class ConstraintHandlerPropagator:
         if not self.using_optimization:
             return False
         
-        self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+        self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
 
         if self.optimization_sum.value != ValueStatus.NOT_SET:
             if self.optimization_sum.value <= self.best_value and not self.optimization_sum.has_unassigned():

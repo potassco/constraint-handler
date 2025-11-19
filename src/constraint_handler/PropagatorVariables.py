@@ -541,25 +541,6 @@ class DictVariable:
         return f"DictVariable({self.name}, {self.var})"
 
 
-def make_dict_from_variables(
-    variables: Sequence[Variable | SetVariable | DictVariable],
-) -> dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]:
-    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {FALSE_ASSIGNMENTS: []}
-    for var in variables:
-        value = var.get_value()
-
-        if value == ValueStatus.NOT_SET:
-            continue
-
-        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            result[FALSE_ASSIGNMENTS].append(var.var)
-
-        else:
-            result[var.var] = value
-    return result
-
-
-
 class OptimizationSum:
     def __init__(self):
 
@@ -590,13 +571,13 @@ class OptimizationSum:
                 vals.add((var, expr.value))
         
         return sum(value for var, value in vals)
-    
-    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control) -> bool:
+
+    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         changed = False
         # print(evaluations)
         for var, expr in self.expressions:
-            changed |= expr.evaluate(evaluations, ctl)
+            changed |= expr.evaluate(evaluations, ctl, env)
 
         if changed:
             total = self.get_value()
@@ -623,3 +604,21 @@ class OptimizationSum:
 
     def has_unassigned(self) -> bool:
         return any(expr.value == ValueStatus.NOT_SET for var, expr in self.expressions)
+    
+
+def make_dict_from_variables(
+    variables: Sequence[Variable | SetVariable | DictVariable],
+) -> dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]:
+    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {FALSE_ASSIGNMENTS: []}
+    for var in variables:
+        value = var.get_value()
+
+        if value == ValueStatus.NOT_SET:
+            continue
+
+        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
+            result[FALSE_ASSIGNMENTS].append(var.var)
+
+        else:
+            result[var.var] = value
+    return result
