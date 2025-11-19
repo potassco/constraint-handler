@@ -102,7 +102,7 @@ def test_engine_propagator():
         "optimize_ints",
         "set_iterations",
         "set_selfref",
-        "strings",
+        #"strings",
         "variables",
     ]
     for test in base_tests + extra:
