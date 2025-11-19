@@ -22,4 +22,4 @@ class AtomNames:
     MULTIMAP_DECLARE: str = "propagator_multimap_declare"
     MULTIMAP_ASSIGN: str = "propagator_multimap_assign"
     SOLVER_ID: str = "_main_solverIdentifier"
-    OPTIMIZE_SUM: str = "optimize_maximizeSum"
+    OPTIMIZE_SUM: str = "propagator_optimize_maximizeSum"
