@@ -105,14 +105,14 @@ class ConstraintHandlerPropagator:
 
         # If not backtracking, check optimization sums
         backtrack = self.evaluate_optimization_sum(ctl)
-        print(f"Optimization sum evaluated to {self.optimization_sum.value}")
+        myprint(f"Optimization sum evaluated to {self.optimization_sum.value}")
         if backtrack:
             print(f"backtracking {backtrack} due to optimization sum being worse than best value {self.best_value}")
             return
 
         # if everything is good, we update the best value
         if self.using_optimization and self.optimization_sum.value > self.best_value:
-            print(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
+            myprint(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
             self.best_value = self.optimization_sum.value
 
         myprint("CHECK DONE!")
@@ -206,7 +206,7 @@ class ConstraintHandlerPropagator:
                     var = self.symbol2var[symbol_var]
                     ng = ng.union(self.get_reasons(var))
                 # ng = (l for l in ng if l < 0)  # only keep negative literals
-                print(f"Adding nogood {list(ng)} to enforce optimization")
+                myprint(f"Adding nogood {list(ng)} to enforce optimization")
                 if ctl.add_nogood(ng):
                     assert False, "Added violated constraint but solver did not detect it"  
                 return True
@@ -520,3 +520,6 @@ class ConstraintHandlerPropagator:
             myprint(f"= {clAtom}")
             if not model.contains(clAtom):
                 model.extend([clAtom])
+
+        if self.using_optimization:
+            print(f"Optimization value: {self.optimization_sum.value}")
