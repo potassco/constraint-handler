@@ -621,7 +621,7 @@ def evaluate_expr(expr, symbols, globals=None):
         case Val(type_, val):
             return val
         case Lambda(vars, body):
-            return lambda **args: evaluate_lambda(symbols, vars, args, body, globals)
+            return lambda *args: evaluate_lambda(symbols, vars, args, body, globals)
             assert False
             # TODO
         case tuple(eargs):

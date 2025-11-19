@@ -5,6 +5,8 @@ from typing import Any, Sequence
 import constraint_handler.evaluator as evaluator
 from constraint_handler.PropagatorConstants import ValueStatus, FALSE_ASSIGNMENTS, DEBUG_PRINT
 
+
+
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
         print(*args, **kwargs)
@@ -583,7 +585,7 @@ class OptimizationSum:
     def get_value(self) -> Any:
         vals = set()
         for var, expr in self.expressions:
-            print(expr, expr.value)
+            myprint(f"Summing {expr} with value {expr.value}")
             if expr.value != ValueStatus.NOT_SET and expr.value != ValueStatus.ASSIGNMENT_IS_FALSE and expr.value is not None:
                 vals.add((var, expr.value))
         

@@ -51,7 +51,8 @@ class ConstraintHandlerPropagator:
         self.evaluatevars: list[EvaluateVariable] = []
 
         self.optimization_sum: OptimizationSum = OptimizationSum()
-        self.best_value: int | float = 0
+        self.best_value: int | float = -1
+        self.using_optimization: bool = False
 
         self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
         self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]] = {}
@@ -79,21 +80,40 @@ class ConstraintHandlerPropagator:
         myprint("#" * 50)
 
     def check(self, ctl: clingo.PropagateControl):
+        """
+        This method is called to check the constraints in the propagator.
+        It evaluates all variables in case there were changes from the last propagation call.
+        It then checks the ensure constraints and evaluates the optimization sums.
+        If a variable evaluation has a conflict, any ensure constraint is violated
+        or the optimization value if below the best it adds a nogood and backtracks.
+        """
         myprint("CHECKING")
 
-        self.evaluated_solver_assignment(ctl, set(self.symbol2var.values()))
+        backtrack = self.evaluated_solver_assignment(ctl, set(self.symbol2var.values()))
 
+        if backtrack:
+            myprint(f"backtracking {backtrack} due to conflicts in evaluation of variables")
+            return
+        
         myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
         backtrack = self.check_ensure(ctl, True)
-        myprint(f"backtracking {backtrack}")
         if backtrack:
+            myprint(f"backtracking {backtrack} due to ensures")
             return
 
         self.check_evaluate(ctl)
 
-        self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
+        # If not backtracking, check optimization sums
+        backtrack = self.evaluate_optimization_sum(ctl)
+        print(f"Optimization sum evaluated to {self.optimization_sum.value}")
+        if backtrack:
+            print(f"backtracking {backtrack} due to optimization sum being worse than best value {self.best_value}")
+            return
 
-        print(f"Optimization sum value: {self.optimization_sum.value}")
+        # if everything is good, we update the best value
+        if self.using_optimization and self.optimization_sum.value > self.best_value:
+            print(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
+            self.best_value = self.optimization_sum.value
 
         myprint("CHECK DONE!")
 
@@ -138,7 +158,9 @@ class ConstraintHandlerPropagator:
         """
         This method is called to propagate the constraints in the propagator.
         It evaluates the expressions assigned to variables and checks the ensures.
-        If any ensure constraint is violated, it adds a nogood and propagates.
+        If a variable evaluation has a conflict, any ensure constraint is violated
+        or the optimization value if below the best and has been completely assigned
+        it adds a nogood and backtracks.
         """
         myprint(f"PROPAGATING with changes: {changes} and decision level {ctl.assignment.decision_level}")
         to_evaluate: set[VariableType] = set()
@@ -147,26 +169,58 @@ class ConstraintHandlerPropagator:
             if lit in self.literal2var:
                 to_evaluate.update(self.literal2var[lit])
 
-        self.evaluated_solver_assignment(ctl, to_evaluate)
+        backtrack = self.evaluated_solver_assignment(ctl, to_evaluate)
+        if backtrack:
+            myprint(f"PROPAGATION DONE, backtracking {backtrack} due to conflicts in evaluation of variables")
+            return
+        
         myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
 
         backtrack = self.check_ensure(ctl)
-        myprint(f"PROPAGATION DONE, backtracking {backtrack}")
 
         if backtrack:
+            myprint(f"PROPAGATION DONE, backtracking due to ensures: {backtrack}")
             return
         
         # If not backtracking, check optimization sums
+        self.evaluate_optimization_sum(ctl)
+        myprint(f"Optimization sum evaluated to {self.optimization_sum.value}")
+
+    def evaluate_optimization_sum(self, ctl: clingo.PropagateControl) -> bool:
+        """
+        This method evaluates the optimization sum in the propagator.
+        It uses the current solver assignment to determine its value.
+        If the optimization sum value is worse than the best value and all variables are assigned,
+        it adds a nogood to enforce the optimization.
+        return True if a backtrack is needed, False otherwise.
+        """
+        if not self.using_optimization:
+            return False
+        
         self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl)
 
-        print(f"Optimization sum evaluated to {self.optimization_sum.value}")
-
+        if self.optimization_sum.value != ValueStatus.NOT_SET:
+            if self.optimization_sum.value <= self.best_value and not self.optimization_sum.has_unassigned():
+                ng = set()
+                for symbol_var in self.optimization_sum.vars():
+                    var = self.symbol2var[symbol_var]
+                    ng = ng.union(self.get_reasons(var))
+                # ng = (l for l in ng if l < 0)  # only keep negative literals
+                print(f"Adding nogood {list(ng)} to enforce optimization")
+                if ctl.add_nogood(ng):
+                    assert False, "Added violated constraint but solver did not detect it"  
+                return True
+        
+        return False
+    
     def evaluated_solver_assignment(
         self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]
     ) -> bool:
         """
         This method evaluates the variables given using the current solver assignment.
         If a variable's value changes, it also evaluates its parents.
+        Return value should say if a backtrack is needed!
+        It returns False if a conflict is detected (No backtracking needed), True otherwise.
         """
         while len(to_evaluate) > 0:
             var = to_evaluate.pop()
@@ -175,12 +229,13 @@ class ConstraintHandlerPropagator:
             result = self.evaluate_variable(ctl, var)
             if result is None:
                 # variable had issue, stop propagation!
-                return False
+                return True
             elif result:
                 # variable changed, evaluate parents
                 myprint(f"Variable {var} changed, adding parents to evaluate queue: {var.parents}")
                 for parent in var.parents:
                     to_evaluate.add(parent)
+        return False
 
     def evaluate_variable(
         self, ctl: clingo.PropagateControl, var: VariableType
@@ -188,6 +243,8 @@ class ConstraintHandlerPropagator:
         """
         This method evaluates a variable in the propagator.
         It uses the current solver assignment to determine its value.
+        It returns True if the variable's value changed, False if it did not change,
+        and None if there was a conflict.
         """
         changed, conflict = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
         myprint(f"Variable {var} is changed: {changed}, conflict: {conflict}")
@@ -316,6 +373,7 @@ class ConstraintHandlerPropagator:
         """
 
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.OPTIMIZE_SUM, 3):
+            self.using_optimization = True
             literal = ctl.solver_literal(atom.literal)
             name = myClorm.cltopy(atom.symbol.arguments[0])
             expr = myClorm.cltopy(atom.symbol.arguments[1], evaluator.Expr)
