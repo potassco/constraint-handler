@@ -156,17 +156,17 @@ computed(subset,ARGS,val(bool,false)) :- compute(subset,ARGS), ARGS = (val(T1,S1
 %%%%%%%%%%%%%%%%%% Fold
 %%% set_fold: a -> b -> b
 
-_set_makeIndex(VM) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TACC,VACC),()))).
-_set_foldStep(fold,ARGS,0,TACC,VACC) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TACC,VACC),()))).
-compute(VO,SUBARGS) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TSTART,VSTART),()))),
-    _set_index(VM,I,TI,VI), _set_foldStep(fold,ARGS,I,TB,VB),
+_set_makeIndex(VM) :- compute(setFold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TACC,VACC),()))).
+_set_foldStep(setFold,ARGS,0,TACC,VACC) :- compute(setFold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TACC,VACC),()))).
+compute(VO,SUBARGS) :- compute(setFold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TSTART,VSTART),()))),
+    _set_index(VM,I,TI,VI), _set_foldStep(setFold,ARGS,I,TB,VB),
     SUBARGS = (val(TI,VI),(val(TB,VB),())).
-_set_foldStep(fold,ARGS,I+1,TN,NEXT) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TSTART,VSTART),()))),
-    _set_foldStep(fold,ARGS,I,TB,VB), _set_index(VM,I,TI,VI),
+_set_foldStep(setFold,ARGS,I+1,TN,NEXT) :- compute(setFold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TSTART,VSTART),()))),
+    _set_foldStep(setFold,ARGS,I,TB,VB), _set_index(VM,I,TI,VI),
     SUBARGS = (val(TI,VI),(val(TB,VB),())),
     computed(VO,SUBARGS,val(TN,NEXT)).
-computed(fold,ARGS,val(TB,VB)) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TSTART,VSTART),()))),
-    _set_foldStep(fold,ARGS,I,TB,VB),
+computed(setFold,ARGS,val(TB,VB)) :- compute(setFold,ARGS), ARGS = (val(function,VO),(val(set,VM),(val(TSTART,VSTART),()))),
+    _set_foldStep(setFold,ARGS,I,TB,VB),
     _set_lastIndex(VM,I).
 
 

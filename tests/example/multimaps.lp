@@ -163,15 +163,15 @@ evaluate(neq,(variable(a),(variable(d),()))).
 evaluate(neq,(variable(a),(variable(e),()))).
 
 
-evaluate(fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
+evaluate(multimapFold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
 computed(myproduct,ARGS,val(int,VA * VB)) :- compute(myproduct,ARGS),
     ARGS = (val(int,VA),(val(int,VB),())).
 
-evaluate(fold,(val(function,snoc),(variable(properDivisors2),(val(symbol,()),())))).
+evaluate(multimapFold,(val(function,snoc),(variable(properDivisors2),(val(symbol,()),())))).
 computed(snoc,ARGS,val(TN,VN)) :- compute(snoc,ARGS),
     ARGS = (val(TA,VA),(val(TB,VB),())),
     TN = TB, VN = (VB, VA).
 
 
 multimap_declare(m_empty,empty).
-evaluate(fold,(val(function,plus),(variable(empty),(val(int,0),())))).
+evaluate(multimapFold,(val(function,plus),(variable(empty),(val(int,0),())))).
