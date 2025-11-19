@@ -412,6 +412,7 @@ def multimap_fold(f, m, start):
         accu = f((key, value), accu)
     return accu
 
+
 def evaluate_multimap_operator(o, args):
     if None in args:
         return None
