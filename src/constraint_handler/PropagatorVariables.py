@@ -1,10 +1,9 @@
-import clingo
-
 from typing import Any, Sequence
 
-import constraint_handler.evaluator as evaluator
-from constraint_handler.PropagatorConstants import ValueStatus, FALSE_ASSIGNMENTS, DEBUG_PRINT
+import clingo
 
+import constraint_handler.evaluator as evaluator
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, FALSE_ASSIGNMENTS, ValueStatus
 
 
 def myprint(*args, **kwargs):
@@ -91,7 +90,6 @@ class VariableValue:
                 assert self.value == ValueStatus.NOT_SET
                 return False
 
-
         self.value = evaluator.evaluate_expr(self.expr, evaluations, env)
         myprint(f"{self.expr} evaluated to {self.value}")
 
@@ -160,7 +158,9 @@ class Variable:
             vars.update(value.vars())
         return vars
 
-    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> tuple[bool, bool]:
+    def evaluate(
+        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
+    ) -> tuple[bool, bool]:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -360,7 +360,9 @@ class SetVariable:
     def vars(self) -> set[clingo.Symbol]:
         return self.expressions.vars()
 
-    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> tuple[bool, bool]:
+    def evaluate(
+        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
+    ) -> tuple[bool, bool]:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -485,7 +487,9 @@ class DictVariable:
             vars.update(value.vars())
         return vars
 
-    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> tuple[bool, bool]:
+    def evaluate(
+        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
+    ) -> tuple[bool, bool]:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
@@ -567,9 +571,13 @@ class OptimizationSum:
         vals = set()
         for var, expr in self.expressions:
             myprint(f"Summing {expr} with value {expr.value}")
-            if expr.value != ValueStatus.NOT_SET and expr.value != ValueStatus.ASSIGNMENT_IS_FALSE and expr.value is not None:
+            if (
+                expr.value != ValueStatus.NOT_SET
+                and expr.value != ValueStatus.ASSIGNMENT_IS_FALSE
+                and expr.value is not None
+            ):
                 vals.add((var, expr.value))
-        
+
         return sum(value for var, value in vals)
 
     def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> bool:
@@ -585,15 +593,15 @@ class OptimizationSum:
                 self.decision_level = ctl.assignment.decision_level
                 self.value = total
                 return True
-        
+
         return False
-    
+
     def vars(self) -> set[clingo.Symbol]:
         vars = set()
         for var, expr in self.expressions:
             vars.update(expr.vars())
         return vars
-    
+
     def reset(self, dl: int):
         for var, expr in self.expressions:
             expr.reset(dl)
@@ -604,7 +612,7 @@ class OptimizationSum:
 
     def has_unassigned(self) -> bool:
         return any(expr.value == ValueStatus.NOT_SET for var, expr in self.expressions)
-    
+
 
 def make_dict_from_variables(
     variables: Sequence[Variable | SetVariable | DictVariable],

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 DEBUG_PRINT = False
 
 FALSE_ASSIGNMENTS = "FALSE_ASSIGNMENTS"
+
+
 # enum for value_not_set, assignment_is_false, and value_is_none
 class ValueStatus(enum.Enum):
     NOT_SET = "value_not_set"

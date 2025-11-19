@@ -1,13 +1,21 @@
-from typing import Any, Dict, List, NamedTuple, Sequence, Tuple
+from typing import Any, Dict, NamedTuple, Sequence, Tuple
 
 import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-from constraint_handler.PropagatorConstants import ValueStatus, AtomNames, DEBUG_PRINT
-from constraint_handler.PropagatorVariables import Variable, SetVariable, DictVariable, EvaluateVariable, OptimizationSum, make_dict_from_variables
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, AtomNames, ValueStatus
+from constraint_handler.PropagatorVariables import (
+    DictVariable,
+    EvaluateVariable,
+    OptimizationSum,
+    SetVariable,
+    Variable,
+    make_dict_from_variables,
+)
 
 VariableType = Variable | SetVariable | DictVariable
+
 
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
@@ -94,7 +102,7 @@ class ConstraintHandlerPropagator:
         if backtrack:
             myprint(f"backtracking {backtrack} due to conflicts in evaluation of variables")
             return
-        
+
         myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
         backtrack = self.check_ensure(ctl, True)
         if backtrack:
@@ -173,7 +181,7 @@ class ConstraintHandlerPropagator:
         if backtrack:
             myprint(f"PROPAGATION DONE, backtracking {backtrack} due to conflicts in evaluation of variables")
             return
-        
+
         myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
 
         backtrack = self.check_ensure(ctl)
@@ -181,7 +189,7 @@ class ConstraintHandlerPropagator:
         if backtrack:
             myprint(f"PROPAGATION DONE, backtracking due to ensures: {backtrack}")
             return
-        
+
         # If not backtracking, check optimization sums
         self.evaluate_optimization_sum(ctl)
         myprint(f"Optimization sum evaluated to {self.optimization_sum.value}")
@@ -196,7 +204,7 @@ class ConstraintHandlerPropagator:
         """
         if not self.using_optimization:
             return False
-        
+
         self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
 
         if self.optimization_sum.value != ValueStatus.NOT_SET:
@@ -208,14 +216,12 @@ class ConstraintHandlerPropagator:
                 # ng = (l for l in ng if l < 0)  # only keep negative literals
                 myprint(f"Adding nogood {list(ng)} to enforce optimization")
                 if ctl.add_nogood(ng):
-                    assert False, "Added violated constraint but solver did not detect it"  
+                    assert False, "Added violated constraint but solver did not detect it"
                 return True
-        
+
         return False
-    
-    def evaluated_solver_assignment(
-        self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]
-    ) -> bool:
+
+    def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]) -> bool:
         """
         This method evaluates the variables given using the current solver assignment.
         If a variable's value changes, it also evaluates its parents.
@@ -237,9 +243,7 @@ class ConstraintHandlerPropagator:
                     to_evaluate.add(parent)
         return False
 
-    def evaluate_variable(
-        self, ctl: clingo.PropagateControl, var: VariableType
-    ) -> bool | None:
+    def evaluate_variable(self, ctl: clingo.PropagateControl, var: VariableType) -> bool | None:
         """
         This method evaluates a variable in the propagator.
         It uses the current solver assignment to determine its value.
@@ -365,7 +369,7 @@ class ConstraintHandlerPropagator:
             id = myClorm.cltopy(arg)
             self.environment = evaluator.get_environment(id)
             # print("hello",self.environment)
-            
+
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
         """
         This method initializes the optimization sum from the ASP encoding.
@@ -375,7 +379,7 @@ class ConstraintHandlerPropagator:
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.OPTIMIZE_SUM, 3):
             self.using_optimization = True
             literal = ctl.solver_literal(atom.literal)
-            name = myClorm.cltopy(atom.symbol.arguments[0])
+            myClorm.cltopy(atom.symbol.arguments[0])
             expr = myClorm.cltopy(atom.symbol.arguments[1], evaluator.Expr)
             symbol = myClorm.cltopy(atom.symbol.arguments[2])
 
