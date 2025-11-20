@@ -360,8 +360,8 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_assign)
-        for (name, symbol_var, key_expr, expr), literal in assign.items():
+        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_assign)
+        for (name, symbol_var, key_expr, expr), literal in assigns.items():
             dictvar: DictVariable = self.symbol2var[symbol_var]
             dictvar.add_value(key_expr, expr, literal)
             if literal not in self.literal2var:
