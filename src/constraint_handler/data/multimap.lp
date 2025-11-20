@@ -119,17 +119,17 @@ compute(eq,SUBARGS) :- compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
 
-_multimap_makeIndex(VM) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TACC,VACC),()))).
-_multimap_foldStep(fold,ARGS,0,TACC,VACC) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TACC,VACC),()))).
-compute(VO,SUBARGS) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
-    _multimap_index(VM,I,TK,RK,TI,VI), _multimap_foldStep(fold,ARGS,I,TB,VB),
+_multimap_makeIndex(VM) :- compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TACC,VACC),()))).
+_multimap_foldStep(multimap_fold,ARGS,0,TACC,VACC) :- compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TACC,VACC),()))).
+compute(VO,SUBARGS) :- compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
+    _multimap_index(VM,I,TK,RK,TI,VI), _multimap_foldStep(multimap_fold,ARGS,I,TB,VB),
     SUBARGS = (val(TI,VI),(val(TB,VB),())).
-_multimap_foldStep(fold,ARGS,I+1,TN,NEXT) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
-    _multimap_foldStep(fold,ARGS,I,TB,VB), _multimap_index(VM,I,TK,RK,TI,VI),
+_multimap_foldStep(multimap_fold,ARGS,I+1,TN,NEXT) :- compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
+    _multimap_foldStep(multimap_fold,ARGS,I,TB,VB), _multimap_index(VM,I,TK,RK,TI,VI),
     SUBARGS = (val(TI,VI),(val(TB,VB),())),
     computed(VO,SUBARGS,val(TN,NEXT)).
-computed(fold,ARGS,val(TB,VB)) :- compute(fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
-    _multimap_foldStep(fold,ARGS,I,TB,VB),
+computed(multimap_fold,ARGS,val(TB,VB)) :- compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(val(TSTART,VSTART),()))),
+    _multimap_foldStep(multimap_fold,ARGS,I,TB,VB),
     _multimap_lastIndex(VM,I).
 
 _multimap_index(EM,0,TK,RK,TV,RV) :- _multimap_makeIndex(EM),

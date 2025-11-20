@@ -43,7 +43,7 @@ assign(dummy,ooo(M),E) :-
     value(a,multimap,M).
 
 assign(dummy,nb_squares,E) :-
-  E    = operation(fold,(LAMB,(SET,(START,())))),
+  E    = operation(set_fold,(LAMB,(SET,(START,())))),
   SET  = variable(shapes),
   ACCU = variable(accu),
   START= val(int,0),
@@ -77,7 +77,7 @@ evaluate(variable(isSquare),(val(multimap,d),())).
 evaluate(variable(isSquare),(val(multimap,e),())).
 
 assign(dummy,nb_squares2,E) :-
-  E    = operation(fold,(LAMB,(SET,(START,())))),
+  E    = operation(set_fold,(LAMB,(SET,(START,())))),
   SET  = variable(shapes),
   ACCU = variable(accu),
   START= val(int,0),

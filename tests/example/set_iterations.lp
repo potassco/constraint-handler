@@ -2,7 +2,7 @@
 
 
 %%% declare empty
-%%% fold(+,empty,0) = 0
+%%% set_fold(+,empty,0) = 0
 
 %%% numbers = { -2.0, -1, 0, 1, 2 }
 %%% squares = { x*x | x \in numbers, x float or x int } = { 0, 1, 4, 4.0 }
@@ -10,11 +10,11 @@
 
 %%% isquares = { x*x | x \in numbers, x int } = { 0, 1, 4 }
 %%% |isquares| = 3
-%%% fold(+,isquares,0) = 5
-%%% fold(*,isquares,1) = 0
+%%% set_fold(+,isquares,0) = 5
+%%% set_fold(*,isquares,1) = 0
 
 set_declare(d_empty,empty).
-evaluate(fold,(val(function,add),(variable(empty),(val(int,0),())))).
+evaluate(set_fold,(val(function,add),(variable(empty),(val(int,0),())))).
 
 assign(a_numbers, numbers, operation(makeSet,
                                     (val(float,float("-2.0")),
@@ -38,5 +38,5 @@ set_assign(a_squares, isquares, SQ) :-
     EX = val(int,X).
 
 evaluate(length,(variable(isquares),())).
-evaluate(fold,(val(function,add),(variable(isquares),(val(int,0),())))).
-evaluate(fold,(val(function,mult),(variable(isquares),(val(int,1),())))).
+evaluate(set_fold,(val(function,add),(variable(isquares),(val(int,0),())))).
+evaluate(set_fold,(val(function,mult),(variable(isquares),(val(int,1),())))).

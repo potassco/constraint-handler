@@ -34,11 +34,11 @@ BinaryOperator = PPEnum(
     ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
 )
 EqOperator = PPEnum("LogicOperator", ["eq", "neq"])
-SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "fold"])
+SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "set_fold"])
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 
-MultimapOperator = PPEnum("MultimapOperator", ["find", "isin", "multimapMake"])
+MultimapOperator = PPEnum("MultimapOperator", ["find", "isin", "multimapMake", "multimap_fold"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
@@ -405,6 +405,14 @@ class HashableDict(dict):
         return hash(frozenset(self.items()))
 
 
+def multimap_fold(f, m, start):
+    accu = start
+    for key in m:
+        value = m[key]
+        accu = f((key, value), accu)
+    return accu
+
+
 def evaluate_multimap_operator(o, args):
     if None in args:
         return None
@@ -415,6 +423,8 @@ def evaluate_multimap_operator(o, args):
         case MultimapOperator.find:
             assert len(args) == 2
             return args[1][args[0]] if args[0] in args[1] else None
+        case MultimapOperator.multimap_fold:
+            return multimap_fold(args[0], args[1], args[2])
         case MultimapOperator.multimapMake:
             d = dict()
             for key, value in args:
@@ -461,7 +471,7 @@ def evaluate_set_operator(o, args):
             return frozenset(args[0].intersection(*args[1:]))
         case SetOperator.subset:
             return args[0].issubset(args[1])
-        case SetOperator.fold:
+        case SetOperator.set_fold:
             return set_fold(args[0], args[1], args[2])
         case _:
             raise NotImplementedError("set_operator", o)
