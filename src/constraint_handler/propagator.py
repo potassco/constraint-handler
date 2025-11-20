@@ -294,7 +294,6 @@ class ConstraintHandlerPropagator:
         """
 
         for (op, args), literal in myClorm.findInPropagateInit(ctl,evaluator.Evaluate).items():
-
             var = EvaluateVariable(op, args, literal)
             self.evaluatevars.append(var)
 
@@ -303,9 +302,7 @@ class ConstraintHandlerPropagator:
         This method initializes the solver identifier from the ASP encoding.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.SOLVER_ID, 1):
-            arg = atom.symbol.arguments[0]
-            id = myClorm.cltopy(arg)
+        for id, _ in myClorm.findInPropagateInit(ctl,evaluator.Main_solverIdentifier).items():
             self.environment = evaluator.get_environment(id)
             # print("hello",self.environment)
 
@@ -315,13 +312,8 @@ class ConstraintHandlerPropagator:
         It reads the optimize_maximizeSum atoms and creates an OptimizationSum instance.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.OPTIMIZE_SUM, 3):
+        for (_, expr, symbol), literal in myClorm.findInPropagateInit(ctl,evaluator.Propagator_optimize_maximizeSum).items():
             self.using_optimization = True
-            literal = ctl.solver_literal(atom.literal)
-            myClorm.cltopy(atom.symbol.arguments[0])
-            expr = myClorm.cltopy(atom.symbol.arguments[1], evaluator.Expr)
-            symbol = myClorm.cltopy(atom.symbol.arguments[2])
-
             self.optimization_sum.add_value(symbol, expr, literal)
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
@@ -332,8 +324,7 @@ class ConstraintHandlerPropagator:
 
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_DECLARE, 2):
             literal = ctl.solver_literal(atom.literal)
-            name = myClorm.cltopy(atom.symbol.arguments[0])
-            symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
+            name, symbol_var = myClorm.cltopy(atom.symbol, evaluator.Propagator_set_declare)
             variable = SetVariable(name, symbol_var, literal)
 
             self.symbol2var[symbol_var] = variable
@@ -367,8 +358,7 @@ class ConstraintHandlerPropagator:
 
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.MULTIMAP_DECLARE, 2):
             literal = ctl.solver_literal(atom.literal)
-            name = myClorm.cltopy(atom.symbol.arguments[0])
-            symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
+            name, symbol_var = myClorm.cltopy(atom.symbol, evaluator.Propagator_multimap_declare)
             variable = DictVariable(name, symbol_var, literal)
             self.symbol2var[symbol_var] = variable
             self.assign2symbol_var[atom.symbol] = symbol_var
@@ -381,10 +371,7 @@ class ConstraintHandlerPropagator:
 
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.MULTIMAP_ASSIGN, 4):
             literal = ctl.solver_literal(atom.literal)
-            name = myClorm.cltopy(atom.symbol.arguments[0])
-            symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
-            key_expr = myClorm.cltopy(atom.symbol.arguments[2], evaluator.Expr)
-            expr = myClorm.cltopy(atom.symbol.arguments[3], evaluator.Expr)
+            name, symbol_var, key_expr, expr = myClorm.cltopy(atom.symbol, evaluator.Propagator_multimap_assign)
             dictvar: DictVariable = self.symbol2var[symbol_var]
             dictvar.add_value(key_expr, expr, literal)
             self.assign2symbol_var[atom.symbol] = symbol_var
