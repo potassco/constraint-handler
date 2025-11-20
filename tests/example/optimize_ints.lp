@@ -16,7 +16,7 @@ optimize_maximizeSum(dummy_opt,EXPR,X) :- item(X,W,V),
 
 
 assign(dummy,carried,EXPR) :-
-  EXPR = operation(multimapFold,(LAMB,(MAP,(STAR,())))),
+  EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),
   MAP  = variable(taken),
   ACCU = variable(accu),
   STAR = val(int,0),

@@ -39,10 +39,10 @@
 %%% max properDivisors2 = 3     min properDivisors2 = 1
 %%% a==b     not a==c     not a==d     not a==e     not a!=b     a!=c     a!=d     a!=e
 
-%%% f = fold(myproduct,properDivisors2,100) where myproduct(x,y) = x*y
+%%% f = multimap_fold(myproduct,properDivisors2,100) where myproduct(x,y) = x*y
 %%%   =  100 * 1 * 2 * 1 * 1 * 2 * 3 = 1200
 
-%%% l = fold(snoc,properDivisors2,())) where snoc(tail,head) = (tail, head)
+%%% l = multimap_fold(snoc,properDivisors2,())) where snoc(tail,head) = (tail, head)
 %%%   = (((((((),1),2),1),1),2),3)
 
 assign(acap, capitals, operation(multimapMake,
@@ -163,15 +163,15 @@ evaluate(neq,(variable(a),(variable(d),()))).
 evaluate(neq,(variable(a),(variable(e),()))).
 
 
-evaluate(multimapFold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
+evaluate(multimap_fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
 computed(myproduct,ARGS,val(int,VA * VB)) :- compute(myproduct,ARGS),
     ARGS = (val(int,VA),(val(int,VB),())).
 
-evaluate(multimapFold,(val(function,snoc),(variable(properDivisors2),(val(symbol,()),())))).
+evaluate(multimap_fold,(val(function,snoc),(variable(properDivisors2),(val(symbol,()),())))).
 computed(snoc,ARGS,val(TN,VN)) :- compute(snoc,ARGS),
     ARGS = (val(TA,VA),(val(TB,VB),())),
     TN = TB, VN = (VB, VA).
 
 
 multimap_declare(m_empty,empty).
-evaluate(multimapFold,(val(function,plus),(variable(empty),(val(int,0),())))).
+evaluate(multimap_fold,(val(function,plus),(variable(empty),(val(int,0),())))).

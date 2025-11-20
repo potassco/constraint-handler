@@ -34,11 +34,11 @@ BinaryOperator = PPEnum(
     ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
 )
 EqOperator = PPEnum("LogicOperator", ["eq", "neq"])
-SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "setFold"])
+SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "set_fold"])
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 
-MultimapOperator = PPEnum("MultimapOperator", ["find", "isin", "multimapMake", "multimapFold"])
+MultimapOperator = PPEnum("MultimapOperator", ["find", "isin", "multimapMake", "multimap_fold"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
@@ -423,7 +423,7 @@ def evaluate_multimap_operator(o, args):
         case MultimapOperator.find:
             assert len(args) == 2
             return args[1][args[0]] if args[0] in args[1] else None
-        case MultimapOperator.multimapFold:
+        case MultimapOperator.multimap_fold:
             return multimap_fold(args[0], args[1], args[2])
         case MultimapOperator.multimapMake:
             d = dict()
@@ -471,7 +471,7 @@ def evaluate_set_operator(o, args):
             return frozenset(args[0].intersection(*args[1:]))
         case SetOperator.subset:
             return args[0].issubset(args[1])
-        case SetOperator.setFold:
+        case SetOperator.set_fold:
             return set_fold(args[0], args[1], args[2])
         case _:
             raise NotImplementedError("set_operator", o)
