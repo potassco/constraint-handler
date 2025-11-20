@@ -279,7 +279,7 @@ class Evaluate(NamedTuple):
 
 
 Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
-Main_solverIdentifier.__annotations__ = { "id": constant }
+Main_solverIdentifier.__annotations__ = {"id": constant}
 
 
 class Propagator_assign(AssignAtom):

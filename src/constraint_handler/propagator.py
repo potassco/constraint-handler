@@ -1,4 +1,4 @@
-from typing import Any, Dict, NamedTuple, Sequence, Tuple
+from typing import Any, Dict, NamedTuple, Sequence
 
 import clingo
 
@@ -53,7 +53,7 @@ class ConstraintHandlerPropagator:
 
         self.get_solver_identifier(ctl)
 
-        self.ensure_lits = myClorm.findInPropagateInit(ctl,evaluator.Propagator_ensure)
+        self.ensure_lits = myClorm.findInPropagateInit(ctl, evaluator.Propagator_ensure)
         self.get_assign(ctl)
         self.get_set_declarations(ctl)
         self.get_multimap_declarations(ctl)
@@ -115,7 +115,7 @@ class ConstraintHandlerPropagator:
         It evaluates the expressions and checks if they hold true.
         If any ensure constraint is violated, it adds a nogood and propagates
         """
-        for (name,expr), lit in self.ensure_lits.items():
+        for (name, expr), lit in self.ensure_lits.items():
             myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
             evaluated = evaluator.evaluate_expr(
                 expr, make_dict_from_variables(self.symbol2var.values()), self.environment
@@ -259,14 +259,14 @@ class ConstraintHandlerPropagator:
 
         self.optimization_sum.reset(assignment.decision_level)
 
-
     def get_assign(self, ctl: clingo.PropagateInit):
         """
         This method initializes the variables from the ASP encoding.
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        for (name, symbol_var, expr), literal in myClorm.findInPropagateInit(ctl,evaluator.Propagator_assign).items():
+        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_assign)
+        for (name, symbol_var, expr), literal in assigns.items():
             if symbol_var in self.symbol2var:
                 variable: Variable = self.symbol2var[symbol_var]
             else:
@@ -289,7 +289,7 @@ class ConstraintHandlerPropagator:
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        for (op, args), literal in myClorm.findInPropagateInit(ctl,evaluator.Evaluate).items():
+        for (op, args), literal in myClorm.findInPropagateInit(ctl, evaluator.Evaluate).items():
             var = EvaluateVariable(op, args, literal)
             self.evaluatevars.append(var)
 
@@ -298,7 +298,7 @@ class ConstraintHandlerPropagator:
         This method initializes the solver identifier from the ASP encoding.
         """
 
-        for id, _ in myClorm.findInPropagateInit(ctl,evaluator.Main_solverIdentifier).items():
+        for id, _ in myClorm.findInPropagateInit(ctl, evaluator.Main_solverIdentifier).items():
             self.environment = evaluator.get_environment(id)
             # print("hello",self.environment)
 
@@ -308,7 +308,8 @@ class ConstraintHandlerPropagator:
         It reads the optimize_maximizeSum atoms and creates an OptimizationSum instance.
         """
 
-        for (_, expr, symbol), literal in myClorm.findInPropagateInit(ctl,evaluator.Propagator_optimize_maximizeSum).items():
+        maxSums = myClorm.findInPropagateInit(ctl, evaluator.Propagator_optimize_maximizeSum)
+        for (_, expr, symbol), literal in maxSums.items():
             self.using_optimization = True
             self.optimization_sum.add_value(symbol, expr, literal)
 
@@ -318,7 +319,8 @@ class ConstraintHandlerPropagator:
         It reads the set_declare and set_assign atoms and creates SetVariable instances.
         """
 
-        for (name, symbol_var), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_declare).items():
+        declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_declare)
+        for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
 
             self.symbol2var[symbol_var] = variable
@@ -329,7 +331,8 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        for (name, symbol_var, expr), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_assign).items():
+        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_assign)
+        for (name, symbol_var, expr), literal in assigns.items():
             setvar: SetVariable = self.symbol2var[symbol_var]
             setvar.add_value(expr, literal)
             if literal not in self.literal2var:
@@ -346,7 +349,8 @@ class ConstraintHandlerPropagator:
         """
         # TODO: this was done by copilot, check if it is correct!
 
-        for (name, symbol_var), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_declare).items():
+        declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_declare)
+        for (name, symbol_var), literal in declares.items():
             variable = DictVariable(name, symbol_var, literal)
             self.symbol2var[symbol_var] = variable
             if literal not in self.literal2var:
@@ -356,7 +360,8 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        for (name, symbol_var, key_expr, expr), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_assign).items():
+        myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_assign)
+        for (name, symbol_var, key_expr, expr), literal in assign.items():
             dictvar: DictVariable = self.symbol2var[symbol_var]
             dictvar.add_value(key_expr, expr, literal)
             if literal not in self.literal2var:

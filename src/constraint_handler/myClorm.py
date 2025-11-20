@@ -182,9 +182,7 @@ def cltopy(func, dtarget=typing.Any):
                         args = (cltopy(symb, targets.get(field)) for symb, field in zip(func.arguments, target._fields))
                         # print("returns",func,targets,args,[(symb,targets.get(field)) for symb,field in zip(func.arguments,fields)])
                         return target(*args)
-            elif any(
-                isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]
-            ):
+            elif any(isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]):
                 if cltopy(func) == target:
                     return target
             elif isinstance(utarget, type):
@@ -270,23 +268,24 @@ def cltopy(func, dtarget=typing.Any):
     # print(f"ctp disj failed all {func,dtarget}")
     raise FailedInstantiation(f"'{func}' is not of type {dtarget}")
 
-def findInModel(model,dtarget=typing.Any,atoms=True,theory=True):
+
+def findInModel(model, dtarget=typing.Any, atoms=True, theory=True):
     while isinstance(dtarget, typing.TypeAliasType):
         dtarget = dtarget.__value__
     rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
     result = dict()
     for target in rows:
         # print(f"ctp {target} {type(target)}")
-        for symb in model.symbols(atoms=atoms,theory=theory):
+        for symb in model.symbols(atoms=atoms, theory=theory):
             try:
-                v = cltopy(symb,target)
+                v = cltopy(symb, target)
                 result[symb] = v
             except FailedInstantiation:
                 pass
     return result
 
 
-def findInControl(ctl,dtarget=typing.Any):
+def findInControl(ctl, dtarget=typing.Any):
     while isinstance(dtarget, typing.TypeAliasType):
         dtarget = dtarget.__value__
     rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
@@ -300,17 +299,18 @@ def findInControl(ctl,dtarget=typing.Any):
             assert getattr(target, "__name__", None) is not None
             name = predicatedefn_default_predicate_name(target.__name__)
             arity = len(target._fields)
-            for atom in ctl.symbolic_atoms.by_signature(name,arity):
+            for atom in ctl.symbolic_atoms.by_signature(name, arity):
                 if atom.literal not in result:
                     try:
-                        result[atom.literal] = cltopy(atom.symbol,target)
+                        result[atom.literal] = cltopy(atom.symbol, target)
                     except FailedInstantiation:
                         pass
         else:
-            raise ValueError("findInControl: not sure what to do with target",target)
+            raise ValueError("findInControl: not sure what to do with target", target)
     return result
 
-def findInPropagateInit(ctl,dtarget):
+
+def findInPropagateInit(ctl, dtarget):
     while isinstance(dtarget, typing.TypeAliasType):
         dtarget = dtarget.__value__
     rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
@@ -320,11 +320,11 @@ def findInPropagateInit(ctl,dtarget):
             assert getattr(target, "__name__", None) is not None
             name = predicatedefn_default_predicate_name(target.__name__)
             arity = len(target._fields)
-            for atom in ctl.symbolic_atoms.by_signature(name,arity):
+            for atom in ctl.symbolic_atoms.by_signature(name, arity):
                 try:
-                    result[cltopy(atom.symbol,target)] = ctl.solver_literal(atom.literal)
+                    result[cltopy(atom.symbol, target)] = ctl.solver_literal(atom.literal)
                 except FailedInstantiation:
                     pass
         else:
-            raise ValueError("findInControl: not sure what to do with target",target)
+            raise ValueError("findInControl: not sure what to do with target", target)
     return result
