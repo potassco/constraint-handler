@@ -268,6 +268,44 @@ AssignAtom = namedtuple("Assign", ["label", "var", "expr"])
 AssignAtom.__annotations__ = {"label": constant, "var": constant, "expr": Expr}
 
 
+class Ensure(NamedTuple):
+    label: constant
+    expr: Expr
+
+
+class Evaluate(NamedTuple):
+    operator: Operator
+    args: list[Expr]
+
+
+class Propagator_assign(Assign):
+    pass
+
+
+class Propagator_ensure(Ensure):
+    pass
+
+
+class Propagator_set_declare(Set_declare):
+    pass
+
+
+class Propagator_set_assign(Set_assign):
+    pass
+
+
+class Propagator_multimap_declare(Multimap_declare):
+    pass
+
+
+class Propagator_multimap_assign(Multimap_assign):
+    pass
+
+
+class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
+    pass
+
+
 def collectVars(expr) -> set[clingo.Symbol]:
     match expr:
         case Operation(Variable(ov), args):

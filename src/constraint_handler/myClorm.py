@@ -310,5 +310,28 @@ def findInControl(ctl,dtarget=typing.Any):
             raise ValueError("findInControl: not sure what to do with target",target)
     return result
 
-#def findInControl(ctl,dtarget=typing.Any,atoms=True):
-#        for atom in ctl.symbolic_atoms.by_signature(AtomNames.ENSURE, 2):
+def findInPropagateInit(ctl,dtarget=typing.Any):
+    while isinstance(dtarget, typing.TypeAliasType):
+        dtarget = dtarget.__value__
+    rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
+    result = dict()
+    for target in rows:
+        if target == typing.Any:
+            print("evaluator.findInPropagateInit: ignoring typing.Any target")
+        elif getattr(target, "_fields", None) is not None:
+            assert getattr(target, "__name__", None) is not None
+            name = predicatedefn_default_predicate_name(target.__name__)
+            arity = len(target._fields)
+            for atom in ctl.symbolic_atoms.by_signature(name,arity):
+                try:
+                    result[cltopy(atom.symbol,target)] = ctl.solver_literal(atom.literal)
+                except FailedInstantiation:
+                    pass
+                #if ctl.solver_literal(atom.literal) not in result:
+                #    try:
+                #        result[ctl.solver_literal(atom.literal)] = cltopy(atom.symbol,target)
+                #    except FailedInstantiation:
+                #        pass
+        else:
+            raise ValueError("findInControl: not sure what to do with target",target)
+    return result

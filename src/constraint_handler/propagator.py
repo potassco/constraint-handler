@@ -62,8 +62,7 @@ class ConstraintHandlerPropagator:
         self.best_value: int | float = -1
         self.using_optimization: bool = False
 
-        self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
-        self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]] = {}
+        self.ensure_lits: Dict[evaluator.Propagator_ensure, int] = {}
 
         self.environment: Dict[Any, Any] = {}
 
@@ -75,7 +74,7 @@ class ConstraintHandlerPropagator:
 
         self.get_solver_identifier(ctl)
 
-        self.get_ensure(ctl)
+        self.ensure_lits = myClorm.findInPropagateInit(ctl,evaluator.Propagator_ensure)
         self.get_assign(ctl)
         self.get_set_declarations(ctl)
         self.get_multimap_declarations(ctl)
@@ -137,8 +136,7 @@ class ConstraintHandlerPropagator:
         It evaluates the expressions and checks if they hold true.
         If any ensure constraint is violated, it adds a nogood and propagates
         """
-        for symbol, lit in self.ensure_symbol_lit.items():
-            name, expr = self.ensure_symbol_parsed[symbol]
+        for (name,expr), lit in self.ensure_lits.items():
             myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
             evaluated = evaluator.evaluate_expr(
                 expr, make_dict_from_variables(self.symbol2var.values()), self.environment
@@ -291,34 +289,6 @@ class ConstraintHandlerPropagator:
         expr = myClorm.cltopy(symbol.arguments[2], evaluator.Expr)
         return name, var, expr
 
-    def parse_ensure(self, symbol: clingo.Symbol) -> Tuple[str, evaluator.Expr]:
-        """
-        Parses an ensure atom and returns its name and expression.
-        """
-        name = myClorm.cltopy(symbol.arguments[0])
-        expr = myClorm.cltopy(symbol.arguments[1], evaluator.Expr)
-        return name, expr
-
-    def parse_evaluate(self, symbol: clingo.Symbol) -> evaluator.Expr:
-        """
-        Parses an evaluate atom and returns its expression.
-        """
-        op = myClorm.cltopy(symbol.arguments[0], evaluator.Operator)
-        args = []
-        for s in myClorm.unnest(symbol.arguments[1]):
-            args.append(myClorm.cltopy(s, evaluator.Expr))
-
-        return op, args
-
-    def get_ensure(self, ctl: clingo.PropagateInit):
-        """
-        This method initializes the ensure constraints from the ASP encoding.
-        It reads the propagator_ensure atoms and stores their literals and parsed expressions.
-        """
-
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.ENSURE, 2):
-            self.ensure_symbol_lit[atom.symbol] = ctl.solver_literal(atom.literal)
-            self.ensure_symbol_parsed[atom.symbol] = self.parse_ensure(atom.symbol)
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
@@ -352,9 +322,7 @@ class ConstraintHandlerPropagator:
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.EVALUATE, 2):
-            literal = ctl.solver_literal(atom.literal)
-            op, args = self.parse_evaluate(atom.symbol)
+        for (op, args), literal in myClorm.findInPropagateInit(ctl,evaluator.Evaluate).items():
 
             var = EvaluateVariable(op, args, literal)
             self.evaluatevars.append(var)
