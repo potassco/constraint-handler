@@ -22,26 +22,6 @@ def myprint(*args, **kwargs):
         print(*args, **kwargs)
 
 
-class Value(NamedTuple):
-    name: clingo.Symbol
-    type_: evaluator.BaseType | None
-    value: bool | int | float | str | clingo.Symbol
-
-
-class Set_value(NamedTuple):
-    name: clingo.Symbol
-    type_: evaluator.BaseType | None
-    value: bool | int | float | str | clingo.Symbol
-
-
-class Multimap_value(NamedTuple):
-    name: clingo.Symbol
-    key_type: evaluator.BaseType | None
-    value_type: evaluator.BaseType | None
-    key: bool | int | float | str | clingo.Symbol
-    value: bool | int | float | str | clingo.Symbol
-
-
 class Evaluated(NamedTuple):
     name: evaluator.Operator
     expr: list[evaluator.Expr]
@@ -455,7 +435,7 @@ class ConstraintHandlerPropagator:
                 for value in final_value:
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
-                    pyAtom = Set_value(var.var, evaluator.get_baseType(value), value)
+                    pyAtom = evaluator.Set_value(var.var, evaluator.get_baseType(value), value)
                     # myprint(f"adding set atom {pyAtom}", end=" ")
                     clAtom = myClorm.pytocl(pyAtom)
                     myprint(f"= {clAtom}")
@@ -466,7 +446,7 @@ class ConstraintHandlerPropagator:
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
 
-                    pyAtom = Multimap_value(
+                    pyAtom = evaluator.Multimap_value(
                         var.var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
                     )
                     # myprint(f"adding multimap atom {pyAtom}", end=" ")
@@ -475,7 +455,7 @@ class ConstraintHandlerPropagator:
                     if not model.contains(clAtom):
                         model.extend([clAtom])
             else:
-                pyAtom = Value(var.var, evaluator.get_baseType(final_value), final_value)
+                pyAtom = evaluator.Value(var.var, evaluator.get_baseType(final_value), final_value)
                 # myprint(f"adding atom {pyAtom}", end=" ")
                 clAtom = myClorm.pytocl(pyAtom)
                 myprint(f"= {clAtom}")
