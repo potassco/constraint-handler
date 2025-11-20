@@ -260,15 +260,6 @@ class ConstraintHandlerPropagator:
 
         self.optimization_sum.reset(assignment.decision_level)
 
-    def parse_assign(self, symbol: clingo.Symbol) -> Tuple[str, clingo.Symbol, evaluator.Expr]:
-        """
-        Parses an assign atom and returns its name, variable, and expression.
-        """
-        name = myClorm.cltopy(symbol.arguments[0])
-        var = myClorm.cltopy(symbol.arguments[1])
-        expr = myClorm.cltopy(symbol.arguments[2], evaluator.Expr)
-        return name, var, expr
-
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
@@ -278,7 +269,7 @@ class ConstraintHandlerPropagator:
 
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.ASSIGN, 3):
             literal = ctl.solver_literal(atom.literal)
-            name, symbol_var, expr = self.parse_assign(atom.symbol)
+            name, symbol_var, expr = myClorm.cltopy(atom.symbol,evaluator.Propagator_assign)
             if symbol_var in self.symbol2var:
                 variable: Variable = self.symbol2var[symbol_var]
             else:
@@ -356,7 +347,7 @@ class ConstraintHandlerPropagator:
 
         for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_ASSIGN, 3):
             literal = ctl.solver_literal(atom.literal)
-            name, symbol_var, expr = self.parse_assign(atom.symbol)
+            name, symbol_var, expr = myClorm.cltopy(atom.symbol,evaluator.Propagator_set_assign)
             setvar: SetVariable = self.symbol2var[symbol_var]
             setvar.add_value(expr, literal)
             self.assign2symbol_var[atom.symbol] = symbol_var

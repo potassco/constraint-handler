@@ -278,7 +278,7 @@ class Evaluate(NamedTuple):
     args: list[Expr]
 
 
-class Propagator_assign(Assign):
+class Propagator_assign(AssignAtom):
     pass
 
 
