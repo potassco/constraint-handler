@@ -264,6 +264,10 @@ type Atom = ExecutionAtom | MultimapAtom | OptimizeAtom | SetAtom | VariableAtom
 type ResultAtom = Value | Set_value | Multimap_value | Warning
 
 
+AssignAtom = namedtuple("Assign", ["label", "var", "expr"])
+AssignAtom.__annotations__ = {"label": constant, "var": constant, "expr": Expr}
+
+
 def collectVars(expr) -> set[clingo.Symbol]:
     match expr:
         case Operation(Variable(ov), args):
