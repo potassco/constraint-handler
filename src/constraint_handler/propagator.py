@@ -4,7 +4,7 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, AtomNames, ValueStatus
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus
 from constraint_handler.PropagatorVariables import (
     DictVariable,
     EvaluateVariable,
@@ -33,7 +33,6 @@ class ConstraintHandlerPropagator:
 
     def __init__(self, check_only: bool = False):
         self.symbol2var: Dict[clingo.Symbol, VariableType] = {}
-        self.assign2symbol_var: Dict[clingo.Symbol, clingo.Symbol] = {}
         self.literal2var: Dict[int, list[VariableType]] = {}
 
         self.evaluatevars: list[EvaluateVariable] = []
@@ -267,9 +266,7 @@ class ConstraintHandlerPropagator:
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.ASSIGN, 3):
-            literal = ctl.solver_literal(atom.literal)
-            name, symbol_var, expr = myClorm.cltopy(atom.symbol,evaluator.Propagator_assign)
+        for (name, symbol_var, expr), literal in myClorm.findInPropagateInit(ctl,evaluator.Propagator_assign).items():
             if symbol_var in self.symbol2var:
                 variable: Variable = self.symbol2var[symbol_var]
             else:
@@ -277,7 +274,6 @@ class ConstraintHandlerPropagator:
                 self.symbol2var[symbol_var] = variable
 
             variable.add_value(expr, literal)
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(variable)
@@ -322,13 +318,10 @@ class ConstraintHandlerPropagator:
         It reads the set_declare and set_assign atoms and creates SetVariable instances.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_DECLARE, 2):
-            literal = ctl.solver_literal(atom.literal)
-            name, symbol_var = myClorm.cltopy(atom.symbol, evaluator.Propagator_set_declare)
+        for (name, symbol_var), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_declare).items():
             variable = SetVariable(name, symbol_var, literal)
 
             self.symbol2var[symbol_var] = variable
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(variable)
@@ -336,12 +329,9 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_ASSIGN, 3):
-            literal = ctl.solver_literal(atom.literal)
-            name, symbol_var, expr = myClorm.cltopy(atom.symbol,evaluator.Propagator_set_assign)
+        for (name, symbol_var, expr), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_assign).items():
             setvar: SetVariable = self.symbol2var[symbol_var]
             setvar.add_value(expr, literal)
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(setvar)
@@ -356,12 +346,9 @@ class ConstraintHandlerPropagator:
         """
         # TODO: this was done by copilot, check if it is correct!
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.MULTIMAP_DECLARE, 2):
-            literal = ctl.solver_literal(atom.literal)
-            name, symbol_var = myClorm.cltopy(atom.symbol, evaluator.Propagator_multimap_declare)
+        for (name, symbol_var), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_declare).items():
             variable = DictVariable(name, symbol_var, literal)
             self.symbol2var[symbol_var] = variable
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(variable)
@@ -369,12 +356,9 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.MULTIMAP_ASSIGN, 4):
-            literal = ctl.solver_literal(atom.literal)
-            name, symbol_var, key_expr, expr = myClorm.cltopy(atom.symbol, evaluator.Propagator_multimap_assign)
+        for (name, symbol_var, key_expr, expr), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_assign).items():
             dictvar: DictVariable = self.symbol2var[symbol_var]
             dictvar.add_value(key_expr, expr, literal)
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(dictvar)
