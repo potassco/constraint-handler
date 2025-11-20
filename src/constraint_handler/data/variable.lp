@@ -3,10 +3,6 @@
 #defined variable_declareOptional/1.
 #defined variable_domain/2.
 
-#show evaluated/4.
-#show value/3.
-#show ge_value/2.
-
 assign(CNAME,X,E) :- variable_define(CNAME,X,E).
 
 _variable_domain(X,val(bool,(false;true))) :- variable_declare(CNAME,X,bool).
