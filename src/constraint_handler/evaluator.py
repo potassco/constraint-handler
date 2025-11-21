@@ -264,6 +264,52 @@ type Atom = ExecutionAtom | MultimapAtom | OptimizeAtom | SetAtom | VariableAtom
 type ResultAtom = Value | Set_value | Multimap_value | Warning
 
 
+AssignAtom = namedtuple("Assign", ["label", "var", "expr"])
+AssignAtom.__annotations__ = {"label": constant, "var": constant, "expr": Expr}
+
+
+class Ensure(NamedTuple):
+    label: constant
+    expr: Expr
+
+
+class Evaluate(NamedTuple):
+    operator: Operator
+    args: list[Expr]
+
+
+Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
+Main_solverIdentifier.__annotations__ = {"id": constant}
+
+
+class Propagator_assign(AssignAtom):
+    pass
+
+
+class Propagator_ensure(Ensure):
+    pass
+
+
+class Propagator_set_declare(Set_declare):
+    pass
+
+
+class Propagator_set_assign(Set_assign):
+    pass
+
+
+class Propagator_multimap_declare(Multimap_declare):
+    pass
+
+
+class Propagator_multimap_assign(Multimap_assign):
+    pass
+
+
+class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
+    pass
+
+
 def collectVars(expr) -> set[clingo.Symbol]:
     match expr:
         case Operation(Variable(ov), args):

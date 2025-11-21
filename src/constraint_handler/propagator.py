@@ -1,10 +1,10 @@
-from typing import Any, Dict, NamedTuple, Sequence, Tuple
+from typing import Any, Dict, NamedTuple, Sequence
 
 import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, AtomNames, ValueStatus
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus
 from constraint_handler.PropagatorVariables import (
     DictVariable,
     EvaluateVariable,
@@ -22,26 +22,6 @@ def myprint(*args, **kwargs):
         print(*args, **kwargs)
 
 
-class Value(NamedTuple):
-    name: clingo.Symbol
-    type_: evaluator.BaseType | None
-    value: bool | int | float | str | clingo.Symbol
-
-
-class Set_value(NamedTuple):
-    name: clingo.Symbol
-    type_: evaluator.BaseType | None
-    value: bool | int | float | str | clingo.Symbol
-
-
-class Multimap_value(NamedTuple):
-    name: clingo.Symbol
-    key_type: evaluator.BaseType | None
-    value_type: evaluator.BaseType | None
-    key: bool | int | float | str | clingo.Symbol
-    value: bool | int | float | str | clingo.Symbol
-
-
 class Evaluated(NamedTuple):
     name: evaluator.Operator
     expr: list[evaluator.Expr]
@@ -53,7 +33,6 @@ class ConstraintHandlerPropagator:
 
     def __init__(self, check_only: bool = False):
         self.symbol2var: Dict[clingo.Symbol, VariableType] = {}
-        self.assign2symbol_var: Dict[clingo.Symbol, clingo.Symbol] = {}
         self.literal2var: Dict[int, list[VariableType]] = {}
 
         self.evaluatevars: list[EvaluateVariable] = []
@@ -62,8 +41,7 @@ class ConstraintHandlerPropagator:
         self.best_value: int | float = -1
         self.using_optimization: bool = False
 
-        self.ensure_symbol_lit: Dict[clingo.Symbol, int] = {}
-        self.ensure_symbol_parsed: Dict[clingo.Symbol, Tuple[str, evaluator.Expr]] = {}
+        self.ensure_lits: Dict[evaluator.Propagator_ensure, int] = {}
 
         self.environment: Dict[Any, Any] = {}
 
@@ -75,7 +53,7 @@ class ConstraintHandlerPropagator:
 
         self.get_solver_identifier(ctl)
 
-        self.get_ensure(ctl)
+        self.ensure_lits = myClorm.findInPropagateInit(ctl, evaluator.Propagator_ensure)
         self.get_assign(ctl)
         self.get_set_declarations(ctl)
         self.get_multimap_declarations(ctl)
@@ -137,8 +115,7 @@ class ConstraintHandlerPropagator:
         It evaluates the expressions and checks if they hold true.
         If any ensure constraint is violated, it adds a nogood and propagates
         """
-        for symbol, lit in self.ensure_symbol_lit.items():
-            name, expr = self.ensure_symbol_parsed[symbol]
+        for (name, expr), lit in self.ensure_lits.items():
             myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
             evaluated = evaluator.evaluate_expr(
                 expr, make_dict_from_variables(self.symbol2var.values()), self.environment
@@ -282,53 +259,14 @@ class ConstraintHandlerPropagator:
 
         self.optimization_sum.reset(assignment.decision_level)
 
-    def parse_assign(self, symbol: clingo.Symbol) -> Tuple[str, clingo.Symbol, evaluator.Expr]:
-        """
-        Parses an assign atom and returns its name, variable, and expression.
-        """
-        name = myClorm.cltopy(symbol.arguments[0])
-        var = myClorm.cltopy(symbol.arguments[1])
-        expr = myClorm.cltopy(symbol.arguments[2], evaluator.Expr)
-        return name, var, expr
-
-    def parse_ensure(self, symbol: clingo.Symbol) -> Tuple[str, evaluator.Expr]:
-        """
-        Parses an ensure atom and returns its name and expression.
-        """
-        name = myClorm.cltopy(symbol.arguments[0])
-        expr = myClorm.cltopy(symbol.arguments[1], evaluator.Expr)
-        return name, expr
-
-    def parse_evaluate(self, symbol: clingo.Symbol) -> evaluator.Expr:
-        """
-        Parses an evaluate atom and returns its expression.
-        """
-        op = myClorm.cltopy(symbol.arguments[0], evaluator.Operator)
-        args = []
-        for s in myClorm.unnest(symbol.arguments[1]):
-            args.append(myClorm.cltopy(s, evaluator.Expr))
-
-        return op, args
-
-    def get_ensure(self, ctl: clingo.PropagateInit):
-        """
-        This method initializes the ensure constraints from the ASP encoding.
-        It reads the propagator_ensure atoms and stores their literals and parsed expressions.
-        """
-
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.ENSURE, 2):
-            self.ensure_symbol_lit[atom.symbol] = ctl.solver_literal(atom.literal)
-            self.ensure_symbol_parsed[atom.symbol] = self.parse_ensure(atom.symbol)
-
     def get_assign(self, ctl: clingo.PropagateInit):
         """
         This method initializes the variables from the ASP encoding.
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.ASSIGN, 3):
-            literal = ctl.solver_literal(atom.literal)
-            name, symbol_var, expr = self.parse_assign(atom.symbol)
+        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_assign)
+        for (name, symbol_var, expr), literal in assigns.items():
             if symbol_var in self.symbol2var:
                 variable: Variable = self.symbol2var[symbol_var]
             else:
@@ -336,7 +274,6 @@ class ConstraintHandlerPropagator:
                 self.symbol2var[symbol_var] = variable
 
             variable.add_value(expr, literal)
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(variable)
@@ -352,10 +289,7 @@ class ConstraintHandlerPropagator:
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.EVALUATE, 2):
-            literal = ctl.solver_literal(atom.literal)
-            op, args = self.parse_evaluate(atom.symbol)
-
+        for (op, args), literal in myClorm.findInPropagateInit(ctl, evaluator.Evaluate).items():
             var = EvaluateVariable(op, args, literal)
             self.evaluatevars.append(var)
 
@@ -364,9 +298,7 @@ class ConstraintHandlerPropagator:
         This method initializes the solver identifier from the ASP encoding.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.SOLVER_ID, 1):
-            arg = atom.symbol.arguments[0]
-            id = myClorm.cltopy(arg)
+        for id, _ in myClorm.findInPropagateInit(ctl, evaluator.Main_solverIdentifier).items():
             self.environment = evaluator.get_environment(id)
             # print("hello",self.environment)
 
@@ -376,13 +308,9 @@ class ConstraintHandlerPropagator:
         It reads the optimize_maximizeSum atoms and creates an OptimizationSum instance.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.OPTIMIZE_SUM, 3):
+        maxSums = myClorm.findInPropagateInit(ctl, evaluator.Propagator_optimize_maximizeSum)
+        for (_, expr, symbol), literal in maxSums.items():
             self.using_optimization = True
-            literal = ctl.solver_literal(atom.literal)
-            myClorm.cltopy(atom.symbol.arguments[0])
-            expr = myClorm.cltopy(atom.symbol.arguments[1], evaluator.Expr)
-            symbol = myClorm.cltopy(atom.symbol.arguments[2])
-
             self.optimization_sum.add_value(symbol, expr, literal)
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
@@ -391,14 +319,11 @@ class ConstraintHandlerPropagator:
         It reads the set_declare and set_assign atoms and creates SetVariable instances.
         """
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_DECLARE, 2):
-            literal = ctl.solver_literal(atom.literal)
-            name = myClorm.cltopy(atom.symbol.arguments[0])
-            symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
+        declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_declare)
+        for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
 
             self.symbol2var[symbol_var] = variable
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(variable)
@@ -406,12 +331,10 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.SET_ASSIGN, 3):
-            literal = ctl.solver_literal(atom.literal)
-            name, symbol_var, expr = self.parse_assign(atom.symbol)
+        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_assign)
+        for (name, symbol_var, expr), literal in assigns.items():
             setvar: SetVariable = self.symbol2var[symbol_var]
             setvar.add_value(expr, literal)
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(setvar)
@@ -426,13 +349,10 @@ class ConstraintHandlerPropagator:
         """
         # TODO: this was done by copilot, check if it is correct!
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.MULTIMAP_DECLARE, 2):
-            literal = ctl.solver_literal(atom.literal)
-            name = myClorm.cltopy(atom.symbol.arguments[0])
-            symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
+        declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_declare)
+        for (name, symbol_var), literal in declares.items():
             variable = DictVariable(name, symbol_var, literal)
             self.symbol2var[symbol_var] = variable
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(variable)
@@ -440,15 +360,10 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        for atom in ctl.symbolic_atoms.by_signature(AtomNames.MULTIMAP_ASSIGN, 4):
-            literal = ctl.solver_literal(atom.literal)
-            name = myClorm.cltopy(atom.symbol.arguments[0])
-            symbol_var = myClorm.cltopy(atom.symbol.arguments[1])
-            key_expr = myClorm.cltopy(atom.symbol.arguments[2], evaluator.Expr)
-            expr = myClorm.cltopy(atom.symbol.arguments[3], evaluator.Expr)
+        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_assign)
+        for (name, symbol_var, key_expr, expr), literal in assigns.items():
             dictvar: DictVariable = self.symbol2var[symbol_var]
             dictvar.add_value(key_expr, expr, literal)
-            self.assign2symbol_var[atom.symbol] = symbol_var
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(dictvar)
@@ -487,7 +402,7 @@ class ConstraintHandlerPropagator:
                 for value in final_value:
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
-                    pyAtom = Set_value(var.var, evaluator.get_baseType(value), value)
+                    pyAtom = evaluator.Set_value(var.var, evaluator.get_baseType(value), value)
                     # myprint(f"adding set atom {pyAtom}", end=" ")
                     clAtom = myClorm.pytocl(pyAtom)
                     myprint(f"= {clAtom}")
@@ -498,7 +413,7 @@ class ConstraintHandlerPropagator:
                     if value is None or value is ValueStatus.NOT_SET:
                         continue
 
-                    pyAtom = Multimap_value(
+                    pyAtom = evaluator.Multimap_value(
                         var.var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
                     )
                     # myprint(f"adding multimap atom {pyAtom}", end=" ")
@@ -507,7 +422,7 @@ class ConstraintHandlerPropagator:
                     if not model.contains(clAtom):
                         model.extend([clAtom])
             else:
-                pyAtom = Value(var.var, evaluator.get_baseType(final_value), final_value)
+                pyAtom = evaluator.Value(var.var, evaluator.get_baseType(final_value), final_value)
                 # myprint(f"adding atom {pyAtom}", end=" ")
                 clAtom = myClorm.pytocl(pyAtom)
                 myprint(f"= {clAtom}")

@@ -7,6 +7,10 @@ import typing
 import clingo
 
 
+class FailedInstantiation(Exception):
+    pass
+
+
 def predicatedefn_default_predicate_name(name):
     return name[0].lower() + name[1:] if name else ""
 
@@ -118,7 +122,7 @@ def pytocl(v, dtarget=None):
             # print(name,args)
             return clingo.Function(name, [pytocl(getattr(v, name), field) for name, field in args.items()])
     # print(f"ptc disj failed all {v,dtarget}")
-    raise TypeError(f"'{v}' is not of type {dtarget}")
+    raise FailedInstantiation(f"'{v}' is not of type {dtarget}")
 
 
 def cltopyNoTarget(func):
@@ -178,10 +182,7 @@ def cltopy(func, dtarget=typing.Any):
                         args = (cltopy(symb, targets.get(field)) for symb, field in zip(func.arguments, target._fields))
                         # print("returns",func,targets,args,[(symb,targets.get(field)) for symb,field in zip(func.arguments,fields)])
                         return target(*args)
-            # elif any(isinstance(target,t) for t in [bool,int,str,float,list,clingo.Symbol]): # + list(containers.values())):
-            elif any(
-                isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]
-            ):  # + list(containers.values())):
+            elif any(isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]):
                 if cltopy(func) == target:
                     return target
             elif isinstance(utarget, type):
@@ -191,7 +192,6 @@ def cltopy(func, dtarget=typing.Any):
                 elif issubclass(utarget, enum.Enum):
                     if func.type == clingo.SymbolType.Function and len(func.arguments) == 0 and func.name in target:
                         return target(func.name)
-                # TODO: make it work with ints as well?
                 elif issubclass(utarget, bool):
                     if (
                         func.type == clingo.SymbolType.Function
@@ -248,17 +248,6 @@ def cltopy(func, dtarget=typing.Any):
                         return result
             ### Missing is instance of NamedTuple
             ######
-            # elif issubclass(target,int):
-            #    if func.type == clingo.SymbolType.Number:
-            #       return target(func.number)
-            # elif issubclass(target,str):
-            #    if func.type == clingo.SymbolType.String:
-            #       return target(func.string)
-            # elif issubclass(target,float):
-            #    if func.type == clingo.SymbolType.Function and func.name == "float" and len(func.arguments) == 1:
-            #       arg = func.arguments[0]
-            #       if arg.type == clingo.SymbolType.String:
-            #          return target(arg.string)
             else:
                 if func.type == clingo.SymbolType.Function:
                     print(f"helloe func ={func}, target = {target}")
@@ -272,14 +261,70 @@ def cltopy(func, dtarget=typing.Any):
                     if name == func.name and len(args) == len(func.arguments):
                         return target(*(cltopy(symb, field) for symb, field in zip(func.arguments, args)))
             # print(f"ctp conj failure '{func}' is not of type '{target}'")
-            raise TypeError(f"'{func}' is not of type '{target}'")
-        except (ValueError, TypeError):
-            # except TypeError as exn:
+            raise FailedInstantiation(f"'{func}' is not of type '{target}'")
+        except FailedInstantiation:
             # print(f"disj failed once {func,target} {exn}")
             pass
-        except Exception as exn:
-            print("hello", exn)
-            print(exn)
-            raise exn
     # print(f"ctp disj failed all {func,dtarget}")
-    raise TypeError(f"'{func}' is not of type {dtarget}")
+    raise FailedInstantiation(f"'{func}' is not of type {dtarget}")
+
+
+def findInModel(model, dtarget=typing.Any, atoms=True, theory=True):
+    while isinstance(dtarget, typing.TypeAliasType):
+        dtarget = dtarget.__value__
+    rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
+    result = dict()
+    for target in rows:
+        # print(f"ctp {target} {type(target)}")
+        for symb in model.symbols(atoms=atoms, theory=theory):
+            try:
+                v = cltopy(symb, target)
+                result[symb] = v
+            except FailedInstantiation:
+                pass
+    return result
+
+
+def findInControl(ctl, dtarget=typing.Any):
+    while isinstance(dtarget, typing.TypeAliasType):
+        dtarget = dtarget.__value__
+    rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
+    result = dict()
+    for target in rows:
+        if target == typing.Any:
+            for atom in ctl.symbolic_atoms:
+                if atom.literal not in result:
+                    result[atom.literal] = cltopy(atom.symbol)
+        elif getattr(target, "_fields", None) is not None:
+            assert getattr(target, "__name__", None) is not None
+            name = predicatedefn_default_predicate_name(target.__name__)
+            arity = len(target._fields)
+            for atom in ctl.symbolic_atoms.by_signature(name, arity):
+                if atom.literal not in result:
+                    try:
+                        result[atom.literal] = cltopy(atom.symbol, target)
+                    except FailedInstantiation:
+                        pass
+        else:
+            raise ValueError("findInControl: not sure what to do with target", target)
+    return result
+
+
+def findInPropagateInit(ctl, dtarget):
+    while isinstance(dtarget, typing.TypeAliasType):
+        dtarget = dtarget.__value__
+    rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
+    result = dict()
+    for target in rows:
+        if getattr(target, "_fields", None) is not None:
+            assert getattr(target, "__name__", None) is not None
+            name = predicatedefn_default_predicate_name(target.__name__)
+            arity = len(target._fields)
+            for atom in ctl.symbolic_atoms.by_signature(name, arity):
+                try:
+                    result[cltopy(atom.symbol, target)] = ctl.solver_literal(atom.literal)
+                except FailedInstantiation:
+                    pass
+        else:
+            raise ValueError("findInControl: not sure what to do with target", target)
+    return result
