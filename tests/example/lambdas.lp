@@ -35,12 +35,7 @@ multimap_assign(dummy,e,val(symbol,width),val(int,1)).
 multimap_assign(dummy,e,val(symbol,height),val(int,1)).
 
 set_declare(d_s,shapes).
-set_assign(a_s,shapes,val(multimap,M)) :- value(S,multimap,M), S=(a;b;c;d;e).
-
-assign(dummy,ooo(M),E) :-
-  E = operation(find,(val(symbol,kind),(MAP,()))),
-    MAP=val(multimap,M),
-    value(a,multimap,M).
+set_assign(a_s,shapes,variable(S)) :- S=(a;b;c;d;e).
 
 assign(dummy,nb_squares,E) :-
   E    = operation(set_fold,(LAMB,(SET,(START,())))),
@@ -70,11 +65,11 @@ define(dis,isSquare,(shape,()),ISSQ) :-
   SREC = operation(conj,(RECT,(operation(eq,(WIDT,(HEIG,()))),()))),
   ISSQ = operation(disj,(SQUA,(SREC,()))).
 
-evaluate(variable(isSquare),(val(multimap,a),())).
-evaluate(variable(isSquare),(val(multimap,b),())).
-evaluate(variable(isSquare),(val(multimap,c),())).
-evaluate(variable(isSquare),(val(multimap,d),())).
-evaluate(variable(isSquare),(val(multimap,e),())).
+evaluate(variable(isSquare),(variable(a),())).
+evaluate(variable(isSquare),(variable(b),())).
+evaluate(variable(isSquare),(variable(c),())).
+evaluate(variable(isSquare),(variable(d),())).
+evaluate(variable(isSquare),(variable(e),())).
 
 assign(dummy,nb_squares2,E) :-
   E    = operation(set_fold,(LAMB,(SET,(START,())))),
