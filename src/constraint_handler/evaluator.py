@@ -274,7 +274,7 @@ class Ensure(NamedTuple):
 
 
 class Evaluate(NamedTuple):
-    operator: Operator
+    operator: Operator | Variable
     args: list[Expr]
 
 
@@ -313,7 +313,7 @@ class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
 def collectVars(expr) -> set[clingo.Symbol]:
     match expr:
         case Operation(Variable(ov), args):
-            return frozenset.union(*(collectVars(e) for e in args + [ov]))
+            return frozenset.union(*(collectVars(e) for e in args + [Variable(ov)]))
         case Operation(o, args):
             return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
         case Variable(a):
@@ -656,16 +656,22 @@ def evaluate_operator(symbols, o, args, globals=None):
                 assert False
 
 
-def evaluate_lambda(symbols, vars, args, body, globals=None):
-    # print("evaluate_lambda",symbols,vars,args,body)
-    d = dict(symbols)
-    return evaluate_expr(body, d, globals)
+def evaluate_lambda(symbols, vars, body, globals=None):
+    def myf(*args):
+        # print("evaluate_lambda",symbols,vars,args,body)
+        d = dict(symbols)
+        assert len(vars) == len(args)
+        for (v, a) in zip(vars,args):
+            d[v] = a
+        return evaluate_expr(body, d, globals)
+    return myf
 
 
 def evaluate_expr(expr, symbols, globals=None):
     match expr:
         case Operation(Variable(ov), eargs):
-            assert False  # TODO: handle variable operator
+            args = [evaluate_expr(a, symbols, globals) for a in eargs]
+            return symbols[ov](*args)
         case Operation(o, eargs):
             args = [evaluate_expr(a, symbols, globals) for a in eargs]
             return evaluate_operator(symbols, o, args, globals)
@@ -677,9 +683,7 @@ def evaluate_expr(expr, symbols, globals=None):
         case Val(type_, val):
             return val
         case Lambda(vars, body):
-            return lambda *args: evaluate_lambda(symbols, vars, args, body, globals)
-            assert False
-            # TODO
+            return evaluate_lambda(symbols, vars, body, globals)
         case tuple(eargs):
             args = tuple(evaluate_expr(a, symbols, globals) for a in eargs)
             return args
