@@ -424,7 +424,7 @@ class DictVariable:
     def __init__(self, name: str, var: clingo.Symbol, lit: int):
         self.name = name
         self.var = var
-        self.expressions: dict[VariableValue, SetVariableValue] = {}
+        self.expressions: dict[VariableValue, SetVariableValue] = evaluator.HashableDict()
 
         self.value = ValueStatus.NOT_SET
 
@@ -459,7 +459,7 @@ class DictVariable:
         Returns a dictionary mapping keys to their assigned values.
         If any value is unassigned, returns None for that key.
         """
-        result = {}
+        result = evaluator.HashableDict()
         for key, value in self.expressions.items():
             key_val = key.value
             val = value.get_value()
