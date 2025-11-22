@@ -8,6 +8,7 @@ from enum import Enum
 from typing import NamedTuple
 
 import clingo
+import constraint_handler.myClorm as myClorm
 
 shared_environment = {"math": __import__("math")}
 solver_environment = dict()
@@ -77,6 +78,8 @@ class Val(NamedTuple):
     type_: BaseType | clingo.Symbol
     value: constant
 
+    def __repr__(self):
+        return f"Val({str(self.type_)},{str(self.value)})"
 
 class Error(NamedTuple):
     message: str
@@ -87,11 +90,11 @@ class FailIntegrity(NamedTuple):
 
 
 class Operation(NamedTuple):
-    op: Operator | Variable
-    args: list[Expr]
+    op: Operator | Variable | Lambda
+    args: myClorm.HashableList[Expr]
 
     def __repr__(self):
-        comma = ", "
+        comma = ","
         return f"{self.op}({comma.join(str(arg) for arg in self.args)})"
 
 
@@ -103,9 +106,11 @@ class Variable(NamedTuple):
 
 
 class Lambda(NamedTuple):
-    vars: list[clingo.Symbol]
+    vars: myClorm.HashableList[clingo.Symbol]
     expr: Expr
 
+    def __repr__(self):
+        return f"Lambda({[str(x) for x in self.vars]},{str(self.expr)})"
 
 type ReducedExpr = Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TODO handle Lambda
 type Expr = Variable | Operation | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
@@ -312,10 +317,10 @@ class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
 
 def collectVars(expr) -> set[clingo.Symbol]:
     match expr:
-        case Operation(Variable(ov), args):
-            return frozenset.union(*(collectVars(e) for e in args + [Variable(ov)]))
-        case Operation(o, args):
-            return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
+        case Operation(eo, eargs):
+            ov = collectVars(eo) if not isinstance(eo, Operator) else frozenset()
+            av = frozenset.union(*(collectVars(e) for e in eargs)) if eargs else frozenset()
+            return ov | av
         case Variable(a):
             return frozenset({a})
         case Val(t, v):
@@ -365,6 +370,8 @@ def reducedExpr(v):
         return frozenset({reducedExpr(x) for x in v})
     elif isinstance(v, dict):
         raise NotImplementedError("reducedExpr is not implemented for", dict, v)
+    elif isinstance(v, Lambda):
+        return v
     else:
         raise NotImplementedError("reducedExpr is not implemented for", v)
 
@@ -449,6 +456,9 @@ def evaluate_logic_operator(o, args):
 class HashableDict(dict):
     def __hash__(self):
         return hash(frozenset(self.items()))
+    def __repr__(self):
+        kv = ', '.join(f"{str(k)}:{str(v)}" for k,v in self.items())
+        return f"{{{kv}}}"
 
 
 def multimap_fold(f, m, start):
@@ -518,7 +528,8 @@ def evaluate_set_operator(o, args):
         case SetOperator.subset:
             return args[0].issubset(args[1])
         case SetOperator.set_fold:
-            return set_fold(args[0], args[1], args[2])
+            o = lambda *aaa: evaluate_operator({},args[0],aaa)
+            return set_fold(o, args[1], args[2])
         case _:
             raise NotImplementedError("set_operator", o)
 
@@ -669,11 +680,9 @@ def evaluate_lambda(symbols, vars, body, globals=None):
 
 def evaluate_expr(expr, symbols, globals=None):
     match expr:
-        case Operation(Variable(ov), eargs):
+        case Operation(eo, eargs):
             args = [evaluate_expr(a, symbols, globals) for a in eargs]
-            return symbols[ov](*args)
-        case Operation(o, eargs):
-            args = [evaluate_expr(a, symbols, globals) for a in eargs]
+            o = evaluate_expr(eo, symbols, globals)
             return evaluate_operator(symbols, o, args, globals)
         case Variable(a):
             if a in symbols:
@@ -683,7 +692,15 @@ def evaluate_expr(expr, symbols, globals=None):
         case Val(type_, val):
             return val
         case Lambda(vars, body):
-            return evaluate_lambda(symbols, vars, body, globals)
+            nsymbols = { x:v for x,v in symbols.items() if x not in vars}
+            nglobals = dict(globals) if globals is not None else None
+            if globals is not None:
+                for x in vars:
+                    if x in nglobals:
+                        del nglobals[x]
+            return Lambda(vars, beta_reduction(nsymbols, body))
+        case o if isinstance(o,Operator):
+            return expr
         case tuple(eargs):
             args = tuple(evaluate_expr(a, symbols, globals) for a in eargs)
             return args
@@ -693,7 +710,7 @@ def evaluate_expr(expr, symbols, globals=None):
         case None:
             return None
         case _:
-            print(expr)
+            print("evaluate_expr", type(expr), expr)
             assert False
 
 
@@ -701,7 +718,7 @@ def beta_reduction(symbols, expr):
     match expr:
         case Operation(eo, eargs):
             o = beta_reduction(symbols, eo)
-            args = [beta_reduction(symbols, e) for e in eargs]
+            args = myClorm.HashableList([beta_reduction(symbols, e) for e in eargs])
             return Operation(o, args)
         case Variable(a):
             if a in symbols:
@@ -711,7 +728,8 @@ def beta_reduction(symbols, expr):
         case Val(type_, val):
             return expr
         case Lambda(vars, body):
-            return expr  # TODO should we do replacements inside body?
+            nsymbols = { x:v for x,v in symbols.items() if x not in vars}
+            return Lambda(vars,beta_reduction(nsymbols, body))
         case tuple(eargs):
             args = tuple(beta_reduction(symbols, e) for e in eargs)
             return args

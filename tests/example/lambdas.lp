@@ -1,16 +1,5 @@
 #include "includeAll.lp".
 
-define(dmf,myfactorial,(n,()),EXP) :-
-  VAR = variable(n),
-  ONE = val(int,1),
-  MIN = operation(sub,(VAR,(ONE,()))),
-  REC = operation(variable(myfactorial),(MIN,())),
-  PRO = operation(mult,(VAR,(REC,()))),
-  EQ1 = operation(leq,(VAR,(ONE,()))),
-  EXP = operation(ite,(EQ1,(ONE,(PRO,())))).
-
-evaluate(variable(myfactorial),(val(int,5),())).
-
 multimap_declare(dummy,a).
 multimap_assign(dummy,a,val(symbol,kind),val(symbol,rectangle)).
 multimap_assign(dummy,a,val(symbol,width),val(int,2)).
@@ -82,3 +71,6 @@ assign(dummy,nb_squares2,E) :-
   MONE = operation(ite,(ISSQ,(val(int,1),(val(int,0),())))),
   PLUS = operation(add,(MONE,(ACCU,()))),
   LAMB = lambda(VARS,PLUS).
+
+#show value/3.
+#show _ge_eval_exec/3.
