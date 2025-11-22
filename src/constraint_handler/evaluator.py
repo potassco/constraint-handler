@@ -8,6 +8,7 @@ from enum import Enum
 from typing import NamedTuple
 
 import clingo
+
 import constraint_handler.myClorm as myClorm
 
 shared_environment = {"math": __import__("math")}
@@ -81,6 +82,7 @@ class Val(NamedTuple):
     def __repr__(self):
         return f"Val({str(self.type_)},{str(self.value)})"
 
+
 class Error(NamedTuple):
     message: str
 
@@ -111,6 +113,7 @@ class Lambda(NamedTuple):
 
     def __repr__(self):
         return f"Lambda({[str(x) for x in self.vars]},{str(self.expr)})"
+
 
 type ReducedExpr = Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TODO handle Lambda
 type Expr = Variable | Operation | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
@@ -456,8 +459,9 @@ def evaluate_logic_operator(o, args):
 class HashableDict(dict):
     def __hash__(self):
         return hash(frozenset(self.items()))
+
     def __repr__(self):
-        kv = ', '.join(f"{str(k)}:{str(v)}" for k,v in self.items())
+        kv = ", ".join(f"{str(k)}:{str(v)}" for k, v in self.items())
         return f"{{{kv}}}"
 
 
@@ -528,7 +532,7 @@ def evaluate_set_operator(o, args):
         case SetOperator.subset:
             return args[0].issubset(args[1])
         case SetOperator.set_fold:
-            o = lambda *aaa: evaluate_operator({},args[0],aaa)
+            o = lambda *aaa: evaluate_operator({}, args[0], aaa)
             return set_fold(o, args[1], args[2])
         case _:
             raise NotImplementedError("set_operator", o)
@@ -667,17 +671,6 @@ def evaluate_operator(symbols, o, args, globals=None):
                 assert False
 
 
-def evaluate_lambda(symbols, vars, body, globals=None):
-    def myf(*args):
-        # print("evaluate_lambda",symbols,vars,args,body)
-        d = dict(symbols)
-        assert len(vars) == len(args)
-        for (v, a) in zip(vars,args):
-            d[v] = a
-        return evaluate_expr(body, d, globals)
-    return myf
-
-
 def evaluate_expr(expr, symbols, globals=None):
     match expr:
         case Operation(eo, eargs):
@@ -692,14 +685,14 @@ def evaluate_expr(expr, symbols, globals=None):
         case Val(type_, val):
             return val
         case Lambda(vars, body):
-            nsymbols = { x:v for x,v in symbols.items() if x not in vars}
+            nsymbols = {x: v for x, v in symbols.items() if x not in vars}
             nglobals = dict(globals) if globals is not None else None
             if globals is not None:
                 for x in vars:
                     if x in nglobals:
                         del nglobals[x]
             return Lambda(vars, beta_reduction(nsymbols, body))
-        case o if isinstance(o,Operator):
+        case o if isinstance(o, Operator):
             return expr
         case tuple(eargs):
             args = tuple(evaluate_expr(a, symbols, globals) for a in eargs)
@@ -728,8 +721,8 @@ def beta_reduction(symbols, expr):
         case Val(type_, val):
             return expr
         case Lambda(vars, body):
-            nsymbols = { x:v for x,v in symbols.items() if x not in vars}
-            return Lambda(vars,beta_reduction(nsymbols, body))
+            nsymbols = {x: v for x, v in symbols.items() if x not in vars}
+            return Lambda(vars, beta_reduction(nsymbols, body))
         case tuple(eargs):
             args = tuple(beta_reduction(symbols, e) for e in eargs)
             return args
