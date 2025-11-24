@@ -11,10 +11,12 @@ from typing import NamedTuple
 import clingo
 
 import constraint_handler.myClorm as myClorm
-
 from constraint_handler.solver_environment import FailIntegrityExn
 
-shared_environment = {"math": importlib.import_module("math"), "solver_environment": importlib.import_module("constraint_handler.solver_environment")}
+shared_environment = {
+    "math": importlib.import_module("math"),
+    "solver_environment": importlib.import_module("constraint_handler.solver_environment"),
+}
 solver_environment = dict()
 
 
@@ -730,16 +732,13 @@ def beta_reduction(symbols, expr):
 
 
 def run_python_stmt(code, symbols, invs, outvs, globals=None):
-#    try:
-        globals = globals if globals else dict()
-        locals = dict()
-        for x in invs:
-            locals[x] = symbols[x] if x in symbols else None
-        exec(code, globals, locals)
-        for x in outvs:
-            symbols[x] = locals[x] if x in locals else None
-#    except Exception as exn:
-#        raise Exception(f"Uncaught python exception {exn} in snippet {code}")
+    globals = globals if globals else dict()
+    locals = dict()
+    for x in invs:
+        locals[x] = symbols[x] if x in symbols else None
+    exec(code, globals, locals)
+    for x in outvs:
+        symbols[x] = locals[x] if x in locals else None
 
 
 def run_stmt(stmt, symbols, globals=None):
