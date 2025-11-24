@@ -8,6 +8,7 @@ import clingo
 
 import constraint_handler.myClorm as myClorm
 import constraint_handler.evaluator as evaluator
+from constraint_handler.solver_environment import FailIntegrityExn
 
 
 def pythonExpressionVariable(clExpr):
@@ -38,7 +39,7 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,evaluator.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
         pId   = myClorm.cltopy(clId)
-    except Exception as exn:
+    except myClorm.FailedInstantiation as exn:
         print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
@@ -71,7 +72,7 @@ def pythonExec(clStmt,clEnv,clOuts,clId):
             val = locals[x] if x in locals else None
             results.append((x,evaluator.reducedExpr(val))) # TODO incorrect for set results?
         return map(myClorm.pytocl,results)
-    except evaluator.FailIntegrityExn:
+    except FailIntegrityExn:
         return myClorm.pytocl(evaluator.FailIntegrity())
     except Exception as exn:
         return myClorm.pytocl(evaluator.Error(str(exn)))

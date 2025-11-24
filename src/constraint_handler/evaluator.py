@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import importlib
 import math
 import operator
 from collections import namedtuple
@@ -11,12 +12,10 @@ import clingo
 
 import constraint_handler.myClorm as myClorm
 
-shared_environment = {"math": __import__("math")}
+from constraint_handler.solver_environment import FailIntegrityExn
+
+shared_environment = {"math": importlib.import_module("math"), "solver_environment": importlib.import_module("constraint_handler.solver_environment")}
 solver_environment = dict()
-
-
-class FailIntegrityExn(Exception):
-    pass
 
 
 class PPEnum(Enum):
@@ -731,7 +730,7 @@ def beta_reduction(symbols, expr):
 
 
 def run_python_stmt(code, symbols, invs, outvs, globals=None):
-    try:
+#    try:
         globals = globals if globals else dict()
         locals = dict()
         for x in invs:
@@ -739,9 +738,8 @@ def run_python_stmt(code, symbols, invs, outvs, globals=None):
         exec(code, globals, locals)
         for x in outvs:
             symbols[x] = locals[x] if x in locals else None
-        return True
-    except Exception as exn:
-        return Error(str(exn))
+#    except Exception as exn:
+#        raise Exception(f"Uncaught python exception {exn} in snippet {code}")
 
 
 def run_stmt(stmt, symbols, globals=None):

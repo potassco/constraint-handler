@@ -74,7 +74,7 @@ _execution_exec(NAME,R) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OU
 :- _execution_exec(NAME,failIntegrity).
 _execution_ou(NAME,X,V) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,(X,V)).
 _execution_result(NAME,STMT,success) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,true).
-warning(("error running",NAME,STMT,MSG)) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,error(MSG)).
+warning(("error running python",STR,MSG,NAME)) :- _execution_query(NAME,STMT), STMT = python(STR,INS,OUTS), _execution_exec(NAME,error(MSG)).
 
 
 
