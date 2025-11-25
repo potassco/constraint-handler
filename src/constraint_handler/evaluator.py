@@ -470,7 +470,8 @@ def multimap_fold(f, m, start):
     accu = start
     for key in m:
         value = m[key]
-        accu = f((key, value), accu)
+        accu = f(value, accu)
+        # accu = f((key, value), accu)
     return accu
 
 
@@ -485,7 +486,8 @@ def evaluate_multimap_operator(o, args):
             assert len(args) == 2
             return args[1][args[0]] if args[0] in args[1] else None
         case MultimapOperator.multimap_fold:
-            return multimap_fold(args[0], args[1], args[2])
+            o = lambda *aaa: evaluate_operator({}, args[0], aaa)
+            return multimap_fold(o, args[1], args[2])
         case MultimapOperator.multimapMake:
             d = dict()
             for key, value in args:
