@@ -44,8 +44,8 @@ To try to solve a set of facts in the (undocumented) input format call
 ```bash
 clingo your_facts.lp tests/example/includeAll.lp 0
 ```
-to solve all your described constraints.
 
+to solve all your described constraints.
 
 Instructions to install and use `nox` can be found in
 [DEVELOPMENT.md](./DEVELOPMENT.md)
