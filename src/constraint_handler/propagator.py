@@ -8,12 +8,12 @@ from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus
 from constraint_handler.PropagatorVariables import (
     DictVariable,
     EvaluateVariable,
+    Execution,
     OptimizationSum,
     SetVariable,
     Variable,
-    Execution,
-    make_dict_from_variables,
     VariableType,
+    make_dict_from_variables,
 )
 
 # VariableType = Variable | SetVariable | DictVariable | Execution
@@ -245,8 +245,12 @@ class ConstraintHandlerPropagator:
 
     def get_reasons(self, var: VariableType) -> set[int]:
         # TODO: optimize this in the future?
+        # This might get the reasons from the same variable multiple times
+        # maybe some caching would help here, but we have to reset the caching every time...
+        # might not be worth it
         reasons = var.literals
-        reasons = reasons.union(*(self.symbol2var[dvar].literals for dvar in var.vars()))
+        for dvar in var.vars():
+            reasons = reasons.union(self.get_reasons(self.symbol2var[dvar]))
         return reasons
 
     def undo(self, thread_id: int, assignment: clingo.Assignment, changes: Sequence[int]) -> None:
@@ -381,7 +385,7 @@ class ConstraintHandlerPropagator:
         for (name, symbol_var, stmt, in_v, out_v), literal in declares.items():
             variable = Execution(name, symbol_var, stmt, in_v, out_v)
             self.symbol2var[symbol_var] = variable
-        
+
         exec_runs = myClorm.findInPropagateInit(ctl, evaluator.Propagator_execution_run)
         for (name, symbol_var), literal in exec_runs.items():
             execvar: Execution = self.symbol2var[symbol_var]
@@ -397,6 +401,8 @@ class ConstraintHandlerPropagator:
         """
         Sets the parents of each variable based on the variables they depend on.
         """
+        # TODO: parents for execution outputs are not handled
+        # because the variable names are "hidden" inside the execution
         for var in self.symbol2var.values():
             for symbol_var in var.vars():
                 if symbol_var == var.var:
@@ -446,7 +452,7 @@ class ConstraintHandlerPropagator:
 
         if final_value is ValueStatus.NOT_SET:
             assert False, f"Variable {var} has no value set in on_model!"
-        
+
         if isinstance(final_value, evaluator.constant):
             self.handle_on_model_normal_type(var, final_value, model)
 
@@ -461,7 +467,7 @@ class ConstraintHandlerPropagator:
 
     def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset, model: clingo.Model):
         for value in final_value:
-            
+
             if value is ValueStatus.NOT_SET:
                 assert False, f"Set variable {var} has no value set in on_model!"
 
@@ -487,7 +493,9 @@ class ConstraintHandlerPropagator:
             if not model.contains(clAtom):
                 model.extend([clAtom])
 
-    def handle_on_model_normal_type(self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol, model: clingo.Model):
+    def handle_on_model_normal_type(
+        self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol, model: clingo.Model
+    ):
         pyAtom = evaluator.Value(var, evaluator.get_baseType(final_value), final_value)
         # myprint(f"adding atom {pyAtom}", end=" ")
         clAtom = myClorm.pytocl(pyAtom)
