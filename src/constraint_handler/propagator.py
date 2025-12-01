@@ -420,14 +420,9 @@ class ConstraintHandlerPropagator:
             elif final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
                 continue
 
-            elif final_value is None:
-                continue
-
             elif isinstance(var, Execution):
                 for var, value in final_value:
-                    if value is None:
-                        continue
-                    elif value is ValueStatus.NOT_SET:
+                    if value is ValueStatus.NOT_SET:
                         assert False, f"Execution variable {var} has output with no value set in on_model!"
 
                     self.handle_on_model_value(var, value, model)
@@ -448,25 +443,26 @@ class ConstraintHandlerPropagator:
             print(f"Optimization value: {self.optimization_sum.value}")
 
     def handle_on_model_value(self, var: clingo.Symbol, final_value: Any, model: clingo.Model):
-        if final_value is None:
-            return
-        elif final_value is ValueStatus.NOT_SET:
+
+        if final_value is ValueStatus.NOT_SET:
             assert False, f"Variable {var} has no value set in on_model!"
         
-        if isinstance(final_value, (bool, int, float, str, clingo.Symbol)):
+        if isinstance(final_value, evaluator.constant):
             self.handle_on_model_normal_type(var, final_value, model)
 
         elif isinstance(final_value, (set, frozenset)):
             self.handle_on_model_set(var, final_value, model)
-            
+
         elif isinstance(final_value, (dict, evaluator.HashableDict)):
             self.handle_on_model_dict(var, final_value, model)
+        else:
+            # In here come Variable(Lambda) and others
+            myprint(f"Unknown model type {type(final_value)} for variable {var} in on_model!")
 
     def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset, model: clingo.Model):
         for value in final_value:
-            if value is None:
-                continue
-            elif value is ValueStatus.NOT_SET:
+            
+            if value is ValueStatus.NOT_SET:
                 assert False, f"Set variable {var} has no value set in on_model!"
 
             pyAtom = evaluator.Set_value(var, evaluator.get_baseType(value), value)
@@ -478,9 +474,8 @@ class ConstraintHandlerPropagator:
 
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict, model: clingo.Model):
         for key, value in final_value.items():
-            if value is None:
-                continue
-            elif value is ValueStatus.NOT_SET:
+
+            if value is ValueStatus.NOT_SET:
                 assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
 
             pyAtom = evaluator.Multimap_value(
