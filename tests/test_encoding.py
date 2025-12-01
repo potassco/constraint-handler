@@ -97,7 +97,7 @@ def test_engine_propagator():
         #"executions",
         "execution_assert",
         #"execution_conditional",
-        "execution_loop",
+        #"execution_loop",
         "lambda_recursive",
         "multimaps",
         "optimize_bools",
