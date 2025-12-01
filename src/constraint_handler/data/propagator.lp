@@ -8,3 +8,9 @@ propagator_multimap_assign(CNAME,X,K,V) :- multimap_assign(CNAME,X,K,V), engine(
 propagator_multimap_declare(CNAME,X) :- multimap_declare(CNAME,X), engine(CNAME,propagator).
 
 propagator_optimize_maximizeSum(CNAME,E,X) :- optimize_maximizeSum(CNAME,E,X), engine(CNAME,propagator).
+
+propagator_execution_declare(CNAME,F,STMT,IN,OUT) :-
+    execution_declare(CNAME,F,STMT,IN,OUT), engine(CNAME,propagator).
+
+propagator_execution_run(CNAME,F) :-
+    execution_run(CNAME,F), engine(CNAME,propagator).

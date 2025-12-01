@@ -94,7 +94,7 @@ def test_engine_propagator():
     extra = []
     unsupported = [
         "custom_globals",
-        "executions",
+        #"executions",
         "execution_assert",
         "execution_conditional",
         "execution_loop",

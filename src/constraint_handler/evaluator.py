@@ -314,6 +314,11 @@ class Propagator_multimap_assign(Multimap_assign):
 class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
     pass
 
+class Propagator_execution_declare(Execution_declare):
+    pass
+
+class Propagator_execution_run(Execution_run):
+    pass
 
 def collectVars(expr) -> set[clingo.Symbol]:
     match expr:

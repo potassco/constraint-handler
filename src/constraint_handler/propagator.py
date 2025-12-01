@@ -11,10 +11,12 @@ from constraint_handler.PropagatorVariables import (
     OptimizationSum,
     SetVariable,
     Variable,
+    Execution,
     make_dict_from_variables,
+    VariableType,
 )
 
-VariableType = Variable | SetVariable | DictVariable
+# VariableType = Variable | SetVariable | DictVariable | Execution
 
 
 def myprint(*args, **kwargs):
@@ -58,6 +60,7 @@ class ConstraintHandlerPropagator:
         self.get_set_declarations(ctl)
         self.get_multimap_declarations(ctl)
         self.get_optimization_sums(ctl)
+        self.get_execution_declarations(ctl)
         self.set_parents()
 
         self.get_evaluate(ctl)
@@ -347,8 +350,6 @@ class ConstraintHandlerPropagator:
         This method initializes the dict variables from the ASP encoding.
         It reads the multimap_declare and multimap_assign atoms and creates DictVariable instances.
         """
-        # TODO: this was done by copilot, check if it is correct!
-
         declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_declare)
         for (name, symbol_var), literal in declares.items():
             variable = DictVariable(name, symbol_var, literal)
@@ -371,6 +372,27 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
+    def get_execution_declarations(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the execution declarations from the ASP encoding.
+        It reads the execution_declare and execution_run atoms and creates Execution instances.
+        """
+        declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_execution_declare)
+        for (name, symbol_var, stmt, in_v, out_v), literal in declares.items():
+            variable = Execution(name, symbol_var, stmt, in_v, out_v)
+            self.symbol2var[symbol_var] = variable
+        
+        exec_runs = myClorm.findInPropagateInit(ctl, evaluator.Propagator_execution_run)
+        for (name, symbol_var), literal in exec_runs.items():
+            execvar: Execution = self.symbol2var[symbol_var]
+            execvar.add_run_literal(literal)
+            if literal not in self.literal2var:
+                self.literal2var[literal] = []
+            self.literal2var[literal].append(execvar)
+
+            ctl.add_watch(literal)
+            ctl.add_watch(-literal)
+
     def set_parents(self):
         """
         Sets the parents of each variable based on the variables they depend on.
@@ -388,47 +410,29 @@ class ConstraintHandlerPropagator:
                     assert False, f"Variable {symbol_var} not found in symbol2var"
                 self.symbol2var[symbol_var].parents.append(var)
 
-    def on_model(self, model):
+    def on_model(self, model: clingo.Model):
         for var in self.symbol2var.values():
             final_value = var.get_value()
             # myprint(var.var, final_value, type(final_value))
             if final_value is ValueStatus.NOT_SET:
                 assert False, f"Variable {var} has no value set in on_model!"
 
-            if final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
+            elif final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
                 continue
 
-            if type(final_value) in (set, frozenset):
-                for value in final_value:
-                    if value is None or value is ValueStatus.NOT_SET:
-                        continue
-                    pyAtom = evaluator.Set_value(var.var, evaluator.get_baseType(value), value)
-                    # myprint(f"adding set atom {pyAtom}", end=" ")
-                    clAtom = myClorm.pytocl(pyAtom)
-                    myprint(f"= {clAtom}")
-                    if not model.contains(clAtom):
-                        model.extend([clAtom])
-            elif type(final_value) in (evaluator.HashableDict, dict):
-                for key, value in final_value.items():
-                    if value is None or value is ValueStatus.NOT_SET:
-                        continue
+            elif final_value is None:
+                continue
 
-                    pyAtom = evaluator.Multimap_value(
-                        var.var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
-                    )
-                    # myprint(f"adding multimap atom {pyAtom}", end=" ")
-                    clAtom = myClorm.pytocl(pyAtom)
-                    myprint(f"= {clAtom}")
-                    if not model.contains(clAtom):
-                        model.extend([clAtom])
+            elif isinstance(var, Execution):
+                for var, value in final_value:
+                    if value is None:
+                        continue
+                    elif value is ValueStatus.NOT_SET:
+                        assert False, f"Execution variable {var} has output with no value set in on_model!"
+
+                    self.handle_on_model_value(var, value, model)
             else:
-                pyAtom = evaluator.Value(var.var, evaluator.get_baseType(final_value), final_value)
-                # myprint(f"adding atom {pyAtom}", end=" ")
-                clAtom = myClorm.pytocl(pyAtom)
-                myprint(f"= {clAtom}")
-
-                if not model.contains(clAtom):
-                    model.extend([clAtom])
+                self.handle_on_model_value(var.var, final_value, model)
 
         for var in self.evaluatevars:
             # if var.value is None or var.value is VALUE_NOT_SET:
@@ -442,3 +446,57 @@ class ConstraintHandlerPropagator:
 
         if self.using_optimization:
             print(f"Optimization value: {self.optimization_sum.value}")
+
+    def handle_on_model_value(self, var: clingo.Symbol, final_value: Any, model: clingo.Model):
+        if final_value is None:
+            return
+        elif final_value is ValueStatus.NOT_SET:
+            assert False, f"Variable {var} has no value set in on_model!"
+        
+        if isinstance(final_value, (bool, int, float, str, clingo.Symbol)):
+            self.handle_on_model_normal_type(var, final_value, model)
+
+        elif isinstance(final_value, (set, frozenset)):
+            self.handle_on_model_set(var, final_value, model)
+            
+        elif isinstance(final_value, (dict, evaluator.HashableDict)):
+            self.handle_on_model_dict(var, final_value, model)
+
+    def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset, model: clingo.Model):
+        for value in final_value:
+            if value is None:
+                continue
+            elif value is ValueStatus.NOT_SET:
+                assert False, f"Set variable {var} has no value set in on_model!"
+
+            pyAtom = evaluator.Set_value(var, evaluator.get_baseType(value), value)
+            # myprint(f"adding set atom {pyAtom}", end=" ")
+            clAtom = myClorm.pytocl(pyAtom)
+            myprint(f"= {clAtom}")
+            if not model.contains(clAtom):
+                model.extend([clAtom])
+
+    def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict, model: clingo.Model):
+        for key, value in final_value.items():
+            if value is None:
+                continue
+            elif value is ValueStatus.NOT_SET:
+                assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
+
+            pyAtom = evaluator.Multimap_value(
+                var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
+            )
+            # myprint(f"adding multimap atom {pyAtom}", end=" ")
+            clAtom = myClorm.pytocl(pyAtom)
+            myprint(f"= {clAtom}")
+            if not model.contains(clAtom):
+                model.extend([clAtom])
+
+    def handle_on_model_normal_type(self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol, model: clingo.Model):
+        pyAtom = evaluator.Value(var, evaluator.get_baseType(final_value), final_value)
+        # myprint(f"adding atom {pyAtom}", end=" ")
+        clAtom = myClorm.pytocl(pyAtom)
+        myprint(f"= {clAtom}")
+
+        if not model.contains(clAtom):
+            model.extend([clAtom])
