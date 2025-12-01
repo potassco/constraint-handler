@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import sys
 from typing import Any, Sequence, TypeVar
 
 import clingo
@@ -6,11 +8,11 @@ import clingo
 import constraint_handler.evaluator as evaluator
 from constraint_handler.PropagatorConstants import DEBUG_PRINT, FALSE_ASSIGNMENTS, ValueStatus
 
-import sys
 
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
         print(*args, **kwargs)
+
 
 VariableType = TypeVar("VariableType", "Variable", "SetVariable", "DictVariable", "Execution")
 
@@ -613,7 +615,14 @@ class OptimizationSum:
 
 class Execution:
 
-    def __init__(self, name: str, func_name: str, stmt: evaluator.Stmt, in_vars: list[clingo.Symbol], out_vars: list[clingo.Symbol]):
+    def __init__(
+        self,
+        name: str,
+        func_name: str,
+        stmt: evaluator.Stmt,
+        in_vars: list[clingo.Symbol],
+        out_vars: list[clingo.Symbol],
+    ):
         self.name: str = name
         self.func_name: str = func_name
         self.stmt: evaluator.Stmt = stmt
@@ -638,6 +647,10 @@ class Execution:
     def var(self):
         return self.func_name
 
+    @property
+    def literals(self) -> set[int]:
+        return {self.literal}
+
     def convert_vars(self, vars: list[clingo.Symbol], input=True) -> list[clingo.Symbol]:
         """
         Convert the name of the variable from e.g. x to execution_input(fname, x)
@@ -646,14 +659,16 @@ class Execution:
         for var in vars:
             converted.append(self.convert_var(var, input=input))
         return converted
-        
+
     def convert_var(self, var: clingo.Symbol, input=True) -> clingo.Symbol:
         exec_name: str = "execution_input" if input else "execution_output"
         var_func = var if type(var) == clingo.Symbol else clingo.String(var)
         v = clingo.Function(exec_name, [self.func_name, var_func])
         return v
-    
-    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> tuple[bool, bool]:
+
+    def evaluate(
+        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
+    ) -> tuple[bool, bool]:
         """Evaluate the execution and return True if the value has changed."""
         self.assigned = ctl.assignment.value(self.literal)
         if self.assigned is None:
@@ -661,25 +676,30 @@ class Execution:
 
         if self.values != ValueStatus.NOT_SET:
             # already assigned
-            return False, False      
+            return False, False
 
         if ctl.assignment.is_false(self.literal):
             self.values = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return True, False
-                
+
         for var in self.converted_in_vars:
             if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.values == ValueStatus.NOT_SET
                 return False, False
-        
+
         evals = {}
         for c_var, var in zip(self.converted_in_vars, self.in_vars):
             evals[var] = evaluations[c_var]
 
-        evaluator.run_stmt(self.stmt, evals, env)
+        try:
+            evaluator.run_stmt(self.stmt, evals, env)
+        except evaluator.FailIntegrityExn as e:
+            self.decision_level = ctl.assignment.decision_level
+            return False, True
+
         self.values = []
         for c_out_var, out_var in zip(self.converted_out_vars, self.out_vars):
             if out_var not in evals:
@@ -697,7 +717,7 @@ class Execution:
 
     def vars(self) -> set[clingo.Symbol]:
         return set(self.converted_in_vars)
-    
+
     def reset(self, dl: int):
         if self.decision_level >= dl:
             self.decision_level = sys.maxsize
@@ -717,24 +737,28 @@ def make_dict_from_variables(
 
     return result
 
-def add_variable_to_dict(var: Variable | SetVariable | DictVariable, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+
+def add_variable_to_dict(
+    var: Variable | SetVariable | DictVariable, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]
+) -> None:
     value = var.get_value()
 
     if value == ValueStatus.NOT_SET:
         return
-    
+
     elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
         d[FALSE_ASSIGNMENTS].append(var.var)
 
     else:
         d[var.var] = value
 
+
 def add_execution_to_dict(exec: Execution, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
     value: ValueStatus | list[tuple[clingo.Symbol, Any]] = exec.get_value()
 
     if value == ValueStatus.NOT_SET:
         return
-    
+
     elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
         for out_var in exec.converted_out_vars:
             d[FALSE_ASSIGNMENTS].append(out_var)
