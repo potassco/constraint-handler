@@ -1,14 +1,18 @@
-from typing import Any, Sequence
+from __future__ import annotations
+from typing import Any, Sequence, TypeVar
 
 import clingo
 
 import constraint_handler.evaluator as evaluator
 from constraint_handler.PropagatorConstants import DEBUG_PRINT, FALSE_ASSIGNMENTS, ValueStatus
 
+import sys
 
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
         print(*args, **kwargs)
+
+VariableType = TypeVar("VariableType", "Variable", "SetVariable", "DictVariable", "Execution")
 
 
 class EvaluateVariable:
@@ -23,18 +27,10 @@ class EvaluateVariable:
         """Evaluate the expression and return True if the value has changed."""
         if not ctl.assignment.is_true(self.literal):
             return False
-        # print(f"Evaluating {self.op}({self.args})")
+        myprint(f"Evaluating {self.op}({self.args})")
         value, errors = evaluator.evaluate_expr(
             evaluator.Operation(self.op, self.args), env, evaluations
         )  # TODO: do something with errors?
-        # print(f"Evaluated {self.op}({self.args}) to {value}")
-        # if type(value) == set:
-        #     if None in value:
-        #         # if something in the set is undefined
-        #         # we do not assign a value
-        #         return False
-        #     value = frozenset(value)
-
         self.value = value
         return True
 
@@ -56,12 +52,12 @@ class VariableValue:
     """
 
     def __init__(self, expr: evaluator.Expr, lit: int):
-        self.expr = expr
+        self.expr: evaluator.Expr = expr
         self.value: Any = ValueStatus.NOT_SET
 
         self.literal: int = lit
         self.assigned: bool | None = None
-        self.decision_level: int = float("inf")
+        self.decision_level: int = sys.maxsize
 
     def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> bool:
         """
@@ -104,7 +100,7 @@ class VariableValue:
     def reset(self, dl):
         if self.decision_level >= dl:
             self.value = ValueStatus.NOT_SET
-            self.decision_level = float("inf")
+            self.decision_level = sys.maxsize
             # TODO: it is possible that it is still assigned!
             # Maybe add a second property self.assigned_decision_level?
             # that one would be only to know when the variable was assigned
@@ -138,12 +134,12 @@ class Variable:
     """
 
     def __init__(self, name: str, var: clingo.Symbol):
-        self.name = name
-        self.var = var
+        self.name: str = name
+        self.var: clingo.Symbol = var
         self.expressions: set[VariableValue] = set()
         self.value: Any = ValueStatus.NOT_SET
-        self.parents: list["Variable" | "SetVariable" | "DictVariable"] = []
-        self.decision_level: int = float("inf")
+        self.parents: list[VariableType] = []
+        self.decision_level: int = sys.maxsize
 
     def add_value(self, expr: evaluator.Expr, lit: int) -> None:
         self.expressions.add(VariableValue(expr, lit))
@@ -328,17 +324,17 @@ class SetVariable:
     """
 
     def __init__(self, name: str, var: clingo.Symbol, lit: int):
-        self.name = name
-        self.var = var
+        self.name: str = name
+        self.var: clingo.Symbol = var
         self.expressions: SetVariableValue = SetVariableValue()
 
-        self.value = ValueStatus.NOT_SET
+        self.value: ValueStatus | set[Any] = ValueStatus.NOT_SET
 
-        self.literal = lit  # this is the literal for the set declaration
+        self.literal: int = lit  # this is the literal for the set declaration
         self.assigned: bool | None = None  # Truth value of the set declaration
-        self.decision_level: int = float("inf")  # decision level of the set declaration
+        self.decision_level: int = sys.maxsize  # decision level of the set declaration
 
-        self.parents: list["Variable" | "SetVariable" | "DictVariable"] = []
+        self.parents: list[VariableType] = []
 
     def add_value(self, arg: evaluator.Expr, lit: int) -> None:
         self.expressions.add_value(arg, lit)
@@ -349,7 +345,7 @@ class SetVariable:
         lits.add(self.literal)
         return lits
 
-    def get_value(self) -> set[Any]:
+    def get_value(self) -> ValueStatus | set[Any]:
         """
         If there is an unassigned value, return None.
         Otherwise return the set of assigned values without the None values.
@@ -401,7 +397,7 @@ class SetVariable:
     def reset(self, dl: int) -> None:
         self.expressions.reset(dl)
         if self.decision_level >= dl:
-            self.decision_level = float("inf")
+            self.decision_level = sys.maxsize
             self.value = ValueStatus.NOT_SET
 
     def __eq__(self, value):
@@ -424,17 +420,17 @@ class DictVariable:
     """
 
     def __init__(self, name: str, var: clingo.Symbol, lit: int):
-        self.name = name
-        self.var = var
+        self.name: str = name
+        self.var: clingo.Symbol = var
         self.expressions: dict[VariableValue, SetVariableValue] = evaluator.HashableDict()
 
-        self.value = ValueStatus.NOT_SET
+        self.value: ValueStatus | dict[clingo.Symbol, Any] = ValueStatus.NOT_SET
 
         self.literal: int = lit
         self.assigned: bool | None = None
-        self.decision_level: int = float("inf")
+        self.decision_level: int = sys.maxsize
 
-        self.parents: list[Variable | SetVariable | DictVariable] = []
+        self.parents: list[VariableType] = []
 
     def add_value(self, key: evaluator.Expr, expr: evaluator.Expr, lit: int) -> None:
         # setting lit for key to 1 since it does not have its own literal
@@ -453,10 +449,10 @@ class DictVariable:
 
         return lits
 
-    def get_value(self) -> dict[clingo.Symbol, Any]:
+    def get_value(self) -> ValueStatus | dict[clingo.Symbol, Any]:
         return self.value
 
-    def discern_value(self) -> dict[clingo.Symbol, Any] | None:
+    def discern_value(self) -> ValueStatus | dict[clingo.Symbol, Any]:
         """
         Returns a dictionary mapping keys to their assigned values.
         If any value is unassigned, returns None for that key.
@@ -507,7 +503,6 @@ class DictVariable:
             return False, False
 
         elif ctl.assignment.is_false(self.literal):
-            # Assignment is false, so value is None
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return True, False
@@ -532,7 +527,7 @@ class DictVariable:
             value.reset(dl)
 
         if self.decision_level >= dl:
-            self.decision_level = float("inf")
+            self.decision_level = sys.maxsize
             self.value = ValueStatus.NOT_SET
 
     def __eq__(self, other):
@@ -553,7 +548,7 @@ class OptimizationSum:
         self.expressions: list[tuple[clingo.Symbol, VariableValue]] = []
         self.value: Any = ValueStatus.NOT_SET
 
-        self.decision_level: int = float("inf")
+        self.decision_level: int = sys.maxsize
 
     def add_value(self, var: clingo.Symbol, expr: evaluator.Expr, lit: int) -> None:
         self.expressions.append((var, VariableValue(expr, lit)))
@@ -609,26 +604,140 @@ class OptimizationSum:
             expr.reset(dl)
 
         if self.decision_level >= dl:
-            self.decision_level = float("inf")
+            self.decision_level = sys.maxsize
             self.value = ValueStatus.NOT_SET
 
     def has_unassigned(self) -> bool:
         return any(expr.value == ValueStatus.NOT_SET for var, expr in self.expressions)
 
 
+class Execution:
+
+    def __init__(self, name: str, func_name: str, stmt: evaluator.Stmt, in_vars: list[clingo.Symbol], out_vars: list[clingo.Symbol]):
+        self.name: str = name
+        self.func_name: str = func_name
+        self.stmt: evaluator.Stmt = stmt
+        self.in_vars: list[clingo.Symbol] = in_vars
+        self.converted_in_vars: list[clingo.Symbol] = self.convert_vars(in_vars, input=True)
+        self.out_vars: list[clingo.Symbol] = out_vars
+        self.converted_out_vars: list[clingo.Symbol] = self.convert_vars(out_vars, input=False)
+
+        # this is for the execution run atom
+        # assuming the declaration atom is always a fact?
+        # otherwise, we might need a literal for that as well
+        self.literal: int = 0
+        self.assigned: bool | None = None
+
+        self.decision_level: int = sys.maxsize
+
+        self.values: ValueStatus | list[tuple[clingo.Symbol, Any]] = ValueStatus.NOT_SET
+
+        self.parents: list[VariableType] = []
+
+    @property
+    def var(self):
+        return self.func_name
+
+    def convert_vars(self, vars: list[clingo.Symbol], input=True) -> list[clingo.Symbol]:
+        """
+        Convert the name of the variable from e.g. x to execution_input(fname, x)
+        """
+        converted: list[clingo.Symbol] = []
+        for var in vars:
+            converted.append(self.convert_var(var, input=input))
+        return converted
+        
+    def convert_var(self, var: clingo.Symbol, input=True) -> clingo.Symbol:
+        exec_name: str = "execution_input" if input else "execution_output"
+        var_func = var if type(var) == clingo.Symbol else clingo.String(var)
+        v = clingo.Function(exec_name, [self.func_name, var_func])
+        return v
+    
+    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> tuple[bool, bool]:
+        """Evaluate the execution and return True if the value has changed."""
+        self.assigned = ctl.assignment.value(self.literal)
+        if self.assigned is None:
+            return False, False
+
+        if self.values != ValueStatus.NOT_SET:
+            # already assigned
+            return False, False      
+
+        if ctl.assignment.is_false(self.literal):
+            self.values = ValueStatus.ASSIGNMENT_IS_FALSE
+            self.decision_level = ctl.assignment.decision_level
+            return True, False
+                
+        for var in self.converted_in_vars:
+            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
+                # can't evaluate yet
+                # value should not be set yet
+                assert self.values == ValueStatus.NOT_SET
+                return False, False
+        
+        evals = {}
+        for c_var, var in zip(self.converted_in_vars, self.in_vars):
+            evals[var] = evaluations[c_var]
+
+        evaluator.run_stmt(self.stmt, evals, env)
+        self.values = []
+        for c_out_var, out_var in zip(self.converted_out_vars, self.out_vars):
+            if out_var not in evals:
+                self.values.append((c_out_var, None))
+            else:
+                self.values.append((c_out_var, evals[out_var]))
+
+        return True, False
+
+    def get_value(self) -> ValueStatus | list[tuple[clingo.Symbol, Any]]:
+        return self.values
+
+    def add_run_literal(self, lit: int):
+        self.literal = lit
+
+    def vars(self) -> set[clingo.Symbol]:
+        return set(self.converted_in_vars)
+    
+    def reset(self, dl: int):
+        if self.decision_level >= dl:
+            self.decision_level = sys.maxsize
+
+            self.values = ValueStatus.NOT_SET
+
+
 def make_dict_from_variables(
-    variables: Sequence[Variable | SetVariable | DictVariable],
+    variables: Sequence[VariableType],
 ) -> dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]:
     result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {FALSE_ASSIGNMENTS: []}
     for var in variables:
-        value = var.get_value()
+        if type(var) == Execution:
+            add_execution_to_dict(var, result)
+        elif type(var) in (Variable, SetVariable, DictVariable):
+            add_variable_to_dict(var, result)
 
-        if value == ValueStatus.NOT_SET:
-            continue
-
-        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            result[FALSE_ASSIGNMENTS].append(var.var)
-
-        else:
-            result[var.var] = value
     return result
+
+def add_variable_to_dict(var: Variable | SetVariable | DictVariable, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+    value = var.get_value()
+
+    if value == ValueStatus.NOT_SET:
+        return
+    
+    elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
+        d[FALSE_ASSIGNMENTS].append(var.var)
+
+    else:
+        d[var.var] = value
+
+def add_execution_to_dict(exec: Execution, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+    value: ValueStatus | list[tuple[clingo.Symbol, Any]] = exec.get_value()
+
+    if value == ValueStatus.NOT_SET:
+        return
+    
+    elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
+        for out_var in exec.converted_out_vars:
+            d[FALSE_ASSIGNMENTS].append(out_var)
+    else:
+        for out_var, val in value:
+            d[out_var] = val
