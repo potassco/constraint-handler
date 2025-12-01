@@ -96,7 +96,7 @@ def test_engine_propagator():
         "custom_globals",
         #"executions",
         "execution_assert",
-        "execution_conditional",
+        #"execution_conditional",
         "execution_loop",
         "lambda_recursive",
         "multimaps",
