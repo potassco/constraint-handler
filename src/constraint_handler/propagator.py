@@ -282,7 +282,7 @@ class ConstraintHandlerPropagator:
         """
 
         for id, _ in myClorm.findInPropagateInit(ctl, evaluator.Main_solverIdentifier).items():
-            self.environment = evaluator.get_environment(id)
+            self.environment = evaluator.get_environment(id.id)
             # print("hello",self.environment)
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
