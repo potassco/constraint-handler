@@ -248,8 +248,6 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-            variable.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
-
     def get_ensure(self, ctl: clingo.PropagateInit):
         """
         This method initializes the ensure constraints from the ASP encoding.
