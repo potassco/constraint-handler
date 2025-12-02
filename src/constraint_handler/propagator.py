@@ -4,7 +4,7 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus, ENSURE_VAR_NAME
 from constraint_handler.PropagatorVariables import (
     DictVariable,
     EvaluateVariable,
@@ -12,6 +12,7 @@ from constraint_handler.PropagatorVariables import (
     OptimizationSum,
     SetVariable,
     Variable,
+    EnsureVariable,
     VariableType,
     make_dict_from_variables,
 )
@@ -43,8 +44,6 @@ class ConstraintHandlerPropagator:
         self.best_value: int | float = -1
         self.using_optimization: bool = False
 
-        self.ensure_lits: Dict[evaluator.Propagator_ensure, int] = {}
-
         self.environment: Dict[Any, Any] = {}
 
         self.check_only = check_only
@@ -55,8 +54,8 @@ class ConstraintHandlerPropagator:
 
         self.get_solver_identifier(ctl)
 
-        self.ensure_lits = myClorm.findInPropagateInit(ctl, evaluator.Propagator_ensure)
         self.get_assign(ctl)
+        self.get_ensure(ctl)
         self.get_set_declarations(ctl)
         self.get_multimap_declarations(ctl)
         self.get_optimization_sums(ctl)
@@ -72,7 +71,7 @@ class ConstraintHandlerPropagator:
         """
         This method is called to check the constraints in the propagator.
         It evaluates all variables in case there were changes from the last propagation call.
-        It then checks the ensure constraints and evaluates the optimization sums.
+        It then evaluates the optimization sums.
         If a variable evaluation has a conflict, any ensure constraint is violated
         or the optimization value if below the best it adds a nogood and backtracks.
         """
@@ -85,10 +84,6 @@ class ConstraintHandlerPropagator:
             return
 
         myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
-        backtrack = self.check_ensure(ctl, True)
-        if backtrack:
-            myprint(f"backtracking {backtrack} due to ensures")
-            return
 
         self.check_evaluate(ctl)
 
@@ -112,36 +107,6 @@ class ConstraintHandlerPropagator:
         for var in self.evaluatevars:
             var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
 
-    def check_ensure(self, ctl: clingo.PropagateControl, is_total: bool = False) -> bool:
-        """
-        This method checks the ensure constraints in the propagator.
-        It evaluates the expressions and checks if they hold true.
-        If any ensure constraint is violated, it adds a nogood and propagates
-        """
-        for (name, expr), lit in self.ensure_lits.items():
-            myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
-            evaluated, errors = evaluator.evaluate_expr(
-                expr, self.environment, make_dict_from_variables(self.symbol2var.values())
-            )  # TODO: do something with errors?
-
-            myprint(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
-
-            if evaluated is None and not is_total:
-                continue
-
-            if not evaluated:
-                #  False (or None in total check mode)
-                nogood = {lit}.union(*(self.get_reasons(self.symbol2var[dvar]) for dvar in evaluator.collectVars(expr)))
-                myprint(
-                    f"the reason for {expr} being {evaluated} is {nogood} based on vars in {evaluator.collectVars(expr)}"
-                )
-                if ctl.add_nogood(list(nogood)):
-                    assert False, "Added violated constraint but solver did not detect it"
-                return True
-
-        myprint("Ensures checked")
-        return False
-
     def propagate(self, ctl: clingo.PropagateControl, changes: Sequence[int]) -> None:
         """
         This method is called to propagate the constraints in the propagator.
@@ -163,12 +128,6 @@ class ConstraintHandlerPropagator:
             return
 
         myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
-
-        backtrack = self.check_ensure(ctl)
-
-        if backtrack:
-            myprint(f"PROPAGATION DONE, backtracking due to ensures: {backtrack}")
-            return
 
         # If not backtracking, check optimization sums
         self.evaluate_optimization_sum(ctl)
@@ -251,6 +210,7 @@ class ConstraintHandlerPropagator:
         reasons = var.literals
         for dvar in var.vars():
             reasons = reasons.union(self.get_reasons(self.symbol2var[dvar]))
+        myprint(f"Reasons for variable {var}: {reasons}")
         return reasons
 
     def undo(self, thread_id: int, assignment: clingo.Assignment, changes: Sequence[int]) -> None:
@@ -289,6 +249,24 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(-literal)
 
             variable.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
+
+    def get_ensure(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the ensure constraints from the ASP encoding.
+        It reads the propagator_ensure atoms and stores them with their literals.
+        """
+
+        ensures = myClorm.findInPropagateInit(ctl, evaluator.Propagator_ensure)
+        c = 0
+        for (name, expr), literal in ensures.items():
+            c += 1
+            ensure_var = EnsureVariable(name, expr, literal)
+            ctl.add_watch(literal)
+            ctl.add_watch(-literal)
+            self.literal2var.setdefault(literal, []).append(ensure_var)
+            # Var name is given here so it works well with the rest of the system
+            # It should do nothing and also should never appear in any assignments!!
+            self.symbol2var[clingo.Function(f"{ENSURE_VAR_NAME}{c}")] = ensure_var
 
     def get_evaluate(self, ctl: clingo.PropagateInit):
         """
