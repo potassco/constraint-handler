@@ -129,6 +129,77 @@ class VariableValue:
         return f"VariableValue({self.expr}, {self.value})"
 
 
+class EnsureVariable:
+
+    __var = clingo.Function("ensure")
+
+    def __init__(self, name: str, expr: evaluator.Expr, literal: int):
+        self.name: str = name
+        self.expression: VariableValue = VariableValue(expr, literal)
+        
+        self.value: ValueStatus | bool = ValueStatus.NOT_SET
+
+    @property
+    def var(self) -> clingo.Symbol:
+        return self.__var
+    
+    @property
+    def parents(self) -> list[VariableType]:
+        return []
+
+    def evaluate(
+        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
+    ) -> tuple[bool, bool]:
+        """
+        Evaluate the expression and return a tuple (changed, conflict).
+        changed is True if the value has changed.
+        conflict is True if there is a conflict.
+        """
+        if ctl.assignment.is_false(self.expression.literal):
+            # Ensure is false, so no conflict
+            return False, False
+        
+        if self.value != ValueStatus.NOT_SET:
+            # already assigned
+            return False, False
+
+        changed = self.expression.evaluate(evaluations, ctl, env)
+
+        if not changed:
+            return False, False
+
+        self.value = self.expression.value
+        # assert isinstance(self.value, bool), "EnsureVariable evaluated to non-boolean value"
+
+        conflict = self.value is False or self.value is None
+        return True, conflict
+
+    def get_value(self) -> ValueStatus | bool:
+        return self.value
+
+    def has_unassigned(self) -> bool:
+        return self.value == ValueStatus.NOT_SET
+    
+    def vars(self) -> set[clingo.Symbol]:
+        return self.expression.vars()
+
+    @property
+    def literals(self) -> set[int]:
+        return {self.expression.literal}
+
+    @property
+    def decision_level(self) -> int:
+        return self.expression.decision_level
+    
+    def reset(self, dl: int) -> None:
+        self.expression.reset(dl)
+        if self.decision_level >= dl:
+            self.value = ValueStatus.NOT_SET
+
+    def __hash__(self):
+        return hash((self.name, self.expression))
+
+
 class Variable:
     """
     A variable with a name and a value expression.

@@ -105,7 +105,7 @@ def test_engine_propagator():
         "optimize_ints",
         "set_iterations",
         "set_selfref",
-        "variables",
+        #"variables",
     ]
     for test in base_tests + extra:
         if test not in unsupported:
