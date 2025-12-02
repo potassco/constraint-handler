@@ -6,7 +6,7 @@ from typing import Any, Sequence, TypeVar
 import clingo
 
 import constraint_handler.evaluator as evaluator
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, FALSE_ASSIGNMENTS, ValueStatus
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, FALSE_ASSIGNMENTS, ValueStatus, EvaluationResult
 
 
 def myprint(*args, **kwargs):
@@ -149,7 +149,7 @@ class EnsureVariable:
 
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
-    ) -> tuple[bool, bool]:
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -157,22 +157,25 @@ class EnsureVariable:
         """
         if ctl.assignment.is_false(self.expression.literal):
             # Ensure is false, so no conflict
-            return False, False
+            return EvaluationResult.NOT_CHANGED
         
         if self.value != ValueStatus.NOT_SET:
             # already assigned
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         changed = self.expression.evaluate(evaluations, ctl, env)
 
         if not changed:
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         self.value = self.expression.value
         # assert isinstance(self.value, bool), "EnsureVariable evaluated to non-boolean value"
 
         conflict = self.value is False or self.value is None
-        return True, conflict
+        if conflict:
+            return EvaluationResult.CONFLICT
+        
+        return EvaluationResult.CHANGED
 
     def get_value(self) -> ValueStatus | bool:
         return self.value
@@ -231,7 +234,7 @@ class Variable:
 
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
-    ) -> tuple[bool, bool]:
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -242,14 +245,14 @@ class Variable:
             changed |= value.evaluate(evaluations, ctl, env)
 
         if not changed:
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         # if some value changed, we need to discern the new value
         val = self.get_values()
         if len(val) > 1:
             # multiple values assigned to the same variable
             myprint(f"Variable vals: {val}")
-            return True, True
+            return EvaluationResult.CONFLICT
         elif len(val) == 0:
             if self.has_unassigned():
                 # some values are unassigned
@@ -261,11 +264,11 @@ class Variable:
         elif len(val) == 1:
             if val == self.value:
                 # same value as before
-                return False, False
+                return EvaluationResult.NOT_CHANGED
 
         self.decision_level = ctl.assignment.decision_level
         self.value = val.pop()
-        return True, False
+        return EvaluationResult.CHANGED
 
     def get_values(self) -> set[Any]:
         vals = set(
@@ -346,7 +349,7 @@ class SetVariableValue:
     def decision_level(self) -> int:
         return min(value.decision_level for value in self.values)
 
-    def get_value(self) -> set[Any]:
+    def get_value(self) -> ValueStatus | set[Any]:
         """
         If there is an unassigned value, return None.
         Otherwise return the set of assigned values without the None values.
@@ -433,7 +436,7 @@ class SetVariable:
 
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
-    ) -> tuple[bool, bool]:
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -443,17 +446,17 @@ class SetVariable:
         self.assigned = ctl.assignment.value(self.literal)
 
         if self.assigned is None:
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         if self.value != ValueStatus.NOT_SET:
             # already assigned
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         elif ctl.assignment.is_false(self.literal):
             # Assignment is false, so value is set to false assignment
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            return True, False
+            return EvaluationResult.CHANGED
 
         changed = self.expressions.evaluate(evaluations, ctl, env)
 
@@ -462,10 +465,10 @@ class SetVariable:
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
-                return True, False
+                return EvaluationResult.CHANGED
 
         # if nothing changed or the changes did not lead to a value
-        return False, False
+        return EvaluationResult.NOT_CHANGED
 
     def reset(self, dl: int) -> None:
         self.expressions.reset(dl)
@@ -560,7 +563,7 @@ class DictVariable:
 
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
-    ) -> tuple[bool, bool]:
+    ) -> EvaluationResult:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
@@ -569,16 +572,16 @@ class DictVariable:
         self.assigned = ctl.assignment.value(self.literal)
 
         if self.assigned is None:
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         if self.value != ValueStatus.NOT_SET:
             # already assigned
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         elif ctl.assignment.is_false(self.literal):
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            return True, False
+            return EvaluationResult.CHANGED
 
         changed = False
         for key, value in self.expressions.items():
@@ -590,10 +593,10 @@ class DictVariable:
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
-                return True, False
+                return EvaluationResult.CHANGED
 
         # if nothing changed or the changes did not lead to a value
-        return False, False
+        return EvaluationResult.NOT_CHANGED
 
     def reset(self, dl: int) -> None:
         for value in self.expressions.values():
@@ -739,27 +742,27 @@ class Execution:
 
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
-    ) -> tuple[bool, bool]:
+    ) -> EvaluationResult:
         """Evaluate the execution and return True if the value has changed."""
         self.assigned = ctl.assignment.value(self.literal)
         if self.assigned is None:
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         if self.values != ValueStatus.NOT_SET:
             # already assigned
-            return False, False
+            return EvaluationResult.NOT_CHANGED
 
         if ctl.assignment.is_false(self.literal):
             self.values = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            return True, False
+            return EvaluationResult.CHANGED
 
         for var in self.converted_in_vars:
             if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.values == ValueStatus.NOT_SET
-                return False, False
+                return EvaluationResult.NOT_CHANGED
 
         evals = {}
         for c_var, var in zip(self.converted_in_vars, self.in_vars):
@@ -769,7 +772,7 @@ class Execution:
             evaluator.run_stmt(self.stmt, evals, env)
         except evaluator.FailIntegrityExn as e:
             self.decision_level = ctl.assignment.decision_level
-            return False, True
+            return EvaluationResult.CONFLICT
 
         self.values = []
         for c_out_var, out_var in zip(self.converted_out_vars, self.out_vars):
@@ -778,7 +781,7 @@ class Execution:
             else:
                 self.values.append((c_out_var, evals[out_var]))
 
-        return True, False
+        return EvaluationResult.CHANGED
 
     def get_value(self) -> ValueStatus | list[tuple[clingo.Symbol, Any]]:
         return self.values
