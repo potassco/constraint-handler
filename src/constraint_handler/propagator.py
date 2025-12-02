@@ -379,8 +379,6 @@ class ConstraintHandlerPropagator:
         """
         Sets the parents of each variable based on the variables they depend on.
         """
-        # TODO: parents for execution outputs are not handled
-        # because the variable names are "hidden" inside the execution
         for var in self.symbol2var.values():
             for symbol_var in var.vars():
                 if symbol_var.name.startswith(EXECUTION_OUTPUT):
