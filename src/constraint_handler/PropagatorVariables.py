@@ -293,27 +293,9 @@ class Variable:
         for value in self.expressions:
             value.reset(dl)
 
-        # only get a new value if the decision level was higher than
-        # what the variable has.
-        # If dl is still higher, this means that some values might have been reset
-        # but they had no impact on this variable's value
-        if self.decision_level < dl:
-            return
-
-        val = self.get_values()
-        if len(val) == 0:
-            if self.has_unassigned():
-                # some values are unassigned
-                # so we cannot determine the value yet
-                self.value = ValueStatus.NOT_SET
-            else:
-                # if all values are set and none are true, then it is set to false assignment
-                self.value = ValueStatus.ASSIGNMENT_IS_FALSE
-        elif len(val) == 1:
-            self.value = val.pop()
-        else:
-            print(f"Reset variable {self.name} at decision level {dl}, values after reset: {val}")
-            assert False, "Variable has multiple values after reset, should not happen"
+        if self.decision_level >= dl:
+            self.decision_level = sys.maxsize
+            self.value = ValueStatus.NOT_SET
 
     def __eq__(self, other):
         if not isinstance(other, Variable):
