@@ -4,7 +4,7 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus, ENSURE_VAR_NAME
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus, ENSURE_VAR_NAME, EvaluationResult
 from constraint_handler.PropagatorVariables import (
     DictVariable,
     EvaluateVariable,
@@ -189,10 +189,10 @@ class ConstraintHandlerPropagator:
         It returns True if the variable's value changed, False if it did not change,
         and None if there was a conflict.
         """
-        changed, conflict = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
-        myprint(f"Variable {var} is changed: {changed}, conflict: {conflict}")
+        eval_result = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
+        myprint(f"Variable {var} evaluation result: {eval_result}")
 
-        if conflict:
+        if eval_result == EvaluationResult.CONFLICT:
             myprint(f"Var {var} is in conflict at decision level {var.decision_level}")
             ng = self.get_reasons(var)
             myprint(f"Adding nogood {ng}")
@@ -200,7 +200,7 @@ class ConstraintHandlerPropagator:
                 assert False, "Added violated constraint but solver did not detect it"
             return None
 
-        return changed
+        return eval_result == EvaluationResult.CHANGED
 
     def get_reasons(self, var: VariableType) -> set[int]:
         # TODO: optimize this in the future?
@@ -396,6 +396,8 @@ class ConstraintHandlerPropagator:
 
     def on_model(self, model: clingo.Model):
         for var in self.symbol2var.values():
+            if isinstance(var, EnsureVariable):
+                continue
             final_value = var.get_value()
             # myprint(var.var, final_value, type(final_value))
             if final_value is ValueStatus.NOT_SET:
