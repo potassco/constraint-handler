@@ -4,7 +4,7 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus, ENSURE_VAR_NAME, EvaluationResult
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus, ENSURE_VAR_NAME, EvaluationResult, EXECUTION_OUTPUT, EXECUTION_INPUT
 from constraint_handler.PropagatorVariables import (
     DictVariable,
     EvaluateVariable,
@@ -50,7 +50,7 @@ class ConstraintHandlerPropagator:
 
     def init(self, ctl: clingo.PropagateInit):
         if self.check_only:
-            ctl.check_mode = clingo.PropagatorCheckMode.Total
+            self.propagate = lambda ctl, changes: None
 
         self.get_solver_identifier(ctl)
 
@@ -383,6 +383,10 @@ class ConstraintHandlerPropagator:
         # because the variable names are "hidden" inside the execution
         for var in self.symbol2var.values():
             for symbol_var in var.vars():
+                if symbol_var.name.startswith(EXECUTION_OUTPUT):
+                    # if the variable it depends on is an execution output,
+                    # then we look for the name of the execution variable
+                    symbol_var = symbol_var.arguments[0]
                 if symbol_var == var.var:
                     # don't add self as parent
                     # for self referencing variables
