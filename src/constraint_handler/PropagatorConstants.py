@@ -5,7 +5,8 @@ DEBUG_PRINT = False
 FALSE_ASSIGNMENTS = "__FALSE_ASSIGNMENTS__"
 
 ENSURE_VAR_NAME = "__ensure__"
-
+EXECUTION_INPUT = "execution_input"
+EXECUTION_OUTPUT = "execution_output"
 # enum for value_not_set, assignment_is_false, and value_is_none
 class ValueStatus(enum.Enum):
     NOT_SET = "__value_not_set__"

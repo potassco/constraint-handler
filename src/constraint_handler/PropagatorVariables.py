@@ -6,7 +6,7 @@ from typing import Any, Sequence, TypeVar
 import clingo
 
 import constraint_handler.evaluator as evaluator
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, FALSE_ASSIGNMENTS, ValueStatus, EvaluationResult
+from constraint_handler.PropagatorConstants import DEBUG_PRINT, FALSE_ASSIGNMENTS, ValueStatus, EvaluationResult, EXECUTION_INPUT, EXECUTION_OUTPUT
 
 
 def myprint(*args, **kwargs):
@@ -717,7 +717,7 @@ class Execution:
         return converted
 
     def convert_var(self, var: clingo.Symbol, input=True) -> clingo.Symbol:
-        exec_name: str = "execution_input" if input else "execution_output"
+        exec_name: str = EXECUTION_INPUT if input else EXECUTION_OUTPUT
         var_func = var if type(var) == clingo.Symbol else clingo.String(var)
         v = clingo.Function(exec_name, [self.func_name, var_func])
         return v
