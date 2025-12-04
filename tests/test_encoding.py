@@ -93,11 +93,6 @@ def test_engine_ground():
 def test_engine_propagator():
     extra = []
     unsupported = [
-        "custom_globals",
-        # "executions",
-        # "execution_assert",
-        # "execution_conditional",
-        # "execution_loop",
         "lambda_recursive",
         "multimaps",
         "optimize_bools",
@@ -105,7 +100,6 @@ def test_engine_propagator():
         "optimize_ints",
         "set_iterations",
         "set_selfref",
-        #"variables",
     ]
     for test in base_tests + extra:
         if test not in unsupported:
