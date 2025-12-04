@@ -17,37 +17,6 @@ def myprint(*args, **kwargs):
 VariableType = TypeVar("VariableType", "Variable", "SetVariable", "DictVariable", "Execution")
 
 
-class EvaluateVariable:
-
-    def __init__(self, op: evaluator.Operator, args: list[evaluator.Expr], literal: int = -1):
-        self.op: evaluator.Operator = op
-        self.args: list[evaluator.Expr] = args
-        self.value: Any = ValueStatus.NOT_SET
-        self.literal: int = literal
-
-    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> bool:
-        """Evaluate the expression and return True if the value has changed."""
-        if not ctl.assignment.is_true(self.literal):
-            return False
-        myprint(f"Evaluating {self.op}({self.args})")
-        value, errors = evaluator.evaluate_expr(
-            evaluator.Operation(self.op, self.args), env, evaluations
-        )  # TODO: do something with errors?
-        self.value = value
-        return True
-
-    def get_value(self) -> Any:
-        return self.value
-
-    def __eq__(self, other):
-        if not isinstance(other, EvaluateVariable):
-            return False
-        return self.op == other.op and self.args == other.args and self.literal == other.literal
-
-    def __hash__(self):
-        return hash((str(self.op), str(self.args), self.literal))
-
-
 class VariableValue:
     """
     This class corresponds to a single expression appearing in some assingment atom
@@ -128,6 +97,37 @@ class VariableValue:
     def __repr__(self):
         return f"VariableValue({self.expr}, {self.value})"
 
+
+class EvaluateVariable:
+
+    def __init__(self, op: evaluator.Operator, args: list[evaluator.Expr], literal: int = -1):
+        self.op: evaluator.Operator = op
+        self.args: list[evaluator.Expr] = args
+        self.value: Any = ValueStatus.NOT_SET
+        self.literal: int = literal
+
+    def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> bool:
+        """Evaluate the expression and return True if the value has changed."""
+        if not ctl.assignment.is_true(self.literal):
+            return False
+        myprint(f"Evaluating {self.op}({self.args})")
+        value, errors = evaluator.evaluate_expr(
+            evaluator.Operation(self.op, self.args), env, evaluations
+        )  # TODO: do something with errors?
+        self.value = value
+        return True
+
+    def get_value(self) -> Any:
+        return self.value
+
+    def __eq__(self, other):
+        if not isinstance(other, EvaluateVariable):
+            return False
+        return self.op == other.op and self.args == other.args and self.literal == other.literal
+
+    def __hash__(self):
+        return hash((str(self.op), str(self.args), self.literal))
+    
 
 class EnsureVariable:
 
@@ -251,31 +251,32 @@ class Variable:
         val = self.get_values()
         if len(val) > 1:
             # multiple values assigned to the same variable
+            # this is True even if the same value is assigned multiple times
             myprint(f"Variable vals: {val}")
             return EvaluationResult.CONFLICT
         elif len(val) == 0:
             if self.has_unassigned():
                 # some values are unassigned
                 # so we cannot determine the value yet
-                val = {ValueStatus.NOT_SET}
+                val = [ValueStatus.NOT_SET]
             else:
                 # if all values are set and none are true, then it is set to false assignment
-                val = {ValueStatus.ASSIGNMENT_IS_FALSE}
+                val = [ValueStatus.ASSIGNMENT_IS_FALSE]
         elif len(val) == 1:
-            if val == self.value:
+            if val[0] == self.value:
                 # same value as before
                 return EvaluationResult.NOT_CHANGED
 
         self.decision_level = ctl.assignment.decision_level
-        self.value = val.pop()
+        self.value = val[0]
         return EvaluationResult.CHANGED
 
-    def get_values(self) -> set[Any]:
-        vals = set(
+    def get_values(self) -> list[Any]:
+        vals = [
             value.value
             for value in self.expressions
             if value.value != ValueStatus.NOT_SET and value.value != ValueStatus.ASSIGNMENT_IS_FALSE
-        )
+        ]
         return vals
 
     @property
