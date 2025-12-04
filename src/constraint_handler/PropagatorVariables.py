@@ -331,7 +331,7 @@ class SetVariableValue:
     def decision_level(self) -> int:
         return min(value.decision_level for value in self.values)
 
-    def get_value(self) -> ValueStatus | set[Any]:
+    def get_value(self) -> ValueStatus | frozenset[Any]:
         """
         If there is an unassigned value, return None.
         Otherwise return the set of assigned values without the None values.
@@ -339,7 +339,7 @@ class SetVariableValue:
         if self.has_unassigned():
             return ValueStatus.NOT_SET
         # Note that we let None be a part of the set!
-        return {arg.value for arg in self.values if arg.value != ValueStatus.ASSIGNMENT_IS_FALSE}
+        return frozenset(arg.value for arg in self.values if arg.value != ValueStatus.ASSIGNMENT_IS_FALSE)
 
     def has_unassigned(self) -> bool:
         return any(arg.value == ValueStatus.NOT_SET for arg in self.values)
@@ -529,7 +529,7 @@ class DictVariable:
                 # TODO: check if this is the desired behavior
                 continue
             if len(val) == 1:
-                val = val.pop()
+                val = next(iter(val))
             result[key_val] = val
         return result
 
