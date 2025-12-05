@@ -65,9 +65,8 @@ def pythonExec(clStmt,clEnv,clId):
     try:
         locals = { x:evaluator.evaluate_expr(v,dict()) for (x,v) in pEnv }
         evaluator.run_stmt(pStmt, locals, evaluator.get_environment(pId))
-        results = [True]
-        for (x,val) in locals.items():
-            results.append((x,evaluator.reducedExpr(val))) # TODO incorrect for set results?
+        results = [(x,evaluator.reducedExpr(val)) for (x,val) in locals.items()]
+        results.append(True)
         return map(myClorm.pytocl,results)
     except FailIntegrityExn:
         return myClorm.pytocl(evaluator.FailIntegrity())
