@@ -162,12 +162,10 @@ class Noop(NamedTuple):
     pass
 
 
-PythonStmt = namedtuple("Python", ["code", "in_vars", "out_vars"])
-PythonStmt.__annotations__ = {"code": str, "in_vars": list[constant], "out_vars": list[constant]}
+PythonStmt = namedtuple("Python", ["code"])
+PythonStmt.__annotations__ = {"code": str}
 # class PythonStmt(NamedTuple):
 #    code: str
-#    in_vars: list[clingo.Symbol]
-#    out_vars: list[clingo.Symbol]
 
 
 class Seq2(NamedTuple):
@@ -733,14 +731,9 @@ def beta_reduction(symbols, expr):
             return expr
 
 
-def run_python_stmt(code, symbols, invs, outvs, globals=None):
+def run_python_stmt(code, locals, globals=None):
     globals = globals if globals else dict()
-    locals = dict()
-    for x in invs:
-        locals[x] = symbols[x] if x in symbols else None
     exec(code, globals, locals)
-    for x in outvs:
-        symbols[x] = locals[x] if x in locals else None
 
 
 def run_stmt(stmt, symbols, globals=None):
@@ -758,8 +751,8 @@ def run_stmt(stmt, symbols, globals=None):
                 run_stmt(stmt2, symbols, globals)
         case Noop():
             pass
-        case PythonStmt(code, invs, outvs):
-            run_python_stmt(code, symbols, invs, outvs, globals)
+        case PythonStmt(code):
+            run_python_stmt(code, symbols, globals)
         case Seq2(stmt1, stmt2):
             run_stmt(stmt1, symbols, globals)
             run_stmt(stmt2, symbols, globals)

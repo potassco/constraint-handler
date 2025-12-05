@@ -54,22 +54,19 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         return myClorm.pytocl(evaluator.Error(str(exn)))
 
 
-def pythonExec(clStmt,clEnv,clOuts,clId):
+def pythonExec(clStmt,clEnv,clId):
     try:
         pStmt = myClorm.cltopy(clStmt,evaluator.Stmt)
         pEnv  = myClorm.cltopy(clEnv,list[tuple[evaluator.constant,evaluator.ReducedExpr]])
-        pOuts = myClorm.cltopy(clOuts,list[evaluator.constant])
         pId   = myClorm.cltopy(clId)
     except Exception as exn:
-        print(f"pythonExec: error when converting {(clStmt,clEnv,clOuts)}: {exn}.")
+        print(f"pythonExec: error when converting {(clStmt,clEnv)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
-        pDict = { x:evaluator.evaluate_expr(v,dict()) for (x,v) in pEnv }
-        locals = dict(pDict)
+        locals = { x:evaluator.evaluate_expr(v,dict()) for (x,v) in pEnv }
         evaluator.run_stmt(pStmt, locals, evaluator.get_environment(pId))
         results = [True]
-        for x in pOuts:
-            val = locals[x] if x in locals else None
+        for (x,val) in locals.items():
             results.append((x,evaluator.reducedExpr(val))) # TODO incorrect for set results?
         return map(myClorm.pytocl,results)
     except FailIntegrityExn:
