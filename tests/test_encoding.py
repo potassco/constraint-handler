@@ -75,7 +75,6 @@ def test_engine_compile():
 def test_engine_ground():
     extra = []
     unsupported = [
-        "custom_globals",
         "lambdas",
         "lambda_recursive",
         "multimap_basics",

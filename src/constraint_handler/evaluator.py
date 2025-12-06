@@ -376,83 +376,6 @@ def reducedExpr(v):
         raise NotImplementedError("reducedExpr is not implemented for", v)
 
 
-def evaluate_unop(o, val):
-    match o:
-        case UnaryOperator.sqrt:
-            return math.sqrt(val)
-        case UnaryOperator.cos:
-            return math.cos(val)
-        case UnaryOperator.sin:
-            return math.sin(val)
-        case UnaryOperator.tan:
-            return math.tan(val)
-        case UnaryOperator.abs:
-            return abs(val)
-        case UnaryOperator.acos:
-            return math.acos(val)
-        case UnaryOperator.asin:
-            return math.asin(val)
-        case UnaryOperator.atan:
-            return math.atan(val)
-        case UnaryOperator.minus:
-            return -val
-        case UnaryOperator.floor:
-            return math.floor(val)
-        case _:
-            raise NotImplementedError("evaluate_unop", o)
-
-
-def evaluate_logic_operator(o, args):
-    match o:
-        case LogicOperator.conj:
-            if False in args:
-                return False
-            elif None in args:
-                return None
-            else:
-                return True
-        case LogicOperator.disj:
-            if True in args:
-                return True
-            elif None in args:
-                return None
-            else:
-                return False
-        case LogicOperator.ite:
-            assert len(args) == 3
-            if args[0] is None:
-                return None
-            return args[1] if args[0] else args[2]
-        case LogicOperator.leqv:
-            if None in args:
-                return None
-            return not functools.reduce(operator.xor, args)
-        case LogicOperator.limp:
-            assert len(args) == 2
-            return args[1] if args[0] else True
-        case LogicOperator.lnot:
-            assert len(args) == 1
-            if None in args:
-                return None
-            return not args[0]
-        case LogicOperator.lxor:
-            if None in args:
-                return None
-            return functools.reduce(operator.xor, args)
-        case LogicOperator.snot:
-            assert len(args) == 1
-            if None in args:
-                return False
-            return not args[0]
-        case LogicOperator.wnot:
-            assert len(args) == 1
-            if None in args:
-                return True
-            return not args[0]
-        case _:
-            raise NotImplementedError("logic_operator", o)
-
-
 class HashableDict(dict):
     def __hash__(self):
         return hash(frozenset(self.items()))
@@ -471,41 +394,6 @@ def multimap_fold(f, m, start):
     return accu
 
 
-def evaluate_multimap_operator(o, args):
-    if None in args:
-        return None
-    match o:
-        case MultimapOperator.isin:
-            assert len(args) == 2
-            return args[0] in args[1]
-        case MultimapOperator.find:
-            assert len(args) == 2
-            return args[1][args[0]] if args[0] in args[1] else None
-        case MultimapOperator.multimap_fold:
-            o = lambda *aaa: evaluate_operator({}, args[0], aaa)
-            return multimap_fold(o, args[1], args[2])
-        case MultimapOperator.multimapMake:
-            d = dict()
-            for key, value in args:
-                if key not in d:
-                    d[key] = {value}
-                else:
-                    d[key].add(value)
-            # make sure that singular items are not wrapped in a set?
-            # TODO: Is this desired?
-            hd = HashableDict()
-            for key, value in d.items():
-                if len(value) == 1:
-                    hd[key] = value.pop()
-                else:
-                    hd[key] = frozenset(value)
-            return hd
-
-            # return HashableDict({key: value for (key, value) in args})
-        case _:
-            raise NotImplementedError("multimap_operator", o)
-
-
 def set_fold(f, s, start):
     # print("fold", f, s, start)
     accu = start
@@ -514,196 +402,328 @@ def set_fold(f, s, start):
     return accu
 
 
-def evaluate_set_operator(o, args):
-    if None in args:
-        return None
-    match o:
-        case SetOperator.makeSet:
-            return frozenset(args)
-        case SetOperator.isin:
-            return args[0] in args[1]
-        case SetOperator.notin:
-            return args[0] not in args[1]
-        case SetOperator.union:
-            return frozenset().union(*args)
-        case SetOperator.inter:
-            return frozenset(args[0].intersection(*args[1:]))
-        case SetOperator.subset:
-            return args[0].issubset(args[1])
-        case SetOperator.set_fold:
-            o = lambda *aaa: evaluate_operator({}, args[0], aaa)
-            return set_fold(o, args[1], args[2])
-        case _:
-            raise NotImplementedError("set_operator", o)
+class Evaluator:
+    def __init__(self, globals=None, locals=None):
+        self.globals = globals if globals else dict()
+        self.locals = locals if locals else dict()
+        self.errors = []
 
 
-def evaluate_string_operator(o, args):
-    if None in args:
-        return None
-    match o:
-        case StringOperator.length:
-            assert len(args) == 1
-            return len(args[0])
-        case StringOperator.concat:
-            return "".join(args)
-        case _:
-            raise NotImplementedError("string operator", o)
+    def unop(self, o, val):
+        match o:
+            case UnaryOperator.sqrt:
+                return math.sqrt(val)
+            case UnaryOperator.cos:
+                return math.cos(val)
+            case UnaryOperator.sin:
+                return math.sin(val)
+            case UnaryOperator.tan:
+                return math.tan(val)
+            case UnaryOperator.abs:
+                return abs(val)
+            case UnaryOperator.acos:
+                return math.acos(val)
+            case UnaryOperator.asin:
+                return math.asin(val)
+            case UnaryOperator.atan:
+                return math.atan(val)
+            case UnaryOperator.minus:
+                return -val
+            case UnaryOperator.floor:
+                return math.floor(val)
+            case _:
+                self.errors.append(NotImplementedError("unop", o))
+                raise NotImplementedError("unop", o)
 
 
-def evaluate_binop(o, lval, rval):
-    if lval is None or rval is None:
-        return None
-    # print(o,lval,rval)
-    match o:
-        case BinaryOperator.add:
-            return lval + rval
-        case BinaryOperator.sub:
-            return lval - rval
-        case BinaryOperator.mult:
-            return lval * rval
-        case BinaryOperator.div:
-            return lval // rval
-        case BinaryOperator.fdiv:
-            return lval / rval
-        case BinaryOperator.pow:
-            return lval ** rval  # fmt: skip
-        case BinaryOperator.leq:
-            return lval <= rval
-        case BinaryOperator.lt:
-            return lval < rval
-        case BinaryOperator.geq:
-            return lval >= rval
-        case BinaryOperator.gt:
-            return lval > rval
-        case _:
-            raise NotImplementedError("binary operator", o)
+    def logic_operator(self, o, args):
+        match o:
+            case LogicOperator.conj:
+                if False in args:
+                    return False
+                elif None in args:
+                    return None
+                else:
+                    return True
+            case LogicOperator.disj:
+                if True in args:
+                    return True
+                elif None in args:
+                    return None
+                else:
+                    return False
+            case LogicOperator.ite:
+                assert len(args) == 3
+                if args[0] is None:
+                    return None
+                return args[1] if args[0] else args[2]
+            case LogicOperator.leqv:
+                if None in args:
+                    return None
+                return not functools.reduce(operator.xor, args)
+            case LogicOperator.limp:
+                assert len(args) == 2
+                return args[1] if args[0] else True
+            case LogicOperator.lnot:
+                assert len(args) == 1
+                if None in args:
+                    return None
+                return not args[0]
+            case LogicOperator.lxor:
+                if None in args:
+                    return None
+                return functools.reduce(operator.xor, args)
+            case LogicOperator.snot:
+                assert len(args) == 1
+                if None in args:
+                    return False
+                return not args[0]
+            case LogicOperator.wnot:
+                assert len(args) == 1
+                if None in args:
+                    return True
+                return not args[0]
+            case _:
+                self.errors.append(NotImplementedError("logic_operator", o))
+                raise NotImplementedError("logic_operator", o)
 
 
-def evaluate_eq_operator(o, lval, rval):
-    match o:
-        case EqOperator.eq:
-            return lval == rval
-        case EqOperator.neq:
-            return lval != rval
-        case _:
-            raise NotImplementedError("equality operator", o)
+    def multimap_operator(self, o, args):
+        if None in args:
+            return None
+        match o:
+            case MultimapOperator.isin:
+                assert len(args) == 2
+                return args[0] in args[1]
+            case MultimapOperator.find:
+                assert len(args) == 2
+                return args[1][args[0]] if args[0] in args[1] else None
+            case MultimapOperator.multimap_fold:
+                o = lambda *aaa: self.operator(args[0], aaa) # TODO: check
+                return multimap_fold(o, args[1], args[2])
+            case MultimapOperator.multimapMake:
+                d = dict()
+                for key, value in args:
+                    if key not in d:
+                        d[key] = {value}
+                    else:
+                        d[key].add(value)
+                # make sure that singular items are not wrapped in a set?
+                # TODO: Is this desired?
+                hd = HashableDict()
+                for key, value in d.items():
+                    if len(value) == 1:
+                        hd[key] = value.pop()
+                    else:
+                        hd[key] = frozenset(value)
+                return hd
+
+                # return HashableDict({key: value for (key, value) in args})
+            case _:
+                self.errors.append(NotImplementedError("multimap_operator", o))
+                raise NotImplementedError("multimap_operator", o)
 
 
-def evaluate_conditional_operator(o, args):
-    match o:
-        case ConditionalOperator.default:
-            if args[0] is not None:
-                return args[0]
-            else:
-                return args[1]
-        case ConditionalOperator.IF:
-            if args[0] == True:
-                return args[1]
-            else:
+    def set_operator(self, o, args):
+        if None in args:
+            return None
+        match o:
+            case SetOperator.makeSet:
+                return frozenset(args)
+            case SetOperator.isin:
+                return args[0] in args[1]
+            case SetOperator.notin:
+                return args[0] not in args[1]
+            case SetOperator.union:
+                return frozenset().union(*args)
+            case SetOperator.inter:
+                return frozenset(args[0].intersection(*args[1:]))
+            case SetOperator.subset:
+                return args[0].issubset(args[1])
+            case SetOperator.set_fold:
+                o = lambda *aaa: self.operator(args[0], aaa)
+                return set_fold(o, args[1], args[2])
+            case _:
+                self.errors.append(NotImplementedError("set_operator", o))
+                raise NotImplementedError("set_operator", o)
+
+
+    def string_operator(self, o, args):
+        if None in args:
+            return None
+        match o:
+            case StringOperator.length:
+                assert len(args) == 1
+                return len(args[0])
+            case StringOperator.concat:
+                return "".join(args)
+            case _:
+                self.errors.append(NotImplementedError("string operator", o))
+                raise NotImplementedError("string operator", o)
+
+
+    def binop(self, o, lval, rval):
+        if lval is None or rval is None:
+            return None
+        # print(o,lval,rval)
+        match o:
+            case BinaryOperator.add:
+                return lval + rval
+            case BinaryOperator.sub:
+                return lval - rval
+            case BinaryOperator.mult:
+                return lval * rval
+            case BinaryOperator.div:
+                return lval // rval
+            case BinaryOperator.fdiv:
+                return lval / rval
+            case BinaryOperator.pow:
+                return lval ** rval  # fmt: skip
+            case BinaryOperator.leq:
+                return lval <= rval
+            case BinaryOperator.lt:
+                return lval < rval
+            case BinaryOperator.geq:
+                return lval >= rval
+            case BinaryOperator.gt:
+                return lval > rval
+            case _:
+                self.errors.append(NotImplementedError("binary operator", o))
+                raise NotImplementedError("binary operator", o)
+
+
+    def eq_operator(self, o, lval, rval):
+        match o:
+            case EqOperator.eq:
+                return lval == rval
+            case EqOperator.neq:
+                return lval != rval
+            case _:
+                self.errors.append(NotImplementedError("equality operator", o))
+                raise NotImplementedError("equality operator", o)
+
+
+    def conditional_operator(self, o, args):
+        match o:
+            case ConditionalOperator.default:
+                if args[0] is not None:
+                    return args[0]
+                else:
+                    return args[1]
+            case ConditionalOperator.IF:
+                if args[0] == True:
+                    return args[1]
+                else:
+                    return None
+            case ConditionalOperator.hasValue:
+                return args[0] is not None
+            case _:
+                self.errors.append(NotImplementedError("conditional operator", o))
+                raise NotImplementedError("conditional operator", o)
+
+
+    def python_operator(self, fn, args):
+        try:
+            call = eval(fn, self.globals) # TODO: add locals?
+            result = call(*args)
+        except Exception as exn:
+            self.errors.append(exn)
+            return None
+            raise exn
+        return result
+
+
+    def operator(self, o, args):
+        match o:
+            case Python(fn):
+                return self.python_operator(fn, args)
+            case Lambda(vars, expr):
+                if len(vars) != len(args):
+                    self.errors.append(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
+                    assert False
+                locals = dict(self.locals)
+                for v, e in zip(vars, args):
+                    locals[v] = e
+                env = Evaluator(self.globals, locals)
+                return env.expr(expr)
+            case EqOperator():
+                if len(args) == 2:
+                    return self.eq_operator(o, args[0], args[1])
+                else:
+                    assert False
+            case LogicOperator():
+                return self.logic_operator(o, args)
+            case MultimapOperator():
+                return self.multimap_operator(o, args)
+            case SetOperator():
+                return self.set_operator(o, args)
+            case StringOperator():
+                return self.string_operator(o, args)
+            case ConditionalOperator():
+                return self.conditional_operator(o, args)
+            case OtherOperator.minus:
+                assert len(args) # TODO error loggin
+                if len(args) == 1:
+                    return -args[0]
+                else:
+                    return args[0] - sum(args[1:])
+            case OtherOperator.max:
+                assert len(args)
+                return max(args)
+            case OtherOperator.min:
+                assert len(args)
+                return min(args)
+            case o:
+                if len(args) == 1:
+                    return self.unop(o, args[0])
+                elif len(args) == 2:
+                    return self.binop(o, args[0], args[1])
+                else:
+                    self.errors.append(f"operator: undefined {o}")
+                    assert False
+
+
+    def expr(self, expr):
+        match expr:
+            case Operation(eo, eargs):
+                args = [self.expr(a) for a in eargs]
+                o = self.expr(eo)
+                return self.operator(o, args)
+            case Variable(a):
+                if a in self.locals:
+                    return self.locals[a] # TODO : and globals?
+                else:
+                    return None
+            case Val(type_, val):
+                return val
+            case Lambda(vars, body):
+                nsymbols = {x: v for x, v in self.locals.items() if x not in vars}
+                nglobals = dict(self.globals) if self.globals is not None else None
+                if globals is not None:
+                    for x in vars:
+                        if x in nglobals:
+                            del nglobals[x]
+                return Lambda(vars, beta_reduction(nsymbols, body))
+            case o if isinstance(o, Operator):
+                return expr
+            case tuple(eargs):
+                args = tuple(self.expr(a) for a in eargs)
+                return args
+            case set(eargs) | frozenset(eargs):
+                args = frozenset(self.expr(a) for a in eargs)
+                return args
+            case None:
                 return None
-        case ConditionalOperator.hasValue:
-            return args[0] is not None
-        case _:
-            raise NotImplementedError("conditional operator", o)
-
-
-def evaluate_python_operator(fn, args, globals=None):
-    # globals = dict()
-    # locals = dict()
-    # call = eval(fn,globals,locals)
-    try:
-        globals = globals if globals else dict()
-        call = eval(fn, globals)
-        result = call(*args)
-    except Exception as exn:
-        print(exn)
-        raise exn
-    return result
-
-
-def evaluate_operator(symbols, o, args, globals=None):
-    match o:
-        case Python(fn):
-            return evaluate_python_operator(fn, args, globals)
-        case Lambda(vars, expr):
-            if len(vars) != len(args):
-                print(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
-                assert False
-            symbols2 = dict(symbols)
-            for v, e in zip(vars, args):
-                symbols2[v] = e
-            return evaluate_expr(expr, symbols2, globals)
-        case EqOperator():
-            if len(args) == 2:
-                return evaluate_eq_operator(o, args[0], args[1])
-            else:
-                assert False
-        case LogicOperator():
-            return evaluate_logic_operator(o, args)
-        case MultimapOperator():
-            return evaluate_multimap_operator(o, args)
-        case SetOperator():
-            return evaluate_set_operator(o, args)
-        case StringOperator():
-            return evaluate_string_operator(o, args)
-        case ConditionalOperator():
-            return evaluate_conditional_operator(o, args)
-        case OtherOperator.minus:
-            assert len(args)
-            if len(args) == 1:
-                return -args[0]
-            else:
-                return args[0] - sum(args[1:])
-        case OtherOperator.max:
-            assert len(args)
-            return max(args)
-        case OtherOperator.min:
-            assert len(args)
-            return min(args)
-        case o:
-            if len(args) == 1:
-                return evaluate_unop(o, args[0])
-            elif len(args) == 2:
-                return evaluate_binop(o, args[0], args[1])
-            else:
-                print(f"evaluate_operator.py: undefined {o}")
+            case _:
+                self.errors.append(f"expr {type(expr)} {expr}")
                 assert False
 
 
 def evaluate_expr(expr, symbols, globals=None):
-    match expr:
-        case Operation(eo, eargs):
-            args = [evaluate_expr(a, symbols, globals) for a in eargs]
-            o = evaluate_expr(eo, symbols, globals)
-            return evaluate_operator(symbols, o, args, globals)
-        case Variable(a):
-            if a in symbols:
-                return symbols[a]
-            else:
-                return None
-        case Val(type_, val):
-            return val
-        case Lambda(vars, body):
-            nsymbols = {x: v for x, v in symbols.items() if x not in vars}
-            nglobals = dict(globals) if globals is not None else None
-            if globals is not None:
-                for x in vars:
-                    if x in nglobals:
-                        del nglobals[x]
-            return Lambda(vars, beta_reduction(nsymbols, body))
-        case o if isinstance(o, Operator):
-            return expr
-        case tuple(eargs):
-            args = tuple(evaluate_expr(a, symbols, globals) for a in eargs)
-            return args
-        case set(eargs) | frozenset(eargs):
-            args = frozenset(evaluate_expr(a, symbols, globals) for a in eargs)
-            return args
-        case None:
-            return None
-        case _:
-            print("evaluate_expr", type(expr), expr)
-            assert False
+    env = Evaluator(globals, symbols)
+    result = env.expr(expr)
+    print(env.errors)
+    return result
 
 
 def beta_reduction(symbols, expr):
