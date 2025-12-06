@@ -163,7 +163,7 @@ class Noop(NamedTuple):
 
 
 class Statement_python(NamedTuple):
-   code: str
+    code: str
 
 
 class Seq2(NamedTuple):
