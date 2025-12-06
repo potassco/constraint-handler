@@ -162,10 +162,8 @@ class Noop(NamedTuple):
     pass
 
 
-PythonStmt = namedtuple("Python", ["code"])
-PythonStmt.__annotations__ = {"code": str}
-# class PythonStmt(NamedTuple):
-#    code: str
+class Statement_python(NamedTuple):
+   code: str
 
 
 class Seq2(NamedTuple):
@@ -179,7 +177,7 @@ class While(NamedTuple):
     body: Stmt
 
 
-type Stmt = Assert | Assign | If | Noop | PythonStmt | Seq2 | While
+type Stmt = Assert | Assign | If | Noop | Statement_python | Seq2 | While
 
 
 class Execution_declare(NamedTuple):
@@ -751,7 +749,7 @@ def run_stmt(stmt, symbols, globals=None):
                 run_stmt(stmt2, symbols, globals)
         case Noop():
             pass
-        case PythonStmt(code):
+        case Statement_python(code):
             run_python_stmt(code, symbols, globals)
         case Seq2(stmt1, stmt2):
             run_stmt(stmt1, symbols, globals)

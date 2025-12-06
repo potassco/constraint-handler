@@ -63,17 +63,17 @@ _execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = assert(EX
 _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assert(EXPR).
 
 
-%%%%%%%%%%%%%%%%% python
-_direct_implode(V) :- _execution_run(NAME,STMT), STMT = python(CODE), _execution_in(NAME,X,V).
-_execution_mapAux(NAME,#inf,()) :- _execution_run(NAME,STMT), STMT = python(STR).
+%%%%%%%%%%%%%%%%% statement_python
+_direct_implode(V) :- _execution_run(NAME,STMT), STMT = statement_python(CODE), _execution_in(NAME,X,V).
+_execution_mapAux(NAME,#inf,()) :- _execution_run(NAME,STMT), STMT = statement_python(STR).
 _execution_mapAux(NAME,Y,K) :- _execution_mapAux(NAME,X,M), _execution_in(NAME,Y,V), X < Y, _direct_imploded(V,W), K=((Y,W),M), #false : _execution_in(NAME,Z,_), X < Z, Z < Y.
 _execution_mapped(NAME,M) :- _execution_mapAux(NAME,X,M), #false : _execution_in(NAME,Y,_), X < Y.
 
-_execution_exec(NAME,R) :- _execution_query(NAME,STMT), STMT = python(STR), _execution_mapped(NAME,M), R=@pythonExec(STMT,M,ID), _main_solverIdentifier(ID).
+_execution_exec(NAME,R) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_mapped(NAME,M), R=@pythonExec(STMT,M,ID), _main_solverIdentifier(ID).
 :- _execution_exec(NAME,failIntegrity).
-_execution_ou(NAME,X,V) :- _execution_query(NAME,STMT), STMT = python(STR), _execution_exec(NAME,(X,V)).
-_execution_succeeds(NAME,STMT) :- _execution_query(NAME,STMT), STMT = python(STR), _execution_exec(NAME,true).
-warning(("error running python",STR,MSG,NAME)) :- _execution_query(NAME,STMT), STMT = python(STR), _execution_exec(NAME,error(MSG)).
+_execution_ou(NAME,X,V) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,(X,V)).
+_execution_succeeds(NAME,STMT) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,true).
+warning(("error running python",STR,MSG,NAME)) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(MSG)).
 
 
 

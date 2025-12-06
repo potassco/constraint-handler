@@ -5,7 +5,7 @@
 %% flooring(input: "x", output: "y"):
 %%     y := math.floor(x)
 execution_declare(dummy,flooring,STMT,("x",()),("y",())) :-
-    STMT = python("y = myths.floor(x)").
+    STMT = statement_python("y = myths.floor(x)").
 assign(dummy,execution_input(flooring,"x"),val(float,float("10.5"))).
 execution_run(dummy,flooring).
 

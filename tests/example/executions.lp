@@ -56,7 +56,7 @@ evaluate(eq,(variable(execution_output(swap,y)),(variable(execution_input(swap,x
 %%     y := z + "x"
 execution_declare(dummy,pyt,STMT,("x",()),("x",(y,()))) :-
     STMT1 = assign(z,operation(add,(val(int,1),(variable("x"),())))),
-    STMT2 = python("x = x+1"),
+    STMT2 = statement_python("x = x+1"),
     STMT3 = assign(y,operation(add,(variable(z),(variable("x"),())))),
     STMT  = seq2(STMT1,seq2(STMT2,STMT3)).
 assign(dummy,execution_input(pyt,"x"),val(int,10)).
