@@ -408,7 +408,6 @@ class Evaluator:
         self.locals = locals if locals else dict()
         self.errors = []
 
-
     def unop(self, o, val):
         match o:
             case UnaryOperator.sqrt:
@@ -434,7 +433,6 @@ class Evaluator:
             case _:
                 self.errors.append(NotImplementedError("unop", o))
                 raise NotImplementedError("unop", o)
-
 
     def logic_operator(self, o, args):
         match o:
@@ -487,7 +485,6 @@ class Evaluator:
                 self.errors.append(NotImplementedError("logic_operator", o))
                 raise NotImplementedError("logic_operator", o)
 
-
     def multimap_operator(self, o, args):
         if None in args:
             return None
@@ -499,7 +496,7 @@ class Evaluator:
                 assert len(args) == 2
                 return args[1][args[0]] if args[0] in args[1] else None
             case MultimapOperator.multimap_fold:
-                o = lambda *aaa: self.operator(args[0], aaa) # TODO: check
+                o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
                 return multimap_fold(o, args[1], args[2])
             case MultimapOperator.multimapMake:
                 d = dict()
@@ -522,7 +519,6 @@ class Evaluator:
             case _:
                 self.errors.append(NotImplementedError("multimap_operator", o))
                 raise NotImplementedError("multimap_operator", o)
-
 
     def set_operator(self, o, args):
         if None in args:
@@ -547,7 +543,6 @@ class Evaluator:
                 self.errors.append(NotImplementedError("set_operator", o))
                 raise NotImplementedError("set_operator", o)
 
-
     def string_operator(self, o, args):
         if None in args:
             return None
@@ -560,7 +555,6 @@ class Evaluator:
             case _:
                 self.errors.append(NotImplementedError("string operator", o))
                 raise NotImplementedError("string operator", o)
-
 
     def binop(self, o, lval, rval):
         if lval is None or rval is None:
@@ -591,7 +585,6 @@ class Evaluator:
                 self.errors.append(NotImplementedError("binary operator", o))
                 raise NotImplementedError("binary operator", o)
 
-
     def eq_operator(self, o, lval, rval):
         match o:
             case EqOperator.eq:
@@ -601,7 +594,6 @@ class Evaluator:
             case _:
                 self.errors.append(NotImplementedError("equality operator", o))
                 raise NotImplementedError("equality operator", o)
-
 
     def conditional_operator(self, o, args):
         match o:
@@ -621,17 +613,15 @@ class Evaluator:
                 self.errors.append(NotImplementedError("conditional operator", o))
                 raise NotImplementedError("conditional operator", o)
 
-
     def python_operator(self, fn, args):
         try:
-            call = eval(fn, self.globals) # TODO: add locals?
+            call = eval(fn, self.globals)  # TODO: add locals?
             result = call(*args)
         except Exception as exn:
             self.errors.append(exn)
             return None
             raise exn
         return result
-
 
     def operator(self, o, args):
         match o:
@@ -662,7 +652,7 @@ class Evaluator:
             case ConditionalOperator():
                 return self.conditional_operator(o, args)
             case OtherOperator.minus:
-                assert len(args) # TODO error loggin
+                assert len(args)  # TODO error loggin
                 if len(args) == 1:
                     return -args[0]
                 else:
@@ -682,7 +672,6 @@ class Evaluator:
                     self.errors.append(f"operator: undefined {o}")
                     assert False
 
-
     def expr(self, expr):
         match expr:
             case Operation(eo, eargs):
@@ -691,7 +680,7 @@ class Evaluator:
                 return self.operator(o, args)
             case Variable(a):
                 if a in self.locals:
-                    return self.locals[a] # TODO : and globals?
+                    return self.locals[a]  # TODO : and globals?
                 else:
                     return None
             case Val(type_, val):
