@@ -4,54 +4,43 @@ The constraint-handler project.
 
 from importlib.resources import files
 
-from clingo.ast import ProgramBuilder, parse_files
-from clingo.script import enable_python
+import clingo
+import clingo.ast
+import clingo.script
 
-BOOL_LP = files("constraint_handler.data").joinpath("bool.lp")
-CONDITIONALS_LP = files("constraint_handler.data").joinpath("conditionals.lp")
-DIRECT_LP = files("constraint_handler.data").joinpath("direct.lp")
-EXECUTION_LP = files("constraint_handler.data").joinpath("execution.lp")
-FLOAT_LP = files("constraint_handler.data").joinpath("float.lp")
-GRINGO_EVAL_LP = files("constraint_handler.data").joinpath("gringoEval.lp")
-GROUND_EXEC_LP = files("constraint_handler.data").joinpath("groundExec.lp")
-INT_LP = files("constraint_handler.data").joinpath("int.lp")
-MAIN_LP = files("constraint_handler.data").joinpath("main.lp")
-MULTIMAP_LP = files("constraint_handler.data").joinpath("multimap.lp")
-OPTIMIZE_LP = files("constraint_handler.data").joinpath("optimize.lp")
-PREFERENCE_LP = files("constraint_handler.data").joinpath("preference.lp")
-PROPAGATOR_LP = files("constraint_handler.data").joinpath("propagator.lp")
-PYTHON_HELPER_LP = files("constraint_handler.data").joinpath("pythonHelper.lp")
-SET_LP = files("constraint_handler.data").joinpath("set.lp")
-STRING_LP = files("constraint_handler.data").joinpath("string.lp")
-SYMBOL_LP = files("constraint_handler.data").joinpath("symbol.lp")
-VARIABLE_LP = files("constraint_handler.data").joinpath("variable.lp")
+modules = [
+    "bool",
+    "conditionals",
+    "direct",
+    "execution",
+    "float",
+    "gringoEval",
+    "groundExec",
+    "int",
+    "main",
+    "multimap",
+    "optimize",
+    "preference",
+    "propagator",
+    "pythonHelper",
+    "set",
+    "string",
+    "symbol",
+    "variable",
+]
 
-enable_python()
+
+def add_to_control(ctrl: clingo.Control):
+    """Adds encoding logic to the provided Control instance."""
+    clingo.script.enable_python()
+    for mod in modules:
+        file = files("constraint_handler.data").joinpath(f"{mod}.lp")
+        ctrl.load(str(file))
 
 
-def add_encoding_to_program_builder(b: ProgramBuilder):
+def add_encoding_to_program_builder(b: clingo.ast.ProgramBuilder):
     """Adds encoding logic to the provided ProgramBuilder instance."""
+    clingo.script.enable_python()
+    all_files = [str(files("constraint_handler.data").joinpath(f"{mod}.lp")) for mod in modules]
     with b:
-        parse_files(
-            [
-                str(BOOL_LP),
-                str(CONDITIONALS_LP),
-                str(DIRECT_LP),
-                str(EXECUTION_LP),
-                str(FLOAT_LP),
-                str(GRINGO_EVAL_LP),
-                str(GROUND_EXEC_LP),
-                str(INT_LP),
-                str(MAIN_LP),
-                str(MULTIMAP_LP),
-                str(OPTIMIZE_LP),
-                str(PREFERENCE_LP),
-                str(PYTHON_HELPER_LP),
-                str(PROPAGATOR_LP),
-                str(SET_LP),
-                str(STRING_LP),
-                str(SYMBOL_LP),
-                str(VARIABLE_LP),
-            ],
-            lambda stm: b.add(stm),
-        )
+        clingo.ast.parse_files(all_files, lambda stm: b.add(stm))
