@@ -76,7 +76,6 @@ _execution_succeeds(NAME,STMT) :- _execution_query(NAME,STMT), STMT = statement_
 warning(("error running python",STR,MSG,NAME)) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(MSG)).
 
 
-
 %%%%%%%%%%%%%%%%% ifthenelse
 _execution_query(then(NAME),THEN) :- _execution_query(NAME,STMT), STMT = if(EXPR,THEN,ELSE).
 _execution_query(else(NAME),ELSE) :- _execution_query(NAME,STMT), STMT = if(EXPR,THEN,ELSE).

@@ -43,9 +43,10 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
-        d = { var : evaluator.evaluate_expr(val,dict()) for (var,val) in pArgs }
-        prettyD = { str(var) : val for (var,val) in d.items() }
-        pRes = evaluator.evaluate_expr(pExpr, d, evaluator.get_environment(pId))
+        globals = evaluator.get_environment(pId)
+        locals = { var : evaluator.evaluate_expr(val,globals) for (var,val) in pArgs }
+        prettyD = { str(var) : val for (var,val) in locals.items() }
+        pRes = evaluator.evaluate_expr(pExpr, globals, locals)
         # print(f"eval expr: {pExpr} = {pRes} assuming {prettyD}")
         pRed = evaluator.reducedExpr(pRes)
         return myClorm.pytocl(pRed)
@@ -60,11 +61,12 @@ def pythonExec(clStmt,clEnv,clId):
         pEnv  = myClorm.cltopy(clEnv,list[tuple[evaluator.constant,evaluator.ReducedExpr]])
         pId   = myClorm.cltopy(clId)
     except Exception as exn:
-        print(f"pythonExec: error when converting {(clStmt,clEnv)}: {exn}.")
+        print(f"pythonExec: error when converting {(clStmt,clEnv,clId)}: {exn}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
     try:
-        locals = { x:evaluator.evaluate_expr(v,dict()) for (x,v) in pEnv }
-        evaluator.run_stmt(pStmt, locals, evaluator.get_environment(pId))
+        globals = evaluator.get_environment(pId)
+        locals = { x:evaluator.evaluate_expr(v, globals) for (x,v) in pEnv }
+        evaluator.evaluate_stmt(pStmt, globals, locals)
         results = [(x,evaluator.reducedExpr(val)) for (x,val) in locals.items()]
         results.append(True)
         return map(myClorm.pytocl,results)

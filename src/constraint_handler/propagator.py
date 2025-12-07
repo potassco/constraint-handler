@@ -118,7 +118,7 @@ class ConstraintHandlerPropagator:
         for (name, expr), lit in self.ensure_lits.items():
             myprint(f"Checking ensure: {name} := {str(expr)} with literal {lit}")
             evaluated = evaluator.evaluate_expr(
-                expr, make_dict_from_variables(self.symbol2var.values()), self.environment
+                expr, self.environment, make_dict_from_variables(self.symbol2var.values())
             )
 
             myprint(f"Ensure constraint {name}: {expr} evaluated to {evaluated}")
