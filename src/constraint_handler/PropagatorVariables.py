@@ -24,7 +24,7 @@ class EvaluateVariable:
         if not ctl.assignment.is_true(self.literal):
             return False
         # print(f"Evaluating {self.op}({self.args})")
-        value = evaluator.evaluate_expr(evaluator.Operation(self.op, self.args), evaluations, env)
+        value = evaluator.evaluate_expr(evaluator.Operation(self.op, self.args), env, evaluations)
         # print(f"Evaluated {self.op}({self.args}) to {value}")
         # if type(value) == set:
         #     if None in value:
@@ -90,7 +90,7 @@ class VariableValue:
                 assert self.value == ValueStatus.NOT_SET
                 return False
 
-        self.value = evaluator.evaluate_expr(self.expr, evaluations, env)
+        self.value = evaluator.evaluate_expr(self.expr, env, evaluations)
         myprint(f"{self.expr} evaluated to {self.value}")
 
         self.decision_level = ctl.assignment.decision_level

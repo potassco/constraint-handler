@@ -707,13 +707,53 @@ class Evaluator:
                 self.errors.append(f"expr {type(expr)} {expr}")
                 assert False
 
+    def stmt_python(self, code):
+        exec(code, self.globals, self.locals)
 
-def evaluate_expr(expr, symbols, globals=None):
-    env = Evaluator(globals, symbols)
+    def stmt(self, stmt):
+        match stmt:
+            case Assert(expr):
+                condition = self.expr(expr)
+                if condition != True:
+                    raise FailIntegrityExn
+            case Assign(var, expr):
+                self.locals[var] = self.expr(expr)  # TODO eval?
+            case If(cond, stmt1, stmt2):
+                if self.expr(cond):  # TODO eval?
+                    self.stmt(stmt1)
+                else:
+                    self.stmt(stmt2)
+            case Noop():
+                pass
+            case Statement_python(code):
+                self.stmt_python(code)
+            case Seq2(stmt1, stmt2):
+                self.stmt(stmt1)
+                self.stmt(stmt2)
+            case While(maxiter, cond, body):
+                iter = 0
+                while self.expr(cond) and iter < maxiter:
+                    iter += 1
+                    self.stmt(body)
+            case _:
+                print(stmt)
+                assert False
+
+
+def evaluate_expr(expr, globals=None, locals=None):
+    env = Evaluator(globals, locals)
     result = env.expr(expr)
-    print(env.errors)
+    if env.errors:
+        print(f"errors in expression evaluation {expr}\nenv.errors")
     return result
 
+
+def evaluate_stmt(stmt, globals=None, locals=None):
+    env = Evaluator(globals, locals)
+    result = env.stmt(stmt)
+    if env.errors:
+        print(f"errors in statement evaluation {stmt}\nenv.errors")
+    return result
 
 def beta_reduction(symbols, expr):
     match expr:
@@ -736,41 +776,6 @@ def beta_reduction(symbols, expr):
             return args
         case Operator:
             return expr
-
-
-def run_python_stmt(code, locals, globals=None):
-    globals = globals if globals else dict()
-    exec(code, globals, locals)
-
-
-def run_stmt(stmt, symbols, globals=None):
-    match stmt:
-        case Assert(expr):
-            condition = evaluate_expr(expr, symbols, globals)
-            if condition != True:
-                raise FailIntegrityExn
-        case Assign(var, expr):
-            symbols[var] = evaluate_expr(expr, symbols, globals)  # TODO eval?
-        case If(cond, stmt1, stmt2):
-            if evaluate_expr(cond, symbols, globals):  # TODO eval?
-                run_stmt(stmt1, symbols, globals)
-            else:
-                run_stmt(stmt2, symbols, globals)
-        case Noop():
-            pass
-        case Statement_python(code):
-            run_python_stmt(code, symbols, globals)
-        case Seq2(stmt1, stmt2):
-            run_stmt(stmt1, symbols, globals)
-            run_stmt(stmt2, symbols, globals)
-        case While(maxiter, cond, body):
-            iter = 0
-            while evaluate_expr(cond, symbols, globals) and iter < maxiter:
-                iter += 1
-                run_stmt(body, symbols, globals)
-        case _:
-            print(stmt)
-            assert False
 
 
 def get_environment(identifier):
