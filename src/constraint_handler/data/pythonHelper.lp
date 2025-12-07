@@ -33,26 +33,34 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
     #print(f"pythonEvalExprFromPairs2: {pExpr}({prettyArgs}) = {pRes}")
     return myClorm.pytocl(pRes)
 
+
 def pythonEvalExpr(clExpr,clArgs,clId):
     # print("pythonEvalExpr",clExpr,clArgs)
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,evaluator.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
         pId   = myClorm.cltopy(clId)
-    except myClorm.FailedInstantiation as exn:
-        print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {exn}.")
-        return myClorm.pytocl(evaluator.Error(str(exn)))
-    try:
         globals = evaluator.get_environment(pId)
-        locals = { var : evaluator.evaluate_expr(val,globals) for (var,val) in pArgs }
+        results = []
+        locals = dict()
+        for (var,vexpr) in pArgs:
+            val,errors = evaluator.evaluate_expr(vexpr,globals)
+            locals[var] = val
+            for error in errors:
+                results.append(evaluator.Error(repr(error)))
         prettyD = { str(var) : val for (var,val) in locals.items() }
-        pRes = evaluator.evaluate_expr(pExpr, globals, locals)
-        # print(f"eval expr: {pExpr} = {pRes} assuming {prettyD}")
-        pRed = evaluator.reducedExpr(pRes)
-        return myClorm.pytocl(pRed)
+        pRes,errors = evaluator.evaluate_expr(pExpr, globals, locals)
+        for error in errors:
+            results.append(evaluator.Error(repr(error)))
+        # print(f"eval expr: {pExpr} = {pRes} assuming {prettyD}\nerrors: {results}")
+        results.append(evaluator.reducedExpr(pRes))
+        return map(myClorm.pytocl,results)
+    except myClorm.FailedInstantiationExn as exn:
+        print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {repr(exn)}.")
+        return myClorm.pytocl(evaluator.Error(repr(exn)))
     except Exception as exn:
-        # print(f"pythonEvalExpr: error when evaluating {pExpr} over {clArgs}:\n{exn}.")
-        return myClorm.pytocl(evaluator.Error(str(exn)))
+        print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
+        return myClorm.pytocl(evaluator.Error(repr(exn)))
 
 
 def pythonExec(clStmt,clEnv,clId):
@@ -60,20 +68,30 @@ def pythonExec(clStmt,clEnv,clId):
         pStmt = myClorm.cltopy(clStmt,evaluator.Stmt)
         pEnv  = myClorm.cltopy(clEnv,list[tuple[evaluator.constant,evaluator.ReducedExpr]])
         pId   = myClorm.cltopy(clId)
-    except Exception as exn:
-        print(f"pythonExec: error when converting {(clStmt,clEnv,clId)}: {exn}.")
-        return myClorm.pytocl(evaluator.Error(str(exn)))
-    try:
         globals = evaluator.get_environment(pId)
-        locals = { x:evaluator.evaluate_expr(v, globals) for (x,v) in pEnv }
-        evaluator.evaluate_stmt(pStmt, globals, locals)
-        results = [(x,evaluator.reducedExpr(val)) for (x,val) in locals.items()]
-        results.append(True)
+        results = []
+        locals = dict()
+        for (var,vexpr) in pEnv:
+            val,errors = evaluator.evaluate_expr(vexpr,globals)
+            locals[var] = val
+            for error in errors:
+                results.append(evaluator.Error(repr(error)))
+        # print((pStmt, globals, locals))
+        errors = evaluator.evaluate_stmt(pStmt, globals, locals)
+        for error in errors:
+            results.append(evaluator.Error(repr(error)))
+        if not results:
+            results.append(True)
+        results.extend((x,evaluator.reducedExpr(val)) for (x,val) in locals.items())
         return map(myClorm.pytocl,results)
     except FailIntegrityExn:
         return myClorm.pytocl(evaluator.FailIntegrity())
-    except Exception as exn:
+    except myClorm.FailedInstantiationExn as exn:
+        print(f"pythonExec: error when converting {(clStmt,clEnv,clId)}: {repr(exn)}.")
         return myClorm.pytocl(evaluator.Error(str(exn)))
+    except Exception as exn:
+        print(f"pythonExec: uncaught exception {repr(exn)} in context {(clStmt,clEnv,clId)}")
+        return myClorm.pytocl(evaluator.Error(repr(exn)))
 
 
 def pythonReversed(clExpr):

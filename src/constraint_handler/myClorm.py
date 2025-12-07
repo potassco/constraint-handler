@@ -7,7 +7,7 @@ import typing
 import clingo
 
 
-class FailedInstantiation(Exception):
+class FailedInstantiationExn(Exception):
     pass
 
 
@@ -122,7 +122,7 @@ def pytocl(v, dtarget=None):
             # print(name,args)
             return clingo.Function(name, [pytocl(getattr(v, name), field) for name, field in args.items()])
     # print(f"ptc disj failed all {v,dtarget}")
-    raise FailedInstantiation(f"'{v}' is not of type {dtarget}")
+    raise FailedInstantiationExn(f"'{v}' is not of type {dtarget}")
 
 
 def cltopyNoTarget(func):
@@ -261,12 +261,12 @@ def cltopy(func, dtarget=typing.Any):
                     if name == func.name and len(args) == len(func.arguments):
                         return target(*(cltopy(symb, field) for symb, field in zip(func.arguments, args)))
             # print(f"ctp conj failure '{func}' is not of type '{target}'")
-            raise FailedInstantiation(f"'{func}' is not of type '{target}'")
-        except FailedInstantiation:
+            raise FailedInstantiationExn(f"'{func}' is not of type '{target}'")
+        except FailedInstantiationExn:
             # print(f"disj failed once {func,target} {exn}")
             pass
     # print(f"ctp disj failed all {func,dtarget}")
-    raise FailedInstantiation(f"'{func}' is not of type {dtarget}")
+    raise FailedInstantiationExn(f"'{func}' is not of type {dtarget}")
 
 
 def findInModel(model, dtarget=typing.Any, atoms=True, theory=True):
@@ -280,7 +280,7 @@ def findInModel(model, dtarget=typing.Any, atoms=True, theory=True):
             try:
                 v = cltopy(symb, target)
                 result[symb] = v
-            except FailedInstantiation:
+            except FailedInstantiationExn:
                 pass
     return result
 
@@ -303,7 +303,7 @@ def findInControl(ctl, dtarget=typing.Any):
                 if atom.literal not in result:
                     try:
                         result[atom.literal] = cltopy(atom.symbol, target)
-                    except FailedInstantiation:
+                    except FailedInstantiationExn:
                         pass
         else:
             raise ValueError("findInControl: not sure what to do with target", target)
@@ -323,7 +323,7 @@ def findInPropagateInit(ctl, dtarget):
             for atom in ctl.symbolic_atoms.by_signature(name, arity):
                 try:
                     result[cltopy(atom.symbol, target)] = ctl.solver_literal(atom.literal)
-                except FailedInstantiation:
+                except FailedInstantiationExn:
                     pass
         else:
             raise ValueError("findInControl: not sure what to do with target", target)
