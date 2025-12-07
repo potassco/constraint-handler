@@ -646,7 +646,7 @@ class Evaluator:
                 if len(args) == 2:
                     return self.eq_operator(o, args[0], args[1])
                 else:
-                    assert False # TODO
+                    assert False  # TODO
             case LogicOperator():
                 return self.logic_operator(o, args)
             case MultimapOperator():
@@ -664,7 +664,7 @@ class Evaluator:
                 else:
                     return args[0] - sum(args[1:])
             case OtherOperator.max:
-                assert len(args) # TODO
+                assert len(args)  # TODO
                 return max(args)
             case OtherOperator.min:
                 assert len(args)
@@ -731,7 +731,7 @@ class Evaluator:
             case Assign(var, expr):
                 self.locals[var] = self.expr(expr)  # TODO eval?
             case If(cond, stmt1, stmt2):
-                if self.expr(cond): 
+                if self.expr(cond):
                     self.stmt(stmt1)
                 else:
                     self.stmt(stmt2)
@@ -754,7 +754,7 @@ class Evaluator:
 def evaluate_expr(expr, globals=None, locals=None):
     env = Evaluator(globals, locals)
     result = env.expr(expr)
-    return result,env.errors
+    return result, env.errors
 
 
 def evaluate_stmt(stmt, globals=None, locals=None):
