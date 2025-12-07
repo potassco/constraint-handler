@@ -369,11 +369,11 @@ def reducedExpr(v):
     elif isinstance(v, frozenset) or isinstance(v, set):
         return frozenset({reducedExpr(x) for x in v})
     elif isinstance(v, dict):
-        raise NotImplementedError("reducedExpr is not implemented for", dict, v)
+        raise NotImplementedError(f"reducedExpr is not implemented for {dict} {v}")
     elif isinstance(v, Lambda):
         return v
     else:
-        raise NotImplementedError("reducedExpr is not implemented for", v)
+        raise NotImplementedError(f"reducedExpr is not implemented for {v}")
 
 
 class HashableDict(dict):
@@ -431,8 +431,8 @@ class Evaluator:
             case UnaryOperator.floor:
                 return math.floor(val)
             case _:
-                self.errors.append(NotImplementedError("unop", o))
-                raise NotImplementedError("unop", o)
+                self.errors.append(NotImplementedError(f"unop {o}"))
+                return None
 
     def logic_operator(self, o, args):
         match o:
@@ -482,8 +482,8 @@ class Evaluator:
                     return True
                 return not args[0]
             case _:
-                self.errors.append(NotImplementedError("logic_operator", o))
-                raise NotImplementedError("logic_operator", o)
+                self.errors.append(NotImplementedError(f"logic_operator {o}"))
+                return None
 
     def multimap_operator(self, o, args):
         if None in args:
@@ -517,8 +517,8 @@ class Evaluator:
 
                 # return HashableDict({key: value for (key, value) in args})
             case _:
-                self.errors.append(NotImplementedError("multimap_operator", o))
-                raise NotImplementedError("multimap_operator", o)
+                self.errors.append(NotImplementedError(f"multimap_operator {o}"))
+                return None
 
     def set_operator(self, o, args):
         if None in args:
@@ -540,26 +540,27 @@ class Evaluator:
                 o = lambda *aaa: self.operator(args[0], aaa)
                 return set_fold(o, args[1], args[2])
             case _:
-                self.errors.append(NotImplementedError("set_operator", o))
-                raise NotImplementedError("set_operator", o)
+                self.errors.append(NotImplementedError(f"set_operator {o}"))
+                return None
 
     def string_operator(self, o, args):
         if None in args:
             return None
         match o:
             case StringOperator.length:
-                assert len(args) == 1
+                if len(args) != 1:
+                    self.errors.append(TypeError(f"len takes one argument ({len(args)} were given)"))
+                    return None
                 return len(args[0])
             case StringOperator.concat:
                 return "".join(args)
             case _:
-                self.errors.append(NotImplementedError("string operator", o))
-                raise NotImplementedError("string operator", o)
+                self.errors.append(NotImplementedError(f"string operator {o}"))
+                return None
 
     def binop(self, o, lval, rval):
         if lval is None or rval is None:
             return None
-        # print(o,lval,rval)
         match o:
             case BinaryOperator.add:
                 return lval + rval
@@ -568,8 +569,14 @@ class Evaluator:
             case BinaryOperator.mult:
                 return lval * rval
             case BinaryOperator.div:
+                if rval == 0:
+                    self.errors.append(ZeroDivisionError())
+                    return None
                 return lval // rval
             case BinaryOperator.fdiv:
+                if rval == 0:
+                    self.errors.append(ZeroDivisionError())
+                    return None
                 return lval / rval
             case BinaryOperator.pow:
                 return lval ** rval  # fmt: skip
@@ -582,8 +589,8 @@ class Evaluator:
             case BinaryOperator.gt:
                 return lval > rval
             case _:
-                self.errors.append(NotImplementedError("binary operator", o))
-                raise NotImplementedError("binary operator", o)
+                self.errors.append(NotImplementedError(f"binary operator {o}"))
+                return None
 
     def eq_operator(self, o, lval, rval):
         match o:
@@ -592,8 +599,8 @@ class Evaluator:
             case EqOperator.neq:
                 return lval != rval
             case _:
-                self.errors.append(NotImplementedError("equality operator", o))
-                raise NotImplementedError("equality operator", o)
+                self.errors.append(NotImplementedError(f"equality operator {o}"))
+                return None
 
     def conditional_operator(self, o, args):
         match o:
@@ -610,8 +617,8 @@ class Evaluator:
             case ConditionalOperator.hasValue:
                 return args[0] is not None
             case _:
-                self.errors.append(NotImplementedError("conditional operator", o))
-                raise NotImplementedError("conditional operator", o)
+                self.errors.append(NotImplementedError(f"conditional operator {o}"))
+                return None
 
     def python_operator(self, fn, args):
         try:
@@ -620,7 +627,6 @@ class Evaluator:
         except Exception as exn:
             self.errors.append(exn)
             return None
-            raise exn
         return result
 
     def operator(self, o, args):
@@ -630,7 +636,7 @@ class Evaluator:
             case Lambda(vars, expr):
                 if len(vars) != len(args):
                     self.errors.append(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
-                    assert False
+                    return None
                 locals = dict(self.locals)
                 for v, e in zip(vars, args):
                     locals[v] = e
@@ -640,7 +646,7 @@ class Evaluator:
                 if len(args) == 2:
                     return self.eq_operator(o, args[0], args[1])
                 else:
-                    assert False
+                    assert False # TODO
             case LogicOperator():
                 return self.logic_operator(o, args)
             case MultimapOperator():
@@ -658,7 +664,7 @@ class Evaluator:
                 else:
                     return args[0] - sum(args[1:])
             case OtherOperator.max:
-                assert len(args)
+                assert len(args) # TODO
                 return max(args)
             case OtherOperator.min:
                 assert len(args)
@@ -669,8 +675,8 @@ class Evaluator:
                 elif len(args) == 2:
                     return self.binop(o, args[0], args[1])
                 else:
-                    self.errors.append(f"operator: undefined {o}")
-                    assert False
+                    self.errors.append(NotImplementedError(f"operator {o}"))
+                    return None
 
     def expr(self, expr):
         match expr:
@@ -682,13 +688,14 @@ class Evaluator:
                 if a in self.locals:
                     return self.locals[a]  # TODO : and globals?
                 else:
+                    self.errors.append(NameError(f"variable {a} undefined"))
                     return None
             case Val(type_, val):
                 return val
             case Lambda(vars, body):
                 nsymbols = {x: v for x, v in self.locals.items() if x not in vars}
                 nglobals = dict(self.globals) if self.globals is not None else None
-                if globals is not None:
+                if self.globals is not None:
                     for x in vars:
                         if x in nglobals:
                             del nglobals[x]
@@ -704,11 +711,16 @@ class Evaluator:
             case None:
                 return None
             case _:
-                self.errors.append(f"expr {type(expr)} {expr}")
-                assert False
+                self.errors.append(NotImplementedError(f"expr {expr}"))
+                return None
 
     def stmt_python(self, code):
-        exec(code, self.globals, self.locals)
+        try:
+            exec(code, self.globals, self.locals)
+        except FailIntegrityExn:
+            raise
+        except Exception as exn:
+            self.errors.append(exn)
 
     def stmt(self, stmt):
         match stmt:
@@ -719,7 +731,7 @@ class Evaluator:
             case Assign(var, expr):
                 self.locals[var] = self.expr(expr)  # TODO eval?
             case If(cond, stmt1, stmt2):
-                if self.expr(cond):  # TODO eval?
+                if self.expr(cond): 
                     self.stmt(stmt1)
                 else:
                     self.stmt(stmt2)
@@ -736,24 +748,20 @@ class Evaluator:
                     iter += 1
                     self.stmt(body)
             case _:
-                print(stmt)
-                assert False
+                self.errors.append(NotImplementedError(f"stmt {stmt}"))
 
 
 def evaluate_expr(expr, globals=None, locals=None):
     env = Evaluator(globals, locals)
     result = env.expr(expr)
-    if env.errors:
-        print(f"errors in expression evaluation {expr}\nenv.errors")
-    return result
+    return result,env.errors
 
 
 def evaluate_stmt(stmt, globals=None, locals=None):
     env = Evaluator(globals, locals)
-    result = env.stmt(stmt)
-    if env.errors:
-        print(f"errors in statement evaluation {stmt}\nenv.errors")
-    return result
+    env.stmt(stmt)
+    return env.errors
+
 
 def beta_reduction(symbols, expr):
     match expr:

@@ -16,6 +16,7 @@ assign(dummy,nope,operation(default,(operation(python("math.floor"),(val(float,f
 main_solverIdentifier(3).
 
 #show value/3.
+#show warning/1.
 
 #script (python)
 
