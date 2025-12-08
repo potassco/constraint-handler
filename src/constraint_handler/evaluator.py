@@ -220,6 +220,8 @@ class Variable_domain(NamedTuple):
     name: constant
     value: Expr
 
+class Variable_declareOptional(NamedTuple):
+    name: constant
 
 class Optimize_maximizeSum(NamedTuple):
     label: constant
@@ -296,6 +298,10 @@ class Propagator_variable_define(Variable_define):
 
 
 class Propagator_variable_domain(Variable_domain):
+    pass
+
+
+class Propagator_variable_declareOptional(Variable_declareOptional):
     pass
 
 

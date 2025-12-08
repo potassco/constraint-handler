@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Dict, NamedTuple, Sequence
 
 import clingo
@@ -204,7 +206,7 @@ class ConstraintHandlerPropagator:
             ng = self.get_reasons(var)
             myprint(f"Adding nogood {ng}")
             if ctl.add_nogood(ng):
-                assert False, "Added violated constraint but solver did not detect it"
+                assert False, f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"
             return None
 
         return eval_result == EvaluationResult.CHANGED
@@ -251,10 +253,17 @@ class ConstraintHandlerPropagator:
                 literal_false = ctl.add_literal(freeze=True)
                 variable.add_value(evaluator.Val(bool, True), literal_true)
                 variable.add_value(evaluator.Val(bool, False), literal_false)
+                ctl.add_watch(literal_true)
+                ctl.add_watch(-literal_true)
+                ctl.add_watch(literal_false)
+                ctl.add_watch(-literal_false)
+
             elif isinstance(domain, evaluator.FromList):
                 for expr in domain.elements:
                     literal = ctl.add_literal(freeze=True)
                     variable.add_value(expr, literal)
+                    ctl.add_watch(literal)
+                    ctl.add_watch(-literal)
             elif isinstance(domain, evaluator.FromFacts):
                 # values will be added from facts, nothing to do here
                 pass
@@ -267,11 +276,22 @@ class ConstraintHandlerPropagator:
                 continue
             variable: Variable = Variable(name, symbol_var)
             variable.add_value(expr, __literal)
+            ctl.add_watch(__literal)
+            ctl.add_watch(-__literal)
 
         for (symbol_var, domain_expr), __literal in var_domains.items():
             variable: Variable = self.symbol2var[symbol_var]
             literal = ctl.add_literal(freeze=True)
             variable.add_value(domain_expr, literal)
+            ctl.add_watch(literal)
+            ctl.add_watch(-literal)
+
+        for (optional,), __literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_declareOptional).items():
+            variable: Variable = self.symbol2var[optional]
+            literal = ctl.add_literal(freeze=True)
+            variable.add_value(evaluator.Val(type(None), None), literal)
+            ctl.add_watch(literal)
+            ctl.add_watch(-literal)
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """

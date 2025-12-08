@@ -208,6 +208,9 @@ class EnsureVariable:
 
     def __hash__(self):
         return hash((self.name, self.expression))
+    
+    def __repr__(self) -> str:
+        return f"EnsureVariable(name={self.name}, expression={self.expression})"
 
 
 class Variable:
@@ -268,7 +271,10 @@ class Variable:
                 val = [ValueStatus.NOT_SET]
             else:
                 # if all values are set and none are true, then it is set to false assignment
-                val = [ValueStatus.ASSIGNMENT_IS_FALSE]
+                self.decision_level = ctl.assignment.decision_level
+                self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+                return EvaluationResult.CONFLICT
+            
         elif len(val) == 1:
             if val[0] == self.value:
                 # same value as before
@@ -314,7 +320,10 @@ class Variable:
         return hash((self.var, frozenset(self.expressions)))
 
     def __str__(self):
-        return f"Variable({self.name}, {self.var}, {self.literals}, {self.expressions})"
+        return f"Variable({self.name}, {self.var}, {self.expressions})"
+    
+    def __repr__(self):
+        return f"Variable({self.name}, {self.var}, {self.expressions})"
 
 
 class SetVariableValue:
