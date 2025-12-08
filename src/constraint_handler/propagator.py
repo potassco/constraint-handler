@@ -206,7 +206,9 @@ class ConstraintHandlerPropagator:
             ng = self.get_reasons(var)
             myprint(f"Adding nogood {ng}")
             if ctl.add_nogood(ng):
-                assert False, f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"
+                assert (
+                    False
+                ), f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"
             return None
 
         return eval_result == EvaluationResult.CHANGED
@@ -286,7 +288,9 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        for (optional,), __literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_declareOptional).items():
+        for (optional,), __literal in myClorm.findInPropagateInit(
+            ctl, evaluator.Propagator_variable_declareOptional
+        ).items():
             variable: Variable = self.symbol2var[optional]
             literal = ctl.add_literal(freeze=True)
             variable.add_value(evaluator.Val(type(None), None), literal)
