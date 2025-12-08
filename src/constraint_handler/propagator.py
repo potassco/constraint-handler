@@ -256,7 +256,10 @@ class ConstraintHandlerPropagator:
                 assert False, f"Unknown domain type {domain} for variable {name}"
 
         for (name, symbol_var, expr), __literal in var_defines.items():
-            variable: Variable = self.symbol2var[symbol_var]
+            if symbol_var in self.symbol2var:
+                print("Warning: variable defined and declared! Definition will do nothing!")
+                continue
+            variable: Variable = Variable(name, symbol_var)
             variable.add_value(expr, __literal)
 
         for (symbol_var, domain_expr), __literal in var_domains.items():
