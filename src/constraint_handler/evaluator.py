@@ -287,6 +287,15 @@ Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
 Main_solverIdentifier.__annotations__ = {"id": constant}
 
 
+class Propagator_variable_declare(Variable_declare):
+    pass
+
+class Propagator_variable_define(Variable_define):
+    pass
+
+class Propagator_variable_domain(Variable_domain):
+    pass
+
 class Propagator_assign(AssignAtom):
     pass
 
