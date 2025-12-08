@@ -622,7 +622,7 @@ class Evaluator:
 
     def python_operator(self, fn, args):
         try:
-            call = eval(fn, self.globals)  # TODO: add locals?
+            call = eval(fn, self.globals, self.locals)
             result = call(*args)
         except Exception as exn:
             self.errors.append(exn)
@@ -779,11 +779,14 @@ def beta_reduction(symbols, expr):
         case Lambda(vars, body):
             nsymbols = {x: v for x, v in symbols.items() if x not in vars}
             return Lambda(vars, beta_reduction(nsymbols, body))
+        case o if isinstance(o, Operator):
+            return expr
         case tuple(eargs):
             args = tuple(beta_reduction(symbols, e) for e in eargs)
             return args
-        case Operator:
-            return expr
+        case _:
+            print("beta_reduction", expr, symbols, type(expr))
+            assert False
 
 
 def get_environment(identifier):
