@@ -4,15 +4,21 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, ValueStatus, ENSURE_VAR_NAME, EvaluationResult, EXECUTION_OUTPUT, EXECUTION_INPUT
+from constraint_handler.PropagatorConstants import (
+    DEBUG_PRINT,
+    ENSURE_VAR_NAME,
+    EXECUTION_OUTPUT,
+    EvaluationResult,
+    ValueStatus,
+)
 from constraint_handler.PropagatorVariables import (
     DictVariable,
+    EnsureVariable,
     EvaluateVariable,
     Execution,
     OptimizationSum,
     SetVariable,
     Variable,
-    EnsureVariable,
     VariableType,
     make_dict_from_variables,
 )
