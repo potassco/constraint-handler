@@ -1,6 +1,6 @@
 #include "includeAll.lp".
 
-variable_declare(d_x,x,bool).
+variable_declare(d_x,x,boolType).
 variable_define(d_y,y,operation(lnot,(variable(x),()))).
 evaluate(neq,(variable(x),(variable(y),()))).
 
