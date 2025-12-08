@@ -1,3 +1,4 @@
 value(execution_output(flooring,"y"),int,10)
 value(yep,int,3)
 value(nope,int,5)
+value(execution_output(empty,"y"),str,"5")

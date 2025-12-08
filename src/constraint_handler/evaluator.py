@@ -404,8 +404,8 @@ def set_fold(f, s, start):
 
 class Evaluator:
     def __init__(self, globals=None, locals=None):
-        self.globals = globals if globals else dict()
-        self.locals = locals if locals else dict()
+        self.globals = globals if globals is not None else dict()
+        self.locals = locals if locals is not None else dict()
         self.errors = []
 
     def unop(self, o, val):

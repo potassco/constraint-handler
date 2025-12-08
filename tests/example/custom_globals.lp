@@ -15,6 +15,10 @@ assign(dummy,nope,operation(default,(operation(python("math.floor"),(val(float,f
 
 main_solverIdentifier(3).
 
+execution_declare(dummy,empty,STMT,(),("y",())) :-
+    STMT = statement_python("y = '5'").
+execution_run(dummy,empty).
+
 #show value/3.
 #show warning/1.
 
