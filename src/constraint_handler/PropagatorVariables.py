@@ -6,7 +6,14 @@ from typing import Any, Sequence, TypeVar
 import clingo
 
 import constraint_handler.evaluator as evaluator
-from constraint_handler.PropagatorConstants import DEBUG_PRINT, FALSE_ASSIGNMENTS, ValueStatus, EvaluationResult, EXECUTION_INPUT, EXECUTION_OUTPUT
+from constraint_handler.PropagatorConstants import (
+    DEBUG_PRINT,
+    EXECUTION_INPUT,
+    EXECUTION_OUTPUT,
+    FALSE_ASSIGNMENTS,
+    EvaluationResult,
+    ValueStatus,
+)
 
 
 def myprint(*args, **kwargs):
@@ -127,7 +134,7 @@ class EvaluateVariable:
 
     def __hash__(self):
         return hash((str(self.op), str(self.args), self.literal))
-    
+
 
 class EnsureVariable:
 
@@ -136,13 +143,13 @@ class EnsureVariable:
     def __init__(self, name: str, expr: evaluator.Expr, literal: int):
         self.name: str = name
         self.expression: VariableValue = VariableValue(expr, literal)
-        
+
         self.value: ValueStatus | bool = ValueStatus.NOT_SET
 
     @property
     def var(self) -> clingo.Symbol:
         return self.__var
-    
+
     @property
     def parents(self) -> list[VariableType]:
         return []
@@ -158,7 +165,7 @@ class EnsureVariable:
         if ctl.assignment.is_false(self.expression.literal):
             # Ensure is false, so no conflict
             return EvaluationResult.NOT_CHANGED
-        
+
         if self.value != ValueStatus.NOT_SET:
             # already assigned
             return EvaluationResult.NOT_CHANGED
@@ -174,7 +181,7 @@ class EnsureVariable:
         conflict = self.value is False or self.value is None
         if conflict:
             return EvaluationResult.CONFLICT
-        
+
         return EvaluationResult.CHANGED
 
     def get_value(self) -> ValueStatus | bool:
@@ -182,7 +189,7 @@ class EnsureVariable:
 
     def has_unassigned(self) -> bool:
         return self.value == ValueStatus.NOT_SET
-    
+
     def vars(self) -> set[clingo.Symbol]:
         return self.expression.vars()
 
@@ -193,7 +200,7 @@ class EnsureVariable:
     @property
     def decision_level(self) -> int:
         return self.expression.decision_level
-    
+
     def reset(self, dl: int) -> None:
         self.expression.reset(dl)
         if self.decision_level >= dl:
