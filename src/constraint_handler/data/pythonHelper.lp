@@ -82,7 +82,11 @@ def pythonExec(clStmt,clEnv,clId):
             results.append(evaluator.Error(repr(error)))
         if not results:
             results.append(True)
-        results.extend((x,evaluator.reducedExpr(val)) for (x,val) in locals.items())
+        for (x,val) in locals.items():
+            try:
+                results.append((x,evaluator.reducedExpr(val)))
+            except NotImplementedError:
+                pass
         return map(myClorm.pytocl,results)
     except FailIntegrityExn:
         return myClorm.pytocl(evaluator.FailIntegrity())
