@@ -94,8 +94,6 @@ class ConstraintHandlerPropagator:
 
         myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
 
-        self.check_evaluate(ctl)
-
         # If not backtracking, check optimization sums
         backtrack = self.evaluate_optimization_sum(ctl)
         myprint(f"Optimization sum evaluated to {self.optimization_sum.value}")
@@ -103,6 +101,7 @@ class ConstraintHandlerPropagator:
             print(f"backtracking {backtrack} due to optimization sum being worse than best value {self.best_value}")
             return
 
+        self.check_evaluate(ctl)
         # if everything is good, we update the best value
         if self.using_optimization and self.optimization_sum.value > self.best_value:
             myprint(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
@@ -246,11 +245,12 @@ class ConstraintHandlerPropagator:
         var_declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_declare)
         var_defines = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_define)
         var_domains = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_domain)
+        var_optionals = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_declareOptional)
         for (name, symbol_var, domain), __literal in var_declares.items():
             variable: Variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = variable
 
-            if domain == bool:
+            if isinstance(domain, evaluator.BoolType):
                 literal_true = ctl.add_literal(freeze=True)
                 literal_false = ctl.add_literal(freeze=True)
                 variable.add_value(evaluator.Val(bool, True), literal_true)
@@ -277,6 +277,7 @@ class ConstraintHandlerPropagator:
                 print("Warning: variable defined and declared! Definition will do nothing!")
                 continue
             variable: Variable = Variable(name, symbol_var)
+            self.symbol2var[symbol_var] = variable
             variable.add_value(expr, __literal)
             ctl.add_watch(__literal)
             ctl.add_watch(-__literal)
@@ -288,14 +289,17 @@ class ConstraintHandlerPropagator:
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        for (optional,), __literal in myClorm.findInPropagateInit(
-            ctl, evaluator.Propagator_variable_declareOptional
-        ).items():
+        for (optional,), __literal in var_optionals.items():
             variable: Variable = self.symbol2var[optional]
             literal = ctl.add_literal(freeze=True)
             variable.add_value(evaluator.Val(type(None), None), literal)
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
+
+        # check that all variables have a domain
+        for var in self.symbol2var.values():
+            if not var.has_domain():
+                assert False, f"Variable {var} has no domain!"
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """

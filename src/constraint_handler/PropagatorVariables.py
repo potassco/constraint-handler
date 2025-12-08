@@ -242,6 +242,9 @@ class Variable:
             vars.update(value.vars())
         return vars
 
+    def has_domain(self) -> bool:
+        return len(self.expressions) > 0
+
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
     ) -> EvaluationResult:
@@ -330,6 +333,9 @@ class SetVariableValue:
     def __init__(self):
         self.values: set[VariableValue] = set()
 
+    def has_domain(self) -> bool:
+        return len(self.values) > 0
+
     def add_value(self, arg: evaluator.Expr, lit: int) -> None:
         self.values.add(VariableValue(arg, lit))
 
@@ -410,6 +416,9 @@ class SetVariable:
         self.decision_level: int = sys.maxsize  # decision level of the set declaration
 
         self.parents: list[VariableType] = []
+
+    def has_domain(self) -> bool:
+        return self.expressions.has_domain()
 
     def add_value(self, arg: evaluator.Expr, lit: int) -> None:
         self.expressions.add_value(arg, lit)
@@ -511,6 +520,9 @@ class DictVariable:
         if key_val not in self.expressions:
             self.expressions[key_val] = SetVariableValue()
         self.expressions[key_val].add_value(expr, lit)
+
+    def has_domain(self) -> bool:
+        return len(self.expressions) > 0
 
     @property
     def literals(self) -> set[int]:
@@ -712,6 +724,9 @@ class Execution:
         self.values: ValueStatus | list[tuple[clingo.Symbol, Any]] = ValueStatus.NOT_SET
 
         self.parents: list[VariableType] = []
+
+    def has_domain(self) -> bool:
+        return True  # executions always have a domain
 
     @property
     def var(self):
