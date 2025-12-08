@@ -208,7 +208,7 @@ class EnsureVariable:
 
     def __hash__(self):
         return hash((self.name, self.expression))
-    
+
     def __repr__(self) -> str:
         return f"EnsureVariable(name={self.name}, expression={self.expression})"
 
@@ -274,7 +274,7 @@ class Variable:
                 self.decision_level = ctl.assignment.decision_level
                 self.value = ValueStatus.ASSIGNMENT_IS_FALSE
                 return EvaluationResult.CONFLICT
-            
+
         elif len(val) == 1:
             if val[0] == self.value:
                 # same value as before
@@ -321,7 +321,7 @@ class Variable:
 
     def __str__(self):
         return f"Variable({self.name}, {self.var}, {self.expressions})"
-    
+
     def __repr__(self):
         return f"Variable({self.name}, {self.var}, {self.expressions})"
 

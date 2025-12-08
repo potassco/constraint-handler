@@ -220,8 +220,10 @@ class Variable_domain(NamedTuple):
     name: constant
     value: Expr
 
+
 class Variable_declareOptional(NamedTuple):
     name: constant
+
 
 class Optimize_maximizeSum(NamedTuple):
     label: constant
