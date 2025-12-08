@@ -54,6 +54,7 @@ class ConstraintHandlerPropagator:
 
         self.get_solver_identifier(ctl)
 
+        self.get_variables(ctl)
         self.get_assign(ctl)
         self.get_ensure(ctl)
         self.get_set_declarations(ctl)
@@ -225,6 +226,43 @@ class ConstraintHandlerPropagator:
             var.reset(assignment.decision_level)
 
         self.optimization_sum.reset(assignment.decision_level)
+
+    def get_variables(self, ctl: clingo.PropagateInit):
+        """
+        This method initializes the variables from the ASP encoding.
+        It reads the propagator_variable_declare, propagator_variable_define, propagator_variable_domain
+        atoms and creates Variable instances.
+        """
+        var_declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_declare)
+        var_defines = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_define)
+        var_domains = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_domain)
+        for (name, symbol_var, domain), __literal in var_declares.items():
+            variable: Variable = Variable(name, symbol_var)
+            self.symbol2var[symbol_var] = variable
+
+            if domain == bool:
+                literal_true = ctl.add_literal(freeze=True)
+                literal_false = ctl.add_literal(freeze=True)
+                variable.add_value(evaluator.Val(bool, True), literal_true)
+                variable.add_value(evaluator.Val(bool, False), literal_false)
+            elif isinstance(domain, evaluator.FromList):
+                for expr in domain.elements:
+                    literal = ctl.add_literal(freeze=True)
+                    variable.add_value(expr, literal)
+            elif isinstance(domain, evaluator.FromFacts):
+                # values will be added from facts, nothing to do here
+                pass
+            else:
+                assert False, f"Unknown domain type {domain} for variable {name}"
+
+        for (name, symbol_var, expr), __literal in var_defines.items():
+            variable: Variable = self.symbol2var[symbol_var]
+            variable.add_value(expr, __literal)
+
+        for (symbol_var, domain_expr), __literal in var_domains.items():
+            variable: Variable = self.symbol2var[symbol_var]
+            literal = ctl.add_literal(freeze=True)
+            variable.add_value(domain_expr, literal)
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """

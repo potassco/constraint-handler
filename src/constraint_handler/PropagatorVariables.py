@@ -421,10 +421,7 @@ class SetVariable:
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]
     ) -> EvaluationResult:
         """
-        Evaluate the expression and return a tuple (changed, conflict).
-        changed is True if the value has changed.
-        conflict is True if there is a conflict.
-        For sets, there should never be a conflict.
+        Evaluate the expression and return an EvaluationResult.
         """
         self.assigned = ctl.assignment.value(self.literal)
 
@@ -717,7 +714,7 @@ class Execution:
             converted.append(self.convert_var(var, input=input))
         return converted
 
-    def convert_var(self, var: clingo.Symbol, input=True) -> clingo.Symbol:
+    def convert_var(self, var: clingo.Symbol | str, input=True) -> clingo.Symbol:
         exec_name: str = EXECUTION_INPUT if input else EXECUTION_OUTPUT
         var_func = var if type(var) == clingo.Symbol else clingo.String(var)
         v = clingo.Function(exec_name, [self.func_name, var_func])
@@ -736,7 +733,10 @@ class Execution:
             return EvaluationResult.NOT_CHANGED
 
         if ctl.assignment.is_false(self.literal):
-            self.values = ValueStatus.ASSIGNMENT_IS_FALSE
+            # if an execution is not run, all its outputs are set to None
+            self.values = []
+            for c_out_var in self.converted_out_vars:
+                self.values.append((c_out_var, None))
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CHANGED
 
