@@ -752,7 +752,7 @@ class Execution:
             evals[var] = evaluations[c_var]
 
         try:
-            evaluator.run_stmt(self.stmt, evals, env)
+            evaluator.evaluate_stmt(self.stmt, env, evals)
         except evaluator.FailIntegrityExn as e:
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CONFLICT
