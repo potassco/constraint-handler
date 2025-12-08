@@ -130,7 +130,7 @@ def pythonStop(clExpr):
     return clExpr
 
 def pythonTagVars(clExpr,clName):
-    # print("pythonEvalExpr",clName,clExpr,clArgs)
+    # print("pythonTagVars",clName,clExpr)
     pName = myClorm.cltopy(clName)
     pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
     vars = evaluator.collectVars(pExpr)
