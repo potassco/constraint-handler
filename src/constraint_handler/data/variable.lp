@@ -5,7 +5,7 @@
 
 assign(CNAME,X,E) :- variable_define(CNAME,X,E), not engine(CNAME,propagator).
 
-_variable_domain(X,val(bool,(false;true))) :- variable_declare(CNAME,X,BoolType), not engine(CNAME,propagator).
+_variable_domain(X,val(bool,(false;true))) :- variable_declare(CNAME,X,boolType), not engine(CNAME,propagator).
 _variable_domain(X,V) :- variable_declare(CNAME,X,fromList(L)), V=@pythonListElements(L), not engine(CNAME,propagator).
 _variable_domain(X,V) :- variable_declare(CNAME,X,fromFacts), variable_domain(X,V), not engine(CNAME,propagator).
 _variable_domain(X,val(none,none)) :- variable_declareOptional(X), variable_declare(CNAME,X,_), not engine(CNAME,propagator).
