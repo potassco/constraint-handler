@@ -471,6 +471,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def on_model(self, model: clingo.Model):
         for var in self.symbol2var.values():
+            self.handle_on_model_warning(var.get_errors(), model)
             if isinstance(var, EnsureVariable):
                 continue
             final_value = var.get_value()
@@ -491,16 +492,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.handle_on_model_value(var.var, final_value, model)
 
         for var in self.evaluatevars:
-            # if var.value is None or var.value is VALUE_NOT_SET:
-            #     continue
+            self.handle_on_model_warning(var.get_errors(), model)
             pyAtom = Evaluated(var.op, var.args, evaluator.get_baseType(var.get_value()), var.get_value())
-            # myprint(f"adding evaluate atom {pyAtom}", end=" ")
+            myprint(f"adding evaluate atom {pyAtom}", end=" ")
             clAtom = myClorm.pytocl(pyAtom)
             myprint(f"= {clAtom}")
             if not model.contains(clAtom):
                 model.extend([clAtom])
 
         if self.using_optimization:
+            self.handle_on_model_warning(self.optimization_sum.get_errors(), model)
             print(f"Optimization value: {self.optimization_sum.value}")
 
     def handle_on_model_value(self, var: clingo.Symbol, final_value: Any, model: clingo.Model):
@@ -558,3 +559,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         if not model.contains(clAtom):
             model.extend([clAtom])
+
+    def handle_on_model_warning(self, errors: list[Exception], model: clingo.Model):
+        for error in errors:
+            atom = evaluator.Warning(clingo.Function("", [clingo.Function(type(error).__name__), clingo.String(str(error))]))
+            if not model.contains(myClorm.pytocl(atom)):
+                model.extend([myClorm.pytocl(atom)])

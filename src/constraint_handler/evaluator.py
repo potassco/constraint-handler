@@ -661,7 +661,7 @@ class Evaluator:
                 return self.python_operator(fn, args)
             case Lambda(vars, expr):
                 if len(vars) != len(args):
-                    self.errors.append(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
+                    self.errors.append(ValueError(f"evaluate_operator inconsistent parameters and argument lengths for {o}"))
                     return None
                 locals = dict(self.locals)
                 for v, e in zip(vars, args):
