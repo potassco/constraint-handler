@@ -56,6 +56,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.check_only = check_only
 
+        self.errors: list[Exception] = []
+
     def init(self, ctl: clingo.PropagateInit):
         if self.check_only:
             self.propagate = lambda ctl, changes: None
@@ -250,6 +252,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             variable: Variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = variable
 
+            self.errors.append(SyntaxError(f"Variable {name} declaration is not a fact!"))
+
             if isinstance(domain, evaluator.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
                 literal_false = ctl.add_literal(freeze=True)
@@ -270,11 +274,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 # values will be added from facts, nothing to do here
                 pass
             else:
-                assert False, f"Unknown domain type {domain} for variable {name}"
+                self.errors.append(ValueError(f"Unknown domain type {domain} for variable {name}"))
 
         for (name, symbol_var, expr), __literal in var_defines.items():
             if symbol_var in self.symbol2var:
-                print("Warning: variable defined and declared! Definition will do nothing!")
+                self.errors.append(SyntaxError(f"Variable {name} declared and defined! variable_define will do nothing!"))
                 continue
             variable: Variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = variable
@@ -299,7 +303,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # check that all variables have a domain
         for var in self.symbol2var.values():
             if not var.has_domain():
-                assert False, f"Variable {var} has no domain!"
+                self.errors.append(ValueError(f"Variable {var} has no domain defined!"))
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
@@ -358,7 +362,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for id, _ in myClorm.findInPropagateInit(ctl, evaluator.Main_solverIdentifier).items():
             self.environment = evaluator.get_environment(id.id)
-            # print("hello",self.environment)
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
         """
@@ -380,6 +383,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_declare)
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
+            self.errors.append(SyntaxError(f"Set variable {name} declaration is not a fact!"))
 
             self.symbol2var[symbol_var] = variable
             if literal not in self.literal2var:
@@ -408,6 +412,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_declare)
         for (name, symbol_var), literal in declares.items():
             variable = DictVariable(name, symbol_var, literal)
+
+            self.errors.append(SyntaxError(f"Dict variable {name} declaration is not a fact!"))
+
             self.symbol2var[symbol_var] = variable
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
@@ -435,6 +442,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_execution_declare)
         for (name, symbol_var, stmt, in_v, out_v), literal in declares.items():
             variable = Execution(name, symbol_var, stmt, in_v, out_v)
+
+            self.errors.append(SyntaxError(f"Execution {name} declaration is not a fact!"))
+
             self.symbol2var[symbol_var] = variable
 
         exec_runs = myClorm.findInPropagateInit(ctl, evaluator.Propagator_execution_run)
@@ -470,6 +480,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.symbol2var[symbol_var].parents.append(var)
 
     def on_model(self, model: clingo.Model):
+        self.handle_on_model_warning(self.errors, model)
+
         for var in self.symbol2var.values():
             self.handle_on_model_warning(var.get_errors(), model)
             if isinstance(var, EnsureVariable):
