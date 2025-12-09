@@ -3,15 +3,15 @@
 #defined variable_declareOptional/1.
 #defined variable_domain/2.
 
-assign(CNAME,X,E) :- variable_define(CNAME,X,E), not engine(CNAME,propagator).
+assign(CNAME,X,E) :- variable_define(CNAME,X,E), engine(CNAME,(compile;ground)).
 
-_variable_domain(X,val(bool,(false;true))) :- variable_declare(CNAME,X,boolType), not engine(CNAME,propagator).
-_variable_domain(X,V) :- variable_declare(CNAME,X,fromList(L)), V=@pythonListElements(L), not engine(CNAME,propagator).
-_variable_domain(X,V) :- variable_declare(CNAME,X,fromFacts), variable_domain(X,V), not engine(CNAME,propagator).
-_variable_domain(X,val(none,none)) :- variable_declareOptional(X), variable_declare(CNAME,X,_), not engine(CNAME,propagator).
+_variable_domain(X,val(bool,(false;true))) :- variable_declare(CNAME,X,boolDomain), engine(CNAME,(compile;ground)).
+_variable_domain(X,V) :- variable_declare(CNAME,X,fromList(L)), V=@pythonListElements(L), engine(CNAME,(compile;ground)).
+_variable_domain(X,V) :- variable_declare(CNAME,X,fromFacts), variable_domain(X,V), engine(CNAME,(compile;ground)).
+_variable_domain(X,val(none,none)) :- variable_declareOptional(X), variable_declare(CNAME,X,_), engine(CNAME,(compile;ground)).
 
 1 { assign(CNAME,X,V) : _variable_domain(X,V) } 1 :-
-   variable_declare(CNAME,X,_), not engine(CNAME,propagator).
+   variable_declare(CNAME,X,_), engine(CNAME,(compile;ground)).
 
 warning((X,"was defined twice:",E1,E2)) :- variable_define(CNAME1,X,E1), variable_define(CNAME2,X,E2),
   (CNAME1,E1) < (CNAME2,E2).
