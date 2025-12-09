@@ -197,7 +197,7 @@ class FromFacts(NamedTuple):
     pass
 
 
-class BoolType(NamedTuple):
+class BoolDomain(NamedTuple):
     pass
 
 
@@ -205,7 +205,7 @@ class FromList(NamedTuple):
     elements: list[Expr]
 
 
-type Domain = BoolType | FromFacts | FromList
+type Domain = BoolDomain | FromFacts | FromList
 
 
 class Variable_declare(NamedTuple):

@@ -250,7 +250,7 @@ class ConstraintHandlerPropagator:
             variable: Variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = variable
 
-            if isinstance(domain, evaluator.BoolType):
+            if isinstance(domain, evaluator.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
                 literal_false = ctl.add_literal(freeze=True)
                 variable.add_value(evaluator.Val(bool, True), literal_true)
