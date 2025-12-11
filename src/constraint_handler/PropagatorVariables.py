@@ -434,6 +434,8 @@ class SetVariable:
 
         self.parents: list[VariableType] = []
 
+        self.errors: list[Exception] = []
+
     def has_domain(self) -> bool:
         return self.expressions.has_domain()
 
@@ -441,7 +443,7 @@ class SetVariable:
         self.expressions.add_value(arg, lit)
 
     def get_errors(self) -> list[Exception]:
-        return self.expressions.get_errors()
+        return self.expressions.get_errors() + self.errors
 
     @property
     def literals(self) -> set[int]:
@@ -481,6 +483,7 @@ class SetVariable:
             # Assignment is false, so value is set to false assignment
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
+            self.errors.append(ValueError(f"Set declaration for {self.var} is False!"))
             return EvaluationResult.CHANGED
 
         changed = self.expressions.evaluate(evaluations, ctl, env)
@@ -500,6 +503,7 @@ class SetVariable:
         if self.decision_level >= dl:
             self.decision_level = sys.maxsize
             self.value = ValueStatus.NOT_SET
+            self.errors = []
 
     def __eq__(self, value):
         if not isinstance(value, SetVariable):
@@ -533,6 +537,8 @@ class DictVariable:
 
         self.parents: list[VariableType] = []
 
+        self.errors: list[Exception] = []
+
     def add_value(self, key: evaluator.Expr, expr: evaluator.Expr, lit: int) -> None:
         # setting lit for key to 1 since it does not have its own literal
         # the literal is bound for the value!
@@ -549,7 +555,7 @@ class DictVariable:
         for key, value in self.expressions.items():
             errors.extend(key.get_errors())
             errors.extend(value.get_errors())
-        return errors
+        return errors + self.errors
 
     @property
     def literals(self) -> set[int]:
@@ -615,6 +621,7 @@ class DictVariable:
         elif ctl.assignment.is_false(self.literal):
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
+            self.errors.append(ValueError(f"Dict declaration for {self.var} is False!"))
             return EvaluationResult.CHANGED
 
         changed = False
@@ -639,6 +646,7 @@ class DictVariable:
         if self.decision_level >= dl:
             self.decision_level = sys.maxsize
             self.value = ValueStatus.NOT_SET
+            self.errors = []
 
     def __eq__(self, other):
         if not isinstance(other, DictVariable):
@@ -696,7 +704,7 @@ class OptimizationSum:
     def evaluate(self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.Control, env: dict[Any, Any]) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         changed = False
-        # print(evaluations)
+
         for var, expr in self.expressions:
             changed |= expr.evaluate(evaluations, ctl, env)
 

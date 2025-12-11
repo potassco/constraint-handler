@@ -353,6 +353,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for (op, args), literal in myClorm.findInPropagateInit(ctl, evaluator.Evaluate).items():
             var = EvaluateVariable(op, args, literal)
+            if literal != 1:
+                self.errors.append(SyntaxError(f"Evaluate atom {op} with args {args} is not a fact!"))
             self.evaluatevars.append(var)
 
     def get_solver_identifier(self, ctl: clingo.PropagateInit):
