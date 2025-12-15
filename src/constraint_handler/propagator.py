@@ -538,6 +538,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"Unknown model type {type(final_value)} for variable {var} in on_model!")
 
     def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset, model: clingo.Model):
+        pyAtom = evaluator.Value(var, evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])]))
+        clAtom = myClorm.pytocl(pyAtom)
+        myprint(f"= {clAtom}")
+        if not model.contains(clAtom):
+            model.extend([clAtom])
+
         for value in final_value:
 
             if value is ValueStatus.NOT_SET:
@@ -551,6 +557,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 model.extend([clAtom])
 
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict, model: clingo.Model):
+        # TODO: If we want to use the ref system for the output here(for sets, etc) then
+        # we have to loop over the expressions in the dict, not just the final values
+        # otherwise, we don't know what the ref is for each key and value
+        # alternatively, we have a separate part of the dict that tells you which refs are for which key/value
+        
         for key, value in final_value.items():
 
             if value is ValueStatus.NOT_SET:
