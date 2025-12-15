@@ -587,8 +587,7 @@ class DictVariable:
                 # then we treat it as not present in the dict
                 # TODO: check if this is the desired behavior
                 continue
-            if len(val) == 1:
-                val = next(iter(val))
+            
             result[key_val] = val
         return result
 
@@ -629,7 +628,7 @@ class DictVariable:
             changed |= key.evaluate(evaluations, ctl, env)
             changed |= value.evaluate(evaluations, ctl, env)
 
-        if changed:
+        if changed or not self.has_unassigned():
             self.value = self.discern_value()
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
