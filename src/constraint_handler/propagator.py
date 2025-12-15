@@ -385,7 +385,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_declare)
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
-            self.errors.append(SyntaxError(f"Set variable {name} declaration is not a fact!"))
+            if literal != 1:
+                self.errors.append(SyntaxError(f"Set variable {name} declaration is not a fact! It has literal {literal}."))
 
             self.symbol2var[symbol_var] = variable
             if literal not in self.literal2var:
@@ -415,7 +416,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for (name, symbol_var), literal in declares.items():
             variable = DictVariable(name, symbol_var, literal)
 
-            self.errors.append(SyntaxError(f"Dict variable {name} declaration is not a fact!"))
+            if literal != 1:
+                self.errors.append(SyntaxError(f"Dict variable {symbol_var} declaration is not a fact! It has literal {literal}."))
 
             self.symbol2var[symbol_var] = variable
             if literal not in self.literal2var:
@@ -554,14 +556,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if value is ValueStatus.NOT_SET:
                 assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
 
-            pyAtom = evaluator.Multimap_value(
-                var, evaluator.get_baseType(key), key, evaluator.get_baseType(value), value
-            )
-            # myprint(f"adding multimap atom {pyAtom}", end=" ")
-            clAtom = myClorm.pytocl(pyAtom)
-            myprint(f"= {clAtom}")
-            if not model.contains(clAtom):
-                model.extend([clAtom])
+            for val in value:
+                pyAtom = evaluator.Multimap_value(
+                    var, evaluator.get_baseType(key), key, evaluator.get_baseType(val), val
+                )
+                # myprint(f"adding multimap atom {pyAtom}", end=" ")
+                clAtom = myClorm.pytocl(pyAtom)
+                myprint(f"= {clAtom}")
+                if not model.contains(clAtom):
+                    model.extend([clAtom])
 
     def handle_on_model_normal_type(
         self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol, model: clingo.Model
