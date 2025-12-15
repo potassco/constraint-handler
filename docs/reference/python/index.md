@@ -1,9 +1,8 @@
 ---
-title: "API Reference"
-icon: "material/book-open-variant"
+title: "Python Reference"
 ---
 
-# API
+# Python Reference
 
 ::: constraint_handler
     handler: python

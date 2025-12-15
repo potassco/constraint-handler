@@ -1,4 +1,14 @@
-%%%%%%%%%%%%%%%%% eq neq
+%*! compute(OP,ARGS)
+
+Interface for boolean computations.
+
+Args:
+    - OP: The operator used in the computation.
+    - ARGS: The arguments passed to the computation in list form.
+*%
+
+
+%# Equality and Inequality
 computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=eq,  ARGS = (val(bool,V1),(val(bool,V2),())), V1 =  V2.
 computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=eq,  ARGS = (val(bool,V1),(val(bool,V2),())), V1 != V2.
 computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=neq, ARGS = (val(bool,V1),(val(bool,V2),())), V1 != V2.
