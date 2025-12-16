@@ -6,6 +6,7 @@ import constraint_handler.utils.testing as chut
 
 clingo.script.enable_python()
 
+import pytest
 
 def run_test_compile(name):
     name = "tests/example/" + name
@@ -89,9 +90,25 @@ def test_engine_ground():
         if test not in unsupported:
             run_test_ground(test)
 
+# def test_engine_propagator():
+#     extra = []
+#     unsupported = [
+#         "lambda_recursive",
+#         "multimaps",
+#         "optimize_bools",
+#         "optimize_floats",
+#         "optimize_ints",
+#         "set_iterations",
+#         "set_selfref",
+#         "lambdas",
+#         "multimap_basics",
+#     ]
+#     for test in base_tests + extra:
+#         if test not in unsupported:
+#             run_test_propagator(test)
 
-def test_engine_propagator():
-    extra = []
+@pytest.mark.parametrize(["name", "check_mode"], list(zip(base_tests, [True]*len(base_tests))) + list(zip(base_tests, [False]*len(base_tests))))
+def test_propagator(name, check_mode):
     unsupported = [
         "lambda_recursive",
         "multimap_basics",
@@ -101,10 +118,22 @@ def test_engine_propagator():
         "optimize_ints",
         "set_iterations",
         "set_selfref",
+        "lambdas",
+        "multimap_basics",
     ]
-    for test in base_tests + extra:
-        if test not in unsupported:
-            run_test_propagator(test)
+    if name in unsupported:
+        return
+    
+    name = "tests/example/" + name
+    solver = chut.SolverWithPropagators(
+        ["0", "--heuristic=Domain"],
+        "defaultEngine(propagator).",
+        files=[name + ".lp"],
+        propagators=[lambda : prop.ConstraintHandlerPropagator(check_mode)],
+    )
+    test = chut.build_expectations(name)
+    solver.solve(test)
+    test.assert_()
 
 
 if __name__ == "__main__":
