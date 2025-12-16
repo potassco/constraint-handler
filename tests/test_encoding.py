@@ -8,6 +8,7 @@ clingo.script.enable_python()
 
 import pytest
 
+
 def run_test_compile(name):
     name = "tests/example/" + name
     solver = Clingo(["0", "--heuristic=Domain"], "defaultEngine(compile).", files=[name + ".lp"])
@@ -90,6 +91,7 @@ def test_engine_ground():
         if test not in unsupported:
             run_test_ground(test)
 
+
 # def test_engine_propagator():
 #     extra = []
 #     unsupported = [
@@ -107,7 +109,11 @@ def test_engine_ground():
 #         if test not in unsupported:
 #             run_test_propagator(test)
 
-@pytest.mark.parametrize(["name", "check_mode"], list(zip(base_tests, [True]*len(base_tests))) + list(zip(base_tests, [False]*len(base_tests))))
+
+@pytest.mark.parametrize(
+    ["name", "check_mode"],
+    list(zip(base_tests, [True] * len(base_tests))) + list(zip(base_tests, [False] * len(base_tests))),
+)
 def test_propagator(name, check_mode):
     unsupported = [
         "lambda_recursive",
@@ -123,13 +129,13 @@ def test_propagator(name, check_mode):
     ]
     if name in unsupported:
         return
-    
+
     name = "tests/example/" + name
     solver = chut.SolverWithPropagators(
         ["0", "--heuristic=Domain"],
         "defaultEngine(propagator).",
         files=[name + ".lp"],
-        propagators=[lambda : prop.ConstraintHandlerPropagator(check_mode)],
+        propagators=[lambda: prop.ConstraintHandlerPropagator(check_mode)],
     )
     test = chut.build_expectations(name)
     solver.solve(test)
