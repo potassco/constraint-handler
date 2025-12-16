@@ -25,13 +25,13 @@ def run_test_ground(name):
     test.assert_()
 
 
-def run_test_propagator(name):
+def run_test_propagator(name: str, check_mode: bool):
     name = "tests/example/" + name
     solver = chut.SolverWithPropagators(
         ["0", "--heuristic=Domain"],
         "defaultEngine(propagator).",
         files=[name + ".lp"],
-        propagators=[prop.ConstraintHandlerPropagator],
+        propagators=[lambda: prop.ConstraintHandlerPropagator(check_mode)],
     )
     test = chut.build_expectations(name)
     solver.solve(test)
@@ -65,17 +65,29 @@ base_tests = [
     "variables",
 ]
 
+compile_extra = ["preferences"]
+ground_extra = []
+propagator_extra = []
 
-def test_engine_compile():
-    extra = ["preferences"]
+
+@pytest.mark.parametrize(
+    "name",
+    base_tests + compile_extra,
+)
+def test_engine_compile(name: str):
     unsupported = ["optimize_bools", "optimize_floats", "optimize_ints"]
-    for test in base_tests + extra:
-        if test not in unsupported:
-            run_test_compile(test)
+
+    if name in unsupported:
+        return
+
+    run_test_compile(name)
 
 
-def test_engine_ground():
-    extra = []
+@pytest.mark.parametrize(
+    "name",
+    base_tests + ground_extra,
+)
+def test_engine_ground(name: str):
     unsupported = [
         "lambdas",
         "lambda_recursive",
@@ -87,34 +99,18 @@ def test_engine_ground():
         "set_iterations",
         "set_selfref",
     ]
-    for test in base_tests + extra:
-        if test not in unsupported:
-            run_test_ground(test)
+    if name in unsupported:
+        return
 
-
-# def test_engine_propagator():
-#     extra = []
-#     unsupported = [
-#         "lambda_recursive",
-#         "multimaps",
-#         "optimize_bools",
-#         "optimize_floats",
-#         "optimize_ints",
-#         "set_iterations",
-#         "set_selfref",
-#         "lambdas",
-#         "multimap_basics",
-#     ]
-#     for test in base_tests + extra:
-#         if test not in unsupported:
-#             run_test_propagator(test)
+    run_test_ground(name)
 
 
 @pytest.mark.parametrize(
     ["name", "check_mode"],
-    list(zip(base_tests, [True] * len(base_tests))) + list(zip(base_tests, [False] * len(base_tests))),
+    list(zip(base_tests + propagator_extra, [True] * len(base_tests + propagator_extra)))
+    + list(zip(base_tests + propagator_extra, [False] * len(base_tests + propagator_extra))),
 )
-def test_propagator(name, check_mode):
+def test_engine_propagator(name, check_mode):
     unsupported = [
         "lambda_recursive",
         "multimap_basics",
@@ -130,19 +126,4 @@ def test_propagator(name, check_mode):
     if name in unsupported:
         return
 
-    name = "tests/example/" + name
-    solver = chut.SolverWithPropagators(
-        ["0", "--heuristic=Domain"],
-        "defaultEngine(propagator).",
-        files=[name + ".lp"],
-        propagators=[lambda: prop.ConstraintHandlerPropagator(check_mode)],
-    )
-    test = chut.build_expectations(name)
-    solver.solve(test)
-    test.assert_()
-
-
-if __name__ == "__main__":
-    test_engine_compile()
-    test_engine_ground()
-    test_engine_propagator()
+    run_test_propagator(name, check_mode)
