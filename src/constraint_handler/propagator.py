@@ -257,8 +257,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if isinstance(domain, evaluator.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
                 literal_false = ctl.add_literal(freeze=True)
-                variable.add_value(evaluator.Val(bool, True), literal_true)
-                variable.add_value(evaluator.Val(bool, False), literal_false)
+                variable.add_value(evaluator.Val(evaluator.BaseType["bool"], True), literal_true)
+                variable.add_value(evaluator.Val(evaluator.BaseType["bool"], False), literal_false)
                 ctl.add_watch(literal_true)
                 ctl.add_watch(-literal_true)
                 ctl.add_watch(literal_false)
@@ -298,7 +298,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for (optional,), __literal in var_optionals.items():
             variable: Variable = self.symbol2var[optional]
             literal = ctl.add_literal(freeze=True)
-            variable.add_value(evaluator.Val(type(None), None), literal)
+            variable.add_value(evaluator.Val(evaluator.BaseType["none"], None), literal)
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
