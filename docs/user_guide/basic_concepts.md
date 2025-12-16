@@ -93,14 +93,39 @@ variable(Var)
     ```
 
 ## Operators & Operations
-One key aspect of the constraint handler is its ability to express arbitrary operations. To achieve this, it uses the `operation/2` predicate.
+One key aspect of the constraint handler is its ability to express arbitrary operations. To achieve this, it uses the `operation/2` predicate together with a collection of operators.
 
 ```asp
 operation(Op, Args).
 ```
 
 | Name | Description |
-| :------ | :--- |
-| `Op` | **TODO** |
-| `Args` | The operation to be performed (e.g., addition, subtraction, etc.). |
-| `val(Type, Value)` | A list of arguments for the operation, which can include variables and values. |
+| :--- | :--- |
+| `Op` | The operator to be applied. Supported operators include arithmetic operations (e.g, `add`, `sub`, `mul`, `div`), comparison operations (e.g., `eq`, `lt`, `gt`), and logical operations (e.g., `and`, `or`, `not`). For a full list of supported operators by specific types, please refer to the respective pages in the reference. |
+| `Args` | A list of arguments on which the operator will be applied. Arguments can be values (using `val/2`), variables (using `variable/1`), or even other operations (using nested `operation/2`). |
+
+!!! Example
+    Adding two variables `x` and `y` and assigning the result to variable `z
+    ```asp
+    assign(some_name, x, val(int,5)).
+    assign(some_name, y, val(int,7)).
+    assign(some_name, z, operation(add, (variable(x), (variable(y),())))).
+    ```
+
+## Constraints
+In the constraint handler, constraints are represented by the `ensure/2` predicate. The conditions within the constraints are expressed using the same operators and operations as described above. These conditions must evaluate to true for the stable model to be considered valid.
+
+```asp
+ensure(Name, Condition).
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Name` | **TODO** |
+| `Condition` | The condition that must hold true. This is typically expressed using the `operation/2` predicate to combine variables, values, and operations. |
+
+!!! Example
+    Ensuring that the variable `z` is greater than `10`
+    ```asp
+    ensure(some_name, operation(gt, (variable(z), (val(int,10),())))).
+    ```
