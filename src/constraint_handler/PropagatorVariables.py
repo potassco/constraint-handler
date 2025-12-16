@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from abc import abstractmethod
 from typing import Any, Iterable, Protocol
 
 import clingo
@@ -23,48 +24,44 @@ def myprint(*args, **kwargs):
 
 class VariableType(Protocol):
     @property
-    def var(self) -> clingo.Symbol:
-        ...
+    @abstractmethod
+    def var(self) -> clingo.Symbol: ...
     @property
-    def decision_level(self) -> int:
-        ...
+    @abstractmethod
+    def decision_level(self) -> int: ...
     @property
-    def parents(self) -> list[VariableType]:
-        ...
+    @abstractmethod
+    def parents(self) -> list[VariableType]: ...
 
-    # var: clingo.Symbol
-    # decision_level: int
-    # parents: list[VariableType]
+    @property
+    @abstractmethod
+    def literals(self) -> set[int]: ...
 
-    def has_domain(self) -> bool:
-        raise NotImplementedError
+    @abstractmethod
+    def has_domain(self) -> bool: ...
 
-    def has_unassigned(self) -> bool:
-        raise NotImplementedError
+    @abstractmethod
+    def has_unassigned(self) -> bool: ...
 
-    def get_value(self) -> Any:
-        raise NotImplementedError
+    @abstractmethod
+    def get_value(self) -> Any: ...
 
-    def reset(self, dl: int) -> None:
-        raise NotImplementedError
+    @abstractmethod
+    def reset(self, dl: int) -> None: ...
 
-    def get_errors(self) -> list[Exception]:
-        raise NotImplementedError
+    @abstractmethod
+    def get_errors(self) -> list[Exception]: ...
 
-    def vars(self) -> set[clingo.Symbol]:
-        raise NotImplementedError
+    @abstractmethod
+    def vars(self) -> set[clingo.Symbol]: ...
 
+    @abstractmethod
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> EvaluationResult:
-        raise NotImplementedError
+    ) -> EvaluationResult: ...
 
-    @property
-    def literals(self) -> set[int]:
-        raise NotImplementedError
-
-    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
-        raise NotImplementedError
+    @abstractmethod
+    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None: ...
 
 
 class VariableValue:
@@ -107,7 +104,7 @@ class VariableValue:
             return True
 
         for var in self.vars():
-            if var not in evaluations: # and var not in evaluations[FALSE_ASSIGNMENTS]:
+            if var not in evaluations:  # and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.value == ValueStatus.NOT_SET
@@ -267,7 +264,6 @@ class EnsureVariable:
 
     def __repr__(self) -> str:
         return f"EnsureVariable(name={self.name}, expression={self.expression})"
-    
 
 
 class Variable:
@@ -874,7 +870,7 @@ class Execution:
 
     def convert_var(self, var: clingo.Symbol | str, input=True) -> clingo.Symbol:
         exec_name: str = EXECUTION_INPUT if input else EXECUTION_OUTPUT
-        
+
         if isinstance(var, clingo.Symbol):
             var_func = var
         else:
@@ -904,7 +900,7 @@ class Execution:
             return EvaluationResult.CHANGED
 
         for var in self.converted_in_vars:
-            if var not in evaluations: # and var not in evaluations[FALSE_ASSIGNMENTS]:
+            if var not in evaluations:  # and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.values == ValueStatus.NOT_SET

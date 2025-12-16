@@ -158,7 +158,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         if self.optimization_sum.value != ValueStatus.NOT_SET:
             if self.optimization_sum.value <= self.best_value and not self.optimization_sum.has_unassigned():
-                ng = set()
+                ng: set[int] = set()
                 for symbol_var in self.optimization_sum.vars():
                     var = self.symbol2var[symbol_var]
                     ng = ng.union(self.get_reasons(var))
@@ -282,23 +282,23 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     SyntaxError(f"Variable {name} declared and defined! variable_define will do nothing!")
                 )
                 continue
-            variable = Variable(name, symbol_var)
-            self.symbol2var[symbol_var] = variable
-            variable.add_value(expr, __literal)
+            define_variable = Variable(name, symbol_var)
+            self.symbol2var[symbol_var] = define_variable
+            define_variable.add_value(expr, __literal)
             ctl.add_watch(__literal)
             ctl.add_watch(-__literal)
 
         for (symbol_var, domain_expr), __literal in var_domains.items():
-            variable: Variable = self.symbol2var[symbol_var]
+            domain_variable: Variable = self.symbol2var[symbol_var]
             literal = ctl.add_literal(freeze=True)
-            variable.add_value(domain_expr, literal)
+            domain_variable.add_value(domain_expr, literal)
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
         for (optional,), __literal in var_optionals.items():
-            variable: Variable = self.symbol2var[optional]
+            optional_variable: Variable = self.symbol2var[optional]
             literal = ctl.add_literal(freeze=True)
-            variable.add_value(evaluator.Val(evaluator.BaseType["none"], None), literal)
+            optional_variable.add_value(evaluator.Val(evaluator.BaseType["none"], None), literal)
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
@@ -315,10 +315,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_assign)
         for (name, symbol_var, expr), literal in assigns.items():
+            variable: Variable
             if symbol_var in self.symbol2var:
-                variable: Variable = self.symbol2var[symbol_var]
+                variable = self.symbol2var[symbol_var]
             else:
-                variable: Variable = Variable(name, symbol_var)
+                variable = Variable(name, symbol_var)
                 self.symbol2var[symbol_var] = variable
 
             variable.add_value(expr, literal)
@@ -513,9 +514,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             else:
                 self.handle_on_model_value(var.var, final_value, model)
 
-        for var in self.evaluatevars:
-            self.handle_on_model_warning(var.get_errors(), model)
-            pyAtom = Evaluated(var.op, var.args, evaluator.get_baseType(var.get_value()), var.get_value())
+        for eval_var in self.evaluatevars:
+            self.handle_on_model_warning(eval_var.get_errors(), model)
+            pyAtom = Evaluated(
+                eval_var.op, eval_var.args, evaluator.get_baseType(eval_var.get_value()), eval_var.get_value()
+            )
             myprint(f"adding evaluate atom {pyAtom}", end=" ")
             clAtom = myClorm.pytocl(pyAtom)
             myprint(f"= {clAtom}")
@@ -557,12 +560,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if value is ValueStatus.NOT_SET:
                 assert False, f"Set variable {var} has no value set in on_model!"
 
-            pyAtom = evaluator.Set_value(var, evaluator.get_baseType(value), value)
+            set_pyAtom = evaluator.Set_value(var, evaluator.get_baseType(value), value)
             # myprint(f"adding set atom {pyAtom}", end=" ")
-            clAtom = myClorm.pytocl(pyAtom)
-            myprint(f"= {clAtom}")
-            if not model.contains(clAtom):
-                model.extend([clAtom])
+            set_clAtom = myClorm.pytocl(set_pyAtom)
+            myprint(f"= {set_clAtom}")
+            if not model.contains(set_clAtom):
+                model.extend([set_clAtom])
 
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict, model: clingo.Model):
         # TODO: If we want to use the ref system for the output here(for sets, etc) then
