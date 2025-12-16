@@ -278,9 +278,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for (name, symbol_var, expr), __literal in var_defines.items():
             if symbol_var in self.symbol2var:
-                self.errors.append(SyntaxError(f"Variable {name} declared and defined! variable_define will do nothing!"))
+                self.errors.append(
+                    SyntaxError(f"Variable {name} declared and defined! variable_define will do nothing!")
+                )
                 continue
-            variable: Variable = Variable(name, symbol_var)
+            variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = variable
             variable.add_value(expr, __literal)
             ctl.add_watch(__literal)
@@ -386,7 +388,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
             if literal != 1:
-                self.errors.append(SyntaxError(f"Set variable {name} declaration is not a fact! It has literal {literal}."))
+                self.errors.append(
+                    SyntaxError(f"Set variable {name} declaration is not a fact! It has literal {literal}.")
+                )
 
             self.symbol2var[symbol_var] = variable
             if literal not in self.literal2var:
@@ -417,7 +421,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             variable = DictVariable(name, symbol_var, literal)
 
             if literal != 1:
-                self.errors.append(SyntaxError(f"Dict variable {symbol_var} declaration is not a fact! It has literal {literal}."))
+                self.errors.append(
+                    SyntaxError(f"Dict variable {symbol_var} declaration is not a fact! It has literal {literal}.")
+                )
 
             self.symbol2var[symbol_var] = variable
             if literal not in self.literal2var:
@@ -538,7 +544,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"Unknown model type {type(final_value)} for variable {var} in on_model!")
 
     def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset, model: clingo.Model):
-        pyAtom = evaluator.Value(var, evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])]))
+        pyAtom = evaluator.Value(
+            var, evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
+        )
         clAtom = myClorm.pytocl(pyAtom)
         myprint(f"= {clAtom}")
         if not model.contains(clAtom):
@@ -561,7 +569,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # we have to loop over the expressions in the dict, not just the final values
         # otherwise, we don't know what the ref is for each key and value
         # alternatively, we have a separate part of the dict that tells you which refs are for which key/value
-        
+
         for key, value in final_value.items():
 
             if value is ValueStatus.NOT_SET:
@@ -590,6 +598,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def handle_on_model_warning(self, errors: list[Exception], model: clingo.Model):
         for error in errors:
-            atom = evaluator.Warning(clingo.Function("", [clingo.Function(type(error).__name__), clingo.String(str(error))]))
+            atom = evaluator.Warning(
+                clingo.Function("", [clingo.Function(type(error).__name__), clingo.String(str(error))])
+            )
             if not model.contains(myClorm.pytocl(atom)):
                 model.extend([myClorm.pytocl(atom)])
