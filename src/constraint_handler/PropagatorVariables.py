@@ -22,9 +22,19 @@ def myprint(*args, **kwargs):
 
 
 class VariableType(Protocol):
-    var: clingo.Symbol
-    decision_level: int
-    parents: list[VariableType]
+    @property
+    def var(self) -> clingo.Symbol:
+        ...
+    @property
+    def decision_level(self) -> int:
+        ...
+    @property
+    def parents(self) -> list[VariableType]:
+        ...
+
+    # var: clingo.Symbol
+    # decision_level: int
+    # parents: list[VariableType]
 
     def has_domain(self) -> bool:
         raise NotImplementedError
@@ -54,13 +64,7 @@ class VariableType(Protocol):
         raise NotImplementedError
 
     def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
-        value = self.get_value()
-        if value == ValueStatus.NOT_SET:
-            return
-        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
-
-        d[self.var] = value  # type: ignore
+        raise NotImplementedError
 
 
 class VariableValue:
@@ -103,7 +107,7 @@ class VariableValue:
             return True
 
         for var in self.vars():
-            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
+            if var not in evaluations: # and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.value == ValueStatus.NOT_SET
@@ -179,7 +183,7 @@ class EvaluateVariable:
         return hash((str(self.op), str(self.args), self.literal))
 
 
-class EnsureVariable(VariableType):
+class EnsureVariable:
 
     __var = clingo.Function("ensure")
 
@@ -255,14 +259,18 @@ class EnsureVariable(VariableType):
         if self.decision_level >= dl:
             self.value = ValueStatus.NOT_SET
 
+    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+        return
+
     def __hash__(self):
         return hash((self.name, self.expression))
 
     def __repr__(self) -> str:
         return f"EnsureVariable(name={self.name}, expression={self.expression})"
+    
 
 
-class Variable(VariableType):
+class Variable:
     """
     A variable with a name and a value expression.
     This is supposed to mirror the assign/3 atom(also propagator_assign/3) in the ASP encoding.
@@ -369,6 +377,15 @@ class Variable(VariableType):
             self.decision_level = sys.maxsize
             self.value = ValueStatus.NOT_SET
 
+    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+        value = self.get_value()
+        if value == ValueStatus.NOT_SET:
+            return
+        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
+            d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+
+        d[self.var] = value  # type: ignore
+
     def __eq__(self, other):
         if not isinstance(other, Variable):
             assert False, "Variable can only be compared to another Variable"
@@ -460,7 +477,7 @@ class SetVariableValue:
         return f"SetVariableValue({self.values})"
 
 
-class SetVariable(VariableType):
+class SetVariable:
     """
     A set variable with a name and a set of value expressions.
     This is supposed to mirror the set_declare/2 and set_assign/3 atom in the ASP encoding.
@@ -551,6 +568,15 @@ class SetVariable(VariableType):
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
+    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+        value = self.get_value()
+        if value == ValueStatus.NOT_SET:
+            return
+        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
+            d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+
+        d[self.var] = value  # type: ignore
+
     def __eq__(self, value):
         if not isinstance(value, SetVariable):
             assert False, "SetVariable can only be compared to another SetVariable"
@@ -563,7 +589,7 @@ class SetVariable(VariableType):
         return f"SetVariable({self.name}, {self.var})"
 
 
-class DictVariable(VariableType):
+class DictVariable:
     """
     A dict variable with a name and a set of key-value expressions.
     This is supposed to mirror the multimap_declare/2 and multimap_assign/4 atom in the ASP encoding.
@@ -693,6 +719,15 @@ class DictVariable(VariableType):
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
+    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+        value = self.get_value()
+        if value == ValueStatus.NOT_SET:
+            return
+        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
+            d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+
+        d[self.var] = value  # type: ignore
+
     def __eq__(self, other):
         if not isinstance(other, DictVariable):
             assert False, "DictVariable can only be compared to another DictVariable"
@@ -782,18 +817,18 @@ class OptimizationSum:
         return any(expr.value == ValueStatus.NOT_SET for var, expr in self.expressions)
 
 
-class Execution(VariableType):
+class Execution:
 
     def __init__(
         self,
         name: str,
-        func_name: str,
+        func_name: clingo.Symbol,
         stmt: evaluator.Stmt,
         in_vars: list[clingo.Symbol],
         out_vars: list[clingo.Symbol],
     ):
         self.name: str = name
-        self.func_name: str = func_name
+        self.func_name: clingo.Symbol = func_name
         self.stmt: evaluator.Stmt = stmt
         self.in_vars: list[clingo.Symbol] = in_vars
         self.converted_in_vars: list[clingo.Symbol] = self.convert_vars(in_vars, input=True)
@@ -821,7 +856,7 @@ class Execution(VariableType):
         return self.values == ValueStatus.NOT_SET
 
     @property
-    def var(self):
+    def var(self) -> clingo.Symbol:
         return self.func_name
 
     @property
@@ -839,7 +874,12 @@ class Execution(VariableType):
 
     def convert_var(self, var: clingo.Symbol | str, input=True) -> clingo.Symbol:
         exec_name: str = EXECUTION_INPUT if input else EXECUTION_OUTPUT
-        var_func = var if type(var) == clingo.Symbol else clingo.String(var)
+        
+        if isinstance(var, clingo.Symbol):
+            var_func = var
+        else:
+            var_func = clingo.String(var)
+
         v = clingo.Function(exec_name, [self.func_name, var_func])
         return v
 
@@ -864,7 +904,7 @@ class Execution(VariableType):
             return EvaluationResult.CHANGED
 
         for var in self.converted_in_vars:
-            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
+            if var not in evaluations: # and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.values == ValueStatus.NOT_SET
@@ -924,7 +964,7 @@ class Execution(VariableType):
 def make_dict_from_variables(
     variables: Iterable[VariableType],
 ) -> dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]:
-    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {FALSE_ASSIGNMENTS: []}
+    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {}
     for var in variables:
         var.add_self_to_dict(result)
 
