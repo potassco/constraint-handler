@@ -5,9 +5,9 @@ import importlib
 import math
 import operator
 from collections import namedtuple
+from collections.abc import Callable
 from enum import Enum
 from typing import NamedTuple
-from collections.abc import Callable
 
 import clingo
 
