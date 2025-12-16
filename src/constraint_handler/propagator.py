@@ -40,7 +40,7 @@ class Evaluated(NamedTuple):
     value: bool | int | float | str | clingo.Symbol
 
 
-class ConstraintHandlerPropagator:
+class ConstraintHandlerPropagator(clingo.Propagator):
 
     def __init__(self, check_only: bool = False):
         self.symbol2var: Dict[clingo.Symbol, VariableType] = {}
