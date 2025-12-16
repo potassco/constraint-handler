@@ -7,6 +7,8 @@ This guide will help you get started with using the library in your Python proje
 
 Make sure the **constraint_handler** is [installed](../installation/) as a dependency of your project. Additionally, ensure that you have [Clingo](https://potassco.org/clingo/) installed, as it is required for using the constraint_handler library.
 
+## Adding to Clingo Control Object
+
 The easiest way to use the library is to add it to a Python clingo control object.
 
 1. Create a standard clingo control object:
@@ -30,6 +32,7 @@ The easiest way to use the library is to add it to a Python clingo control objec
 
 You can now use the constraint handler features within your clingo program.
 
+## Test Example
 To check whether the constraint handler, here is a small example:
 
 ```python

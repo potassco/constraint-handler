@@ -2,6 +2,7 @@
 * User Guide
     * [Installation](user_guide/installation.md)
     * [Getting Started](user_guide/getting_started.md)
+    * [Basic Concepts](user_guide/basic_concepts.md)
 * ASP Reference
     * [Bool](reference/asp/primitives/bool.md)
     * [Primitives](reference/asp/index.md)
