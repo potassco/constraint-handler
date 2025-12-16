@@ -465,7 +465,7 @@ class SetVariable:
 
         changed = self.expressions.evaluate(evaluations, ctl, env)
 
-        if changed:
+        if changed or not self.has_unassigned():
             self.value = self.expressions.get_value()
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
