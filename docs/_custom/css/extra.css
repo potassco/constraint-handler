@@ -28,3 +28,7 @@
     height: 1.5rem;
     width: 1.5rem;
 }
+
+.md-nav--primary .md-nav__title {
+    display: none !important;
+}

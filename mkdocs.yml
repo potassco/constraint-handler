@@ -30,7 +30,7 @@ theme:
     - toc.follow
     - navigation.path
     # - navigation.top
-    - navigation.tabs
+    # - navigation.tabs
     - content.code.copy
     - content.tooltips
     # - navigation.instant.preview
