@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Union
+from typing import Callable, Optional, Sequence, Union
 
 import clingo
 import clingo.symbol
@@ -48,13 +48,12 @@ class TheoryContains(clintest.assertion.Assertion):
 
 
 class SolverWithPropagators(clintest.solver.Solver):
-
     def __init__(
         self,
         arguments: Optional[Sequence[str]] = None,
         program: Optional[str] = None,
         files: Optional[Sequence[str]] = None,
-        propagators: list[clingo.propagator.Propagator] = [],
+        propagators: list[clingo.propagator.Propagator | Callable[..., clingo.propagator.Propagator]] = [],
     ) -> None:
         self.__arguments = [] if arguments is None else arguments
         self.__program = "" if program is None else program

@@ -145,7 +145,6 @@ class VariableValue:
 
 
 class EvaluateVariable:
-
     def __init__(self, op: evaluator.Operator, args: list[evaluator.Expr], literal: int = -1):
         self.op: evaluator.Operator = op
         self.args: list[evaluator.Expr] = args
@@ -178,16 +177,15 @@ class EvaluateVariable:
 
     def __hash__(self) -> int:
         return hash((str(self.op), str(self.args), self.literal))
-    
+
     def __str__(self) -> str:
         return f"EvaluateVariable({self.op}, {self.args})"
-    
+
     def __repr__(self) -> str:
         return self.__str__()
 
 
 class EnsureVariable:
-
     __var = clingo.Function("ensure")
 
     def __init__(self, name: str, expr: evaluator.Expr, literal: int):
@@ -477,7 +475,7 @@ class SetVariableValue:
 
     def __str__(self) -> str:
         return f"SetVariableValue({self.values})"
-    
+
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -751,9 +749,9 @@ class DictVariable:
     def __repr__(self) -> str:
         return self.__str__()
 
+
 class OptimizationSum:
     def __init__(self) -> None:
-
         self.expressions: list[tuple[clingo.Symbol, VariableValue]] = []
         self.value: Any = ValueStatus.NOT_SET
 
@@ -832,7 +830,6 @@ class OptimizationSum:
 
 
 class Execution:
-
     def __init__(
         self,
         name: str,
@@ -976,7 +973,7 @@ class Execution:
 
     def __hash__(self) -> int:
         return hash((self.func_name, self.stmt, tuple(self.in_vars), tuple(self.out_vars)))
-    
+
     def __repr__(self) -> str:
         return f"Execution({self.name}, {self.func_name}, {self.stmt})"
 
