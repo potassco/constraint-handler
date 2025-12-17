@@ -47,21 +47,21 @@ value(name, bool, false)
     Others are strictly unary or binary.
 
 
-| Operator | Name | Arity | Description |
-| :--- | :--- | :--- | :--- |
-| **Comparison** | | | |
-| `eq` | Equality | 2 | `true` if `A` is equal to `B`. |
-| `neq` | Inequality | 2 | `true` if `A` is not equal to `B`. |
-| **Logical** | | | |
-| `conj` | Conjunction | N-ary | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
-| `disj` | Disjunction | N-ary | `true` if *at least one* argument in the list is true. |
-| `limp` | Implication | 2 | `false` only if the first argument is `true` and the second is `false`. Otherwise `true`. If either of the values is empty, the result will be empty as well. |
-| `lxor` | Exclusive OR | N-ary  | `true` if an **odd** number of arguments are `true`. |
-| `leqv` | Equivalence | N-ary  | `true` if an **even** number of arguments are `true`. |
-| **Negation** | | | |
-| `lnot` | Logical Negation | 1 | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). Requires a defined value. |
-| `snot` | Strong Negation | 1 | Treats undefined/missing values as `false`. |
-| `wnot` | Weak Negation | 1 | Treats undefined/missing values as `true`. |
+| Operator | Name | Arity | Description | Return Type |
+| :--- | :--- | :--- | :--- | :--- |
+| **Comparison** | | | | |
+| `eq` | Equality | 2 | `true` if `A` is equal to `B`. | [bool](#bool) |
+| `neq` | Inequality | 2 | `true` if `A` is not equal to `B`. | [bool](#bool) |
+| **Logical** | | | | |
+| `conj` | Conjunction | N-ary | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. | [bool](#bool) |
+| `disj` | Disjunction | N-ary | `true` if *at least one* argument in the list is true. | [bool](#bool) |
+| `limp` | Implication | 2 | `false` only if the first argument is `true` and the second is `false`. Otherwise `true`. If either of the values is empty, the result will be empty as well. | [bool](#bool) \| [none](#none) |
+| `lxor` | Exclusive OR | N-ary  | `true` if an **odd** number of arguments are `true`. | [bool](#bool) |
+| `leqv` | Equivalence | N-ary  | `true` if an **even** number of arguments are `true`. | [bool](#bool) |
+| **Negation** | | | | |
+| `lnot` | Logical Negation | 1 | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). Requires a defined value. | [bool](#bool) |
+| `snot` | Strong Negation | 1 | Treats undefined/missing values as `false`. | [bool](#bool) |
+| `wnot` | Weak Negation | 1 | Treats undefined/missing values as `true`. | [bool](#bool) |
 
 !!! Example
     Checking for inequality of two variables
@@ -74,6 +74,7 @@ value(name, bool, false)
 
     This would assign the value `true` to the variable `c`.
 
+---
 
 ## Int
 
