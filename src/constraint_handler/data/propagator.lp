@@ -19,3 +19,5 @@ propagator_execution_declare(CNAME,F,STMT,IN,OUT) :-
 
 propagator_execution_run(CNAME,F) :-
     execution_run(CNAME,F), engine(CNAME,propagator).
+
+propagator_evaluate(F,E) :- evaluate(F,E), defaultEngine(propagator).

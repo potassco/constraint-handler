@@ -363,7 +363,11 @@ class Propagator_execution_run(Execution_run):
     pass
 
 
-def collectVars(expr) -> set[clingo.Symbol]:
+class Propagator_evaluate(Evaluate):
+    pass
+
+
+def collectVars(expr) -> frozenset[clingo.Symbol]:
     match expr:
         case Operation(eo, eargs):
             ov = collectVars(eo) if not isinstance(eo, Operator) else frozenset()
