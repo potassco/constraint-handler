@@ -457,8 +457,10 @@ def multimap_compare(multimap: HashableDict, op: Callable):
         for key, value in multimap.items():
             local_best = op(value)
 
-            if best_val is None or (local_best is not None and op(local_best, best_val)):
+            if best_val is None:
                 best_val = local_best
+            elif local_best is not None:
+                best_val = op(best_val, local_best)
 
     except TypeError as exn:
         errors.append(NotImplementedError(f"multimap does not support comparison of values of some types: {exn}"))
