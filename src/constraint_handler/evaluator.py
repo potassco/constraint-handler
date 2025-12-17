@@ -395,6 +395,8 @@ def get_baseType(v):
         return BaseType.int
     elif isinstance(v, frozenset):
         return BaseType.set
+    elif isinstance(v, HashableDict):
+        return BaseType.multimap
     elif isinstance(v, clingo.Symbol):
         return BaseType.symbol
     else:
