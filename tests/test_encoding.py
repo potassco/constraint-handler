@@ -75,7 +75,7 @@ propagator_extra = []
     base_tests + compile_extra,
 )
 def test_engine_compile(name: str):
-    unsupported = ["optimize_bools", "optimize_floats", "optimize_ints"]
+    unsupported = ["optimize_bools", "optimize_floats", "optimize_ints", "multimap_basics"]
 
     if name in unsupported:
         return

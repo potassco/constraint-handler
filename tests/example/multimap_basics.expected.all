@@ -1,3 +1,7 @@
+set_value(in5,str,"c")
+set_value(inc,int,6)
+value(isin5,bool,true)
+value(isin6,bool,false)
 evaluated(eq,(variable(m1a),(operation(makeSet,(val(int,1),())),())),bool,true)
 evaluated(eq,(variable(m1b),(operation(makeSet,(val(int,2),(val(int,3),()))),())),bool,true)
 evaluated(eq,(variable(m1c),(operation(makeSet,(())),())),bool,true)
