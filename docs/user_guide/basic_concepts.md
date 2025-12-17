@@ -16,7 +16,7 @@ For a full list of supported types, refer to the **TODO** section in the ASP Ref
 ## Values
 Values represent concrete data used in rules and constraints. 
 
-For value input, the constraint handler uses the `val/2` function symbol.
+To work with a value directly, the constraint handler uses the `val/2` function symbol.
 
 ```asp
 val(Type, Value)
@@ -29,12 +29,12 @@ val(Type, Value)
 
 
 !!! Example 
-    This represents the integer value 42 when it is used in an assignment
+    This represents the integer value 42. It can be used in expressions such as operations or assignments.
     ```asp
     val(int, 42)
     ```
 
-For value output, the constraint handler uses the `value/3` predicate.
+Values assigned to certain variables are added to the output. For this the constraint handler uses the `value/3` predicate.
 
 | Name | Description |
 | :--- | :--- |
@@ -43,7 +43,7 @@ For value output, the constraint handler uses the `value/3` predicate.
 | `Value` | The actual value assigned to the variable. |
 
 !!! Example 
-    This represents the value of the variable `my_variable` being the same integer 42
+    This represents the value of the variable `my_variable` being the integer 42
     ```asp
     value(my_variable, int, 42)
     ```
