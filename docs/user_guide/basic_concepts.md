@@ -112,6 +112,44 @@ operation(Op, Args).
     assign(some_name, z, operation(add, (variable(x), (variable(y),())))).
     ```
 
+## Lists & Nesting
+As can be seen in the previous section, the constraint handler uses lists and nesting to create complex expressions.
+
+### Lists
+Lists are represented as recursive tuples. More precisely, a list is either the empty tuple `()` or a tuple of the form `(Head, Tail)`, where `Head` is the first element of the list and `Tail` is another list representing the rest of the elements. A list has to be terminated by the empty tuple.
+
+!!! Example
+    The list containing the integers `1`, `2`, and `3` is represented as follows:
+    ```asp
+    (val(int, 1), (val(int, 2), (val(int, 3), ())))
+    ```
+
+### Nesting
+Nesting allows for the construction of more complex structures by embedding expressions within each other. This is particularly useful when defining
+expressions that can be seen as a sequence of operations. In that case one or more elements of the argument list will be entire operations.
+
+!!! Example
+    Consider the expressions `a+x` and `b+c`. These can be represented like this:
+    ```asp
+    operation(add, (variable(a), (variable(x),())))
+    operation(add, (variable(b), (variable(c),())))
+    ```
+
+    If we now wanted to represent `a + b + c` directly, we can imagine one possible structure like this:
+
+    ```mermaid
+    graph TD
+      Op1[add] --> A[variable a]
+      Op1 --> Op2[add]
+      Op2 --> B[variable b]
+      Op2 --> C[variable c]
+    ```
+
+    As the diagram suggests, this can be achieved by replacing the `variable(x)` in the first operation by the entirety of the second operation:
+    ```asp
+    operation(add, (variable(a), (operation(add, (variable(b), (variable(c),()))),())))
+    ```
+
 ## Constraints
 In the constraint handler, constraints are represented by the `ensure/2` predicate. The conditions within the constraints are expressed using the same operators and operations as described above. These conditions must evaluate to true for the stable model to be considered valid.
 
