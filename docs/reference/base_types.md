@@ -194,7 +194,38 @@ value(name, float, float("-0.001"))
 ---
 
 ## String
+Strings are used to represent text-based data. They support concatenation and comparison operations.
 
+### Definition
+```asp
+val(string, "Hello, World!")
+val(string, "Constraint Handling")
+```
+
+### Output
+```asp
+value(name, string, "Hello, World!")
+value(name, string, "Constraint Handling")
+```
+
+| Operator | Name | Arity | Description | Return Type |
+| :--- | :--- | :--- | :--- | :--- |
+| **Manipulation** | | | | |
+| `concat` | Concatenation | 2 | Joins two strings together. | [string](#string) |
+| `length` | Length | 1 | Returns the number of characters in the string. | [int](#int) |
+| **Comparison** | | | | |
+| `eq` | Equality | 2 | `true` if string `A` is identical to string `B`. | [bool](#bool) |
+| `neq` | Inequality | 2 | `true` if string `A` is not identical to string `B`. | [bool](#bool) |
+
+!!! Example
+    Concatenating a prefix to a name.
+    ```asp
+    assign(example, prefix, val(str, "var_")).
+    assign(example, suffix, val(str, "x")).
+    assign(example, full_name, operation(concat, (variable(prefix), (variable(suffix), ())))).
+    ```
+
+    This would assign the value `"var_x"` to the variable `full_name`.
 
 
 ## Symbol
