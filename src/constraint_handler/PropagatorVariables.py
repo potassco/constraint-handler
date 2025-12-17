@@ -927,11 +927,11 @@ class Execution:
 
         try:
             self.errors = evaluator.evaluate_stmt(self.stmt, env, evals)
-        except evaluator.FailIntegrityExn as e:
+        except evaluator.FailIntegrityExn:
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CONFLICT
 
-        self.values = []
+        self.values: list[tuple[clingo.Symbol, Any]] = []
         for c_out_var, out_var in zip(self.converted_out_vars, self.out_vars):
             if out_var not in evals:
                 self.values.append((c_out_var, None))

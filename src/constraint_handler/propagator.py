@@ -353,7 +353,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        for (op, args), literal in myClorm.findInPropagateInit(ctl, evaluator.Evaluate).items():
+        for (op, args), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_evaluate).items():
             var = EvaluateVariable(op, args, literal)
             if literal != 1:
                 self.errors.append(SyntaxError(f"Evaluate atom {op} with args {args} is not a fact!"))
