@@ -227,6 +227,7 @@ value(name, string, "Constraint Handling")
 
     This would assign the value `"var_x"` to the variable `full_name`.
 
+---
 
 ## Symbol
 Symbols represent raw ASP constants or function symbols (atoms). Unlike strings, they are not enclosed in quotes and follow standard ASP naming conventions (starting with a lowercase letter).
