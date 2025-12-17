@@ -130,8 +130,68 @@ value(name, int, -7)
 ---
 
 ## Float
+Floats represent real numbers with fractional parts. They support a wide range of mathematical operations, including trigonometry.
 
+!!! info
+    Since neither `,` nor `.` can be used in ASP to represent floating point numbers, floats are represented by strings inside of the
+    function symbol `float/1`. This means `"3.14"` is used for strings, while `float("3.14")` is used for floats.
 
+### Definition
+```asp
+val(float, float("3.14159"))
+val(float, float("-0.001"))
+```
+
+### Output
+```asp
+value(name, float, float("3.14159"))
+value(name, float, float("-0.001"))
+```
+
+### Supported Operators
+!!! info "Type Promotion" 
+    If a binary operation involves one [int](#int) and one [float](#float) (e.g. the addition of an int and a float), the integer is automatically promoted to a float. The result is then calcualted as if both operands were floats.
+
+| Operator | Name | Arity | Description | Return Type |
+| :--- | :--- | :--- | :--- | :--- |
+| **Arithmetic** | | | | |
+| `add` | Addition | 2 | Adds two floats (`A + B`). | [float](#float) |
+| `sub` | Subtraction | 2 | Subtracts the second float from the first (`A - B`). | [float](#float) |
+| `mult` | Multiplication | 2 | Multiplies two floats (`A * B`). | [float](#float) |
+| `div` | Division | 2 | Performs integer division on two floats (`A / B`). | [float](#float) |
+| `fdiv` | Float Division | 2 | Performs explicit floating point division. | [float](#float) |
+| `floor` | Floor | 1 | Rounds the float down to the nearest integer value (returned as float). | [float](#float) |
+| `pow` | Exponentiation | 2 | Raises the first value to the power of the second. | [float](#float) |
+| `abs` | Absolute Value | 1 | Returns the absolute value (`|A|`). | [float](#float) |
+| `minus` | Unary Minus | 1 | Negates the value (`-A`). | [float](#float) |
+| `max` | Maximum | 2 | Returns the larger of the two values. | [float](#float) |
+| **Trigonometry** | | | | |
+| `sqrt` | Square Root | 1 | Calculates the square root. | [float](#float) |
+| `sin` | Sine | 1 | Calculates the sine. | [float](#float) |
+| `cos` | Cosine | 1 | Calculates the cosine. | [float](#float) |
+| `tan` | Tangent | 1 | Calculates the tangent. | [float](#float) |
+| `asin` | Arc Sine | 1 | Calculates the inverse sine. | [float](#float) |
+| `acos` | Arc Cosine | 1 | Calculates the inverse cosine. | [float](#float) |
+| `atan` | Arc Tangent | 1 | Calculates the inverse tangent. | [float](#float) |
+| **Comparison** | | | | |
+| `eq` | Equality | 2 | `true` if `A` is equal to `B`. | [bool](#bool) |
+| `neq` | Inequality | 2 | `true` if `A` is not equal to `B`. | [bool](#bool) |
+| `lt` | Less Than | 2 | `true` if `A` is strictly less than `B`. | [bool](#bool) |
+| `leq` | Less Than or Equal | 2 | `true` if `A` is less than or equal to `B`. | [bool](#bool) |
+| `gt` | Greater Than | 2 | `true` if `A` is strictly greater than `B`. | [bool](#bool) |
+| `geq` | Greater Than or Equal | 2 | `true` if `A` is greater than or equal to `B`. | [bool](#bool) |
+
+!!! Example
+    Multiplying two floats
+
+    ```asp
+    assign(example, a, val(float, float("2.5"))).
+    assign(example, b, val(float, float("4.0"))).
+    assign(example, c, operation(mult, (variable(a), (variable(b), ())))).
+    ```
+    This would assign the value `float("10.0")` to the variable `c`.
+
+---
 
 ## String
 
