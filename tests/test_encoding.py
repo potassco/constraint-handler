@@ -75,7 +75,7 @@ propagator_extra = []
     base_tests + compile_extra,
 )
 def test_engine_compile(name: str):
-    unsupported = ["optimize_bools", "optimize_floats", "optimize_ints", "multimap_basics"]
+    unsupported: list[str] = ["optimize_bools", "optimize_floats", "optimize_ints", "multimap_basics"]
 
     if name in unsupported:
         return
@@ -88,7 +88,7 @@ def test_engine_compile(name: str):
     base_tests + ground_extra,
 )
 def test_engine_ground(name: str):
-    unsupported = [
+    unsupported: list[str] = [
         "lambdas",
         "lambda_recursive",
         "multimap_basics",
@@ -111,7 +111,7 @@ def test_engine_ground(name: str):
     + list(zip(base_tests + propagator_extra, [False] * len(base_tests + propagator_extra))),
 )
 def test_engine_propagator(name, check_mode):
-    unsupported = [
+    unsupported: list[str] = [
         "lambda_recursive",
         "multimap_basics",
         "multimaps",
