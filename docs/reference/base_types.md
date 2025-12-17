@@ -229,3 +229,39 @@ value(name, string, "Constraint Handling")
 
 
 ## Symbol
+Symbols represent raw ASP constants or function symbols (atoms). Unlike strings, they are not enclosed in quotes and follow standard ASP naming conventions (starting with a lowercase letter).
+
+### Definition
+```asp
+val(symbol, active)
+val(symbol, state(idle))
+```
+
+### Output
+```asp
+value(name, symbol, active)
+value(name, symbol, state(idle))
+```
+### Supported Operators
+!!! info "Ordering" 
+    Symbol comparison follows the standard Clingo/ASP ordering rules.
+
+| Operator | Name | Arity | Description | Return Type |
+| :--- | :--- | :--- | :--- | :--- |
+| **Comparison** | | | | |
+| `eq` | Equality | 2 | `true` if `A` is equal to `B`. | [bool](#bool) |
+| `neq` | Inequality | 2 | `true` if `A` is not equal to `B`. | [bool](#bool) |
+| `lt` | Less Than | 2 | `true` if `A` comes before `B` in standard ASP order. | [bool](#bool) |
+| `leq` | Less Than or Equal | 2 | `true` if `A` comes before or is equal to `B`. | [bool](#bool) |
+| `gt` | Greater Than | 2 | `true` if `A` comes after `B` in standard ASP order. | [bool](#bool) |
+| `geq` | Greater Than or Equal | 2 | `true` if `A` comes after or is equal to `B`. | [bool](#bool) |
+
+!!! Example 
+    Checking if a status variable is set to error.
+
+    ```asp
+    assign(system, current_status, val(symbol, error)).
+    assign(system, is_critical, operation(eq, (variable(current_status), (val(symbol, error), ())))).
+    ```
+
+    This would assign `true` to `is_critical`.
