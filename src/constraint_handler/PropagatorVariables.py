@@ -129,18 +129,18 @@ class VariableValue:
             self.assigned = None
             self.errors = []
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, VariableValue):
             return False
         return self.expr == other.expr
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self.expr))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"VariableValue({self.expr}, {self.value})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"VariableValue({self.expr}, {self.value})"
 
 
@@ -171,13 +171,19 @@ class EvaluateVariable:
     def get_errors(self) -> list[Exception]:
         return self.errors
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, EvaluateVariable):
             return False
         return self.op == other.op and self.args == other.args and self.literal == other.literal
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((str(self.op), str(self.args), self.literal))
+    
+    def __str__(self) -> str:
+        return f"EvaluateVariable({self.op}, {self.args})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class EnsureVariable:
@@ -382,18 +388,18 @@ class Variable:
 
         d[self.var] = value  # type: ignore
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, Variable):
             assert False, "Variable can only be compared to another Variable"
         return self.var == other.var and self.expressions == other.expressions
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.var, frozenset(self.expressions)))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Variable({self.name}, {self.var}, {self.expressions})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Variable({self.name}, {self.var}, {self.expressions})"
 
 
@@ -457,20 +463,23 @@ class SetVariableValue:
 
         return changed
 
-    def reset(self, dl: int):
+    def reset(self, dl: int) -> None:
         for arg in self.values:
             arg.reset(dl)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, SetVariableValue):
             return False
         return self.values == other.values
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(frozenset(self.values))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"SetVariableValue({self.values})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class SetVariable:
@@ -573,16 +582,19 @@ class SetVariable:
 
         d[self.var] = value  # type: ignore
 
-    def __eq__(self, value):
+    def __eq__(self, value) -> bool:
         if not isinstance(value, SetVariable):
             assert False, "SetVariable can only be compared to another SetVariable"
         return self.var == value.var and self.expressions == value.expressions
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.var, self.expressions))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"SetVariable({self.name}, {self.var})"
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class DictVariable:
@@ -664,8 +676,9 @@ class DictVariable:
 
     def vars(self) -> set[clingo.Symbol]:
         vars = set()
-        for value in self.expressions.values():
+        for key, value in self.expressions.items():
             vars.update(value.vars())
+            vars.update(key.vars())
         return vars
 
     def evaluate(
@@ -724,17 +737,19 @@ class DictVariable:
 
         d[self.var] = value  # type: ignore
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, DictVariable):
             assert False, "DictVariable can only be compared to another DictVariable"
         return self.var == other.var and self.expressions == other.expressions
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.var, frozenset(self.expressions.items())))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"DictVariable({self.name}, {self.var})"
 
+    def __repr__(self) -> str:
+        return self.__str__()
 
 class OptimizationSum:
     def __init__(self) -> None:
@@ -811,6 +826,9 @@ class OptimizationSum:
 
     def has_unassigned(self) -> bool:
         return any(expr.value == ValueStatus.NOT_SET for var, expr in self.expressions)
+
+    def __repr__(self) -> str:
+        return f"OptimizationSum({self.expressions})"
 
 
 class Execution:
@@ -955,6 +973,12 @@ class Execution:
         else:
             for out_var, val in value:
                 d[out_var] = val
+
+    def __hash__(self) -> int:
+        return hash((self.func_name, self.stmt, tuple(self.in_vars), tuple(self.out_vars)))
+    
+    def __repr__(self) -> str:
+        return f"Execution({self.name}, {self.func_name}, {self.stmt})"
 
 
 def make_dict_from_variables(
