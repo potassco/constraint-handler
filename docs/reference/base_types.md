@@ -2,6 +2,31 @@
 
 This section documents the fundamental data types supported by the **constraint_handler**. Each type comes with its own set of operators and functions.
 
+---
+
+## None
+To represent undefined values, the constraint handler uses `none`. Unlike a variable simply missing from a list, `none` is an explicit value that propagates through certain operations.
+
+### Definition
+```asp
+val(none, none)
+
+```
+### Output
+```asp
+value(name, none, none)
+```
+
+### Supported Operators
+| Operator | Name | Arity | Description | Return Type |
+| :--- | :--- | :--- | :--- | :--- |
+| **Logical** | | | | |
+| `limp` | Implication | 2 | If either of the values is `none`, the result will be `none`. Otherwise, this follows the standard implication rules from [bool](#bool). | [none](#none) |
+| **Negation** | | | | |
+| `lnot` | Classical Negation | 1 | The negation of `none` is still `none`. | [none](#none) |
+
+---
+
 ## Bool
 Booleans represent the logical values `true` and `false`. They are the result of comparisons and the building blocks for logical conditions.
 
