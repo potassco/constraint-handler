@@ -8,12 +8,12 @@ This section documents the fundamental data types supported by the **constraint_
 To represent undefined values, the constraint handler uses `none`. Unlike a variable simply missing from a list, `none` is an explicit value that propagates through certain operations.
 
 ### Definition
-```asp
+```prolog
 val(none, none)
 
 ```
 ### Output
-```asp
+```prolog
 value(name, none, none)
 ```
 
@@ -31,12 +31,12 @@ value(name, none, none)
 Booleans represent the logical values `true` and `false`. They are the result of comparisons and the building blocks for logical conditions.
 
 ### Definition
-```asp
+```prolog
 val(bool, true)
 val(bool, false)
 ```
 ### Output
-```asp
+```prolog
 value(name, bool, true)
 value(name, bool, false)
 ```
@@ -66,7 +66,7 @@ value(name, bool, false)
 !!! Example
     Checking for inequality of two variables
 
-    ```asp
+    ```prolog
     assign(example, a, val(bool, true)).
     assign(example, b, val(bool, false)).
     assign(example, c, operation(neq, (variable(a), (variable(b), ())))).
@@ -80,12 +80,12 @@ value(name, bool, false)
 Integers represent positive and negative whole numbers. They support standard arithmetic operations as well as comparisons.
 
 ### Definition
-```asp
+```prolog
 val(int, 42)
 val(int, -7)
 ```
 ### Output
-```asp
+```prolog
 value(name, int, 42)
 value(name, int, -7)
 ```
@@ -120,7 +120,7 @@ value(name, int, -7)
 !!! Example
     Adding two integers
 
-    ```asp
+    ```prolog
     assign(example, a, val(int, 5)).
     assign(example, b, val(int, 10)).
     assign(example, c, operation(add, (variable(a), (variable(b), ())))).
@@ -137,13 +137,13 @@ Floats represent real numbers with fractional parts. They support a wide range o
     function symbol `float/1`. This means `"3.14"` is used for strings, while `float("3.14")` is used for floats.
 
 ### Definition
-```asp
+```prolog
 val(float, float("3.14159"))
 val(float, float("-0.001"))
 ```
 
 ### Output
-```asp
+```prolog
 value(name, float, float("3.14159"))
 value(name, float, float("-0.001"))
 ```
@@ -184,7 +184,7 @@ value(name, float, float("-0.001"))
 !!! Example
     Multiplying two floats
 
-    ```asp
+    ```prolog
     assign(example, a, val(float, float("2.5"))).
     assign(example, b, val(float, float("4.0"))).
     assign(example, c, operation(mult, (variable(a), (variable(b), ())))).
@@ -197,13 +197,13 @@ value(name, float, float("-0.001"))
 Strings are used to represent text-based data. They support concatenation and comparison operations.
 
 ### Definition
-```asp
+```prolog
 val(string, "Hello, World!")
 val(string, "Constraint Handling")
 ```
 
 ### Output
-```asp
+```prolog
 value(name, string, "Hello, World!")
 value(name, string, "Constraint Handling")
 ```
@@ -219,7 +219,7 @@ value(name, string, "Constraint Handling")
 
 !!! Example
     Concatenating a prefix to a name.
-    ```asp
+    ```prolog
     assign(example, prefix, val(str, "var_")).
     assign(example, suffix, val(str, "x")).
     assign(example, full_name, operation(concat, (variable(prefix), (variable(suffix), ())))).
@@ -233,13 +233,13 @@ value(name, string, "Constraint Handling")
 Symbols represent raw ASP constants or function symbols (atoms). Unlike strings, they are not enclosed in quotes and follow standard ASP naming conventions (starting with a lowercase letter).
 
 ### Definition
-```asp
+```prolog
 val(symbol, active)
 val(symbol, state(idle))
 ```
 
 ### Output
-```asp
+```prolog
 value(name, symbol, active)
 value(name, symbol, state(idle))
 ```
@@ -260,7 +260,7 @@ value(name, symbol, state(idle))
 !!! Example 
     Checking if a status variable is set to error.
 
-    ```asp
+    ```prolog
     assign(system, current_status, val(symbol, error)).
     assign(system, is_critical, operation(eq, (variable(current_status), (val(symbol, error), ())))).
     ```

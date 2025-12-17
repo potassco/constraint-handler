@@ -18,7 +18,7 @@ Values represent concrete data used in rules and constraints.
 
 To work with a value directly, the constraint handler uses the `val/2` function symbol.
 
-```asp
+```prolog
 val(Type, Value)
 ```
 
@@ -30,7 +30,7 @@ val(Type, Value)
 
 !!! Example 
     This represents the integer value 42. It can be used in expressions such as operations or assignments.
-    ```asp
+    ```prolog
     val(int, 42)
     ```
 
@@ -44,7 +44,7 @@ Values assigned to certain variables are added to the output. For this the const
 
 !!! Example 
     This represents the value of the variable `my_variable` being the integer 42
-    ```asp
+    ```prolog
     value(my_variable, int, 42)
     ```
 
@@ -54,7 +54,7 @@ Variables represent unknown values that can be assigned during the solving proce
 
 They are defined using the `assign/3` predicate.
 
-```asp
+```prolog
 assign(Name, Var, val(Type, Value)).
 ```
 
@@ -67,7 +67,7 @@ assign(Name, Var, val(Type, Value)).
 !!! Example
     Assigning the integer value `42` to the variable `x` with the name `some_name`:
 
-    ```asp
+    ```prolog
     assign(some_name, x, val(int, 42)).
     ```
 
@@ -76,7 +76,7 @@ assign(Name, Var, val(Type, Value)).
 While it is technically possible to use the `value/3` predicate to use the value of a variable, it is not recommended. Instead, users are
 advised to use the `variable/1` function symbol.
 
-```asp
+```prolog
 variable(Var)
 ```
 
@@ -87,7 +87,7 @@ variable(Var)
 !!! Example
     Getting the value assigned to variable `x` and assign it to variable `y`:
 
-    ```asp
+    ```prolog
     assign(some_name, x, val(int,42)).
     assign(some_name, y, variable(x)).
     ```
@@ -95,7 +95,7 @@ variable(Var)
 ## Operators & Operations
 One key aspect of the constraint handler is its ability to express arbitrary operations. To achieve this, it uses the `operation/2` predicate together with a collection of operators.
 
-```asp
+```prolog
 operation(Op, Args).
 ```
 
@@ -106,7 +106,7 @@ operation(Op, Args).
 
 !!! Example
     Adding two variables `x` and `y` and assigning the result to variable `z`
-    ```asp
+    ```prolog
     assign(some_name, x, val(int,5)).
     assign(some_name, y, val(int,7)).
     assign(some_name, z, operation(add, (variable(x), (variable(y),())))).
@@ -120,7 +120,7 @@ Lists are represented as recursive tuples. More precisely, a list is either the 
 
 !!! Example
     The list containing the integers `1`, `2`, and `3` is represented as follows:
-    ```asp
+    ```prolog
     (val(int, 1), (val(int, 2), (val(int, 3), ())))
     ```
 
@@ -130,7 +130,7 @@ expressions that can be seen as a sequence of operations. In that case one or mo
 
 !!! Example
     Consider the expressions `a+x` and `b+c`. These can be represented like this:
-    ```asp
+    ```prolog
     operation(add, (variable(a), (variable(x),())))
     operation(add, (variable(b), (variable(c),())))
     ```
@@ -146,14 +146,14 @@ expressions that can be seen as a sequence of operations. In that case one or mo
     ```
 
     As the diagram suggests, this can be achieved by replacing the `variable(x)` in the first operation by the entirety of the second operation:
-    ```asp
+    ```prolog
     operation(add, (variable(a), (operation(add, (variable(b), (variable(c),()))),())))
     ```
 
 ## Constraints
 In the constraint handler, constraints are represented by the `ensure/2` predicate. The conditions within the constraints are expressed using the same operators and operations as described above. These conditions must evaluate to true for the stable model to be considered valid.
 
-```asp
+```prolog
 ensure(Name, Condition).
 ```
 
@@ -164,6 +164,6 @@ ensure(Name, Condition).
 
 !!! Example
     Ensuring that the variable `z` is greater than `10`
-    ```asp
+    ```prolog
     ensure(some_name, operation(gt, (variable(z), (val(int,10),())))).
     ```
