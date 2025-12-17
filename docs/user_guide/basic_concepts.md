@@ -105,7 +105,7 @@ operation(Op, Args).
 | `Args` | A list of arguments on which the operator will be applied. Arguments can be values (using `val/2`), variables (using `variable/1`), or even other operations (using nested `operation/2`). |
 
 !!! Example
-    Adding two variables `x` and `y` and assigning the result to variable `z
+    Adding two variables `x` and `y` and assigning the result to variable `z`
     ```asp
     assign(some_name, x, val(int,5)).
     assign(some_name, y, val(int,7)).
