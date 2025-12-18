@@ -8,6 +8,7 @@
     * [Base Types](reference/base_types.md)
     * [Operations](reference/operations.md)
     * [Collections](reference/collections.md)
+    * [Constraints](reference/constraints.md)
     * [Optimization](reference/optimization.md)
     * [Propagator](reference/propagator.md)
     * [Error Handling](reference/error_handling.md)
