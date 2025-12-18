@@ -2,6 +2,8 @@
 
 This page explains how to perform operations on values in the ASP constraint handler.
 
+---
+
 ## List Syntax
 
 Before starting with operations, it's important to understand the list syntax used for representing multiple arguments in expressions.
@@ -38,7 +40,7 @@ operation(Operator, Arguments).
 
 While simple operations may be sufficient for many use cases, more complex programs often require combining multiple operations together. For this reason, the constraint handler fully supports nesting operations within each other.
 
-In this case, one or more elements of the argument list will be entire operation terms rather than simple values or variables.
+In this case, one or more elements of the argument list will be entire `operation` terms rather than simple values or variables.
 
 !!! Example
     Consider the expressions `a+x` and `b+c`:
