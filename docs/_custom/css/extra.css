@@ -32,3 +32,8 @@
 .md-nav--primary .md-nav__title {
     display: none !important;
 }
+
+/* Prevent wrapping in the first column of all tables */
+.md-typeset table:not([class]) td:first-child {
+  white-space: nowrap;
+}
