@@ -69,10 +69,10 @@ set_value(SetName, Type, Value)
     This results in the following output atoms:
 
     ```prolog
-    value(my_set, set, ref(variable(my_set))).
-    set_value(my_set, int, val(int, 1)).
-    set_value(my_set, int, val(int, 3)).
-    set_value(my_set, int, val(int, 5)).
+    value(my_set, set, ref(variable(my_set)))
+    set_value(my_set, int, val(int, 1))
+    set_value(my_set, int, val(int, 3))
+    set_value(my_set, int, val(int, 5))
     ```
 
 ### Make Set
@@ -89,10 +89,10 @@ The constraint handler provides a `makeSet` operator to create sets directly wit
     This results in the following output atoms:
 
     ```prolog
-    value(my_set,set,ref(makeSet((val(int,1),(val(int,3),(val(int,5),())))))).
-    set_value(my_set, int, val(int, 1)).
-    set_value(my_set, int, val(int, 3)).
-    set_value(my_set, int, val(int, 5)).
+    value(my_set,set,ref(makeSet((val(int,1),(val(int,3),(val(int,5),()))))))
+    set_value(my_set, int, val(int, 1))
+    set_value(my_set, int, val(int, 3))
+    set_value(my_set, int, val(int, 5))
     ```
 
 ### Supported Operators
