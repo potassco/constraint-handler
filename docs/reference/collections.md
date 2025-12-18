@@ -1,8 +1,8 @@
 # Collections
 
-This page documents the collection types available in the language. Because collections require variables for their variables in addition to themselves,
-they do not follow the normal assign schema. Instead, specific `declare` and `assign` predicates are provided for each collection type. Declare predicates
-are used to create new collections, while assign predicates are used to add elements to existing collections.
+This page documents the collection types available in the language. Because collections require variables for their elements in addition to themselves, they do not use the `assign/3` predicate used for [variables](./values_and_variables.md#variable). 
+
+Instead, specific `declare` and `assign` predicates are provided for each collection type. Declare predicates are used to create new collections, while assign predicates are used to add elements to existing collections.
 
 ---
 
