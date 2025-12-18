@@ -6,6 +6,7 @@
 * Reference
     * [Values & Variables](reference/values_and_variables.md)
     * [Base Types](reference/base_types.md)
+    * [Operations](reference/operations.md)
     * [Collections](reference/collections.md)
     * [Optimization](reference/optimization.md)
     * [Propagator](reference/propagator.md)
