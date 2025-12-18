@@ -116,4 +116,115 @@ Once a set is created (either via declaration or returned from another operation
 | `eq` | Equality | 2 | `true` if two sets contain exactly the same elements. | [bool](../base_types.md#bool) |
 | `neq` | Inequality | 2 | `true` if two sets differ by at least one element. | [bool](../base_types.md#bool) |
 
-## Multimaps
+---
+
+## Multimap
+Multimaps are collections that associate keys with values. Unlike standard maps or dictionaries, where a single key is associated with a single value, multimaps associate a each key to a set of values.
+
+### Declaration
+To declare a new multimap manually, use the `multimap_declare/2` predicate.
+
+#### Input
+```prolog
+multimap_declare(Name, MultimapName).
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Name` | **TODO** |
+| `MultimapName` | A unique identifier of the multimap. |
+
+#### Output
+This, just like `assign/3` **TODO**, adds an atom of [`value/3`](../user_guide/basic_concepts.md#values) to the model. Here, the value is the identifier of the multimap.
+```prolog
+value(MultimapName, multimap, MultimapName).
+```
+
+### Assigning Key-Value Pairs
+To add key-value pairs to a multimap, use the `multimap_assign/4` predicate:
+#### Input
+```prolog
+multimap_assign(Name, MultimapName, Key, Value).
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Name` | **TODO** |
+| `MultimapName` | The unique identifier of the multimap to which the key-value pair will be added. |
+| `Key` | The key in form of a [value](./values_and_variables.md#value) to be added to the multimap. |
+| `Value` | The value to be associated with the key in the multimap. |
+
+#### Output
+Assigning a key-value pair to a multimap adds an atom of `multimap_value/5` to the model.
+
+```prolog
+multimap_value(MultimapName, KeyType, KeyValue, ValueType Value)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `MultimapName` | The unique identifier of the multimap. |
+| `KeyType` | The data type of the key being added to the multimap.
+| `KeyValue` | The actual key being added to the multimap. |
+| `ValueType` | The data type of the value associated with the key in the multimap. |
+| `Value` | The value associated with the key in the multimap. |
+
+!!! Example
+    To create the multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it, you would use the following code:
+
+    ```prolog
+    multimap_declare(name, my_map).
+    multimap_assign(name, my_map, val(int, 1), val(str, "one")).
+    multimap_assign(name, my_map, val(int, 2), val(str, "two")).
+    multimap_assign(name, my_map, val(int, 1), val(str, "uno")).
+    ```
+
+    This results in the following output atoms:
+
+    ```prolog
+    value(my_map,multimap,my_map)
+    multimap_value(my_map,int,1,str,"one")
+    multimap_value(my_map,int,1,str,"uno")
+    multimap_value(my_map,int,2,str,"two")
+    ```
+
+### Make Multimap
+Just like sets, the constraint handler provides a `multimapMake` operator to create multimaps directly within expressions.
+
+!!! Example
+    To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimapMake`, you would use the following code:
+
+    ```prolog
+    assign(bla, my_map, operation(multimapMake, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
+    ```
+
+    This results in the following output atoms:
+
+    ```prolog
+    value(my_map,multimap,ref(operation(multimapMake,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),())))))) 
+    multimap_value(my_map,int,1,str,"one")
+    multimap_value(my_map,int,1,str,"uno")
+    multimap_value(my_map,int,2,str,"two")
+    ```
+
+### Supported Operators
+Once a multimap is created (either via declaration or returned from another operation), the following operators
+can be used in expressions.
+
+| Operator | Name | Arity | Description | Return Type |
+| :--- | :--- | :--- | :--- | :--- |
+| **Construction** | | | | |
+| `multimapMake` | Make Map | N-ary | Creates a new multimap from a list of `(Key, Value)` tuples. | [multimap](#multimap) |
+| **Analysis** | | | | |
+| `countKeys` | Count Keys | 1 | Returns the number of unique keys in the map. | [int](../base_types.md#int) |
+| `countEntries` | Count Entries | 1 | Returns the total number of key-value pairs. | [int](../base_types.md#int) |
+| `sumIntEntries`| Sum Entries | 1 | Sums all integer values contained in the map. | [int](../base_types.md#int) |
+| `maxEntries` | Max Entry | 1 | Returns the maximum value stored in the map (by value, not key). | **TODO** |
+| `minEntries` | Min Entry | 1 | Returns the minimum value stored in the map. | **TODO** |
+| **Operations** | | | | |
+| `find` | Find | 2 | Retrieves the value(s) associated with a specific key. | **TODO** |
+| `isin` | Has Key | 2 | `true` if the specific **Key** exists in the map. | [bool](../base_types.md#bool) |
+| `multimap_fold`| Fold | 3 | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.| **TODO** |
+| **Comparison** | | | | |
+| `eq` | Equality | 2 | `true` if two maps contain exactly the same entries. | [bool](../base_types.md#bool) |
+| `neq` | Inequality | 2 | `true` if two maps differ by at least one entry. | [bool](../base_types.md#bool) |
