@@ -2,6 +2,8 @@
 
 This page describes how to work with values and variables in the ASP constraint handler.
 
+---
+
 ## Value
 
 Values represent concrete instances of data of some [type](./base_types.md) or [collection](./collections.md) used in rules and constraints.
