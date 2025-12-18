@@ -4,6 +4,7 @@
     * [Getting Started](user_guide/getting_started.md)
     * [Basic Concepts](user_guide/basic_concepts.md)
 * Reference
+    * [Values & Variables](reference/values_and_variables.md)
     * [Base Types](reference/base_types.md)
     * [Collections](reference/collections.md)
     * [Optimization](reference/optimization.md)
