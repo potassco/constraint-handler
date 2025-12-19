@@ -72,7 +72,7 @@ value(Var, Type, Value)
     value(x, int, 42).
     ```
 
-    This is exactly what the test example from the [Getting Started](getting_started.md#test-example) guide does.
+    This is exactly what the test example from the [Getting Started](../user_guide/getting_started.md#test-example) guide does.
 
 ### Usage
 While it is technically possible to use the `value/3` predicate to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their expressions.

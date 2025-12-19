@@ -57,7 +57,7 @@ set_value(SetName, Type, Value)
 | `Value` | The actual value being added to the set. |
 
 !!! Example
-    To create the set `my_set` and add the [ints](../base_types/#int) `1`, `3` and `5` to it, you would use the following code:
+    To create the set `my_set` and add the [ints](base_types.md/#int) `1`, `3` and `5` to it, you would use the following code:
 
     ```prolog
     set_declare(name, my_set).
@@ -80,7 +80,7 @@ set_value(SetName, Type, Value)
 The constraint handler provides a `makeSet` operator to create sets directly within expressions.
 
 !!! Example
-    To create the same set `my_set` and add the [ints](../base_types/#int) `1`, `3` and `5` to it using `makeSet`, you would use the following code:
+    To create the same set `my_set` and add the [ints](base_types.md/#int) `1`, `3` and `5` to it using `makeSet`, you would use the following code:
 
     ```prolog
     assign(bla, my_set, operation(makeSet, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
@@ -105,16 +105,16 @@ Once a set is created (either via declaration or returned from another operation
 | **Set Theory** | | | | |
 | `union` | Union | 2 | Returns a new set containing elements from both sets (`A ∪ B`). | [set](#set) |
 | `inter` | Intersection | 2 | Returns a new set containing only elements common to both sets (`A ∩ B`). | [set](#set) |
-| `subset` | Subset | 2 | `true` if set `A` is a subset of set `B`. | [bool](../base_types.md#bool) |
+| `subset` | Subset | 2 | `true` if set `A` is a subset of set `B`. | [bool](base_types.md#bool) |
 | **Membership** | | | | |
-| `isin` | Is In | 2 | `true` if element `A` is contained in set `B`. | [bool](../base_types.md#bool) |
-| `notin` | Not In | 2 | `true` if element `A` is NOT contained in set `B`. | [bool](../base_types.md#bool) |
+| `isin` | Is In | 2 | `true` if element `A` is contained in set `B`. | [bool](base_types.md#bool) |
+| `notin` | Not In | 2 | `true` if element `A` is NOT contained in set `B`. | [bool](base_types.md#bool) |
 | **Analysis** | | | | |
-| `length` | Cardinality | 1 | Returns the number of elements in the set. | [int](../base_types.md#int) |
+| `length` | Cardinality | 1 | Returns the number of elements in the set. | [int](base_types.md#int) |
 | `set_fold` | Fold | 3 | Iterates over the set, applies a function to each element and accumulates the result. | **TODO** |
 | **Comparison** | | | | |
-| `eq` | Equality | 2 | `true` if two sets contain exactly the same elements. | [bool](../base_types.md#bool) |
-| `neq` | Inequality | 2 | `true` if two sets differ by at least one element. | [bool](../base_types.md#bool) |
+| `eq` | Equality | 2 | `true` if two sets contain exactly the same elements. | [bool](base_types.md#bool) |
+| `neq` | Inequality | 2 | `true` if two sets differ by at least one element. | [bool](base_types.md#bool) |
 
 ---
 
@@ -216,15 +216,15 @@ can be used in expressions.
 | **Construction** | | | | |
 | `multimapMake` | Make Map | N-ary | Creates a new multimap from a list of `(Key, Value)` tuples. | [multimap](#multimap) |
 | **Analysis** | | | | |
-| `countKeys` | Count Keys | 1 | Returns the number of unique keys in the map. | [int](../base_types.md#int) |
-| `countEntries` | Count Entries | 1 | Returns the total number of key-value pairs. | [int](../base_types.md#int) |
-| `sumIntEntries`| Sum Entries | 1 | Sums all integer values contained in the map. | [int](../base_types.md#int) |
+| `countKeys` | Count Keys | 1 | Returns the number of unique keys in the map. | [int](base_types.md#int) |
+| `countEntries` | Count Entries | 1 | Returns the total number of key-value pairs. | [int](base_types.md#int) |
+| `sumIntEntries`| Sum Entries | 1 | Sums all integer values contained in the map. | [int](base_types.md#int) |
 | `maxEntries` | Max Entry | 1 | Returns the maximum value stored in the map (by value, not key). | **TODO** |
 | `minEntries` | Min Entry | 1 | Returns the minimum value stored in the map. | **TODO** |
 | **Operations** | | | | |
 | `find` | Find | 2 | Retrieves the value(s) associated with a specific key. | **TODO** |
-| `isin` | Has Key | 2 | `true` if the specific **Key** exists in the map. | [bool](../base_types.md#bool) |
+| `isin` | Has Key | 2 | `true` if the specific **Key** exists in the map. | [bool](base_types.md#bool) |
 | `multimap_fold`| Fold | 3 | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.| **TODO** |
 | **Comparison** | | | | |
-| `eq` | Equality | 2 | `true` if two maps contain exactly the same entries. | [bool](../base_types.md#bool) |
-| `neq` | Inequality | 2 | `true` if two maps differ by at least one entry. | [bool](../base_types.md#bool) |
+| `eq` | Equality | 2 | `true` if two maps contain exactly the same entries. | [bool](base_types.md#bool) |
+| `neq` | Inequality | 2 | `true` if two maps differ by at least one entry. | [bool](base_types.md#bool) |

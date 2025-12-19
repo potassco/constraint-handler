@@ -18,12 +18,12 @@ ensure(Name, Condition).
 | `Condition` | The condition that must be satisfied in the model. |
 
 ### Condition
-Conditions can be any expression with a [bool](./values_and_variables.md#bool) result. If the condition evaluates to false, the model is considered invalid.
+Conditions can be any expression with a [bool](./base_types.md#bool) result. If the condition evaluates to false, the model is considered invalid.
 
 !!! info "Strict Evaluation"
     The constraint handler is strict. The condition must explicitly evaluate to `true`. If a condition cannot be evaluated (e.g., because it references a variable that was never assigned), the constraint is considered violated.
 
-If a variable itself is of type [bool](./values_and_variables.md#bool), it can be used directly as a condition.
+If a variable itself is of type [bool](./base_types.md#bool), it can be used directly as a condition.
 
 !!! Example
     Ensure that a variable `x` is true:

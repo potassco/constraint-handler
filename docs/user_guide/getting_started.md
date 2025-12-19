@@ -5,7 +5,7 @@
 
 This guide will help you get started with using the library in your Python projects.
 
-Make sure the **constraint_handler** is [installed](../installation/) as a dependency of your project. Additionally, ensure that you have [Clingo](https://potassco.org/clingo/) installed, as it is required for using the constraint_handler library.
+Make sure the **constraint_handler** is [installed](installation.md) as a dependency of your project. Additionally, ensure that you have [Clingo](https://potassco.org/clingo/) installed, as it is required for using the constraint_handler library.
 
 ## Adding to Clingo Control Object
 
