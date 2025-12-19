@@ -9,6 +9,7 @@
     * [Operations](reference/operations.md)
     * [Collections](reference/collections.md)
     * [Constraints](reference/constraints.md)
+    * [Conditionals](reference/conditionals.md)
     * [Optimization](reference/optimization.md)
     * [Propagator](reference/propagator.md)
     * [Error Handling](reference/error_handling.md)
