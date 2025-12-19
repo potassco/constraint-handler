@@ -33,7 +33,7 @@ The easiest way to use the library is to add it to a Python clingo control objec
 You can now use the constraint handler features within your clingo program.
 
 ## Test Example
-To check whether the constraint handler, here is a small example:
+To check whether the installation was successful, here is a small example:
 
 ```python
 from clingo.control import Control
