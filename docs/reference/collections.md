@@ -98,23 +98,23 @@ The constraint handler provides a `makeSet` operator to create sets directly wit
 ### Supported Operators
 Once a set is created (either via declaration or returned from another operation), the following operators can be used in expressions.
 
-| Operator | Name | Arity | Description | Return Type |
-| :--- | :--- | :--- | :--- | :--- |
-| **Construction** | | | | |
-| `makeSet` | Make Set | N-ary | Creates a new set explicitly from a list of arguments. | [set](#set) |
-| **Set Theory** | | | | |
-| `union` | Union | 2 | Returns a new set containing elements from both sets (`A ∪ B`). | [set](#set) |
-| `inter` | Intersection | 2 | Returns a new set containing only elements common to both sets (`A ∩ B`). | [set](#set) |
-| `subset` | Subset | 2 | `true` if set `A` is a subset of set `B`. | [bool](base_types.md#bool) |
-| **Membership** | | | | |
-| `isin` | Is In | 2 | `true` if element `A` is contained in set `B`. | [bool](base_types.md#bool) |
-| `notin` | Not In | 2 | `true` if element `A` is NOT contained in set `B`. | [bool](base_types.md#bool) |
-| **Analysis** | | | | |
-| `length` | Cardinality | 1 | Returns the number of elements in the set. | [int](base_types.md#int) |
-| `set_fold` | Fold | 3 | Iterates over the set, applies a function to each element and accumulates the result. | **TODO** |
-| **Comparison** | | | | |
-| `eq` | Equality | 2 | `true` if two sets contain exactly the same elements. | [bool](base_types.md#bool) |
-| `neq` | Inequality | 2 | `true` if two sets differ by at least one element. | [bool](base_types.md#bool) |
+| Operator | Name | Signature | Description |
+| :--- | :--- | :--- | :--- |
+| **Construction** | | | |
+| `makeSet` | Make Set | (list[[any](base_types.md)]) $\to$ [set](#set)[[any](base_types.md)] | Creates a new set explicitly from a list of arguments. |
+| **Set Theory** | | | |
+| `union` | Union | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing elements from both sets. |
+| `inter` | Intersection | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing only elements common to both sets. |
+| `subset` | Subset | ([set](#set), [set](#set)) $\to$ [bool](base_types.md#bool) | `true` if first set is a subset of the second. |
+| **Membership** | | | |
+| `isin` | Is In | ([any](base_types.md), [set](#set)) $\to$ [bool](base_types.md#bool) | `true` if the element is contained in the set. |
+| `notin` | Not In | ([any](base_types.md), [set](#set)) $\to$ [bool](base_types.md#bool) | `true` if the element is NOT contained in the set. |
+| **Analysis** | | | |
+| `length` | Cardinality | ([set](#set)) $\to$ [int](base_types.md#int) | Returns the number of elements in the set. |
+| `set_fold` | Fold | ([set](#set), any, any) $\to$ any | Iterates over the set, applies a function to each element and accumulates the result. |
+| **Comparison** | | | |
+| `eq` | Equality | ([set](#set), [set](#set)) $\to$ [bool](base_types.md#bool) | Returns `true` if two sets contain exactly the same elements. |
+| `neq` | Inequality | ([set](#set), [set](#set)) $\to$ [bool](base_types.md#bool) | Returns `true` if two sets differ by at least one element. |
 
 ---
 
@@ -211,20 +211,20 @@ Just like sets, the constraint handler provides a `multimapMake` operator to cre
 Once a multimap is created (either via declaration or returned from another operation), the following operators
 can be used in expressions.
 
-| Operator | Name | Arity | Description | Return Type |
-| :--- | :--- | :--- | :--- | :--- |
-| **Construction** | | | | |
-| `multimapMake` | Make Map | N-ary | Creates a new multimap from a list of `(Key, Value)` tuples. | [multimap](#multimap) |
-| **Analysis** | | | | |
-| `countKeys` | Count Keys | 1 | Returns the number of unique keys in the map. | [int](base_types.md#int) |
-| `countEntries` | Count Entries | 1 | Returns the total number of key-value pairs. | [int](base_types.md#int) |
-| `sumIntEntries`| Sum Entries | 1 | Sums all integer values contained in the map. | [int](base_types.md#int) |
-| `maxEntries` | Max Entry | 1 | Returns the maximum value stored in the map (by value, not key). | **TODO** |
-| `minEntries` | Min Entry | 1 | Returns the minimum value stored in the map. | **TODO** |
-| **Operations** | | | | |
-| `find` | Find | 2 | Retrieves the value(s) associated with a specific key. | **TODO** |
-| `isin` | Has Key | 2 | `true` if the specific **Key** exists in the map. | [bool](base_types.md#bool) |
-| `multimap_fold`| Fold | 3 | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.| **TODO** |
-| **Comparison** | | | | |
-| `eq` | Equality | 2 | `true` if two maps contain exactly the same entries. | [bool](base_types.md#bool) |
-| `neq` | Inequality | 2 | `true` if two maps differ by at least one entry. | [bool](base_types.md#bool) |
+| Operator | Name | Signature | Description |
+| :--- | :--- | :--- | :--- |
+| **Construction** | | | |
+| `multimapMake` | Make Map | (list[([any](base_types.md), [any](base_types.md))]) $\to$ [multimap](#multimap) | Creates a new multimap from a list of `(Key, Value)` tuples. |
+| **Analysis** | | | |
+| `countKeys` | Count Keys | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Returns the number of unique keys in the map. |
+| `countEntries` | Count Entries | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Returns the total number of key-value pairs. |
+| `sumIntEntries`| Sum Entries | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Sums all integer values contained in the map. |
+| `maxEntries` | Max Entry | ([multimap](#multimap)) $\to$ [any](base_types.md) | Returns the maximum value stored in the map (by value, not key). |
+| `minEntries` | Min Entry | ([multimap](#multimap)) $\to$ [any](base_types.md) | Returns the minimum value stored in the map. |
+| **Operations** | | | |
+| `find` | Find | ([multimap](#multimap), [any](base_types.md)) $\to$ [list](base_types.md#list) | Retrieves the list of value(s) associated with a specific key. |
+| `isin` | Has Key | ([any](base_types.md), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | `true` if the specific **Key** exists in the map. |
+| `multimap_fold`| Fold | ([multimap](#multimap), any, any) $\to$ any | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.|
+| **Comparison** | | | |
+| `eq` | Equality | ([multimap](#multimap), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | Returns `true` if two maps contain exactly the same entries. |
+| `neq` | Inequality | ([multimap](#multimap), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | Returns `true` if two maps differ by at least one entry. |

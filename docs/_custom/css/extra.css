@@ -37,3 +37,7 @@
 .md-typeset table:not([class]) td:first-child {
   white-space: nowrap;
 }
+
+.md-typeset table:not([class]) td:nth-child(3) {
+  white-space: nowrap;
+}
