@@ -13,11 +13,11 @@ import clingo
 import constraint_handler.myClorm as myClorm
 from constraint_handler.solver_environment import FailIntegrityExn
 
-shared_environment = {
+_shared_environment = {
     "math": importlib.import_module("math"),
     "solver_environment": importlib.import_module("constraint_handler.solver_environment"),
 }
-solver_environment = dict()
+_solver_environment = dict()
 
 
 class PPEnum(Enum):
@@ -822,12 +822,12 @@ def beta_reduction(symbols, expr):
 
 
 def get_environment(identifier):
-    global shared_environment
-    global solver_environment
-    globs = dict(shared_environment)
+    global _shared_environment
+    global _solver_environment
+    globs = dict(_shared_environment)
     if identifier is not None:
-        if identifier in solver_environment:
-            globs.update(solver_environment[identifier])
+        if identifier in _solver_environment:
+            globs.update(_solver_environment[identifier])
         else:
             print(f"undeclared globals for {identifier}")
     return globs

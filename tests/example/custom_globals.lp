@@ -26,8 +26,8 @@ execution_run(dummy,empty).
 
 import constraint_handler.evaluator as evaluator
 
-if "math" in evaluator.shared_environment:
-    del evaluator.shared_environment["math"]
-evaluator.solver_environment[3] = { "myths": __import__("math") }
+if "math" in evaluator._shared_environment:
+    del evaluator._shared_environment["math"]
+evaluator._solver_environment[3] = { "myths": __import__("math") }
 
 #end.
