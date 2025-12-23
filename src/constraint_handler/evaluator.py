@@ -116,8 +116,8 @@ class Lambda(NamedTuple):
         return f"Lambda({[str(x) for x in self.vars]},{str(self.expr)})"
 
 
-type ReducedExpr = Val | tuple[ReducedExpr, ...] | frozenset[ReducedExpr]  # TODO handle Lambda
-type Expr = Variable | Operation | Val | Lambda | tuple[Expr, ...] | frozenset[Expr]
+type ReducedExpr = Val | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
+type Expr = Variable | Operation | Val | Lambda | frozenset[Expr] | tuple[Expr, ...]
 
 
 class Set_declare(NamedTuple):
