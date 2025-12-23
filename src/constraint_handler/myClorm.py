@@ -34,7 +34,7 @@ def unnest(symb, cons="", nil=""):
             # print("unnest return",l)
             return l
         else:
-            return None
+            raise FailedInstantiationExn(f"{symb} is not a list")
 
 
 # def Tuple(subtype):
@@ -126,30 +126,36 @@ def pytocl(v, dtarget=None):
 
 
 def cltopyNoTarget(func):
-    if func.type not in [clingo.SymbolType.Number, clingo.SymbolType.String, clingo.SymbolType.Function]:
-        raise NotImplementedError(func.type)  # [clingo.SymbolType.Infimum, clingo.SymbolType.Supremum]:
-    if func.type == clingo.SymbolType.Number:
-        return func.number
-    elif func.type == clingo.SymbolType.String:
-        return func.string
-    elif (
-        func.name == "float"
-        and len(func.arguments) == 1
-        and func.arguments[0].type in [clingo.SymbolType.String, clingo.SymbolType.Number]
-    ):
-        arg = func.arguments[0]
-        return float(arg.string if arg.type == clingo.SymbolType.String else arg.number)
-    elif func.name in ["true", "false"] and len(func.arguments) == 0:
-        return func.name == "true"
-    elif func.name == "none" and len(func.arguments) == 0:
-        return None
-    elif func.name == "set" and len(func.arguments) == 1 and unnest(func.arguments[0]) is not None:
-        return frozenset(cltopyNoTarget(e) for e in unnest(func.arguments[0]))
-    elif unnest(func) is not None:
-        return HashableList([cltopyNoTarget(e) for e in unnest(func)])
-    elif func.name == "":
-        return tuple([cltopyNoTarget(e) for e in func.arguments])
-    else:
+    try:
+        if func.type not in [clingo.SymbolType.Number, clingo.SymbolType.String, clingo.SymbolType.Function]:
+            raise NotImplementedError(func.type)  # [clingo.SymbolType.Infimum, clingo.SymbolType.Supremum]:
+        if func.type == clingo.SymbolType.Number:
+            return func.number
+        elif func.type == clingo.SymbolType.String:
+            return func.string
+        elif (
+            func.name == "float"
+            and len(func.arguments) == 1
+            and func.arguments[0].type in [clingo.SymbolType.String, clingo.SymbolType.Number]
+        ):
+            arg = func.arguments[0]
+            return float(arg.string if arg.type == clingo.SymbolType.String else arg.number)
+        elif func.name in ["true", "false"] and len(func.arguments) == 0:
+            return func.name == "true"
+        elif func.name == "none" and len(func.arguments) == 0:
+            return None
+        elif func.name == "set" and len(func.arguments) == 1:
+            l = unnest(func.arguments[0])
+            return frozenset(cltopyNoTarget(e) for e in l)
+        elif func.name == "":
+            try:
+                l = unnest(func)
+                return HashableList([cltopyNoTarget(e) for e in l])
+            except FailedInstantiationExn:
+                return tuple([cltopyNoTarget(e) for e in func.arguments])
+        else:
+            return func
+    except FailedInstantiationExn:
         return func
 
 
