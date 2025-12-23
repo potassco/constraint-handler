@@ -27,7 +27,7 @@
 %%% multimap_value(m2,"b",5)
 %%% multimap_value(m2,"b",6)
 
-assign(dummy, m1, operation(multimapMake,
+assign(dummy, m1, operation(multimap_make,
                            ((val(str,"a"), val(int,1)),
                            ((val(str,"b"), val(int,2)),
                            ((val(str,"b"), val(int,3)),()))))).
@@ -38,17 +38,17 @@ multimap_assign(dummy,m2,val(str,"b"),val(int,5)).
 multimap_assign(dummy,m2,val(str,"b"),val(int,6)).
 
 assign(dummy,in5,EXPR) :-
-  MAP = operation(multimapMake,
+  MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))),
   EXPR = operation(find,(val(int,5),(MAP,()))).
 assign(dummy,inc,EXPR) :-
-  MAP = operation(multimapMake,
+  MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))),
   EXPR = operation(find,(val(str,"c"),(MAP,()))).
 assign(dummy,in6,EXPR) :-
-  MAP = operation(multimapMake,
+  MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))),
   EXPR = operation(find,(val(int,6),(MAP,()))).
@@ -78,10 +78,10 @@ evaluate(isin,(val(str,"c"),(variable(m2),()))).
 evaluate(isin,(val(int,4),(variable(m2),()))).
 
 assign(dummy,isin5,operation(isin,(val(int,5),(MAP,())))) :-
-  MAP = operation(multimapMake,
+  MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))).
 assign(dummy,isin6,operation(isin,(val(int,6),(MAP,())))) :-
-  MAP = operation(multimapMake,
+  MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))).

@@ -48,7 +48,7 @@ base_tests = [
     "floats",
     "ints",
     "integrity",
-    #"lambdas",
+    # "lambdas",
     "lambda_recursive",
     "multimap_basics",
     "multimaps",
