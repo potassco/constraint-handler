@@ -588,7 +588,7 @@ class Evaluator:
             case MultimapOperator.multimap_fold_i:
                 o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
                 return multimap_fold_i(o, args[1], args[2])
-            case MultimapOperator.multimapMake:
+            case MultimapOperator.multimap_make:
                 d = HashableDict()
                 for key, value in args:
                     if key not in d:
