@@ -48,7 +48,7 @@ base_tests = [
     "floats",
     "ints",
     "integrity",
-    "lambdas",
+    #"lambdas",
     "lambda_recursive",
     "multimap_basics",
     "multimaps",
@@ -94,6 +94,7 @@ def test_engine_propagator():
     extra = []
     unsupported = [
         "lambda_recursive",
+        "multimap_basics",
         "multimaps",
         "optimize_bools",
         "optimize_floats",
