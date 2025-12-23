@@ -526,26 +526,20 @@ class Evaluator:
                 return args[0] in args[1]
             case MultimapOperator.find:
                 assert len(args) == 2
-                return args[1][args[0]] if args[0] in args[1] else None
+                return args[1][args[0]] if args[0] in args[1] else frozenset()
             case MultimapOperator.multimap_fold:
                 o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
                 return multimap_fold(o, args[1], args[2])
             case MultimapOperator.multimapMake:
-                d = dict()
+                d = HashableDict()
                 for key, value in args:
                     if key not in d:
                         d[key] = {value}
                     else:
                         d[key].add(value)
-                # make sure that singular items are not wrapped in a set?
-                # TODO: Is this desired?
-                hd = HashableDict()
                 for key, value in d.items():
-                    if len(value) == 1:
-                        hd[key] = value.pop()
-                    else:
-                        hd[key] = frozenset(value)
-                return hd
+                    d[key] = frozenset(value)
+                return d
 
                 # return HashableDict({key: value for (key, value) in args})
             case _:
