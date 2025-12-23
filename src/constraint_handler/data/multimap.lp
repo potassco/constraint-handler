@@ -16,10 +16,10 @@ _multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,X,EK,EV), EX = variable(X), eV
 %%%%%%%%%%%%%%%%% pairstuples
 direct_query(E1;E2) :- direct_query(E), E=(E1,E2).
 
-%%%%%%%%%%%%%%%%% multimapMake
+%%%%%%%%%%%%%%%%% multimap_make
 
-eValue(E,multimap,ER) :- direct_query(E), E=operation(multimapMake,L), ER=ref(E).
-_multimap_add(ER,EK,EV) :- direct_query(E), E=operation(multimapMake,L), eValue(E,multimap,ER),
+eValue(E,multimap,ER) :- direct_query(E), E=operation(multimap_make,L), ER=ref(E).
+_multimap_add(ER,EK,EV) :- direct_query(E), E=operation(multimap_make,L), eValue(E,multimap,ER),
     (EK,EV)=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value

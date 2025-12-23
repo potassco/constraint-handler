@@ -41,7 +41,7 @@ SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 
-MultimapOperator = PPEnum("MultimapOperator", ["find", "isin", "multimapMake", "multimap_fold"])
+MultimapOperator = PPEnum("MultimapOperator", ["find", "isin", "multimap_make", "multimap_fold"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
@@ -530,7 +530,7 @@ class Evaluator:
             case MultimapOperator.multimap_fold:
                 o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
                 return multimap_fold(o, args[1], args[2])
-            case MultimapOperator.multimapMake:
+            case MultimapOperator.multimap_make:
                 d = HashableDict()
                 for key, value in args:
                     if key not in d:

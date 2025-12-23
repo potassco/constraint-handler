@@ -196,3 +196,5 @@ _set_makeIndex(EM) :- _set_implode(EM).
 _set_as_list_aux(EM,0,()) :- _set_implode(EM).
 _set_as_list_aux(EM,IDX+1,K) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,TV,RV), _direct_imploded(val(TV,RV),V), K=(V,L).
 _set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
+
+%_direct_imploded(E,E) :- _direct_implode(E), E = set(_).
