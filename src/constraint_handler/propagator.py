@@ -207,7 +207,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"Adding nogood {ng}")
             if ctl.add_nogood(ng):
                 assert False, (
-                    f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"
+                    f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}",
                 )
             return None
 
