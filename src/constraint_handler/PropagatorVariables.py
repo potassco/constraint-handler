@@ -119,7 +119,7 @@ class VariableValue:
     def get_errors(self) -> list[Exception]:
         return self.errors
 
-    def vars(self) -> set[clingo.Symbol]:
+    def vars(self) -> frozenset[clingo.Symbol]:
         return evaluator.collectVars(self.expr)
 
     def reset(self, dl):
@@ -241,7 +241,7 @@ class EnsureVariable:
     def has_unassigned(self) -> bool:
         return self.value == ValueStatus.NOT_SET
 
-    def vars(self) -> set[clingo.Symbol]:
+    def vars(self) -> frozenset[clingo.Symbol]:
         return self.expression.vars()
 
     def get_errors(self) -> list[Exception]:
