@@ -113,7 +113,6 @@ def test_engine_ground(name: str):
 def test_engine_propagator(name, check_mode):
     unsupported: list[str] = [
         "lambda_recursive",
-        "multimap_basics",
         "multimaps",
         "optimize_bools",
         "optimize_floats",
