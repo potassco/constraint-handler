@@ -5,6 +5,7 @@ import importlib
 import math
 import operator
 from collections import namedtuple
+from collections.abc import Callable
 from enum import Enum
 from typing import NamedTuple
 
@@ -41,7 +42,22 @@ SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
 
-MultimapOperator = PPEnum("MultimapOperator", ["find", "isin", "multimap_make", "multimap_fold"])
+MultimapOperator = PPEnum(
+    "MultimapOperator",
+    [
+        "find",
+        "find2",
+        "isin",
+        "multimap_make",
+        "multimap_fold",
+        "multimap_fold_i",
+        "countKeys",
+        "countEntries",
+        "sumIntEntries",
+        "maxEntries",
+        "minEntries",
+    ],
+)
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
@@ -347,7 +363,11 @@ class Propagator_execution_run(Execution_run):
     pass
 
 
-def collectVars(expr) -> set[clingo.Symbol]:
+class Propagator_evaluate(Evaluate):
+    pass
+
+
+def collectVars(expr) -> frozenset[clingo.Symbol]:
     match expr:
         case Operation(eo, eargs):
             ov = collectVars(eo) if not isinstance(eo, Operator) else frozenset()
@@ -379,6 +399,8 @@ def get_baseType(v):
         return BaseType.int
     elif isinstance(v, frozenset):
         return BaseType.set
+    elif isinstance(v, HashableDict):
+        return BaseType.multimap
     elif isinstance(v, clingo.Symbol):
         return BaseType.symbol
     else:
@@ -421,9 +443,37 @@ def multimap_fold(f, m, start):
     accu = start
     for key in m:
         value = m[key]
-        accu = f(value, accu)
-        # accu = f((key, value), accu)
+        accu = set_fold(f, value, accu)
     return accu
+
+
+def multimap_fold_i(f, m, start):
+    accu = start
+    for key in m:
+        value = m[key]
+        for val in value:
+            accu = f(key, val, accu)
+    return accu
+
+
+def multimap_compare(multimap: HashableDict, op: Callable):
+    best_val = None
+    errors: list[Exception] = []
+    try:
+        for key, value in multimap.items():
+            local_best = op(value)
+
+            if best_val is None:
+                best_val = local_best
+            elif local_best is not None:
+                best_val = op(best_val, local_best)
+
+    except TypeError as exn:
+        errors.append(NotImplementedError(f"multimap does not support comparison of values of some types: {exn}"))
+    except Exception as exn:
+        errors.append(exn)
+
+    return best_val, errors
 
 
 def set_fold(f, s, start):
@@ -527,9 +577,17 @@ class Evaluator:
             case MultimapOperator.find:
                 assert len(args) == 2
                 return args[1][args[0]] if args[0] in args[1] else frozenset()
+            case MultimapOperator.find2:
+                # args is dict, key, value
+                # return if value in d[key]
+                assert len(args) == 3
+                return args[1] in args[0] and args[2] in args[0][args[1]]
             case MultimapOperator.multimap_fold:
                 o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
                 return multimap_fold(o, args[1], args[2])
+            case MultimapOperator.multimap_fold_i:
+                o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
+                return multimap_fold_i(o, args[1], args[2])
             case MultimapOperator.multimap_make:
                 d = HashableDict()
                 for key, value in args:
@@ -541,7 +599,29 @@ class Evaluator:
                     d[key] = frozenset(value)
                 return d
 
-                # return HashableDict({key: value for (key, value) in args})
+            case MultimapOperator.countKeys:
+                return len(args[0])
+
+            case MultimapOperator.countEntries:
+                count = 0
+                for key, value in args[0].items():
+                    count += len(value)
+                return count
+
+            case MultimapOperator.sumIntEntries:
+                total = 0
+                for key, value in args[0].items():
+                    total += sum(v for v in value if isinstance(v, int))
+                return total
+
+            case MultimapOperator.maxEntries:
+                __max, erros = multimap_compare(args[0], max)
+                self.errors.extend(erros)
+                return __max
+            case MultimapOperator.minEntries:
+                __min, erros = multimap_compare(args[0], min)
+                self.errors.extend(erros)
+                return __min
             case _:
                 self.errors.append(NotImplementedError(f"multimap_operator {o}"))
                 return None
@@ -661,7 +741,9 @@ class Evaluator:
                 return self.python_operator(fn, args)
             case Lambda(vars, expr):
                 if len(vars) != len(args):
-                    self.errors.append(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
+                    self.errors.append(
+                        ValueError(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
+                    )
                     return None
                 locals = dict(self.locals)
                 for v, e in zip(vars, args):
