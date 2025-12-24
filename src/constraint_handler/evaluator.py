@@ -5,29 +5,22 @@ import importlib
 import math
 import operator
 from collections import namedtuple
-from collections.abc import Callable
 from enum import Enum
 from typing import NamedTuple
 
 import clingo
 
+import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
+import constraint_handler.set as myset
 from constraint_handler.solver_environment import FailIntegrityExn
+from constraint_handler.utils.common import PPEnum
 
 _shared_environment = {
     "math": importlib.import_module("math"),
     "solver_environment": importlib.import_module("constraint_handler.solver_environment"),
 }
 _solver_environment = dict()
-
-
-class PPEnum(Enum):
-    @staticmethod
-    def _generate_next_value_(name, start, count, last_values):
-        return name
-
-    def __str__(self):
-        return self.name
 
 
 BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
@@ -38,26 +31,8 @@ BinaryOperator = PPEnum(
     ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
 )
 EqOperator = PPEnum("LogicOperator", ["eq", "neq"])
-SetOperator = PPEnum("SetOperator", ["makeSet", "isin", "notin", "union", "inter", "subset", "set_fold"])
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
-
-MultimapOperator = PPEnum(
-    "MultimapOperator",
-    [
-        "find",
-        "find2",
-        "isin",
-        "multimap_make",
-        "multimap_fold",
-        "multimap_fold_i",
-        "countKeys",
-        "countEntries",
-        "sumIntEntries",
-        "maxEntries",
-        "minEntries",
-    ],
-)
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
@@ -80,9 +55,9 @@ Operator = (
     | BinaryOperator
     | EqOperator
     | LogicOperator
-    | SetOperator
     | StringOperator
-    | MultimapOperator
+    | multimap.Operator
+    | myset.Operator
     | OtherOperator
     | ConditionalOperator
     | Python
@@ -399,7 +374,7 @@ def get_baseType(v):
         return BaseType.int
     elif isinstance(v, frozenset):
         return BaseType.set
-    elif isinstance(v, HashableDict):
+    elif isinstance(v, multimap.HashableDict):
         return BaseType.multimap
     elif isinstance(v, clingo.Symbol):
         return BaseType.symbol
@@ -430,65 +405,13 @@ def reducedExpr(v):
         raise NotImplementedError(f"reducedExpr is not implemented for {v}")
 
 
-class HashableDict(dict):
-    def __hash__(self):
-        return hash(frozenset(self.items()))
-
-    def __repr__(self):
-        kv = ", ".join(f"{str(k)}:{str(v)}" for k, v in self.items())
-        return f"{{{kv}}}"
-
-
-def multimap_fold(f, m, start):
-    accu = start
-    for key in m:
-        value = m[key]
-        accu = set_fold(f, value, accu)
-    return accu
-
-
-def multimap_fold_i(f, m, start):
-    accu = start
-    for key in m:
-        value = m[key]
-        for val in value:
-            accu = f(key, val, accu)
-    return accu
-
-
-def multimap_compare(multimap: HashableDict, op: Callable):
-    best_val = None
-    errors: list[Exception] = []
-    try:
-        for key, value in multimap.items():
-            local_best = op(value)
-
-            if best_val is None:
-                best_val = local_best
-            elif local_best is not None:
-                best_val = op(best_val, local_best)
-
-    except TypeError as exn:
-        errors.append(NotImplementedError(f"multimap does not support comparison of values of some types: {exn}"))
-    except Exception as exn:
-        errors.append(exn)
-
-    return best_val, errors
-
-
-def set_fold(f, s, start):
-    # print("fold", f, s, start)
-    accu = start
-    for e in s:
-        accu = f(e, accu)
-    return accu
-
-
 class Evaluator:
     def __init__(self, globals=None, locals=None):
         self.globals = globals if globals is not None else dict()
         self.locals = locals if locals is not None else dict()
         self.errors = []
+        self.multimap = multimap.Evaluator(self.errors)
+        self.set = myset.Evaluator(self.errors)
 
     def unop(self, o, val):
         match o:
@@ -565,88 +488,6 @@ class Evaluator:
                 return not args[0]
             case _:
                 self.errors.append(NotImplementedError(f"logic_operator {o}"))
-                return None
-
-    def multimap_operator(self, o, args):
-        if None in args:
-            return None
-        match o:
-            case MultimapOperator.isin:
-                assert len(args) == 2
-                return args[0] in args[1]
-            case MultimapOperator.find:
-                assert len(args) == 2
-                return args[1][args[0]] if args[0] in args[1] else frozenset()
-            case MultimapOperator.find2:
-                # args is dict, key, value
-                # return if value in d[key]
-                assert len(args) == 3
-                return args[1] in args[0] and args[2] in args[0][args[1]]
-            case MultimapOperator.multimap_fold:
-                o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
-                return multimap_fold(o, args[1], args[2])
-            case MultimapOperator.multimap_fold_i:
-                o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
-                return multimap_fold_i(o, args[1], args[2])
-            case MultimapOperator.multimap_make:
-                d = HashableDict()
-                for key, value in args:
-                    if key not in d:
-                        d[key] = {value}
-                    else:
-                        d[key].add(value)
-                for key, value in d.items():
-                    d[key] = frozenset(value)
-                return d
-
-            case MultimapOperator.countKeys:
-                return len(args[0])
-
-            case MultimapOperator.countEntries:
-                count = 0
-                for key, value in args[0].items():
-                    count += len(value)
-                return count
-
-            case MultimapOperator.sumIntEntries:
-                total = 0
-                for key, value in args[0].items():
-                    total += sum(v for v in value if isinstance(v, int))
-                return total
-
-            case MultimapOperator.maxEntries:
-                __max, erros = multimap_compare(args[0], max)
-                self.errors.extend(erros)
-                return __max
-            case MultimapOperator.minEntries:
-                __min, erros = multimap_compare(args[0], min)
-                self.errors.extend(erros)
-                return __min
-            case _:
-                self.errors.append(NotImplementedError(f"multimap_operator {o}"))
-                return None
-
-    def set_operator(self, o, args):
-        if None in args:
-            return None
-        match o:
-            case SetOperator.makeSet:
-                return frozenset(args)
-            case SetOperator.isin:
-                return args[0] in args[1]
-            case SetOperator.notin:
-                return args[0] not in args[1]
-            case SetOperator.union:
-                return frozenset().union(*args)
-            case SetOperator.inter:
-                return frozenset(args[0].intersection(*args[1:]))
-            case SetOperator.subset:
-                return args[0].issubset(args[1])
-            case SetOperator.set_fold:
-                o = lambda *aaa: self.operator(args[0], aaa)
-                return set_fold(o, args[1], args[2])
-            case _:
-                self.errors.append(NotImplementedError(f"set_operator {o}"))
                 return None
 
     def string_operator(self, o, args):
@@ -757,10 +598,10 @@ class Evaluator:
                     assert False  # TODO
             case LogicOperator():
                 return self.logic_operator(o, args)
-            case MultimapOperator():
-                return self.multimap_operator(o, args)
-            case SetOperator():
-                return self.set_operator(o, args)
+            case multimap.Operator():
+                return self.multimap.operator(o, args)
+            case myset.Operator():
+                return self.set.operator(o, args)
             case StringOperator():
                 return self.string_operator(o, args)
             case ConditionalOperator():

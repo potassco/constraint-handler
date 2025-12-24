@@ -7,6 +7,7 @@ from typing import Any, Iterable, Protocol
 import clingo
 
 import constraint_handler.evaluator as evaluator
+import constraint_handler.multimap as multimap
 from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
     EXECUTION_INPUT,
@@ -605,7 +606,7 @@ class DictVariable:
     def __init__(self, name: str, var: clingo.Symbol, lit: int):
         self.name: str = name
         self.var: clingo.Symbol = var
-        self.expressions: dict[VariableValue, SetVariableValue] = evaluator.HashableDict()
+        self.expressions: dict[VariableValue, SetVariableValue] = multimap.HashableDict()
 
         self.value: ValueStatus | dict[clingo.Symbol, Any] = ValueStatus.NOT_SET
 
@@ -652,7 +653,7 @@ class DictVariable:
         Returns a dictionary mapping keys to their assigned values.
         If any value is unassigned, returns None for that key.
         """
-        result = evaluator.HashableDict()
+        result = multimap.HashableDict()
         for key, value in self.expressions.items():
             key_val = key.value
             val = value.get_value()
