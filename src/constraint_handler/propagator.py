@@ -5,6 +5,7 @@ from typing import Any, Dict, NamedTuple, Sequence, cast
 import clingo
 
 import constraint_handler.evaluator as evaluator
+import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
@@ -538,7 +539,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         elif isinstance(final_value, (set, frozenset)):
             self.handle_on_model_set(var, final_value, model)
 
-        elif isinstance(final_value, (dict, evaluator.HashableDict)):
+        elif isinstance(final_value, (dict, multimap.HashableDict)):
             self.handle_on_model_dict(var, final_value, model)
         else:
             # In here come Variable(Lambda) and others
