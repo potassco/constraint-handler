@@ -76,11 +76,8 @@ propagator_extra = []
 )
 def test_engine_compile(name: str):
     unsupported: list[str] = ["optimize_bools", "optimize_floats", "optimize_ints", "multimap_basics"]
-
-    if name in unsupported:
-        return
-
-    run_test_compile(name)
+    if name not in unsupported:
+        run_test_compile(name)
 
 
 @pytest.mark.parametrize(
@@ -99,10 +96,8 @@ def test_engine_ground(name: str):
         "set_iterations",
         "set_selfref",
     ]
-    if name in unsupported:
-        return
-
-    run_test_ground(name)
+    if name not in unsupported:
+        run_test_ground(name)
 
 
 @pytest.mark.parametrize(
@@ -122,7 +117,5 @@ def test_engine_propagator(name, check_mode):
         "lambdas",
         "multimap_basics",
     ]
-    if name in unsupported:
-        return
-
-    run_test_propagator(name, check_mode)
+    if name not in unsupported:
+        run_test_propagator(name, check_mode)
