@@ -18,20 +18,20 @@
 %%% addtwoten<=addtentwo     not addtwoten<addtentwo
 %%% addtwoten>=addtentwo     not addtwoten>addtentwo
 
-assign(assign_x, x, val(int,20)).
-assign(a_int, two, val(int,2)).
-assign(a_int, ten, val(int,10)).
-assign(a_int, addtwoten, operation(add,(variable(two),(variable(ten),())))).
-assign(a_int, addtentwo, operation(add,(variable(ten),(variable(two),())))).
-assign(a_int, multtwoten, operation(mult,(variable(two),(variable(ten),())))).
-assign(a_int, multtentwo, operation(mult,(variable(ten),(variable(two),())))).
-assign(a_int, subtwoten, operation(sub,(variable(two),(variable(ten),())))).
-assign(a_int, subtentwo, operation(sub,(variable(ten),(variable(two),())))).
+variable_define(assign_x, x, val(int,20)).
+variable_define(a_int, two, val(int,2)).
+variable_define(a_int, ten, val(int,10)).
+variable_define(a_int, addtwoten, operation(add,(variable(two),(variable(ten),())))).
+variable_define(a_int, addtentwo, operation(add,(variable(ten),(variable(two),())))).
+variable_define(a_int, multtwoten, operation(mult,(variable(two),(variable(ten),())))).
+variable_define(a_int, multtentwo, operation(mult,(variable(ten),(variable(two),())))).
+variable_define(a_int, subtwoten, operation(sub,(variable(two),(variable(ten),())))).
+variable_define(a_int, subtentwo, operation(sub,(variable(ten),(variable(two),())))).
 
-assign(a_int, divtwoten, operation(div,(variable(two),(variable(ten),())))).
-assign(a_int, divtentwo, operation(div,(variable(ten),(variable(two),())))).
-assign(a_int, powtwoten, operation(pow,(variable(two),(variable(ten),())))).
-assign(a_int, powtentwo, operation(pow,(variable(ten),(variable(two),())))).
+variable_define(a_int, divtwoten, operation(div,(variable(two),(variable(ten),())))).
+variable_define(a_int, divtentwo, operation(div,(variable(ten),(variable(two),())))).
+variable_define(a_int, powtwoten, operation(pow,(variable(two),(variable(ten),())))).
+variable_define(a_int, powtentwo, operation(pow,(variable(ten),(variable(two),())))).
 
 evaluate(add,(variable(x),(val(int,10),()))).
 evaluate(add,(variable(two),(variable(ten),()))).

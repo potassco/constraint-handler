@@ -2,8 +2,8 @@
 
 %#show direct_query/1.
 %#show value/3.
-assign(example1_pi,pi,val(float,float("3.14159"))).
-assign(example1_y,y,
+variable_define(example1_pi,pi,val(float,float("3.14159"))).
+variable_define(example1_y,y,
        operation(mult,
                     (operation(add,(variable(pi),(val(int,2),()))),
                     (val(float,float("3.14159")),())))).

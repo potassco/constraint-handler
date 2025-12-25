@@ -1,11 +1,11 @@
 #include "includeAll.lp".
 
-assign(assign_b, b, val(bool,true)).
-assign(assign_i, i, val(int,42)).
-assign(assign_f, f, val(float,float("47.1"))).
-assign(assign_s, s, val(str,"foo")).
-assign(assign_x, x, variable(s)).
-assign(assign_y, y, operation(add,(operation(mult,(val(int,2),
+variable_define(assign_b, b, val(bool,true)).
+variable_define(assign_i, i, val(int,42)).
+variable_define(assign_f, f, val(float,float("47.1"))).
+variable_define(assign_s, s, val(str,"foo")).
+variable_define(assign_x, x, variable(s)).
+variable_define(assign_y, y, operation(add,(operation(mult,(val(int,2),
                                                   (variable(i), ()))),
                                   (val(int,1), ())))).
 

@@ -26,11 +26,14 @@
 %%% not (snot b) == true
 %%% wnot a == true
 
-1 { assign(a_x,x,val(bool,false)) ; assign(a_x,x,val(bool,true)) } 1.
-1 { assign(a_y,y,val(bool,false)) ; assign(a_y,y,val(bool,true)) } 1.
-1 { assign(a_a,a,V) : V = (val(bool,false); val(none,none)) } 1.
-1 { assign(a_b,b,V) : V = (val(bool,true);  val(none,none)) } 1.
-assign(a_f,f,
+variable_declare(a_x,x,boolDomain).
+variable_declare(a_y,y,boolDomain).
+variable_declare(a_a,a,fromFacts).
+variable_domain(a,(val(bool,false); val(none,none))).
+variable_declare(a_b,b,fromFacts).
+variable_domain(b,(val(bool,true); val(none,none))).
+
+variable_define(a_f,f,
     operation(conj,
              (operation(disj,(PX,(PY,()))),
              (operation(disj,(NX,(NY,()))),
@@ -40,8 +43,8 @@ assign(a_f,f,
     NX = operation(lnot,(PX,())),
     NY = operation(lnot,(PY,())).
 
-assign(a_t,t,operation(lxor,(variable(x),(variable(y),())))).
-assign(a_z,z,operation(ite,(variable(x),(variable(y),(operation(lnot,(variable(y),())),()))))).
+variable_define(a_t,t,operation(lxor,(variable(x),(variable(y),())))).
+variable_define(a_z,z,operation(ite,(variable(x),(variable(y),(operation(lnot,(variable(y),())),()))))).
 
 evaluate(limp,(variable(f),(operation(lnot,(variable(x),())),()))).
 evaluate(leqv,(variable(f),(operation(conj,(operation(lnot,(variable(x),())),(variable(y),()))),()))).

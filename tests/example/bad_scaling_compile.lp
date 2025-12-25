@@ -5,21 +5,23 @@
 
 digits(10).
 domain(0..D-1) :- digits(D).
-maxDepth(3).
+maxDepth(5).
 depth(1..K) :- maxDepth(K).
 
-1 { assign(assign_x, x, val(int,I)) : domain(I) } 1.
+variable_declare(assign_x,x,fromFacts).
+variable_domain(x,val(int,I)) :- domain(I).
 
 expr(1,variable(x)).
 expr(K+1,NE) :- expr(K,E), depth(K+1), digits(D),
                 NE=operation(add,(variable(x),(DE,()))),
                 DE=operation(mult,(val(int,D),(E,()))).
 
-assign(assign_y, y, E) :- expr(K,E), maxDepth(K).
+variable_define(assign_y, y, E) :- expr(K,E), maxDepth(K).
 
 requestEngine(assign_x,ground).
-requestEngine(assign_y,compile).
+requestEngine(assign_y,ground).
 %requestEngine(assign_y,ground).
+#show value/3.
 
 %%% the grounding of the compile engine scales exponentially in maxDepth
 %%% the reason is that the correlation between multiple occurrences of x

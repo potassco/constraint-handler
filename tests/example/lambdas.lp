@@ -26,7 +26,7 @@ multimap_assign(dummy,e,val(symbol,height),val(int,1)).
 set_declare(d_s,shapes).
 set_assign(a_s,shapes,variable(S)) :- S=(a;b;c;d;e).
 
-assign(dummy,nb_squares,E) :-
+variable_define(dummy,nb_squares,E) :-
   E    = operation(set_fold,(LAMB,(SET,(START,())))),
   SET  = variable(shapes),
   ACCU = variable(accu),
@@ -60,7 +60,7 @@ evaluate(variable(isSquare),(variable(c),())).
 evaluate(variable(isSquare),(variable(d),())).
 evaluate(variable(isSquare),(variable(e),())).
 
-assign(dummy,nb_squares2,E) :-
+variable_define(dummy,nb_squares2,E) :-
   E    = operation(set_fold,(LAMB,(SET,(START,())))),
   SET  = variable(shapes),
   ACCU = variable(accu),

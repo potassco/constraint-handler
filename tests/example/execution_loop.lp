@@ -13,5 +13,6 @@ execution_declare(dummy,factorial,STMT,(n,()),(f,())) :-
     BODY = seq2(MULT,DECR),
     LOOP = while(8,GEQ,BODY),    %%%% CHEATING
     STMT = seq2(INIT,LOOP).
-1 { assign(dummy,execution_input(factorial,n),val(int,(3;5))) } 1.
+variable_declare(dummy,execution_input(factorial,n),fromFacts).
+variable_domain (execution_input(factorial,n),val(int,(3;5))).
 execution_run(dummy,factorial).

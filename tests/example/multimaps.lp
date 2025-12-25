@@ -45,7 +45,7 @@
 %%% l = multimap_fold(snoc,properDivisors2,())) where snoc(tail,head) = (tail, head)
 %%%   = (((((((),1),2),1),1),2),3)
 
-assign(acap, capitals, operation(multimap_make,
+variable_define(acap, capitals, operation(multimap_make,
                                 ((val(str,"germany"), val(str,"berlin")),
                                 ((val(str,"france"), val(str,"paris")),
                                 ((val(str,"belarus"), val(str,"minsk")),()))))).
@@ -62,7 +62,7 @@ multimap_assign(ac,cities,val(str,"belarus"),val(str,"brest")).
 multimap_declare(dpd,properDivisors).
 multimap_assign(apd,properDivisors,val(int,4),operation(makeSet,(val(int,1),(val(int,2), ())))).
 multimap_assign(apd,properDivisors,val(int,5),variable(div5)).
-assign(apd,div5,operation(makeSet,(val(int,1),()))).
+variable_define(apd,div5,operation(makeSet,(val(int,1),()))).
 multimap_assign(apd,properDivisors,val(int,6), variable(div6)).
 set_declare(dpd,div6).
 set_assign(apd,div6,val(int,1)).
@@ -107,7 +107,7 @@ evaluate(minEntries,(variable(cities),())).
 evaluate(maxEntries,(variable(properDivisors2),())).
 evaluate(minEntries,(variable(properDivisors2),())).
 
-assign(aa, a, operation(multimap_make,
+variable_define(aa, a, operation(multimap_make,
                        ((operation(makeSet,(val(int,1),(val(int,2),()))),operation(makeSet,(val(int,2),(val(int,4),())))),
                        ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,4),(val(int,8),())))),
                        ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,1),(val(int,2),())))),
@@ -120,7 +120,7 @@ multimap_assign(ab,b,
              (operation(add,(val(int,1),(val(int,1),()))),
              (operation(add,(val(int,2),(val(int,2),()))),())))).
 
-assign(abs,b24,
+variable_define(abs,b24,
     operation(makeSet,
         (operation(mult,(val(int,2),(val(int,1),()))),
         (operation(mult,(val(int,2),(val(int,2),()))),())))).
@@ -139,17 +139,17 @@ multimap_assign(ab,b,
     variable(b24),
     variable(b48)).
 
-assign(ac, c, operation(multimap_make,
+variable_define(ac, c, operation(multimap_make,
                        ((operation(makeSet,(val(int,1),(val(int,2),()))), operation(makeSet,(val(int,2),(val(int,4),())))),
                        ((operation(makeSet,(val(int,2),(val(int,4),()))), operation(makeSet,(val(int,4),(val(int,7),())))),
                        ((operation(makeSet,(val(int,2),(val(int,4),()))), operation(makeSet,(val(int,1),(val(int,2),())))),
                        ()))))).
 
-assign(ad,d,operation(multimap_make,
+variable_define(ad,d,operation(multimap_make,
                      ((operation(makeSet,(val(int,1),(val(int,2),()))),operation(makeSet,(val(int,2),(val(int,4),())))),
                      ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,4),(val(int,8),())))),
                      ())))).
-assign(ae,e,operation(multimap_make,
+variable_define(ae,e,operation(multimap_make,
                      ((operation(makeSet,(val(int,1),(val(int,2),()))), operation(makeSet,(val(int,2),(val(int,4),())))),
                      ()))).
 

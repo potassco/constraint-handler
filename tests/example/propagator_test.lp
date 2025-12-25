@@ -9,21 +9,24 @@
 
 %%% there should be 2 models: { e1=true, e2=true } and { e1=false, e2=false }
 
-%1 { assign(p_e1,e1,val(bool,(true;false))) } 1.
+% variable_declare(p_e1,e1,boolDomain).
 
-% assign(p_e1,e1,val(bool,(true))).
+% variable_define(p_e1,e1,val(bool,(true))).
 
-%1 { assign(p_e2,e2,val(bool,(true;false))) } 1.
-%assign(p_e2,e2,val(bool,(true))).
-%assign(p_ec,ec,operation(conj,(variable(e1),(variable(e2),())))).
-%assign(p_ed,ed,operation(disj,(variable(e1),(variable(e2),())))).
+% variable_declare(p_e2,e2,boolDomain).
+%variable_define(p_e2,e2,val(bool,(true))).
+%variable_define(p_ec,ec,operation(conj,(variable(e1),(variable(e2),())))).
+%variable_define(p_ed,ed,operation(disj,(variable(e1),(variable(e2),())))).
 %ensure(p_ee,operation(leqv,(variable(ec),(variable(ed),())))).
 %ensure(p_ee,variable(ec)).
 
 
-1 { assign(p_x,x,val(int,1..2)) } 1.
-1 { assign(p_y,y,val(int,1..2)) } 1.
-1 { assign(p_z,z,(PROD;SUM)) } 1 :-
+variable_declare(p_x,x,fromFacts).
+variable_domain(x,val(int,1..2)).
+variable_declare(p_y,y,fromFacts).
+variable_domain(y,val(int,1..2)).
+variable_declare(p_z,z,fromFacts).
+variable_domain(z,(PROD;SUM)) :-
     PROD = operation(mult,(variable(x),(variable(y),()))),
     SUM = operation(add,(variable(x),(variable(y),()))).
 
