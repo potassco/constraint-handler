@@ -6,15 +6,15 @@
 %%% z=y-f                 compile
 %%% t=python(math.cos)(z) default
 %%% u=sin(z)              ground
-assign(assign_i, i, val(float,float("42"))).
-assign(assign_f, f, val(float,float("47.1"))).
-assign(assign_y, y, operation(add,(operation(mult,(val(int,2),
+variable_define(assign_i, i, val(float,float("42"))).
+variable_define(assign_f, f, val(float,float("47.1"))).
+variable_define(assign_y, y, operation(add,(operation(mult,(val(int,2),
                                                            (variable(i), ()))),
                                        (val(int,1), ())))).
-assign(assign_z, z, operation(minus,(variable(y),
+variable_define(assign_z, z, operation(minus,(variable(y),
                                         (variable(f), ())))).
-assign(assign_t, t, operation(python(val(str,"math.cos")),(variable(z),()))).
-assign(assign_u, u, operation(sin,(variable(z),()))).
+variable_define(assign_t, t, operation(python(val(str,"math.cos")),(variable(z),()))).
+variable_define(assign_u, u, operation(sin,(variable(z),()))).
 
 requestEngine(assign_y,ground).
 requestEngine(assign_z,compile).

@@ -15,7 +15,8 @@ execution_declare(dummy,absolut,STMT,(x,()),(y,())) :-
     THEN = assign(y,variable(x)),
     ELSE = assign(y,operation(mult,(variable(x),(val(int,-1),())))),
     STMT = if(GEQ,THEN,ELSE).
-1 { assign(dummy,execution_input(absolut,x),val(int,(-2;0;2))) } 1.
+variable_declare(dummy,execution_input(absolut,x),fromFacts).
+variable_domain(execution_input(absolut,x),val(int,(-2;0;2))).
 execution_run(dummy,absolut).
 evaluate(geq,(variable(execution_output(absolut,y)),(val(int,0),()))).
 evaluate(eq,
@@ -41,8 +42,10 @@ execution_declare(dummy,swap,STMT,VARS,VARS) :-
     STMT  = seq2(STMT1,seq2(STMT2,STMT3)),
     VARS  = (x,(y,())).
 
-1 { assign(dummy,execution_input(swap,x),val(int,(10;20))) } 1.
-1 { assign(dummy,execution_input(swap,y),val(int,(30;40))) } 1.
+variable_declare(dummy,execution_input(swap,x),fromFacts).
+variable_domain(execution_input(swap,x),val(int,(10;20))).
+variable_declare(dummy,execution_input(swap,y),fromFacts).
+variable_domain(execution_input(swap,y),val(int,(30;40))).
 execution_run(dummy,swap).
 evaluate(eq,(variable(execution_output(swap,x)),(variable(execution_input(swap,y)),()))).
 evaluate(eq,(variable(execution_output(swap,y)),(variable(execution_input(swap,x)),()))).
@@ -59,5 +62,5 @@ execution_declare(dummy,pyt,STMT,("x",()),("x",(y,()))) :-
     STMT2 = statement_python("x = x+1"),
     STMT3 = assign(y,operation(add,(variable(z),(variable("x"),())))),
     STMT  = seq2(STMT1,seq2(STMT2,STMT3)).
-assign(dummy,execution_input(pyt,"x"),val(int,10)).
+variable_define(dummy,execution_input(pyt,"x"),val(int,10)).
 execution_run(dummy,pyt).

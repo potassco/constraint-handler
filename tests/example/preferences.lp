@@ -4,8 +4,9 @@ preference_maximizeScore.
 
 label(a;b).
 word("over";"take").
-1 { assign(dummy,X,val(str,W)) : word(W) } 1 :- label(X).
-assign(dummy,compound,STR) :- STR = operation(concat,(variable(a),(variable(b),()))).
+variable_declare(dummy,X,fromFacts) :- label(X).
+variable_domain(X,val(str,W)) :- label(X), word(W).
+variable_define(dummy,compound,STR) :- STR = operation(concat,(variable(a),(variable(b),()))).
 
 preference_holds(dummy,operation(neq,(variable(a),(variable(b),())))).
 
@@ -15,7 +16,8 @@ evaluate(disj,(operation(eq,(variable(compound),(val(str,"takeover"),()))),(oper
 %preference_variable(compound,val(str,"taketake"),100).
 %preference_variable(compound,val(str,"helloworld"),20).
 
-1 { assign(dummy,X,val(symbol,C)) : color(C) } 1 :- vertex(X).
+variable_declare(dummy,X,fromFacts) :- vertex(X).
+variable_domain(X,val(symbol,C)) :- vertex(X), color(C).
 ensure(dummy,operation(neq,(variable(X),(variable(Y),())))) :- edge(X,Y).
 
 color(red;green;blue).
@@ -52,7 +54,8 @@ preference_variable(t2,val(symbol,red),-1).
 
 number(p;q).
 smallInt(1..4).
-1 { assign(dummy,X,val(int,N)) : smallInt(N) } 1 :- number(X).
+variable_declare(dummy,X,fromFacts) :- number(X).
+variable_domain(X,val(int,N)) :- number(X), smallInt(N).
 ensure(dummy,operation(neq,(variable(p),(variable(q),())))).
 
 preference_holds(dummy,operation(leq,(variable(p),(variable(q),()))),10).

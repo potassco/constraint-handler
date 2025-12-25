@@ -16,7 +16,7 @@
 set_declare(d_empty,empty).
 evaluate(set_fold,(val(function,add),(variable(empty),(val(int,0),())))).
 
-assign(a_numbers, numbers, operation(makeSet,
+variable_define(a_numbers, numbers, operation(makeSet,
                                     (val(float,float("-2.0")),
                                     (val(int,-1),
                                     (val(int, 0),
@@ -29,7 +29,7 @@ set_assign(a_squares, squares, SQ) :-
     SQ = operation(mult,(EX,(EX,()))),
     EX = val(T,X).
 
-assign(a_csq, csquares, operation(length,(variable(squares),()))).
+variable_define(a_csq, csquares, operation(length,(variable(squares),()))).
 
 set_declare(d_squares,isquares).
 set_assign(a_squares, isquares, SQ) :-
