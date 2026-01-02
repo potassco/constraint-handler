@@ -1,8 +1,8 @@
 # Collections
 
-This page documents the collection types available in the language. Because collections require variables for their elements in addition to themselves, they do not use the `assign/3` predicate used for [variables](./values_and_variables.md#variable). 
+This page documents the collection types available in the language.
 
-Instead, specific `declare` and `assign` predicates are provided for each collection type. Declare predicates are used to create new collections, while assign predicates are used to add elements to existing collections.
+Collections follow a *declare and assign* schema. Specific declare predicates are used to create new collections, while assign predicates are used to add elements to existing collections.
 
 ---
 
@@ -14,17 +14,17 @@ To declare a new set, use the `set_declare/2` predicate:
 
 #### Input
 ```prolog
-set_declare(Name, SetName).
+set_declare(Identifier, Name).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Name` | **TODO** |
-| `SetName` | A unique identifier of the set. |
+| `Identifier` | Unique identifier of the statement. |
+| `Name` | A unique identifier of the set. |
 
 
 #### Output
-This, just like `assign/3` **TODO**, adds an atom of [`value/3`](../user_guide/basic_concepts.md#values) to the model. Here, the value is a reference to the set.
+This, just like in the case of [Variables](expressions.md#variable), adds an atom of `value/3` to the model. Here, the value is a reference to the set.
 ```prolog
 value(set_name, set, ref(variable(set_name)))
 ```
@@ -34,25 +34,25 @@ value(set_name, set, ref(variable(set_name)))
 To add elements to a set, use the `set_assign/3` predicate:
 #### Input
 ```prolog
-set_assign(Name, SetName, Value).
+set_assign(Identifier, Name, Value).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Name` | **TODO** |
-| `SetName` | The unique identifier of the set to which the value will be added
+| `Identifier` | Unique identifier of the statement. |
+| `Name` | The unique identifier of the set to which the value will be added
 | `Value` | The value to be added to the set. |
 
 #### Output
 Assigning a value to a set adds an atom of `set_value/3` to the model.
 
 ```prolog
-set_value(SetName, Type, Value)
+set_value(Name, Type, Value)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `SetName` | The unique identifier of the set. |
+| `Name` | The unique identifier of the set. |
 | `Type` | The data type of the value being added to the set.
 | `Value` | The actual value being added to the set. |
 
@@ -101,7 +101,7 @@ Once a set is created (either via declaration or returned from another operation
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `makeSet` | Make Set | (list[[any](base_types.md)]) $\to$ [set](#set)[[any](base_types.md)] | Creates a new set explicitly from a list of arguments. |
+| `makeSet` | Make Set | ([list](expressions.md#list)[[any](base_types.md)]) $\to$ [set](#set)[[any](base_types.md)] | Creates a new set explicitly from a list of arguments. |
 | **Set Theory** | | | |
 | `union` | Union | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing elements from both sets. |
 | `inter` | Intersection | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing only elements common to both sets. |
@@ -126,31 +126,31 @@ To declare a new multimap manually, use the `multimap_declare/2` predicate.
 
 #### Input
 ```prolog
-multimap_declare(Name, MultimapName).
+multimap_declare(Identifier, Name).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Name` | **TODO** |
-| `MultimapName` | A unique identifier of the multimap. |
+| `Identifier` | Unique identifier of the statement. |
+| `Name` | A unique identifier of the multimap. |
 
 #### Output
-This, just like `assign/3` **TODO**, adds an atom of [`value/3`](../user_guide/basic_concepts.md#values) to the model. Here, the value is the identifier of the multimap.
+This, just like in the case of [Variables](expressions.md#variable), adds an atom of `value/3` to the model. Here, the value is the identifier of the multimap.
 ```prolog
-value(MultimapName, multimap, MultimapName).
+value(Name, multimap, Name).
 ```
 
 ### Assigning Key-Value Pairs
 To add key-value pairs to a multimap, use the `multimap_assign/4` predicate:
 #### Input
 ```prolog
-multimap_assign(Name, MultimapName, Key, Value).
+multimap_assign(Identifier, Name, Key, Value).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Name` | **TODO** |
-| `MultimapName` | The unique identifier of the multimap to which the key-value pair will be added. |
+| `Identifier` | Unique identifier of the statement. |
+| `Name` | The unique identifier of the multimap to which the key-value pair will be added. |
 | `Key` | The key in form of a [value](./values_and_variables.md#value) to be added to the multimap. |
 | `Value` | The value to be associated with the key in the multimap. |
 
@@ -158,12 +158,12 @@ multimap_assign(Name, MultimapName, Key, Value).
 Assigning a key-value pair to a multimap adds an atom of `multimap_value/5` to the model.
 
 ```prolog
-multimap_value(MultimapName, KeyType, KeyValue, ValueType Value)
+multimap_value(Name, KeyType, KeyValue, ValueType Value)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `MultimapName` | The unique identifier of the multimap. |
+| `Name` | The unique identifier of the multimap. |
 | `KeyType` | The data type of the key being added to the multimap.
 | `KeyValue` | The actual key being added to the multimap. |
 | `ValueType` | The data type of the value associated with the key in the multimap. |
@@ -214,7 +214,7 @@ can be used in expressions.
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `multimapMake` | Make Map | (list[([any](base_types.md), [any](base_types.md))]) $\to$ [multimap](#multimap) | Creates a new multimap from a list of `(Key, Value)` tuples. |
+| `multimapMake` | Make Map | ([list](expressions.md#list)[([any](base_types.md), [any](base_types.md))]) $\to$ [multimap](#multimap) | Creates a new multimap from a list of `(Key, Value)` tuples. |
 | **Analysis** | | | |
 | `countKeys` | Count Keys | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Returns the number of unique keys in the map. |
 | `countEntries` | Count Entries | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Returns the total number of key-value pairs. |
@@ -222,7 +222,7 @@ can be used in expressions.
 | `maxEntries` | Max Entry | ([multimap](#multimap)) $\to$ [any](base_types.md) | Returns the maximum value stored in the map (by value, not key). |
 | `minEntries` | Min Entry | ([multimap](#multimap)) $\to$ [any](base_types.md) | Returns the minimum value stored in the map. |
 | **Operations** | | | |
-| `find` | Find | ([multimap](#multimap), [any](base_types.md)) $\to$ [list](base_types.md#list) | Retrieves the list of value(s) associated with a specific key. |
+| `find` | Find | ([multimap](#multimap), [any](base_types.md)) $\to$ [list](expressions.md#list) | Retrieves the list of value(s) associated with a specific key. |
 | `isin` | Has Key | ([any](base_types.md), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | `true` if the specific **Key** exists in the map. |
 | `multimap_fold`| Fold | ([multimap](#multimap), any, any) $\to$ any | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.|
 | **Comparison** | | | |
