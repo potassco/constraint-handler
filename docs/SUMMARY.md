@@ -4,9 +4,8 @@
     * [Getting Started](user_guide/getting_started.md)
     * [Basic Concepts](user_guide/basic_concepts.md)
 * Reference
-    * [Values & Variables](reference/values_and_variables.md)
+    * [Expressions](reference/expressions.md)
     * [Base Types](reference/base_types.md)
-    * [Operations](reference/operations.md)
     * [Collections](reference/collections.md)
     * [Constraints](reference/constraints.md)
     * [Conditionals](reference/conditionals.md)
