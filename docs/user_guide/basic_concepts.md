@@ -9,7 +9,7 @@ For a complete specification of every predicate and operator, please consult the
 ## Input & Output
 The constraint handler operates on a simple principle:
 
-1.  **Input:** You write declarative rules using the handler's predicates (like `assign`, `ensure`, `operation`) to define your problem.
+1.  **Input:** You write declarative rules using the handler's predicates (like `variable_define`, `ensure`, `operation`) to define your problem.
 2.  **Output:** The handler processes these rules and adds new atoms (like `value`) to the final stable model, representing the computed results.
 
 ---
@@ -36,28 +36,28 @@ Because the handler supports many types, it needs a way to distinguish between t
     val(float, float("3.14"))
     ```
 
-> For full details, see [Values & Variables](../reference/values_and_variables.md#value) in the reference.
+> For full details, see the [Value](../reference/expressions.md#value) reference.
 
 ---
 
 ## Variables & Assignment
-Variables allow you to store specific values and reuse them later. You create them using the **Assignment** predicate.
+Variables allow you to store specific values and reuse them later. You can create them using the `variable_define/3` predicate.
 
-**Syntax:** `assign(Name, VariableName, Expression)`
+**Syntax:** `variable_define(Identifier, Name, Expression)`
 
-* **Name:** **TODO**
-* **VariableName:** The name you will use to refer to this data.
+* **Identifier:** Unique identifier of the statement.
+* **Name:** The name you will use to refer to this data.
 * **Expression:** The value or calculation to assign.
 
 !!! Example
     Assigning the integer `42` to a variable named `x`:
     ```prolog
-    assign(s1, x, val(int, 42)).
+    variable_define(s1, x, val(int, 42)).
     ```
 
 To use this variable in a later expression, you reference it using `variable(x)`.
 
-> For formal syntax, see [Values & Variables](../reference/values_and_variables.md) in the reference.
+> For full details, see the [Variable](../reference/expressions.md#variable) reference.
 
 ---
 
@@ -75,7 +75,7 @@ To perform calculations—such as arithmetic, logical comparisons, or set manipu
     operation(add, (variable(x), (variable(y), ())))
     ```
 
-> For more information, refer to the [Operations](../reference/operations.md) page. A list of operators is attached to each respective type in the [Base Type](../reference/base_types.md) or [Collections](../reference/collections.md) sections.
+> For more information, refer to the [Operation](../reference/expressions.md#operation) reference. A list of operators is attached to each respective type in the [Base Type](../reference/base_types.md) or [Collections](../reference/collections.md) sections.
 
 ---
 

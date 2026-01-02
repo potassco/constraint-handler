@@ -44,7 +44,7 @@ control = Control()
 constraint_handler.add_to_control(control)
 # Add a small example
 control.add("base", [], """
-assign(some_name, x, val(int,42)).
+variable_define(some_name, x, val(int,42)).
 #show value/3.
 """)
 # Ground the program
