@@ -63,6 +63,7 @@ base_tests = [
     "set_selfref",
     "strings",
     "variables",
+    "warning_variables",
 ]
 
 compile_extra = ["preferences"]
@@ -116,6 +117,7 @@ def test_engine_propagator(name, check_mode):
         "set_selfref",
         "lambdas",
         "multimap_basics",
+        "warning_variables",
     ]
     if name not in unsupported:
         run_test_propagator(name, check_mode)
