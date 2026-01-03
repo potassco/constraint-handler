@@ -7,6 +7,8 @@ import clingo
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.expression as expression
 from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
     ENSURE_VAR_NAME,
@@ -35,9 +37,9 @@ def myprint(*args, **kwargs):
 
 
 class Evaluated(NamedTuple):
-    name: evaluator.Operator
-    expr: list[evaluator.Expr]
-    type_: evaluator.BaseType | None
+    name: expression.Operator
+    expr: list[expression.Expr]
+    type_: atom.BaseType | None
     value: bool | int | float | str | clingo.Symbol
 
 
@@ -244,33 +246,33 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It reads the propagator_variable_declare, propagator_variable_define, propagator_variable_domain
         atoms and creates Variable instances.
         """
-        var_declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_declare)
-        var_defines = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_define)
-        var_domains = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_domain)
-        var_optionals = myClorm.findInPropagateInit(ctl, evaluator.Propagator_variable_declareOptional)
+        var_declares = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declare)
+        var_defines = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_define)
+        var_domains = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_domain)
+        var_optionals = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declareOptional)
         for (name, symbol_var, domain), __literal in var_declares.items():
             variable: Variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = variable
 
             self.errors.append(SyntaxError(f"Variable {name} declaration is not a fact!"))
 
-            if isinstance(domain, evaluator.BoolDomain):
+            if isinstance(domain, atom.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
                 literal_false = ctl.add_literal(freeze=True)
-                variable.add_value(evaluator.Val(evaluator.BaseType.bool, True), literal_true)
-                variable.add_value(evaluator.Val(evaluator.BaseType.bool, False), literal_false)
+                variable.add_value(expression.Val(atom.BaseType.bool, True), literal_true)
+                variable.add_value(expression.Val(atom.BaseType.bool, False), literal_false)
                 ctl.add_watch(literal_true)
                 ctl.add_watch(-literal_true)
                 ctl.add_watch(literal_false)
                 ctl.add_watch(-literal_false)
 
-            elif isinstance(domain, evaluator.FromList):
+            elif isinstance(domain, atom.FromList):
                 for expr in domain.elements:
                     literal = ctl.add_literal(freeze=True)
                     variable.add_value(expr, literal)
                     ctl.add_watch(literal)
                     ctl.add_watch(-literal)
-            elif isinstance(domain, evaluator.FromFacts):
+            elif isinstance(domain, atom.FromFacts):
                 # values will be added from facts, nothing to do here
                 pass
             else:
@@ -298,7 +300,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for (optional,), __literal in var_optionals.items():
             optional_variable: Variable = cast(Variable, self.symbol2var[optional])
             literal = ctl.add_literal(freeze=True)
-            optional_variable.add_value(evaluator.Val(evaluator.BaseType.none, None), literal)
+            optional_variable.add_value(expression.Val(atom.BaseType.none, None), literal)
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
@@ -313,7 +315,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_assign)
+        assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_assign)
         for (name, symbol_var, expr), literal in assigns.items():
             variable: Variable
             if symbol_var in self.symbol2var:
@@ -336,7 +338,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It reads the propagator_ensure atoms and stores them with their literals.
         """
 
-        ensures = myClorm.findInPropagateInit(ctl, evaluator.Propagator_ensure)
+        ensures = myClorm.findInPropagateInit(ctl, atom.Propagator_ensure)
         c = 0
         for (name, expr), literal in ensures.items():
             c += 1
@@ -354,7 +356,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It reads the propagator_assign atoms and creates Variable instances.
         """
 
-        for (op, args), literal in myClorm.findInPropagateInit(ctl, evaluator.Propagator_evaluate).items():
+        for (op, args), literal in myClorm.findInPropagateInit(ctl, atom.Propagator_evaluate).items():
             var = EvaluateVariable(op, args, literal)
             if literal != 1:
                 self.errors.append(SyntaxError(f"Evaluate atom {op} with args {args} is not a fact!"))
@@ -365,7 +367,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         This method initializes the solver identifier from the ASP encoding.
         """
 
-        for id, _ in myClorm.findInPropagateInit(ctl, evaluator.Main_solverIdentifier).items():
+        for id, _ in myClorm.findInPropagateInit(ctl, atom.Main_solverIdentifier).items():
             self.environment = evaluator.get_environment(id.id)
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
@@ -374,7 +376,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It reads the optimize_maximizeSum atoms and creates an OptimizationSum instance.
         """
 
-        maxSums = myClorm.findInPropagateInit(ctl, evaluator.Propagator_optimize_maximizeSum)
+        maxSums = myClorm.findInPropagateInit(ctl, atom.Propagator_optimize_maximizeSum)
         for (_, expr, symbol), literal in maxSums.items():
             self.using_optimization = True
             self.optimization_sum.add_value(symbol, expr, literal)
@@ -385,7 +387,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It reads the set_declare and set_assign atoms and creates SetVariable instances.
         """
 
-        declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_declare)
+        declares = myClorm.findInPropagateInit(ctl, atom.Propagator_set_declare)
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
             if literal != 1:
@@ -401,7 +403,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_set_assign)
+        assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_set_assign)
         for (name, symbol_var, expr), literal in assigns.items():
             setvar: SetVariable = cast(SetVariable, self.symbol2var[symbol_var])
             setvar.add_value(expr, literal)
@@ -417,7 +419,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         This method initializes the dict variables from the ASP encoding.
         It reads the multimap_declare and multimap_assign atoms and creates DictVariable instances.
         """
-        declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_declare)
+        declares = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_declare)
         for (name, symbol_var), literal in declares.items():
             variable = DictVariable(name, symbol_var, literal)
 
@@ -434,7 +436,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        assigns = myClorm.findInPropagateInit(ctl, evaluator.Propagator_multimap_assign)
+        assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_assign)
         for (name, symbol_var, key_expr, expr), literal in assigns.items():
             dictvar: DictVariable = cast(DictVariable, self.symbol2var[symbol_var])
             dictvar.add_value(key_expr, expr, literal)
@@ -450,7 +452,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         This method initializes the execution declarations from the ASP encoding.
         It reads the execution_declare and execution_run atoms and creates Execution instances.
         """
-        declares = myClorm.findInPropagateInit(ctl, evaluator.Propagator_execution_declare)
+        declares = myClorm.findInPropagateInit(ctl, atom.Propagator_execution_declare)
         for (name, symbol_var, stmt, in_v, out_v), literal in declares.items():
             variable = Execution(name, symbol_var, stmt, in_v, out_v)
 
@@ -458,7 +460,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.symbol2var[symbol_var] = variable
 
-        exec_runs = myClorm.findInPropagateInit(ctl, evaluator.Propagator_execution_run)
+        exec_runs = myClorm.findInPropagateInit(ctl, atom.Propagator_execution_run)
         for (name, symbol_var), literal in exec_runs.items():
             execvar: Execution = cast(Execution, self.symbol2var[symbol_var])
             execvar.add_run_literal(literal)
@@ -533,7 +535,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if final_value is ValueStatus.NOT_SET:
             assert False, f"Variable {var} has no value set in on_model!"
 
-        if isinstance(final_value, evaluator.constant):
+        if isinstance(final_value, atom.constant):
             self.handle_on_model_normal_type(var, final_value, model)
 
         elif isinstance(final_value, (set, frozenset)):
@@ -546,7 +548,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"Unknown model type {type(final_value)} for variable {var} in on_model!")
 
     def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset, model: clingo.Model):
-        pyAtom = evaluator.Value(
+        pyAtom = atom.Value(
             var, evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
         )
         clAtom = myClorm.pytocl(pyAtom)
@@ -558,7 +560,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if value is ValueStatus.NOT_SET:
                 assert False, f"Set variable {var} has no value set in on_model!"
 
-            set_pyAtom = evaluator.Set_value(var, evaluator.get_baseType(value), value)
+            set_pyAtom = atom.Set_value(var, evaluator.get_baseType(value), value)
             # myprint(f"adding set atom {pyAtom}", end=" ")
             set_clAtom = myClorm.pytocl(set_pyAtom)
             myprint(f"= {set_clAtom}")
@@ -572,7 +574,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # alternatively, we have a separate part of the dict that tells you which refs are for which key/value
 
         # TODO: Type for dict is not handled here which results in a none value being output for the type in the value atom
-        pyAtom = evaluator.Value(
+        pyAtom = atom.Value(
             var, evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
         )
         clAtom = myClorm.pytocl(pyAtom)
@@ -585,9 +587,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
 
             for val in value:
-                mm_pyAtom = evaluator.Multimap_value(
-                    var, evaluator.get_baseType(key), key, evaluator.get_baseType(val), val
-                )
+                mm_pyAtom = atom.Multimap_value(var, evaluator.get_baseType(key), key, evaluator.get_baseType(val), val)
                 # myprint(f"adding multimap atom {pyAtom}", end=" ")
                 mm_clAtom = myClorm.pytocl(mm_pyAtom)
                 myprint(f"= {mm_clAtom}")
@@ -597,7 +597,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def handle_on_model_normal_type(
         self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol, model: clingo.Model
     ):
-        pyAtom = evaluator.Value(var, evaluator.get_baseType(final_value), final_value)
+        pyAtom = atom.Value(var, evaluator.get_baseType(final_value), final_value)
         # myprint(f"adding atom {pyAtom}", end=" ")
         clAtom = myClorm.pytocl(pyAtom)
         myprint(f"= {clAtom}")
@@ -607,8 +607,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def handle_on_model_warning(self, errors: list[Exception], model: clingo.Model):
         for error in errors:
-            atom = evaluator.Warning(
+            atom_ = atom.Warning(
                 clingo.Function("", [clingo.Function(type(error).__name__), clingo.String(str(error))])
             )
-            if not model.contains(myClorm.pytocl(atom)):
-                model.extend([myClorm.pytocl(atom)])
+            if not model.contains(myClorm.pytocl(atom_)):
+                model.extend([myClorm.pytocl(atom_)])

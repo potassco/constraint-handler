@@ -8,12 +8,14 @@ import clingo
 
 import constraint_handler.myClorm as myClorm
 import constraint_handler.evaluator as evaluator
-from constraint_handler.solver_environment import FailIntegrityExn
+import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.statement as statement
 
 
 def pythonExpressionVariable(clExpr):
     # print("pythonExpressionVariable",clExpr)
-    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+    pExpr = myClorm.cltopy(clExpr,expression.Expr)
     pVars = list(evaluator.collectVars(pExpr))
     clVars = [myClorm.pytocl(var) for var in pVars]
     return clVars
@@ -21,8 +23,8 @@ def pythonExpressionVariable(clExpr):
  # TODO: dead?
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars)
-    pArgs = myClorm.cltopy(clArgs,list[evaluator.Val])
-    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+    pArgs = myClorm.cltopy(clArgs,list[expression.Val])
+    pExpr = myClorm.cltopy(clExpr,expression.Expr)
     if len(pVars) != len(pArgs):
         print(f"pythonBetaReduction: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
         return []
@@ -37,8 +39,8 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
 def pythonEvalExpr(clExpr,clArgs,clId):
     # print("pythonEvalExpr",clExpr,clArgs)
     try:
-        pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,evaluator.ReducedExpr]])
-        pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+        pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
+        pExpr = myClorm.cltopy(clExpr,expression.Expr)
         pId   = myClorm.cltopy(clId)
         globals = evaluator.get_environment(pId)
         results = []
@@ -47,26 +49,26 @@ def pythonEvalExpr(clExpr,clArgs,clId):
             val,errors = evaluator.evaluate_expr(vexpr,globals)
             locals[var] = val
             for error in errors:
-                results.append(evaluator.Error(repr(error)))
+                results.append(atom.Error(repr(error)))
         prettyD = { str(var) : val for (var,val) in locals.items() }
         pRes,errors = evaluator.evaluate_expr(pExpr, globals, locals)
         for error in errors:
-            results.append(evaluator.Error(repr(error)))
+            results.append(atom.Error(repr(error)))
         # print(f"eval expr: {pExpr} = {pRes} assuming {prettyD}\nerrors: {results}")
         results.append(evaluator.reducedExpr(pRes))
         return map(myClorm.pytocl,results)
     except myClorm.FailedInstantiationExn as exn:
         print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {repr(exn)}.")
-        return myClorm.pytocl(evaluator.Error(repr(exn)))
+        return myClorm.pytocl(atom.Error(repr(exn)))
     except Exception as exn:
         print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
-        return myClorm.pytocl(evaluator.Error(repr(exn)))
+        return myClorm.pytocl(atom.Error(repr(exn)))
 
 
 def pythonExec(clStmt,clEnv,clId):
     try:
-        pStmt = myClorm.cltopy(clStmt,evaluator.Stmt)
-        pEnv  = myClorm.cltopy(clEnv,list[tuple[evaluator.constant,evaluator.ReducedExpr]])
+        pStmt = myClorm.cltopy(clStmt,statement.Stmt)
+        pEnv  = myClorm.cltopy(clEnv,list[tuple[expression.constant,expression.ReducedExpr]])
         pId   = myClorm.cltopy(clId)
         globals = evaluator.get_environment(pId)
         results = []
@@ -75,11 +77,11 @@ def pythonExec(clStmt,clEnv,clId):
             val,errors = evaluator.evaluate_expr(vexpr,globals)
             locals[var] = val
             for error in errors:
-                results.append(evaluator.Error(repr(error)))
+                results.append(atom.Error(repr(error)))
         # print((pStmt, globals, locals))
         errors = evaluator.evaluate_stmt(pStmt, globals, locals)
         for error in errors:
-            results.append(evaluator.Error(repr(error)))
+            results.append(atom.Error(repr(error)))
         if not results:
             results.append(True)
         for (x,val) in locals.items():
@@ -88,14 +90,14 @@ def pythonExec(clStmt,clEnv,clId):
             except NotImplementedError:
                 pass
         return map(myClorm.pytocl,results)
-    except FailIntegrityExn:
-        return myClorm.pytocl(evaluator.FailIntegrity())
+    except evaluator.FailIntegrityExn:
+        return myClorm.pytocl(atom.FailIntegrity())
     except myClorm.FailedInstantiationExn as exn:
         print(f"pythonExec: error when converting {(clStmt,clEnv,clId)}: {repr(exn)}.")
-        return myClorm.pytocl(evaluator.Error(str(exn)))
+        return myClorm.pytocl(atom.Error(str(exn)))
     except Exception as exn:
         print(f"pythonExec: uncaught exception {repr(exn)} in context {(clStmt,clEnv,clId)}")
-        return myClorm.pytocl(evaluator.Error(repr(exn)))
+        return myClorm.pytocl(atom.Error(repr(exn)))
 
 
 def pythonReversed(clExpr):
@@ -119,7 +121,7 @@ def pythonListLength(clExpr):
 
 class Local(typing.NamedTuple):
     name: typing.Any
-    var: evaluator.Variable
+    var: expression.Variable
 
 
 def pythonDebug(clExpr):
@@ -136,7 +138,7 @@ def pythonStop(clExpr):
 def pythonTagVars(clExpr,clName):
     # print("pythonTagVars",clName,clExpr)
     pName = myClorm.cltopy(clName)
-    pExpr = myClorm.cltopy(clExpr,evaluator.Expr)
+    pExpr = myClorm.cltopy(clExpr,expression.Expr)
     vars = evaluator.collectVars(pExpr)
     map = { var : Local(pName,var) for var in vars }
     pExp2 = evaluator.beta_reduction(map,pExpr)
