@@ -8,6 +8,8 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
+import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.statement as statement
 from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
     EXECUTION_INPUT,
@@ -70,8 +72,8 @@ class VariableValue:
     This class corresponds to a single expression appearing in some assingment atom
     """
 
-    def __init__(self, expr: evaluator.Expr, lit: int):
-        self.expr: evaluator.Expr = expr
+    def __init__(self, expr: expression.Expr, lit: int):
+        self.expr: expression.Expr = expr
         self.value: Any = ValueStatus.NOT_SET
 
         self.literal: int = lit
@@ -146,9 +148,9 @@ class VariableValue:
 
 
 class EvaluateVariable:
-    def __init__(self, op: evaluator.Operator, args: list[evaluator.Expr], literal: int = -1):
-        self.op: evaluator.Operator = op
-        self.args: list[evaluator.Expr] = args
+    def __init__(self, op: expression.Operator, args: list[expression.Expr], literal: int = -1):
+        self.op: expression.Operator = op
+        self.args: list[expression.Expr] = args
         self.value: Any = ValueStatus.NOT_SET
         self.literal: int = literal
 
@@ -161,7 +163,7 @@ class EvaluateVariable:
         if not ctl.assignment.is_true(self.literal):
             return False
         myprint(f"Evaluating {self.op}({self.args})")
-        value, self.errors = evaluator.evaluate_expr(evaluator.Operation(self.op, self.args), env, evaluations)
+        value, self.errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations)
         self.value = value
         return True
 
@@ -189,7 +191,7 @@ class EvaluateVariable:
 class EnsureVariable:
     __var = clingo.Function("ensure")
 
-    def __init__(self, name: str, expr: evaluator.Expr, literal: int):
+    def __init__(self, name: str, expr: expression.Expr, literal: int):
         self.name: str = name
         self.expression: VariableValue = VariableValue(expr, literal)
 
@@ -285,7 +287,7 @@ class Variable:
         self.parents: list[VariableType] = []
         self.decision_level: int = sys.maxsize
 
-    def add_value(self, expr: evaluator.Expr, lit: int) -> None:
+    def add_value(self, expr: expression.Expr, lit: int) -> None:
         self.expressions.add(VariableValue(expr, lit))
 
     def get_value(self) -> Any:
@@ -409,7 +411,7 @@ class SetVariableValue:
     def has_domain(self) -> bool:
         return len(self.values) > 0
 
-    def add_value(self, arg: evaluator.Expr, lit: int) -> None:
+    def add_value(self, arg: expression.Expr, lit: int) -> None:
         self.values.add(VariableValue(arg, lit))
 
     def get_errors(self) -> list[Exception]:
@@ -506,7 +508,7 @@ class SetVariable:
     def has_domain(self) -> bool:
         return self.expressions.has_domain()
 
-    def add_value(self, arg: evaluator.Expr, lit: int) -> None:
+    def add_value(self, arg: expression.Expr, lit: int) -> None:
         self.expressions.add_value(arg, lit)
 
     def get_errors(self) -> list[Exception]:
@@ -618,7 +620,7 @@ class DictVariable:
 
         self.errors: list[Exception] = []
 
-    def add_value(self, key: evaluator.Expr, expr: evaluator.Expr, lit: int) -> None:
+    def add_value(self, key: expression.Expr, expr: expression.Expr, lit: int) -> None:
         # setting lit for key to 1 since it does not have its own literal
         # the literal is bound for the value!
         key_val = VariableValue(key, 1)
@@ -758,7 +760,7 @@ class OptimizationSum:
 
         self.decision_level: int = sys.maxsize
 
-    def add_value(self, var: clingo.Symbol, expr: evaluator.Expr, lit: int) -> None:
+    def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int) -> None:
         self.expressions.append((var, VariableValue(expr, lit)))
 
     @property
@@ -835,13 +837,13 @@ class Execution:
         self,
         name: str,
         func_name: clingo.Symbol,
-        stmt: evaluator.Stmt,
+        stmt: statement.Stmt,
         in_vars: list[clingo.Symbol],
         out_vars: list[clingo.Symbol],
     ):
         self.name: str = name
         self.func_name: clingo.Symbol = func_name
-        self.stmt: evaluator.Stmt = stmt
+        self.stmt: statement.Stmt = stmt
         self.in_vars: list[clingo.Symbol] = in_vars
         self.converted_in_vars: list[clingo.Symbol] = self.convert_vars(in_vars, input=True)
         self.out_vars: list[clingo.Symbol] = out_vars

@@ -4,17 +4,25 @@ import functools
 import importlib
 import math
 import operator
-from collections import namedtuple
-from enum import Enum
-from typing import NamedTuple
 
 import clingo
 
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.statement as statement
 import constraint_handler.set as myset
+from constraint_handler.schemas.expression import (
+    BaseType,
+    BinaryOperator,
+    ConditionalOperator,
+    EqOperator,
+    LogicOperator,
+    OtherOperator,
+    StringOperator,
+    UnaryOperator,
+)
 from constraint_handler.solver_environment import FailIntegrityExn
-from constraint_handler.utils.common import PPEnum
 
 _shared_environment = {
     "math": importlib.import_module("math"),
@@ -23,336 +31,17 @@ _shared_environment = {
 _solver_environment = dict()
 
 
-BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
-UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
-LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
-BinaryOperator = PPEnum(
-    "BinaryOperator",
-    ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
-)
-EqOperator = PPEnum("LogicOperator", ["eq", "neq"])
-StringOperator = PPEnum("StringOperator", ["concat", "length"])
-OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
-
-
-# ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
-class ConditionalOperator(Enum):
-    default = "default"
-    IF = "if"
-    hasValue = "hasValue"
-
-
-class CustomOperator(NamedTuple):
-    name: clingo.Symbol
-
-
-class Python(NamedTuple):
-    fn: str
-
-
-Operator = (
-    UnaryOperator
-    | BinaryOperator
-    | EqOperator
-    | LogicOperator
-    | StringOperator
-    | multimap.Operator
-    | myset.Operator
-    | OtherOperator
-    | ConditionalOperator
-    | Python
-)
-
-
-constant = bool | float | int | str | type(None) | clingo.Symbol
-
-
-class Val(NamedTuple):
-    type_: BaseType | clingo.Symbol
-    value: constant
-
-    def __repr__(self):
-        return f"Val({str(self.type_)},{str(self.value)})"
-
-
-class Error(NamedTuple):
-    message: str
-
-
-class FailIntegrity(NamedTuple):
-    pass
-
-
-class Operation(NamedTuple):
-    op: Operator | Variable | Lambda
-    args: myClorm.HashableList[Expr]
-
-    def __repr__(self):
-        comma = ","
-        return f"{self.op}({comma.join(str(arg) for arg in self.args)})"
-
-
-class Variable(NamedTuple):
-    arg: constant
-
-    def __repr__(self):
-        return f"{self.arg}"
-
-
-class Lambda(NamedTuple):
-    vars: myClorm.HashableList[clingo.Symbol]
-    expr: Expr
-
-    def __repr__(self):
-        return f"Lambda({[str(x) for x in self.vars]},{str(self.expr)})"
-
-
-type ReducedExpr = Val | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
-type Expr = Variable | Operation | Val | Lambda | frozenset[Expr] | tuple[Expr, ...]
-
-
-class Set_declare(NamedTuple):
-    label: constant
-    name: constant
-
-
-class Set_assign(NamedTuple):
-    label: constant
-    name: constant
-    member: Expr
-
-
-class Multimap_declare(NamedTuple):
-    label: constant
-    name: constant
-
-
-class Multimap_assign(NamedTuple):
-    label: constant
-    name: constant
-    key: Expr
-    val: Expr
-
-
-class Assert(NamedTuple):
-    expr: Expr
-
-
-class Assign(NamedTuple):
-    var: constant
-    expr: Expr
-
-
-class If(NamedTuple):
-    cond: Expr
-    then: Stmt
-    else_: Stmt
-
-
-class Noop(NamedTuple):
-    pass
-
-
-class Statement_python(NamedTuple):
-    code: str
-
-
-class Seq2(NamedTuple):
-    fst: Stmt
-    snd: Stmt
-
-
-class While(NamedTuple):
-    max_iterations: int
-    cond: Expr
-    body: Stmt
-
-
-type Stmt = Assert | Assign | If | Noop | Statement_python | Seq2 | While
-
-
-class Execution_declare(NamedTuple):
-    label: constant
-    name: constant
-    body: Stmt
-    inputs_vars: list[constant]
-    outputs_vars: list[constant]
-
-
-class Execution_run(NamedTuple):
-    label: constant
-    name: constant
-
-
-class FromFacts(NamedTuple):
-    pass
-
-
-class BoolDomain(NamedTuple):
-    pass
-
-
-class FromList(NamedTuple):
-    elements: list[Expr]
-
-
-type Domain = BoolDomain | FromFacts | FromList
-
-
-class Variable_declare(NamedTuple):
-    label: constant
-    name: constant
-    domain: Domain
-
-
-class Variable_define(NamedTuple):
-    label: constant
-    name: constant
-    value: Expr
-
-
-class Variable_domain(NamedTuple):
-    name: constant
-    value: Expr
-
-
-class Variable_declareOptional(NamedTuple):
-    name: constant
-
-
-class Optimize_maximizeSum(NamedTuple):
-    label: constant
-    value: Expr
-    id: constant
-
-
-class Optimize_precision(NamedTuple):
-    value: Expr
-
-
-class Value(NamedTuple):
-    name: constant
-    type_: BaseType | clingo.Symbol
-    cst: constant  # ReducedExpr
-
-
-class Set_value(NamedTuple):
-    name: constant
-    elt_type_: BaseType | clingo.Symbol
-    elt_cst: constant
-
-
-class Multimap_value(NamedTuple):
-    name: constant
-    key_type_: BaseType | clingo.Symbol
-    key_value: constant
-    cst_type_: BaseType | clingo.Symbol
-    cst_value: constant
-
-
-class Warning(NamedTuple):
-    content: constant
-
-
-# class SetMember(NamedTuple):
-#     set: frozenset
-#     value: optConstant
-
-
-type SetAtom = Set_declare | Set_assign
-type MultimapAtom = Multimap_declare | Multimap_assign
-type ExecutionAtom = Execution_declare | Execution_run
-type VariableAtom = Variable_declare | Variable_define | Variable_domain
-type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
-type Atom = ExecutionAtom | MultimapAtom | OptimizeAtom | SetAtom | VariableAtom
-type ResultAtom = Value | Set_value | Multimap_value | Warning
-
-
-AssignAtom = namedtuple("Assign", ["label", "var", "expr"])
-AssignAtom.__annotations__ = {"label": constant, "var": constant, "expr": Expr}
-
-
-class Ensure(NamedTuple):
-    label: constant
-    expr: Expr
-
-
-class Evaluate(NamedTuple):
-    operator: Operator | Variable
-    args: list[Expr]
-
-
-Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
-Main_solverIdentifier.__annotations__ = {"id": constant}
-
-
-class Propagator_variable_declare(Variable_declare):
-    pass
-
-
-class Propagator_variable_define(Variable_define):
-    pass
-
-
-class Propagator_variable_domain(Variable_domain):
-    pass
-
-
-class Propagator_variable_declareOptional(Variable_declareOptional):
-    pass
-
-
-class Propagator_assign(AssignAtom):
-    pass
-
-
-class Propagator_ensure(Ensure):
-    pass
-
-
-class Propagator_set_declare(Set_declare):
-    pass
-
-
-class Propagator_set_assign(Set_assign):
-    pass
-
-
-class Propagator_multimap_declare(Multimap_declare):
-    pass
-
-
-class Propagator_multimap_assign(Multimap_assign):
-    pass
-
-
-class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
-    pass
-
-
-class Propagator_execution_declare(Execution_declare):
-    pass
-
-
-class Propagator_execution_run(Execution_run):
-    pass
-
-
-class Propagator_evaluate(Evaluate):
-    pass
-
-
 def collectVars(expr) -> frozenset[clingo.Symbol]:
     match expr:
-        case Operation(eo, eargs):
-            ov = collectVars(eo) if not isinstance(eo, Operator) else frozenset()
+        case expression.Operation(eo, eargs):
+            ov = collectVars(eo) if not isinstance(eo, expression.Operator) else frozenset()
             av = frozenset.union(*(collectVars(e) for e in eargs)) if eargs else frozenset()
             return ov | av
-        case Variable(a):
+        case expression.Variable(a):
             return frozenset({a})
-        case Val(t, v):
+        case expression.Val(t, v):
             return frozenset()
-        case Lambda(vars, body):
+        case expression.Lambda(vars, body):
             return collectVars(body) - frozenset(vars)
         case tuple(args):
             return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
@@ -384,22 +73,22 @@ def get_baseType(v):
 
 def reducedExpr(v):
     if isinstance(v, float):
-        return Val(BaseType.float, v)
+        return expression.Val(BaseType.float, v)
     elif isinstance(v, str):
-        return Val(BaseType.str, v)
+        return expression.Val(BaseType.str, v)
     elif isinstance(v, bool):
-        return Val(BaseType.bool, v)
+        return expression.Val(BaseType.bool, v)
     elif isinstance(v, int):
-        return Val(BaseType.int, v)
+        return expression.Val(BaseType.int, v)
     elif isinstance(v, clingo.Symbol):
-        return Val(BaseType.symbol, v)
+        return expression.Val(BaseType.symbol, v)
     elif isinstance(v, type(None)):
-        return Val(BaseType.none, None)
+        return expression.Val(BaseType.none, None)
     elif isinstance(v, frozenset) or isinstance(v, set):
         return frozenset({reducedExpr(x) for x in v})
     elif isinstance(v, dict):
         raise NotImplementedError(f"reducedExpr is not implemented for {dict} {v}")
-    elif isinstance(v, Lambda):
+    elif isinstance(v, expression.Lambda):
         return v
     else:
         raise NotImplementedError(f"reducedExpr is not implemented for {v}")
@@ -578,9 +267,9 @@ class Evaluator:
 
     def operator(self, o, args):
         match o:
-            case Python(fn):
+            case expression.Python(fn):
                 return self.python_operator(fn, args)
-            case Lambda(vars, expr):
+            case expression.Lambda(vars, expr):
                 if len(vars) != len(args):
                     self.errors.append(
                         ValueError(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
@@ -629,27 +318,27 @@ class Evaluator:
 
     def expr(self, expr):
         match expr:
-            case Operation(eo, eargs):
+            case expression.Operation(eo, eargs):
                 args = [self.expr(a) for a in eargs]
                 o = self.expr(eo)
                 return self.operator(o, args)
-            case Variable(a):
+            case expression.Variable(a):
                 if a in self.locals:
                     return self.locals[a]  # TODO : and globals?
                 else:
                     self.errors.append(NameError(f"variable {a} undefined"))
                     return None
-            case Val(type_, val):
+            case expression.Val(type_, val):
                 return val
-            case Lambda(vars, body):
+            case expression.Lambda(vars, body):
                 nsymbols = {x: v for x, v in self.locals.items() if x not in vars}
                 nglobals = dict(self.globals) if self.globals is not None else None
                 if self.globals is not None:
                     for x in vars:
                         if x in nglobals:
                             del nglobals[x]
-                return Lambda(vars, beta_reduction(nsymbols, body))
-            case o if isinstance(o, Operator):
+                return expression.Lambda(vars, beta_reduction(nsymbols, body))
+            case o if isinstance(o, expression.Operator):
                 return expr
             case tuple(eargs):
                 args = tuple(self.expr(a) for a in eargs)
@@ -673,25 +362,25 @@ class Evaluator:
 
     def stmt(self, stmt):
         match stmt:
-            case Assert(expr):
+            case statement.Assert(expr):
                 condition = self.expr(expr)
                 if condition != True:
                     raise FailIntegrityExn
-            case Assign(var, expr):
+            case statement.Assign(var, expr):
                 self.locals[var] = self.expr(expr)  # TODO eval?
-            case If(cond, stmt1, stmt2):
+            case statement.If(cond, stmt1, stmt2):
                 if self.expr(cond):
                     self.stmt(stmt1)
                 else:
                     self.stmt(stmt2)
-            case Noop():
+            case statement.Noop():
                 pass
-            case Statement_python(code):
+            case statement.Statement_python(code):
                 self.stmt_python(code)
-            case Seq2(stmt1, stmt2):
+            case statement.Seq2(stmt1, stmt2):
                 self.stmt(stmt1)
                 self.stmt(stmt2)
-            case While(maxiter, cond, body):
+            case statement.While(maxiter, cond, body):
                 iter = 0
                 while self.expr(cond) and iter < maxiter:
                     iter += 1
@@ -714,21 +403,21 @@ def evaluate_stmt(stmt, globals=None, locals=None):
 
 def beta_reduction(symbols, expr):
     match expr:
-        case Operation(eo, eargs):
+        case expression.Operation(eo, eargs):
             o = beta_reduction(symbols, eo)
             args = myClorm.HashableList([beta_reduction(symbols, e) for e in eargs])
-            return Operation(o, args)
-        case Variable(a):
+            return expression.Operation(o, args)
+        case expression.Variable(a):
             if a in symbols:
                 return symbols[a]
             else:
                 return expr
-        case Val(type_, val):
+        case expression.Val(type_, val):
             return expr
-        case Lambda(vars, body):
+        case expression.Lambda(vars, body):
             nsymbols = {x: v for x, v in symbols.items() if x not in vars}
-            return Lambda(vars, beta_reduction(nsymbols, body))
-        case o if isinstance(o, Operator):
+            return expression.Lambda(vars, beta_reduction(nsymbols, body))
+        case o if isinstance(o, expression.Operator):
             return expr
         case tuple(eargs):
             args = tuple(beta_reduction(symbols, e) for e in eargs)
