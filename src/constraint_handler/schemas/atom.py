@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import clingo
 
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
 from constraint_handler.schemas.expression import BaseType, constant
+from constraint_handler.utils.common import PPEnum
 
 
 class Error(NamedTuple):
@@ -120,27 +121,29 @@ class Multimap_value(NamedTuple):
     cst_value: constant
 
 
+Warning1 = namedtuple("warning", ["content"])
+Warning1.__annotations__ = {"id": constant}
+
+
+VariableWarning = PPEnum(
+    "VariableWarning", ["emptyDomain", "multipleDeclarations", "multipleDefinitions", "undeclared"]
+)
+
+
+class Variable(NamedTuple):
+    symbol: VariableWarning
+
+
 class Warning(NamedTuple):
-    content: constant
-
-
-type SetAtom = Set_declare | Set_assign
-type MultimapAtom = Multimap_declare | Multimap_assign
-type ExecutionAtom = Execution_declare | Execution_run
-type VariableAtom = Variable_declare | Variable_define | Variable_domain
-type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
-type Atom = ExecutionAtom | MultimapAtom | OptimizeAtom | SetAtom | VariableAtom
-type ResultAtom = Value | Set_value | Multimap_value | Warning
+    id: Variable
+    declarations: list[constant]
+    info: Any
 
 
 class Assign(NamedTuple):
     label: constant
     var: constant
     expr: expression.Expr
-
-
-# AssignAtom = namedtuple("Assign", ["label", "var", "expr"])
-# AssignAtom.__annotations__ = {"label": constant, "var": constant, "expr": expression.Expr}
 
 
 class Ensure(NamedTuple):
@@ -151,6 +154,16 @@ class Ensure(NamedTuple):
 class Evaluate(NamedTuple):
     operator: expression.Operator | expression.Variable
     args: list[expression.Expr]
+
+
+type SetAtom = Set_declare | Set_assign
+type MultimapAtom = Multimap_declare | Multimap_assign
+type ExecutionAtom = Execution_declare | Execution_run
+type VariableAtom = Variable_declare | Variable_define | Variable_domain
+type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
+type MainAtom = Assign | Ensure | Evaluate
+type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | SetAtom | VariableAtom
+type ResultAtom = Value | Set_value | Multimap_value | Warning1 | Warning
 
 
 Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
