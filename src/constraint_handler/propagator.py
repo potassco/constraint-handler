@@ -607,7 +607,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def handle_on_model_warning(self, errors: list[Exception], model: clingo.Model):
         for error in errors:
-            atom_ = atom.Warning(
+            atom_ = atom.Warning1(
                 clingo.Function("", [clingo.Function(type(error).__name__), clingo.String(str(error))])
             )
             if not model.contains(myClorm.pytocl(atom_)):
