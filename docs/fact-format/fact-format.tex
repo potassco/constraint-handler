@@ -140,11 +140,21 @@
 \subsection{Result fact format}
 \begin{grammar}
 
+<variable-warning> ::=
+~\alt `emptyDomain'
+\alt `multipleDeclarations'
+\alt `multipleDefinitions'
+\alt `undeclared'
+
+<warning-symbol> ::=
+~\alt `variable' `(' <variable-warning> `)'
+
 <atom> ::=
 ~\alt `value' `(' <term> `,' <type> `,' <term> `)'
 \alt `set_value' `(' <term> `,' <type> `,' <term> `)'
 \alt `multimap_value' `(' <term> `,' <type> `,' <term> `,' <type> `,' <term> `)'
 \alt `warning' `(' <term> `)'
+\alt `warning' `(' <warning-symbol> `,' <term-list> `,' <term> `)'
 \end{grammar}
 
 \subsection*{Examples}
