@@ -100,7 +100,11 @@
 \alt `statement_python' `(' <str> `)'
 \alt `seq2' `(' <statement> `,' <statement> `)'
 \alt `while' `(' <int> `,' <expression> `,' <statement> `)'
+\end{grammar}
 
+\subsection{Building facts and declarations}
+
+\begin{grammar}
 <domain> ::= `boolDomain' | `fromFacts' | `fromList' `(' <expression-list> `)'
 
 <variable-atom> ::=
@@ -137,6 +141,7 @@
 \alt `ensure' `(' <term> `,' <expression> `)'
 \alt `compute' `(' <term> `,' <val-list> `)'
 \alt `computed' `(' <term> `,' <val-list> `,' <type> `,' <term> `)'
+\alt `evaluate' `(' <operator> `,' <expression-list> `)'
 \alt <variable-atom>
 \alt <multimap-atom>
 \alt <set-atom>
@@ -159,6 +164,7 @@
 
 <atom> ::=
 ~\alt `value' `(' <term> `,' <type> `,' <term> `)'
+\alt `evaluated' `(' <operator> `,' <expression-list>  `,' <type> `,' <term> `)'
 \alt `set_value' `(' <term> `,' <type> `,' <term> `)'
 \alt `multimap_value' `(' <term> `,' <type> `,' <term> `,' <type> `,' <term> `)'
 \alt `preference_score' `(' <int> `)'

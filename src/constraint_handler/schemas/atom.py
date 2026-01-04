@@ -19,42 +19,6 @@ class FailIntegrity(NamedTuple):
     pass
 
 
-class Set_declare(NamedTuple):
-    label: constant
-    name: constant
-
-
-class Set_assign(NamedTuple):
-    label: constant
-    name: constant
-    member: expression.Expr
-
-
-class Multimap_declare(NamedTuple):
-    label: constant
-    name: constant
-
-
-class Multimap_assign(NamedTuple):
-    label: constant
-    name: constant
-    key: expression.Expr
-    val: expression.Expr
-
-
-class Execution_declare(NamedTuple):
-    label: constant
-    name: constant
-    body: statement.Stmt
-    inputs_vars: list[constant]
-    outputs_vars: list[constant]
-
-
-class Execution_run(NamedTuple):
-    label: constant
-    name: constant
-
-
 class FromFacts(NamedTuple):
     pass
 
@@ -89,6 +53,68 @@ class Variable_domain(NamedTuple):
 
 class Variable_declareOptional(NamedTuple):
     name: constant
+
+
+type VariableAtom = Variable_declare | Variable_define | Variable_domain | Variable_declareOptional
+
+
+class Set_declare(NamedTuple):
+    label: constant
+    name: constant
+
+
+class Set_assign(NamedTuple):
+    label: constant
+    name: constant
+    member: expression.Expr
+
+
+class Set_value(NamedTuple):
+    name: constant
+    elt_type_: BaseType | clingo.Symbol
+    elt_cst: constant
+
+
+type SetAtom = Set_declare | Set_assign
+
+
+class Multimap_declare(NamedTuple):
+    label: constant
+    name: constant
+
+
+class Multimap_assign(NamedTuple):
+    label: constant
+    name: constant
+    key: expression.Expr
+    val: expression.Expr
+
+
+class Multimap_value(NamedTuple):
+    name: constant
+    key_type_: BaseType | clingo.Symbol
+    key_value: constant
+    cst_type_: BaseType | clingo.Symbol
+    cst_value: constant
+
+
+type MultimapAtom = Multimap_declare | Multimap_assign
+
+
+class Execution_declare(NamedTuple):
+    label: constant
+    name: constant
+    body: statement.Stmt
+    inputs_vars: list[constant]
+    outputs_vars: list[constant]
+
+
+class Execution_run(NamedTuple):
+    label: constant
+    name: constant
+
+
+type ExecutionAtom = Execution_declare | Execution_run
 
 
 class Optimize_maximizeSum(NamedTuple):
@@ -128,26 +154,6 @@ class Preference_score(NamedTuple):
     score: int
 
 
-class Value(NamedTuple):
-    name: constant
-    type_: BaseType | clingo.Symbol
-    cst: constant  # ReducedExpr
-
-
-class Set_value(NamedTuple):
-    name: constant
-    elt_type_: BaseType | clingo.Symbol
-    elt_cst: constant
-
-
-class Multimap_value(NamedTuple):
-    name: constant
-    key_type_: BaseType | clingo.Symbol
-    key_value: constant
-    cst_type_: BaseType | clingo.Symbol
-    cst_value: constant
-
-
 Warning1 = namedtuple("warning", ["content"])
 Warning1.__annotations__ = {"id": constant}
 
@@ -178,18 +184,27 @@ class Ensure(NamedTuple):
     expr: expression.Expr
 
 
+class Value(NamedTuple):
+    name: constant
+    type_: BaseType | clingo.Symbol
+    cst: constant  # ReducedExpr
+
+
 class Evaluate(NamedTuple):
     operator: expression.Operator | expression.Variable
     args: list[expression.Expr]
 
 
-type SetAtom = Set_declare | Set_assign
-type MultimapAtom = Multimap_declare | Multimap_assign
-type ExecutionAtom = Execution_declare | Execution_run
-type VariableAtom = Variable_declare | Variable_define | Variable_domain
+class Evaluated(NamedTuple):
+    name: expression.Operator
+    expr: list[expression.Expr]
+    type_: BaseType
+    value: constant
+
+
 type MainAtom = Assign | Ensure | Evaluate
 type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
-type ResultAtom = Value | Set_value | Multimap_value | Preference_score | Warning1 | Warning
+type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_score | Warning1 | Warning
 
 
 Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
