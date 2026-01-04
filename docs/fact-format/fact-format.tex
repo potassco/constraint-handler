@@ -125,6 +125,13 @@
 ~\alt `optimize_maximizeSum' `(' <term> `,' <expression> `,' <term> `)'
 \alt `optimize_precision' `(' <expression>  `)'
 
+<preference-atom> ::=
+~\alt `preference_maximizeScore'
+\alt `preference_holds' `(' <term> `,' <expression> `)'
+\alt `preference_holds' `(' <term> `,' <expression> `,' <int> `)'
+\alt `preference_variableValue' `(' <term> `,' <term> `,' <expression> `)'
+\alt `preference_variableValue' `(' <term> `,' <term> `,' <expression> `,' <int> `)'
+
 <atom> ::=
 ~\alt`assign' `(' <term> `,' <term> `,' <expression> `)'
 \alt `ensure' `(' <term> `,' <expression> `)'
@@ -135,6 +142,7 @@
 \alt <set-atom>
 \alt <execution-atom>
 \alt <optimize-atom>
+\alt <preference-atom>
 \end{grammar}
 
 \subsection{Result fact format}
@@ -153,6 +161,7 @@
 ~\alt `value' `(' <term> `,' <type> `,' <term> `)'
 \alt `set_value' `(' <term> `,' <type> `,' <term> `)'
 \alt `multimap_value' `(' <term> `,' <type> `,' <term> `,' <type> `,' <term> `)'
+\alt `preference_score' `(' <int> `)'
 \alt `warning' `(' <term> `)'
 \alt `warning' `(' <warning-symbol> `,' <term-list> `,' <term> `)'
 \end{grammar}

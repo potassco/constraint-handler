@@ -101,6 +101,33 @@ class Optimize_precision(NamedTuple):
     value: expression.Expr
 
 
+type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
+
+
+class Preference_maximizeScore(NamedTuple):
+    pass
+
+
+class Preference_holds(NamedTuple):
+    label: constant
+    value: expression.Expr
+    factor: int
+
+
+class Preference_variableValue(NamedTuple):
+    label: constant
+    variable: constant
+    value: expression.Expr
+    factor: int
+
+
+type PreferenceAtom = Preference_maximizeScore | Preference_holds | Preference_variableValue
+
+
+class Preference_score(NamedTuple):
+    score: int
+
+
 class Value(NamedTuple):
     name: constant
     type_: BaseType | clingo.Symbol
@@ -160,10 +187,9 @@ type SetAtom = Set_declare | Set_assign
 type MultimapAtom = Multimap_declare | Multimap_assign
 type ExecutionAtom = Execution_declare | Execution_run
 type VariableAtom = Variable_declare | Variable_define | Variable_domain
-type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
 type MainAtom = Assign | Ensure | Evaluate
-type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | SetAtom | VariableAtom
-type ResultAtom = Value | Set_value | Multimap_value | Warning1 | Warning
+type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
+type ResultAtom = Value | Set_value | Multimap_value | Preference_score | Warning1 | Warning
 
 
 Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
