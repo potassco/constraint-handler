@@ -17,6 +17,8 @@
 %%%  -two!=two     --two!=two     two<=ten     two<ten     not two>=ten     not two>ten
 %%% addtwoten<=addtentwo     not addtwoten<addtentwo
 %%% addtwoten>=addtentwo     not addtwoten>addtentwo
+%%% 6//2==3   5//2==2
+%%% 6/2==3.0    5/2==2.5
 
 variable_define(assign_x, x, val(int,20)).
 variable_define(a_int, two, val(int,2)).
@@ -56,3 +58,7 @@ evaluate(leq,(variable(addtwoten),(variable(addtentwo),()))).
 evaluate(lt,(variable(addtwoten),(variable(addtentwo),()))).
 evaluate(geq,(variable(addtwoten),(variable(addtentwo),()))).
 evaluate(gt,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(eq,(operation(div,(val(int,6),(val(int,2),()))),(val(int,3),()))).
+evaluate(eq,(operation(div,(val(int,5),(val(int,2),()))),(val(int,2),()))).
+evaluate(eq,(operation(fdiv,(val(int,6),(val(int,2),()))),(val(float,float("3.0")),()))).
+evaluate(eq,(operation(fdiv,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),()))).

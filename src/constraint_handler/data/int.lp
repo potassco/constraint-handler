@@ -19,3 +19,7 @@ computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=leq, ARGS = (val(int,V
 computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=lt,  ARGS = (val(int,V1),(val(int,V2),())), V1 >= V2.
 computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=geq, ARGS = (val(int,V1),(val(int,V2),())), V1 <  V2.
 computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=gt,  ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
+
+computed(OP,ARGS,RES) :- compute(OP,ARGS), OP=fdiv, ARGS = (val(int,_),(val(int,_),())),
+  RES = @pythonEvalExpr(operation(OP,ARGS),(),ID),
+  _main_solverIdentifier(ID).

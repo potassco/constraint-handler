@@ -1,7 +1,7 @@
 #defined preference_holds/2.
 #defined preference_holds/3.
-#defined preference_variable/2.
-#defined preference_variable/3.
+#defined preference_variableValue/2.
+#defined preference_variableValue/3.
 #defined preference_maximizeScore/0.
 
 warning((unsupported,"multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
