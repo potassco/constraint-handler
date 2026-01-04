@@ -6,13 +6,15 @@
 
 warning((unsupported,"multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
 
-_preference_expressionScore(EQ, 1) :- preference_variable(X,E), EQ = operation(eq,(variable(X),(E,()))).
-_preference_expressionScore(EQ, K) :- preference_variable(X,E,K), K > 0, EQ = operation(eq,(variable(X),(E,()))).
-_preference_expressionScore(NE,-K) :- preference_variable(X,E,K), K < 0,
+%%% convenience
+preference_variableValue(CNAME,X,E,1) :- preference_variableValue(CNAME,X,E).
+preference_holds(CNAME,E,1) :- preference_holds(CNAME,E).
+
+_preference_expressionScore(EQ, K) :- preference_variableValue(CNAME,X,E,K), K > 0, EQ = operation(eq,(variable(X),(E,()))).
+_preference_expressionScore(NE,-K) :- preference_variableValue(CNAME,X,E,K), K < 0,
     EQ = operation(eq,(variable(X),(E,()))),
     NE = operation(wnot,(EQ,())).
 
-_preference_expressionScore(E, 1) :- preference_holds(CNAME,E).
 _preference_expressionScore(E, K) :- preference_holds(CNAME,E,K), K > 0.
 _preference_expressionScore(F,-K) :- preference_holds(CNAME,E,K), K < 0,
     F = operation(wnot,(E,())).
