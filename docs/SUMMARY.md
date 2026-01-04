@@ -7,7 +7,6 @@
     * [Expressions](reference/expressions.md)
     * [Base Types](reference/base_types.md)
     * [Collections](reference/collections.md)
-    * [Constraints](reference/constraints.md)
     * [Conditionals](reference/conditionals.md)
     * [Optimization](reference/optimization.md)
     * [Propagator](reference/propagator.md)
