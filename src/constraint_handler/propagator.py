@@ -36,13 +36,6 @@ def myprint(*args, **kwargs):
         print(*args, **kwargs)
 
 
-class Evaluated(NamedTuple):
-    name: expression.Operator
-    expr: list[expression.Expr]
-    type_: atom.BaseType | None
-    value: bool | int | float | str | clingo.Symbol
-
-
 class ConstraintHandlerPropagator(clingo.Propagator):
     def __init__(self, check_only: bool = False):
         self.symbol2var: Dict[clingo.Symbol, VariableType] = {}
@@ -518,7 +511,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for eval_var in self.evaluatevars:
             self.handle_on_model_warning(eval_var.get_errors(), model)
-            pyAtom = Evaluated(
+            pyAtom = atom.Evaluated(
                 eval_var.op, eval_var.args, evaluator.get_baseType(eval_var.get_value()), eval_var.get_value()
             )
             myprint(f"adding evaluate atom {pyAtom}", end=" ")
