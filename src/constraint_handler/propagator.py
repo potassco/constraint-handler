@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, NamedTuple, Sequence, cast
+from typing import Any, Dict, Sequence, cast
 
 import clingo
 

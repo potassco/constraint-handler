@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import NamedTuple
+import types
 
 import clingo
 
@@ -51,7 +52,7 @@ Operator = (
 )
 
 
-constant = bool | float | int | str | type(None) | clingo.Symbol
+constant = bool | float | int | str | types.NoneType | clingo.Symbol
 
 
 class Val(NamedTuple):
