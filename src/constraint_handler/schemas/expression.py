@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import types
 from enum import Enum
 from typing import NamedTuple
-import types
 
 import clingo
 

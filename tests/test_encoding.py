@@ -10,6 +10,7 @@ import pytest
 
 ctrl_options = ["0", "--heuristic=Domain"]
 
+
 def run_test_compile(name):
     name = "tests/example/" + name
     solver = Clingo(ctrl_options, "defaultEngine(compile).", files=[name + ".lp"])
