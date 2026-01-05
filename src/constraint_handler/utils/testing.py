@@ -31,7 +31,11 @@ def build_expectations(name):
     test_any = clintest.test.And(*(clintest.test.Assert(Any(), opt_contains(a)) for a in expected_any))
     expected_first = atoms_from_file(name + ".expected.first")
     test_first = clintest.test.And(*(clintest.test.Assert(First(), contains(a)) for a in expected_first))
-    test_exists = clintest.test.Assert(Any(), clintest.assertion.True_()) if (expected_all or expected_first) and not expected_any else clintest.test.True_()
+    test_exists = (
+        clintest.test.Assert(Any(), clintest.assertion.True_())
+        if (expected_all or expected_first) and not expected_any
+        else clintest.test.True_()
+    )
     return clintest.test.And(test_exists, test_all, test_any, test_first)
 
 
