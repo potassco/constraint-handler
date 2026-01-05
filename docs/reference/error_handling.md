@@ -2,9 +2,17 @@
 
 This page documents the types of errors and warnings that can be reported by the constraint handler during model generation or solving.
 
+!!! Warning
+    This section may frequently change as error messages get more streamlined.
+
 ## Warning
 
-The constraint handler has the ability to capture certain types of errors without interrupting the solving process. Instead, whenever such errors are encountered, a `warning/1` predicate is used to report these issues.
+The constraint handler has the ability to capture certain types of errors without interrupting the solving process. Instead, whenever such errors are encountered, a `warning` predicate is used to report these issues.
+
+!!! Note
+    In order to get useful warnings, users are advised to provide statements with meaningful identifiers in their encodings.
+
+Currently, there are two such predicates in use.
 
 ```prolog
 warning(Warning)
@@ -14,8 +22,17 @@ warning(Warning)
 | :--- | :--- |
 | `Warning` | Usually a tuple containing information about the identified problem. |
 
-!!! Note
-    This is where statement identifiers can be provided to help users locate the source of the warning.
+A version that provides more details:
+
+```prolog
+warning(Type, Identifiers, Details)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | The type of warning being issued. |
+| `Identifiers` | A list of statement identifiers related to the warning. |
+| `Details` | Additional details about the warning. |
 
 !!! Example
     The following resembles a warning being issued when a variable is defined multiple times:
@@ -32,42 +49,106 @@ warning(Warning)
 
 Here, we outline the various error types that can be reported by the constraint handler.
 
-### Variable Defined Twice
-This error occurs when a variable is defined more than once within the same scope.
+### Variable
+This section covers errors related to variable declarations and definitions.
+
+#### Empty Domain
+This error occurs when a variable does not have any possible values in its domain.
 
 ```prolog
-warning((X,"was defined twice:",E1,E2))
+warning(variable(emptyDomain), _,Variable)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `X` | The name of the variable that was defined multiple times. |
-| `E1` | The first expression assigned to the variable. |
-| `E2` | The second expression assigned to the variable. |
+| `Type` | `variable(emptyDomain)` |
+| `Details` | The name of the variable that is empty. |
 
-### Variable Declared Twice
-This error occurs when a variable is declared more than once within the same scope.
+!!! Example
+    Variable declared with an empty list as its domain.
 
-```prolog
-warning((X,"was declared twice:",D1,D2))
-```
+    ```prolog
+    variable_declare(d_a,a,fromList(())).
+    ```
+    
+    Raises the warning:
+    ```prolog
+    warning(variable(emptyDomain),(d_a,()),a)
+    ```
 
-| Name | Description |
-| :--- | :--- |
-| `X` | The name of the variable that was defined multiple times. |
-| `D1` | The first domain declared for the variable. |
-| `D2` | The second domain declared for the variable. |
-
-### Variable Not Declared
+#### Undeclared
 This error occurs when a variable has a defined domain but has not been declared.
 
 ```prolog
-warning((X,"has a domain but was never declared."))
+warning(variable(undeclared), (), Variable)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `X` | The name of the variable that was not declared. |
+| `Type` | `variable(undeclared)` |
+| `Details` | The name of the variable that was not declared. |
+
+!!! Example
+    Variable defined with a domain but not declared.
+
+    ```prolog
+    variable_domain(c,val(symbol,(red;green;blue))).
+    ```
+    
+    Raises the warning:
+    ```prolog
+    warning(variable(undeclared),(),c)
+    ```
+
+#### Multiple Declarations
+This error occurs when a variable has multiple declarations with different domains.
+
+```prolog
+warning(variable(multipleDeclarations), _, (Variable, Domains...))
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `variable(multipleDeclarations)` |
+| `Details` | The name of the variable and the different domains it was declared with. |
+
+!!! Example
+    Variable declared multiple times with different domains.
+
+    ```prolog
+    variable_declare(d_u,u,fromFacts).
+    variable_declare(d_u,u,boolDomain).
+    ```
+    
+    Raises the warning:
+    ```prolog
+    warning(variable(multipleDeclarations),(d_u,(d_u,())),(u,boolDomain,fromFacts))
+    ```
+
+#### Multiple Definitions
+This error occurs when a variable is defined more than once within the same scope.
+
+```prolog
+warning(variable(multipleDefinitions), _, (Variable, Expressions...))
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `variable(multipleDefinitions)` |
+| `Details` | The name of the variable and the expressions that defined it. |
+
+!!! Example
+    Variable defined multiple times.
+
+    ```prolog
+    variable_define(d_x,x,val(int, 1)).
+    variable_define(d_x,x,val(int, 2)).
+    ```
+    
+    Raises the warning:
+    ```prolog
+    warning(variable(multipleDefinitions),(d_x,(d_x,())),(x,val(int,1),val(int,2)))
+    ```
 
 ### Expression Evaluation Error
 This error occurs when there is an issue evaluating an expression.
