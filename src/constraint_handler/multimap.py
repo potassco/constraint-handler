@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+import constraint_handler.evaluator as full_evaluator
 import constraint_handler.set as myset
 from constraint_handler.utils.common import PPEnum
 
@@ -86,10 +87,12 @@ class Evaluator:
                 assert len(args) == 3
                 return args[1] in args[0] and args[2] in args[0][args[1]]
             case Operator.multimap_fold:
-                o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
+                evaluator = full_evaluator.Evaluator()
+                o = lambda *aaa: evaluator.operator(args[0], aaa)  # TODO: check
                 return fold(o, args[1], args[2])
             case Operator.multimap_fold_i:
-                o = lambda *aaa: self.operator(args[0], aaa)  # TODO: check
+                evaluator = full_evaluator.Evaluator()
+                o = lambda *aaa: evaluator.operator(args[0], aaa)  # TODO: check
                 return fold_i(o, args[1], args[2])
             case Operator.multimap_make:
                 d = HashableDict()
