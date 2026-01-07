@@ -36,8 +36,8 @@ variable_define(dummy,nb_squares,E) :-
   KIND = operation(find,(val(symbol,kind),(SHAP,()))),
   WIDT = operation(find,(val(symbol,width),(SHAP,()))),
   HEIG = operation(find,(val(symbol,height),(SHAP,()))),
-  SQUA = operation(eq,(KIND,(val(symbol,square),()))),
-  RECT = operation(eq,(KIND,(val(symbol,rectangle),()))),
+  SQUA = operation(eq,(KIND,(operation(makeSet,(val(symbol,square),())),()))),
+  RECT = operation(eq,(KIND,(operation(makeSet,(val(symbol,rectangle),())),()))),
   SREC = operation(conj,(RECT,(operation(eq,(WIDT,(HEIG,()))),()))),
   ISSQ = operation(disj,(SQUA,(SREC,()))),
   MONE = operation(ite,(ISSQ,(val(int,1),(val(int,0),())))),
@@ -49,8 +49,8 @@ define(dis,isSquare,(shape,()),ISSQ) :-
   KIND = operation(find,(val(symbol,kind),(SHAP,()))),
   WIDT = operation(find,(val(symbol,width),(SHAP,()))),
   HEIG = operation(find,(val(symbol,height),(SHAP,()))),
-  SQUA = operation(eq,(KIND,(val(symbol,square),()))),
-  RECT = operation(eq,(KIND,(val(symbol,rectangle),()))),
+  SQUA = operation(eq,(KIND,(operation(makeSet,(val(symbol,square),())),()))),
+  RECT = operation(eq,(KIND,(operation(makeSet,(val(symbol,rectangle),())),()))),
   SREC = operation(conj,(RECT,(operation(eq,(WIDT,(HEIG,()))),()))),
   ISSQ = operation(disj,(SQUA,(SREC,()))).
 

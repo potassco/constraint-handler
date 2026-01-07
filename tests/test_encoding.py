@@ -52,7 +52,7 @@ base_tests = [
     "floats",
     "ints",
     "integrity",
-    # "lambdas",
+    "lambdas",
     "lambda_recursive",
     "multimap_basics",
     "multimaps",
@@ -117,8 +117,6 @@ def test_engine_propagator(name, check_mode):
         "optimize_ints",
         "set_iterations",
         "set_selfref",
-        "lambdas",
-        "multimap_basics",
         "warning_variables",
     ]
     if name not in unsupported:
