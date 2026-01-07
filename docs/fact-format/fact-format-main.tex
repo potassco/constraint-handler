@@ -7,6 +7,8 @@
 \usepackage{longtable}
 \usepackage{syntax}
 
+\usepackage{semantic}
+
 \usepackage{todonotes}
 \newcommand{\todoi}[1]{\todo[inline]{todo: #1}}
 
@@ -33,6 +35,9 @@
 %\newtheorem{conjecture}{Conjecture}
 \newtheorem{fact}{Fact}
 
+\usepackage{bm}
+\renewcommand{\vec}[1]{\bm{#1}}
+
 \usepackage{acronym}
 \acrodef{CSP}{Constraint Satisfaction Problem}
 
@@ -55,6 +60,14 @@
 \newcommand{\inputs}[1]{I(#1)}
 \newcommand{\variables}{X}
 \newcommand{\constraints}{\mathcal{C}}
+
+\newcommand{\partialto}{\rightharpoonup}
+\newcommand{\card}[1]{\left|#1\right|}
+\newcommand{\herbrand}{H}
+\newcommand{\discourse}{D}
+\newcommand{\evaluate}[2]{eval(#1,#2)}
+\newcommand{\redto}[2]{#1 \mapsto #2}
+\newcommand{\entails}{\vdash}
 
 \begin{document}
 

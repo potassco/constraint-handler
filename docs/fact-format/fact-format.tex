@@ -237,5 +237,115 @@ assign(assign_y0,y0,operation(default,(variable(x0),(variable(x1),())))).
 
 Difference with, say, Python:
 \begin{itemize}
-\item \texttt{a and False} has value False even if \texttt{a} is undefined.
+\item \texttt{a and False} has value False even if \texttt{a} is none.
 \end{itemize}
+
+\section{Semantics}
+
+%Each variable $x$ is associated with a set of expressions $E_x$.
+\subsection{Exogenous Variables}
+\subsection{Endogenous Variables}
+\subsection{Evaluation of expressions}
+Let $\herbrand$ be the Herbrand universe.
+Let $\discourse$ be a fixed set of values called \emph{universe of discourse}.
+A \emph{valuation} or ``assignment'' or ``interpretation'' is a (partial) mapping from terms to values in $\discourse$, ie, a partial function $\vec{v}: \herbrand \partialto \discourse$.
+We call terms in the domain of a valuation \emph{variables}.
+
+
+%\begin{align*}
+%\evaluae{\vec{v}}{x} & =\\
+%\end{align*}
+
+\inference[constants]{}{\vec{v}\entails\redto{\texttt{val(t,c)}}{c}}
+
+\inference[variable]{}{\vec{v}\entails\redto{\texttt{variable($x$)}}{v_i}}when $\vec{v}(x_i) = v_i$
+
+\inference[tuple]{\vec{v}\entails\redto{e_1}{a_1}&\vec{v}\entails\redto{e_2}{a_2}&\dots&\vec{v}\entails\redto{e_k}{a_k}&}{\vec{v}\entails\redto{(e_1,\dots,e_k)}{(a_1,\dots,a_k)}}
+
+\inference[application]{\vec{v}\entails\redto{e_o}{f}&\vec{v}\entails\redto{e_1}{a_1}&\vec{v}\entails\redto{e_2}{a_2}&\dots&\vec{v}\entails\redto{e_k}{a_k}&}{\vec{v}\entails\redto{\texttt{operator($e_o$,[$e_1$,$\dots$,$e_k$])}}{r}} when $f(a_1,\dots,a_k) = r$
+
+\subsection{Evaluation of statements}
+
+\inference[assert]{\vec{v}\entails\redto{e}{\top}}{\vec{v}\entails\redto{\texttt{assert($e$)}}{\vec{v}}}
+
+\inference[assign]{\vec{v}\entails\redto{e}{a}}{\vec{v}\entails\redto{\texttt{assign($x$,$e$)}}{\vec{w}}}
+where $\vec{w} = \{ x \mapsto a \} \cup \{ z \mapsto b \suchthat z \mapsto b \in \vec{v} \text{ and } z \neq x\}$
+
+\inference[if then branch]{\vec{v}\entails\redto{e}{\top}&\vec{v}\entails\redto{s_1}{\vec{w}}}{\vec{v}\entails\redto{\texttt{if($e$,$s_1$,$s_2$)}}{\vec{w}}}
+
+\inference[if else branch]{\vec{v}\entails\redto{e}{\bot}&\vec{v}\entails\redto{s_2}{\vec{w}}}{\vec{v}\entails\redto{\texttt{if($e$,$s_1$,$s_2$)}}{\vec{w}}}
+
+\inference[noop]{}{\vec{v}\entails\redto{\texttt{noop}}{\vec{v}}}
+
+\inference[seq2]{\vec{v}\entails\redto{s_1}{\vec{u}}&\vec{u}\entails\redto{s_2}{\vec{w}}}{\vec{v}\entails\redto{\texttt{seq2($s_1$,$s_2$)}}{\vec{w}}}
+
+\inference[while body]{\vec{v}\entails\redto{e}{\top}&\vec{v}\entails\redto{s}{\vec{u}}&\vec{u}\entails\redto{\texttt{while($e$,$s$)}}{\vec{w}}}{\vec{v}\entails\redto{\texttt{while($e$,$s$)}}{\vec{w}}}
+
+\inference[while exit]{\vec{v}\entails\redto{e}{\bot}}{\vec{v}\entails\redto{\texttt{while($e$,$s$)}}{\vec{v}}}
+
+
+\inference[bounded while body]{\vec{v}\entails\redto{e}{\top}&\vec{v}\entails\redto{s}{\vec{u}}&\vec{u}\entails\redto{\texttt{while($n-1$,$e$,$s$)}}{\vec{w}}}{\vec{v}\entails\redto{\texttt{while($n$,$e$,$s$)}}{\vec{w}}}
+
+\inference[bounded while exit 1]{}{\vec{v}\entails\redto{\texttt{while($0$,$e$,$s$)}}{\vec{v}}}
+
+\inference[bounded while exit 2]{\vec{v}\entails\redto{e}{\bot}}{\vec{v}\entails\redto{\texttt{while($n$,$e$,$s$)}}{\vec{v}}}
+
+TODO python
+
+\subsection{Candidate model}
+Let $M$ be a set of predicate instances.
+An \emph{exogenous variable} of $M$ is a term $x$ that appears in some declaration \texttt{variable_declare($l$,$x$,$d$)} in $M$; we say that $d$ is the domain of $x$.
+An \emph{endogenous variable} of $M$ is a term $y$ that appears in some definition \texttt{variable_define($l$,$y$,$e$)} in $M$; we say that $e$ is the expression associated to $y$.
+$X = \{ x \suchthat \texttt{variable_declare($l$,$x$,$d$) } \in M \text{ for some } l, d\}$
+$Y = \{ y \suchthat \texttt{variable_define($l$,$y$,$e$) } \in M \text{ for some } l, e\}$
+
+TODO: add endogenous variables from out statements
+
+$M$ is well-formed if the following conditions hold:
+\begin{itemize}
+\item $\card{X} + \card{Y} = \card{TODO}$. In other words, no exogenous variable appears in more than one declaration, no endogenous variable appears in more than one definition, and no variable is both exogenous and endogenous.
+%\item No term $x$ appears in more than one \texttt{variable_declare(\_,$x$,\_)} predicate instance
+\end{itemize}
+
+Let $M$ be a well-formed answer set of $P$.
+
+
+
+%Assume wlog that the exogenous variables are $x_1, \dots, x_n$ and the endogenous variables are $y_1, \dots, y_m$.
+%We can see valuations as vectors $\vec{v} = \left(v_1,\dots,v_n,w_1,\dots,w_{m}\right) \in \discourse^{n+m}$ where $v_i$ is the value assigned to $x_i$ and $w_i$ is the value assigned to $y_i$.
+
+$M$ is not a solution
+
+Let $\vec{v} = \left(v_1,\dots,v_n,\dots,v_{n+m}\right) \in \discourse^{n+m}$ and let $e$ be an expression built from the exogenous and endogenous variables.
+The \emph{evaluation} of $e$ on $\vec{v}$, written $\evaluate{\vec{v}}{e}$, is ...
+Each variable $y_i$ is associated with a single expressions $e_i$.
+Each expression $e_i$ defines a partial function: $f_i: \discourse^{n+m} \partialto  \discourse$.
+
+Thus, we have a function $f : \discourse^{n+m} \partialto \discourse^{n+m}$ defined as $f(\vec{v}) \mapsto \left(v_1,\dots,v_n,e_1(\vec{v}),\dots,e_m(\vec{v})\right)$ with $\vec{v} = \left(v_1,\dots,v_n,\dots,v_{n+m}\right)$
+
+Thus, we have a function $f : \discourse^{n+m} \partialto \discourse^{n+m}$ defined as 
+\begin{align*}
+f(\vec{v}) &\mapsto \left(v_1,\dots,v_n,\evaluate{\vec{v}}{e_1},\dots,\evaluate{\vec{v}}{e_m})\right) &  \text{with } \vec{v} = \left(v_1,\dots,v_{n+m}\right)
+\end{align*}
+
+
+A realization is a fixpoint of $f$.
+
+Example:
+
+%Let $\mu$ be a mapping that maps each variable $x$ to a value $m_x$.
+%The evaluation of $x$ under $\mu$ is the value $v_x$ of $e_x$ where each variable $y$ occurring in $e_x$ is substitued with $m_y$.
+%
+%$\mu$ is a realization when for all $x$ we have $m_x = v_x$.
+
+%\subsection{realization}
+
+\subsection{Satisfying model}
+partial functions
+
+\section{Implementation}
+The dependencies of $x$ 
+
+dependency graph
+
+Acyclic structural equations
