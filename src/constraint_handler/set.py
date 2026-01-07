@@ -1,3 +1,4 @@
+import constraint_handler.evaluator as full_evaluator
 from constraint_handler.utils.common import PPEnum
 
 Operator = PPEnum("Operator", ["makeSet", "isin", "notin", "union", "inter", "subset", "set_fold"])
@@ -34,7 +35,8 @@ class Evaluator:
             case Operator.subset:
                 return args[0].issubset(args[1])
             case Operator.set_fold:
-                o = lambda *aaa: self.operator(args[0], aaa)
+                evaluator = full_evaluator.Evaluator()
+                o = lambda *aaa: evaluator.operator(args[0], aaa)
                 return fold(o, args[1], args[2])
             case _:
                 self.errors.append(NotImplementedError(f"set.operator {o}"))
