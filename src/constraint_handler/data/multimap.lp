@@ -45,7 +45,7 @@ _multimap_entry(EM,TK,RK,TV,RV) :- _multimap_add(EM,EK,EV),
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-multimap_value(X,TK,VK,TV,VV) :- eValue(E,multimap,EM), _multimap_entry(EM,TK,VK,TV,VV), E=variable(X).
+multimap_value(X,KEY,VAL) :- eValue(E,multimap,EM), _multimap_entry(EM,TK,VK,TV,VV), E=variable(X), KEY=val(TK,VK), VAL=val(TV,VV).
 
 %%%%%%%%%%%%%%%%%% find
 

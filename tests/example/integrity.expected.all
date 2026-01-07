@@ -1,2 +1,2 @@
-value(x,bool,true)
-value(y,bool,false)
+value(x,val(bool,true))
+value(y,val(bool,false))

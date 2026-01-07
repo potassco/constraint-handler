@@ -541,9 +541,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"Unknown model type {type(final_value)} for variable {var} in on_model!")
 
     def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset, model: clingo.Model):
-        pyAtom = atom.Value(
-            var, evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
+        pyVal = expression.Val(
+            evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
         )
+        pyAtom = atom.Value(var, pyVal)
         clAtom = myClorm.pytocl(pyAtom)
         myprint(f"= {clAtom}")
         if not model.contains(clAtom):
@@ -553,7 +554,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if value is ValueStatus.NOT_SET:
                 assert False, f"Set variable {var} has no value set in on_model!"
 
-            set_pyAtom = atom.Set_value(var, evaluator.get_baseType(value), value)
+            set_pyVal = expression.Val(evaluator.get_baseType(value), value)
+            set_pyAtom = atom.Set_value(var, set_pyVal)
             # myprint(f"adding set atom {pyAtom}", end=" ")
             set_clAtom = myClorm.pytocl(set_pyAtom)
             myprint(f"= {set_clAtom}")
@@ -567,9 +569,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # alternatively, we have a separate part of the dict that tells you which refs are for which key/value
 
         # TODO: Type for dict is not handled here which results in a none value being output for the type in the value atom
-        pyAtom = atom.Value(
-            var, evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
+        pyVal = expression.Val(
+            evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
         )
+        pyAtom = atom.Value(var, pyVal)
         clAtom = myClorm.pytocl(pyAtom)
         myprint(f"= {clAtom}")
         if not model.contains(clAtom):
@@ -580,7 +583,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
 
             for val in value:
-                mm_pyAtom = atom.Multimap_value(var, evaluator.get_baseType(key), key, evaluator.get_baseType(val), val)
+                mm_pyKey = expression.Val(evaluator.get_baseType(key), key)
+                mm_pyVal = evaluator.get_baseType(val), val
+                mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
                 # myprint(f"adding multimap atom {pyAtom}", end=" ")
                 mm_clAtom = myClorm.pytocl(mm_pyAtom)
                 myprint(f"= {mm_clAtom}")
@@ -590,7 +595,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def handle_on_model_normal_type(
         self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol, model: clingo.Model
     ):
-        pyAtom = atom.Value(var, evaluator.get_baseType(final_value), final_value)
+        pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
+        pyAtom = atom.Value(var, pyVal)
         # myprint(f"adding atom {pyAtom}", end=" ")
         clAtom = myClorm.pytocl(pyAtom)
         myprint(f"= {clAtom}")

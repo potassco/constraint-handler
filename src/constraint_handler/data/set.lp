@@ -28,7 +28,7 @@ _set_contains(ER,T,V1) :- representation(T,intensional),
     _set_assign(NAME,X,E1), eValue(E1,T,V1), eValue(variable(X),set,ER),
     #false : _set_assign(N2,X,E2), eValue(E2,T,V2), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
 
-set_value(X,T,V) :- eValue(EV,set,E), _set_contains(E,T,V), EV=variable(X).
+set_value(X,val(T,V)) :- eValue(EV,set,E), _set_contains(E,T,V), EV=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
 

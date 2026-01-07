@@ -68,33 +68,33 @@ set_declare(set_selfref,even).
 set_assign(set_selfref,even,val(int,0)).
 set_assign(set_selfref,even,EX) :-
     EX = val(int,X),
-    set_value(nb,int,X),
-    set_value(odd,int,X-1).
+    set_value(nb,EX),
+    set_value(odd,val(int,X-1)).
 
 set_declare(set_selfref,odd).
 set_assign(set_selfref,odd,EX) :-
     EX = val(int,X),
-    set_value(nb,int,X),
-    set_value(even,int,X-1).
+    set_value(nb,EX),
+    set_value(even,val(int,X-1)).
 
 set_declare(set_selfref,doubles).
 set_assign(set_selfref,doubles,TWOX) :-
     TWO = val(int,2),
     EX = val(int,X),
     TWOX = operation(mult,(TWO,(EX,()))),
-    set_value(nb,int,X).
+    set_value(nb,EX).
 
 set_declare(set_selfref,es).
 set_assign(set_selfref,es,EX) :-
     EX = val(int,X),
-    set_value(nb,int,X),
-    not set_value(os,int,X).
+    set_value(nb,EX),
+    not set_value(os,EX).
 
 set_declare(set_selfref,os).
 set_assign(set_selfref,os,EX) :-
     EX = val(int,X),
-    set_value(nb,int,X),
-    set_value(es,int,X-1).
+    set_value(nb,EX),
+    set_value(es,val(int,X-1)).
 
 %%% any:
 evaluate(eq,(variable(a),(variable(b),()))).

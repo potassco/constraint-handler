@@ -25,7 +25,7 @@ variable_define(a_numbers, numbers, operation(makeSet,
 
 set_declare(d_squares,squares).
 set_assign(a_squares, squares, SQ) :-
-    set_value(numbers,T,X),
+    set_value(numbers,EX),
     SQ = operation(mult,(EX,(EX,()))),
     EX = val(T,X).
 
@@ -33,7 +33,7 @@ variable_define(a_csq, csquares, operation(length,(variable(squares),()))).
 
 set_declare(d_squares,isquares).
 set_assign(a_squares, isquares, SQ) :-
-    set_value(numbers,int,X),
+    set_value(numbers,EX),
     SQ = operation(mult,(EX,(EX,()))),
     EX = val(int,X).
 

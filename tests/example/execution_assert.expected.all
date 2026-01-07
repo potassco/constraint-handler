@@ -1,1 +1,1 @@
-value(same,bool,false)
+value(same,val(bool,false))

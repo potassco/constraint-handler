@@ -1,2 +1,2 @@
-value(execution_output(snippet,y),int,5)
-value(execution_output(snippet,y),none,none)
+value(execution_output(snippet,y),val(int,5))
+value(execution_output(snippet,y),val(none,none))

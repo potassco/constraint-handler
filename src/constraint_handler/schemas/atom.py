@@ -71,8 +71,7 @@ class Set_assign(NamedTuple):
 
 class Set_value(NamedTuple):
     name: constant
-    elt_type_: BaseType | clingo.Symbol
-    elt_cst: constant
+    elt: expression.Val
 
 
 type SetAtom = Set_declare | Set_assign
@@ -92,10 +91,8 @@ class Multimap_assign(NamedTuple):
 
 class Multimap_value(NamedTuple):
     name: constant
-    key_type_: BaseType | clingo.Symbol
-    key_value: constant
-    cst_type_: BaseType | clingo.Symbol
-    cst_value: constant
+    key: expression.Val
+    cst: expression.Val
 
 
 type MultimapAtom = Multimap_declare | Multimap_assign
@@ -186,8 +183,7 @@ class Ensure(NamedTuple):
 
 class Value(NamedTuple):
     name: constant
-    type_: BaseType | clingo.Symbol
-    cst: constant  # ReducedExpr
+    val: expression.Val
 
 
 class Evaluate(NamedTuple):
