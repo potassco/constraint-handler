@@ -1,4 +1,4 @@
-value(execution_input(factorial,n),int,5)
-value(execution_output(factorial,f),int,120)
-value(execution_input(factorial,n),int,3)
-value(execution_output(factorial,f),int,6)
+value(execution_input(factorial,n),val(int,5))
+value(execution_output(factorial,f),val(int,120))
+value(execution_input(factorial,n),val(int,3))
+value(execution_output(factorial,f),val(int,6))

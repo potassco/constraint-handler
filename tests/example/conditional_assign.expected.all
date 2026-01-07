@@ -1,2 +1,2 @@
-value(z,bool,true)
+value(z,val(bool,true))
 evaluated(leqv,(operation(hasValue,(variable(a),())),(operation(default,(operation(leq,(variable(a),(val(int,2),()))),(val(bool,false),()))),())),bool,true)

@@ -1,4 +1,4 @@
-value(y0,int,1)
-value(y0,int,0)
+value(y0,val(int,1))
+value(y0,val(int,0))
 evaluated(hasValue,(variable(a),()),bool,true)
 evaluated(hasValue,(variable(a),()),bool,false)

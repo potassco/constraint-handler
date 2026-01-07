@@ -30,6 +30,8 @@
 \subsection{Building expression terms}
 \begin{grammar}
 
+<val> ::= `val' `(' <type> `,' <term> `)'
+
 <operator> ::=
 ~\alt `python' `(' <str> `)'
 \alt <lambda-expr>
@@ -77,7 +79,7 @@
 <tuple-expr> ::= `(' `)' | `(' <expressions> `)'
 
 <expression> ::=
-~\alt `val' `(' <type> `,' <term> `)'
+~\alt <val>
 \alt `variable' `(' <term> `)'
 \alt `operation' `(' <operator> `,' <expression-list> `)'
 \alt <lambda-expr>
@@ -163,10 +165,10 @@
 ~\alt `variable' `(' <variable-warning> `)'
 
 <atom> ::=
-~\alt `value' `(' <term> `,' <type> `,' <term> `)'
+~\alt `value' `(' <term> `,' <val> `)'
 \alt `evaluated' `(' <operator> `,' <expression-list>  `,' <type> `,' <term> `)'
-\alt `set_value' `(' <term> `,' <type> `,' <term> `)'
-\alt `multimap_value' `(' <term> `,' <type> `,' <term> `,' <type> `,' <term> `)'
+\alt `set_value' `(' <term> `,' <val> `)'
+\alt `multimap_value' `(' <term> `,' <val> `,' <val> `)'
 \alt `preference_score' `(' <int> `)'
 \alt `warning' `(' <term> `)'
 \alt `warning' `(' <warning-symbol> `,' <term-list> `,' <term> `)'

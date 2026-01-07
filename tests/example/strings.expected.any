@@ -1,2 +1,2 @@
-value(f,bool,true) value(f,bool,false)
-value(g,bool,true) value(g,bool,false)
+value(f,val(bool,true)) value(f,val(bool,false))
+value(g,val(bool,true)) value(g,val(bool,false))

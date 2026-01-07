@@ -1,2 +1,2 @@
-value(z,bool,true)
-value(z,bool,false)
+value(z,val(bool,true))
+value(z,val(bool,false))
