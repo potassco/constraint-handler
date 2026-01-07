@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import operator
-from typing import Any, Callable, Dict, Literal, Sequence, cast
+from typing import Any, Callable, Literal, Sequence, cast
 
 import clingo
 
@@ -37,8 +37,8 @@ def myprint(*args, **kwargs):
 
 class ConstraintHandlerPropagator(clingo.Propagator):
     def __init__(self, check_only: bool = False):
-        self.symbol2var: Dict[clingo.Symbol, VariableType] = {}
-        self.literal2var: Dict[int, list[VariableType]] = {}
+        self.symbol2var: dict[clingo.Symbol, VariableType] = {}
+        self.literal2var: dict[int, list[VariableType]] = {}
 
         self.evaluatevars: list[EvaluateVariable] = []
 
@@ -46,14 +46,22 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.best_value: int | float = -1
         self.using_optimization: bool = False
         self.optimization_check_func: Callable[[int | float, int | float], bool]
+        self.set_optimization_check_strength("le")
 
-        self.environment: Dict[Any, Any] = {}
+        self.environment: dict[Any, Any] = {}
 
         self.check_only = check_only
 
         self.errors: list[Exception] = []
 
     def init(self, init: clingo.PropagateInit) -> None:
+        self.symbol2var.clear()
+        self.literal2var.clear()
+        self.evaluatevars.clear()
+        self.optimization_sum = OptimizationSum()
+        self.environment = {}
+        self.errors.clear()
+
         if self.check_only:
             self.propagate = lambda ctl, changes: None
 
@@ -69,8 +77,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.set_parents()
 
         self.get_evaluate(init)
-
-        self.set_optimization_check_strength("le")
 
         myprint("INIT DONE")
         myprint("#" * 50)
@@ -90,6 +96,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.optimization_check_func = operator.le
         else:
             raise ValueError(f"Unknown optimization check strength: {strength}")
+
+    def set_optimization_best_value(self, value: int | float) -> None:
+        """
+        This method sets the best optimization value.
+        """
+        self.best_value = value
 
     def check(self, control: clingo.PropagateControl) -> None:
         """
@@ -180,7 +192,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     ng = ng.union(self.get_reasons(var))
                 # ng = (l for l in ng if l < 0)  # only keep negative literals
                 myprint(f"Adding nogood {list(ng)} to enforce optimization")
-                if ctl.add_nogood(ng):
+                if ctl.add_nogood(ng, tag=True):
                     assert False, "Added violated constraint but solver did not detect it"
                 return True
 
@@ -268,7 +280,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             variable: Variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = variable
 
-            self.errors.append(SyntaxError(f"Variable {name} declaration is not a fact!"))
+            self.errors.append(SyntaxError(f"Variable '{symbol_var}' declaration is not a fact!"))
 
             if isinstance(domain, atom.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
@@ -290,12 +302,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 # values will be added from facts, nothing to do here
                 pass
             else:
-                self.errors.append(ValueError(f"Unknown domain type {domain} for variable {name}"))
+                self.errors.append(ValueError(f"Unknown domain type '{domain}' for variable '{symbol_var}'"))
 
         for (name, symbol_var, expr), __literal in var_defines.items():
             if symbol_var in self.symbol2var:
                 self.errors.append(
-                    SyntaxError(f"Variable {name} declared and defined! variable_define will do nothing!")
+                    SyntaxError(f"Variable '{symbol_var}' declared and defined! variable_define will do nothing!")
                 )
                 continue
             define_variable = Variable(name, symbol_var)
@@ -321,7 +333,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # check that all variables have a domain
         for var in self.symbol2var.values():
             if not var.has_domain():
-                self.errors.append(ValueError(f"Variable {var} has no domain defined!"))
+                self.errors.append(ValueError(f"Variable '{var}' has no domain defined!"))
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
