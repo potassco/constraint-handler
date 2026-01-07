@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Sequence, cast
+import operator
+from typing import Any, Callable, Dict, Literal, Sequence, cast
 
 import clingo
 
@@ -28,8 +29,6 @@ from constraint_handler.PropagatorVariables import (
     make_dict_from_variables,
 )
 
-# VariableType = Variable | SetVariable | DictVariable | Execution
-
 
 def myprint(*args, **kwargs):
     if DEBUG_PRINT:
@@ -46,6 +45,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.optimization_sum: OptimizationSum = OptimizationSum()
         self.best_value: int | float = -1
         self.using_optimization: bool = False
+        self.optimization_check_func: Callable[[int | float, int | float], bool]
 
         self.environment: Dict[Any, Any] = {}
 
@@ -70,8 +70,26 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_evaluate(init)
 
+        self.set_optimization_check_strength("le")
+
         myprint("INIT DONE")
         myprint("#" * 50)
+
+    def set_optimization_check_strength(self, strength: Literal["lt", "le"]) -> None:
+        """
+        This method sets the optimization check strength.
+        'lt' means that only better solutions are accepted(i.e. solution with lower sum).
+        'le' means that better or equal solutions are accepted(i.e. solution with lower or equal sum).
+        """
+
+        assert strength in ("lt", "le"), f"Unknown optimization check strength: {strength}"
+
+        if strength == "lt":
+            self.optimization_check_func = operator.lt
+        elif strength == "le":
+            self.optimization_check_func = operator.le
+        else:
+            raise ValueError(f"Unknown optimization check strength: {strength}")
 
     def check(self, control: clingo.PropagateControl) -> None:
         """
@@ -95,13 +113,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         backtrack = self.evaluate_optimization_sum(control)
         myprint(f"Optimization sum evaluated to {self.optimization_sum.value}")
         if backtrack:
-            print(f"backtracking {backtrack} due to optimization sum being worse than best value {self.best_value}")
+            myprint(f"backtracking {backtrack} due to optimization sum being worse than best value {self.best_value}")
             return
 
         self.check_evaluate(control)
         # if everything is good, we update the best value
         if self.using_optimization and self.optimization_sum.value > self.best_value:
-            myprint(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
+            print(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
             self.best_value = self.optimization_sum.value
 
         myprint("CHECK DONE!")
@@ -152,7 +170,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
 
         if self.optimization_sum.value != ValueStatus.NOT_SET:
-            if self.optimization_sum.value <= self.best_value and not self.optimization_sum.has_unassigned():
+            if (
+                self.optimization_check_func(self.optimization_sum.value, self.best_value)
+                and not self.optimization_sum.has_unassigned()
+            ):
                 ng: set[int] = set()
                 for symbol_var in self.optimization_sum.vars():
                     var = self.symbol2var[symbol_var]
@@ -335,7 +356,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         c = 0
         for (name, expr), literal in ensures.items():
             c += 1
-            ensure_var = EnsureVariable(name, expr, literal)
+            ensure_var: EnsureVariable = EnsureVariable(name, expr, literal)
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
             self.literal2var.setdefault(literal, []).append(ensure_var)
