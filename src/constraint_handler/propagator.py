@@ -15,6 +15,7 @@ from constraint_handler.PropagatorConstants import (
     ENSURE_VAR_NAME,
     EXECUTION_OUTPUT,
     EvaluationResult,
+    ReasoningMode,
     ValueStatus,
 )
 from constraint_handler.PropagatorVariables import (
@@ -53,6 +54,31 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.check_only = check_only
 
         self.errors: list[Exception] = []
+
+        self.reasoning_mode: ReasoningMode = ReasoningMode.STANDARD
+
+        # this is used for cautious reasoning
+        # for the first model, the set is assigned the first model
+        self.is_first_model: bool = True
+        self.reasoning_mode_result: set[clingo.Symbol] = set()
+        # This is will hold the model which is then used to update the result
+        self.current_model: set[clingo.Symbol] = set()
+
+    def get_configuration(self, ctl: clingo.Control):
+        myprint(ctl.configuration.solve.enum_mode)
+        match ctl.configuration.solve.enum_mode:
+            case "brave":
+                self.reasoning_mode = ReasoningMode.BRAVE
+                ctl.configuration.solve.models = 0
+                ctl.configuration.solve.enum_mode = "auto"
+            case "cautious":
+                self.reasoning_mode = ReasoningMode.CAUTIOUS
+                ctl.configuration.solve.models = 0
+                ctl.configuration.solve.enum_mode = "auto"
+            case _:
+                self.reasoning_mode = ReasoningMode.STANDARD
+
+        print(f"Propagator reasoning mode set to {self.reasoning_mode}")
 
     def init(self, init: clingo.PropagateInit) -> None:
         self.symbol2var.clear()
@@ -130,11 +156,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.check_evaluate(control)
         # if everything is good, we update the best value
+        # TODO: Maybe we have to move this next stuff to the on_model function
+        # in case there are multiple propagators?
         if self.using_optimization and self.optimization_sum.value > self.best_value:
             print(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
             self.best_value = self.optimization_sum.value
-
-        myprint("CHECK DONE!")
 
     def check_evaluate(self, ctl: clingo.PropagateControl):
         myprint("Checking evaluate atoms")
@@ -280,7 +306,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             variable: Variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = variable
 
-            self.errors.append(SyntaxError(f"Variable '{symbol_var}' declaration is not a fact!"))
+            if __literal != 1:
+                self.errors.append(SyntaxError(f"Variable '{symbol_var}' declaration is not a fact!"))
 
             if isinstance(domain, atom.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
@@ -298,6 +325,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     variable.add_value(expr, literal)
                     ctl.add_watch(literal)
                     ctl.add_watch(-literal)
+
             elif isinstance(domain, atom.FromFacts):
                 # values will be added from facts, nothing to do here
                 pass
@@ -547,15 +575,37 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             pyAtom = atom.Evaluated(
                 eval_var.op, eval_var.args, evaluator.get_baseType(eval_var.get_value()), eval_var.get_value()
             )
-            myprint(f"adding evaluate atom {pyAtom}", end=" ")
-            clAtom = myClorm.pytocl(pyAtom)
-            myprint(f"= {clAtom}")
-            if not model.contains(clAtom):
-                model.extend([clAtom])
+            self.add_atom_to_current_model(pyAtom)
 
         if self.using_optimization:
             self.handle_on_model_warning(self.optimization_sum.get_errors(), model)
             print(f"Optimization value: {self.optimization_sum.value}")
+
+        if self.reasoning_mode == ReasoningMode.CAUTIOUS:
+            if self.is_first_model:
+                self.reasoning_mode_result = self.current_model.copy()
+                self.is_first_model = False
+            else:
+                self.reasoning_mode_result = self.reasoning_mode_result.intersection(self.current_model)
+        elif self.reasoning_mode == ReasoningMode.BRAVE:
+            self.reasoning_mode_result = self.reasoning_mode_result.union(self.current_model)
+
+        self.update_clingo_model(model)
+        self.current_model.clear()
+
+    def update_clingo_model(self, model: clingo.Model):
+        # add to the clingo output the final result based on reasoning mode
+        # For brave and cautious, we output the accumulated result (similar to clingo)
+        # For standard, we output the current model
+        if self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS):
+            for clAtom in self.reasoning_mode_result:
+                if not model.contains(clAtom):
+                    model.extend([clAtom])
+
+        elif self.reasoning_mode == ReasoningMode.STANDARD:
+            for clAtom in self.current_model:
+                if not model.contains(clAtom):
+                    model.extend([clAtom])
 
     def handle_on_model_value(self, var: clingo.Symbol, final_value: Any, model: clingo.Model):
         if final_value is ValueStatus.NOT_SET:
@@ -578,10 +628,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
         )
         pyAtom = atom.Value(var, pyVal)
-        clAtom = myClorm.pytocl(pyAtom)
-        myprint(f"= {clAtom}")
-        if not model.contains(clAtom):
-            model.extend([clAtom])
+        self.add_atom_to_current_model(pyAtom)
 
         for value in final_value:
             if value is ValueStatus.NOT_SET:
@@ -590,10 +637,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             set_pyVal = expression.Val(evaluator.get_baseType(value), value)
             set_pyAtom = atom.Set_value(var, set_pyVal)
             # myprint(f"adding set atom {pyAtom}", end=" ")
-            set_clAtom = myClorm.pytocl(set_pyAtom)
-            myprint(f"= {set_clAtom}")
-            if not model.contains(set_clAtom):
-                model.extend([set_clAtom])
+            self.add_atom_to_current_model(set_pyAtom)
 
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict, model: clingo.Model):
         # TODO: If we want to use the ref system for the output here(for sets, etc) then
@@ -606,10 +650,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
         )
         pyAtom = atom.Value(var, pyVal)
-        clAtom = myClorm.pytocl(pyAtom)
-        myprint(f"= {clAtom}")
-        if not model.contains(clAtom):
-            model.extend([clAtom])
+        self.add_atom_to_current_model(pyAtom)
 
         for key, value in final_value.items():
             if value is ValueStatus.NOT_SET:
@@ -617,30 +658,28 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             for val in value:
                 mm_pyKey = expression.Val(evaluator.get_baseType(key), key)
-                mm_pyVal = evaluator.get_baseType(val), val
+                mm_pyVal = expression.Val(evaluator.get_baseType(val), val)
                 mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
-                # myprint(f"adding multimap atom {pyAtom}", end=" ")
-                mm_clAtom = myClorm.pytocl(mm_pyAtom)
-                myprint(f"= {mm_clAtom}")
-                if not model.contains(mm_clAtom):
-                    model.extend([mm_clAtom])
+
+                self.add_atom_to_current_model(mm_pyAtom)
 
     def handle_on_model_normal_type(
         self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol, model: clingo.Model
     ):
         pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
         pyAtom = atom.Value(var, pyVal)
-        # myprint(f"adding atom {pyAtom}", end=" ")
-        clAtom = myClorm.pytocl(pyAtom)
-        myprint(f"= {clAtom}")
-
-        if not model.contains(clAtom):
-            model.extend([clAtom])
+        self.add_atom_to_current_model(pyAtom)
 
     def handle_on_model_warning(self, errors: list[Exception], model: clingo.Model):
         for error in errors:
             atom_ = atom.Warning1(
                 clingo.Function("", [clingo.Function(type(error).__name__), clingo.String(str(error))])
             )
-            if not model.contains(myClorm.pytocl(atom_)):
-                model.extend([myClorm.pytocl(atom_)])
+            self.add_atom_to_current_model(atom_)
+
+    def add_atom_to_current_model(self, pyAtom: atom.ResultAtom) -> None:
+        clAtom = myClorm.pytocl(pyAtom)
+        myprint(f"adding atom {pyAtom}", end=" ")
+        myprint(f"= {clAtom}")
+
+        self.current_model.add(clAtom)
