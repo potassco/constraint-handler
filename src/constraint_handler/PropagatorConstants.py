@@ -20,3 +20,9 @@ class EvaluationResult(enum.Enum):
     CHANGED = "__changed__"
     CONFLICT = "__conflict__"
     INFER = "__infer__"
+
+
+class ReasoningMode(enum.Enum):
+    STANDARD = "standard"
+    BRAVE = "brave"
+    CAUTIOUS = "cautious"
