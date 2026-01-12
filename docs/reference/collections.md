@@ -24,9 +24,9 @@ set_declare(Identifier, Name).
 
 
 #### Output
-This, just like in the case of [Variables](expressions.md#variable), adds an atom of `value/3` to the model. Here, the value is a reference to the set.
+This, just like in the case of [Variables](expressions.md#variable), adds an atom of `value/2` to the model. Here, the value is a reference to the set.
 ```prolog
-value(set_name, set, ref(variable(set_name)))
+value(set_name, val(set, ref(variable(set_name))))
 ```
 
 ### Assigning Elements
@@ -44,17 +44,16 @@ set_assign(Identifier, Name, Value).
 | `Value` | The value to be added to the set. |
 
 #### Output
-Assigning a value to a set adds an atom of `set_value/3` to the model.
+Assigning a value to a set adds an atom of `set_value/2` to the model.
 
 ```prolog
-set_value(Name, Type, Value)
+set_value(Name, Value)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Name` | The unique identifier of the set. |
-| `Type` | The data type of the value being added to the set.
-| `Value` | The actual value being added to the set. |
+| `Value` | The actual value being added to the set using the `val/2` predicate. |
 
 !!! Example
     To create the set `my_set` and add the [ints](base_types.md/#int) `1`, `3` and `5` to it, you would use the following code:
@@ -69,10 +68,10 @@ set_value(Name, Type, Value)
     This results in the following output atoms:
 
     ```prolog
-    value(my_set, set, ref(variable(my_set)))
-    set_value(my_set, int, val(int, 1))
-    set_value(my_set, int, val(int, 3))
-    set_value(my_set, int, val(int, 5))
+    value(my_set, val(set, ref(variable(my_set))))
+    set_value(my_set, val(int, 1))
+    set_value(my_set, val(int, 3))
+    set_value(my_set, val(int, 5))
     ```
 
 ### Make Set
@@ -89,10 +88,10 @@ The constraint handler provides a `makeSet` operator to create sets directly wit
     This results in the following output atoms:
 
     ```prolog
-    value(my_set,set,ref(makeSet((val(int,1),(val(int,3),(val(int,5),()))))))
-    set_value(my_set, int, val(int, 1))
-    set_value(my_set, int, val(int, 3))
-    set_value(my_set, int, val(int, 5))
+    value(my_set, val(set, ref(makeSet((val(int,1),(val(int,3),(val(int,5),())))))))
+    set_value(my_set, val(int, 1))
+    set_value(my_set, val(int, 3))
+    set_value(my_set, val(int, 5))
     ```
 
 ### Supported Operators
@@ -111,7 +110,7 @@ Once a set is created (either via declaration or returned from another operation
 | `notin` | Not In | ([any](base_types.md), [set](#set)) $\to$ [bool](base_types.md#bool) | `true` if the element is NOT contained in the set. |
 | **Analysis** | | | |
 | `length` | Cardinality | ([set](#set)) $\to$ [int](base_types.md#int) | Returns the number of elements in the set. |
-| `set_fold` | Fold | ([set](#set), any, any) $\to$ any | Iterates over the set, applies a function to each element and accumulates the result. |
+| `set_fold` | Fold | ((A,B) $\to$ B, [set](#set)(A), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
 | **Comparison** | | | |
 | `eq` | Equality | ([set](#set), [set](#set)) $\to$ [bool](base_types.md#bool) | Returns `true` if two sets contain exactly the same elements. |
 | `neq` | Inequality | ([set](#set), [set](#set)) $\to$ [bool](base_types.md#bool) | Returns `true` if two sets differ by at least one element. |
@@ -135,9 +134,9 @@ multimap_declare(Identifier, Name).
 | `Name` | A unique identifier of the multimap. |
 
 #### Output
-This, just like in the case of [Variables](expressions.md#variable), adds an atom of `value/3` to the model. Here, the value is the identifier of the multimap.
+This, just like in the case of [Variables](expressions.md#variable), adds an atom of `value/2` to the model. Here, the value is the identifier of the multimap.
 ```prolog
-value(Name, multimap, Name).
+value(Name, val(multimap, Name)).
 ```
 
 ### Assigning Key-Value Pairs
@@ -158,16 +157,14 @@ multimap_assign(Identifier, Name, Key, Value).
 Assigning a key-value pair to a multimap adds an atom of `multimap_value/5` to the model.
 
 ```prolog
-multimap_value(Name, KeyType, KeyValue, ValueType Value)
+multimap_value(Name, Key, Value)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Name` | The unique identifier of the multimap. |
-| `KeyType` | The data type of the key being added to the multimap.
-| `KeyValue` | The actual key being added to the multimap. |
-| `ValueType` | The data type of the value associated with the key in the multimap. |
-| `Value` | The value associated with the key in the multimap. |
+| `Key` | The key in form of a `val/2` predicate being added to the multimap. |
+| `Value` | The value in form of a `val/2` associated with the key in the multimap. |
 
 !!! Example
     To create the multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it, you would use the following code:
@@ -182,10 +179,10 @@ multimap_value(Name, KeyType, KeyValue, ValueType Value)
     This results in the following output atoms:
 
     ```prolog
-    value(my_map,multimap,my_map)
-    multimap_value(my_map,int,1,str,"one")
-    multimap_value(my_map,int,1,str,"uno")
-    multimap_value(my_map,int,2,str,"two")
+    value(my_map,val(multimap,my_map))
+    multimap_value(my_map, val(int,1), val(str,"one"))
+    multimap_value(my_map, val(int,1), val(str,"uno"))
+    multimap_value(my_map, val(int,2), val(str,"two"))
     ```
 
 ### Make Multimap
@@ -201,10 +198,10 @@ Just like sets, the constraint handler provides a `multimapMake` operator to cre
     This results in the following output atoms:
 
     ```prolog
-    value(my_map,multimap,ref(operation(multimapMake,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),())))))) 
-    multimap_value(my_map,int,1,str,"one")
-    multimap_value(my_map,int,1,str,"uno")
-    multimap_value(my_map,int,2,str,"two")
+    value(my_map, val(multimap, ref(operation(multimapMake,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),()))))))) 
+    multimap_value(my_map,val(int,1),val(str,"one"))
+    multimap_value(my_map,val(int,1),val(str,"uno"))
+    multimap_value(my_map,val(int,2),val(str,"two"))
     ```
 
 ### Supported Operators

@@ -37,7 +37,7 @@ When wanting to optimize over a single value, the result could be captured in a 
     The result will be the model where `x` takes the value `10`.
 
     ```prolog
-    value(x,int,10)
+    value(x,val(int,10))
     ```
 
 !!! Example "Example 2: Optimization Over Multiple Variables"
@@ -56,8 +56,8 @@ When wanting to optimize over a single value, the result could be captured in a 
     The result will be the model where both `x` and `y` take the value `10`, maximizing their sum to `20`.
 
     ```prolog
-    value(x,int,10)
-    value(y,int,10)
+    value(x,val(int,10))
+    value(y,val(int,10))
     ```
 ### Multiple value
 

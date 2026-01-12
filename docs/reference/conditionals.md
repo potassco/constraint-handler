@@ -20,7 +20,7 @@ Sometimes operations should only be performed when a certain condition is met. F
 
     The model will contain the atom:
     ```prolog
-    value(z,int,2)
+    value(z,val(int,2))
     ```
 
     However:
@@ -33,7 +33,7 @@ Sometimes operations should only be performed when a certain condition is met. F
 
     The model will contain the atom:
     ```prolog
-    value(z,none, none)
+    value(z,val(none, none))
     ```
 
 ---
@@ -54,7 +54,7 @@ The `ite` operator expands on the `if` operator by allowing to specify an altern
 
     The model will contain the atom:
     ```prolog
-    value(z,int,2)
+    value(z,val(int,2))
     ```
 
     However:
@@ -67,7 +67,7 @@ The `ite` operator expands on the `if` operator by allowing to specify an altern
 
     The model will contain the atom:
     ```prolog
-    value(z,int,5)
+    value(z,val(int,5))
     ```
 
 ---
@@ -88,7 +88,7 @@ The `default` operator is used to provide a fallback value if the first expressi
 
     The model will contain the atom:
     ```prolog
-    value(z,int,2)
+    value(z,val(int,2))
     ```
 
     However:
@@ -101,7 +101,7 @@ The `default` operator is used to provide a fallback value if the first expressi
 
     The model will contain the atom:
     ```prolog
-    value(z,int,5)
+    value(z,val(int,5))
     ```
 
 ---

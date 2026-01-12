@@ -14,7 +14,7 @@ val(none, none)
 ```
 ### Output
 ```prolog
-value(name, none, none)
+value(name, val(none, none))
 ```
 
 ### Supported Operators
@@ -37,8 +37,8 @@ val(bool, false)
 ```
 ### Output
 ```prolog
-value(name, bool, true)
-value(name, bool, false)
+value(name, val(bool, true))
+value(name, val(bool, false))
 ```
 
 ### Supported Operators
@@ -85,8 +85,8 @@ val(int, -7)
 ```
 ### Output
 ```prolog
-value(name, int, 42)
-value(name, int, -7)
+value(name, val(int, 42))
+value(name, val(int, -7))
 ```
 
 ### Supported Operators
@@ -143,8 +143,8 @@ val(float, float("-0.001"))
 
 ### Output
 ```prolog
-value(name, float, float("3.14159"))
-value(name, float, float("-0.001"))
+value(name, val(float, float("3.14159")))
+value(name, val(float, float("-0.001")))
 ```
 
 ### Supported Operators
@@ -203,8 +203,8 @@ val(string, "Constraint Handling")
 
 ### Output
 ```prolog
-value(name, string, "Hello, World!")
-value(name, string, "Constraint Handling")
+value(name, val(string, "Hello, World!"))
+value(name, val(string, "Constraint Handling"))
 ```
 
 | Operator | Name | Signature | Description |
@@ -239,8 +239,8 @@ val(symbol, state(idle))
 
 ### Output
 ```prolog
-value(name, symbol, active)
-value(name, symbol, state(idle))
+value(name, val(symbol, active))
+value(name, val(symbol, state(idle)))
 ```
 ### Supported Operators
 !!! info "Ordering" 

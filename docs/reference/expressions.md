@@ -81,24 +81,23 @@ val(Type, Value)
 Variables represent references to values that can be reused throughout the program. The constraint handler provides multiple ways of assigning values to variables.
 
 ### Output
-When a variable is assigned a value, an atom of the `value/3` predicate is added to the model.
+When a variable is assigned a value, an atom of the `value/2` predicate is added to the model.
 
 ```prolog
-value(Name, Type, Value)
+value(Name, Value)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Name` | The unique identifier for the variable associated with the value. |
-| `Type` | The data type of the value. |
-| `Value` | The actual value assigned to the variable. |
+| `Value` | The actual value assigned to the variable using the `val/2` predicate. |
 
 
 !!! Example
     If the integer value `42` was assigned to the variable `x` the following atom would be added to the model:
 
     ```prolog
-    value(x, int, 42).
+    value(x, val(int, 42)).
     ```
 
     This is exactly what the test example from the [Getting Started](../user_guide/getting_started.md#test-example) guide does.
@@ -119,13 +118,13 @@ variable_define(Identifier, Name, Expression).
 
 This assigns a specific value to the variable `Name` based on the evaluation of `Expression`. 
 
-The result is a single `value/3` atom in the model.
+The result is a single `value/2` atom in the model.
 
 ### Declare
 A more advanced technique is to declare variables using the `variable_declare/3` predicate. Instead of creating a single variable with a specific value, this declares possible values from a given set of possible values (domain).
 
 !!! Note
-    While [define](#define) creates a single `value/3` atom in all models. The [declare](#declare) approach creates multiple models with different `value/3` atoms based on the domain.
+    While [define](#define) creates a single `value/2` atom in all models. The [declare](#declare) approach creates multiple models with different `value/2` atoms based on the domain.
 
 ```prolog
 variable_declare(Identifier, Name, Domain).
@@ -147,12 +146,12 @@ variable_declare(Identifier, Name, Domain).
     This creates models for both possible assignments:
 
     ```prolog
-    value(x, bool, true).
+    value(x, val(bool, true)).
     ```
     and
 
     ```prolog
-    value(x, bool, false).
+    value(x, val(bool, false)).
     ```
 
 
@@ -180,13 +179,13 @@ fromList(Values)
     This creates models for each possible assignment:
 
     ```prolog
-    value(y, int, 1).
+    value(y, val(int, 1))
     ```
     ```prolog
-    value(y, int, 2).
+    value(y, val(int, 2))
     ```
     ```prolog
-    value(y, int, 3).
+    value(y, val(int, 3))
     ```
 
 ##### From Facts
@@ -211,13 +210,13 @@ variable_domain(Name, Domain).
     This creates models for each possible assignment:
 
     ```prolog
-    value(y, int, 1).
+    value(y, val(int, 1))
     ```
     ```prolog
-    value(y, int, 2).
+    value(y, val(int, 2))
     ```
     ```prolog
-    value(y, int, 3).
+    value(y, val(int, 3))
     ```
 
 #### Optional
@@ -241,11 +240,11 @@ variable_declareOptional(Name).
     This creates models for each possible assignment as before, but also an additional model with the value:
 
     ```prolog
-    value(y, none, none).
+    value(y, val(none, none)).
     ```
 
 ### Usage
-While it is technically possible to use the `value/3` predicate to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their expressions.
+While it is technically possible to use the `value/2` predicate to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their expressions.
 
 This function symbol retreives the value stored in the specified variable.
 

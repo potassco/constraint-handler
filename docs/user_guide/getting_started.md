@@ -45,7 +45,7 @@ constraint_handler.add_to_control(control)
 # Add a small example
 control.add("base", [], """
 variable_define(some_name, x, val(int,42)).
-#show value/3.
+#show value/2.
 """)
 # Ground the program
 control.ground([("base", [])])
@@ -54,4 +54,4 @@ with control.solve(yield_ = True) as handle:
     for model in handle:
         print(model)
 ```
-This should show a single model with only `value(x,int,42)` in the output.
+This should show a single model with only `value(x,val(int,42))` in the output.
