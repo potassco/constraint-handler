@@ -92,4 +92,4 @@ The `ensure/2` predicate asserts that a specific condition must be true. If the 
     ensure(check_z, operation(gt, (variable(z), (val(int, 10), ())))).
     ```
 
-> For more details, see [Constraints](../reference/constraints.md) in the reference.
+> For more details, see [Constraints](../reference/expressions.md#ensure) in the reference.

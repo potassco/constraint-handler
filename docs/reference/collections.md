@@ -150,8 +150,8 @@ multimap_assign(Identifier, Name, Key, Value).
 | :--- | :--- |
 | `Identifier` | Unique identifier of the statement. |
 | `Name` | The unique identifier of the multimap to which the key-value pair will be added. |
-| `Key` | The key in form of a [value](./values_and_variables.md#value) to be added to the multimap. |
-| `Value` | The value to be associated with the key in the multimap. |
+| `Key` | The key in form of a `val/2` predicate to be added to the multimap. |
+| `Value` | The value in form of a `val/2` to be associated with the key in the multimap. |
 
 #### Output
 Assigning a key-value pair to a multimap adds an atom of `multimap_value/5` to the model.
