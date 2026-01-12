@@ -243,14 +243,19 @@ Difference with, say, Python:
 \section{Semantics}
 
 %Each variable $x$ is associated with a set of expressions $E_x$.
-\subsection{Exogenous Variables}
-\subsection{Endogenous Variables}
-\subsection{Evaluation of expressions}
+%\subsection{Exogenous Variables}
+%\subsection{Endogenous Variables}
 Let $\herbrand$ be the Herbrand universe.
 Let $\discourse$ be a fixed set of values called \emph{universe of discourse}.
-A \emph{valuation} or ``assignment'' or ``interpretation'' is a (partial) mapping from terms to values in $\discourse$, ie, a partial function $\vec{v}: \herbrand \partialto \discourse$.
+We will assume that boolean values are in the universe of discourse.
+A \emph{valuation} or ``assignment'' or ``interpretation'' is a (partial) mapping from terms in $\herbrand$ to values in $\discourse$, ie, a partial function $\vec{v}: \herbrand \partialto \discourse$.
+A valuation $\vec{u}$ is smaller than a valuation $\vec{v}$ if $\vec{u}$ and $\vec{v}$ coincide on every variable in the domain of $\vec{u}$.
+That is, for every term $y \in \herbrand$ and value $a \in \discourse$, $y \mapsto a \in \vec{u}$ implies that $y \mapsto a \in \vec{v}$.
+Furthermore, $\vec{u}$ is strictly smaller than $\vec{v}$ is $\vec{u}$ is smaller than $\vec{v}$ and there exists a term $y$ and a vaue $a$ such that $y \mapsto a \in \vec{v}$ while $y \mapsto a \notin \vec{u}$.
+
 We call terms in the domain of a valuation \emph{variables}.
 
+\subsection{Evaluation of expressions}
 
 %\begin{align*}
 %\evaluae{\vec{v}}{x} & =\\
@@ -292,6 +297,28 @@ where $\vec{w} = \{ x \mapsto a \} \cup \{ z \mapsto b \suchthat z \mapsto b \in
 
 TODO python
 
+\subsection{Extended model}
+Let $M$ be a set of atoms and $\vec{v}$ be a valuation.
+We say that $\vec{v}$ satisfies $M$ if the following conditions hold.
+\begin{itemize}
+\item for every atom $\texttt{variable_define($l$,$y$,$e$)} \in M$, there exists a value $a \in \discourse$ such that we have $\vec{v}\entails\redto{e}{a}$ and such that $y \mapsto a \in \vec{v}$;
+\item for every atom $\texttt{variable_declare($l$,$y$,boolDomain)} \in M$, there exists a boolean value $a \in \mathbb{B}$ such that we have $\vec{v}\entails\redto{e}{a}$ and such that $y \mapsto a \in \vec{v}$;
+\item for every atom $\texttt{variable_declare($l$,$y$,fromFacts)} \in M$, there exists an expression $e$ and a value $a \in \discourse$ such that $\texttt{variable_domain($y$,$e$)} \in M$, $\vec{v}\entails\redto{e}{a}$, and $y \mapsto a \in \vec{v}$;
+\item for every atom $\texttt{execution_declare($l$,$p$,$s$,$i$,$o$)} \in M$ such that $\texttt{execution_run($l'$,$p$)} \in M$ for some term $l'$, the valuations $\vec{i} = \{ x \mapsto \vec{v}(\texttt{execution_input($s$,$x$)}) \suchthat x \in i \}$ and $\vec{o} = \{ x \mapsto \vec{v}(\texttt{execution_output($s$,$x$)}) \suchthat x \in o \}$ satisfy $\vec{i}\entails\redto{s}{\vec{o}}$; and
+\item for every atom $\texttt{ensure($l$,$e$)} \in M$, we have $\vec{v}\entails\redto{e}{\top}$.
+\end{itemize}
+ 
+Let $P$ be an answer set program.
+An extended model of $P$ is a pair $(M,\vec{v})$ such that the following conditions hold, where $M$ is a set of atoms and $\vec{v}$ is a valuation.
+
+\begin{itemize}
+\item $M$ is an answer set of $P$;
+\item $\vec{v}$ satisfies $M$; and
+\item There does not exist a valuation $\vec{u}$ strictly smaller than $\vec{v}$ that satisfies $M$.
+\end{itemize}
+
+\begin{comment}
+%define/declare
 \subsection{Candidate model}
 Let $M$ be a set of predicate instances.
 An \emph{exogenous variable} of $M$ is a term $x$ that appears in some declaration \texttt{variable_declare($l$,$x$,$d$)} in $M$; we say that $d$ is the domain of $x$.
@@ -342,6 +369,7 @@ Example:
 
 \subsection{Satisfying model}
 partial functions
+\end{comment}
 
 \section{Implementation}
 The dependencies of $x$ 
