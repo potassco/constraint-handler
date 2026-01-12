@@ -59,8 +59,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         # this is used for cautious reasoning
         # for the first model, the set is assigned the first model
-        self.is_first_model: bool = True
-        self.reasoning_mode_result: set[atom.ResultAtom] = set()
+        self.reasoning_mode_result: set[atom.ResultAtom] | None = None
         # This is will hold the model which is then used to update the result
         self.current_model: set[atom.ResultAtom] = set()
 
@@ -586,12 +585,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.handle_on_model_warning(self.optimization_sum.get_errors())
             print(f"Optimization value: {self.optimization_sum.value}")
 
-        if self.reasoning_mode == ReasoningMode.CAUTIOUS:
-            if self.is_first_model:
-                self.reasoning_mode_result = self.current_model.copy()
-                self.is_first_model = False
-            else:
-                self.reasoning_mode_result = self.reasoning_mode_result.intersection(self.current_model)
+        if self.reasoning_mode_result is None:
+            self.reasoning_mode_result = self.current_model.copy()
+        elif self.reasoning_mode == ReasoningMode.CAUTIOUS:
+            self.reasoning_mode_result = self.reasoning_mode_result.intersection(self.current_model)
         elif self.reasoning_mode == ReasoningMode.BRAVE:
             self.reasoning_mode_result = self.reasoning_mode_result.union(self.current_model)
 
