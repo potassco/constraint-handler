@@ -1,25 +1,25 @@
-# Expressions
+# Modeling Language
 
-This page describes the different types of expressions supported by the constraint handler. Expressions are the fundamental building blocks in the constraint handler. The goal is to provide a unified way to work with different types of data and operations.
+This page documents the core syntax and fundamental building blocks of the constraint handler.
 
 ---
 
 ## Syntax
 
-The base syntax for expressions follows the syntax of ASP predicates or function symbols.
+The base syntax follows standard ASP predicates and function symbols.
 
 ### Simple
-A simple expression with a set number of arguments could be represented as follows:
+A simple expression or predicate with a fixed number of arguments could be represented as follows:
 
 ```prolog
-some_expression(Identifier, Term, Term)
+some_element(Identifier, Term, Term)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `some_expression` | The type of expression. |
-| `Identifier` | A unique identifier for the expression. |
-| `Term` | An argument specific to the expression type. |
+| `some_element` | The type of expression or predicate. |
+| `Identifier` | A unique identifier. |
+| `Term` | An argument specific to the type. |
 
 !!! Example
     A simple expression `my_expression` with the unique identifier `expr_1` and three terms:
@@ -29,19 +29,19 @@ some_expression(Identifier, Term, Term)
 
 ### List
 
-To represent expressions with varying numbers of arguments, the constraint handler uses a list syntax.
+For elements with varying numbers of arguments, the constraint handler uses a list syntax.
 
 Lists are represented as recursive tuples. More precisely, a list is either the empty tuple `()` or a tuple of the form `(Head, Tail)`, where `Head` is the first element of the list and `Tail` is another list representing the rest of the elements. A list has to be terminated by the empty tuple.
 
 ```prolog
-some_expression(Identifier, Terms)
+some_element(Identifier, Terms)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `some_expression` | The type of expression. |
-| `Identifier` | A unique identifier for the expression. |
-| `Terms` | A list of terms specific to the expression type. |
+| `some_expression` | The type of expression or predicate. |
+| `Identifier` | A unique identifier. |
+| `Terms` | A list of terms specific to the type. |
 
 
 !!! Example
@@ -81,6 +81,7 @@ val(Type, Value)
 Variables represent references to values that can be reused throughout the program. The constraint handler provides multiple ways of assigning values to variables.
 
 ### Output
+
 When a variable is assigned a value, an atom of the `value/2` predicate is added to the model.
 
 ```prolog
@@ -104,6 +105,7 @@ value(Name, Value)
 
 
 ### Define
+
 The simplest way to create variables is to use the `variable_define/3` predicate to define them with a specific value.
 
 ```prolog
@@ -121,6 +123,7 @@ This assigns a specific value to the variable `Name` based on the evaluation of 
 The result is a single `value/2` atom in the model.
 
 ### Declare
+
 A more advanced technique is to declare variables using the `variable_declare/3` predicate. Instead of creating a single variable with a specific value, this declares possible values from a given set of possible values (domain).
 
 !!! Note
@@ -156,9 +159,11 @@ variable_declare(Identifier, Name, Domain).
 
 
 #### Domain
+
 While the constraint handler provides a shortcut for boolean domains, users can also define custom domains.
 
 ##### From List
+
 An easy way to define a domain is to use the `fromList` function symbol together with a list of possible values.
 
 ```prolog
@@ -189,7 +194,8 @@ fromList(Values)
     ```
 
 ##### From Facts
-Another way to define a domain is to use the `fromFacts` function symbol. However, this additionally requires the use of the `variable_domain/2` predicate to extract the possible values from existing facts.
+
+Another way to define a domain is to use the `fromFacts/0` predicate. However, this additionally requires the use of the `variable_domain/2` predicate to extract the possible values from existing facts.
 
 ```prolog
 variable_domain(Name, Domain).
@@ -220,6 +226,7 @@ variable_domain(Name, Domain).
     ```
 
 #### Optional
+
 Variables that are declared using a domain can also be marked as optional. This means that the variable may also not be assigned any value at all.
 
 ```prolog
@@ -244,6 +251,7 @@ variable_declareOptional(Name).
     ```
 
 ### Usage
+
 While it is technically possible to use the `value/2` predicate to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their expressions.
 
 This function symbol retreives the value stored in the specified variable.
@@ -267,6 +275,7 @@ variable(Name)
 ---
 
 ## Operation
+
 Operations are the key aspect of the constraint handler that allow expressing arbitrary computations. To achieve this, the constraint handler uses the `operation/2` predicate together with a collection of operators.
 
 ```prolog
@@ -346,7 +355,7 @@ ensure(Identifier, Condition).
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific expression. |
+| `Identifier` | A unique identifier for this specific statement. |
 | `Condition` | The condition that must be satisfied in the model. |
 
 ### Condition

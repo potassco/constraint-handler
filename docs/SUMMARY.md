@@ -4,7 +4,7 @@
     * [Getting Started](user_guide/getting_started.md)
     * [Basic Concepts](user_guide/basic_concepts.md)
 * Reference
-    * [Expressions](reference/expressions.md)
+    * [Modeling Language](reference/modeling_language.md)
     * [Base Types](reference/base_types.md)
     * [Collections](reference/collections.md)
     * [Conditionals](reference/conditionals.md)

@@ -24,7 +24,7 @@ set_declare(Identifier, Name).
 
 
 #### Output
-This, just like in the case of [Variables](expressions.md#variable), adds an atom of `value/2` to the model. Here, the value is a reference to the set.
+This, just like in the case of [Variables](modeling_language.md#variable), adds an atom of `value/2` to the model. Here, the value is a reference to the set.
 ```prolog
 value(set_name, val(set, ref(variable(set_name))))
 ```
@@ -100,7 +100,7 @@ Once a set is created (either via declaration or returned from another operation
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `makeSet` | Make Set | ([list](expressions.md#list)[[any](base_types.md)]) $\to$ [set](#set)[[any](base_types.md)] | Creates a new set explicitly from a list of arguments. |
+| `makeSet` | Make Set | ([list](modeling_language.md#list)[[any](base_types.md)]) $\to$ [set](#set)[[any](base_types.md)] | Creates a new set explicitly from a list of arguments. |
 | **Set Theory** | | | |
 | `union` | Union | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing elements from both sets. |
 | `inter` | Intersection | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing only elements common to both sets. |
@@ -134,7 +134,7 @@ multimap_declare(Identifier, Name).
 | `Name` | A unique identifier of the multimap. |
 
 #### Output
-This, just like in the case of [Variables](expressions.md#variable), adds an atom of `value/2` to the model. Here, the value is the identifier of the multimap.
+This, just like in the case of [Variables](modeling_language.md#variable), adds an atom of `value/2` to the model. Here, the value is the identifier of the multimap.
 ```prolog
 value(Name, val(multimap, Name)).
 ```
@@ -211,7 +211,7 @@ can be used in expressions.
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `multimapMake` | Make Map | ([list](expressions.md#list)[([any](base_types.md), [any](base_types.md))]) $\to$ [multimap](#multimap) | Creates a new multimap from a list of `(Key, Value)` tuples. |
+| `multimapMake` | Make Map | ([list](modeling_language.md#list)[([any](base_types.md), [any](base_types.md))]) $\to$ [multimap](#multimap) | Creates a new multimap from a list of `(Key, Value)` tuples. |
 | **Analysis** | | | |
 | `countKeys` | Count Keys | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Returns the number of unique keys in the map. |
 | `countEntries` | Count Entries | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Returns the total number of key-value pairs. |
@@ -219,7 +219,7 @@ can be used in expressions.
 | `maxEntries` | Max Entry | ([multimap](#multimap)) $\to$ [any](base_types.md) | Returns the maximum value stored in the map (by value, not key). |
 | `minEntries` | Min Entry | ([multimap](#multimap)) $\to$ [any](base_types.md) | Returns the minimum value stored in the map. |
 | **Operations** | | | |
-| `find` | Find | ([multimap](#multimap), [any](base_types.md)) $\to$ [list](expressions.md#list) | Retrieves the list of value(s) associated with a specific key. |
+| `find` | Find | ([multimap](#multimap), [any](base_types.md)) $\to$ [list](modeling_language.md#list) | Retrieves the list of value(s) associated with a specific key. |
 | `isin` | Has Key | ([any](base_types.md), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | `true` if the specific **Key** exists in the map. |
 | `multimap_fold`| Fold | ([multimap](#multimap), any, any) $\to$ any | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.|
 | **Comparison** | | | |

@@ -43,7 +43,7 @@ value(name, val(bool, false))
 
 ### Supported Operators
 !!! info
-    Some of the operators like `conj` and `disj` accept any number of arguments, these use the [list](expressions.md#list) notation as shown in the expression section. Others are strictly unary or binary.
+    Some of the operators like `conj` and `disj` accept any number of arguments, these use the [list](modeling_language.md#list) notation as shown in the expression section. Others are strictly unary or binary.
 
 
 | Operator | Name | Signature | Description |
@@ -52,11 +52,11 @@ value(name, val(bool, false))
 | `eq` | Equality | ([bool](#bool), [bool](#bool)) $\to$ [bool](#bool) | `true` if all arguments are equal. |
 | `neq` | Inequality | ([bool](#bool), [bool](#bool)) $\to$ [bool](#bool) | `true` if not all arguments are equal. |
 | **Logical** | | | | |
-| `conj` | Conjunction | ([list](expressions.md#list)[[bool](#bool)]) $\to$ [bool](#bool) | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
-| `disj` | Disjunction | ([list](expressions.md#list)[[bool](#bool)]) $\to$ [bool](#bool) | `true` if *at least one* argument in the list is true. |
+| `conj` | Conjunction | ([list](modeling_language.md#list)[[bool](#bool)]) $\to$ [bool](#bool) | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
+| `disj` | Disjunction | ([list](modeling_language.md#list)[[bool](#bool)]) $\to$ [bool](#bool) | `true` if *at least one* argument in the list is true. |
 | `limp` | Implication | ([bool](#bool), [bool](#bool)) $\to$ [bool](#bool) | `false` only if the first argument is `true` and the second is `false`. Otherwise `true`. | [bool](#bool) \| [none](#none) |
-| `lxor` | Exclusive OR | ([list](expressions.md#list)[[bool](#bool)]) $\to$ [bool](#bool)  | `true` if an **odd** number of arguments are `true`. |
-| `leqv` | Equivalence | ([list](expressions.md#list)[[bool](#bool)]) $\to$ [bool](#bool)  | `true` if an **even** number of arguments are `true`. |
+| `lxor` | Exclusive OR | ([list](modeling_language.md#list)[[bool](#bool)]) $\to$ [bool](#bool)  | `true` if an **odd** number of arguments are `true`. |
+| `leqv` | Equivalence | ([list](modeling_language.md#list)[[bool](#bool)]) $\to$ [bool](#bool)  | `true` if an **even** number of arguments are `true`. |
 | **Negation** | | | | |
 | `lnot` | Logical | ([bool](#bool)) $\to$ [bool](#bool) | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). |
 | `snot` | Strong | ([bool](#bool)) $\to$ [bool](#bool) | Treats undefined/missing values as `false`. |
