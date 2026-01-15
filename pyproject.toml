@@ -33,7 +33,7 @@ doc = [
     "mkdoclingo @ git+https://github.com/potassco/mkdoclingo.git@new_grammar",
     "mkdocs-literate-nav"
 ]
-dev = ["constraint_handler[test,typecheck,lint_pylint]"]
+dev = ["constraint_handler[test,typecheck,lint_pylint, doc]"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
