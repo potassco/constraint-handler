@@ -11,6 +11,8 @@
     * [Optimization](reference/optimization.md)
     * [Propagator](reference/propagator.md)
     * [Error Handling](reference/error_handling.md)
+* Developer Reference
+    * [Fact Format](developer/fact-format.md)
 * Community
     * [Welcome](community/welcome.md)
     * [Changes](community/CHANGES.md)
