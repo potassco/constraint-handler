@@ -254,16 +254,19 @@ value(name, val(float, float("-0.001")))
 ## String
 Strings are used to represent text-based data. They support concatenation and comparison operations.
 
+!!! Warning
+    Currently strings are called `str` and not `string`. In the future, this section will completely move into either direction.
+
 ### Definition
 ```prolog
-val(string, "Hello, World!")
-val(string, "Constraint Handling")
+val(str, "Hello, World!")
+val(str, "Constraint Handling")
 ```
 
 ### Output
 ```prolog
-value(name, val(string, "Hello, World!"))
-value(name, val(string, "Constraint Handling"))
+value(name, val(str, "Hello, World!"))
+value(name, val(str, "Constraint Handling"))
 ```
 
 | Operator | Name | Signature | Description |
