@@ -138,7 +138,7 @@ Once a set is created (either via declaration or returned from another operation
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `makeSet` | Make Set | ([list](modeling_language.md#list)[[any](base_types.md)]) $\to$ [set](#set)[[any](base_types.md)] | Creates a new set explicitly from a list of arguments. |
+| `makeSet` | Make Set | ([list](core_syntax.md#list)[[any](base_types.md)]) $\to$ [set](#set)[[any](base_types.md)] | Creates a new set explicitly from a list of arguments. |
 | **Set Theory** | | | |
 | `union` | Union | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing elements from both sets. |
 | `inter` | Intersection | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing only elements common to both sets. |
@@ -150,8 +150,8 @@ Once a set is created (either via declaration or returned from another operation
 | `length` | Cardinality | ([set](#set)) $\to$ [int](base_types.md#int) | Returns the number of elements in the set. |
 | `set_fold` | Fold | ((A,B) $\to$ B, [set](#set)(A), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
 | **Comparison** | | | |
-| `eq` | Equality | ([set](#set), [set](#set)) $\to$ [bool](base_types.md#bool) | Returns `true` if two sets contain exactly the same elements. |
-| `neq` | Inequality | ([set](#set), [set](#set)) $\to$ [bool](base_types.md#bool) | Returns `true` if two sets differ by at least one element. |
+| `eq` | Equality | ([set](#set) \| [none](#none), [set](#set) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. Two sets have the same value if they contain the same values. |
+| `neq` | Inequality | ([set](#set) \| [none](#none), [set](#set) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
 
 ---
 
@@ -261,5 +261,5 @@ can be used in expressions.
 | `isin` | Has Key | ([any](base_types.md), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | `true` if the specific **Key** exists in the map. |
 | `multimap_fold`| Fold | ([multimap](#multimap), any, any) $\to$ any | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.|
 | **Comparison** | | | |
-| `eq` | Equality | ([multimap](#multimap), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | Returns `true` if two maps contain exactly the same entries. |
-| `neq` | Inequality | ([multimap](#multimap), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | Returns `true` if two maps differ by at least one entry. |
+| `eq` | Equality | ([multimap](#multimap) \| [none](#none), [multimap](#multimap) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
+| `neq` | Inequality | ([multimap](#multimap) \| [none](#none), [multimap](#multimap) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |

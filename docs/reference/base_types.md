@@ -76,6 +76,9 @@ value(name, val(none, none))
 ### Supported Operators
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
+| **Comparison** | | | |
+| `eq` | Equality | ([none](#none) \| T, [none](#none) \| T) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([none](#none) \| T, [none](#none) \| T) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
 | **Logical** | | | |
 | `limp` | Implication | ([none](#none) \| [bool](#bool), [none](#none) \| [bool](#bool)) $\to$ [none](#none) | If either of the values is `none`, the result will be `none`. Otherwise, this follows the standard implication rules from [bool](#bool). |
 | **Negation** | | | |
@@ -105,8 +108,8 @@ value(name, val(bool, false))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Comparison** | | | | |
-| `eq` | Equality | ([bool](#bool), [bool](#bool)) $\to$ [bool](#bool) | `true` if all arguments are equal. |
-| `neq` | Inequality | ([bool](#bool), [bool](#bool)) $\to$ [bool](#bool) | `true` if not all arguments are equal. |
+| `eq` | Equality | ([bool](#bool) \| [none](#none), [bool](#bool) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([bool](#bool) \| [none](#none), [bool](#bool) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
 | **Logical** | | | | |
 | `conj` | Conjunction | ([list](core_syntax.md#list)[[bool](#bool)]) $\to$ [bool](#bool) | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
 | `disj` | Disjunction | ([list](core_syntax.md#list)[[bool](#bool)]) $\to$ [bool](#bool) | `true` if *at least one* argument in the list is true. |
@@ -165,8 +168,8 @@ value(name, val(int, -7))
 | `acos` | Arc Cosine | ([int](#int)) $\to$ [float](#float) | Calculates the inverse cosine. |
 | `atan` | Arc Tangent | ([int](#int)) $\to$ [float](#float) | Calculates the inverse tangent. |
 | **Comparison** | | | |
-| `eq` | Equality | ([int](#int), [int](#int)) $\to$ [bool](#bool) | Returns `true` if inputs are identical, otherwise `false`. |
-| `neq` | Inequality | ([int](#int), [int](#int)) $\to$ [bool](#bool) | Returns `true` if inputs differ, otherwise `false`. |
+| `eq` | Equality | ([int](#int) \| [none](#none), [int](#int) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([int](#int) \| [none](#none), [int](#int) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
 | `lt` | Less Than | ([int](#int), [int](#int)) $\to$ [bool](#bool) | `true` if first is strictly less than second. |
 | `leq` | Less Than or Equal | ([int](#int), [int](#int)) $\to$ [bool](#bool) | `true` if first is less than or equal to second. |
 | `gt` | Greater Than | ([int](#int), [int](#int)) $\to$ [bool](#bool) | `true` if first is strictly greater than second. |
@@ -229,8 +232,8 @@ value(name, val(float, float("-0.001")))
 | `acos` | Arc Cosine | ([float](#float)) $\to$ [float](#float) | Calculates the inverse cosine. |
 | `atan` | Arc Tangent | ([float](#float)) $\to$ [float](#float) | Calculates the inverse tangent. |
 | **Comparison** | | | |
-| `eq` | Equality | ([float](#float), [float](#float)) $\to$ [bool](#bool) | Returns `true` if inputs are identical, otherwise `false`. |
-| `neq` | Inequality | ([float](#float), [float](#float)) $\to$ [bool](#bool) | Returns `true` if inputs differ, otherwise `false`. |
+| `eq` | Equality | ([float](#float) \| [none](#none), [float](#float) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([float](#float) \| [none](#none), [float](#float) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
 | `lt` | Less Than | ([float](#float), [float](#float)) $\to$ [bool](#bool) | `true` if first is strictly less than second. |
 | `leq` | Less Than or Equal | ([float](#float), [float](#float)) $\to$ [bool](#bool) | `true` if first is less than or equal to second. |
 | `gt` | Greater Than | ([float](#float), [float](#float)) $\to$ [bool](#bool) | `true` if first is strictly greater than second. |
@@ -269,8 +272,8 @@ value(name, val(string, "Constraint Handling"))
 | `concat` | Concatenation | ([string](#string), [string](#string)) $\to$ [string](#string) | Joins two strings together. |
 | `length` | Length | ([string](#string)) $\to$ [int](#int) | Returns the number of characters in the string. |
 | **Comparison** | | | |
-| `eq` | Equality | ([string](#string), [string](#string)) $\to$ [bool](#bool) | Returns `true` if inputs are identical, otherwise `false`. |
-| `neq` | Inequality | ([string](#string), [string](#string)) $\to$ [bool](#bool) | Returns `true` if inputs differ, otherwise `false`. |
+| `eq` | Equality | ([string](#string) \| [none](#none), [string](#string) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([string](#string) \| [none](#none), [string](#string) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
 
 !!! Example
     Concatenating a prefix to a name.
@@ -305,8 +308,8 @@ value(name, val(symbol, state(idle)))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Comparison** | | | |
-| `eq` | Equality | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if inputs are identical, otherwise `false`. |
-| `neq` | Inequality | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if inputs differ, otherwise `false`. |
+| `eq` | Equality | ([symbol](#symbol) \| [none](#none), [symbol](#symbol) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([symbol](#symbol) \| [none](#none), [symbol](#symbol) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
 | `lt` | Less Than | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if first argument is smaller than the second. |
 | `leq` | Less Than or Equal | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if first argument is smaller than or equal to the second. |
 | `gt` | Greater Than | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if first argument is larger than the second. |
