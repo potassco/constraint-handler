@@ -30,40 +30,34 @@ Sometimes the output type may be a union of multiple types, indicating that the 
 ```
 Could represent some division operation that returns an integer when the division is exact, and a float otherwise.
 
-#### Type Values
+#### Generic Variables
+Capitalized letters act as placeholders for any type.
+ - **Consistency:** If the same letter appears multiple times (e.g., `A`), all arguments using that letter must be of the same type.
+ - **Distinctness:** Different letters (e.g., `A` and `B`) can represent different types.
+
+
 When defining more complex operators, the output type may depend directly on the input types. This is indicated using placeholders like `A`, `B`, etc. For example:
 
 ```prolog
 (A, B) -> A | B
 ```
 Indicates that the output type can be either of the input types.
-
-!!! Example
+!!! Example "Example: Same Type"
     Given some operator signature:
 
     ```prolog
-    (A,A) -> A
+    (T, T) -> bool
     ```
+    This means that the operator takes two inputs of the same type (denoted by `T`), and returns a boolean value.
 
-    This indicates a binary operator that takes two inputs of the same type `A` and returns a value of the same type `A`. This means, both the signatures
+!!! Example "Example: Different Types"
+    Given some operator signature:
 
     ```prolog
-    (int, int) -> int
+    (A,B) -> A
     ```
-    and
 
-    ```prolog
-    (float, float) -> float
-    ```
-    are valid instantiations of this operator.
-
-    While 
-    ```prolog
-    (int, float) -> int
-    ```
-    would **not** be valid, since the input types do not match.
-
-
+    This means that the operator takes two inputs of potentially different types (denoted by `A` and `B`), and returns a value of the same type as the first input (`A`).
 ---
 
 ## None
