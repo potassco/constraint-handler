@@ -3,6 +3,68 @@
 This section documents the fundamental data types supported by the **constraint_handler**. Each type comes with its own set of operators and functions.
 
 ---
+## Notation
+In the following sections we will use the following notation to describe types and their available operators.
+
+### Operator Signatures
+Operators are described using a function signature notation:
+
+```prolog
+(input_type1, input_type2, ...) -> output_type
+```
+
+Where `input_type` and `output_type` refer to the data types involved in the operation. 
+
+#### Simple
+Simple operators often only require a single input type and produce a single output type. For example, an addition operator for integers would be represented as:
+
+```prolog
+(int, int) -> int
+```
+
+#### Union
+Sometimes the output type may be a union of multiple types, indicating that the operator can return different types based on the inputs. This is denoted using the pipe symbol `|`. For example:
+
+```prolog
+(int, int) -> int | float
+```
+Could represent some division operation that returns an integer when the division is exact, and a float otherwise.
+
+#### Type Values
+When defining more complex operators, the output type may depend directly on the input types. This is indicated using placeholders like `A`, `B`, etc. For example:
+
+```prolog
+(A, B) -> A | B
+```
+Indicates that the output type can be either of the input types.
+
+!!! Example
+    Given some operator signature:
+
+    ```prolog
+    (A,A) -> A
+    ```
+
+    This indicates a binary operator that takes two inputs of the same type `A` and returns a value of the same type `A`. This means, both the signatures
+
+    ```prolog
+    (int, int) -> int
+    ```
+    and
+
+    ```prolog
+    (float, float) -> float
+    ```
+    are valid instantiations of this operator.
+
+    While 
+    ```prolog
+    (int, float) -> int
+    ```
+    would **not** be valid, since the input types do not match.
+
+
+---
 
 ## None
 To represent undefined values, the constraint handler uses `none`. Unlike a variable simply missing from a list, `none` is an explicit value that propagates through certain operations.
@@ -229,7 +291,7 @@ value(name, val(string, "Constraint Handling"))
 ---
 
 ## Symbol
-Symbols represent raw ASP constants or function symbols (atoms). Unlike strings, they are not enclosed in quotes and follow standard ASP naming conventions (starting with a lowercase letter).
+Normal ASP symbols can also be used as values. They are frequently used for representing states or identifiers.
 
 ### Definition
 ```prolog
