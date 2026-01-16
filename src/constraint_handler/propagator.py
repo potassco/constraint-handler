@@ -168,19 +168,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def evaluate_model(self, ctl: clingo.PropagateControl) -> bool:
         old_model = self.python_model
-        self.python_model = set()
         self.update_python_model()
-        if old_model is None or self.reasoning_mode == ReasoningMode.STANDARD:
-            new_model = self.python_model.copy()
-        elif self.reasoning_mode == ReasoningMode.CAUTIOUS:
-            new_model = old_model.intersection(self.python_model)
-        elif self.reasoning_mode == ReasoningMode.BRAVE:
-            new_model = old_model.union(self.python_model)
-        else:
-            assert False
-        changed = new_model != old_model
-        self.python_model = new_model
-        if changed and (self.reasoning_mode == ReasoningMode.BRAVE or self.reasoning_mode == ReasoningMode.CAUTIOUS):
+        if old_model is not None:
+            if self.reasoning_mode == ReasoningMode.CAUTIOUS:
+                self.python_model = old_model.intersection(self.python_model)
+            if self.reasoning_mode == ReasoningMode.BRAVE:
+                self.python_model = old_model.union(self.python_model)
+        if self.python_model != old_model and self.reasoning_mode != ReasoningMode.STANDARD:
             # should it be somethinbg about projections?
             ng: set[int] = set().union(*(self.get_reasons(var) for var in self.symbol2var.values()))
             myprint(f"Adding nogood {list(ng)} to enforce brave/cautious")
@@ -575,6 +569,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.symbol2var[symbol_var].parents.append(var)
 
     def update_python_model(self):
+        self.python_model = set()
         self.handle_on_model_warning(self.errors)
 
         for var in self.symbol2var.values():
