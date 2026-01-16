@@ -36,7 +36,7 @@ Because the handler supports many types, it needs a way to distinguish between t
     val(float, float("3.14"))
     ```
 
-> For full details, see the [Value](../reference/modeling_language.md#value) reference.
+> For full details, see the [Value](../reference/core_syntax.md#value) reference.
 
 ---
 
@@ -57,7 +57,7 @@ Variables allow you to store specific values and reuse them later. You can creat
 
 To use this variable in a later expression, you reference it using `variable(x)`.
 
-> For full details, see the [Variable](../reference/modeling_language.md#variable) reference.
+> For full details, see the [Variable](../reference/core_syntax.md#variable) reference.
 
 ---
 
@@ -75,7 +75,7 @@ To perform calculations—such as arithmetic, logical comparisons, or set manipu
     operation(add, (variable(x), (variable(y), ())))
     ```
 
-> For more information, refer to the [Operation](../reference/modeling_language.md#operation) reference. A list of operators is attached to each respective type in the [Base Type](../reference/base_types.md) or [Collections](../reference/collections.md) sections.
+> For more information, refer to the [Operation](../reference/core_syntax.md#operation) reference. A list of operators is attached to each respective type in the [Base Type](../reference/base_types.md) or [Collections](../reference/collections.md) sections.
 
 ---
 
@@ -92,4 +92,4 @@ The `ensure/2` predicate asserts that a specific condition must be true. If the 
     ensure(check_z, operation(gt, (variable(z), (val(int, 10), ())))).
     ```
 
-> For more details, see [Constraints](../reference/modeling_language.md#ensure) in the reference.
+> For more details, see [Constraints](../reference/core_syntax.md#ensure) in the reference.

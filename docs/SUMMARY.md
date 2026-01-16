@@ -5,7 +5,7 @@
     * [Basic Concepts](user_guide/basic_concepts.md)
 * Reference
     * [Language Concepts](reference/language_concepts.md)
-    * [Modeling Language](reference/modeling_language.md)
+    * [Core Syntax](reference/core_syntax.md)
     * [Base Types](reference/base_types.md)
     * [Collections](reference/collections.md)
     * [Conditionals](reference/conditionals.md)

@@ -1,4 +1,4 @@
-# Modeling Language
+# Base Language
 
 This page documents the core syntax and fundamental building blocks of the constraint handler.
 

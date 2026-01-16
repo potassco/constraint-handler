@@ -2,7 +2,7 @@
 This page details the core concepts of the constraint handler's modeling language.
 
 !!! Note
-    Here, we will use simpler syntax in order to not distract from the unterlying core concepts. The actual syntax used in the constraint handler will be explained in [Modeling Language](modeling_language.md) and other reference pages.
+    Here, we will use simpler syntax in order to not distract from the unterlying core concepts. The actual syntax used in the constraint handler will be explained in [Modeling Language](core_syntax.md) and other reference pages.
 
 ## Valuation
 A Valuation is a mapping (association) from variables to values. It represents the "state" of the system at a specific point in time or in a specific solution.
@@ -46,11 +46,11 @@ A list of expressions used in the constraint handler.
 
 | Expression | Description |
 |-|-|
-| [val](modeling_language.md#value) | Refers to a specific value in the current valuation. |
-| [variable](modeling_language.md#variable) | Retrieves the value of a variable from the current valuation. |
-| [operation](modeling_language.md#operation) | Combines multiple expressions using operators based on [types](base_types.md) and [collections](collections.md). |
+| [val](core_syntax.md#value) | Refers to a specific value in the current valuation. |
+| [variable](core_syntax.md#variable) | Retrieves the value of a variable from the current valuation. |
+| [operation](core_syntax.md#operation) | Combines multiple expressions using operators based on [types](base_types.md) and [collections](collections.md). |
 | lambda | Defines anonymous functions that can be applied to expressions. |
-| tuple expression | Multiple expressions combined into one [list](modeling_language.md#list). |
+| tuple expression | Multiple expressions combined into one [list](core_syntax.md#list). |
 
 
 ## Statement
@@ -144,16 +144,16 @@ A list of declarations used to define problems.
 | Declaration | Description |
 |-|-|
 | assign | Declares a variable and assigns it a value from a specified domain. |
-| [ensure](modeling_language.md#ensure) | Declares a constraint that must hold in all valid solutions. |
+| [ensure](core_syntax.md#ensure) | Declares a constraint that must hold in all valid solutions. |
 | compute | |
 | computed | |
 | evaluate | |
 | **Variable** | |
-| [domain](modeling_language.md#domain) | Defines a domain of possible values for variables. |
-| [variable_declare](modeling_language.md#declare) | Declares a variable with a specified domain. |
-| [variable_declareOptional](modeling_language.md#optional) | Declares an optional variable with a specified domain. |
-| [variable_define](modeling_language.md#define) | Declares and defines a variable with a specific value. |
-| [variable_domain](modeling_language.md#domain) | Retrieves the domain of a declared variable. |
+| [domain](core_syntax.md#domain) | Defines a domain of possible values for variables. |
+| [variable_declare](core_syntax.md#declare) | Declares a variable with a specified domain. |
+| [variable_declareOptional](core_syntax.md#optional) | Declares an optional variable with a specified domain. |
+| [variable_define](core_syntax.md#define) | Declares and defines a variable with a specific value. |
+| [variable_domain](core_syntax.md#domain) | Retrieves the domain of a declared variable. |
 | **Set** | |
 | [set_declare](collections.md#declaration) | Declares a set variable with a specified domain. |
 | [set_assign](collections.md#assigning-elements) | Declares a set variable and assigns it a value from a specified domain. |
@@ -190,7 +190,7 @@ A list of output facts used to represent results.
 
 | Result | Description |
 |-|-|
-| [value](modeling_language.md#output) | Indicates the assigned value of a variable in the solution. |
+| [value](core_syntax.md#output) | Indicates the assigned value of a variable in the solution. |
 | [set_value](collections.md#output_1) | Indicates the assigned value of a variable in the solution. |
 | [multimap_value](collections.md#output_3) | Indicates the assigned value of a variable in the solution. |
 | [warning](error_handling.md#warning) | Represents a warning message generated during solving. |
