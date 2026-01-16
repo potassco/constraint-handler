@@ -174,6 +174,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.python_model = old_model.intersection(self.python_model)
             if self.reasoning_mode == ReasoningMode.BRAVE:
                 self.python_model = old_model.union(self.python_model)
+        # the following is incorrect and can cause unsat when the propagator wasn't requested for anything.
         if self.python_model != old_model and self.reasoning_mode != ReasoningMode.STANDARD:
             # should it be somethinbg about projections?
             ng: set[int] = set().union(*(self.get_reasons(var) for var in self.symbol2var.values()))
