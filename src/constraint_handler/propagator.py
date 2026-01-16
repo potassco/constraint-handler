@@ -59,21 +59,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         # this is used for cautious reasoning
         # for the first model, the set is assigned the first model
-        self.reasoning_mode_result: set[atom.ResultAtom] | None = None
         # This is will hold the model which is then used to update the result
-        self.current_model: set[atom.ResultAtom] = set()
+        self.current_model: set[atom.ResultAtom] | None = None
 
     def get_configuration(self, ctl: clingo.Control):
         myprint(ctl.configuration.solve.enum_mode)
         match ctl.configuration.solve.enum_mode:
             case "brave":
                 self.reasoning_mode = ReasoningMode.BRAVE
-                ctl.configuration.solve.models = 0
-                ctl.configuration.solve.enum_mode = "auto"
             case "cautious":
                 self.reasoning_mode = ReasoningMode.CAUTIOUS
-                ctl.configuration.solve.models = 0
-                ctl.configuration.solve.enum_mode = "auto"
             case _:
                 self.reasoning_mode = ReasoningMode.STANDARD
 
@@ -160,6 +155,40 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if self.using_optimization and self.optimization_sum.value > self.best_value:
             print(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
             self.best_value = self.optimization_sum.value
+
+        if control.assignment.is_total:
+            self.check_total(control)
+
+    def check_total(self, control: clingo.PropagateControl) -> None:
+        backtrack = self.evaluate_model(control)
+        myprint(f"Standard/Brave/Cautious model evaluated to {self.current_model}")
+        if backtrack:
+            myprint(f"backtracking {backtrack} due to brave/cautious model being updated")
+            return
+
+    def evaluate_model(self, ctl: clingo.PropagateControl) -> bool:
+        old_reasoning_mode_result = self.current_model
+        self.current_model = set()
+        self.update_current_model()
+        if old_reasoning_mode_result is None or self.reasoning_mode == ReasoningMode.STANDARD:
+            new_reasoning_mode_result = self.current_model.copy()
+        elif self.reasoning_mode == ReasoningMode.CAUTIOUS:
+            new_reasoning_mode_result = old_reasoning_mode_result.intersection(self.current_model)
+        elif self.reasoning_mode == ReasoningMode.BRAVE:
+            new_reasoning_mode_result = old_reasoning_mode_result.union(self.current_model)
+        else:
+            assert False
+        changed = new_reasoning_mode_result != old_reasoning_mode_result
+        self.current_model = new_reasoning_mode_result
+        if changed and (self.reasoning_mode == ReasoningMode.BRAVE or self.reasoning_mode == ReasoningMode.CAUTIOUS):
+            # should it be somethinbg about projections?
+            ng: set[int] = set().union(*(self.get_reasons(var) for var in self.symbol2var.values()))
+            myprint(f"Adding nogood {list(ng)} to enforce brave/cautious")
+            if ctl.add_nogood(ng, tag=False):
+                assert False, "Added violated constraint but solver did not detect it"
+            return True
+        else:
+            return
 
     def check_evaluate(self, ctl: clingo.PropagateControl):
         myprint("Checking evaluate atoms")
@@ -545,11 +574,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     assert False, f"Variable {symbol_var} not found in symbol2var"
                 self.symbol2var[symbol_var].parents.append(var)
 
-    def on_model(self, model: clingo.Model):
-        self.update_current_model()
-        self.update_clingo_model(model)
-        self.current_model.clear()
-
     def update_current_model(self):
         self.handle_on_model_warning(self.errors)
 
@@ -585,21 +609,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.handle_on_model_warning(self.optimization_sum.get_errors())
             print(f"Optimization value: {self.optimization_sum.value}")
 
-        if self.reasoning_mode_result is None:
-            self.reasoning_mode_result = self.current_model.copy()
-        elif self.reasoning_mode == ReasoningMode.CAUTIOUS:
-            self.reasoning_mode_result = self.reasoning_mode_result.intersection(self.current_model)
-        elif self.reasoning_mode == ReasoningMode.BRAVE:
-            self.reasoning_mode_result = self.reasoning_mode_result.union(self.current_model)
-
-    def update_clingo_model(self, model: clingo.Model):
+    def on_model(self, model: clingo.Model):
         # add to the clingo output the final result based on reasoning mode
         # For brave and cautious, we output the accumulated result (similar to clingo)
         # For standard, we output the current model
-        if self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS):
-            self.extend_clingo_model(model, self.reasoning_mode_result)
-        elif self.reasoning_mode == ReasoningMode.STANDARD:
-            self.extend_clingo_model(model, self.current_model)
+        for pyAtom in self.current_model:
+            clAtom = myClorm.pytocl(pyAtom)
+            myprint(f"adding atom {pyAtom}", end=" ")
+            myprint(f"= {clAtom}")
+            if not model.contains(clAtom):
+                model.extend([clAtom])
 
     def handle_on_model_value(self, var: clingo.Symbol, final_value: Any):
         if final_value is ValueStatus.NOT_SET:
@@ -668,12 +687,3 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 clingo.Function("", [clingo.Function(type(error).__name__), clingo.String(str(error))])
             )
             self.current_model.add(atom_)
-
-    def extend_clingo_model(self, model: clingo.Model, pyModel: set[atom.ResultAtom]) -> None:
-        for pyAtom in pyModel:
-            clAtom = myClorm.pytocl(pyAtom)
-            myprint(f"adding atom {pyAtom}", end=" ")
-            myprint(f"= {clAtom}")
-
-            if not model.contains(clAtom):
-                model.extend([clAtom])
