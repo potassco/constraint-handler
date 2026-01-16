@@ -6,6 +6,44 @@ Collections follow a *declare and assign* schema. Specific declare predicates ar
 
 ---
 
+## Notation
+The following sections require an expansion on the [Notation](base_types.md#notation) introduceed for base types to include collections.
+
+### Typed Sets
+While it is currently not possible to declare typed sets directly, we will still use the notation to indicate the type of elements contained in a set. This is done to indicate that certain operators only work on sets containing specific types.
+
+For this, we use the following notation
+
+```prolog
+set[A]
+```
+where `A` is a type variable representing the type of elements contained in the set.
+
+!!! Example
+    The types
+
+    ```prolog 
+    set[int]
+    set[str]
+    ```
+
+    represent sets containing only integers and strings, respectively.
+
+### Functions
+If an operator takes a function as an argument, we will indicate the entire signature of the function using the same notation as 
+for [operator signatures](base_types.md#operator-signatures)
+
+!!! Example
+    The signature
+
+    ```prolog
+    ((A,B) -> B,C) -> B | C
+    ```
+
+    represents a function that takes as input a function with signature `(A,B) -> B` and a value of type `C`, and returns a value of type `B` or `C`.
+
+---
+
 ## Set
 Sets are unordered collections of unique elements. They are useful for grouping items where order does not matter and duplicates are not allowed.
 
