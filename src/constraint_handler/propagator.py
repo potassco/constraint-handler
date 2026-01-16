@@ -60,7 +60,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # this is used for cautious reasoning
         # for the first model, the set is assigned the first model
         # This is will hold the model which is then used to update the result
-        self.current_model: set[atom.ResultAtom] | None = None
+        self.python_model: set[atom.ResultAtom] | None = None
 
     def get_configuration(self, ctl: clingo.Control):
         myprint(ctl.configuration.solve.enum_mode)
@@ -161,25 +161,25 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def check_total(self, control: clingo.PropagateControl) -> None:
         backtrack = self.evaluate_model(control)
-        myprint(f"Standard/Brave/Cautious model evaluated to {self.current_model}")
+        myprint(f"Standard/Brave/Cautious model evaluated to {self.python_model}")
         if backtrack:
             myprint(f"backtracking {backtrack} due to brave/cautious model being updated")
             return
 
     def evaluate_model(self, ctl: clingo.PropagateControl) -> bool:
-        old_reasoning_mode_result = self.current_model
-        self.current_model = set()
-        self.update_current_model()
-        if old_reasoning_mode_result is None or self.reasoning_mode == ReasoningMode.STANDARD:
-            new_reasoning_mode_result = self.current_model.copy()
+        old_model = self.python_model
+        self.python_model = set()
+        self.update_python_model()
+        if old_model is None or self.reasoning_mode == ReasoningMode.STANDARD:
+            new_model = self.python_model.copy()
         elif self.reasoning_mode == ReasoningMode.CAUTIOUS:
-            new_reasoning_mode_result = old_reasoning_mode_result.intersection(self.current_model)
+            new_model = old_model.intersection(self.python_model)
         elif self.reasoning_mode == ReasoningMode.BRAVE:
-            new_reasoning_mode_result = old_reasoning_mode_result.union(self.current_model)
+            new_model = old_model.union(self.python_model)
         else:
             assert False
-        changed = new_reasoning_mode_result != old_reasoning_mode_result
-        self.current_model = new_reasoning_mode_result
+        changed = new_model != old_model
+        self.python_model = new_model
         if changed and (self.reasoning_mode == ReasoningMode.BRAVE or self.reasoning_mode == ReasoningMode.CAUTIOUS):
             # should it be somethinbg about projections?
             ng: set[int] = set().union(*(self.get_reasons(var) for var in self.symbol2var.values()))
@@ -574,7 +574,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     assert False, f"Variable {symbol_var} not found in symbol2var"
                 self.symbol2var[symbol_var].parents.append(var)
 
-    def update_current_model(self):
+    def update_python_model(self):
         self.handle_on_model_warning(self.errors)
 
         for var in self.symbol2var.values():
@@ -603,7 +603,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             pyAtom = atom.Evaluated(
                 eval_var.op, eval_var.args, evaluator.get_baseType(eval_var.get_value()), eval_var.get_value()
             )
-            self.current_model.add(pyAtom)
+            self.python_model.add(pyAtom)
 
         if self.using_optimization:
             self.handle_on_model_warning(self.optimization_sum.get_errors())
@@ -613,7 +613,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # add to the clingo output the final result based on reasoning mode
         # For brave and cautious, we output the accumulated result (similar to clingo)
         # For standard, we output the current model
-        for pyAtom in self.current_model:
+        for pyAtom in self.python_model:
             clAtom = myClorm.pytocl(pyAtom)
             myprint(f"adding atom {pyAtom}", end=" ")
             myprint(f"= {clAtom}")
@@ -641,7 +641,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
         )
         pyAtom = atom.Value(var, pyVal)
-        self.current_model.add(pyAtom)
+        self.python_model.add(pyAtom)
 
         for value in final_value:
             if value is ValueStatus.NOT_SET:
@@ -650,7 +650,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             set_pyVal = expression.Val(evaluator.get_baseType(value), value)
             set_pyAtom = atom.Set_value(var, set_pyVal)
             # myprint(f"adding set atom {pyAtom}", end=" ")
-            self.current_model.add(set_pyAtom)
+            self.python_model.add(set_pyAtom)
 
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict):
         # TODO: If we want to use the ref system for the output here(for sets, etc) then
@@ -663,7 +663,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
         )
         pyAtom = atom.Value(var, pyVal)
-        self.current_model.add(pyAtom)
+        self.python_model.add(pyAtom)
 
         for key, value in final_value.items():
             if value is ValueStatus.NOT_SET:
@@ -674,16 +674,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 mm_pyVal = expression.Val(evaluator.get_baseType(val), val)
                 mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
 
-                self.current_model.add(mm_pyAtom)
+                self.python_model.add(mm_pyAtom)
 
     def handle_on_model_normal_type(self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol):
         pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
         pyAtom = atom.Value(var, pyVal)
-        self.current_model.add(pyAtom)
+        self.python_model.add(pyAtom)
 
     def handle_on_model_warning(self, errors: list[Exception]):
         for error in errors:
             atom_ = atom.Warning1(
                 clingo.Function("", [clingo.Function(type(error).__name__), clingo.String(str(error))])
             )
-            self.current_model.add(atom_)
+            self.python_model.add(atom_)
