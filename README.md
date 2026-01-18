@@ -26,15 +26,18 @@ editable mode.
 ```bash
 git clone https://github.com/potassco/constraint-handler
 cd constraint-handler
-pip install -e .
+pip install -e .[dev]
 ```
 
 ## Documentation
 
-To generate and open the documentation, run
+To generate the documentation, at least the "doc" part of the project needs to be installed.
+This is included in the "dev" installation.
+
+After that, to view the documentation locally, run:
 
 ```bash
-nox -s doc -- serve
+mkdocs serve
 ```
 
 ## Manual Execution
@@ -46,6 +49,3 @@ clingo your_facts.lp tests/example/includeAll.lp 0
 ```
 
 to solve all your described constraints.
-
-Instructions to install and use `nox` can be found in
-[DEVELOPMENT.md](./DEVELOPMENT.md)
