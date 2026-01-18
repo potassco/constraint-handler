@@ -2,6 +2,11 @@
 
 This page documents the conditional expressions available in the constraint handler. All conditionals can be used just like normal operators known from the [base_types](base_types.md) or [collections](collections.md) documentation pages.
 
+## Notation
+On this page, we will expand the notation introduced in the [Operators](operators.md) documentation page to also include conditionals.
+
+Even though a `Condition` is an [Expression](language_concepts.md#expression) that evaluates to [bool](base_types.md#bool), we will mark it as `C` in the operator signatures to better indicate that this is the condition the respective conditional is based on.
+
 ---
 
 ## If (If-Then)
@@ -10,7 +15,7 @@ Sometimes operations should only be performed when a certain condition is met. F
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `if` | If-Then | ([bool](base_types.md#bool), any) $\to$ [none](base_types.md#none) \| any <br><br> **Example:** <br> (true, [int](base_types.md#int)) $\to$ [int](base_types.md#int) <br> (false, [int](base_types.md#int)) $\to$ [none](base_types.md#none)| If the `Condition` holds, then the `Expression` is evaluated. Otherwise, the conditional evaluates to [none](base_types.md#none). |
+| `if` | If-Then | (C, A) $\to$ [none](base_types.md#none) \| A | If the condition `C` holds, then the expression `A` is evaluated. Otherwise, the conditional evaluates to [none](base_types.md#none). |
 
 !!! Example
     ```prolog
@@ -44,7 +49,7 @@ The `ite` operator expands on the `if` operator by allowing to specify an altern
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `ite` | If-Then-Else | ([bool](base_types.md#bool), any, any) $\to$ any <br><br> **Example:** <br> (true, [int](base_types.md#int), [bool](base_types.md#bool)) $\to$ [int](base_types.md#int) <br> (false, [int](base_types.md#int), [bool](base_types.md#bool)) $\to$ [bool](base_types.md#bool)| If the `Condition` holds, evaluates the first expression, otherwise the second. |
+| `ite` | If-Then-Else | (C, A, B) $\to$ A \| B | If the condition [`C`] holds, evaluates the expression `A`, otherwise the expression `B`. |
 
 !!! Example
     ```prolog
@@ -78,7 +83,7 @@ The `default` operator is used to provide a fallback value if the first expressi
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `default` | Default | (any, any) $\to$ any <br><br> **Example:** <br> ([int](base_types.md#int), [bool](base_types.md#bool)) $\to$ [int](base_types.md#int) <br> ([none](base_types.md#none), [bool](base_types.md#bool)) $\to$ [bool](base_types.md#bool) | Returns the first value if it is defined, otherwise the second. |
+| `default` | Default | (A, B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
 
 !!! Example
     ```prolog
@@ -112,7 +117,7 @@ The `hasValue` operator checks whether an expression is defined (not `none`).
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `hasValue` | Has Value | (any) $\to$ [bool](base_types.md#bool) | Returns `true` if the argument is defined, otherwise `false`. |
+| `hasValue` | Has Value | (T) $\to$ [bool](base_types.md#bool) | Returns `true` if the argument is defined, otherwise `false`. |
 
 !!! Example
     ```prolog
