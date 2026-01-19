@@ -31,7 +31,6 @@ LINKS = {
     # Language Concepts
     "Language Concepts":    "reference/language_concepts/",
     "Valuation":            "reference/language_concepts/#valuation",
-    "Expressions":          "reference/language_concepts/#expression",
     "Expression":           "reference/language_concepts/#expression",
     "Statement":            "reference/language_concepts/#statement",
     "Declaration":          "reference/language_concepts/#declaration",
@@ -45,6 +44,8 @@ LINKS = {
     "Ensure":               "reference/core_syntax/#ensure",
 
     # Base Types
+    "Type":                 "reference/base_types/",
+    "Base Type":           "reference/base_types/",
     "None":                 "reference/base_types/#none",
     "Int":                  "reference/base_types/#int",
     "Bool":                 "reference/base_types/#bool",
@@ -81,5 +82,9 @@ def on_page_markdown(markdown, page, config, files):
         resolved_url = get_relative_url(target_path, page.url)
         
         definitions.append(f"[{label}]: {resolved_url}")
+
+        # Plural variants
+        if not label.endswith('s'):
+            definitions.append(f"[{label}s]: {resolved_url}")
         
     return markdown + "\n".join(definitions)
