@@ -27,6 +27,9 @@ documentation.
 import os
 
 LINKS = {
+    # User Guide
+    "installation": "user_guide/installation.md",
+
     # Language Concepts
     "Language Concepts": "reference/language_concepts.md",
     "Valuation": "reference/language_concepts.md#valuation",
