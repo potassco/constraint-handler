@@ -3,7 +3,6 @@ This module defines a MkDocs hook that appends standardized link definitions
 to the end of each Markdown page. This allows authors to use consistent link
 labels throughout the documentation without manually defining them on each page.
 
-
 Link labels are shortcuts for commonly referenced documents or sections. Instead
 of typing out full URLs, authors can simply use the defined labels in their
 Markdown content.
@@ -20,48 +19,61 @@ After defining the label
 we can instead simply type [SomeSection] and it will automatically resolve to the
 full link at build time.
 
-This makes it more convenient and robust to maintain links, as changes to target URLs 
-only need to be made in one place (the LINKS dictionary) rather than throughout the entire 
+This makes it more convenient and robust to maintain links, as changes to target URLs
+only need to be made in one place (the LINKS dictionary) rather than throughout the entire
 documentation.
 """
 
-from mkdocs.utils import get_relative_url
+import os
 
 LINKS = {
     # Language Concepts
-    "Language Concepts":    "reference/language_concepts/",
-    "Valuation":            "reference/language_concepts/#valuation",
-    "Expression":           "reference/language_concepts/#expression",
-    "Statement":            "reference/language_concepts/#statement",
-    "Declaration":          "reference/language_concepts/#declaration",
-    "Result":               "reference/language_concepts/#result",
-    
+    "Language Concepts": "reference/language_concepts.md",
+    "Valuation": "reference/language_concepts.md#valuation",
+    "Expression": "reference/language_concepts.md#expression",
+    "Statement": "reference/language_concepts.md#statement",
+    "Declaration": "reference/language_concepts.md#declaration",
+    "Result": "reference/language_concepts.md#result",
     # Core Syntax
-    "Core Syntax":          "reference/core_syntax/",
-    "Value":                "reference/core_syntax/#value",
-    "Variable":             "reference/core_syntax/#variable",
-    "Operation":            "reference/core_syntax/#operation",
-    "Ensure":               "reference/core_syntax/#ensure",
-
+    "Core Syntax": "reference/core_syntax.md",
+    "Value": "reference/core_syntax.md#value",
+    "Val": "reference/core_syntax.md#value",
+    "Variable": "reference/core_syntax.md#variable",
+    "Domain": "reference/core_syntax.md#domain",
+    "variable_domain": "reference/core_syntax.md#domain",
+    "variable_define": "reference/core_syntax.md#define",
+    "variable_declare": "reference/core_syntax.md#declare",
+    "variable_declareOptional": "reference/core_syntax.md#optional",
+    "Operation": "reference/core_syntax.md#operation",
+    "Ensure": "reference/core_syntax.md#ensure",
     # Base Types
-    "Type":                 "reference/base_types/",
-    "Base Type":           "reference/base_types/",
-    "None":                 "reference/base_types/#none",
-    "Int":                  "reference/base_types/#int",
-    "Bool":                 "reference/base_types/#bool",
-    "Float":                "reference/base_types/#float",
-    "String":               "reference/base_types/#string",
-    "Symbol":               "reference/base_types/#symbol",
-
+    "Type": "reference/base_types.md",
+    "Base Type": "reference/base_types.md",
+    "None": "reference/base_types.md#none",
+    "Int": "reference/base_types.md#int",
+    "Bool": "reference/base_types.md#bool",
+    "Float": "reference/base_types.md#float",
+    "String": "reference/base_types.md#string",
+    "Symbol": "reference/base_types.md#symbol",
     # Collections
-    "Set":                  "reference/collections/#set",
-    "Multimap":             "reference/collections/#multimap",
-
+    "Collection": "reference/collections.md",
+    "Set": "reference/collections.md#set",
+    "set_declare": "reference/collections.md#declaration",
+    "set_assign": "reference/collections.md#assigning-elements",
+    "set_value": "reference/collections.md#output_1",
+    "multimap_declare": "reference/collections.md#declaration_1",
+    "multimap_assign": "reference/collections.md#assigning-key-value-pairs",
+    "multimap_value": "reference/collections.md#output_3",
+    "Multimap": "reference/collections.md#multimap",
     # Conditionals
-    "If":                   "reference/conditionals/#if",
-    "Ite":                  "reference/conditionals/#ite",
-    "Default":              "reference/conditionals/#default",
-    "HasValue":             "reference/conditionals/#hasvalue",
+    "If": "reference/conditionals.md#if",
+    "Ite": "reference/conditionals.md#ite",
+    "Default": "reference/conditionals.md#default",
+    "HasValue": "reference/conditionals.md#hasvalue",
+    # Optimization
+    "optimize_maximizeSum": "reference/optimization.md#maximize-sum",
+    # Error Handling
+    "warning": "reference/error_handling.md#warning",
 }
 """
 The dictionary of link labels to their corresponding target paths.
@@ -72,19 +84,35 @@ relative paths to the target files or sections within the documentation.
 
 def on_page_markdown(markdown, page, config, files):
     """
-    Generates Markdown link definitions from the LINKS dictionary 
-    and appends them to the bottom of every page.
+    Generates Markdown link definitions relative to the source file location.
+
+    Technically, we could use relative paths to the /doc/ directory, which would
+    require less complexity here. However, this leads to issues with mkdocs where
+    paths using `.md` are not found and paths without it are unrecognized.
+
+    The paths without `.md` would still work, but mkdocs would emit warnings for
+    each occurrence, which clutters the build output and may hide real issues.
+
+    This, we resort to calculating relative paths from the source file to ensure
+    that links are correctly resolved without warnings.
     """
-    
     definitions = ["\n\n"]
     
-    for label, target_path in LINKS.items():
-        resolved_url = get_relative_url(target_path, page.url)
-        
-        definitions.append(f"[{label}]: {resolved_url}")
+    current_dir = os.path.dirname(page.file.src_uri)
+    
+    for label, target in LINKS.items():
+        if '#' in target:
+            path, anchor = target.split('#', 1)
+            anchor = '#' + anchor
+        else:
+            path = target
+            anchor = ''
 
-        # Plural variants
-        if not label.endswith('s'):
-            definitions.append(f"[{label}s]: {resolved_url}")
+        rel_path = os.path.relpath(path, current_dir).replace(os.sep, '/')
+        final_link = f"{rel_path}{anchor}"
         
+        definitions.append(f"[{label}]: {final_link}")
+        if not label.endswith('s'):
+            definitions.append(f"[{label}s]: {final_link}")
+
     return markdown + "\n".join(definitions)
