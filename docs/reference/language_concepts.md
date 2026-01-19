@@ -49,8 +49,8 @@ A list of expressions used in the constraint handler.
 | [val] | Refers to a specific value in the current valuation. |
 | [variable] | Retrieves the value of a variable from the current valuation. |
 | [operation] | Combines multiple expressions using operators based on [Types] and [Collections]. |
-| lambda | Defines anonymous functions that can be applied to expressions. |
-| tuple expression | Multiple expressions combined into one [List]. |
+| [lambda] | Defines anonymous functions that can be applied to expressions. |
+| [tuple expression] | Multiple expressions combined into one [List]. |
 
 
 ## Statement
@@ -106,12 +106,12 @@ A list of statements used in the constraint handler.
 
 | Statement | Description |
 |-|-|
-| assert | Checks whether a given condition holds in the current valuation; fails if the condition is not met. |
-| assign | Assigns a value to a variablen. |
-| if | Conditionally executes one of two statements based on whether a condition holds. |
-| while | Repeats a statement while a condition holds (up to a fixed iteration limit). |
-| seq2 | Executes two statements in sequence: the first transforms the valuation, then the second operates on the result. |
-| noop | A "no-operation" statement (pass). It succeeds without changing the valuation. |
+| [assert][Assert Statement] | Checks whether a given condition holds in the current valuation; fails if the condition is not met. |
+| [assign] | Assigns a value to a variablen. |
+| [if][If Statement] | Conditionally executes one of two statements based on whether a condition holds. |
+| [while] | Repeats a statement while a condition holds (up to a fixed iteration limit). |
+| [seq2] | Executes two statements in sequence: the first transforms the valuation, then the second operates on the result. |
+| [noop] | A "no-operation" statement (pass). It succeeds without changing the valuation. |
 
 ## Fact
 
@@ -145,9 +145,9 @@ A list of declarations used to define problems.
 |-|-|
 | assign | Declares a variable and assigns it a value from a specified domain. |
 | [ensure] | Declares a constraint that must hold in all valid solutions. |
-| compute | |
-| computed | |
-| evaluate | |
+| [compute] | |
+| [computed] | |
+| [evaluate] | |
 | **Variable** | |
 | [domain] | Defines a domain of possible values for variables. |
 | [variable_declare] | Declares a variable with a specified domain. |
@@ -162,14 +162,14 @@ A list of declarations used to define problems.
 | [multimap_assign] | Declares a multimap
 | **Optimization** | |
 | [optimize_maximizeSum] | Declares a maximization objective based on the sum of values. |
-| optimize_precision | Declares the precision floats in the optimization are handled with. |
+| [optimize_precision] | Declares the precision floats in the optimization are handled with. |
 | **Preference** | |
-| preference_maximizeScore | |
-| preference_holds | |
-| preference_variableValue | |
+| [preference_maximizeScore] | |
+| [preference_holds] | |
+| [preference_variableValue] | |
 | **Execution** | |
-| execution_declare | |
-| execution_run | |
+| [execution_declare] | |
+| [execution_run] | |
 
 ### Result
 Output facts represent the results produced by the constraint handler after solving a problem. They indicate which variables have been assigned specific values in a solution, warnings and preferences.
@@ -194,5 +194,5 @@ A list of output facts used to represent results.
 | [set_value] | Indicates the assigned value of a variable in the solution. |
 | [multimap_value] | Indicates the assigned value of a variable in the solution. |
 | [warning] | Represents a warning message generated during solving. |
-| evaluated | Represents the evaluation of an expression in the solution. |
-| preference_score | Represents the score of a preference in the solution. |
+| [evaluated] | Represents the evaluation of an expression in the solution. |
+| [preference_score] | Represents the score of a preference in the solution. |
