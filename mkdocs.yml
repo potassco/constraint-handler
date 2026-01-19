@@ -121,3 +121,5 @@ plugins:
             predicate_table: true
             start_level: 1
 
+hooks:
+  - docs/_hooks/links_hook.py
