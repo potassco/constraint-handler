@@ -2,14 +2,14 @@
 
 This section introduces the fundamental concepts of the **constraint_handler** library. It explains how to define data, perform calculations, and enforce rules within your ASP programs.
 
-For a complete specification of every predicate and operator, please consult the Reference section.
+For a complete specification of every predicate and operator, please consult the Reference section. It's recommended to start with the [Language Concepts] to better understand the overall design philosophy.
 
 ---
 
 ## Input & Output
 The constraint handler operates on a simple principle:
 
-1.  **Input:** You write declarative rules using the handler's predicates (like `variable_define`, `ensure`, `operation`) to define your problem.
+1.  **Input:** You write declarative rules using the handler's predicates and function symbols (like `variable_define`, `ensure`, `operation`) to define your problem.
 2.  **Output:** The handler processes these rules and adds new atoms (like `value`) to the final stable model, representing the computed results.
 
 ---
@@ -19,13 +19,15 @@ One of the main advantages of the constraint handler is its ability to seamlessl
 
 While Clingo primarily handles integers and symbolic constants, the constraint handler extends this to include:
 
-* **Primitives:** [Floats](../reference/base_types.md#float), [Strings](../reference/base_types.md#string), and [Booleans](../reference/base_types.md#bool).
-* **Collections:** [Sets](../reference/collections.md#set) and [Multimaps](../reference/collections.md#multimap).
+* **Primitives:** [Floats], [Strings], and [Bools].
+* **Collections:** [Sets] and [Multimaps].
+
+> For a comprehensive list of supported types, please refer to the [Base Types] and [Collections] sections in the reference.
 
 ---
 
 ## Values
-Because the handler supports many types, it needs a way to distinguish between them (e.g., the *integer* `5` vs. the *string* `"5"`). We use the `val/2` wrapper for this purpose.
+Because the handler supports many types, it needs a way to distinguish between them (e.g., the integer `5` vs. the string `"5"`). We use the `val/2` wrapper for this purpose.
 
 **Syntax:** `val(Type, Data)`
 
@@ -36,7 +38,7 @@ Because the handler supports many types, it needs a way to distinguish between t
     val(float, float("3.14"))
     ```
 
-> For full details, see the [Value](../reference/core_syntax.md#value) reference.
+> For full details, see the [Value] reference.
 
 ---
 
@@ -55,9 +57,9 @@ Variables allow you to store specific values and reuse them later. You can creat
     variable_define(s1, x, val(int, 42)).
     ```
 
-To use this variable in a later expression, you reference it using `variable(x)`.
+To use this variable in a later [Expression], you reference it using `variable(x)`.
 
-> For full details, see the [Variable](../reference/core_syntax.md#variable) reference.
+> For full details, see the [Variable] reference.
 
 ---
 
@@ -75,7 +77,7 @@ To perform calculations—such as arithmetic, logical comparisons, or set manipu
     operation(add, (variable(x), (variable(y), ())))
     ```
 
-> For more information, refer to the [Operation](../reference/core_syntax.md#operation) reference. A list of operators is attached to each respective type in the [Base Type](../reference/base_types.md) or [Collections](../reference/collections.md) sections.
+> For more information, refer to the [Operation] reference. A list of operators is attached to each respective type in the [Base Type] or [Collections] sections.
 
 ---
 
@@ -84,7 +86,7 @@ While assignments *create* data, constraints *validate* it.
 
 The `ensure/2` predicate asserts that a specific condition must be true. If the condition fails, the constraint handler rejects the current model (similar to an integrity constraint `:- ...` in standard ASP).
 
-**Syntax:** `ensure(StatementID, Condition)`
+**Syntax:** `ensure(Identifier, Condition)`
 
 !!! Example
     Ensuring that variable `z` is greater than 10:
@@ -92,4 +94,4 @@ The `ensure/2` predicate asserts that a specific condition must be true. If the 
     ensure(check_z, operation(gt, (variable(z), (val(int, 10), ())))).
     ```
 
-> For more details, see [Constraints](../reference/core_syntax.md#ensure) in the reference.
+> For more details, see [Ensure] in the reference.
