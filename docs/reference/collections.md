@@ -120,7 +120,7 @@ The constraint handler provides a `makeSet` operator to create sets directly wit
     To create the same set `my_set` and add the [ints] `1`, `3` and `5` to it using `makeSet`, you would use the following code:
 
     ```prolog
-    assign(bla, my_set, operation(makeSet, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
+    variable_define(bla, my_set, operation(makeSet, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
     ```
 
     This results in the following output atoms:
