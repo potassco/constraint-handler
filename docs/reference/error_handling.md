@@ -50,10 +50,10 @@ warning(Type, Identifiers, Details)
 Here, we outline the various error types that can be reported by the constraint handler.
 
 ### Variable
-This section covers errors related to variable declarations and definitions.
+This section covers errors related to [Variable] declarations and definitions.
 
 #### Empty Domain
-This error occurs when a variable does not have any possible values in its domain.
+This error occurs when a [Variable] does not have any possible values in its [Domain].
 
 ```prolog
 warning(variable(emptyDomain), _,Variable)
@@ -77,7 +77,7 @@ warning(variable(emptyDomain), _,Variable)
     ```
 
 #### Undeclared
-This error occurs when a variable has a defined domain but has not been declared.
+This error occurs when a [Variable] has a defined [Domain] but has not been [declared][variable_declare].
 
 ```prolog
 warning(variable(undeclared), (), Variable)
@@ -101,7 +101,7 @@ warning(variable(undeclared), (), Variable)
     ```
 
 #### Multiple Declarations
-This error occurs when a variable has multiple declarations with different domains.
+This error occurs when a [Variable] has multiple declarations with different [Domains].
 
 ```prolog
 warning(variable(multipleDeclarations), _, (Variable, Domains...))
@@ -126,7 +126,7 @@ warning(variable(multipleDeclarations), _, (Variable, Domains...))
     ```
 
 #### Multiple Definitions
-This error occurs when a variable is defined more than once within the same scope.
+This error occurs when a [Variable] is defined more than once within the same scope.
 
 ```prolog
 warning(variable(multipleDefinitions), _, (Variable, Expressions...))
