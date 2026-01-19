@@ -31,7 +31,7 @@ where `A` is a type variable representing the type of elements contained in the 
 
 ### Functions
 If an operator takes a function as an argument, we will indicate the entire signature of the function using the same notation as 
-for [operator signatures](base_types.md#operator-signatures)
+for [Operator Signatures]
 
 !!! Example
     The signature
@@ -62,7 +62,7 @@ set_declare(Identifier, Name).
 
 
 #### Output
-This, just like in the case of [Variables](core_syntax.md#variable), adds an atom of `value/2` to the model. Here, the value is a reference to the set.
+This, just like in the case of [Variables], adds an atom of `value/2` to the model. Here, the value is a reference to the set.
 ```prolog
 value(set_name, val(set, ref(variable(set_name))))
 ```
@@ -94,7 +94,7 @@ set_value(Name, Value)
 | `Value` | The actual value being added to the set using the `val/2` predicate. |
 
 !!! Example
-    To create the set `my_set` and add the [ints](base_types.md/#int) `1`, `3` and `5` to it, you would use the following code:
+    To create the set `my_set` and add the [ints] `1`, `3` and `5` to it, you would use the following code:
 
     ```prolog
     set_declare(name, my_set).
@@ -117,7 +117,7 @@ set_value(Name, Value)
 The constraint handler provides a `makeSet` operator to create sets directly within expressions.
 
 !!! Example
-    To create the same set `my_set` and add the [ints](base_types.md/#int) `1`, `3` and `5` to it using `makeSet`, you would use the following code:
+    To create the same set `my_set` and add the [ints] `1`, `3` and `5` to it using `makeSet`, you would use the following code:
 
     ```prolog
     assign(bla, my_set, operation(makeSet, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
@@ -138,20 +138,20 @@ Once a set is created (either via declaration or returned from another operation
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `makeSet` | Make Set | ([list](core_syntax.md#list)[[any](base_types.md)]) $\to$ [set](#set)[[any](base_types.md)] | Creates a new set explicitly from a list of arguments. |
+| `makeSet` | Make Set | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
 | **Set Theory** | | | |
-| `union` | Union | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing elements from both sets. |
-| `inter` | Intersection | ([set](#set), [set](#set)) $\to$ [set](#set) | Returns a new set containing only elements common to both sets. |
-| `subset` | Subset | ([set](#set), [set](#set)) $\to$ [bool](base_types.md#bool) | `true` if first set is a subset of the second. |
+| `union` | Union | ([set], [set]) $\to$ [set] | Returns a new set containing elements from both sets. |
+| `inter` | Intersection | ([set], [set]) $\to$ [set] | Returns a new set containing only elements common to both sets. |
+| `subset` | Subset | ([set], [set]) $\to$ [bool] | `true` if first set is a subset of the second. |
 | **Membership** | | | |
-| `isin` | Is In | ([any](base_types.md), [set](#set)) $\to$ [bool](base_types.md#bool) | `true` if the element is contained in the set. |
-| `notin` | Not In | ([any](base_types.md), [set](#set)) $\to$ [bool](base_types.md#bool) | `true` if the element is NOT contained in the set. |
+| `isin` | Is In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is contained in the set. |
+| `notin` | Not In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is NOT contained in the set. |
 | **Analysis** | | | |
-| `length` | Cardinality | ([set](#set)) $\to$ [int](base_types.md#int) | Returns the number of elements in the set. |
-| `set_fold` | Fold | ((A,B) $\to$ B, [set](#set)(A), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
+| `length` | Cardinality | ([set]) $\to$ [int] | Returns the number of elements in the set. |
+| `set_fold` | Fold | ((A,B) $\to$ B, [set](A), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
 | **Comparison** | | | |
-| `eq` | Equality | ([set](#set) \| [none](#none), [set](#set) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. Two sets have the same value if they contain the same values. |
-| `neq` | Inequality | ([set](#set) \| [none](#none), [set](#set) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
+| `eq` | Equality | ([set] \| [none], [set] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two sets have the same value if they contain the same values. |
+| `neq` | Inequality | ([set] \| [none], [set] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 
 ---
 
@@ -172,7 +172,7 @@ multimap_declare(Identifier, Name).
 | `Name` | A unique identifier of the multimap. |
 
 #### Output
-This, just like in the case of [Variables](core_syntax.md#variable), adds an atom of `value/2` to the model. Here, the value is the identifier of the multimap.
+This, just like in the case of [Variables], adds an atom of `value/2` to the model. Here, the value is the identifier of the multimap.
 ```prolog
 value(Name, val(multimap, Name)).
 ```
@@ -249,17 +249,17 @@ can be used in expressions.
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `multimapMake` | Make Map | ([list](core_syntax.md#list)[([any](base_types.md), [any](base_types.md))]) $\to$ [multimap](#multimap) | Creates a new multimap from a list of `(Key, Value)` tuples. |
+| `multimapMake` | Make Map | ([list]\[(K, V)\]) $\to$ [multimap]\[K, V\] | Creates a new multimap from a list of `(Key, Value)` tuples. |
 | **Analysis** | | | |
-| `countKeys` | Count Keys | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Returns the number of unique keys in the map. |
-| `countEntries` | Count Entries | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Returns the total number of key-value pairs. |
-| `sumIntEntries`| Sum Entries | ([multimap](#multimap)) $\to$ [int](base_types.md#int) | Sums all integer values contained in the map. |
-| `maxEntries` | Max Entry | ([multimap](#multimap)) $\to$ [any](base_types.md) | Returns the maximum value stored in the map (by value, not key). |
-| `minEntries` | Min Entry | ([multimap](#multimap)) $\to$ [any](base_types.md) | Returns the minimum value stored in the map. |
+| `countKeys` | Count Keys | ([multimap]) $\to$ [int] | Returns the number of unique keys in the map. |
+| `countEntries` | Count Entries | ([multimap]) $\to$ [int] | Returns the total number of key-value pairs. |
+| `sumIntEntries`| Sum Entries | ([multimap]) $\to$ [int] | Sums all integer values contained in the map. |
+| `maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ [V] | Returns the maximum value stored in the map (by value, not key). |
+| `minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ [V] | Returns the minimum value stored in the map. |
 | **Operations** | | | |
-| `find` | Find | ([multimap](#multimap), [any](base_types.md)) $\to$ [list](core_syntax.md#list) | Retrieves the list of value(s) associated with a specific key. |
-| `isin` | Has Key | ([any](base_types.md), [multimap](#multimap)) $\to$ [bool](base_types.md#bool) | `true` if the specific **Key** exists in the map. |
-| `multimap_fold`| Fold | ([multimap](#multimap), any, any) $\to$ any | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.|
+| `find` | Find | ([multimap]\[K, V\], K) $\to$ [list]\[V\] | Retrieves the list of value(s) associated with a specific key. |
+| `isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
+| `multimap_fold`| Fold | ([multimap], any, any) $\to$ any | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.|
 | **Comparison** | | | |
-| `eq` | Equality | ([multimap](#multimap) \| [none](#none), [multimap](#multimap) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
-| `neq` | Inequality | ([multimap](#multimap) \| [none](#none), [multimap](#multimap) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
+| `eq` | Equality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
+| `neq` | Inequality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |

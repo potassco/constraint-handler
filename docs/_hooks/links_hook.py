@@ -50,6 +50,7 @@ LINKS = {
     "Ensure": "reference/core_syntax.md#ensure",
     # Base Types
     "Type": "reference/base_types.md",
+    "Operator Signatures": "reference/base_types.md#operator-signatures",
     "Base Type": "reference/base_types.md",
     "None": "reference/base_types.md#none",
     "Int": "reference/base_types.md#int",
