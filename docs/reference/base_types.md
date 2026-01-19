@@ -1,10 +1,10 @@
 # Base Types
 
-This section documents the fundamental data types supported by the **constraint_handler**. Each type comes with its own set of operators and functions.
+This section documents the fundamental data types supported by the **constraint_handler**. Each type comes with its own set of operators.
 
 ---
 ## Notation
-In the following sections we will use the following notation to describe types and their available operators.
+In the following sections, we will use the here declared notation to describe types and their available operators.
 
 ### Operator Signatures
 Operators are described using a function signature notation:
@@ -13,7 +13,7 @@ Operators are described using a function signature notation:
 (input_type1, input_type2, ...) -> output_type
 ```
 
-Where `input_type` and `output_type` refer to the data types involved in the operation. 
+Where `input_type` and `output_type` refer to the data types involved in the [Operation]. 
 
 #### Simple
 Simple operators often only require a single input type and produce a single output type. For example, an addition operator for integers would be represented as:
@@ -28,10 +28,11 @@ Sometimes the output type may be a union of multiple types, indicating that the 
 ```prolog
 (int, int) -> int | float
 ```
-Could represent some division operation that returns an integer when the division is exact, and a float otherwise.
+Could represent some division [Operation] that returns an integer when the division is exact, and a float otherwise.
 
 #### Generic Variables
 Capitalized letters act as placeholders for any type.
+
  - **Consistency:** If the same letter appears multiple times (e.g., `A`), all arguments using that letter must be of the same type.
  - **Distinctness:** Different letters (e.g., `A` and `B`) can represent different types.
 
@@ -77,12 +78,12 @@ value(name, val(none, none))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Comparison** | | | |
-| `eq` | Equality | ([none](#none) \| T, [none](#none) \| T) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([none](#none) \| T, [none](#none) \| T) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
+| `eq` | Equality | ([none] \| T, [none] \| T) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([none] \| T, [none] \| T) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 | **Logical** | | | |
-| `limp` | Implication | ([none](#none) \| [bool](#bool), [none](#none) \| [bool](#bool)) $\to$ [none](#none) | If either of the values is `none`, the result will be `none`. Otherwise, this follows the standard implication rules from [bool](#bool). |
+| `limp` | Implication | ([none] \| [bool], [none] \| [bool]) $\to$ [none] | If either of the values is `none`, the result will be `none`. Otherwise, this follows the standard implication rules from [bool]. |
 | **Negation** | | | |
-| `lnot` | Classical Negation | ([none](#none)) $\to$ [none](#none) | The negation of `none` is still `none`. |
+| `lnot` | Classical Negation | ([none]) $\to$ [none] | The negation of `none` is still `none`. |
 
 ---
 
@@ -102,24 +103,24 @@ value(name, val(bool, false))
 
 ### Supported Operators
 !!! info
-    Some of the operators like `conj` and `disj` accept any number of arguments, these use the [list](core_syntax.md#list) notation as shown in the expression section. Others are strictly unary or binary.
+    Some of the operators like `conj` and `disj` accept any number of arguments, these use the [list] notation as shown in the expression section. Others are strictly unary or binary.
 
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Comparison** | | | | |
-| `eq` | Equality | ([bool](#bool) \| [none](#none), [bool](#bool) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([bool](#bool) \| [none](#none), [bool](#bool) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
+| `eq` | Equality | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 | **Logical** | | | | |
-| `conj` | Conjunction | ([list](core_syntax.md#list)[[bool](#bool)]) $\to$ [bool](#bool) | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
-| `disj` | Disjunction | ([list](core_syntax.md#list)[[bool](#bool)]) $\to$ [bool](#bool) | `true` if *at least one* argument in the list is true. |
-| `limp` | Implication | ([bool](#bool), [bool](#bool)) $\to$ [bool](#bool) | `false` only if the first argument is `true` and the second is `false`. Otherwise `true`. | [bool](#bool) \| [none](#none) |
-| `lxor` | Exclusive OR | ([list](core_syntax.md#list)[[bool](#bool)]) $\to$ [bool](#bool)  | `true` if an **odd** number of arguments are `true`. |
-| `leqv` | Equivalence | ([list](core_syntax.md#list)[[bool](#bool)]) $\to$ [bool](#bool)  | `true` if an **even** number of arguments are `true`. |
+| `conj` | Conjunction | ([list]\[[bool]\]) $\to$ [bool] | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
+| `disj` | Disjunction | ([list]\[[bool]\]) $\to$ [bool] | `true` if *at least one* argument in the list is true. |
+| `limp` | Implication | ([bool], [bool]) $\to$ [bool] | `false` only if the first argument is `true` and the second is `false`. Otherwise `true`. | [bool] \| [none] |
+| `lxor` | Exclusive OR | ([list]\[[bool]\]) $\to$ [bool]  | `true` if an **odd** number of arguments are `true`. |
+| `leqv` | Equivalence | ([list]\[[bool]\]) $\to$ [bool]  | `true` if an **even** number of arguments are `true`. |
 | **Negation** | | | | |
-| `lnot` | Logical | ([bool](#bool)) $\to$ [bool](#bool) | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). |
-| `snot` | Strong | ([bool](#bool)) $\to$ [bool](#bool) | Treats undefined/missing values as `false`. |
-| `wnot` | Weak | ([bool](#bool)) $\to$ [bool](#bool) | Treats undefined/missing values as `true`. |
+| `lnot` | Logical | ([bool]) $\to$ [bool] | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). |
+| `snot` | Strong | ([bool]) $\to$ [bool] | Treats undefined/missing values as `false`. |
+| `wnot` | Weak | ([bool]) $\to$ [bool] | Treats undefined/missing values as `true`. |
 
 !!! Example
     Checking for inequality of two variables
@@ -152,28 +153,28 @@ value(name, val(int, -7))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Arithmetic** | | | |
-| `add` | Addition | ([int](#int), [int](#int)) $\to$ [int](#int) | Adds two integers. |
-| `sub` | Subtraction | ([int](#int), [int](#int)) $\to$ [int](#int) | Subtracts the second integer from the first. |
-| `mult` | Multiplication | ([int](#int), [int](#int)) $\to$ [int](#int) | Multiplies two integers. |
-| `div` | Integer Division | ([int](#int), [int](#int)) $\to$ [int](#int) | Divides the first integer by the second. |
-| `pow` | Exponentiation | ([int](#int), [int](#int)) $\to$ [int](#int) | Raises the first integer to the power of the second. |
-| `abs` | Absolute Value | ([int](#int)) $\to$ [int](#int) | Returns the absolute value of the integer. |
-| `minus` | Unary Minus | ([int](#int)) $\to$ [int](#int) | Negates the integer. |
+| `add` | Addition | ([int], [int]) $\to$ [int] | Adds two integers. |
+| `sub` | Subtraction | ([int], [int]) $\to$ [int] | Subtracts the second integer from the first. |
+| `mult` | Multiplication | ([int], [int]) $\to$ [int] | Multiplies two integers. |
+| `div` | Integer Division | ([int], [int]) $\to$ [int] | Divides the first integer by the second. |
+| `pow` | Exponentiation | ([int], [int]) $\to$ [int] | Raises the first integer to the power of the second. |
+| `abs` | Absolute Value | ([int]) $\to$ [int] | Returns the absolute value of the integer. |
+| `minus` | Unary Minus | ([int]) $\to$ [int] | Negates the integer. |
 | **Trigonometry** | | | |
-| `sqrt` | Square Root | ([int](#int)) $\to$ [float](#float) | Calculates the square root of the integer. |
-| `sin` | Sine | ([int](#int)) $\to$ [float](#float) | Calculates the sine of the integer. |
-| `cos` | Cosine | ([int](#int)) $\to$ [float](#float) | Calculates the cosine of the integer. |
-| `tan` | Tangent | ([int](#int)) $\to$ [float](#float) | Calculates the tangent of the integer. |
-| `asin` | Arc Sine | ([int](#int)) $\to$ [float](#float) | Calculates the inverse sine. |
-| `acos` | Arc Cosine | ([int](#int)) $\to$ [float](#float) | Calculates the inverse cosine. |
-| `atan` | Arc Tangent | ([int](#int)) $\to$ [float](#float) | Calculates the inverse tangent. |
+| `sqrt` | Square Root | ([int]) $\to$ [float] | Calculates the square root of the integer. |
+| `sin` | Sine | ([int]) $\to$ [float] | Calculates the sine of the integer. |
+| `cos` | Cosine | ([int]) $\to$ [float] | Calculates the cosine of the integer. |
+| `tan` | Tangent | ([int]) $\to$ [float] | Calculates the tangent of the integer. |
+| `asin` | Arc Sine | ([int]) $\to$ [float] | Calculates the inverse sine. |
+| `acos` | Arc Cosine | ([int]) $\to$ [float] | Calculates the inverse cosine. |
+| `atan` | Arc Tangent | ([int]) $\to$ [float] | Calculates the inverse tangent. |
 | **Comparison** | | | |
-| `eq` | Equality | ([int](#int) \| [none](#none), [int](#int) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([int](#int) \| [none](#none), [int](#int) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
-| `lt` | Less Than | ([int](#int), [int](#int)) $\to$ [bool](#bool) | `true` if first is strictly less than second. |
-| `leq` | Less Than or Equal | ([int](#int), [int](#int)) $\to$ [bool](#bool) | `true` if first is less than or equal to second. |
-| `gt` | Greater Than | ([int](#int), [int](#int)) $\to$ [bool](#bool) | `true` if first is strictly greater than second. |
-| `geq` | Greater Than or Equal | ([int](#int), [int](#int)) $\to$ [bool](#bool) | `true` if first is greater than or equal to second. |
+| `eq` | Equality | ([int] \| [none], [int] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([int] \| [none], [int] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
+| `lt` | Less Than | ([int], [int]) $\to$ [bool] | `true` if first is strictly less than second. |
+| `leq` | Less Than or Equal | ([int], [int]) $\to$ [bool] | `true` if first is less than or equal to second. |
+| `gt` | Greater Than | ([int], [int]) $\to$ [bool] | `true` if first is strictly greater than second. |
+| `geq` | Greater Than or Equal | ([int], [int]) $\to$ [bool] | `true` if first is greater than or equal to second. |
 
 !!! Example
     Adding two integers
@@ -208,36 +209,36 @@ value(name, val(float, float("-0.001")))
 
 ### Supported Operators
 !!! info "Type Promotion" 
-    If a binary operation involves one [int](#int) and one [float](#float) (e.g. the addition of an int and a float), the integer is automatically promoted to a float. The result is then calcualted as if both operands were floats.
+    If a binary operation involves one [int] and one [float] (e.g. the addition of an int and a float), the integer is automatically promoted to a float. The result is then calcualted as if both operands were floats.
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Arithmetic** | | | |
-| `add` | Addition | ([float](#float), [float](#float)) $\to$ [float](#float) | Adds two floats. |
-| `sub` | Subtraction | ([float](#float), [float](#float)) $\to$ [float](#float) | Subtracts the second float from the first. |
-| `mult` | Multiplication | ([float](#float), [float](#float)) $\to$ [float](#float) | Multiplies two floats. |
-| `div` | Division | ([float](#float), [float](#float)) $\to$ [float](#float) | Performs integer division on two floats. |
-| `fdiv` | Float Division | ([float](#float), [float](#float)) $\to$ [float](#float) | Performs explicit floating point division. |
-| `floor` | Floor | ([float](#float)) $\to$ [float](#float) | Rounds the float down to the nearest integer value. |
-| `pow` | Exponentiation | ([float](#float), [float](#float)) $\to$ [float](#float) | Raises the first value to the power of the second. |
-| `abs` | Absolute Value | ([float](#float)) $\to$ [float](#float) | Returns the absolute value. |
-| `minus` | Unary Minus | ([float](#float)) $\to$ [float](#float) | Negates the value. |
-| `max` | Maximum | ([float](#float), [float](#float)) $\to$ [float](#float) | Returns the larger of the two values. |
+| `add` | Addition | ([float], [float]) $\to$ [float] | Adds two floats. |
+| `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
+| `mult` | Multiplication | ([float], [float]) $\to$ [float] | Multiplies two floats. |
+| `div` | Division | ([float], [float]) $\to$ [float] | Performs integer division on two floats. |
+| `fdiv` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
+| `floor` | Floor | ([float]) $\to$ [float] | Rounds the float down to the nearest integer value. |
+| `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
+| `abs` | Absolute Value | ([float]) $\to$ [float] | Returns the absolute value. |
+| `minus` | Unary Minus | ([float]) $\to$ [float] | Negates the value. |
+| `max` | Maximum | ([float], [float]) $\to$ [float] | Returns the larger of the two values. |
 | **Trigonometry** | | | |
-| `sqrt` | Square Root | ([float](#float)) $\to$ [float](#float) | Calculates the square root. |
-| `sin` | Sine | ([float](#float)) $\to$ [float](#float) | Calculates the sine. |
-| `cos` | Cosine | ([float](#float)) $\to$ [float](#float) | Calculates the cosine. |
-| `tan` | Tangent | ([float](#float)) $\to$ [float](#float) | Calculates the tangent. |
-| `asin` | Arc Sine | ([float](#float)) $\to$ [float](#float) | Calculates the inverse sine. |
-| `acos` | Arc Cosine | ([float](#float)) $\to$ [float](#float) | Calculates the inverse cosine. |
-| `atan` | Arc Tangent | ([float](#float)) $\to$ [float](#float) | Calculates the inverse tangent. |
+| `sqrt` | Square Root | ([float]) $\to$ [float] | Calculates the square root. |
+| `sin` | Sine | ([float]) $\to$ [float] | Calculates the sine. |
+| `cos` | Cosine | ([float]) $\to$ [float] | Calculates the cosine. |
+| `tan` | Tangent | ([float]) $\to$ [float] | Calculates the tangent. |
+| `asin` | Arc Sine | ([float]) $\to$ [float] | Calculates the inverse sine. |
+| `acos` | Arc Cosine | ([float]) $\to$ [float] | Calculates the inverse cosine. |
+| `atan` | Arc Tangent | ([float]) $\to$ [float] | Calculates the inverse tangent. |
 | **Comparison** | | | |
-| `eq` | Equality | ([float](#float) \| [none](#none), [float](#float) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([float](#float) \| [none](#none), [float](#float) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
-| `lt` | Less Than | ([float](#float), [float](#float)) $\to$ [bool](#bool) | `true` if first is strictly less than second. |
-| `leq` | Less Than or Equal | ([float](#float), [float](#float)) $\to$ [bool](#bool) | `true` if first is less than or equal to second. |
-| `gt` | Greater Than | ([float](#float), [float](#float)) $\to$ [bool](#bool) | `true` if first is strictly greater than second. |
-| `geq` | Greater Than or Equal | ([float](#float), [float](#float)) $\to$ [bool](#bool) | `true` if first is greater than or equal to second. |
+| `eq` | Equality | ([float] \| [none], [float] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([float] \| [none], [float] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
+| `lt` | Less Than | ([float], [float]) $\to$ [bool] | `true` if first is strictly less than second. |
+| `leq` | Less Than or Equal | ([float], [float]) $\to$ [bool] | `true` if first is less than or equal to second. |
+| `gt` | Greater Than | ([float], [float]) $\to$ [bool] | `true` if first is strictly greater than second. |
+| `geq` | Greater Than or Equal | ([float], [float]) $\to$ [bool] | `true` if first is greater than or equal to second. |
 
 !!! Example
     Multiplying two floats
@@ -272,11 +273,11 @@ value(name, val(str, "Constraint Handling"))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Manipulation** | | | |
-| `concat` | Concatenation | ([string](#string), [string](#string)) $\to$ [string](#string) | Joins two strings together. |
-| `length` | Length | ([string](#string)) $\to$ [int](#int) | Returns the number of characters in the string. |
+| `concat` | Concatenation | ([string], [string]) $\to$ [string] | Joins two strings together. |
+| `length` | Length | ([string]) $\to$ [int] | Returns the number of characters in the string. |
 | **Comparison** | | | |
-| `eq` | Equality | ([string](#string) \| [none](#none), [string](#string) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([string](#string) \| [none](#none), [string](#string) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
+| `eq` | Equality | ([string] \| [none], [string] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([string] \| [none], [string] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 
 !!! Example
     Concatenating a prefix to a name.
@@ -311,12 +312,12 @@ value(name, val(symbol, state(idle)))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Comparison** | | | |
-| `eq` | Equality | ([symbol](#symbol) \| [none](#none), [symbol](#symbol) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([symbol](#symbol) \| [none](#none), [symbol](#symbol) \| [none](#none)) $\to$ [bool](#bool) | `true` if both arguments have different values, otherwise `false`. |
-| `lt` | Less Than | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if first argument is smaller than the second. |
-| `leq` | Less Than or Equal | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if first argument is smaller than or equal to the second. |
-| `gt` | Greater Than | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if first argument is larger than the second. |
-| `geq` | Greater Than or Equal | ([symbol](#symbol), [symbol](#symbol)) $\to$ [bool](#bool) | `true` if first argument is larger than or equal to the second. |
+| `eq` | Equality | ([symbol] \| [none], [symbol] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([symbol] \| [none], [symbol] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
+| `lt` | Less Than | ([symbol], [symbol]) $\to$ [bool] | `true` if first argument is smaller than the second. |
+| `leq` | Less Than or Equal | ([symbol], [symbol]) $\to$ [bool] | `true` if first argument is smaller than or equal to the second. |
+| `gt` | Greater Than | ([symbol], [symbol]) $\to$ [bool] | `true` if first argument is larger than the second. |
+| `geq` | Greater Than or Equal | ([symbol], [symbol]) $\to$ [bool] | `true` if first argument is larger than or equal to the second. |
 
 !!! Example 
     Checking if a status variable is set to error.
