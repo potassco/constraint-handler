@@ -1,11 +1,11 @@
 # Conditionals
 
-This page documents the conditional expressions available in the constraint handler. All conditionals can be used just like normal operators known from the [base_types](base_types.md) or [collections](collections.md) documentation pages.
+This page documents the conditional expressions available in the constraint handler. All conditionals can be used just like normal operators known from the [Base Types] or [Collections] documentation pages.
 
 ## Notation
-On this page, we will expand the notation introduced in the [Operators](operators.md) documentation page to also include conditionals.
+On this page, we will expand the notation introduced in the [Collections] documentation page to also include conditionals.
 
-Even though a `Condition` is an [Expression](language_concepts.md#expression) that evaluates to [bool](base_types.md#bool), we will mark it as `C` in the operator signatures to better indicate that this is the condition the respective conditional is based on.
+Even though a `Condition` is an [Expression] that evaluates to [bool], we will mark it as `C` in the operator signatures to better indicate that this is the condition the respective conditional is based on.
 
 ---
 
@@ -15,7 +15,7 @@ Sometimes operations should only be performed when a certain condition is met. F
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `if` | If-Then | (C, A) $\to$ [none](base_types.md#none) \| A | If the condition `C` holds, then the expression `A` is evaluated. Otherwise, the conditional evaluates to [none](base_types.md#none). |
+| `if` | If-Then | (C, A) $\to$ [none] \| A | If the condition `C` holds, then the [Expression] `A` is evaluated. Otherwise, the conditional evaluates to [none]. |
 
 !!! Example
     ```prolog
@@ -34,7 +34,7 @@ Sometimes operations should only be performed when a certain condition is met. F
     variable_define(name, z, operation(if, (val(bool, false),(val(int,2),())))).
     ```
 
-    Here, since the condition is `false`, `z` will be assigned [none](base_types.md#none).
+    Here, since the condition is `false`, `z` will be assigned [none].
 
     The model will contain the atom:
     ```prolog
@@ -45,7 +45,7 @@ Sometimes operations should only be performed when a certain condition is met. F
 
 ## Ite (If-Then-Else)
 
-The `ite` operator expands on the `if` operator by allowing to specify an alternative expression to be evaluated when the condition does not hold.
+The `ite` operator expands on the `if` operator by allowing to specify an alternative [Expression] to be evaluated when the condition does not hold.
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
@@ -79,7 +79,7 @@ The `ite` operator expands on the `if` operator by allowing to specify an altern
 
 ## Default
 
-The `default` operator is used to provide a fallback value if the first expression is undefined (e.g. evaluates to [`none`](base_types.md#none)).
+The `default` operator is used to provide a fallback value if the first [Expression] is undefined (e.g. evaluates to [`none`]).
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
@@ -102,7 +102,7 @@ The `default` operator is used to provide a fallback value if the first expressi
     variable_define(name, z, operation(default, (val(none, none),(val(int,5),())))).
     ```
 
-    Here, since the first value is [none](base_types.md#none), `z` will be assigned the value `5`.
+    Here, since the first value is [none], `z` will be assigned the value `5`.
 
     The model will contain the atom:
     ```prolog
@@ -113,11 +113,11 @@ The `default` operator is used to provide a fallback value if the first expressi
 
 ## hasValue
 
-The `hasValue` operator checks whether an expression is defined (not `none`).
+The `hasValue` operator checks whether an [Expression] is defined (not `none`).
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `hasValue` | Has Value | (T) $\to$ [bool](base_types.md#bool) | Returns `true` if the argument is defined, otherwise `false`. |
+| `hasValue` | Has Value | (T) $\to$ [bool] | Returns `true` if the argument is defined, otherwise `false`. |
 
 !!! Example
     ```prolog
