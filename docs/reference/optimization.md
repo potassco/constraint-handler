@@ -4,7 +4,7 @@ This page documents the native optimization capabilities of the constraint handl
 
 ## Maximize Sum
 
-The optimization module supports maximizing the sum of a set of expressions. This is done using the `optimize_maximizeSum/3` predicate.
+The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/3` predicate.
 
 ```prolog
 optimize_maximizeSum(Identifier, Expression, Key)
@@ -19,7 +19,7 @@ optimize_maximizeSum(Identifier, Expression, Key)
 
 ### Single Value
 
-When wanting to optimize over a single value, the result could be captured in a variable which is then optimized using the `optimize_maximizeSum/3` predicate directly. Here, single value doesn't mean the result has to be based on a single variable, just that the result can be captured in a single expression.
+When wanting to optimize over a single value, the result could be captured in a [Variable] which is then optimized using the `optimize_maximizeSum/3` predicate directly. Here, single value doesn't mean the result has to be based on a single variable, just that the result can be captured in a single [Expression].
 
 !!! Example "Example 1: Optimization Over a Single Variable"
     Consider a program that defines the variables `x` with a single value between `1` and `10`.
@@ -59,9 +59,9 @@ When wanting to optimize over a single value, the result could be captured in a 
     value(x,val(int,10))
     value(y,val(int,10))
     ```
-### Multiple value
+### Multiple Values
 
-Sometimes, the exact number of variables is unknown or represents the optimization taget itself. In these cases, the optimization can be expressed using multimaps to capture all values that should be optimized over.
+Sometimes, the exact number of [Variables] is unknown or represents the optimization taget itself. In these cases, the optimization can be expressed using multimaps to capture all [Values] that should be optimized over.
 
 !!! Example "Example 3: Optimization Over Multiple Values"
     Consider a program that defines some items as follows:
