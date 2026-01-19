@@ -32,10 +32,12 @@ LINKS = {
     "Valuation": "reference/language_concepts.md#valuation",
     "Expression": "reference/language_concepts.md#expression",
     "Statement": "reference/language_concepts.md#statement",
+    "Fact": "reference/language_concepts.md#fact",
     "Declaration": "reference/language_concepts.md#declaration",
     "Result": "reference/language_concepts.md#result",
     # Core Syntax
     "Core Syntax": "reference/core_syntax.md",
+    "List": "reference/core_syntax.md#list",
     "Value": "reference/core_syntax.md#value",
     "Val": "reference/core_syntax.md#value",
     "Variable": "reference/core_syntax.md#variable",
@@ -110,7 +112,7 @@ def on_page_markdown(markdown, page, config, files):
 
         rel_path = os.path.relpath(path, current_dir).replace(os.sep, '/')
         final_link = f"{rel_path}{anchor}"
-        
+
         definitions.append(f"[{label}]: {final_link}")
         if not label.endswith('s'):
             definitions.append(f"[{label}s]: {final_link}")

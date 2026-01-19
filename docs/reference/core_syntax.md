@@ -1,6 +1,20 @@
-# Base Language
+# Core Syntax
 
 This page documents the core syntax and fundamental building blocks of the constraint handler.
+
+---
+
+## Notation
+
+In the following sections, we will introduce the notation used throughout the documentation to describe the various elements of the constraint handler.
+
+While in the previous [Language Concepts] page we used an abstract syntax to introduce general concepts such as [Expressions] and [Declarations], this page mainly focuses on the specific syntax used by the constraint handler to represent these concepts in ASP.
+
+However, for documentation purposes, we will often use more meaningful names for arguments instead of the generic ones introduced previously and will refer to their respective concepts accordingly.
+
+For example, we will use `Identifier` to refer to unique names assigned to specific [Declarations]. These identifiers can be any term, but we want to make it more specific. They typically appear as the first argument in their respective predicates.
+
+Similarly, we will use the term `Name` to refer to unique names assigned to variables. Like `Identifier`, these can be any term. They typically appear as the second argument in their respective predicates.
 
 ---
 
@@ -9,63 +23,61 @@ This page documents the core syntax and fundamental building blocks of the const
 The base syntax follows standard ASP predicates and function symbols.
 
 ### Simple
-A simple expression or predicate with a fixed number of arguments could be represented as follows:
+A simple [Declaration] with a fixed number of arguments could be represented as follows:
 
 ```prolog
-some_element(Identifier, Term, Term)
+some_predicate(Identifier, Term, Term)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `some_element` | The type of expression or predicate. |
-| `Identifier` | A unique identifier. |
-| `Term` | An argument specific to the type. |
+| `some_predicate` | The identifier of the predicate. |
+| `Identifier` | A term used as a unique identifier of this specific atom. |
+| `Term` | Some argument of the predicate. |
 
 !!! Example
-    A simple expression `my_expression` with the unique identifier `expr_1` and three terms:
+    A simple declaration `some_predicate` with the unique identifier `my_predicate` and three terms:
     ```prolog
-    my_expression(expr_1, term_1, term_2, term_3)
+    some_predicate(my_predicate, term_1, term_2, term_3)
     ```
 
 ### List
 
-For elements with varying numbers of arguments, the constraint handler uses a list syntax.
+For arguments with varying numbers of elements, the constraint handler uses a list syntax.
 
-Lists are represented as recursive tuples. More precisely, a list is either the empty tuple `()` or a tuple of the form `(Head, Tail)`, where `Head` is the first element of the list and `Tail` is another list representing the rest of the elements. A list has to be terminated by the empty tuple.
-
-```prolog
-some_element(Identifier, Terms)
-```
-
-| Name | Description |
-| :--- | :--- |
-| `some_expression` | The type of expression or predicate. |
-| `Identifier` | A unique identifier. |
-| `Terms` | A list of terms specific to the type. |
-
+Lists are represented as recursive tuples. More precisely, a list is either the empty tuple `()` or a tuple of the form `(Head, Tail)`, where `Head` is the first element of the list and `Tail` is another list representing the rest of the arguments. A list has to be terminated by the empty tuple.
 
 !!! Example
-    A list expression `my_list_expression` with the unique identifier `list_expr_1` and three terms:
+    Given some predicate with a definition like:
+
     ```prolog
-    my_list_expression(list_expr_1, (term_1, (term_2, (term_3, ()))))
+    some_predicate(Identifier, Terms)
+    ```
+
+    where Terms represents a list of terms, one could represent a list with three terms as follows:
+
+    ```prolog
+    some_predicate(my_predicate, (term_1, (term_2, (term_3, ()))))
     ```
 
 ---
 
 ## Value
 
-Values represent concrete instances of data of some [type](./base_types.md) or [collection](./collections.md) used in rules and constraints.
+**[Expression]**{.badge .expression }
+
+Values represent concrete instances of data of some [Type] or [Collection] used in rules and constraints.
 
 To work with a value directly, the constraint handler uses the `val/2` function symbol.
 
 ```prolog
-val(Type, Value)
+val(Type, Term)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Type` | The data type of the value. | 
-| `Value` | The actual value, which should correspond to the specified type. |
+| `Type` | The data type of the value. This should correspond to one of the supported types in the constraint handler, such as [int], [bool], etc. | 
+| `Term` | The actual value, which should correspond to the specified type. |
 
 
 !!! Example 
@@ -81,6 +93,8 @@ val(Type, Value)
 Variables represent references to values that can be reused throughout the program. The constraint handler provides multiple ways of assigning values to variables.
 
 ### Output
+
+**[Result]**{.badge .result }
 
 When a variable is assigned a value, an atom of the `value/2` predicate is added to the model.
 
@@ -106,6 +120,8 @@ value(Name, Value)
 
 ### Define
 
+**[Declaration]**{.badge .declaration }
+
 The simplest way to create variables is to use the `variable_define/3` predicate to define them with a specific value.
 
 ```prolog
@@ -114,20 +130,22 @@ variable_define(Identifier, Name, Expression).
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific expression. |
+| `Identifier` | A unique identifier for this specific [Declaration]. |
 | `Name` | A unique identifier for the variable. |
-| `Expression` | An expression that evaluates to a value. |
+| `Expression` | An [Expression] to be associated with the variable. |
 
-This assigns a specific value to the variable `Name` based on the evaluation of `Expression`. 
+This assigns a specific value to the variable `Name` based on the [Valuation] of `Expression`. 
 
 The result is a single `value/2` atom in the model.
 
 ### Declare
 
+**[Declaration]**{.badge .declaration }
+
 A more advanced technique is to declare variables using the `variable_declare/3` predicate. Instead of creating a single variable with a specific value, this declares possible values from a given set of possible values (domain).
 
 !!! Note
-    While [define](#define) creates a single `value/2` atom in all models. The [declare](#declare) approach creates multiple models with different `value/2` atoms based on the domain.
+    While [Define](#define) creates a single `value/2` atom in all models. The [Declare](#declare) approach creates multiple models with different `value/2` atoms based on the domain.
 
 ```prolog
 variable_declare(Identifier, Name, Domain).
@@ -135,9 +153,9 @@ variable_declare(Identifier, Name, Domain).
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific expression. |
+| `Identifier` | A unique identifier for this specific [Declaration]. |
 | `Name` | A unique identifier for the variable. |
-| `Domain` | An expression that evaluates to a domain of possible values. |
+| `Domain` | An [Expression] that evaluates to a domain of possible values. |
 
 !!! Example
     Declaring a variable `x` that can take the boolean values `true` or `false`:
@@ -160,6 +178,8 @@ variable_declare(Identifier, Name, Domain).
 
 #### Domain
 
+**[Fact]**{.badge .fact }
+
 While the constraint handler provides a shortcut for boolean domains, users can also define custom domains.
 
 ##### From List
@@ -172,7 +192,7 @@ fromList(Values)
 
 | Name | Description |
 | :--- | :--- |
-| `Values` | A list of values representing the domain. |
+| `Values` | A [List] of [Values] representing the domain. |
 
 !!! Example
     Creating a variable `y` that can take the integer values `1`, `2`, or `3`:
@@ -252,7 +272,7 @@ variable_declareOptional(Name).
 
 ### Usage
 
-While it is technically possible to use the `value/2` predicate to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their expressions.
+While it is technically possible to use the `value/2` [Result] to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their [Expressions].
 
 This function symbol retreives the value stored in the specified variable.
 
@@ -276,16 +296,18 @@ variable(Name)
 
 ## Operation
 
+**[Expression]**{.badge .expression }
+
 Operations are the key aspect of the constraint handler that allow expressing arbitrary computations. To achieve this, the constraint handler uses the `operation/2` predicate together with a collection of operators.
 
 ```prolog
-operation(Operator, Arguments).
+operation(Operator, Terms).
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Operator` | The operator to be applied. For a full list of supported operators by specific types, please refer to the respective pages in the reference. |
-| `Arguments` | A list of arguments on which the operator will be applied. Arguments can be [values](#value), [variables](#variable), or even other operations. |
+| `Terms` | A list of arguments on which the operator will be applied. Terms can be [Values], [Variables], or even other operations. |
 
 !!! Example
     Adding two variables `x` and `y` and assigning the result to variable `z`
@@ -344,6 +366,9 @@ In this case, one or more elements of the argument list will be entire `operatio
     ```
 
 ## Ensure
+
+**[Declaration]**{.badge .declaration }
+
 Ensures allow users to specify conditions that must hold true in the model.
 
 ### Input
@@ -359,12 +384,12 @@ ensure(Identifier, Condition).
 | `Condition` | The condition that must be satisfied in the model. |
 
 ### Condition
-Conditions can be any expression with a [bool](./base_types.md#bool) result. If the condition evaluates to false, the model is considered invalid.
+Conditions can be any expression with a [Bool] result. If the condition evaluates to false, the model is considered invalid.
 
 !!! info "Strict Evaluation"
     The constraint handler is strict. The condition must explicitly evaluate to `true`. If a condition cannot be evaluated (e.g., because it references a variable that was never assigned), the constraint is considered violated.
 
-If a variable itself is of type [bool](./base_types.md#bool), it can be used directly as a condition.
+If a variable itself is of type [Bool], it can be used directly as a condition.
 
 !!! Example
     Ensure that a variable `x` is true:
