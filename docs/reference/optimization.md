@@ -33,7 +33,7 @@ When wanting to optimize over a single value, the result could be captured in a 
     The variable `x` can then be maximized using:
 
     ```prolog
-    optimize_maximizeSum(max_x, variable_value(x), total).
+    optimize_maximizeSum(max_x, variable(x), total).
     ```
 
     The result will be the model where `x` takes the value `10`.
