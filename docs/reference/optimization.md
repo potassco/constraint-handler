@@ -4,6 +4,8 @@ This page documents the native optimization capabilities of the constraint handl
 
 ## Maximize Sum
 
+**[Declaration]**{.badge .declaration }
+
 The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/3` predicate.
 
 ```prolog

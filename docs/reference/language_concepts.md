@@ -4,6 +4,8 @@ This page details the core concepts of the constraint handler's modeling languag
 !!! Note
     Here, we will use simpler syntax in order to not distract from the unterlying core concepts. The actual syntax used in the constraint handler will be explained in [Core Syntax] and other reference pages.
 
+---
+
 ## Valuation
 A Valuation is a mapping (association) from variables to values. It represents the "state" of the system at a specific point in time or in a specific solution.
 
@@ -19,6 +21,8 @@ We denote such mappings as:
     ```
 
     This valuation indicates that the variable `x` has the value `5`.
+
+---
 
 ## Expression
 An Expression is a term that takes a specific value in the context of a valuation.
@@ -52,6 +56,7 @@ A list of expressions used in the constraint handler.
 | [lambda] | Defines anonymous functions that can be applied to expressions. |
 | [tuple expression] | Multiple expressions combined into one [List]. |
 
+---
 
 ## Statement
 In contrast to expressions, statements do not yield values directly. Instead, they represent actions that either transform a given input valuation into an output valuation, or fail.
@@ -113,6 +118,8 @@ A list of statements used in the constraint handler.
 | [seq2] | Executes two statements in sequence: the first transforms the valuation, then the second operates on the result. |
 | [noop] | A "no-operation" statement (pass). It succeeds without changing the valuation. |
 
+---
+
 ## Fact
 
 Facts correspond to ASP atoms or predicate instances that appear at the top level of an encoding or model. The constraint handler differentiates between two types of facts:
@@ -170,6 +177,8 @@ A list of declarations used to define problems.
 | **Execution** | |
 | [execution_declare] | Prepares a statement for execution by declaring it with a specific name and providing input and output. |
 | [execution_run] | Runs a previously declared execution. |
+
+---
 
 ### Result
 Output facts represent the results produced by the constraint handler after solving a problem. They indicate which variables have been assigned specific values in a solution, warnings and preferences.

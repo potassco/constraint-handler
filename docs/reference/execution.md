@@ -46,7 +46,7 @@ execution_output(ExecutionName, Name)
 
 ---
 
-## Transformation (Assign)
+## Assign
 
 **[Statement]**{.badge .statement }
 

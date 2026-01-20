@@ -7,6 +7,8 @@ This page documents the types of errors and warnings that can be reported by the
 
 ## Warning
 
+**[Result]**{.badge .result }
+
 The constraint handler has the ability to capture certain types of errors without interrupting the solving process. Instead, whenever such errors are encountered, a `warning` predicate is used to report these issues.
 
 !!! Note

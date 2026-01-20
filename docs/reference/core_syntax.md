@@ -178,13 +178,14 @@ variable_declare(Identifier, Name, Domain).
 
 #### Domain
 
-**[Fact]**{.badge .fact }
 
 While the constraint handler provides a shortcut for boolean domains, users can also define custom domains.
 
 ##### From List
 
-An easy way to define a domain is to use the `fromList` function symbol together with a list of possible values.
+**[Expression]**{.badge .expression }
+
+An easy way to define a domain is to use the `fromList` function symbol together with a list of [Expressions] defining the possible values.
 
 ```prolog
 fromList(Values)
@@ -192,7 +193,7 @@ fromList(Values)
 
 | Name | Description |
 | :--- | :--- |
-| `Values` | A [List] of [Values] representing the domain. |
+| `Values` | A [List] of [Expressions] representing the [Values] of the domain. |
 
 !!! Example
     Creating a variable `y` that can take the integer values `1`, `2`, or `3`:
@@ -215,7 +216,9 @@ fromList(Values)
 
 ##### From Facts
 
-Another way to define a domain is to use the `fromFacts/0` predicate. However, this additionally requires the use of the `variable_domain/2` predicate to extract the possible values from existing facts.
+**[Declaration]**{.badge .declaration }
+
+Another way to define a domain is to use the `fromFacts/0` function symbol. However, this additionally requires the use of the `variable_domain/2` predicate to extract the possible values from existing facts.
 
 ```prolog
 variable_domain(Name, Domain).
@@ -247,6 +250,8 @@ variable_domain(Name, Domain).
 
 #### Optional
 
+**[Declaration]**{.badge .declaration }
+
 Variables that are declared using a domain can also be marked as optional. This means that the variable may also not be assigned any value at all.
 
 ```prolog
@@ -271,6 +276,8 @@ variable_declareOptional(Name).
     ```
 
 ### Usage
+
+**[Expression]**{.badge .expression }
 
 While it is technically possible to use the `value/2` [Result] to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their [Expressions].
 
@@ -369,10 +376,7 @@ In this case, one or more elements of the argument list will be entire `operatio
 
 **[Declaration]**{.badge .declaration }
 
-Ensures allow users to specify conditions that must hold true in the model.
-
-### Input
-To specify conditions that must hold true in the model, the constraint handler provides the `ensure/2` predicate.
+Ensures allow users to specify conditions that must hold true in the model. For this, the constraint handler provides the `ensure/2` predicate.
 
 ```prolog
 ensure(Identifier, Condition).

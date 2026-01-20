@@ -64,11 +64,11 @@ LINKS = {
     # Collections
     "Collection": "reference/collections.md",
     "Set": "reference/collections.md#set",
-    "set_declare": "reference/collections.md#declaration",
-    "set_assign": "reference/collections.md#assigning-elements",
+    "set_declare": "reference/collections.md#declare",
+    "set_assign": "reference/collections.md#assign",
     "set_value": "reference/collections.md#output_1",
-    "multimap_declare": "reference/collections.md#declaration_1",
-    "multimap_assign": "reference/collections.md#assigning-key-value-pairs",
+    "multimap_declare": "reference/collections.md#declare_1",
+    "multimap_assign": "reference/collections.md#assign_1",
     "multimap_value": "reference/collections.md#output_3",
     "Multimap": "reference/collections.md#multimap",
     # Conditionals
@@ -79,7 +79,7 @@ LINKS = {
     # Optimization
     "optimize_maximizeSum": "reference/optimization.md#maximize-sum",
     # Execution
-    "Assign Statement": "reference/execution.md#transformation-assign",
+    "Assign Statement": "reference/execution.md#assign",
     "execution_declare": "reference/execution.md#declare",
     "execution_run": "reference/execution.md#run",
     "If Statement": "reference/execution.md#if",

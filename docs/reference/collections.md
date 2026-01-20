@@ -47,10 +47,14 @@ for [Operator Signatures]
 ## Set
 Sets are unordered collections of unique elements. They are useful for grouping items where order does not matter and duplicates are not allowed.
 
-### Declaration
+### Declare
+
 To declare a new set, use the `set_declare/2` predicate:
 
 #### Input
+
+**[Declaration]**{.badge .declaration }
+
 ```prolog
 set_declare(Identifier, Name).
 ```
@@ -62,15 +66,21 @@ set_declare(Identifier, Name).
 
 
 #### Output
+
+**[Result]**{.badge .result }
+
 This, just like in the case of [Variables], adds an atom of `value/2` to the model. Here, the value is a reference to the set.
 ```prolog
 value(set_name, val(set, ref(variable(set_name))))
 ```
 
-### Assigning Elements
+### Assign
 
 To add elements to a set, use the `set_assign/3` predicate:
 #### Input
+
+**[Declaration]**{.badge .declaration }
+
 ```prolog
 set_assign(Identifier, Name, Value).
 ```
@@ -82,6 +92,9 @@ set_assign(Identifier, Name, Value).
 | `Value` | The value to be added to the set. |
 
 #### Output
+
+**[Result]**{.badge .result }
+
 Assigning a value to a set adds an atom of `set_value/2` to the model.
 
 ```prolog
@@ -158,10 +171,14 @@ Once a set is created (either via declaration or returned from another operation
 ## Multimap
 Multimaps are collections that associate keys with values. Unlike standard maps or dictionaries, where a single key is associated with a single value, multimaps associate a each key to a set of values.
 
-### Declaration
+### Declare
+
 To declare a new multimap manually, use the `multimap_declare/2` predicate.
 
 #### Input
+
+**[Declaration]**{.badge .declaration }
+
 ```prolog
 multimap_declare(Identifier, Name).
 ```
@@ -172,14 +189,21 @@ multimap_declare(Identifier, Name).
 | `Name` | A unique identifier of the multimap. |
 
 #### Output
+
+**[Result]**{.badge .result }
+
 This, just like in the case of [Variables], adds an atom of `value/2` to the model. Here, the value is the identifier of the multimap.
 ```prolog
 value(Name, val(multimap, Name)).
 ```
 
-### Assigning Key-Value Pairs
+### Assign
+
 To add key-value pairs to a multimap, use the `multimap_assign/4` predicate:
 #### Input
+
+**[Declaration]**{.badge .declaration }
+
 ```prolog
 multimap_assign(Identifier, Name, Key, Value).
 ```
@@ -192,6 +216,9 @@ multimap_assign(Identifier, Name, Key, Value).
 | `Value` | The value in form of a `val/2` to be associated with the key in the multimap. |
 
 #### Output
+
+**[Result]**{.badge .result }
+
 Assigning a key-value pair to a multimap adds an atom of `multimap_value/5` to the model.
 
 ```prolog
