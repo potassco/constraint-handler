@@ -9,6 +9,8 @@
     --doc-symbol-declaration-bg-color: oklch(70% 0.154 211 / 0.15);
     --doc-symbol-result-fg-color: oklch(70% 0.209 151);
     --doc-symbol-result-bg-color: oklch(70% 0.209 151 / 0.15);
+    --doc-symbol-statement-fg-color: oklch(70% 0.165 50);
+    --doc-symbol-statement-bg-color: oklch(70% 0.165 50 / 0.15);
 }
 
 [data-md-color-scheme="slate"] .md-header,
@@ -99,4 +101,10 @@ a.badge,
     background-color: var(--doc-symbol-result-bg-color);
     color: var(--doc-symbol-result-fg-color);
     border: 1px solid var(--doc-symbol-result-fg-color);
+}
+
+.statement {
+    background-color: var(--doc-symbol-statement-bg-color);
+    color: var(--doc-symbol-statement-fg-color);
+    border: 1px solid var(--doc-symbol-statement-fg-color);
 }

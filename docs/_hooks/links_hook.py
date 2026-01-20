@@ -82,6 +82,11 @@ LINKS = {
     "Assign Statement": "reference/execution.md#transformation-assign",
     "execution_declare": "reference/execution.md#declare",
     "execution_run": "reference/execution.md#run",
+    "If Statement": "reference/execution.md#if",
+    "seq2": "reference/execution.md#sequence",
+    "noop": "reference/execution.md#no-operation",
+    "assert": "reference/execution.md#assert",
+    "while": "reference/execution.md#while",
     # Error Handling
     "warning": "reference/error_handling.md#warning",
 }
