@@ -106,8 +106,8 @@ A list of statements used in the constraint handler.
 
 | Statement | Description |
 |-|-|
-| [assert][Assert Statement] | Checks whether a given condition holds in the current valuation; fails if the condition is not met. |
-| [assign] | Assigns a value to a variablen. |
+| [assert] | Checks whether a given condition holds in the current valuation; fails if the condition is not met. |
+| [assign][Assign Statement] | Assigns a value to a variable within the context of the statement. |
 | [if][If Statement] | Conditionally executes one of two statements based on whether a condition holds. |
 | [while] | Repeats a statement while a condition holds (up to a fixed iteration limit). |
 | [seq2] | Executes two statements in sequence: the first transforms the valuation, then the second operates on the result. |
@@ -168,8 +168,8 @@ A list of declarations used to define problems.
 | [preference_holds] | |
 | [preference_variableValue] | |
 | **Execution** | |
-| [execution_declare] | |
-| [execution_run] | |
+| [execution_declare] | Prepares a statement for execution by declaring it with a specific name and providing input and output. |
+| [execution_run] | Runs a previously declared execution. |
 
 ### Result
 Output facts represent the results produced by the constraint handler after solving a problem. They indicate which variables have been assigned specific values in a solution, warnings and preferences.

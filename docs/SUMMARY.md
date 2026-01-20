@@ -11,6 +11,7 @@
     * [Conditionals](reference/conditionals.md)
     * [Optimization](reference/optimization.md)
     * [Propagator](reference/propagator.md)
+    * [Execution](reference/execution.md)
     * [Error Handling](reference/error_handling.md)
 * Developer Reference
     * [Fact Format](developer/fact-format.md)
