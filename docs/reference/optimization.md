@@ -98,3 +98,55 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     multimap_value(taken,symbol,a,int,2) 
     multimap_value(taken,symbol,b,int,4)
     ```
+---
+
+## Precision
+
+**[Declaration]**{.badge .declaration }
+
+By default, the optimization module uses a precision of `1` for floating-point calculations. This can be adjusted using the `optimize_precision/1` predicate.
+
+```prolog
+optimize_precision(Precision)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Precision` | The [Value] to be used for floating-point calculations. Must be a positive [Int]. |
+
+!!! Example
+    Given the following variable `x` with a set of possible [Float] values:
+
+    ```prolog
+    variable_declare(declare_x, x, fromFacts).
+    variable_domain(x, val(float, float("-2.239"))).
+    variable_domain(x, val(float, float("-2.235"))).
+    variable_domain(x, val(float, float("-2.21"))).
+    variable_domain(x, val(float, float("-2.1"))).
+    variable_domain(x, val(float, float("-1.0"))).
+    variable_domain(x, val(float, float("4.0"))).
+    variable_domain(x, val(float, float("5.0"))).
+    ```
+
+    Assuming optimization for the lowest possible value without setting any precision:
+
+    ```prolog
+    optimize_maximizeSum(min_x, operation(mult,(variable(x),(val(int, -1),()))), total).
+    ```
+
+    Because the default precision is `1`, this would yield all models containing the floats starting with `-2.` as optimal models.
+
+    Increasing the precision to `100`
+    ```prolog
+    optimize_precision(val(int,100)).
+    ```
+
+    would yield only the models containing `-2.239` and `-2.235` as optimal models.
+
+    The precision could be increased to `1000`
+
+    ```prolog
+    optimize_precision(val(int,1000)).
+    ```
+
+    to yield the single optimal model containing only `-2.239` as a result.
