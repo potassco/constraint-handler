@@ -78,6 +78,7 @@ LINKS = {
     "HasValue": "reference/conditionals.md#hasvalue",
     # Optimization
     "optimize_maximizeSum": "reference/optimization.md#maximize-sum",
+    "optimize_precision": "reference/optimization.md#precision",
     # Execution
     "Assign Statement": "reference/execution.md#assign",
     "execution_declare": "reference/execution.md#declare",
