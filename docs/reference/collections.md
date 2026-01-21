@@ -161,7 +161,7 @@ Once a set is created (either via declaration or returned from another operation
 | `notin` | Not In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is NOT contained in the set. |
 | **Analysis** | | | |
 | `length` | Cardinality | ([set]) $\to$ [int] | Returns the number of elements in the set. |
-| `set_fold` | Fold | ((A,B) $\to$ B, [set](A), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
+| `set_fold` | Fold | ((A,B) $\to$ B, [set]\([A]\), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
 | **Comparison** | | | |
 | `eq` | Equality | ([set] \| [none], [set] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two sets have the same value if they contain the same values. |
 | `neq` | Inequality | ([set] \| [none], [set] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
