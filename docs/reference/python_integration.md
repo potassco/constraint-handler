@@ -103,3 +103,95 @@ Currently, this can be done by manipulating the `_shared_environment` of the con
     ```prolog
     value(z,val(int,25))
     ```
+---
+
+## Statements
+The constraint handler also supports using Python [Statements]. For this, the `statement_python/1` function symbol is used.
+
+```prolog
+statement_python(String)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `String` | A [String] containing a Python statement to be executed. |
+
+!!! Note "String Identifiers Required"
+    To access a [Variable] from the current [Valuation] inside a Python [Statement], the variable must be defined using a string identifier (e.g., `"x"`), not a symbolic atom (e.g., `x`).
+
+    The constraint handler automatically maps these string identifiers to Python variables. 
+    
+    For example:
+    ```prolog
+    statement_python("y = x + 1")
+    ```
+    This statement expects a variable named `"x"` in the current valuation and adds or manipulates a variable named `"y"` in the resulting valuation.
+
+!!! Important "Important: "x" vs x"
+    Variables defined with string names (e.g., `"x"`) are completely distinct from variables defined with symbolic names (e.g., `x`).
+
+
+!!! Example
+    Imagine some variable `x` with an initial value of `5` that is supposed to be an input variable to an execution manipulating it by adding `1` twice using Python statements.
+
+    Declaring the input variable:
+    ```prolog
+    variable_define(d_a,execution_input(python_add_twice, "x"),val(int,5)).
+    ```
+
+    Declaring the execution using a python statement `x = x + 1`:
+    ```prolog
+    execution_declare(dummy, python_add_twice, S, ("x",()), ("x",())) :-
+        ADD_ONE = statement_python("x = x + 1"),
+        S = seq2(
+            ADD_ONE,
+            ADD_ONE
+        ).
+    ```
+
+    Executing the program:
+    ```prolog
+    execution_run(dummy, python_add_twice).
+    ```
+
+    This will yield the following result:
+    ```prolog
+    value(execution_output(python_add_twice,"x"),val(int,7))
+    ```
+### Variable Mapping
+Given the current way Python statements expect variables to be defined using string identifiers, it may become quite cumbersome to work with these variables throughout the entire program.
+
+Since only the Python statements require this format, a convenient way to map between symbolic variable names and string identifiers is to use assignment statements.
+
+!!! Example
+    Continuing from the previous example, to avoid using string identifiers throughout the entire program, you can use assignment statements to map between symbolic variable names and string identifiers.
+
+    Define the input variables to the statement:
+    ```prolog
+    variable_define(d_a,execution_input(python_add_twice, x),val(int,5)).
+    ```
+
+    To deal with the mapping, assignments can be used like so:
+    ```
+    SYM_TO_STR = assign("x", variable(x))
+    STR_TO_SYM = assign(x, variable("x"))
+    ```
+
+    Using these, the execution can be written as:
+    ```prolog
+    execution_declare(dummy, python_add_twice, S, (x,()), (x,())) :-
+        SYM_TO_STR = assign("x", variable(x)),
+        STR_TO_SYM = assign(x, variable("x")),
+        ADD_ONE = statement_python("x = x + 1"),
+        S = seq2(SYM_TO_STR, seq2(ADD_ONE, seq2(ADD_ONE, STR_TO_SYM))).
+    ```
+
+    Executing the program:
+    ```prolog
+    execution_run(dummy, python_add_twice).
+    ```
+    
+    This will yield the following result:
+    ```prolog
+    value(execution_output(python_add_twice,x),val(int,7))
+    ```

@@ -88,6 +88,8 @@ LINKS = {
     "noop": "reference/execution.md#no-operation",
     "assert": "reference/execution.md#assert",
     "while": "reference/execution.md#while",
+    # Python Integration
+    "statement_python": "reference/python_integration.md#statement",
     # Error Handling
     "warning": "reference/error_handling.md#warning",
 }

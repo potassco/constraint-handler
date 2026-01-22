@@ -117,6 +117,7 @@ A list of statements used in the constraint handler.
 | [while] | Repeats a statement while a condition holds (up to a fixed iteration limit). |
 | [seq2] | Executes two statements in sequence: the first transforms the valuation, then the second operates on the result. |
 | [noop] | A "no-operation" statement (pass). It succeeds without changing the valuation. |
+| [statement_python] | Embeds a Python script that can manipulate the valuation. |
 
 ---
 
