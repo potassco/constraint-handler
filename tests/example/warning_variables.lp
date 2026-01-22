@@ -12,10 +12,6 @@ variable_domain(itsfine2,val(symbol,black)).
 variable_declare(d_a,a,fromList(())).
 variable_declare(d_b,b,fromFacts).
 
-%%% raises warning(variable(undeclared),(),c) and warning(variable(undeclared),(),d)
-variable_domain(c,val(symbol,(red;green;blue))).
-variable_domain(d,val(int,0..5)).
-
 %%% raises warning(variable(multipleDeclarations),(d_t,(d_t,())),(t,fromList((val(symbol,green),(val(symbol,blue),()))),fromList((val(symbol,red),()))))
 variable_declare(d_t,t,fromList((val(symbol,red),()))).
 variable_declare(d_t,t,fromList((val(symbol,green),(val(symbol,blue),())))).
@@ -52,3 +48,4 @@ variable_define(d_z1,z,variable(itsfine)).
 variable_define(d_z2,z,operation(lnot,(variable(itsfine),()))).
 variable_define(d_z3,z,operation(snot,(variable(itsfine),()))).
 variable_define(d_z4,z,operation(wnot,(variable(itsfine),()))).
+

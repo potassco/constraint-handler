@@ -3,9 +3,6 @@
 #defined variable_declareOptional/1.
 #defined variable_domain/2.
 
-%%% rules common to all engines
-warning(variable(undeclared),(),X) :- variable_domain(X,V), not variable_declare(_,X,_).
-
 warning(variable(multipleDeclarations),(CNAME1,(CNAME2,())),(X,D1,D2)) :-
   variable_declare(CNAME1,X,D1), variable_declare(CNAME2,X,D2), (CNAME1,D1) < (CNAME2,D2),
   0 = #count { CNAME3,D3 : variable_declare(CNAME3,X,D3), (CNAME3,D3) < (CNAME2,D2), (CNAME3,D3) != (CNAME1,D1) }.
@@ -33,8 +30,21 @@ warning(variable(emptyDomain),(CNAME,()),X) :- _variable_declare(CNAME,X,_), not
 
 %%%%%%%%%%%%%%%%% _variable_query
 _variable_query(any,X) :- variable_declare(NAME,X,DOM).
+_variable_query(any,X) :- variable_domain(X,V).
 _variable_query(any,X) :- variable_define(NAME,X,DOM).
 _variable_query(any,X) :- set_assign(NAME,X,E).
 _variable_query(any,X) :- multimap_assign(NAME,X,K,B).
 _variable_query(Q,X) :- _expression_query(Q,E), E=variable(X).
 _variable_query(Q,execution_input(NAME,X)) :- _statement_query(Q,STMT), execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
+
+
+variable_exists(X) :- variable_declare(_,X,_).
+variable_exists(X) :- variable_define(_,X,_).
+variable_exists(X) :- set_declare(_,X).
+variable_exists(X) :- multimap_declare(_,X).
+variable_exists(execution_output(NAME,X)) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
+
+warning(variable(undeclared),(),X) :- _variable_query(Q,X), not variable_exists(X).
+
+% TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
+
