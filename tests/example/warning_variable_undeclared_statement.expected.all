@@ -1,0 +1,13 @@
+warning(variable(undeclared),(),execution_input(stmt,v0))
+warning(variable(undeclared),(),execution_input(stmt,v2))
+warning(variable(undeclared),(),b)
+warning(variable(undeclared),(),v20)
+warning(variable(undeclared),(),v7)
+warning(variable(undeclared),(),v21)
+warning(variable(undeclared),(),something_something_v21)
+warning(variable(undeclared),(),something_something_v5)
+not_warning(variable(undeclared),(),v1)
+warning(variable(undeclared),(),v7)
+warning(variable(undeclared),(),execution_output(stmt,v7))
+warning(variable(undeclared),(),execution_input(stmt,v8))
+something_something_for_vc

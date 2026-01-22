@@ -66,6 +66,8 @@ base_tests = [
     "strings",
     "variables",
     "warning_variables",
+    "warning_variable_undeclared",
+    "warning_variable_undeclared_statement",
 ]
 
 compile_extra = ["preferences"]
@@ -78,7 +80,7 @@ propagator_extra = []
     base_tests + compile_extra,
 )
 def test_engine_compile(name: str):
-    unsupported: list[str] = ["optimize_bools", "optimize_floats", "optimize_ints", "multimap_basics"]
+    unsupported: list[str] = ["optimize_bools", "optimize_floats", "optimize_ints", "multimap_basics", "warning_variable_undeclared_statement"]
     if name not in unsupported:
         run_test_compile(name)
 
@@ -98,6 +100,7 @@ def test_engine_ground(name: str):
         "optimize_ints",
         "set_iterations",
         "set_selfref",
+        "warning_variable_undeclared_statement",
     ]
     if name not in unsupported:
         run_test_ground(name)
@@ -118,6 +121,8 @@ def test_engine_propagator(name, check_mode):
         "set_iterations",
         "set_selfref",
         "warning_variables",
+        "warning_variable_undeclared",
+        "warning_variable_undeclared_statement",
     ]
     if name not in unsupported:
         run_test_propagator(name, check_mode)
