@@ -15,4 +15,7 @@ execution_declare(d_4,stmt,
 variable_define(d_5,v9,variable(execution_output(stmt,v4))).
 variable_define(d_6,va,variable(v7)).
 variable_define(d_7,vb,variable(execution_input(stmt,v8))).
-variable_define(d_3,execution_input(stmt,vc),val(int,3)).
+variable_define(d_3,execution_output(stmt,vc),val(int,3)).
+
+%% something_something_for_vc
+%% not_warning(variable(undeclared),(),v1)
