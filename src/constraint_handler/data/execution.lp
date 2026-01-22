@@ -23,12 +23,13 @@ eValue(variable(execution_output(NAME,X)),none,none) :- _execution_output_var(NA
 _execution_ou_proj(NAME,X) :- _execution_ou(NAME,X,V).
 
 %%%%%%%%%%%%%%%%% _statement_query,
-_statement_query(any,STMT) :- _execution_declare(NAME,STMT,INS,OUTS).
+_statement_query(any,STMT) :- execution_declare(CNAME,NAME,STMT,INS,OUTS).
 _statement_query(Q,STM1) :- _statement_query(Q,STMT), STMT = seq2(STM1,STM2).
 _statement_query(Q,STM2) :- _statement_query(Q,STMT), STMT = seq2(STM1,STM2).
 _statement_query(Q,THEN) :- _statement_query(Q,STMT), STMT = if(EXPR,THEN,ELSE).
 _statement_query(Q,ELSE) :- _statement_query(Q,STMT), STMT = if(EXPR,THEN,ELSE).
 _statement_query(Q,BODY) :- _statement_query(Q,STMT), STMT = while(MAX,EXPR,BODY).
+_statement_query(Q,STMT) :- _variable_query(Q,execution_output(NAME,X)), execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
 
 %%%%%%%%%%%%%%%%% noop
