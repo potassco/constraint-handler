@@ -145,14 +145,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"backtracking {backtrack} due to optimization sum being worse than best value {self.best_value}")
             return
 
-        self.check_evaluate(control)
-        # if everything is good, we update the best value
-        # TODO: Maybe we have to move this next stuff to the on_model function
-        # in case there are multiple propagators?
-        if self.using_optimization and self.optimization_sum.value > self.best_value:
-            print(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
-            self.best_value = self.optimization_sum.value
-
         if control.assignment.is_total:
             self.check_total(control)
 
@@ -162,6 +154,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if backtrack:
             myprint(f"backtracking {backtrack} due to brave/cautious model being updated")
             return
+
+        self.check_evaluate(control)
+        # if everything is good, we update the best value
+        # TODO: Maybe we have to move this next stuff to the on_model function
+        # in case there are multiple propagators?
+        if self.using_optimization and self.optimization_sum.value > self.best_value:
+            print(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
+            self.best_value = self.optimization_sum.value
 
     def evaluate_model(self, ctl: clingo.PropagateControl) -> bool:
         old_model = self.python_model
