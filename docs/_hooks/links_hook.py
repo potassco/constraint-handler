@@ -77,8 +77,12 @@ LINKS = {
     "Default": "reference/conditionals.md#default",
     "HasValue": "reference/conditionals.md#hasvalue",
     # Optimization
+    "Optimization": "reference/optimization.md",
     "optimize_maximizeSum": "reference/optimization.md#maximize-sum",
     "optimize_precision": "reference/optimization.md#precision",
+    # Engines
+    "requestEngine": "reference/engines.md#request",
+    "defaultEngine": "reference/engines.md#default",
     # Execution
     "Assign Statement": "reference/execution.md#assign",
     "execution_declare": "reference/execution.md#declare",

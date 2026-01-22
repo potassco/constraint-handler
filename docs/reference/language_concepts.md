@@ -171,6 +171,9 @@ A list of declarations used to define problems.
 | **Optimization** | |
 | [optimize_maximizeSum] | Declares a maximization objective based on the sum of values. |
 | [optimize_precision] | Declares the precision floats in the optimization are handled with. |
+| **Engine** | |
+| [requestEngine] | Requests a specific engine for solving a part of the program. |
+| [defaultEngine] | Sets the default engine for solving all parts of the program without a specific engine request. |
 | **Preference** | |
 | [preference_maximizeScore] | |
 | [preference_holds] | |

@@ -10,7 +10,7 @@
     * [Collections](reference/collections.md)
     * [Conditionals](reference/conditionals.md)
     * [Optimization](reference/optimization.md)
-    * [Propagator](reference/propagator.md)
+    * [Engines](reference/engines.md)
     * [Execution](reference/execution.md)
     * [Python Integration](reference/python_integration.md)
     * [Error Handling](reference/error_handling.md)
