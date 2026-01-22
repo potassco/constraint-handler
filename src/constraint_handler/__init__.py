@@ -8,6 +8,9 @@ import clingo
 import clingo.ast
 import clingo.script
 
+import constraint_handler.evaluator as evaluator
+import constraint_handler.propagator as propagator
+
 modules = [
     "bool",
     "conditionals",

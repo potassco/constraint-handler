@@ -82,9 +82,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.environment = {}
         self.errors.clear()
 
-        if self.check_only:
-            self.propagate = lambda ctl, changes: None
-
         self.get_solver_identifier(init)
 
         self.get_variables(init)
@@ -199,6 +196,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         or the optimization value if below the best and has been completely assigned
         it adds a nogood and backtracks.
         """
+        if self.check_only:
+            return
+
         myprint(f"PROPAGATING with changes: {changes} and decision level {control.assignment.decision_level}")
         to_evaluate: set[VariableType] = set()
         for rlit in changes:

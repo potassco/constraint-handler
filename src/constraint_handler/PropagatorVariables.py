@@ -244,8 +244,8 @@ class EnsureVariable:
     def has_unassigned(self) -> bool:
         return self.value == ValueStatus.NOT_SET
 
-    def vars(self) -> frozenset[clingo.Symbol]:
-        return self.expression.vars()
+    def vars(self) -> set[clingo.Symbol]:
+        return set(self.expression.vars())
 
     def get_errors(self) -> list[Exception]:
         return self.expression.get_errors()
