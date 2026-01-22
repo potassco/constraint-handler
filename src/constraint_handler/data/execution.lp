@@ -1,5 +1,6 @@
 #defined execution_declare/5.
 #defined execution_run/2.
+#defined _statement_query/2.
 
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execution_declare(CNAME,NAME,STMT,INS,OUTS).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execution_run(CNAME,NAME).
@@ -21,16 +22,19 @@ eValue(variable(execution_output(NAME,X)),none,none) :- _execution_output_var(NA
 
 _execution_ou_proj(NAME,X) :- _execution_ou(NAME,X,V).
 
-%%%%%%%%%%%%%%%%% _execution_query,
-_execution_query(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS).
+%%%%%%%%%%%%%%%%% _statement_query,
+_statement_query(any,STMT) :- _execution_declare(NAME,STMT,INS,OUTS).
+_statement_query(Q,STM1) :- _statement_query(Q,STMT), STMT = seq2(STM1,STM2).
+_statement_query(Q,STM2) :- _statement_query(Q,STMT), STMT = seq2(STM1,STM2).
+_statement_query(Q,THEN) :- _statement_query(Q,STMT), STMT = if(EXPR,THEN,ELSE).
+_statement_query(Q,ELSE) :- _statement_query(Q,STMT), STMT = if(EXPR,THEN,ELSE).
+_statement_query(Q,BODY) :- _statement_query(Q,STMT), STMT = while(MAX,EXPR,BODY).
 
 
 %%%%%%%%%%%%%%%%% noop
 _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = noop.
 
 %%%%%%%%%%%%%%%%% seq2
-_execution_query(subl(NAME),STMT1) :- _execution_query(NAME,STMT), STMT = seq2(STMT1,STMT2).
-_execution_query(subr(NAME),STMT2) :- _execution_query(NAME,STMT), STMT = seq2(STMT1,STMT2).
 _execution_run(subl(NAME),STMT1) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT2).
 _execution_run(subr(NAME),STMT2) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT2), _execution_succeeds(subl(NAME),STMT1).
 _execution_in(subl(NAME),X,V) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT2), _execution_in(NAME,X,V).
@@ -69,16 +73,14 @@ _execution_mapAux(NAME,#inf,()) :- _execution_run(NAME,STMT), STMT = statement_p
 _execution_mapAux(NAME,Y,K) :- _execution_mapAux(NAME,X,M), _execution_in(NAME,Y,V), X < Y, _direct_imploded(V,W), K=((Y,W),M), #false : _execution_in(NAME,Z,_), X < Z, Z < Y.
 _execution_mapped(NAME,M) :- _execution_mapAux(NAME,X,M), #false : _execution_in(NAME,Y,_), X < Y.
 
-_execution_exec(NAME,R) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_mapped(NAME,M), R=@pythonExec(STMT,M,ID), _main_solverIdentifier(ID).
+_execution_exec(NAME,R) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_mapped(NAME,M), R=@pythonExec(STMT,M,ID), _main_solverIdentifier(ID).
 :- _execution_exec(NAME,failIntegrity).
-_execution_ou(NAME,X,V) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,(X,V)).
-_execution_succeeds(NAME,STMT) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,true).
-warning(("error running python",STR,MSG,NAME)) :- _execution_query(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(MSG)).
+_execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,(X,V)).
+_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,true).
+warning(("error running python",STR,MSG,NAME)) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(MSG)).
 
 
 %%%%%%%%%%%%%%%%% ifthenelse
-_execution_query(then(NAME),THEN) :- _execution_query(NAME,STMT), STMT = if(EXPR,THEN,ELSE).
-_execution_query(else(NAME),ELSE) :- _execution_query(NAME,STMT), STMT = if(EXPR,THEN,ELSE).
 _execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE).
 
 _execution_branch(NAME,then(NAME),THEN) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_evaled(NAME,STMT,EXPR,val(bool,true)).
@@ -91,7 +93,6 @@ _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN
 
 
 %%%%%%%%%%%%%%%%% while
-%_execution_query(body(NAME),BODY) :- _execution_query(NAME,STMT), STMT = while(EXPR,BODY).
 %_execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY).
 %_execution_branch(NAME,skip(NAME),noop) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_evaled(NAME,STMT,EXPR,val(bool,false)).
 %_execution_branch(NAME,step(NAME),seq2(BODY,STMT1)) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY),
