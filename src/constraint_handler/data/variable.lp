@@ -30,3 +30,11 @@ _variable_hasDomain(X) :- _variable_domain(X,V).
    _variable_declare(CNAME,X,_), _variable_hasDomain(X).
 
 warning(variable(emptyDomain),(CNAME,()),X) :- _variable_declare(CNAME,X,_), not _variable_hasDomain(X).
+
+%%%%%%%%%%%%%%%%% _variable_query
+_variable_query(any,X) :- variable_declare(NAME,X,DOM).
+_variable_query(any,X) :- variable_define(NAME,X,DOM).
+_variable_query(any,X) :- set_assign(NAME,X,E).
+_variable_query(any,X) :- multimap_assign(NAME,X,K,B).
+_variable_query(Q,X) :- _expression_query(Q,E), E=variable(X).
+_variable_query(Q,execution_input(NAME,X)) :- _statement_query(Q,STMT), execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).

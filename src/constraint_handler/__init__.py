@@ -16,6 +16,7 @@ modules = [
     "conditionals",
     "direct",
     "execution",
+    "expression",
     "float",
     "gringoEval",
     "groundExec",

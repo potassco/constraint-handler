@@ -2,6 +2,7 @@
 #include "../../src/constraint_handler/data/conditionals.lp".
 #include "../../src/constraint_handler/data/direct.lp".
 #include "../../src/constraint_handler/data/execution.lp".
+#include "../../src/constraint_handler/data/expression.lp".
 #include "../../src/constraint_handler/data/float.lp".
 #include "../../src/constraint_handler/data/gringoEval.lp".
 #include "../../src/constraint_handler/data/groundExec.lp".
