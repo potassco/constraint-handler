@@ -29,22 +29,27 @@ _variable_hasDomain(X) :- _variable_domain(X,V).
 warning(variable(emptyDomain),(CNAME,()),X) :- _variable_declare(CNAME,X,_), not _variable_hasDomain(X).
 
 %%%%%%%%%%%%%%%%% _variable_query
-_variable_query(any,X) :- variable_declare(NAME,X,DOM).
-_variable_query(any,X) :- variable_domain(X,V).
-_variable_query(any,X) :- variable_define(NAME,X,DOM).
-_variable_query(any,X) :- set_assign(NAME,X,E).
-_variable_query(any,X) :- multimap_assign(NAME,X,K,B).
-_variable_query(Q,X) :- _expression_query(Q,E), E=variable(X).
-_variable_query(Q,execution_input(NAME,X)) :- _statement_query(Q,STMT), execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
+_variable_query((),X) :- variable_domain(X,V).
+_variable_query((),X) :- set_assign(NAME,X,E).
+_variable_query((),X) :- multimap_assign(NAME,X,K,B).
+_variable_query(SCOPE,X) :- _expression_query(SCOPE,E), E=variable(X).
+_variable_query((),execution_input(NAME,X)) :- _statement_query(SCOPE,STMT), execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
+_variable_query((NAME,()),X) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
+_variable_exists((),X) :- variable_declare(_,X,_).
+_variable_exists((),X) :- variable_define(_,X,_).
+_variable_exists((),X) :- set_declare(_,X).
+_variable_exists((),X) :- multimap_declare(_,X).
+_variable_exists((),X) :- multimap_declare(_,X).
+_variable_exists(SCOPE,X) :- _statement_query(SCOPE,STMT), STMT = assign(X,EXPR).
+_variable_exists((NAME,()),X) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
+_variable_exists((),execution_output(NAME,X)) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
-variable_exists(X) :- variable_declare(_,X,_).
-variable_exists(X) :- variable_define(_,X,_).
-variable_exists(X) :- set_declare(_,X).
-variable_exists(X) :- multimap_declare(_,X).
-variable_exists(execution_output(NAME,X)) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
-
-warning(variable(undeclared),(),X) :- _variable_query(Q,X), not variable_exists(X).
+_variable_search_scope(SCOPE,X) :- _variable_query(SCOPE,X).
+_variable_search_scope(OUTER,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), not _variable_exists(SCOPE,X).
+_variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), _variable_exists(SCOPE,X).
+_variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), _variable_found(OUTER,X).
+warning(variable(undeclared),(),(SCOPE,X)) :- _variable_query(SCOPE,X), not _variable_found(SCOPE,X).
 
 % TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
 
