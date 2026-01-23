@@ -52,4 +52,3 @@ _variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), _v
 warning(variable(undeclared),(),(SCOPE,X)) :- _variable_query(SCOPE,X), not _variable_found(SCOPE,X).
 
 % TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
-
