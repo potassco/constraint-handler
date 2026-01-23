@@ -17,8 +17,9 @@ execution_declare(dummy,empty,STMT,(),("y",())) :-
     STMT = statement_python("y = '5'").
 execution_run(dummy,empty).
 
-#show value/3.
+#show value/2.
 #show warning/1.
+#show warning/3.
 
 #script (python)
 
