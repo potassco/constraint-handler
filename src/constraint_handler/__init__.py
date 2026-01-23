@@ -30,6 +30,7 @@ modules = [
     "set",
     "string",
     "symbol",
+    "type",
     "variable",
 ]
 
