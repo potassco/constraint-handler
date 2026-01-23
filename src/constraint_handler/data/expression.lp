@@ -2,7 +2,7 @@
 %%%%%%%%%%%%%%%%% _expression_query from variables
 _expression_query((),E) :- variable_define(_,X,E).
 _expression_query((),E) :- variable_domain(X,E).
-_expression_query((),E) :- variable_declare(_,X,fromFList(L)), E=@pythonListElements(L).
+_expression_query((),E) :- variable_declare(_,X,fromList(L)), E=@pythonListElements(L).
 
 _expression_query((),E) :- set_assign(_,X,E).
 _expression_query((),K) :- multimap_assign(_,X,K,B).
