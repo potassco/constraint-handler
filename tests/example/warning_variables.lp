@@ -48,4 +48,3 @@ variable_define(d_z1,z,variable(itsfine)).
 variable_define(d_z2,z,operation(lnot,(variable(itsfine),()))).
 variable_define(d_z3,z,operation(snot,(variable(itsfine),()))).
 variable_define(d_z4,z,operation(wnot,(variable(itsfine),()))).
-

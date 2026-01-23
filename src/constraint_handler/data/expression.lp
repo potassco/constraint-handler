@@ -17,4 +17,3 @@ _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = assert(EXP
 _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = assign(X,EXPR).
 _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = if(EXPR,THEN,ELSE).
 _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = while(MAX,EXPR,BODY).
-
