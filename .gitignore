@@ -37,7 +37,9 @@ _autosummary
 site
 
 docs/fact-format/fact-format-main.pdf
+tests/example/old
 tests/untracked
+untracked
 
 # latex auxiliary files
 *.aux
