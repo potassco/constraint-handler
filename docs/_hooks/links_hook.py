@@ -83,6 +83,13 @@ LINKS = {
     # Engines
     "requestEngine": "reference/engines.md#request",
     "defaultEngine": "reference/engines.md#default",
+    # Preference
+    "preference": "reference/preference.md",
+    "preference_maximizeScore": "reference/preference.md#maximize-score",
+    "preference_holds": "reference/preference.md#holds",
+    "preference_variableValue": "reference/preference.md#variable-value",
+    "preference_score": "reference/preference.md#preference-score",
+
     # Execution
     "Assign Statement": "reference/execution.md#assign",
     "execution_declare": "reference/execution.md#declare",

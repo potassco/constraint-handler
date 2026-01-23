@@ -11,6 +11,7 @@
     * [Conditionals](reference/conditionals.md)
     * [Optimization](reference/optimization.md)
     * [Engines](reference/engines.md)
+    * [Preference](reference/preference.md)
     * [Execution](reference/execution.md)
     * [Python Integration](reference/python_integration.md)
     * [Error Handling](reference/error_handling.md)

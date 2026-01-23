@@ -175,9 +175,9 @@ A list of declarations used to define problems.
 | [requestEngine] | Requests a specific engine for solving a part of the program. |
 | [defaultEngine] | Sets the default engine for solving all parts of the program without a specific engine request. |
 | **Preference** | |
-| [preference_maximizeScore] | |
-| [preference_holds] | |
-| [preference_variableValue] | |
+| [preference_maximizeScore] | Indicates that the solver should order solutions based on the total preference score. |
+| [preference_holds] | Declares a preference based on a condition. |
+| [preference_variableValue] | Declares a preference for a variable having a specific value. |
 | **Execution** | |
 | [execution_declare] | Prepares a statement for execution by declaring it with a specific name and providing input and output. |
 | [execution_run] | Runs a previously declared execution. |
@@ -208,4 +208,4 @@ A list of output facts used to represent results.
 | [multimap_value] | Indicates the assigned value of a variable in the solution. |
 | [warning] | Represents a warning message generated during solving. |
 | [evaluated] | Represents the evaluation of an expression in the solution. |
-| [preference_score] | Represents the score of a preference in the solution. |
+| [preference_score] | Represents the total score of preferences satisfied in the solution. |
