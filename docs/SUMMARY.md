@@ -3,6 +3,8 @@
     * [Installation](user_guide/installation.md)
     * [Getting Started](user_guide/getting_started.md)
     * [Basic Concepts](user_guide/basic_concepts.md)
+* Examples
+    * [Knapsack](examples/knapsack.md)
 * Reference
     * [Language Concepts](reference/language_concepts.md)
     * [Core Syntax](reference/core_syntax.md)
