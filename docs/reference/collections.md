@@ -341,7 +341,7 @@ can be used in expressions.
 | **Operations** | | | |
 | `find` | Find | ([multimap]\[K, V\], K) $\to$ [list]\[V\] | Retrieves the list of value(s) associated with a specific key. |
 | `isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
-| `multimap_fold`| Fold | ([multimap], any, any) $\to$ any | Iterates over every entry (Key-Value pair), applies a function to each element and accumulates the result.|
+| `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all entries in the multimap, applies a function to each value and accumulates the result. |
 | **Comparison** | | | |
 | `eq` | Equality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
 | `neq` | Inequality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
