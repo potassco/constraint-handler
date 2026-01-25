@@ -215,6 +215,9 @@ multimap_assign(Identifier, Name, Key, Value).
 | `Key` | The key in form of a `val/2` predicate to be added to the multimap. |
 | `Value` | The value in form of a `val/2` to be associated with the key in the multimap. |
 
+!!! Note
+    While we use Key-Value terminology, it is important to remember that in a multimap, each key can be associated with multiple values. Meaning, if we assign the same key multiple times with different values, all those values will be stored in a set associated with that key.
+
 #### Output
 
 **[Result]**{.badge .result }
@@ -251,7 +254,7 @@ multimap_value(Name, Key, Value)
     ```
 
 ### Make Multimap
-Just like sets, the constraint handler provides a `multimapMake` operator to create multimaps directly within expressions.
+Just like for sets, the constraint handler provides a `multimapMake` operator to create multimaps directly within expressions.
 
 !!! Example
     To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimapMake`, you would use the following code:
@@ -281,8 +284,8 @@ can be used in expressions.
 | `countKeys` | Count Keys | ([multimap]) $\to$ [int] | Returns the number of unique keys in the map. |
 | `countEntries` | Count Entries | ([multimap]) $\to$ [int] | Returns the total number of key-value pairs. |
 | `sumIntEntries`| Sum Entries | ([multimap]) $\to$ [int] | Sums all integer values contained in the map. |
-| `maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ [V] | Returns the maximum value stored in the map (by value, not key). |
-| `minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ [V] | Returns the minimum value stored in the map. |
+| `maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ V | Returns the maximum value stored in the map (by value, not key). |
+| `minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ V | Returns the minimum value stored in the map. |
 | **Operations** | | | |
 | `find` | Find | ([multimap]\[K, V\], K) $\to$ [list]\[V\] | Retrieves the list of value(s) associated with a specific key. |
 | `isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
