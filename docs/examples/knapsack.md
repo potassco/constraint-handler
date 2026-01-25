@@ -6,14 +6,11 @@ Below are some of the key predicates and function symbols used in this example. 
 
 | Concept | Description |
 | :--- | :--- |
-| **Predicates and Function Symbols** | |
 | [variable_define] | Assigns a specific [Value] to a [Variable]. |
 | [variable_declare] | Declares a [Variable] with a specific domain of possible [Values]. |
 | [operation] | Defines an operation that can be used in [Expressions]. |
 | [ensure] | Adds a requirement that must be satisfied in any valid solution. |
 | [optimize_maximizeSum] | Defines an optimization objective to maximize the sum of specified [Expressions]. |
-
-
 
 ## Problem description
 The Knapsack Problem is a combinatorial optimization problem where the goal is to maximize the total value of items placed in a knapsack without exceeding its weight capacity.
@@ -60,7 +57,7 @@ item(8, "4.0",  "20.0").
 capacity("5.0").
 ```
 
-Given this input, we will first transform the items and capacity into suitable variable definitions.
+Given this input, we will first transform the items and capacity into suitable variable definitions using [variable_define]
 
 The capacity can be directly defined as a single float variable:
 ```prolog
@@ -77,13 +74,13 @@ variable_define(dummy, item_value(ID), val(float, float(VALUE))) :- item(ID, _, 
 This concludes the data setup part of our encoding.
 
 ### Item Selection
-Given our data setup, we now have to define how we want to select items to include in the knapsack. For this, we will declare a binary variable for each item indicating whether the item is included in the knapsack or not.
+Given our data setup, we now have to define how we want to select items to include in the knapsack. For this, we will [declare][variable_declare] a binary variable for each item indicating whether the item is included in the knapsack or not.
 
 ```prolog
 variable_declare(dummy, item_included(ID), boolDomain) :- item(ID, _,_).
 ```
 
-This defines `item_included(ID)` as a boolean variable for each item. Remember, while `variable_define` assigns a specific value to a variable, `variable_declare` defines a variable with a domain of possible values.
+This defines `item_included(ID)` as a boolean variable for each item. Remember, while [variable_define] assigns a specific value to a variable, [variable_declare] declares a variable with a domain of possible values.
 
 This means that `item_included(ID)` can take the values `false` (not included) or `true` (included) and either of these values can be chosen in a solution.
 
@@ -131,7 +128,7 @@ In the next section, we will use this `weight/2` predicate to enforce the capaci
 ### Capacity
 Now that we have a way to calculate the total weight of the selected items, we need to ensure that this total weight does not exceed the knapsack's capacity.
 
-We can achieve this by using the `ensure/2` predicate to add a constraint to our model:
+We can achieve this by using the [ensure] to add a constraint to our model:
 
 ```prolog
 ensure(capacity_constraint, operation(leq, (TOTAL_WEIGHT,(variable(total_capacity),())))) :- weight(_, TOTAL_WEIGHT).
@@ -144,7 +141,7 @@ Again, just a single line is sufficient to enforce the capacity constraint in ou
 ### Optimization
 Finally, we need to define our optimization objective, which is to maximize the total value of the selected items.
 
-For this, we will use the `optimize_maximizeSum/2` predicate as follows:
+For this, we will use the [`optimize_maximizeSum/2`][optimize_maximizeSum] predicate as follows:
 
 ```prolog
 optimize_maximizeSum(dummy, EXPR, ID) :- 
