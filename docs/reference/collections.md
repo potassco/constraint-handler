@@ -166,6 +166,58 @@ Once a set is created (either via declaration or returned from another operation
 | `eq` | Equality | ([set] \| [none], [set] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two sets have the same value if they contain the same values. |
 | `neq` | Inequality | ([set] \| [none], [set] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 
+
+!!! Example "Example: Set Fold"
+    Here, we will elaborate on the `set_fold` operator with a concrete example, since it is a bit more complex than the other operators.
+
+    The operator requires three arguments:
+
+    1. A function with signature `(A,B) -> B` that takes an element of the set and an accumulator of type `B`, and returns a new accumulator of type `B`.
+    2. A set of elements of type `A` to iterate over.
+    3. An initial value for the accumulator of type `B`.
+
+    The fold operator will then iterate over each element in the set, applying the function to the current element and the accumulator, updating the accumulator with the result. After all elements have been processed, the final value of the accumulator is returned.
+
+    In this example, we will sum all integers in a set. For this, we assume that `val(function, add)` is a predefined function that adds two integers.
+
+    Given is the following set:
+    ```prolog
+    set_declare(example, my_set).
+    set_assign(example, my_set, val(int, 1)).
+    set_assign(example, my_set, val(int, 2)).
+    set_assign(example, my_set, val(int, 3)).
+    set_assign(example, my_set, val(int, 4)).
+    set_assign(example, my_set, val(int, 5)).
+    ```
+    or for short:
+    ```prolog
+    set_declare(example, my_set).
+    set_assign(example, my_set, val(int, 1..5)).
+    ```
+
+    This defines the set `my_set` containing the integers from `1` to `5`.
+
+    In order to now sum all integers in this set, we can use the `set_fold` operator as follows:
+
+    ```prolog
+    variable_define(example, set_result, FOLD) :-
+        FUNC = val(function,add),
+        SET = variable(my_set),
+        INIT = val(int, 0),
+        FOLD = operation(set_fold, (FUNC,(SET,(INIT,())))).
+    ```
+
+    - We define `FUNC` as the addition function.
+    - We define `SET` as a reference to our set `my_set`.
+    - We define `INIT` as the initial accumulator value `0`.
+    - Finally, we construct the `set_fold` operation using these three components.
+
+    Running this code will yield:
+    ```prolog
+    value(set_result,val(int,15))
+    ```
+
+    Which is the expected sum of all integers from `1` to `5`.
 ---
 
 ## Multimap
@@ -293,3 +345,68 @@ can be used in expressions.
 | **Comparison** | | | |
 | `eq` | Equality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
 | `neq` | Inequality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
+
+!!! Example "Multimap Fold"
+    Just like for sets, we will elaborate on the `multimap_fold` operator with a concrete example.
+
+    The operator requires three arguments:
+
+    1. A function with signature `(A,B) -> B` that takes an entry of the multimap and an accumulator of type `B`, and returns a new accumulator of type `B`.
+    2. A multimap of entries of type `(K,V)` to iterate over.
+    3. An initial value for the accumulator of type `B`.
+
+    The fold operator will then iterate over each entry in the multimap, applying the function to the current entry and the accumulator, updating the accumulator with the result. After all entries have been processed, the final value of the accumulator is returned.
+
+    Because all values in a multimap are stored in sets, the `multimap_fold` operator can be seen as a combination of `find` and `set_fold`. First, `find` retrieves all values associated with each key, and then `set_fold` is applied to these values.
+
+    In this example, we will sum all integer values in a multimap. For this, we assume that `val(function, add)` is a predefined function that adds two integers.
+
+    Given is the following multimap:
+    ```prolog
+    multimap_declare(example, my_map).
+    multimap_assign(example, my_map, val(symbol, some_key), val(int, 1..5)).
+    ```
+
+    This defines the multimap `my_map` containing the key `some_key` associated with the integers from `1` to `5`.
+
+    In order to now sum all integers in this multimap, we can use the `multimap_fold` operator as follows:
+
+    ```prolog
+    variable_define(example, map_result, FOLD) :-
+        FUNC = val(function, add),
+        MAP = variable(my_map),
+        INIT = val(int, 0),
+        FOLD = operation(multimap_fold, (FUNC,(MAP,(INIT,())))).
+    ```
+
+    - We define `FUNC` as the addition function.
+    - We define `MAP` as a reference to our multimap `my_map`.
+    - We define `INIT` as the initial accumulator value `0`.
+    - Finally, we construct the `multimap_fold` operation using these three components.
+
+    Running this code will yield:
+    ```prolog
+    value(map_result,val(int,15))
+    ```
+
+    Which is the expected sum of all integers from `1` to `5`.
+
+    ---
+
+    Given that the `multimap_fold` operator iterates over every entry in the multimap, the same function also works with multiple keys.
+
+    For example, given the following multimap:
+    ```prolog
+    multimap_declare(example, my_map).
+    multimap_assign(example, my_map, val(symbol, key1), val(int, 1..3)).
+    multimap_assign(example, my_map, val(symbol, key2), val(int, 4..5)).
+    ```
+
+    This defines the multimap `my_map` containing the key `key1` associated with the integers from `1` to `3` and the key `key2` associated with the integers from `4` to `5`.
+
+    Using the same `multimap_fold` code as above will now yield:
+    ```prolog
+    value(map_result,val(int,15))
+    ```
+
+    Which is exactly the same result as before, the expected sum of all integers from `1` to `5`.
