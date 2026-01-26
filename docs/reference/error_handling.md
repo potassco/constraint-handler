@@ -72,7 +72,7 @@ warning(variable(emptyDomain), _,Variable)
     ```prolog
     variable_declare(d_a,a,fromList(())).
     ```
-    
+
     Raises the warning:
     ```prolog
     warning(variable(emptyDomain),(d_a,()),a)
@@ -96,7 +96,7 @@ warning(variable(undeclared), (), Variable)
     ```prolog
     variable_domain(c,val(symbol,(red;green;blue))).
     ```
-    
+
     Raises the warning:
     ```prolog
     warning(variable(undeclared),(),c)
@@ -121,7 +121,7 @@ warning(variable(multipleDeclarations), _, (Variable, Domains...))
     variable_declare(d_u,u,fromFacts).
     variable_declare(d_u,u,boolDomain).
     ```
-    
+
     Raises the warning:
     ```prolog
     warning(variable(multipleDeclarations),(d_u,(d_u,())),(u,boolDomain,fromFacts))
@@ -146,7 +146,7 @@ warning(variable(multipleDefinitions), _, (Variable, Expressions...))
     variable_define(d_x,x,val(int, 1)).
     variable_define(d_x,x,val(int, 2)).
     ```
-    
+
     Raises the warning:
     ```prolog
     warning(variable(multipleDefinitions),(d_x,(d_x,())),(x,val(int,1),val(int,2)))

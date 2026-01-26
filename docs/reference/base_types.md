@@ -13,7 +13,7 @@ Operators are described using a function signature notation:
 (input_type1, input_type2, ...) -> output_type
 ```
 
-Where `input_type` and `output_type` refer to the data types involved in the [Operation]. 
+Where `input_type` and `output_type` refer to the data types involved in the [Operation].
 
 #### Simple
 Simple operators often only require a single input type and produce a single output type. For example, an addition operator for integers would be represented as:
@@ -208,7 +208,7 @@ value(name, val(float, float("-0.001")))
 ```
 
 ### Supported Operators
-!!! info "Type Promotion" 
+!!! info "Type Promotion"
     If a binary operation involves one [int] and one [float] (e.g. the addition of an int and a float), the integer is automatically promoted to a float. The result is then calcualted as if both operands were floats.
 
 | Operator | Name | Signature | Description |
@@ -306,7 +306,7 @@ value(name, val(symbol, active))
 value(name, val(symbol, state(idle)))
 ```
 ### Supported Operators
-!!! info "Ordering" 
+!!! info "Ordering"
     Symbol comparison follows the standard Clingo/ASP ordering rules.
 
 | Operator | Name | Signature | Description |
@@ -319,7 +319,7 @@ value(name, val(symbol, state(idle)))
 | `gt` | Greater Than | ([symbol], [symbol]) $\to$ [bool] | `true` if first argument is larger than the second. |
 | `geq` | Greater Than or Equal | ([symbol], [symbol]) $\to$ [bool] | `true` if first argument is larger than or equal to the second. |
 
-!!! Example 
+!!! Example
     Checking if a status variable is set to error.
 
     ```prolog

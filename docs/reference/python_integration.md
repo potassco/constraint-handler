@@ -32,8 +32,8 @@ One of the modules the environment provides by default is the `math` module, whi
 
     ```prolog
     variable_define(
-        python_sqrt, 
-        x, 
+        python_sqrt,
+        x,
         operation(python("math.sqrt"), (val(int, 16), ()))
     ).
     ```
@@ -56,8 +56,8 @@ Lambda functions can be defined directly within the `String` argument of the `py
 
     ```prolog
     variable_define(
-        python_cube, 
-        y, 
+        python_cube,
+        y,
         operation(python("lambda x: x ** 3"), (val(int, 3), ()))
     ).
     ```
@@ -92,8 +92,8 @@ Currently, this can be done by manipulating the `_shared_environment` of the con
 
     ```prolog
     variable_define(
-        custom_op, 
-        z, 
+        custom_op,
+        z,
         operation(python("custom_function"), (val(int, 5), (val(int, 3), ())))
     ).
     ```
@@ -119,8 +119,8 @@ statement_python(String)
 !!! Note "String Identifiers Required"
     To access a [Variable] from the current [Valuation] inside a Python [Statement], the variable must be defined using a string identifier (e.g., `"x"`), not a symbolic atom (e.g., `x`).
 
-    The constraint handler automatically maps these string identifiers to Python variables. 
-    
+    The constraint handler automatically maps these string identifiers to Python variables.
+
     For example:
     ```prolog
     statement_python("y = x + 1")
@@ -190,7 +190,7 @@ Since only the Python statements require this format, a convenient way to map be
     ```prolog
     execution_run(dummy, python_add_twice).
     ```
-    
+
     This will yield the following result:
     ```prolog
     value(execution_output(python_add_twice,x),val(int,7))

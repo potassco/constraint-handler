@@ -73,15 +73,15 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     item(c,-1).
     ```
 
-    Here, each item has some identifier and a value. 
-    
+    Here, each item has some identifier and a value.
+
     To let the program freely select any set of items, we use a choice rule together with a multimap to declare items as taken:
 
     ```prolog
     multimap_declare(dummy,taken).
     { multimap_assign(dummy,taken,val(symbol,X),val(int,V)) } :- item(X,V).
     ```
-    
+
     We can now optimize the selection such that we get the highest possible sum of values as follows:
 
     ```prolog
@@ -95,7 +95,7 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     The result will be the model where items `a` and `b` are taken, maximizing the sum to `6`.
 
     ```prolog
-    multimap_value(taken,symbol,a,int,2) 
+    multimap_value(taken,symbol,a,int,2)
     multimap_value(taken,symbol,b,int,4)
     ```
 ---

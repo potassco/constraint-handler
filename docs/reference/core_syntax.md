@@ -76,11 +76,11 @@ val(Type, Term)
 
 | Name | Description |
 | :--- | :--- |
-| `Type` | The data type of the value. This should correspond to one of the supported types in the constraint handler, such as [int], [bool], etc. | 
+| `Type` | The data type of the value. This should correspond to one of the supported types in the constraint handler, such as [int], [bool], etc. |
 | `Term` | The actual value, which should correspond to the specified type. |
 
 
-!!! Example 
+!!! Example
     This represents the integer value 42. It can be used in expressions such as operations or assignments.
     ```prolog
     val(int, 42)
@@ -134,7 +134,7 @@ variable_define(Identifier, Name, Expression).
 | `Name` | A unique identifier for the variable. |
 | `Expression` | An [Expression] to be associated with the variable. |
 
-This assigns a specific value to the variable `Name` based on the [Valuation] of `Expression`. 
+This assigns a specific value to the variable `Name` based on the [Valuation] of `Expression`.
 
 The result is a single `value/2` atom in the model.
 

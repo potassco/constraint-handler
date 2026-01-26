@@ -22,7 +22,7 @@ where `A` is a type variable representing the type of elements contained in the 
 !!! Example
     The types
 
-    ```prolog 
+    ```prolog
     set[int]
     set[str]
     ```
@@ -30,7 +30,7 @@ where `A` is a type variable representing the type of elements contained in the 
     represent sets containing only integers and strings, respectively.
 
 ### Functions
-If an operator takes a function as an argument, we will indicate the entire signature of the function using the same notation as 
+If an operator takes a function as an argument, we will indicate the entire signature of the function using the same notation as
 for [Operator Signatures]
 
 !!! Example
@@ -336,7 +336,7 @@ Just like for sets, the constraint handler provides a `multimap_make` operator t
     This results in the following output atoms:
 
     ```prolog
-    value(my_map, val(multimap, ref(operation(multimap_make,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),()))))))) 
+    value(my_map, val(multimap, ref(operation(multimap_make,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),())))))))
     multimap_value(my_map,val(int,1),val(str,"one"))
     multimap_value(my_map,val(int,1),val(str,"uno"))
     multimap_value(my_map,val(int,2),val(str,"two"))

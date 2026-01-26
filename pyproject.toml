@@ -27,8 +27,8 @@ lint_pylint = ["pylint"]
 typecheck = ["types-setuptools", "mypy"]
 test = ["pytest", "clintest>=0.4"]
 doc = [
-    "mkdocs", 
-    "mkdocs-material", 
+    "mkdocs",
+    "mkdocs-material",
     "mkdocstrings[python]",
     "mkdocs-literate-nav"
 ]

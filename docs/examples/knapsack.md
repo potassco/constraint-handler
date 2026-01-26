@@ -144,7 +144,7 @@ Finally, we need to define our optimization objective, which is to maximize the 
 For this, we will use the [`optimize_maximizeSum/2`][optimize_maximizeSum] predicate as follows:
 
 ```prolog
-optimize_maximizeSum(dummy, EXPR, ID) :- 
+optimize_maximizeSum(dummy, EXPR, ID) :-
     item(ID, _, _),
     COND = variable(item_included(ID)),
     EXPR = operation(if, (COND, (variable(item_value(ID)),()))).
@@ -183,7 +183,7 @@ weight(N, NEXT) :-
 ensure(capacity_constraint, operation(leq, (TOTAL_WEIGHT,(variable(total_capacity),())))) :- weight(_, TOTAL_WEIGHT).
 
 % Optimization for Value
-optimize_maximizeSum(dummy, EXPR, ID) :- 
+optimize_maximizeSum(dummy, EXPR, ID) :-
     item(ID, _, _),
     COND = variable(item_included(ID)),
     EXPR = operation(if, (COND, (variable(item_value(ID)),()))).
@@ -198,29 +198,29 @@ We're looking for the items `1`, `2`, `4`, and `5` to be included in the knapsac
 Adding `#show value/2.` to the end of the program should give you an output similar to this:
 
 ```prolog
-value(item_included(8),val(bool,false)) 
-value(item_included(7),val(bool,false)) 
-value(item_included(6),val(bool,false)) 
-value(item_included(3),val(bool,false)) 
-value(item_included(5),val(bool,true)) 
-value(item_included(4),val(bool,true)) 
-value(item_included(2),val(bool,true)) 
-value(item_included(1),val(bool,true)) 
-value(total_capacity,val(float,float("5.0"))) 
-value(item_weight(1),val(float,float("0.02"))) 
-value(item_weight(2),val(float,float("0.15"))) 
-value(item_weight(3),val(float,float("0.8"))) 
-value(item_weight(4),val(float,float("2.4"))) 
-value(item_weight(5),val(float,float("1.8"))) 
-value(item_weight(6),val(float,float("3.5"))) 
-value(item_weight(7),val(float,float("2.0"))) 
-value(item_weight(8),val(float,float("4.0"))) 
-value(item_value(1),val(float,float("1200.0"))) 
-value(item_value(2),val(float,float("300.0"))) 
-value(item_value(3),val(float,float("850.0"))) 
-value(item_value(4),val(float,float("1600.0"))) 
-value(item_value(5),val(float,float("1100.0"))) 
-value(item_value(6),val(float,float("1800.0"))) 
-value(item_value(7),val(float,float("50.0"))) 
+value(item_included(8),val(bool,false))
+value(item_included(7),val(bool,false))
+value(item_included(6),val(bool,false))
+value(item_included(3),val(bool,false))
+value(item_included(5),val(bool,true))
+value(item_included(4),val(bool,true))
+value(item_included(2),val(bool,true))
+value(item_included(1),val(bool,true))
+value(total_capacity,val(float,float("5.0")))
+value(item_weight(1),val(float,float("0.02")))
+value(item_weight(2),val(float,float("0.15")))
+value(item_weight(3),val(float,float("0.8")))
+value(item_weight(4),val(float,float("2.4")))
+value(item_weight(5),val(float,float("1.8")))
+value(item_weight(6),val(float,float("3.5")))
+value(item_weight(7),val(float,float("2.0")))
+value(item_weight(8),val(float,float("4.0")))
+value(item_value(1),val(float,float("1200.0")))
+value(item_value(2),val(float,float("300.0")))
+value(item_value(3),val(float,float("850.0")))
+value(item_value(4),val(float,float("1600.0")))
+value(item_value(5),val(float,float("1100.0")))
+value(item_value(6),val(float,float("1800.0")))
+value(item_value(7),val(float,float("50.0")))
 value(item_value(8),val(float,float("20.0")))
 ```

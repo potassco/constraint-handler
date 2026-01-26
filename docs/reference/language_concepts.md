@@ -33,9 +33,9 @@ An Expression is a term that takes a specific value in the context of a valuatio
     { x: 5 , y: "hello"}
     ```
 
-    the expression `x + 2` takes the value `7`. 
+    the expression `x + 2` takes the value `7`.
 
-In order to constrain the set of possible values that an expression can take, they can be associated with specific types. 
+In order to constrain the set of possible values that an expression can take, they can be associated with specific types.
 
 !!! Example
     The valuation
@@ -94,16 +94,16 @@ to denote a statement that fails if the given condition does not hold in the con
     { x: 5 , y: "hello"}
     ```
 
-    The statement 
+    The statement
     ```
     assert x > 0
-    ``` 
+    ```
     succeeds and produces the same valuation as output.
 
-    While the statement 
+    While the statement
     ```
     assert x < 0
-    ``` 
+    ```
     fails.
 
 ### Overview

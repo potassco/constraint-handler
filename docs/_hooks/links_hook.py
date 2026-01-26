@@ -29,7 +29,6 @@ import os
 LINKS = {
     # User Guide
     "installation": "user_guide/installation.md",
-
     # Language Concepts
     "Language Concepts": "reference/language_concepts.md",
     "Valuation": "reference/language_concepts.md#valuation",
@@ -90,7 +89,6 @@ LINKS = {
     "preference_holds": "reference/preference.md#holds",
     "preference_variableValue": "reference/preference.md#variable-value",
     "preference_score": "reference/preference.md#preference-score",
-
     # Execution
     "Assign Statement": "reference/execution.md#assign",
     "execution_declare": "reference/execution.md#declare",
@@ -112,6 +110,7 @@ Keys are the labels used in Markdown (e.g., [Term]), and values are the
 relative paths to the target files or sections within the documentation.
 """
 
+
 def on_page_markdown(markdown, page, config, files):
     """
     Generates Markdown link definitions relative to the source file location.
@@ -127,22 +126,22 @@ def on_page_markdown(markdown, page, config, files):
     that links are correctly resolved without warnings.
     """
     definitions = ["\n\n"]
-    
+
     current_dir = os.path.dirname(page.file.src_uri)
-    
+
     for label, target in LINKS.items():
-        if '#' in target:
-            path, anchor = target.split('#', 1)
-            anchor = '#' + anchor
+        if "#" in target:
+            path, anchor = target.split("#", 1)
+            anchor = "#" + anchor
         else:
             path = target
-            anchor = ''
+            anchor = ""
 
-        rel_path = os.path.relpath(path, current_dir).replace(os.sep, '/')
+        rel_path = os.path.relpath(path, current_dir).replace(os.sep, "/")
         final_link = f"{rel_path}{anchor}"
 
         definitions.append(f"[{label}]: {final_link}")
-        if not label.endswith('s'):
+        if not label.endswith("s"):
             definitions.append(f"[{label}s]: {final_link}")
 
     return markdown + "\n".join(definitions)

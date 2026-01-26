@@ -41,7 +41,7 @@ For convenience, there also exists a shorthand version `preference_variableValue
     ```prolog
     preference_variableValue(dummy,color,val(symbol,red),5).
     preference_variableValue(dummy,color,val(symbol,(green;blue)),3).
-    preference_variableValue(dummy,color,val(symbol,yellow)). 
+    preference_variableValue(dummy,color,val(symbol,yellow)).
     ```
 
     In this example, the variable `color` has the highest preference value of `5` for the value `red`, a preference value of `3` for both `green` and `blue`, and the lowest preference value of `1` for `yellow`. When the solver evaluates solutions, it will prioritize those where `color` is `red`, followed by those where it is `green` or `blue`, and lastly those where it is `yellow`.
@@ -138,7 +138,7 @@ However, instead of decreasing the overall score, negative preference values wil
     ```
 
     One might be inclined to believe that models containing yellow have `5` subtracted from their total score for each occurrence. This would lead the model containing the combination `color(a) = yellow` and `color(b) = yellow` to have a total score of `0`.
-    
+
     However, this is not the case. Instead, models that do not contain yellow will have their total score increased by `5` for each occurrence of yellow that is avoided. Thus, the model with `color(a) = yellow` and `color(b) = yellow` will still have a total score of `10`, because it satisfies the preference of `color(a) = color(b)`. On the other hand, a model with `color(a) = red` and `color(b) = red` will have a total score of `26`, which is calculated as follows:
 
     - Preference for `color(a) = red`: 3

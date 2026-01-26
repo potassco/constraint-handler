@@ -71,7 +71,7 @@ can help preserve these correlations during grounding, leading to more efficient
     variable_domain(x, val(int, 0..1)).
 
     expression(1, variable(x)).
-    expression(N+1, NEXT) :- 
+    expression(N+1, NEXT) :-
         expression(N, PREV), max_depth(MAX), N < MAX,
         MULT = operation(mult, (val(int, 2), (PREV, ()))),
         NEXT = operation(add, (variable(x), (MULT, ()))).
@@ -110,7 +110,7 @@ using the `compile` engine can be more efficient.
     variable_domain(x(1..MAX), val(int, 1..10)):- num_variables(MAX).
 
     expression(1, variable(x(1))).
-    expression(N+1, NEXT) :- 
+    expression(N+1, NEXT) :-
         expression(N, PREV), num_variables(MAX), N < MAX,
         NEXT = operation(max, (variable(x(N+1)), (PREV, ()))).
 

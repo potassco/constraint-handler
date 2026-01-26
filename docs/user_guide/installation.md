@@ -11,7 +11,7 @@ pip install -i https://test.pypi.org/simple/ constraint-handler
 ```
 
 === "For Developers (from Source)"
-To install the project for development it is best to install it 
+To install the project for development it is best to install it
 in editable mode directly from source:
 
 ```console

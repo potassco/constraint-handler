@@ -31,8 +31,8 @@ pip install -e .[dev]
 
 ## Documentation
 
-To generate the documentation, at least the "doc" part of the project needs to be installed.
-This is included in the "dev" installation.
+To generate the documentation, at least the "doc" part of the project needs to
+be installed. This is included in the "dev" installation.
 
 After that, to view the documentation locally, run:
 

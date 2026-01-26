@@ -64,12 +64,12 @@
     display: inline-block;
     vertical-align: middle;
     line-height: normal;
-    
+
     text-decoration: none !important;
     transition: opacity 0.2s ease;
 }
 
-a.badge, 
+a.badge,
 .badge a {
     color: inherit !important;
     text-decoration: none !important;
