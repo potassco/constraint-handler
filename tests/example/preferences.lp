@@ -42,7 +42,7 @@ edge(x2,y2).
 edge(x2,z2).
 edge(x2,t2).
 
-preference_variableValue(dummy,x2,val(symbol,red),2).
+preference_variableValue(dummy,x2,val(symbol,red),3).
 preference_variableValue(dummy,y2,val(symbol,red),1).
 preference_variableValue(dummy,z2,val(symbol,red),1).
 preference_variableValue(dummy,t2,val(symbol,red),-1).
@@ -61,5 +61,5 @@ preference_variableValue(dummy,q,val(int,N),N) :- smallInt(N).
 
 
 #show evaluated/4.
-#show value/3.
+#show value/2.
 #show preference_score/1.
