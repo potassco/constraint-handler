@@ -14,56 +14,49 @@ representation(set,intensional).
 
 computed(length,ARGS,val(int,N)) :- compute(length,ARGS),
     ARGS = (val(set,SET),()),
-    N = #count { V,T : _set_contains(SET,T,V) }.
+    N = #count { V : _set_contains(SET,V) }.
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
 
 _se_value(EX,val(set,ER)) :- _set_declare(NAME,EX), ER=ref(EX).
-_set_contains(ER,T,V) :- representation(T,extensional), _set_assign(NAME,EX,EV), _se_value(EX,val(set,ER)), _se_value(EV,val(T,V)).
+_set_contains(ER,val(T,V)) :- representation(T,extensional), _set_assign(NAME,EX,EV), _se_value(EX,val(set,ER)), _se_value(EV,val(T,V)).
 
 compute(eq,(val(T,V1),(val(T,V2),()))) :- representation(T,intensional),
     _set_assign(N1,EX,E1), _se_value(E1,val(T,V1)),
     _set_assign(N2,EX,E2), _se_value(E2,val(T,V2)), V1 < V2.
-_set_contains(ER,T,V1) :- representation(T,intensional),
+_set_contains(ER,val(T,V1)) :- representation(T,intensional),
     _set_assign(NAME,EX,E1), _se_value(E1,val(T,V1)), _se_value(EX,val(set,ER)),
     #false : _set_assign(N2,EX,E2), _se_value(E2,val(T,V2)), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
 
-set_value(X,val(T,V)) :- _se_value(EX,val(set,E)), _set_contains(E,T,V), EX=variable(X).
+set_value(X,V) :- _se_value(EX,val(set,E)), _set_contains(E,V), EX=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
 
 computed(isin,ARGS,val(bool,true))  :- compute(isin,ARGS), ARGS = (val(T,V),(val(set,S),())),
-    representation(T,extensional),     _set_contains(S,T,V).
+    representation(T,extensional),     _set_contains(S,val(T,V)).
 computed(isin,ARGS,val(bool,false)) :- compute(isin,ARGS), ARGS = (val(T,V),(val(set,S),())),
-    representation(T,extensional), not _set_contains(S,T,V).
+    representation(T,extensional), not _set_contains(S,val(T,V)).
 computed(notin,ARGS,val(bool,false)) :- compute(notin,ARGS), ARGS = (val(T,V),(val(set,S),())),
-    representation(T,extensional),     _set_contains(S,T,V).
+    representation(T,extensional),     _set_contains(S,val(T,V)).
 computed(notin,ARGS,val(bool,true))  :- compute(notin,ARGS), ARGS = (val(T,V),(val(set,S),())),
-    representation(T,extensional), not _set_contains(S,T,V).
+    representation(T,extensional), not _set_contains(S,val(T,V)).
 
 compute(eq,(val(T,V1),(val(T,V2),())))  :- compute((isin;notin),ARGS), ARGS = (val(T,V1),(val(set,S),())),
-    representation(T,intensional), _set_contains(S,T,V2).
+    representation(T,intensional), _set_contains(S,val(T,V2)).
 
 computed(isin,ARGS,val(bool,true))   :- compute(isin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
-    representation(T,intensional), _set_contains(S,T,V2), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
+    representation(T,intensional), _set_contains(S,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 computed(isin,ARGS,val(bool,false))  :- compute(isin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
-    representation(T,intensional), #false : _set_contains(S,T,V2), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
+    representation(T,intensional), #false : _set_contains(S,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 computed(notin,ARGS,val(bool,false)) :- compute(isin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
-    representation(T,intensional), _set_contains(S,T,V2), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
+    representation(T,intensional), _set_contains(S,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 computed(notin,ARGS,val(bool,true))  :- compute(isin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
-    representation(T,intensional), #false : _set_contains(S,T,V2), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
+    representation(T,intensional), #false : _set_contains(S,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 
 %%%%%%%%%%%%%%%%% makeSet
 
-computed(makeSet,ARGS,val(set,ref(makeSet(ARGS)))) :- compute(makeSet,ARGS).
-compute(eq,(val(T,V1),(val(T,V2),()))) :- compute(makeSet,ARGS),
-    val(T,V1)=@pythonListElements(ARGS), val(T,V2)=@pythonListElements(ARGS),
-    representation(T,intensional), V1 < V2.
-_set_contains(ER,T,V) :- compute(makeSet,ARGS), computed(makeSet,ARGS,val(set,ER)),
-    val(T,V)=@pythonListElements(ARGS), representation(T,extensional).
-_set_contains(ER,T,V1) :- compute(makeSet,ARGS), computed(makeSet,ARGS,val(set,ER)), representation(T,intensional),
-    val(T,V1)=@pythonListElements(ARGS),
-    #false : val(T,V2)=@pythonListElements(ARGS), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
+_set_declare(_internal,E) :- direct_query(E), E=operation(makeSet,L).
+_set_assign(_internal,E,SE) :- direct_query(E), E=operation(makeSet,L), SE=@pythonListElements(L).
 
 _set_declare(_internal,E) :- direct_query(E), E=set(L).
 _set_assign(_internal,E,SE) :- direct_query(E), E=set(L), SE=@pythonListElements(L).
@@ -76,33 +69,27 @@ _set_assign(_internal,E,SE) :- direct_query(E), E=set(L), SE=@pythonListElements
 
 %%%%%%%%%%%%%%%%% union inter
 
-compute(eq,(val(T,VSMALL),(val(T,VBIG),()))) :- compute((union;inter),ARGS), ARGS = (val(set,S1),(val(set,S2),())),
-    _set_contains(S1,T,V1), _set_contains(S2,T,V2), representation(T,intensional), (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL < VBIG.
+_set_declare(_internal,E) :- direct_query(E), E=operation(union,L).
+_set_assign(_internal,E,V) :- direct_query(E), E=operation(union,L), SE=@pythonListElements(L), _se_value(SE,val(set,ER)), _set_contains(ER,V).
 
-computed(union,ARGS,val(set,ref(union(ARGS)))) :- compute(union,ARGS), ARGS = (val(set,S1),(val(set,S2),())).
-_set_contains(ER,T,V) :- compute(union,ARGS), computed(union,ARGS,val(set,ER)),
-    ARGS = (val(set,S1),(val(set,S2),())),
-    representation(T,extensional), _set_contains((S1;S2),T,V).
 
-_set_contains(ER,T,VR) :- compute(union,ARGS), computed(union,ARGS,val(set,ER)),
-    ARGS = (val(set,S1),(val(set,S2),())),
-    representation(T,intensional),
-    (SR,SO)=((S1,S2);(S2,S1)), _set_contains(SR,T,VR),
-    #false : _set_contains(SO,T,VO), computed(eq,(val(T,VO),(val(T,VR),())),val(bool,true)), VO < VR.
+
+compute(eq,(val(T,VSMALL),(val(T,VBIG),()))) :- compute(inter,ARGS), ARGS = (val(set,S1),(val(set,S2),())),
+    _set_contains(S1,val(T,V1)), _set_contains(S2,val(T,V2)), representation(T,intensional), (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL < VBIG.
 
 computed(inter,ARGS,val(set,ref(inter(ARGS))))   :- compute(inter,ARGS), ARGS = (val(set,S1),(val(set,S2),())).
-_set_contains(ER,T,V) :- compute(inter,ARGS), computed(inter,ARGS,val(set,ER)),
+_set_contains(ER,val(T,V)) :- compute(inter,ARGS), computed(inter,ARGS,val(set,ER)),
     ARGS = (val(set,S1),(val(set,S2),())),
-    representation(T,extensional), _set_contains(S1,T,V), _set_contains(S2,T,V).
+    representation(T,extensional), _set_contains(S1,val(T,V)), _set_contains(S2,val(T,V)).
 
-_set_contains(ER,T,V) :- compute(inter,ARGS), computed(inter,ARGS,val(set,ER)),
+_set_contains(ER,val(T,V)) :- compute(inter,ARGS), computed(inter,ARGS,val(set,ER)),
     ARGS = (val(set,S1),(val(set,S2),())),
     representation(T,intensional),
-    _set_contains(S1,T,V), _set_contains(S2,T,V).
-_set_contains(ER,T,V) :- compute(inter,ARGS), computed(inter,ARGS,val(set,ER)),
+    _set_contains(S1,val(T,V)), _set_contains(S2,val(T,V)).
+_set_contains(ER,val(T,V)) :- compute(inter,ARGS), computed(inter,ARGS,val(set,ER)),
     ARGS = (val(set,S1),(val(set,S2),())),
     representation(T,intensional),
-    _set_contains(S1,T,V1), _set_contains(S2,T,V2), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)),
+    _set_contains(S1,val(T,V1)), _set_contains(S2,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)),
     V=(V1;V2), V=V1 : V1 < V2; V=V2 : V2 < V1.
 
 %%%%%%%%%%%%%%%%% Equality
@@ -115,18 +102,18 @@ computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS),  ARGS = (val(set,S1),(val
 computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS),  ARGS = (val(T1,S1),(val(set,S2),())), T1 != set.
 
 computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS=(val(set,S1),(val(set,S2),())),
-    _set_contains(S1,T,V), not _set_contains(S2,T,V), representation(T,extensional).
+    _set_contains(S1,val(T,V)), not _set_contains(S2,val(T,V)), representation(T,extensional).
 computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS=(val(set,S1),(val(set,S2),())),
-    _set_contains(S2,T,V), not _set_contains(S1,T,V), representation(T,extensional).
+    _set_contains(S2,val(T,V)), not _set_contains(S1,val(T,V)), representation(T,extensional).
 computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS=(val(set,S1),(val(set,S2),())),
-    _set_contains(S1,T,V1), representation(T,intensional),
-    #false : _set_contains(S2,T,V2), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
+    _set_contains(S1,val(T,V1)), representation(T,intensional),
+    #false : _set_contains(S2,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS=(val(set,S1),(val(set,S2),())),
-    _set_contains(S2,T,V2), representation(T,intensional),
-    #false : _set_contains(S1,T,V1), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
+    _set_contains(S2,val(T,V2)), representation(T,intensional),
+    #false : _set_contains(S1,val(T,V1)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 
 compute(eq,(val(T,V1),(val(T,V2),()))) :- compute(eq,ARGS), ARGS=(val(set,S1),(val(set,S2),())),
-    _set_contains(S1,T,V1), _set_contains(S2,T,V2), representation(T,intensional).
+    _set_contains(S1,val(T,V1)), _set_contains(S2,val(T,V2)), representation(T,intensional).
 
 %%%%%%%%%%%%%%%%% Equality axioms
 
@@ -144,12 +131,12 @@ compute(eq,(val(T,V1),(val(T,V2),()))) :- compute(eq,ARGS), ARGS=(val(set,S1),(v
 %%%%%%%%%%%%%%%%% Subset
 
 compute(eq,(val(T,V1),(val(T,V2),()))) :- compute(subset,ARGS), ARGS = (val(set,S1),(val(set,S2),())),
-    _set_contains(S1,T,V1), _set_contains(S2,T,V2), representation(T,intensional).
+    _set_contains(S1,val(T,V1)), _set_contains(S2,val(T,V2)), representation(T,intensional).
 computed(subset,ARGS,val(bool,false)) :- compute(subset,ARGS), ARGS = (val(set,S1),(val(set,S2),())),
-    _set_contains(S1,T,V), representation(T,extensional), not _set_contains(S2,T,V).
+    _set_contains(S1,val(T,V)), representation(T,extensional), not _set_contains(S2,val(T,V)).
 computed(subset,ARGS,val(bool,false)) :- compute(subset,ARGS), ARGS = (val(set,S1),(val(set,S2),())),
-    _set_contains(S1,T,V1), representation(T,intensional),
-    #false : _set_contains(S2,T,V2), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
+    _set_contains(S1,val(T,V1)), representation(T,intensional),
+    #false : _set_contains(S2,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 
 computed(subset,ARGS,val(bool,true))  :- compute(subset,ARGS), ARGS = (val(set,S1),(val(set,S2),())),
     not computed(subset,ARGS,val(bool,false)).
@@ -175,18 +162,18 @@ computed(set_fold,ARGS,val(TB,VB)) :- compute(set_fold,ARGS), ARGS = (val(functi
 
 
 _set_index(EM,0,TV,RV) :- _set_makeIndex(EM),
-    _set_contains(EM,TV,RV),
-    #false : _set_contains(EM,TV1,RV1), (TV1,RV1) < (TV,RV).
+    _set_contains(EM,val(TV,RV)),
+    #false : _set_contains(EM,val(TV1,RV1)), (TV1,RV1) < (TV,RV).
 
 _set_index(EM,I+1,TV,RV) :- _set_index(EM,I,TV0,RV0),
-    _set_contains(EM,TV,RV), (TV0,RV0) < (TV,RV),
-    #false : _set_contains(EM,TV1,RV1), (TV0,RV0) < (TV1,RV1), (TV1,RV1) < (TV,RV).
+    _set_contains(EM,val(TV,RV)), (TV0,RV0) < (TV,RV),
+    #false : _set_contains(EM,val(TV1,RV1)), (TV0,RV0) < (TV1,RV1), (TV1,RV1) < (TV,RV).
 
 _set_lastIndex(EM,I+1) :- _set_index(EM,I,TV,RV),
-    #false : _set_contains(EM,TV1,RV1), (TV,RV) < (TV1,RV1).
+    #false : _set_contains(EM,val(TV1,RV1)), (TV,RV) < (TV1,RV1).
 
 _set_lastIndex(EM,0) :- _set_makeIndex(EM),
-    #false : _set_contains(EM,TV,RV).
+    #false : _set_contains(EM,val(TV,RV)).
 
 %%%%%%%%%%%%%%%%% _set_implode
 _set_implode(REF) :- _direct_implode(val(set,REF)).
@@ -194,7 +181,7 @@ _set_implode(REF) :- _direct_implode(E), _se_value(E,val(set,REF)).
 _direct_imploded(E,V) :- _direct_implode(E), E=val(set,REF), _set_imploded(REF,V).
 _direct_imploded(E,V) :- _direct_implode(E), _se_value(E,val(set,REF)), _set_imploded(REF,V).
 
-_direct_implode(val(TV,RV)) :- _set_implode(EM), _set_contains(EM,TV,RV).
+_direct_implode(val(TV,RV)) :- _set_implode(EM), _set_contains(EM,val(TV,RV)).
 _set_makeIndex(EM) :- _set_implode(EM).
 _set_as_list_aux(EM,0,()) :- _set_implode(EM).
 _set_as_list_aux(EM,IDX+1,K) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,TV,RV), _direct_imploded(val(TV,RV),V), K=(V,L).
