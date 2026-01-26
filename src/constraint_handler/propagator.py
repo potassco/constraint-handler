@@ -56,14 +56,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.errors: list[Exception] = []
 
         self.reasoning_mode: ReasoningMode = ReasoningMode.STANDARD
-
+        self.reasoning_mode_stage_lits: dict[int, int] = {1: -1, 2: -1}
+        self.reasoning_stage: Literal[0, 1, 2] = 0
         # this is used for cautious reasoning
         # for the first model, the set is assigned the first model
         # This is will hold the model which is then used to update the result
         self.python_model: set[atom.ResultAtom] | None = None
 
+        self.first_decision_level: int = -1
+
     def get_configuration(self, ctl: clingo.Control):
-        myprint(ctl.configuration.solve.enum_mode)
         match ctl.configuration.solve.enum_mode:
             case "brave":
                 self.reasoning_mode = ReasoningMode.BRAVE
@@ -95,8 +97,54 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_evaluate(init)
 
+        self.add_reasoning_mode_helper_atoms(init)
+
         myprint("INIT DONE")
         myprint("#" * 50)
+
+    def add_reasoning_mode_helper_atoms(self, ctl: clingo.PropagateInit) -> None:
+        """
+        This method adds helper atoms for brave and cautious reasoning modes.
+        An atom marks the stage where we let clingo do the reasoning for variables handled by the solver
+        The second atom marks the stage where we evaluate the atoms of the propagator.
+        """
+        if self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS):
+            myprint("Adding reasoning mode helper atoms")
+            for a in ctl.symbolic_atoms.by_signature("stage", 1):
+                if a.symbol.arguments[0].number == 1:
+                    self.reasoning_mode_stage_lits[1] = ctl.solver_literal(a.literal)
+
+                elif a.symbol.arguments[0].number == 2:
+                    self.reasoning_mode_stage_lits[2] = ctl.solver_literal(a.literal)
+            # self.reasoning_mode_stage_lits[1] = ctl.add_literal(freeze=True)
+            # self.reasoning_mode_stage_lits[2] = ctl.add_literal(freeze=True)
+            # ctl.add_watch(self.reasoning_mode_stage_lits[1])
+            # ctl.add_watch(self.reasoning_mode_stage_lits[2])
+            # ctl.add_watch(-self.reasoning_mode_stage_lits[1])
+            # ctl.add_watch(-self.reasoning_mode_stage_lits[2])
+            # ctl.add_clause([-self.reasoning_mode_stage_lits[1], -self.reasoning_mode_stage_lits[2]])
+            # ctl.add_clause([self.reasoning_mode_stage_lits[1], self.reasoning_mode_stage_lits[2]])
+            print(self.reasoning_mode_stage_lits)
+
+    def decide(self, thread_id: int, assignment: clingo.Assignment, fallback: int) -> int:
+        """
+        This method is called to decide on literals in the propagator.
+        When we are in brave or cautious mode, we make a special decision on decision level 1.
+        we first decide on the first stage literal to be true.
+        the second time we decide on the second stage literal to be true.
+        """
+        if self.first_decision_level == -1:
+            self.first_decision_level = assignment.decision_level
+        if self.reasoning_mode != ReasoningMode.STANDARD and self.first_decision_level == assignment.decision_level:
+            if not assignment.is_true(self.reasoning_mode_stage_lits[1]) and self.reasoning_stage == 0:
+                print("Deciding first stage literal for brave/cautious reasoning", self.reasoning_mode_stage_lits[1])
+                self.reasoning_stage = 1
+                return self.reasoning_mode_stage_lits[1]
+            elif not assignment.is_true(self.reasoning_mode_stage_lits[2]) and self.reasoning_stage == 1:
+                print("Deciding second stage literal for brave/cautious reasoning", self.reasoning_mode_stage_lits[2])
+                self.reasoning_stage = 2
+                return self.reasoning_mode_stage_lits[2]
+        return fallback
 
     def set_optimization_check_strength(self, strength: Literal["lt", "le"]) -> None:
         """
@@ -166,21 +214,29 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def evaluate_model(self, ctl: clingo.PropagateControl) -> bool:
         old_model = self.python_model
         self.update_python_model()
+        assert type(self.python_model) is set
         if old_model is not None:
             if self.reasoning_mode == ReasoningMode.CAUTIOUS:
                 self.python_model = old_model.intersection(self.python_model)
             if self.reasoning_mode == ReasoningMode.BRAVE:
                 self.python_model = old_model.union(self.python_model)
         # the following is incorrect and can cause unsat when the propagator wasn't requested for anything.
-        if self.python_model != old_model and self.reasoning_mode != ReasoningMode.STANDARD:
+        if (
+            self.python_model != old_model
+            and self.reasoning_mode != ReasoningMode.STANDARD
+            and self.reasoning_stage == 2
+        ):
             # should it be somethinbg about projections?
             ng: set[int] = set().union(*(self.get_reasons(var) for var in self.symbol2var.values()))
+            # if ng is empty it means that there are no variables in the propagator
+            if len(ng) == 0:
+                return False
             myprint(f"Adding nogood {list(ng)} to enforce brave/cautious")
             if ctl.add_nogood(ng, tag=False):
                 assert False, "Added violated constraint but solver did not detect it"
             return True
         else:
-            return
+            return False
 
     def check_evaluate(self, ctl: clingo.PropagateControl):
         myprint("Checking evaluate atoms")
@@ -199,7 +255,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if self.check_only:
             return
 
-        myprint(f"PROPAGATING with changes: {changes} and decision level {control.assignment.decision_level}")
         to_evaluate: set[VariableType] = set()
         for rlit in changes:
             lit = abs(rlit)
