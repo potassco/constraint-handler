@@ -44,6 +44,24 @@ for [Operator Signatures]
 
 ---
 
+## Tuple Expressions
+The constraint handler supports tuple [Expressions] to group multiple expressions into a single unit. While these are currently not standalone collections, they are used as input for certain collection operations.
+
+A tuple expression is created by simply enclosing multiple expressions within parentheses and separating them by commas.
+
+The empty tuple is represented by `()`.
+
+!!! Example
+    The tuple expression
+
+    ```prolog
+    (val(symbol, color), val(symbol, red))
+    ```
+
+    groups together two symbol values: `color` and `red`.
+
+---
+
 ## Set
 Sets are unordered collections of unique elements. They are useful for grouping items where order does not matter and duplicates are not allowed.
 
@@ -306,19 +324,19 @@ multimap_value(Name, Key, Value)
     ```
 
 ### Make Multimap
-Just like for sets, the constraint handler provides a `multimapMake` operator to create multimaps directly within expressions.
+Just like for sets, the constraint handler provides a `multimap_make` operator to create multimaps directly within expressions. Here, all key-value pairs are provided as a list of [Tuple Expressions].
 
 !!! Example
-    To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimapMake`, you would use the following code:
+    To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimap_make`, you would use the following code:
 
     ```prolog
-    assign(bla, my_map, operation(multimapMake, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
+    assign(bla, my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
     ```
 
     This results in the following output atoms:
 
     ```prolog
-    value(my_map, val(multimap, ref(operation(multimapMake,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),()))))))) 
+    value(my_map, val(multimap, ref(operation(multimap_make,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),()))))))) 
     multimap_value(my_map,val(int,1),val(str,"one"))
     multimap_value(my_map,val(int,1),val(str,"uno"))
     multimap_value(my_map,val(int,2),val(str,"two"))
@@ -331,7 +349,7 @@ can be used in expressions.
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `multimapMake` | Make Map | ([list]\[(K, V)\]) $\to$ [multimap]\[K, V\] | Creates a new multimap from a list of `(Key, Value)` tuples. |
+| `multimap_make` | Make Map | ([list]\[(K, V)\]) $\to$ [multimap]\[K, V\] | Creates a new multimap from a list of `(Key, Value)` tuples. |
 | **Analysis** | | | |
 | `countKeys` | Count Keys | ([multimap]) $\to$ [int] | Returns the number of unique keys in the map. |
 | `countEntries` | Count Entries | ([multimap]) $\to$ [int] | Returns the total number of key-value pairs. |

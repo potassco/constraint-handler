@@ -63,6 +63,7 @@ LINKS = {
     "Symbol": "reference/base_types.md#symbol",
     # Collections
     "Collection": "reference/collections.md",
+    "Tuple Expression": "reference/collections.md#tuple-expressions",
     "Set": "reference/collections.md#set",
     "set_declare": "reference/collections.md#declare",
     "set_assign": "reference/collections.md#assign",
