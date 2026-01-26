@@ -29,7 +29,7 @@ test = ["pytest", "clintest>=0.4"]
 doc = [
     "mkdocs",
     "mkdocs-material",
-    "mkdocstrings[python]",
+    "mkdocstrings[python]>=1.0.2",
     "mkdocs-literate-nav"
 ]
 dev = ["constraint_handler[test,typecheck,lint_pylint, doc]"]
