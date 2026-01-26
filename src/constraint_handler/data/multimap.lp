@@ -10,26 +10,26 @@ direct_query(EK;EV) :- _multimap_assign(CNAME,X,EK,EV).
 
 representation(multimap,intensional).
 
-eValue(EX,multimap,X) :- _multimap_declare(CNAME,X), EX=variable(X), ER = ref(EX).
-_multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,X,EK,EV), EX = variable(X), eValue(EX,multimap,ER).
+_se_value(EX,val(multimap,X)) :- _multimap_declare(CNAME,X), EX=variable(X), ER = ref(EX).
+_multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,X,EK,EV), EX = variable(X), _se_value(EX,val(multimap,ER)).
 
 %%%%%%%%%%%%%%%%% pairstuples
 direct_query(E1;E2) :- direct_query(E), E=(E1,E2).
 
 %%%%%%%%%%%%%%%%% multimap_make
 
-eValue(E,multimap,ER) :- direct_query(E), E=operation(multimap_make,L), ER=ref(E).
-_multimap_add(ER,EK,EV) :- direct_query(E), E=operation(multimap_make,L), eValue(E,multimap,ER),
+_se_value(E,val(multimap,ER)) :- direct_query(E), E=operation(multimap_make,L), ER=ref(E).
+_multimap_add(ER,EK,EV) :- direct_query(E), E=operation(multimap_make,L), _se_value(E,val(multimap,ER)),
     (EK,EV)=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value
 
-_multimap_has(key,EM,TK,VK) :- _multimap_add(EM,EK,EV), eValue(EK,TK,VK).
+_multimap_has(key,EM,TK,VK) :- _multimap_add(EM,EK,EV), _se_value(EK,val(TK,VK)).
 
 compute(eq,(val(T,V1),(val(T,V2),()))) :- _multimap_has(D,E,T,V1), _multimap_has(D,E,T,V2),
     representation(T,intensional), V1 < V2.
 _multimap_has(val(RK),EM,TV,VV) :- _multimap_add(EM,EK,EV),
-    eValue(EK,TK,VK), eValue(EV,TV,VV),
+    _se_value(EK,val(TK,VK)), _se_value(EV,val(TV,VV)),
     _multimap_representative(key,EM,TK,VK,RK).
 _multimap_representative(D,E,T,V,R) :- _multimap_has(D,E,T,V),
     representation(T,intensional),
@@ -40,12 +40,12 @@ _multimap_representative(D,E,T,V,V) :- _multimap_has(D,E,T,V),
     representation(T,extensional).
 
 _multimap_entry(EM,TK,RK,TV,RV) :- _multimap_add(EM,EK,EV),
-    eValue(EK,TK,VK), _multimap_representative(key,EM,TK,VK,RK),
-    eValue(EV,TV,VV), _multimap_representative(val(RK),EM,TV,VV,RV).
+    _se_value(EK,val(TK,VK)), _multimap_representative(key,EM,TK,VK,RK),
+    _se_value(EV,val(TV,VV)), _multimap_representative(val(RK),EM,TV,VV,RV).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-multimap_value(X,KEY,VAL) :- eValue(E,multimap,EM), _multimap_entry(EM,TK,VK,TV,VV), E=variable(X), KEY=val(TK,VK), VAL=val(TV,VV).
+multimap_value(X,KEY,VAL) :- _se_value(E,val(multimap,EM)), _multimap_entry(EM,TK,VK,TV,VV), E=variable(X), KEY=val(TK,VK), VAL=val(TV,VV).
 
 %%%%%%%%%%%%%%%%%% find
 

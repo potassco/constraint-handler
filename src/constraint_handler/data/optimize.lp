@@ -14,4 +14,4 @@ optimize_component(ME,X) :- _optimize_maximizeSum(CNAME,E,X),
 
 direct_query(E) :- optimize_component(E,X).
 
-#maximize { I,X : optimize_component(E,X), eValue(E,int,I) }.
+#maximize { I,X : optimize_component(E,X), _se_value(E,val(int,I)) }.
