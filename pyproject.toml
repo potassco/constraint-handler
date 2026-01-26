@@ -26,8 +26,13 @@ format = ["black", "isort", "autoflake"]
 lint_pylint = ["pylint"]
 typecheck = ["types-setuptools", "mypy"]
 test = ["pytest", "clintest>=0.4"]
-doc = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
-dev = ["constraint_handler[test,typecheck,lint_pylint]"]
+doc = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mkdocs-literate-nav"
+]
+dev = ["constraint_handler[test,typecheck,lint_pylint, doc]"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

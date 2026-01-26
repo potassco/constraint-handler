@@ -23,18 +23,18 @@ theme:
     - header.autohide
     - navigation.instant
     - navigation.tracking
-    # - navigation.sections
+    - navigation.sections
     - navigation.indexes
     - content.code.annotate
     # - toc.integrate
     - toc.follow
     - navigation.path
     # - navigation.top
-    - navigation.tabs
+    # - navigation.tabs
     - content.code.copy
     - content.tooltips
     # - navigation.instant.preview
-    # - navigation.expand
+    - navigation.expand
   icon:
     repo: fontawesome/brands/github
     admonition:
@@ -96,6 +96,8 @@ markdown_extensions:
 plugins:
   - search
   - autorefs
+  - literate-nav:
+      nav_file: SUMMARY.md
   - mkdocstrings:
       handlers:
         python:
@@ -113,20 +115,11 @@ plugins:
             show_signature_annotations: true
             signature_crossrefs: true
             show_source: false
+        asp:
+          options:
+            glossary: true
+            predicate_table: true
+            start_level: 1
 
-nav:
-  - Home: index.md
-  - Getting Started: getting_started.md
-  - Examples: examples/index.md
-  - Reference:
-    - reference/index.md
-    - Problem: reference/problem/index.md
-    - Encodings: reference/encodings/index.md
-    - API: reference/api/index.md
-  - Community:
-    - community/index.md
-    - Help: community/help.md
-    - Changes: community/CHANGES.md
-    - Contributing: community/CONTRIBUTING.md
-    - Development: community/DEVELOPMENT.md
-    - Deployment: community/DEPLOYMENT.md
+hooks:
+  - docs/_hooks/links_hook.py

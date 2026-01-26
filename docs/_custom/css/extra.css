@@ -1,5 +1,16 @@
 :root {
     --md-primary-fg-color: #6495ED;
+
+    --doc-symbol-fact-fg-color: oklch(70% 0.202 349);
+    --doc-symbol-fact-bg-color: oklch(70% 0.202 349/ 0.15);
+    --doc-symbol-expression-fg-color: oklch(70% 0.182 276);
+    --doc-symbol-expression-bg-color: oklch(70% 0.182 276 / 0.15);
+    --doc-symbol-declaration-fg-color: oklch(70% 0.154 211);
+    --doc-symbol-declaration-bg-color: oklch(70% 0.154 211 / 0.15);
+    --doc-symbol-result-fg-color: oklch(70% 0.209 151);
+    --doc-symbol-result-bg-color: oklch(70% 0.209 151 / 0.15);
+    --doc-symbol-statement-fg-color: oklch(70% 0.165 50);
+    --doc-symbol-statement-bg-color: oklch(70% 0.165 50 / 0.15);
 }
 
 [data-md-color-scheme="slate"] .md-header,
@@ -27,4 +38,73 @@
 .md-header__button.md-logo svg {
     height: 1.5rem;
     width: 1.5rem;
+}
+
+.md-nav--primary .md-nav__title {
+    display: none !important;
+}
+
+/* Prevent wrapping in the first column of all tables */
+.md-typeset table:not([class]) td:first-child {
+  white-space: nowrap;
+}
+
+.md-typeset table:not([class]) td:nth-child(3) {
+  white-space: nowrap;
+}
+
+/* A badge for language concepts */
+.badge {
+    padding: 2px 8px;
+    min-width: 90px;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: normal;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: normal;
+
+    text-decoration: none !important;
+    transition: opacity 0.2s ease;
+}
+
+a.badge,
+.badge a {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+.badge:hover {
+    opacity: 0.8;
+}
+
+.expression {
+    background-color: var(--doc-symbol-expression-bg-color);
+    color: var(--doc-symbol-expression-fg-color);
+    border: 1px solid var(--doc-symbol-expression-fg-color);
+}
+
+.fact {
+    background-color: var(--doc-symbol-fact-bg-color);
+    color: var(--doc-symbol-fact-fg-color);
+    border: 1px solid var(--doc-symbol-fact-fg-color);
+}
+
+.declaration {
+    background-color: var(--doc-symbol-declaration-bg-color);
+    color: var(--doc-symbol-declaration-fg-color);
+    border: 1px solid var(--doc-symbol-declaration-fg-color);
+}
+
+.result {
+    background-color: var(--doc-symbol-result-bg-color);
+    color: var(--doc-symbol-result-fg-color);
+    border: 1px solid var(--doc-symbol-result-fg-color);
+}
+
+.statement {
+    background-color: var(--doc-symbol-statement-bg-color);
+    color: var(--doc-symbol-statement-fg-color);
+    border: 1px solid var(--doc-symbol-statement-fg-color);
 }
