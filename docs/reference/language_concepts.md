@@ -151,11 +151,10 @@ A list of declarations used to define problems.
 
 | Declaration | Description |
 |-|-|
-| assign | Declares a variable and assigns it a value from a specified domain. |
 | [ensure] | Declares a constraint that must hold in all valid solutions. |
-| [compute] | |
-| [computed] | |
-| [evaluate] | |
+| [compute] | Experimental and not documented. |
+| [computed] | Experimental and not documented. |
+| [evaluate] | Experimental and not documented. |
 | **Variable** | |
 | [domain] | Defines a domain of possible values for variables. |
 | [variable_declare] | Declares a variable with a specified domain. |
@@ -207,5 +206,5 @@ A list of output facts used to represent results.
 | [set_value] | Indicates the assigned value of a variable in the solution. |
 | [multimap_value] | Indicates the assigned value of a variable in the solution. |
 | [warning] | Represents a warning message generated during solving. |
-| [evaluated] | Represents the evaluation of an expression in the solution. |
+| [evaluated] | Experimental and not documented. |
 | [preference_score] | Represents the total score of preferences satisfied in the solution. |
