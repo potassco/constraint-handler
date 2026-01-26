@@ -102,24 +102,12 @@ plugins:
       handlers:
         python:
           paths: [src]
-          import:
-            - https://docs.python.org/3/objects.inv
           options:
             show_symbol_type_heading: true
             show_symbol_type_toc: true
-            # show_root_toc_entry: false
-            # show_inherited_summary: true
-            show_inherited_detail: true
-            show_inherited_detail_toc: true
-            show_inherited_detail_tree: true
             show_signature_annotations: true
             signature_crossrefs: true
             show_source: false
-        asp:
-          options:
-            glossary: true
-            predicate_table: true
-            start_level: 1
 
 hooks:
   - docs/_hooks/links_hook.py
