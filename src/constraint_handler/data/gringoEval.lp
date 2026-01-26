@@ -22,8 +22,8 @@ ge_expressionQuery(EXPR) :- _ge_assign(CNAME,X,EXPR).
 involvedVars(EXPR,@pythonExpressionVariable(EXPR)) :- ge_expressionQuery(EXPR).
 ge_vQuery(X) :- involvedVars(EXPR,X).
 
-_direct_implode(val(T,V)) :- ge_vQuery(X), eValue(variable(X),T,V).
-ge_value(X,VAL) :- ge_vQuery(X), E=variable(X), eValue(E,T,V), _direct_imploded(E,VAL).
+_direct_implode(V) :- ge_vQuery(X), _se_value(variable(X),V).
+ge_value(X,VAL) :- ge_vQuery(X), E=variable(X), _se_value(E,val(T,V)), _direct_imploded(E,VAL).
 
 
 _ge_setAssignsAux(X,#inf,()) :- _ge_set_declare(CNAME,X).

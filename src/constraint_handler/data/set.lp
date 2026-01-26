@@ -18,17 +18,17 @@ computed(length,ARGS,val(int,N)) :- compute(length,ARGS),
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
 
-eValue(EX,set,ER) :- _set_declare(NAME,EX), ER=ref(EX).
-_set_contains(ER,T,V) :- representation(T,extensional), _set_assign(NAME,EX,EV), eValue(EX,set,ER), eValue(EV,T,V).
+_se_value(EX,val(set,ER)) :- _set_declare(NAME,EX), ER=ref(EX).
+_set_contains(ER,T,V) :- representation(T,extensional), _set_assign(NAME,EX,EV), _se_value(EX,val(set,ER)), _se_value(EV,val(T,V)).
 
 compute(eq,(val(T,V1),(val(T,V2),()))) :- representation(T,intensional),
-    _set_assign(N1,EX,E1), eValue(E1,T,V1),
-    _set_assign(N2,EX,E2), eValue(E2,T,V2), V1 < V2.
+    _set_assign(N1,EX,E1), _se_value(E1,val(T,V1)),
+    _set_assign(N2,EX,E2), _se_value(E2,val(T,V2)), V1 < V2.
 _set_contains(ER,T,V1) :- representation(T,intensional),
-    _set_assign(NAME,EX,E1), eValue(E1,T,V1), eValue(EX,set,ER),
-    #false : _set_assign(N2,EX,E2), eValue(E2,T,V2), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
+    _set_assign(NAME,EX,E1), _se_value(E1,val(T,V1)), _se_value(EX,val(set,ER)),
+    #false : _set_assign(N2,EX,E2), _se_value(E2,val(T,V2)), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
 
-set_value(X,val(T,V)) :- eValue(EX,set,E), _set_contains(E,T,V), EX=variable(X).
+set_value(X,val(T,V)) :- _se_value(EX,val(set,E)), _set_contains(E,T,V), EX=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
 
@@ -65,7 +65,6 @@ _set_contains(ER,T,V1) :- compute(makeSet,ARGS), computed(makeSet,ARGS,val(set,E
     val(T,V1)=@pythonListElements(ARGS),
     #false : val(T,V2)=@pythonListElements(ARGS), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
 
-direct_query(SE) :- direct_query(E), E=set(L), SE=@pythonListElements(L).
 _set_declare(_internal,E) :- direct_query(E), E=set(L).
 _set_assign(_internal,E,SE) :- direct_query(E), E=set(L), SE=@pythonListElements(L).
 
@@ -191,9 +190,9 @@ _set_lastIndex(EM,0) :- _set_makeIndex(EM),
 
 %%%%%%%%%%%%%%%%% _set_implode
 _set_implode(REF) :- _direct_implode(val(set,REF)).
-_set_implode(REF) :- _direct_implode(E), eValue(E,set,REF).
+_set_implode(REF) :- _direct_implode(E), _se_value(E,val(set,REF)).
 _direct_imploded(E,V) :- _direct_implode(E), E=val(set,REF), _set_imploded(REF,V).
-_direct_imploded(E,V) :- _direct_implode(E), eValue(E,set,REF), _set_imploded(REF,V).
+_direct_imploded(E,V) :- _direct_implode(E), _se_value(E,val(set,REF)), _set_imploded(REF,V).
 
 _direct_implode(val(TV,RV)) :- _set_implode(EM), _set_contains(EM,TV,RV).
 _set_makeIndex(EM) :- _set_implode(EM).

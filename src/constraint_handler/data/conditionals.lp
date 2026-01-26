@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%% conditional_hasValue/1 conditional_hasNoValue/1
-conditional_hasValue(E) :- eValue(E,T,V), (T,V) != (none,none).
+conditional_hasValue(E) :- _se_value(E,V), V != val(none,none).
 conditional_hasNoValue(E) :- direct_query(E), not conditional_hasValue(E).
 
 %%%%%%%%%%%%%%%%% eq neq
@@ -11,22 +11,22 @@ computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=neq, ARGS = (val(T1,V1
 %%%%%%%%%%%%%%%%% ite
 _direct_lazy(ite).
 direct_query(E1) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))).
-direct_query(E2) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), eValue(E1,bool,true).
-direct_query(E3) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), eValue(E1,bool,false).
+direct_query(E2) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), _se_value(E1,val(bool,true)).
+direct_query(E3) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), _se_value(E1,val(bool,false)).
 
-eValue(E,none,none) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), eValue(E1,none,none).
-eValue(E,T2,V2) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), eValue(E1,bool,true), eValue(E2,T2,V2).
-eValue(E,T3,V3) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), eValue(E1,bool,false), eValue(E3,T3,V3).
+_se_value(E,val(none,none)) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), _se_value(E1,val(none,none)).
+_se_value(E,V2) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), _se_value(E1,val(bool,true)), _se_value(E2,V2).
+_se_value(E,V3) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), _se_value(E1,val(bool,false)), _se_value(E3,V3).
 
 %%%%%%%%%%%%%%%%% if
-eValue(E,T2,V2) :- direct_query(E), E=operation(if,(E1,(E2,()))), eValue(E1,bool,true), eValue(E2,T2,V2).
-eValue(E,none,none) :- direct_query(E), E=operation(if,(E1,(E2,()))), eValue(E1,bool,false).
-eValue(E,none,none) :- direct_query(E), E=operation(if,(E1,(E2,()))), eValue(E1,none,none).
+_se_value(E,V2) :- direct_query(E), E=operation(if,(E1,(E2,()))), _se_value(E1,val(bool,true)), _se_value(E2,V2).
+_se_value(E,val(none,none)) :- direct_query(E), E=operation(if,(E1,(E2,()))), _se_value(E1,val(bool,false)).
+_se_value(E,val(none,none)) :- direct_query(E), E=operation(if,(E1,(E2,()))), _se_value(E1,val(none,none)).
 
 %%%%%%%%%%%%%%%%% default
-eValue(E,T,V) :- direct_query(E), E=operation(default,(E1,TL)), eValue(E1,T,V), (T,V) != (none,none).
-eValue(E,T,V) :- direct_query(E), E=operation(default,(E1,(E2,()))), not conditional_hasValue(E1), eValue(E2,T,V).
+_se_value(E,V) :- direct_query(E), E=operation(default,(E1,TL)), _se_value(E1,V), V != val(none,none).
+_se_value(E,V) :- direct_query(E), E=operation(default,(E1,(E2,()))), not conditional_hasValue(E1), _se_value(E2,V).
 
 %%%%%%%%%%%%%%%%% hasValue
-eValue(E,bool,true)  :- direct_query(E), E=operation(hasValue,(E1,())), conditional_hasValue(E1).
-eValue(E,bool,false) :- direct_query(E), E=operation(hasValue,(E1,())), conditional_hasNoValue(E1).
+_se_value(E,val(bool,true))  :- direct_query(E), E=operation(hasValue,(E1,())), conditional_hasValue(E1).
+_se_value(E,val(bool,false)) :- direct_query(E), E=operation(hasValue,(E1,())), conditional_hasNoValue(E1).

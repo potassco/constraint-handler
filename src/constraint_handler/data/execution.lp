@@ -12,7 +12,7 @@ _execution_output_var(NAME,X) :- _execution_declare(NAME,STMT,INS,OUTS), X=@pyth
 _execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), execution_run(CNAME,NAME), engine(CNAME,compile).
 %warning(("undeclared run",NAME)) :- execution_run(NAME), not execution_declare(_,NAME,_).
 
-_execution_in(NAME,X,val(T,V)) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), eValue(variable(execution_input(NAME,X)),T,V).
+_execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), _se_value(variable(execution_input(NAME,X)),V).
 
 assign(_internal,execution_output(NAME,X),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_ou(NAME,X,V).
 assign(_internal,execution_output(NAME,X),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_in(NAME,X,V), not _execution_ou_proj(NAME,X).
@@ -50,9 +50,9 @@ _execution_eval_aux(NAME,STMT,EXPR,EXP2) :- _execution_equery(NAME,STMT,EXPR), E
 direct_query(EXP2) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2).
 _set_declare(_internal,E) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L).
 _set_assign(_internal,E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L), V=@pythonListElements(L).
-eValue(E,T,VAL) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=val(T,VAL).
-%_execution_evaled(NAME,EXPR,V) :- _execution_eval_aux(NAME,EXPR,EXP2), eValue(EXP2,T,VAL), V=val(T,VAL).
-_execution_evaled(NAME,STMT,EXPR,V) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2), eValue(EXP2,T,VAL), V=val(T,VAL).
+_se_value(E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=val(T,VAL).
+%_execution_evaled(NAME,EXPR,V) :- _execution_eval_aux(NAME,EXPR,EXP2), _se_value(EXP2,V), V=val(T,VAL).
+_execution_evaled(NAME,STMT,EXPR,V) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2), _se_value(EXP2,V), V=val(T,VAL).
 
 
 %%%%%%%%%%%%%%%%% assign
