@@ -43,7 +43,7 @@ Because it can be very verbose to specify engines for every part of a program, a
 using the `defaultEngine/1` predicate. This engine applies to all [Declarations] that do not have a specific
 engine requested via `requestEngine/2`.
 
-If no default engine is set, the system will use the [compile](#compile) engine.
+If no default engine is set, the system will use the compile engine.
 
 
 ```prolog

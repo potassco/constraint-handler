@@ -101,7 +101,7 @@ LINKS = {
     "assert": "reference/execution.md#assert",
     "while": "reference/execution.md#while",
     # Python Integration
-    "statement_python": "reference/python_integration.md#statement",
+    "statement_python": "reference/python_integration.md#statements",
     # Error Handling
     "warning": "reference/error_handling.md#warning",
 }
