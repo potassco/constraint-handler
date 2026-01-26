@@ -29,8 +29,7 @@ test = ["pytest", "clintest>=0.4"]
 doc = [
     "mkdocs", 
     "mkdocs-material", 
-    "mkdocstrings[python]", 
-    "mkdoclingo @ git+https://github.com/potassco/mkdoclingo.git@new_grammar",
+    "mkdocstrings[python]",
     "mkdocs-literate-nav"
 ]
 dev = ["constraint_handler[test,typecheck,lint_pylint, doc]"]
