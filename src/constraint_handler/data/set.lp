@@ -3,8 +3,8 @@
 
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_declare(CNAME,X).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_assign(CNAME,X,EXPR).
-_set_assign(CNAME,X,E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
-_set_declare(CNAME,X) :- engine(CNAME,compile), set_declare(CNAME,X).
+_set_assign(CNAME,variable(X),E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
+_set_declare(CNAME,variable(X)) :- engine(CNAME,compile), set_declare(CNAME,X).
 
 direct_query(E)    :- _set_assign(NAME,X,E).
 
@@ -18,17 +18,17 @@ computed(length,ARGS,val(int,N)) :- compute(length,ARGS),
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
 
-eValue(EX,set,ER) :- _set_declare(NAME,X), EX=variable(X), ER=ref(EX).
-_set_contains(ER,T,V) :- representation(T,extensional), _set_assign(NAME,X,EV), eValue(variable(X),set,ER), eValue(EV,T,V).
+eValue(EX,set,ER) :- _set_declare(NAME,EX), ER=ref(EX).
+_set_contains(ER,T,V) :- representation(T,extensional), _set_assign(NAME,EX,EV), eValue(EX,set,ER), eValue(EV,T,V).
 
 compute(eq,(val(T,V1),(val(T,V2),()))) :- representation(T,intensional),
-    _set_assign(N1,X,E1), eValue(E1,T,V1),
-    _set_assign(N2,X,E2), eValue(E2,T,V2), V1 < V2.
+    _set_assign(N1,EX,E1), eValue(E1,T,V1),
+    _set_assign(N2,EX,E2), eValue(E2,T,V2), V1 < V2.
 _set_contains(ER,T,V1) :- representation(T,intensional),
-    _set_assign(NAME,X,E1), eValue(E1,T,V1), eValue(variable(X),set,ER),
-    #false : _set_assign(N2,X,E2), eValue(E2,T,V2), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
+    _set_assign(NAME,EX,E1), eValue(E1,T,V1), eValue(EX,set,ER),
+    #false : _set_assign(N2,EX,E2), eValue(E2,T,V2), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
 
-set_value(X,val(T,V)) :- eValue(EV,set,E), _set_contains(E,T,V), EV=variable(X).
+set_value(X,val(T,V)) :- eValue(EX,set,E), _set_contains(E,T,V), EX=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
 
@@ -64,6 +64,10 @@ _set_contains(ER,T,V) :- compute(makeSet,ARGS), computed(makeSet,ARGS,val(set,ER
 _set_contains(ER,T,V1) :- compute(makeSet,ARGS), computed(makeSet,ARGS,val(set,ER)), representation(T,intensional),
     val(T,V1)=@pythonListElements(ARGS),
     #false : val(T,V2)=@pythonListElements(ARGS), computed(eq,(val(T,V2),(val(T,V1),())),val(bool,true)), V2 < V1.
+
+direct_query(SE) :- direct_query(E), E=set(L), SE=@pythonListElements(L).
+_set_declare(_internal,E) :- direct_query(E), E=set(L).
+_set_assign(_internal,E,SE) :- direct_query(E), E=set(L), SE=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% filter
 %%% TODO

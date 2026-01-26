@@ -14,10 +14,10 @@ _execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), execution_r
 
 _execution_in(NAME,X,val(T,V)) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), eValue(variable(execution_input(NAME,X)),T,V).
 
-eValue(variable(execution_output(NAME,X)),T,V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_ou(NAME,X,val(T,V)).
-eValue(variable(execution_output(NAME,X)),T,V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_in(NAME,X,val(T,V)), not _execution_ou_proj(NAME,X).
-eValue(variable(execution_output(NAME,X)),none,none) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), not _execution_input_var(NAME,X), not _execution_ou_proj(NAME,X).
-eValue(variable(execution_output(NAME,X)),none,none) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), not _execution_succeeds(NAME,STMT).
+assign(_internal,execution_output(NAME,X),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_ou(NAME,X,V).
+assign(_internal,execution_output(NAME,X),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_in(NAME,X,V), not _execution_ou_proj(NAME,X).
+assign(_internal,execution_output(NAME,X),val(none,none)) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), not _execution_input_var(NAME,X), not _execution_ou_proj(NAME,X).
+assign(_internal,execution_output(NAME,X),val(none,none)) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), not _execution_succeeds(NAME,STMT).
 
 
 _execution_ou_proj(NAME,X) :- _execution_ou(NAME,X,V).
@@ -48,6 +48,8 @@ _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,S
 %direct_query(EXP2) :- _execution_eval_aux(NAME,EXPR,EXP2).
 _execution_eval_aux(NAME,STMT,EXPR,EXP2) :- _execution_equery(NAME,STMT,EXPR), EXP2=@pythonTagVars(EXPR,NAME).
 direct_query(EXP2) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2).
+_set_declare(_internal,E) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L).
+_set_assign(_internal,E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L), V=@pythonListElements(L).
 eValue(E,T,VAL) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=val(T,VAL).
 %_execution_evaled(NAME,EXPR,V) :- _execution_eval_aux(NAME,EXPR,EXP2), eValue(EXP2,T,VAL), V=val(T,VAL).
 _execution_evaled(NAME,STMT,EXPR,V) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2), eValue(EXP2,T,VAL), V=val(T,VAL).
@@ -77,6 +79,8 @@ _execution_exec(NAME,R) :- _execution_run(NAME,STMT), STMT = statement_python(ST
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,(X,V)).
 _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,true).
 warning(("error running python",STR,MSG,NAME)) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(MSG)).
+
+%_statement_extract_vars(SCOPE,INS,OUS) :- _statement_query(SCOPE,STMT), STMT = statement_python(S), _main_solverIdentifier(ID), (INS,OUS)=@pythonGetVariablesFromPython(S,ID).
 
 
 %%%%%%%%%%%%%%%%% ifthenelse
