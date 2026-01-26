@@ -185,6 +185,9 @@ class Value(NamedTuple):
     name: constant
     val: expression.Val
 
+    def __repr__(self):
+        return f"Value({str(self.name)},{str(self.val)})"
+
 
 class Evaluate(NamedTuple):
     operator: expression.Operator | expression.Variable
