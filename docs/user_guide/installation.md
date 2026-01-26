@@ -17,5 +17,5 @@ in editable mode directly from source:
 ```console
 git clone https://github.com/potassco/constraint-handler
 cd constraint-handler
-pip install -e .
+pip install -e .[dev]
 ```
