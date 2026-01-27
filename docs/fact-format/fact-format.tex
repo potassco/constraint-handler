@@ -204,10 +204,10 @@ ensure(example_check2,operation(leq,
 \paragraph{Other examples}
 
 \begin{verbatim}
-operation(python(val(str,"maths.cos")),(val(float,float("0.1")),()))
-operation(python(val(str,"lambda x,y: x+y*y")),
-         (variable(v1),
-         (val(float,float("0.1")),())))
+variable_define(define_named, py_named_function, operation(python("math.cos"),(val(float,float("0.1")),()))).
+variable_define(define_lambda, py_lambda, operation(python("lambda x,y: x+y*y"),
+         (val(float,float("2.0")),
+         (val(float,float("0.1")),())))).
 
 ensure(c1,operation(eq,
                    (variable(v1),
