@@ -21,3 +21,5 @@ propagator_execution_run(CNAME,F) :-
     execution_run(CNAME,F), engine(CNAME,propagator).
 
 propagator_evaluate(F,E) :- evaluate(F,E), defaultEngine(propagator).
+
+propagator_forbid_warning(CNAME,W) :- forbid_warning(CNAME,W), defaultEngine(propagator).

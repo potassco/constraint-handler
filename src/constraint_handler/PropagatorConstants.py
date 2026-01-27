@@ -26,3 +26,23 @@ class ReasoningMode(enum.Enum):
     STANDARD = "standard"
     BRAVE = "brave"
     CAUTIOUS = "cautious"
+
+
+class EmptyDomain(Exception):
+    pass
+
+
+class MultipleDeclarations(Exception):
+    pass
+
+
+class Undeclared(Exception):
+    pass
+
+
+class MultipleDefinitions(Exception):
+    pass
+
+
+class NoValueSet(Exception):
+    pass
