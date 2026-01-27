@@ -22,5 +22,3 @@ variable_define(a_g,g,operation(neq,(variable(x),(variable(y),())))).
 evaluate(neq,(variable(f),(variable(g),()))).
 evaluate(length,(variable(x),())).
 evaluate(disj,(operation(eq,(operation(concat,(variable(y),(variable(x),()))),(val(str,"barfoo"),()))),(operation(eq,(variable(x),(variable(y),()))),(operation(eq,(variable(y),(val(str,"foobar"),()))),(operation(eq,(operation(concat,(variable(y),(variable(y),()))),(val(str,"blabla"),()))),()))))).
-
-variable_define(a_yy,yy,operation(add,(variable(y),(variable(y),())))).
