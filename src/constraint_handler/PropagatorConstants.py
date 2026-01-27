@@ -28,6 +28,16 @@ class ReasoningMode(enum.Enum):
     CAUTIOUS = "cautious"
 
 
+REASONING_STAGE_ATOM = "__stage__"
+
+
+REASONING_MODE_PROGRAM = f"""
+% Reasoning mode handling
+1{{{REASONING_STAGE_ATOM}(1;2)}}1.
+#heuristic {REASONING_STAGE_ATOM}(1). [990,true]
+"""
+
+
 class EmptyDomain(Exception):
     pass
 
