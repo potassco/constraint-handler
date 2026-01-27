@@ -1,16 +1,16 @@
 computed(OP, ARGS, val(int, 0)) :- compute(OP, ARGS), OP=add, ARGS = ().
 compute(OP, TAIL) :- compute(OP, ARGS), OP=add, ARGS = (val(int, _), TAIL).
-computed(OP, ARGS, val(int, V1 + VTAIL)) :- 
-    compute(OP, ARGS), 
-    OP=add, 
+computed(OP, ARGS, val(int, V1 + VTAIL)) :-
+    compute(OP, ARGS),
+    OP=add,
     ARGS = (val(int, V1), TAIL),
     computed(OP, TAIL, val(int, VTAIL)).
 
 computed(OP, ARGS, val(int, 1)) :- compute(OP, ARGS), OP=mult, ARGS = ().
 compute(OP, TAIL) :- compute(OP, ARGS), OP=mult, ARGS = (val(int, _), TAIL).
-computed(OP, ARGS, val(int, V1 * VTAIL)) :- 
-    compute(OP, ARGS), 
-    OP=mult, 
+computed(OP, ARGS, val(int, V1 * VTAIL)) :-
+    compute(OP, ARGS),
+    OP=mult,
     ARGS = (val(int, V1), TAIL),
     computed(OP, TAIL, val(int, VTAIL)).
 

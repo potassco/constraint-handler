@@ -308,9 +308,7 @@ class Evaluator:
                 assert len(args)
                 return min(args)
             case o:
-                foldable = {
-                    BinaryOperator.add: sum, BinaryOperator.mult: math.prod
-                }
+                foldable = {BinaryOperator.add: sum, BinaryOperator.mult: math.prod}
 
                 if o in foldable:
                     # This makes it possible to use `add` for strings.
