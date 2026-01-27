@@ -36,10 +36,16 @@ variable_define(a_int, powtwoten, operation(pow,(variable(two),(variable(ten),()
 variable_define(a_int, powtentwo, operation(pow,(variable(ten),(variable(two),())))).
 
 evaluate(add,(variable(x),(val(int,10),()))).
+evaluate(add,()).
+evaluate(add,(variable(ten),())).
 evaluate(add,(variable(two),(variable(ten),()))).
 evaluate(add,(variable(ten),(variable(two),()))).
+evaluate(add,(variable(ten),(variable(two),(variable(two),(variable(ten),()))))).
+evaluate(mult,()).
+evaluate(mult,(variable(ten),())).
 evaluate(mult,(variable(two),(variable(ten),()))).
 evaluate(mult,(variable(ten),(variable(two),()))).
+evaluate(mult,(variable(ten),(variable(two),(variable(two),(variable(ten),()))))).
 evaluate(sub,(variable(two),(variable(ten),()))).
 evaluate(sub,(variable(ten),(variable(two),()))).
 evaluate(eq,(variable(addtwoten),(variable(addtentwo),()))).
