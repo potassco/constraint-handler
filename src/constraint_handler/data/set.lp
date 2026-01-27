@@ -48,9 +48,9 @@ computed(isin,ARGS,val(bool,true))   :- compute(isin,ARGS), ARGS = (val(T,V1),(v
     representation(T,intensional), _set_contains(S,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 computed(isin,ARGS,val(bool,false))  :- compute(isin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
     representation(T,intensional), #false : _set_contains(S,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
-computed(notin,ARGS,val(bool,false)) :- compute(isin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
+computed(notin,ARGS,val(bool,false)) :- compute(notin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
     representation(T,intensional), _set_contains(S,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
-computed(notin,ARGS,val(bool,true))  :- compute(isin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
+computed(notin,ARGS,val(bool,true))  :- compute(notin,ARGS), ARGS = (val(T,V1),(val(set,S),())),
     representation(T,intensional), #false : _set_contains(S,val(T,V2)), computed(eq,(val(T,V1),(val(T,V2),())),val(bool,true)).
 
 %%%%%%%%%%%%%%%%% makeSet
