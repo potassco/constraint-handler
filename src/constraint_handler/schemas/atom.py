@@ -172,7 +172,7 @@ class Warning(NamedTuple):
 
 class Forbid_warning(NamedTuple):
     label: constant
-    symbol: VariableWarning
+    symbol: constant
 
 
 class Assign(NamedTuple):

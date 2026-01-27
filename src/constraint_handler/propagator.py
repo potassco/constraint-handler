@@ -623,7 +623,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for (name, symbol_var, stmt, in_v, out_v), literal in declares.items():
             variable = Execution(name, symbol_var, stmt, in_v, out_v)
 
-            self.errors.append(SyntaxError(f"Execution {name} declaration is not a fact!"))
+            if literal != 1:
+                self.errors.append(SyntaxError(f"Execution {name} declaration is not a fact!"))
 
             self.symbol2var[symbol_var] = variable
 
