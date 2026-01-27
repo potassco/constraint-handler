@@ -170,6 +170,11 @@ class Warning(NamedTuple):
     info: Any
 
 
+class Forbid_warning(NamedTuple):
+    label: constant
+    symbol: VariableWarning
+
+
 class Assign(NamedTuple):
     label: constant
     var: constant
@@ -263,4 +268,8 @@ class Propagator_execution_run(Execution_run):
 
 
 class Propagator_evaluate(Evaluate):
+    pass
+
+
+class Propagator_forbid_warning(Forbid_warning):
     pass

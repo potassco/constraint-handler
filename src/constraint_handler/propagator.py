@@ -14,8 +14,13 @@ from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
     ENSURE_VAR_NAME,
     EXECUTION_OUTPUT,
+    EmptyDomain,
     EvaluationResult,
+    MultipleDeclarations,
+    MultipleDefinitions,
+    NoValueSet,
     ReasoningMode,
+    Undeclared,
     ValueStatus,
 )
 from constraint_handler.PropagatorVariables import (
@@ -65,6 +70,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.first_decision_level: int = -1
 
+        self.forbidden_warnings: list[str] = []
+
     def get_configuration(self, ctl: clingo.Control):
         match ctl.configuration.solve.enum_mode:
             case "brave":
@@ -98,6 +105,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.get_evaluate(init)
 
         self.add_reasoning_mode_helper_atoms(init)
+
+        self.get_forbidden_warnings(init)
 
         myprint("INIT DONE")
         myprint("#" * 50)
@@ -344,6 +353,18 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 )
             return None
 
+        # check if any errors are forbidden
+        for warning in var.get_errors():
+            if type(warning).__name__.lower() in self.forbidden_warnings:
+                myprint(f"Forbidden warning {type(warning).__name__} exists, making program unsat!")
+                ng = self.get_reasons(var)
+                myprint(f"Adding nogood {ng}")
+                if ctl.add_nogood(ng):
+                    assert False, (
+                        f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}",
+                    )
+                    return None
+
         return eval_result == EvaluationResult.CHANGED
 
     def get_reasons(self, var: VariableType) -> set[int]:
@@ -382,6 +403,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         var_optionals = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declareOptional)
         for (name, symbol_var, domain), __literal in var_declares.items():
             variable: Variable = Variable(name, symbol_var)
+
+            if symbol_var in self.symbol2var:
+                self.errors.append(MultipleDeclarations(f"Variable '{symbol_var}' declared multiple times!"))
+
             self.symbol2var[symbol_var] = variable
 
             if __literal != 1:
@@ -412,9 +437,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for (name, symbol_var, expr), __literal in var_defines.items():
             if symbol_var in self.symbol2var:
-                self.errors.append(
-                    SyntaxError(f"Variable '{symbol_var}' declared and defined! variable_define will do nothing!")
-                )
+                self.errors.append(MultipleDefinitions(f"Variable '{symbol_var}' has multiple definitions!"))
                 continue
             define_variable = Variable(name, symbol_var)
             self.symbol2var[symbol_var] = define_variable
@@ -423,6 +446,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(-__literal)
 
         for (symbol_var, domain_expr), __literal in var_domains.items():
+            print("######################")
+            if symbol_var not in self.symbol2var:
+                self.errors.append(Undeclared(f"Variable '{symbol_var}' domain set but variable not declared!"))
+                continue
             domain_variable: Variable = cast(Variable, self.symbol2var[symbol_var])
             literal = ctl.add_literal(freeze=True)
             domain_variable.add_value(domain_expr, literal)
@@ -439,7 +466,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # check that all variables have a domain
         for var in self.symbol2var.values():
             if not var.has_domain():
-                self.errors.append(ValueError(f"Variable '{var}' has no domain defined!"))
+                self.errors.append(EmptyDomain(f"Variable '{var}' has no domain defined!"))
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
@@ -603,6 +630,23 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
+    def get_forbidden_warnings(self, ctl) -> None:
+        """
+        Returns the list of forbidden warnings given by the atoms in the input program.
+        """
+
+        forbidden_warnings = myClorm.findInPropagateInit(ctl, atom.Propagator_forbid_warning)
+        for (name, warning), literal in forbidden_warnings.items():
+            self.forbidden_warnings.append(str(warning).lower())
+
+        # If a forbidden warning exists already, add empty constraint to make the program unsat
+        # Since the warning comes from just reading the input
+        for warning in self.errors:
+            if type(warning).__name__.lower() in self.forbidden_warnings:
+                myprint(f"Forbidden warning {type(warning).__name__} exists, making program unsat!")
+                ctl.add_clause([])
+                return
+
     def set_parents(self):
         """
         Sets the parents of each variable based on the variables they depend on.
@@ -626,7 +670,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def update_python_model(self):
         self.python_model = set()
-        self.handle_on_model_warning(self.errors)
 
         for var in self.symbol2var.values():
             self.handle_on_model_warning(var.get_errors())
@@ -634,8 +677,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 continue
             final_value = var.get_value()
             # myprint(var.var, final_value, type(final_value))
-
-            assert final_value is not ValueStatus.NOT_SET, f"Variable {var} has no value set in on_model!"
+            if final_value is ValueStatus.NOT_SET:
+                self.errors.append(NoValueSet(f"Variable {var} has no value set in on_model!"))
+                continue
 
             if final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
                 continue
@@ -659,6 +703,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if self.using_optimization:
             self.handle_on_model_warning(self.optimization_sum.get_errors())
             print(f"Optimization value: {self.optimization_sum.value}")
+
+        self.handle_on_model_warning(self.errors)
 
     def on_model(self, model: clingo.Model):
         # add to the clingo output the final result based on reasoning mode
