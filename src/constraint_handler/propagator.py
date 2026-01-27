@@ -213,13 +213,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.check_total(control)
 
     def check_total(self, control: clingo.PropagateControl) -> None:
+        self.check_evaluate(control)
         backtrack = self.evaluate_model(control)
         myprint(f"Standard/Brave/Cautious model evaluated to {self.python_model}")
         if backtrack:
             myprint(f"backtracking {backtrack} due to brave/cautious model being updated")
             return
 
-        self.check_evaluate(control)
         # if everything is good, we update the best value
         # TODO: Maybe we have to move this next stuff to the on_model function
         # in case there are multiple propagators?
@@ -702,6 +702,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.handle_on_model_value(var.var, final_value)
 
         for eval_var in self.evaluatevars:
+            print(eval_var, eval_var.get_value())
             self.handle_on_model_warning(eval_var.get_errors())
             pyAtom = atom.Evaluated(
                 eval_var.op, eval_var.args, evaluator.get_baseType(eval_var.get_value()), eval_var.get_value()
