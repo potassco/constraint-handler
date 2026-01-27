@@ -311,10 +311,6 @@ class Evaluator:
                 foldable = {BinaryOperator.add: sum, BinaryOperator.mult: math.prod}
 
                 if o in foldable:
-                    # This makes it possible to use `add` for strings.
-                    if len(args) > 0 and isinstance(args[0], str) and o == BinaryOperator.add:
-                        return "".join(args)
-
                     return foldable[o](args)
 
                 if len(args) == 1:
