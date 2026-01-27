@@ -308,6 +308,13 @@ class Evaluator:
                 assert len(args)
                 return min(args)
             case o:
+                foldable = {
+                    BinaryOperator.add: sum, BinaryOperator.mult: math.prod
+                }
+
+                if o in foldable:
+                    return foldable[o](args)
+
                 if len(args) == 1:
                     return self.unop(o, args[0])
                 elif len(args) == 2:
