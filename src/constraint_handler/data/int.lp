@@ -1,4 +1,11 @@
-computed(OP,ARGS,val(int,V1+V2))  :- compute(OP,ARGS), OP=add,  ARGS = (val(int,V1),(val(int,V2),())).
+computed(OP, ARGS, val(int, V1)) :- compute(OP, ARGS), OP=add, ARGS = (val(int, V1), ()).
+compute(OP, ARGS) :- compute(OP, OLD_ARGS), OP=add, OLD_ARGS = (val(int, _), ARGS), ARGS != ().
+computed(OP, ARGS, val(int, V1 + VTAIL)) :- 
+    compute(OP, ARGS), 
+    OP=add, 
+    ARGS = (val(int, V1), TAIL),
+    computed(OP, TAIL, val(int, VTAIL)).
+
 computed(OP,ARGS,val(int,V1-V2))  :- compute(OP,ARGS), OP=sub,  ARGS = (val(int,V1),(val(int,V2),())).
 computed(OP,ARGS,val(int,V1*V2))  :- compute(OP,ARGS), OP=mult, ARGS = (val(int,V1),(val(int,V2),())).
 computed(OP,ARGS,val(int,V1/V2))  :- compute(OP,ARGS), OP=div,  ARGS = (val(int,V1),(val(int,V2),())).
