@@ -159,7 +159,7 @@ _direct_imploded(E,V) :- _direct_implode(E), _se_value(E,val(set,REF)), _set_imp
 _direct_implode(val(TV,RV)) :- _set_implode(EM), _set_contains(EM,val(TV,RV)).
 _set_makeIndex(EM) :- _set_implode(EM).
 _set_as_list_aux(EM,0,()) :- _set_implode(EM).
-_set_as_list_aux(EM,IDX+1,K) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,TV,RV), _direct_imploded(val(TV,RV),V), K=(V,L).
+_set_as_list_aux(EM,IDX+1,K) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,val(TV,RV)), _direct_imploded(val(TV,RV),V), K=(V,L).
 _set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
 
 %_direct_imploded(E,E) :- _direct_implode(E), E = set(_).
