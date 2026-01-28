@@ -307,7 +307,7 @@ We say that $\vec{v}$ satisfies $M$ if the following conditions hold.
 \item for every atom $\texttt{execution_declare($l$,$p$,$s$,$i$,$o$)} \in M$ such that $\texttt{execution_run($l'$,$p$)} \in M$ for some term $l'$, the valuations $\vec{i} = \{ x \mapsto \vec{v}(\texttt{execution_input($s$,$x$)}) \suchthat x \in i \}$ and $\vec{o} = \{ x \mapsto \vec{v}(\texttt{execution_output($s$,$x$)}) \suchthat x \in o \}$ satisfy $\vec{i}\entails\redto{s}{\vec{o}}$; and
 \item for every atom $\texttt{ensure($l$,$e$)} \in M$, we have $\vec{v}\entails\redto{e}{\top}$.
 \end{itemize}
- 
+
 Let $P$ be an answer set program.
 An extended model of $P$ is a pair $(M,\vec{v})$ such that the following conditions hold, where $M$ is a set of atoms and $\vec{v}$ is a valuation.
 
@@ -350,7 +350,7 @@ Each expression $e_i$ defines a partial function: $f_i: \discourse^{n+m} \partia
 
 Thus, we have a function $f : \discourse^{n+m} \partialto \discourse^{n+m}$ defined as $f(\vec{v}) \mapsto \left(v_1,\dots,v_n,e_1(\vec{v}),\dots,e_m(\vec{v})\right)$ with $\vec{v} = \left(v_1,\dots,v_n,\dots,v_{n+m}\right)$
 
-Thus, we have a function $f : \discourse^{n+m} \partialto \discourse^{n+m}$ defined as 
+Thus, we have a function $f : \discourse^{n+m} \partialto \discourse^{n+m}$ defined as
 \begin{align*}
 f(\vec{v}) &\mapsto \left(v_1,\dots,v_n,\evaluate{\vec{v}}{e_1},\dots,\evaluate{\vec{v}}{e_m})\right) &  \text{with } \vec{v} = \left(v_1,\dots,v_{n+m}\right)
 \end{align*}
@@ -372,7 +372,7 @@ partial functions
 \end{comment}
 
 \section{Implementation}
-The dependencies of $x$ 
+The dependencies of $x$
 
 dependency graph
 
