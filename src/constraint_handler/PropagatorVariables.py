@@ -852,7 +852,8 @@ class Execution:
         # this is for the execution run atom
         # assuming the declaration atom is always a fact?
         # otherwise, we might need a literal for that as well
-        self.literal: int = 0
+        # if there is no execution_run atom, this is always false, which means the execution is never run
+        self.literal: int = -1
         self.assigned: bool | None = None
 
         self.decision_level: int = sys.maxsize
