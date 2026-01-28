@@ -1,7 +1,7 @@
 import constraint_handler.evaluator as full_evaluator
 from constraint_handler.utils.common import PPEnum
 
-Operator = PPEnum("Operator", ["makeSet", "isin", "notin", "union", "inter", "subset", "set_fold"])
+Operator = PPEnum("Operator", ["makeSet", "isin", "notin", "union", "inter", "diff", "subset", "set_fold"])
 
 
 def fold(f, s, start):
@@ -32,6 +32,10 @@ class Evaluator:
                 return frozenset().union(*args)
             case Operator.inter:
                 return frozenset(args[0].intersection(*args[1:]))
+            case Operator.diff:
+                if not args:
+                    return frozenset()
+                return frozenset(args[0].difference(*args[1:]))
             case Operator.subset:
                 return args[0].issubset(args[1])
             case Operator.set_fold:

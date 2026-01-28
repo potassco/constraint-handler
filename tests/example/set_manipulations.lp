@@ -7,6 +7,8 @@
 %%% t = { 10, 2, 3, true }
 %%% u = s cup t = { 10, 2, 3, true, 89.1 }
 %%% v = s cap t = { true }
+%%% duv = u \\ v = { 10, 2, 3, 89.1 }
+%%% cduv = |duv| = 4
 %%% w = { |u|+1, |v|, b in V, true not in u } = { Z, 5, true, false }
 %%% cu = |u| = 5
 %%% x = { 3, 1+2, u, v, { true } } = { 3, { true }, { 10, 2, 3, true, 89.1 } }
@@ -50,6 +52,12 @@ variable_define(assign_u, u, operation(union,
 variable_define(assign_v, v, operation(inter,
                                   (variable(s),
                                   (variable(t),())))).
+
+variable_define(assign_duv, duv, operation(diff,
+                                  (variable(u),
+                                  (variable(v),())))).
+
+variable_define(assign_cduv, cduv, operation(length,(variable(duv),()))).
 
 variable_define(assign_cu, cu, operation(length,(variable(u),()))).
 
