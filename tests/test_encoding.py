@@ -1,8 +1,9 @@
-import constraint_handler.utils.testing as chut
-
 import pytest
 
+import constraint_handler.utils.testing as chut
+
 ctrl_options = ["0", "--heuristic=Domain"]
+
 
 def run_test_compile(name):
     name = "tests/example/" + name
