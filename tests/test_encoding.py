@@ -1,19 +1,12 @@
-import clingo.script
-from clintest.solver import Clingo
-
-import constraint_handler.propagator as prop
 import constraint_handler.utils.testing as chut
-
-clingo.script.enable_python()
 
 import pytest
 
 ctrl_options = ["0", "--heuristic=Domain"]
 
-
 def run_test_compile(name):
     name = "tests/example/" + name
-    solver = Clingo(ctrl_options, "defaultEngine(compile).", files=[name + ".lp"])
+    solver = chut.Solver(ctrl_options, "defaultEngine(compile).", files=[name + ".lp"])
     test = chut.build_expectations(name)
     solver.solve(test)
     test.assert_()
@@ -21,7 +14,7 @@ def run_test_compile(name):
 
 def run_test_ground(name):
     name = "tests/example/" + name
-    solver = Clingo(ctrl_options, "defaultEngine(ground).", files=[name + ".lp"])
+    solver = chut.Solver(ctrl_options, "defaultEngine(ground).", files=[name + ".lp"])
     test = chut.build_expectations(name)
     solver.solve(test)
     test.assert_()
@@ -29,11 +22,11 @@ def run_test_ground(name):
 
 def run_test_propagator(name: str, check_mode: bool):
     name = "tests/example/" + name
-    solver = chut.SolverWithPropagators(
+    solver = chut.Solver(
         ctrl_options,
         "defaultEngine(propagator).",
         files=[name + ".lp"],
-        propagators=[lambda: prop.ConstraintHandlerPropagator(check_mode)],
+        propagator_check_only=check_mode,
     )
     test = chut.build_expectations(name)
     solver.solve(test)

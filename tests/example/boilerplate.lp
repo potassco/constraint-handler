@@ -1,5 +1,3 @@
-defaultEngine(ground).
-
 #script (python)
 import constraint_handler as ch
 

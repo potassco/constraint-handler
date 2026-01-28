@@ -7,6 +7,7 @@ import clintest.solver
 import clintest.test
 from clintest.quantifier import All, Any, First
 
+import constraint_handler as ch
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 
@@ -52,48 +53,36 @@ class TheoryContains(clintest.assertion.Assertion):
         return self.__symbol in model.symbols(theory=True)
 
 
-class SolverWithPropagators(clintest.solver.Solver):
+class Solver(clintest.solver.Solver):
     def __init__(
         self,
         arguments: Optional[Sequence[str]] = None,
         program: Optional[str] = None,
         files: Optional[Sequence[str]] = None,
-        propagators: list[clingo.propagator.Propagator | Callable[..., clingo.propagator.Propagator]] = [],
+        propagator_check_only: bool = False
     ) -> None:
         self.__arguments = [] if arguments is None else arguments
         self.__program = "" if program is None else program
         self.__files = [] if files is None else files
-        self.__propgators = [] if not len(propagators) else propagators
-
-    def wrap(self, test, props, method):
-        def fn(*args, **kwargs):
-            for prop in props:
-                if hasattr(prop, method) and callable(getattr(prop, method)):
-                    getattr(prop, method)(*args, **kwargs)
-            getattr(test, method)(*args, **kwargs)
-
-        return fn
+        self.__propagator_check_only = propagator_check_only
 
     def solve(self, test: clintest.test.Test) -> None:
         ctl = clingo.Control(self.__arguments)
 
-        ctl.add("base", [], self.__program)
+        ch.add_to_control(ctl,propagator_check_only=self.__propagator_check_only)
+        ctl.add(self.__program)
 
         for file in self.__files:
             ctl.load(file)
-
-        ctl.ground([("base", [])])
-        props = [prop() for prop in self.__propgators]
-        for prop in props:
-            ctl.register_propagator(prop)
+        ctl.ground()
 
         if not test.outcome().is_certain():
             ctl.solve(
-                on_core=self.wrap(test, props, "on_core"),
-                on_finish=self.wrap(test, props, "on_finish"),
-                on_model=self.wrap(test, props, "on_model"),
-                on_unsat=self.wrap(test, props, "on_unsat"),
-                on_statistics=self.wrap(test, props, "on_statistics"),
+                on_core=test.on_core,
+                on_finish=test.on_finish,
+                on_model=test.on_model,
+                on_unsat=test.on_unsat,
+                on_statistics=test.on_statistics,
             )
 
     def __repr__(self):
@@ -101,8 +90,8 @@ class SolverWithPropagators(clintest.solver.Solver):
         arguments = repr(self.__arguments)
         program = repr(self.__program)
         files = repr(self.__files)
-        props = repr(self.__propagators)
-        return f"{name}({arguments}, {program}, {files}, {props})"
+        prop = repr(self.__propagator_check_only)
+        return f"{name}({arguments}, {program}, {files}, {prop})"
 
 
 class PropPrint(clingo.propagator.Propagator):
