@@ -36,6 +36,7 @@ modules = [
 
 python_enabled = False
 
+
 def add_to_control(
     ctrl: clingo.Control, propagator_check_only: bool = False, environment=None, _environment_ids=dict()
 ):
