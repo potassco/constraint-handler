@@ -12,6 +12,13 @@ set_value(u,val(int,3))
 set_value(u,val(int,10))
 set_value(u,val(int,2))
 
+set_value(duv,val(float,float("89.1")))
+set_value(duv,val(int,3))
+set_value(duv,val(int,10))
+set_value(duv,val(int,2))
+
+value(cduv,val(int,4))
+
 value(cu,val(int,5))
 
 set_value(v,val(bool,true))

@@ -68,7 +68,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "maxEntries" | "minEntries"
 
 <set-operator> ::=
-    | <eq-operator> | "union" | "inter" | "subset" | "makeSet"
+    | <eq-operator> | "union" | "inter" | "diff" | "subset" | "makeSet"
     | "isin" | "notin" | "length" | "set_fold"
 
 <string-operator> ::= <eq-operator> | "concat" | "length"

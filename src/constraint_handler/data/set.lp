@@ -73,6 +73,19 @@ _set_assign(_internal,E,VSMALL) :- direct_query(E), E=operation(inter,L), L=(S1,
     _set_contains(R2,V2), computed(eq,(V1,(V2,())),val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
+%%%%%%%%%%%%%%%%% diff
+
+compute(eq,(V1,(V2,()))) :- compute(diff,ARGS), ARGS = (val(set,S1),(val(set,S2),())),
+    _set_contains(S1,V1), _set_contains(S2,V2).
+
+computed(diff,ARGS,val(set,ref(diff(ARGS)))) :- compute(diff,ARGS), ARGS = (val(set,_S1),(val(set,_S2),())).
+
+_set_assign(_internal,E,V1) :- direct_query(E), E=operation(diff,L), L=(S1,(S2,())),
+    _se_value(S1,val(set,R1)),
+    _se_value(S2,val(set,R2)),
+    _set_contains(R1,V1),
+    #false : _set_contains(R2,V2), computed(eq,(V1,(V2,())),val(bool,true)).
+
 %%%%%%%%%%%%%%%%% Equality
 compute(eq,ARGS) :- compute(neq,ARGS), ARGS = (set(T1,S1),(set(T2,S2),())), (T1;T2)=set.
 computed(neq,ARGS,val(bool,NEQ)) :- computed(eq,ARGS,val(bool,EQ)), ARGS = (val(T1,S1),(val(T2,S2),())), (T1;T2)=set, (EQ,NEQ)=((true,false);(false,true)).
