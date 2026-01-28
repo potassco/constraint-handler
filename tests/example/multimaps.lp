@@ -38,6 +38,7 @@
 %%% max cities = "potsdam"     min cities = "brest"
 %%% max properDivisors2 = 3     min properDivisors2 = 1
 %%% a==b     not a==c     not a==d     not a==e     not a!=b     a!=c     a!=d     a!=e
+%%% d!=e     e!=d
 
 %%% f = multimap_fold(myproduct,properDivisors2,100) where myproduct(x,y) = x*y
 %%%   =  100 * 1 * 2 * 1 * 1 * 2 * 3 = 1200
@@ -161,6 +162,8 @@ evaluate(neq,(variable(a),(variable(b),()))).
 evaluate(neq,(variable(a),(variable(c),()))).
 evaluate(neq,(variable(a),(variable(d),()))).
 evaluate(neq,(variable(a),(variable(e),()))).
+evaluate(neq,(variable(d),(variable(e),()))).
+evaluate(neq,(variable(e),(variable(d),()))).
 
 
 evaluate(multimap_fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
