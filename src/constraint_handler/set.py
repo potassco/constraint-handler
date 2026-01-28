@@ -33,9 +33,10 @@ class Evaluator:
             case Operator.inter:
                 return frozenset(args[0].intersection(*args[1:]))
             case Operator.diff:
-                if not args:
-                    return frozenset()
-                return frozenset(args[0].difference(*args[1:]))
+                if len(args) != 2:
+                    self.errors.append(TypeError(f"diff takes exactly 2 arguments ({len(args)} were given)"))
+                    return None
+                return frozenset(args[0].difference(args[1]))
             case Operator.subset:
                 return args[0].issubset(args[1])
             case Operator.set_fold:
