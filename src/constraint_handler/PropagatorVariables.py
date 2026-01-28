@@ -391,7 +391,7 @@ class Variable:
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Variable):
-            assert False, "Variable can only be compared to another Variable"
+            return False
         return self.var == other.var and self.expressions == other.expressions
 
     def __hash__(self) -> int:
@@ -585,7 +585,7 @@ class SetVariable:
 
     def __eq__(self, value) -> bool:
         if not isinstance(value, SetVariable):
-            assert False, "SetVariable can only be compared to another SetVariable"
+            return False
         return self.var == value.var and self.expressions == value.expressions
 
     def __hash__(self) -> int:
@@ -740,7 +740,7 @@ class DictVariable:
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, DictVariable):
-            assert False, "DictVariable can only be compared to another DictVariable"
+            return False
         return self.var == other.var and self.expressions == other.expressions
 
     def __hash__(self) -> int:
@@ -979,6 +979,16 @@ class Execution:
 
     def __repr__(self) -> str:
         return f"Execution({self.name}, {self.func_name}, {self.stmt})"
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Execution):
+            return False
+        return (
+            self.func_name == other.func_name
+            and self.stmt == other.stmt
+            and self.in_vars == other.in_vars
+            and self.out_vars == other.out_vars
+        )
 
 
 def make_dict_from_variables(

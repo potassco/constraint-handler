@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import operator
-from typing import Any, Callable, Literal, Sequence, cast
+from typing import Any, Callable, Iterable, Literal, Sequence, cast
 
 import clingo
 
@@ -69,6 +69,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # for the first model, the set is assigned the first model
         # This is will hold the model which is then used to update the result
         self.python_model: set[atom.ResultAtom] | None = None
+        self.variable_lits: dict[VariableType, int] = {}
+        self.nogood_queue: list[Iterable[int]] = []
+        self.previously_stage_2: bool = False
 
         self.first_decision_level: int = -1
 
@@ -140,6 +143,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # ctl.add_clause([-self.reasoning_mode_stage_lits[1], -self.reasoning_mode_stage_lits[2]])
             # ctl.add_clause([self.reasoning_mode_stage_lits[1], self.reasoning_mode_stage_lits[2]])
 
+        for var in self.symbol2var.values():
+            lit = ctl.add_literal(freeze=True)
+            self.variable_lits[var] = lit
+
     # def decide(self, thread_id: int, assignment: clingo.Assignment, fallback: int) -> int:
     #     """
     #     This method is called to decide on literals in the propagator.
@@ -193,6 +200,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         or the optimization value is below the best it adds a nogood and backtracks.
         """
         myprint("CHECKING")
+        if self.add_nogoods_from_queue(control):
+            myprint("backtracking due to nogoods in queue")
+            return
 
         backtrack = self.evaluated_solver_assignment(control, set(self.symbol2var.values()))
 
@@ -235,7 +245,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return False
 
         # This part onwards is only for brave/cautious reasoning
-
+        print(f"old model: {old_model}\nnew model: {self.python_model}")
         assert type(self.python_model) is set
         if old_model is not None:
             if self.reasoning_mode == ReasoningMode.CAUTIOUS:
@@ -243,18 +253,66 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if self.reasoning_mode == ReasoningMode.BRAVE:
                 self.python_model = old_model.union(self.python_model)
 
+            print(f"dif model: {self.python_model.difference(old_model)}")
+
         stage2: bool = ctl.assignment.is_true(self.reasoning_mode_stage_lits[2])
-        # TODO: Make sure to add the nogoods for the currently true assignment somewhere before this?
-        # maybe in the check part once we are in stage 2?
-        if stage2:
-            # make sure to add the correct nogoods here for the new stuff!
-            ng: set[int] = set().union(*(self.get_reasons(var) for var in self.symbol2var.values()))
-            myprint(f"Adding nogood {list(ng)} to enforce brave/cautious")
-            if ctl.add_nogood(ng, tag=False):
-                assert False, "Added violated constraint but solver did not detect it"
-            return True
-        else:
+        if not stage2:
             return False
+
+        if stage2 and not self.previously_stage_2:
+            # First time in stage 2
+            self.previously_stage_2 = True
+            # add nogoods for the stuff in the current model
+            # add nogoods to ensure at least 1 var changes
+            for result_var in self.python_model:
+                if isinstance(result_var, atom.Evaluated):
+                    continue
+                assert type(result_var) in (atom.Value, atom.Set_value, atom.Multimap_value)
+                assert isinstance(result_var.name, clingo.Symbol)
+
+                var: VariableType = self.symbol2var[result_var.name]
+                ng = self.get_reasons(var).union({self.variable_lits[var]})
+                print(ng)
+                self.nogood_queue.append(ng)
+
+            self.nogood_queue.append([-lit for lit in self.variable_lits.values()])
+
+            return self.add_nogoods_from_queue(ctl)
+
+        elif stage2 and self.previously_stage_2:
+            # Subsequent times in stage 2
+            # make sure to add the correct nogoods here for the new stuff!
+            for result_var in self.python_model.difference(old_model):
+                if isinstance(result_var, atom.Evaluated):
+                    continue
+                assert type(result_var) in (atom.Value, atom.Set_value, atom.Multimap_value)
+                assert isinstance(result_var.name, clingo.Symbol)
+
+                var: VariableType = self.symbol2var[result_var.name]
+                ng = self.get_reasons(var).union({self.variable_lits[var]})
+                self.nogood_queue.append(ng)
+
+            if not self.add_nogoods_from_queue(ctl):
+                # assert False, (
+                #     "Added constraint to backtrack because brave/cautious model changed, but solver did not detect it"
+                # )
+                return False
+            return True
+
+        assert False, "should never get here?"
+
+    def add_nogoods_from_queue(self, ctl: clingo.PropagateControl) -> bool:
+        """
+        Add nogoods from queue until propagation must be stopped or queue is empty.
+        returns True if propagation must be stopped
+        """
+        while len(self.nogood_queue) > 0:
+            ng = self.nogood_queue.pop(0)
+            print(f"Adding nogood from queue: {ng}")
+            if not ctl.add_nogood(ng):
+                return True
+
+        return False
 
     def check_evaluate(self, ctl: clingo.PropagateControl):
         myprint("Checking evaluate atoms")
@@ -271,6 +329,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         it adds a nogood and backtracks.
         """
         if self.check_only:
+            return
+
+        if self.add_nogoods_from_queue(control):
+            myprint("backtracking due to nogoods in queue")
             return
 
         to_evaluate: set[VariableType] = set()
