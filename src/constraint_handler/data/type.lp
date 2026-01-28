@@ -30,9 +30,51 @@ _type_list(SCOPE,ARGS,TS) :- _type_listAux(SCOPE,ARGS,0,TS).
 _warning(type(failed_operation),(),(SCOPE,O,ARGS)) :- _expression_query(SCOPE,E), E=operation(O,ARGS), not type_expression(SCOPE,E,_).
 
 
-%%% temporary stuff until more uniform handling of operators.
-operator_declare(mult,(int,(int,())),int).
-operator_declare(add,(int,(int,())),int).
-operator_declare(ite,(bool,(int,(int,()))),int).
+%%%%%%%%%%%%%%%%% type_operator
+% Types
+_type(int;float;bool;str;symbol;none;set;multimap).
+_numeric_type(int;float).
+
+% Operators
+intToFloatOperator(sqrt;cos;sin;tan;acos;asin;atan).
+numericUnOperator(abs;minus;floor).
+numericBinOperator(add;sub;mult;div;fdiv;pow;max).
+comparisonOperator(leq;lt;geq;gt;eq;neq).
+
+operator_declare(OP,(T,(T,())),bool) :- comparisonOperator(OP), _type(T).
+operator_declare(OP,(T1,(T2,())),bool) :- comparisonOperator(OP), _numeric_type(T1), _numeric_type(T2).
+operator_declare(OP, (int,()), float) :- intToFloatOperator(OP).
+operator_declare(OP, (T,()), T) :- numericUnOperator(OP), _numeric_type(T).
+operator_declare(OP,(T1,(T2,())),T1)    :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 = T2.
+operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
+operator_declare(concat, (str,(str,())), str).
+operator_declare(length, (T,()), int) :- T = (str;set).
 
 _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
+
+% Variadic operators
+% 
+variadicOperator(add;mult).
+
+_variadic_check(SCOPE, OP, ARGS,0,T) :- 
+    _expression_query(SCOPE,E), 
+    E=operation(OP,ARGS), 
+    _type_listArg(SCOPE, ARGS, 0, val(T, _)),
+    variadicOperator(OP).
+
+_variadic_check(SCOPE, OP, ARGS,I,T) :- 
+    _expression_query(SCOPE,E), 
+    E=operation(OP,ARGS), 
+    _variadic_check(SCOPE,OP,ARGS,I-1,T1), 
+    _type_listArg(SCOPE, ARGS, I, val(T2, _)),
+    operator_declare(OP, (T1, (T2,())), T).
+
+_type_operator(SCOPE,OP,function(TS,T)) :- 
+    _expression_query(SCOPE,E), 
+    E=operation(OP,ARGS),
+    _type_listAux(SCOPE,ARGS,N,()),
+    _variadic_check(SCOPE, OP, ARGS,N-1,T),
+    _type_list(SCOPE,ARGS,TS).
+
+% More complex operators (union types needed?)
+operator_declare(ite,(bool,(int,(int,()))),int).
