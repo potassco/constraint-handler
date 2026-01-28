@@ -34,12 +34,16 @@ modules = [
     "variable",
 ]
 
+python_enabled = False
 
 def add_to_control(
     ctrl: clingo.Control, propagator_check_only: bool = False, environment=None, _environment_ids=dict()
 ):
     """Adds encoding logic to the provided Control instance. The environment argumennt specifies the locals used in the python statements and expressions."""
-    clingo.script.enable_python()
+    global python_enabled
+    if not python_enabled:
+        clingo.script.enable_python()
+        python_enabled = True
     for mod in modules:
         file = files("constraint_handler.data").joinpath(f"{mod}.lp")
         ctrl.load(str(file))
@@ -94,11 +98,3 @@ def set_globals(environment=None):
 
 def add_to_globals(environment):
     evaluator._shared_environment.update(environment)
-
-
-def add_encoding_to_program_builder(b: clingo.ast.ProgramBuilder):
-    """Adds encoding logic to the provided ProgramBuilder instance."""
-    clingo.script.enable_python()
-    all_files = [str(files("constraint_handler.data").joinpath(f"{mod}.lp")) for mod in modules]
-    with b:
-        clingo.ast.parse_files(all_files, lambda stm: b.add(stm))

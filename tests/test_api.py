@@ -5,10 +5,8 @@ Test cases for main library functions.
 from typing import Iterator, Set
 
 from clingo import Control, Symbol
-from clingo.ast import ProgramBuilder
 
 import constraint_handler
-import constraint_handler.propagator as prop
 
 
 def test_add_ctrl():
@@ -33,19 +31,14 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
     ctrl = Control("0")
 
     if use_prop:
-        propagator = prop.ConstraintHandlerPropagator()
-        ctrl.register_propagator(propagator)
         ctrl.add("defaultEngine(propagator).")
 
-    pbuilder = ProgramBuilder(ctrl)
-    constraint_handler.add_encoding_to_program_builder(pbuilder)
+    constraint_handler.add_to_control(ctrl)
     ctrl.add("base", [], program)
 
     ctrl.ground([("base", [])])
     with ctrl.solve(yield_=True) as solve_handle:
         for model in solve_handle:
-            if use_prop:
-                propagator.on_model(model)
             solution = set()
             for fact in model.symbols(shown=True, theory=True):
                 solution.add(fact.__str__())
@@ -89,8 +82,7 @@ def test_add():
     """
 
     ctrl = Control("0")
-    pbuilder = ProgramBuilder(ctrl)
-    constraint_handler.add_encoding_to_program_builder(pbuilder)
+    constraint_handler.add_to_control(ctrl)
 
     ctrl.add("base", [], constraint_expr)
 
