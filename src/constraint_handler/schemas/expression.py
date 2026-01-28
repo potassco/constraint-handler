@@ -20,7 +20,7 @@ BinaryOperator = PPEnum(
 )
 EqOperator = PPEnum("LogicOperator", ["eq", "neq"])
 StringOperator = PPEnum("StringOperator", ["concat", "length"])
-OtherOperator = PPEnum("OtherOperator", ["minus", "max", "min", "length"])
+OtherOperator = PPEnum("OtherOperator", ["max", "min", "length"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])

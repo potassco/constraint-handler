@@ -295,12 +295,6 @@ class Evaluator:
                 return self.string_operator(o, args)
             case ConditionalOperator():
                 return self.conditional_operator(o, args)
-            case OtherOperator.minus:
-                assert len(args)  # TODO error loggin
-                if len(args) == 1:
-                    return -args[0]
-                else:
-                    return args[0] - sum(args[1:])
             case OtherOperator.max:
                 assert len(args)  # TODO
                 return max(args)
