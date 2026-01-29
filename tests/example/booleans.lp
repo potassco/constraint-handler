@@ -48,6 +48,8 @@ variable_define(a_z,z,operation(ite,(variable(x),(variable(y),(operation(lnot,(v
 
 evaluate(limp,(variable(f),(operation(lnot,(variable(x),())),()))).
 evaluate(leqv,(variable(f),(operation(conj,(operation(lnot,(variable(x),())),(variable(y),()))),()))).
+evaluate(leqv,(val(bool,true),(val(bool,false),(val(bool,false),())))).
+evaluate(leqv,(val(bool,true),(val(bool,true),(val(bool,false),())))).
 evaluate(eq,(variable(z),(operation(leqv,(variable(x),(variable(y),()))),()))).
 evaluate(neq,(variable(z),(variable(t),()))).
 evaluate(limp,(variable(f),(operation(lnot,(variable(y),())),()))).

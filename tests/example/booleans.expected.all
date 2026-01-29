@@ -1,5 +1,7 @@
 evaluated(limp,(variable(f),(operation(lnot,(variable(x),())),())),bool,true)
 evaluated(leqv,(variable(f),(operation(conj,(operation(lnot,(variable(x),())),(variable(y),()))),())),bool,true)
+evaluated(leqv,(val(bool,true),(val(bool,false),(val(bool,false),()))),bool,true)
+evaluated(leqv,(val(bool,true),(val(bool,true),(val(bool,false),()))),bool,false)
 evaluated(eq,(variable(z),(operation(leqv,(variable(x),(variable(y),()))),())),bool,true)
 evaluated(neq,(variable(z),(variable(t),())),bool,true)
 evaluated(conj,(operation(limp,(variable(f),(operation(lnot,(variable(y),())),()))),(variable(f),())),bool,false)
