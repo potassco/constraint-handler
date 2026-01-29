@@ -120,14 +120,17 @@ def incorrect_arity_error(operator, expected_arity, given_arity):
     operator_name = str(operator).split(".")[-1]
     if isinstance(expected_arity, int):
         arity_desc = f"exactly {expected_arity}"
-        # Use "arguments" for expected arity
-        arg_word = "arguments"
+        # Use singular "argument" when expected arity is 1
+        arg_word = "argument" if expected_arity == 1 else "arguments"
     else:
         arity_desc = str(expected_arity)
-        # Use "arguments" when arity description is a string
+        # Use "arguments" for string descriptions
         arg_word = "arguments"
     
-    return TypeError(f"{operator_name} takes {arity_desc} {arg_word} ({given_arity} were given)")
+    # Use "was given" when given_arity is 1, otherwise "were given"
+    given_word = "was given" if given_arity == 1 else "were given"
+    
+    return TypeError(f"{operator_name} takes {arity_desc} {arg_word} ({given_arity} {given_word})")
 
 
 class PropPrint(clingo.propagator.Propagator):

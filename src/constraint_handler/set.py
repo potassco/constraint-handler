@@ -27,34 +27,34 @@ class Evaluator:
                 return frozenset(args)
             case Operator.isin:
                 if len(args) != 2:
-                    self.errors.append(testing.incorrect_arity_error(Operator.isin, 2, len(args)))
+                    self.errors.append(testing.incorrect_arity_error(o, 2, len(args)))
                     return None
                 return args[0] in args[1]
             case Operator.notin:
                 if len(args) != 2:
-                    self.errors.append(testing.incorrect_arity_error(Operator.notin, 2, len(args)))
+                    self.errors.append(testing.incorrect_arity_error(o, 2, len(args)))
                     return None
                 return args[0] not in args[1]
             case Operator.union:
                 return frozenset().union(*args)
             case Operator.inter:
                 if len(args) < 1:
-                    self.errors.append(testing.incorrect_arity_error(Operator.inter, "at least 1", len(args)))
+                    self.errors.append(testing.incorrect_arity_error(o, "at least 1", len(args)))
                     return None
                 return frozenset(args[0].intersection(*args[1:]))
             case Operator.diff:
                 if len(args) != 2:
-                    self.errors.append(testing.incorrect_arity_error(Operator.diff, 2, len(args)))
+                    self.errors.append(testing.incorrect_arity_error(o, 2, len(args)))
                     return None
                 return frozenset(args[0].difference(args[1]))
             case Operator.subset:
                 if len(args) != 2:
-                    self.errors.append(testing.incorrect_arity_error(Operator.subset, 2, len(args)))
+                    self.errors.append(testing.incorrect_arity_error(o, 2, len(args)))
                     return None
                 return args[0].issubset(args[1])
             case Operator.set_fold:
                 if len(args) != 3:
-                    self.errors.append(testing.incorrect_arity_error(Operator.set_fold, 3, len(args)))
+                    self.errors.append(testing.incorrect_arity_error(o, 3, len(args)))
                     return None
                 evaluator = full_evaluator.Evaluator()
                 o = lambda *aaa: evaluator.operator(args[0], aaa)

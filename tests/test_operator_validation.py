@@ -22,7 +22,7 @@ def test_set_diff_arg_validation():
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "diff takes exactly 2 arguments (1 were given)" in str(evaluator.errors[0])
+    assert "diff takes exactly 2 arguments (1 was given)" in str(evaluator.errors[0])
 
     # Test with 2 arguments (correct case)
     evaluator.errors = []
@@ -58,7 +58,7 @@ def test_set_isin_arg_validation():
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "isin takes exactly 2 arguments (1 were given)" in str(evaluator.errors[0])
+    assert "isin takes exactly 2 arguments (1 was given)" in str(evaluator.errors[0])
 
     # Test with 2 arguments (correct case)
     evaluator.errors = []
@@ -94,7 +94,7 @@ def test_set_notin_arg_validation():
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "notin takes exactly 2 arguments (1 were given)" in str(evaluator.errors[0])
+    assert "notin takes exactly 2 arguments (1 was given)" in str(evaluator.errors[0])
 
     # Test with 2 arguments (correct case)
     evaluator.errors = []
@@ -162,7 +162,7 @@ def test_set_subset_arg_validation():
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "subset takes exactly 2 arguments (1 were given)" in str(evaluator.errors[0])
+    assert "subset takes exactly 2 arguments (1 was given)" in str(evaluator.errors[0])
 
     # Test with 2 arguments (correct case)
     evaluator.errors = []
@@ -199,7 +199,7 @@ def test_set_fold_arg_validation():
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "set_fold takes exactly 3 arguments (1 were given)" in str(evaluator.errors[0])
+    assert "set_fold takes exactly 3 arguments (1 was given)" in str(evaluator.errors[0])
 
     # Test with 2 arguments
     evaluator.errors = []
