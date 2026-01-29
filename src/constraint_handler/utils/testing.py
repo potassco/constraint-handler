@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Sequence, Union, Any
+from typing import Any, Callable, Optional, Sequence, Union
 
 import clingo
 import clingo.symbol
