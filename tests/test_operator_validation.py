@@ -32,9 +32,7 @@ def test_set_diff_arg_validation():
 
     # Test with 3 arguments
     evaluator.errors = []
-    result = evaluator.operator(
-        Operator.diff, [frozenset({1, 2, 3}), frozenset({2, 3, 4}), frozenset({1, 4, 5})]
-    )
+    result = evaluator.operator(Operator.diff, [frozenset({1, 2, 3}), frozenset({2, 3, 4}), frozenset({1, 4, 5})])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
