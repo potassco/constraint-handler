@@ -47,6 +47,6 @@ computed(lxor,ARGS,val(bool,false)) :- compute(lxor,ARGS),
     N = #count { I : (I,val(bool,true))=@pythonEnumerateElements(ARGS) }, N \ 2 = 0.
 
 computed(leqv,ARGS,val(bool,true))  :- compute(leqv,ARGS),
-    N = #count { I : (I,val(bool,true))=@pythonEnumerateElements(ARGS) }, N \ 2 = 0.
+    N = #count { I : (I,val(bool,false))=@pythonEnumerateElements(ARGS) }, N \ 2 = 0.
 computed(leqv,ARGS,val(bool,false)) :- compute(leqv,ARGS),
-    N = #count { I : (I,val(bool,true))=@pythonEnumerateElements(ARGS) }, N \ 2 = 1.
+    N = #count { I : (I,val(bool,false))=@pythonEnumerateElements(ARGS) }, N \ 2 = 1.
