@@ -122,7 +122,7 @@ def test_set_inter_arg_validation():
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "inter takes at least 1 argument (0 were given)" in str(evaluator.errors[0])
+    assert "inter takes at least 1 arguments (0 were given)" in str(evaluator.errors[0])
 
     # Test with 1 argument (correct case)
     evaluator.errors = []
@@ -182,10 +182,9 @@ def test_set_subset_arg_validation():
 def test_set_fold_arg_validation():
     """Test that set_fold operator only accepts exactly 3 arguments."""
     from constraint_handler.set import Evaluator, Operator
-    from constraint_handler.utils.common import PPEnum
+    from constraint_handler.schemas.expression import BinaryOperator
 
     evaluator = Evaluator()
-    TestOp = PPEnum("TestOp", ["add"])
 
     # Test with 0 arguments
     result = evaluator.operator(Operator.set_fold, [])
@@ -196,7 +195,7 @@ def test_set_fold_arg_validation():
 
     # Test with 1 argument
     evaluator.errors = []
-    result = evaluator.operator(Operator.set_fold, [TestOp.add])
+    result = evaluator.operator(Operator.set_fold, [BinaryOperator.add])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
@@ -204,15 +203,21 @@ def test_set_fold_arg_validation():
 
     # Test with 2 arguments
     evaluator.errors = []
-    result = evaluator.operator(Operator.set_fold, [TestOp.add, frozenset({1, 2, 3})])
+    result = evaluator.operator(Operator.set_fold, [BinaryOperator.add, frozenset({1, 2, 3})])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
     assert "set_fold takes exactly 3 arguments (2 were given)" in str(evaluator.errors[0])
 
+    # Test with 3 arguments (correct case)
+    evaluator.errors = []
+    result = evaluator.operator(Operator.set_fold, [BinaryOperator.add, frozenset({1, 2, 3}), 0])
+    assert result == 6
+    assert len(evaluator.errors) == 0
+
     # Test with 4 arguments
     evaluator.errors = []
-    result = evaluator.operator(Operator.set_fold, [TestOp.add, frozenset({1, 2, 3}), 0, "extra"])
+    result = evaluator.operator(Operator.set_fold, [BinaryOperator.add, frozenset({1, 2, 3}), 0, "extra"])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)

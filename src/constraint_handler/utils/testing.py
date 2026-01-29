@@ -105,6 +105,31 @@ class SolverWithPropagators(clintest.solver.Solver):
         return f"{name}({arguments}, {program}, {files}, {props})"
 
 
+def incorrect_arity_error(operator, expected_arity, given_arity):
+    """
+    Create a TypeError for incorrect operator arity.
+    
+    Args:
+        operator: The operator that was called
+        expected_arity: Expected number of arguments (int or string like "at least 1")
+        given_arity: Actual number of arguments provided
+    
+    Returns:
+        TypeError instance with appropriate message
+    """
+    operator_name = str(operator).split(".")[-1]
+    if isinstance(expected_arity, int):
+        arity_desc = f"exactly {expected_arity}"
+        # Use "arguments" for expected arity
+        arg_word = "arguments"
+    else:
+        arity_desc = str(expected_arity)
+        # Use "arguments" when arity description is a string
+        arg_word = "arguments"
+    
+    return TypeError(f"{operator_name} takes {arity_desc} {arg_word} ({given_arity} were given)")
+
+
 class PropPrint(clingo.propagator.Propagator):
     def __init__(self):
         print("creation")
