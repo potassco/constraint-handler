@@ -36,16 +36,14 @@ _type(int;float;bool;str;symbol;none;set;multimap).
 _numeric_type(int;float).
 
 % Operators
-intToFloatOperator(sqrt;cos;sin;tan;acos;asin;atan).
+numericUnFOperator(sqrt;cos;sin;tan;acos;asin;atan).
 numericUnOperator(abs;minus;floor).
 numericBinOperator(add;sub;mult;div;fdiv;pow;max).
 comparisonOperator(leq;lt;geq;gt;eq;neq).
 
 operator_declare(OP,(T,(T,())),bool) :- comparisonOperator(OP), _type(T).
 operator_declare(OP,(T1,(T2,())),bool) :- comparisonOperator(OP), _numeric_type(T1), _numeric_type(T2).
-operator_declare(OP, (int,()), float) :- intToFloatOperator(OP).
-operator_declare(OP, (T,()), T) :- numericUnOperator(OP), _numeric_type(T).
-operator_declare(OP,(T1,(T2,())),T1)    :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 = T2.
+operator_declare(OP,(T,()),float) :- numericUnFOperator(OP), _numeric_type(T).
 operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
 operator_declare(concat, (str,(str,())), str).
 operator_declare(length, (T,()), int) :- T = (str;set).
