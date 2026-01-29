@@ -69,6 +69,11 @@ _variadic_check(SCOPE, OP, ARGS,I,T) :-
     _type_listArg(SCOPE, ARGS, I, val(T2, _)),
     operator_declare(OP, (T1, (T2,())), T).
 
+_type_operator(SCOPE,OP,function((),int)) :- 
+    _expression_query(SCOPE,E), 
+    E=operation(OP,()),
+    variadicOperator(OP).
+
 _type_operator(SCOPE,OP,function(TS,T)) :- 
     _expression_query(SCOPE,E), 
     E=operation(OP,ARGS),
