@@ -1,4 +1,4 @@
-""" This module is the main entry point for Clingspector, a tool for checking Clingo logic programs."""
+"""This module is the main entry point for Clingspector, a tool for checking Clingo logic programs."""
 
 import argparse
 import logging

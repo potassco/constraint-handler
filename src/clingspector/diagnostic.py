@@ -1,4 +1,4 @@
-""" Diagnostic classes for Clingspector."""
+"""Diagnostic classes for Clingspector."""
 
 from __future__ import annotations
 
