@@ -876,7 +876,18 @@ class Execution:
 
     @property
     def literals(self) -> set[int]:
-        return {self.literal}
+        """
+        Return the literal(s) associated with this execution.
+        If the execution is run return the positive literal.
+        If the execution is not run return the negative literal.
+        If the execution is unassigned return an empty set.
+        """
+        if self.assigned:
+            return {self.literal}
+        elif self.assigned is False:
+            return {-self.literal}
+        else:
+            return set()
 
     def convert_vars(self, vars: list[clingo.Symbol], input=True) -> list[clingo.Symbol]:
         """
