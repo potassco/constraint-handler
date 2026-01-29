@@ -152,7 +152,7 @@ class Evaluator:
             case LogicOperator.leqv:
                 if None in args:
                     return None
-                return args.count(False) % 2 == 0
+                return functools.reduce(operator.eq, args)
             case LogicOperator.limp:
                 assert len(args) == 2
                 return args[1] if args[0] else True
