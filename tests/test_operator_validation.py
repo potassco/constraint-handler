@@ -181,8 +181,8 @@ def test_set_subset_arg_validation():
 
 def test_set_fold_arg_validation():
     """Test that set_fold operator only accepts exactly 3 arguments."""
-    from constraint_handler.set import Evaluator, Operator
     from constraint_handler.schemas.expression import BinaryOperator
+    from constraint_handler.set import Evaluator, Operator
 
     evaluator = Evaluator()
 

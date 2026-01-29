@@ -105,34 +105,6 @@ class SolverWithPropagators(clintest.solver.Solver):
         return f"{name}({arguments}, {program}, {files}, {props})"
 
 
-def incorrect_arity_error(operator, expected_arity, given_arity):
-    """
-    Create a TypeError for incorrect operator arity.
-    
-    Args:
-        operator: The operator that was called
-        expected_arity: Expected number of arguments (int or string like "at least 1")
-        given_arity: Actual number of arguments provided
-    
-    Returns:
-        TypeError instance with appropriate message
-    """
-    operator_name = str(operator).split(".")[-1]
-    if isinstance(expected_arity, int):
-        arity_desc = f"exactly {expected_arity}"
-        # Use singular "argument" when expected arity is 1
-        arg_word = "argument" if expected_arity == 1 else "arguments"
-    else:
-        arity_desc = str(expected_arity)
-        # Use "arguments" for string descriptions
-        arg_word = "arguments"
-    
-    # Use "was given" when given_arity is 1, otherwise "were given"
-    given_word = "was given" if given_arity == 1 else "were given"
-    
-    return TypeError(f"{operator_name} takes {arity_desc} {arg_word} ({given_arity} {given_word})")
-
-
 class PropPrint(clingo.propagator.Propagator):
     def __init__(self):
         print("creation")
@@ -157,3 +129,28 @@ class PropPrint(clingo.propagator.Propagator):
             fact = clingo.Function("value", [x, t, v])
             print(f"extending with {fact}")
             _model.extend([fact])
+
+
+def incorrect_arity_error(operator, expected_arity, given_arity):
+    """
+    Create a TypeError for incorrect operator arity.
+
+    Args:
+        operator: The operator that was called
+        expected_arity: Expected number of arguments (int or string like "at least 1")
+        given_arity: Actual number of arguments provided
+
+    Returns:
+        TypeError instance with appropriate message
+    """
+    operator_name = str(operator).split(".")[-1]
+    if isinstance(expected_arity, int):
+        arity_desc = f"exactly {expected_arity}"
+        arg_word = "argument" if expected_arity == 1 else "arguments"
+    else:
+        arity_desc = str(expected_arity)
+        arg_word = "arguments"
+
+    given_word = "was given" if given_arity == 1 else "were given"
+
+    return TypeError(f"{operator_name} takes {arity_desc} {arg_word} ({given_arity} {given_word})")

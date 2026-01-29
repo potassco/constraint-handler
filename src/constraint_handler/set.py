@@ -1,6 +1,6 @@
 import constraint_handler.evaluator as full_evaluator
-from constraint_handler.utils.common import PPEnum
 from constraint_handler.utils import testing
+from constraint_handler.utils.common import PPEnum
 
 Operator = PPEnum("Operator", ["makeSet", "isin", "notin", "union", "inter", "diff", "subset", "set_fold"])
 
