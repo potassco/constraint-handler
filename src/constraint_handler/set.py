@@ -25,12 +25,21 @@ class Evaluator:
             case Operator.makeSet:
                 return frozenset(args)
             case Operator.isin:
+                if len(args) != 2:
+                    self.errors.append(TypeError(f"isin takes exactly 2 arguments ({len(args)} were given)"))
+                    return None
                 return args[0] in args[1]
             case Operator.notin:
+                if len(args) != 2:
+                    self.errors.append(TypeError(f"notin takes exactly 2 arguments ({len(args)} were given)"))
+                    return None
                 return args[0] not in args[1]
             case Operator.union:
                 return frozenset().union(*args)
             case Operator.inter:
+                if len(args) < 1:
+                    self.errors.append(TypeError(f"inter takes at least 1 argument ({len(args)} were given)"))
+                    return None
                 return frozenset(args[0].intersection(*args[1:]))
             case Operator.diff:
                 if len(args) != 2:
@@ -38,8 +47,14 @@ class Evaluator:
                     return None
                 return frozenset(args[0].difference(args[1]))
             case Operator.subset:
+                if len(args) != 2:
+                    self.errors.append(TypeError(f"subset takes exactly 2 arguments ({len(args)} were given)"))
+                    return None
                 return args[0].issubset(args[1])
             case Operator.set_fold:
+                if len(args) != 3:
+                    self.errors.append(TypeError(f"set_fold takes exactly 3 arguments ({len(args)} were given)"))
+                    return None
                 evaluator = full_evaluator.Evaluator()
                 o = lambda *aaa: evaluator.operator(args[0], aaa)
                 return fold(o, args[1], args[2])
