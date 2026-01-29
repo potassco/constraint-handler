@@ -38,7 +38,7 @@ variable_define(d,manual_count,EXPR) :-
 
 
 variable_define(d,the_max,EXPR) :-
-  STEP = lambda((elt,(accu,())),operation(max,(variable(elt),(variable(accu),())))),
+  STEP = val(function,max),
   SET = variable(num_set),
   INIT = val(int,-1000), % #inf is not supported
   EXPR = operation(set_fold,(STEP,(SET,(INIT,())))).
