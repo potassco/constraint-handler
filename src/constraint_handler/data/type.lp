@@ -41,6 +41,7 @@ numericUnOperator(abs;minus;floor).
 numericBinOperator(add;sub;mult;div;fdiv;pow;max).
 comparisonOperator(leq;lt;geq;gt).
 equalityOperator(eq;neq).
+logicOperator(conj;disj;limp;lxor;leqv).
 
 % All
 operator_declare(OP,(T1,(T2,())),bool) :- equalityOperator(OP), _type(T1),_type(T2), 1 { T1 = T2 ; T1 = none ; T2 = none }.
@@ -53,7 +54,9 @@ operator_declare(OP,(T,(T,())),float) :- _numeric_type(T), OP = fdiv.
 operator_declare(OP,(T,(T,())),T)    :- numericBinOperator(OP), _numeric_type(T), OP != fdiv.
 operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
 % Bool
-operator_declare(lnot,(T,()),T) :- T = (bool;none).
+operator_declare(OP,(T,()),T) :- OP = lnot,T = (bool;none).
+operator_declare(OP,(T,()),bool) :- OP = (wnot;snot), T = (bool;none).
+operator_declare(OP,(T,(T,())),T) :- logicOperator(OP), T = (bool).
 % Str
 operator_declare(concat,(str,(str,())),str).
 operator_declare(length,(T,()),int) :- T = (str;set).
@@ -63,6 +66,7 @@ _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 % Variadic operators
 %
 variadicOperator(add;mult).
+variadicOperator(OP) :- logicOperator(OP), OP != limp.
 
 _variadic_check(SCOPE, OP, ARGS,0,T) :-
     _expression_query(SCOPE,E),
@@ -79,9 +83,10 @@ _variadic_check(SCOPE, OP, ARGS,I,T) :-
     type_expression(SCOPE,ARG,T2),
     operator_declare(OP, (T1, (T2,())), T).
 
-_type_operator(SCOPE,OP,function((),int)) :-
+_type_operator(SCOPE,OP,function((),T)) :-
     _expression_query(SCOPE,E),
     E=operation(OP,()),
+    operator_declare(OP, (_, (_,())), T),
     variadicOperator(OP).
 
 _type_operator(SCOPE,OP,function(TS,T)) :-
