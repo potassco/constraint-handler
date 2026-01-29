@@ -44,6 +44,9 @@ comparisonOperator(leq;lt;geq;gt;eq;neq).
 operator_declare(OP,(T,(T,())),bool) :- comparisonOperator(OP), _type(T).
 operator_declare(OP,(T1,(T2,())),bool) :- comparisonOperator(OP), _numeric_type(T1), _numeric_type(T2).
 operator_declare(OP,(T,()),float) :- numericUnFOperator(OP), _numeric_type(T).
+operator_declare(OP,(T,()),T) :- numericUnOperator(OP), _numeric_type(T).
+operator_declare(OP,(T,(T,())),float) :- _numeric_type(T), OP = fdiv.
+operator_declare(OP,(T,(T,())),T)    :- numericBinOperator(OP), _numeric_type(T), OP != fdiv.
 operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
 operator_declare(concat, (str,(str,())), str).
 operator_declare(length, (T,()), int) :- T = (str;set).
