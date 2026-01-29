@@ -255,51 +255,47 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             print(f"dif model: {self.python_model.difference(old_model)}")
 
-        stage2: bool = ctl.assignment.is_true(self.reasoning_mode_stage_lits[2])
-        if not stage2:
+        if not ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]):
             return False
 
-        if stage2 and not self.previously_stage_2:
+        assert ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]), "stage 2 should be true!"
+
+        if not self.previously_stage_2:
             # First time in stage 2
             self.previously_stage_2 = True
+
             # add nogoods for the stuff in the current model
+            self.nogood_queue.extend(self.get_reasoning_mode_nogoods(self.python_model))
+
             # add nogoods to ensure at least 1 var changes
-            for result_var in self.python_model:
-                if isinstance(result_var, atom.Evaluated):
-                    continue
-                assert type(result_var) in (atom.Value, atom.Set_value, atom.Multimap_value)
-                assert isinstance(result_var.name, clingo.Symbol)
-
-                var: VariableType = self.symbol2var[result_var.name]
-                ng = self.get_reasons(var).union({self.variable_lits[var]})
-                print(ng)
-                self.nogood_queue.append(ng)
-
             self.nogood_queue.append([-lit for lit in self.variable_lits.values()])
 
             return self.add_nogoods_from_queue(ctl)
 
-        elif stage2 and self.previously_stage_2:
+        elif self.previously_stage_2:
             # Subsequent times in stage 2
-            # make sure to add the correct nogoods here for the new stuff!
-            for result_var in self.python_model.difference(old_model):
-                if isinstance(result_var, atom.Evaluated):
-                    continue
-                assert type(result_var) in (atom.Value, atom.Set_value, atom.Multimap_value)
-                assert isinstance(result_var.name, clingo.Symbol)
+            assert old_model is not None
 
-                var: VariableType = self.symbol2var[result_var.name]
-                ng = self.get_reasons(var).union({self.variable_lits[var]})
-                self.nogood_queue.append(ng)
+            # add nogoods for the new stuff
+            self.nogood_queue.extend(self.get_reasoning_mode_nogoods(self.python_model.difference(old_model)))
 
-            if not self.add_nogoods_from_queue(ctl):
-                # assert False, (
-                #     "Added constraint to backtrack because brave/cautious model changed, but solver did not detect it"
-                # )
-                return False
-            return True
+            return self.add_nogoods_from_queue(ctl)
 
         assert False, "should never get here?"
+
+    def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom]) -> list[Iterable[int]]:
+        nogoods: list[Iterable[int]] = []
+        for result_var in variables:
+            if isinstance(result_var, atom.Evaluated):
+                continue
+            assert type(result_var) in (atom.Value, atom.Set_value, atom.Multimap_value)
+            assert isinstance(result_var.name, clingo.Symbol)
+
+            var: VariableType = self.symbol2var[result_var.name]
+            ng = self.get_reasons(var).union({self.variable_lits[var]})
+            nogoods.append(ng)
+
+        return nogoods
 
     def add_nogoods_from_queue(self, ctl: clingo.PropagateControl) -> bool:
         """
