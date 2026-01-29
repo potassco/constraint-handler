@@ -39,44 +39,51 @@ _numeric_type(int;float).
 numericUnFOperator(sqrt;cos;sin;tan;acos;asin;atan).
 numericUnOperator(abs;minus;floor).
 numericBinOperator(add;sub;mult;div;fdiv;pow;max).
-comparisonOperator(leq;lt;geq;gt;eq;neq).
+comparisonOperator(leq;lt;geq;gt).
+equalityOperator(eq;neq).
 
-operator_declare(OP,(T,(T,())),bool) :- comparisonOperator(OP), _type(T).
+% All
+operator_declare(OP,(T1,(T2,())),bool) :- equalityOperator(OP), _type(T1),_type(T2), 1 { T1 = T2 ; T1 = none ; T2 = none }.
+operator_declare(OP,(T,(T,())),bool) :- comparisonOperator(OP), _type(T), T != str.
+% Numeric
 operator_declare(OP,(T1,(T2,())),bool) :- comparisonOperator(OP), _numeric_type(T1), _numeric_type(T2).
 operator_declare(OP,(T,()),float) :- numericUnFOperator(OP), _numeric_type(T).
 operator_declare(OP,(T,()),T) :- numericUnOperator(OP), _numeric_type(T).
 operator_declare(OP,(T,(T,())),float) :- _numeric_type(T), OP = fdiv.
 operator_declare(OP,(T,(T,())),T)    :- numericBinOperator(OP), _numeric_type(T), OP != fdiv.
 operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
-operator_declare(concat, (str,(str,())), str).
-operator_declare(length, (T,()), int) :- T = (str;set).
+% Bool
+operator_declare(lnot,(T,()),T) :- T = (bool;none).
+% Str
+operator_declare(concat,(str,(str,())),str).
+operator_declare(length,(T,()),int) :- T = (str;set).
 
 _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 
 % Variadic operators
-% 
+%
 variadicOperator(add;mult).
 
-_variadic_check(SCOPE, OP, ARGS,0,T) :- 
-    _expression_query(SCOPE,E), 
-    E=operation(OP,ARGS), 
+_variadic_check(SCOPE, OP, ARGS,0,T) :-
+    _expression_query(SCOPE,E),
+    E=operation(OP,ARGS),
     _type_listArg(SCOPE, ARGS, 0, val(T, _)),
     variadicOperator(OP).
 
-_variadic_check(SCOPE, OP, ARGS,I,T) :- 
-    _expression_query(SCOPE,E), 
-    E=operation(OP,ARGS), 
-    _variadic_check(SCOPE,OP,ARGS,I-1,T1), 
+_variadic_check(SCOPE, OP, ARGS,I,T) :-
+    _expression_query(SCOPE,E),
+    E=operation(OP,ARGS),
+    _variadic_check(SCOPE,OP,ARGS,I-1,T1),
     _type_listArg(SCOPE, ARGS, I, val(T2, _)),
     operator_declare(OP, (T1, (T2,())), T).
 
-_type_operator(SCOPE,OP,function((),int)) :- 
-    _expression_query(SCOPE,E), 
+_type_operator(SCOPE,OP,function((),int)) :-
+    _expression_query(SCOPE,E),
     E=operation(OP,()),
     variadicOperator(OP).
 
-_type_operator(SCOPE,OP,function(TS,T)) :- 
-    _expression_query(SCOPE,E), 
+_type_operator(SCOPE,OP,function(TS,T)) :-
+    _expression_query(SCOPE,E),
     E=operation(OP,ARGS),
     _type_listAux(SCOPE,ARGS,N,()),
     _variadic_check(SCOPE, OP, ARGS,N-1,T),
