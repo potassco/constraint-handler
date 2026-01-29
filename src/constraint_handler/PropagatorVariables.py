@@ -226,7 +226,7 @@ class EnsureVariable:
         changed is True if the value has changed.
         conflict is True if there is a conflict.
         """
-        if ctl.assignment.is_false(self.expression.literal):
+        if self.expression.assigned is not None and not self.expression.assigned:
             # Ensure is false, so no conflict
             return EvaluationResult.NOT_CHANGED
 
