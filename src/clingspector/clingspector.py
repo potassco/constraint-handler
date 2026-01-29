@@ -1,6 +1,4 @@
-""" This module contains the Clingspector class for checking Clingo logic programs.
-
-"""
+"""This module contains the Clingspector class for checking Clingo logic programs."""
 
 from __future__ import annotations
 

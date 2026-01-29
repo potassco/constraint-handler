@@ -22,17 +22,29 @@ clingspector = "clingspector.main:main"
 Homepage = "https://github.com/potassco/constraint-handler.git/"
 
 [project.optional-dependencies]
-format = ["black", "isort", "autoflake"]
-lint_pylint = ["pylint"]
-typecheck = ["types-setuptools", "mypy"]
-test = ["pytest", "clintest>=0.4"]
+format = [
+    "black==26.1.0",
+    "isort==7.0.0",
+    "autoflake==2.3.1"
+]
+lint_pylint = [
+    "pylint==4.0.4"
+]
+typecheck = [
+    "types-setuptools==80.10.0.20260124",
+    "mypy==1.19.1"
+]
+test = [
+    "pytest==9.0.1",
+    "clintest>=0.4"
+]
 doc = [
     "mkdocs",
     "mkdocs-material",
     "mkdocstrings[python]>=1.0.2",
     "mkdocs-literate-nav"
 ]
-dev = ["constraint_handler[test,typecheck,lint_pylint, doc]"]
+dev = ["constraint_handler[test,typecheck,lint_pylint,doc]"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

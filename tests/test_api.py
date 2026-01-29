@@ -14,13 +14,11 @@ import constraint_handler.propagator as prop
 def test_add_ctrl():
     ctrl = Control("0")
     constraint_handler.add_to_control(ctrl)
-    ctrl.add(
-        """
+    ctrl.add("""
     assign(assign_x,x,val(int,20)).
     assign(assign_y,y,operation(add,(variable(x),(val(int,10),())))).
     #show value/2.
-    """
-    )
+    """)
     ctrl.ground()
     solve_handle = ctrl.solve(yield_=True)
     for model in solve_handle:
