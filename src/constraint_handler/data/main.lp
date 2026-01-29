@@ -6,6 +6,7 @@
 #defined requestEngine/2.
 #defined defaultEngine/1.
 #defined main_solverIdentifier/1.
+#defined forbid_warning/2.
 
 %%%%%%%%%%%%%%%%% engines
 %%% compile
