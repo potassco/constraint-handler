@@ -73,8 +73,8 @@ preference_holds(Identifier, Condition, Value)
     If we wanted to express that we prefer combinations where `a` and `b` are equal, we could do so as follows:
 
     ```prolog
-    preference_holds(bla, operation(eq, (variable(color(a)),(variable(color(b)),()))), 2).
-    preference_holds(bla, operation(neq, (variable(color(a)),(variable(color(b)),())))).
+    preference_holds(name, operation(eq, (variable(color(a)),(variable(color(b)),()))), 2).
+    preference_holds(name, operation(neq, (variable(color(a)),(variable(color(b)),())))).
     ```
     In this example, we express a preference value of `2` for the condition where `color(a)` is equal to `color(b)`. Additionally, we have a default preference (with an implicit value of `1`) for the condition where they are not equal.
 
@@ -90,7 +90,7 @@ Preferences can also be combined to create more complex preference structures. F
     variable_declare(declare_color, color(a;b), fromFacts).
     variable_domain(color(a;b), val(symbol, (red;green;blue;yellow))).
 
-    preference_holds(bla, operation(eq, (variable(color(a)),(variable(color(b)),()))), 10).
+    preference_holds(name, operation(eq, (variable(color(a)),(variable(color(b)),()))), 10).
     preference_variableValue(dummy,color(a;b),val(symbol,red),3).
     preference_variableValue(dummy,color(a;b),val(symbol,(green;blue)),2).
     preference_variableValue(dummy,color(a;b),val(symbol,yellow)).
@@ -131,7 +131,7 @@ However, instead of decreasing the overall score, negative preference values wil
     variable_declare(declare_color, color(a;b), fromFacts).
     variable_domain(color(a;b), val(symbol, (red;green;blue;yellow))).
 
-    preference_holds(bla, operation(eq, (variable(color(a)),(variable(color(b)),()))), 10).
+    preference_holds(name, operation(eq, (variable(color(a)),(variable(color(b)),()))), 10).
     preference_variableValue(dummy,color(a;b),val(symbol,red),3).
     preference_variableValue(dummy,color(a;b),val(symbol,(green;blue)),2).
     preference_variableValue(dummy,color(a;b),val(symbol,yellow),-5).
