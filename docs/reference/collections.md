@@ -151,7 +151,7 @@ The constraint handler provides a `makeSet` operator to create sets directly wit
     To create the same set `my_set` and add the [ints] `1`, `3` and `5` to it using `makeSet`, you would use the following code:
 
     ```prolog
-    variable_define(bla, my_set, operation(makeSet, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
+    variable_define(name, my_set, operation(makeSet, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
     ```
 
     This results in the following output atoms:
@@ -331,7 +331,7 @@ Just like for sets, the constraint handler provides a `multimap_make` operator t
     To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimap_make`, you would use the following code:
 
     ```prolog
-    variable_define(bla, my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
+    variable_define(name, my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
     ```
 
     This results in the following output atoms:
