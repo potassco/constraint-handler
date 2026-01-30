@@ -171,7 +171,7 @@ Once a set is created (either via declaration or returned from another operation
 | **Construction** | | | |
 | `makeSet` | Make Set | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
 | **Set Theory** | | | |
-| `union` | Union | ([set], [set]) $\to$ [set] | Returns a new set containing elements from both sets. |
+| `union` | Union | ([list]\[[set]\]) $\to$ [set] | Returns a new set containing elements from all sets. |
 | `inter` | Intersection | ([set], [set]) $\to$ [set] | Returns a new set containing only elements common to both sets. |
 | `diff` | Difference | ([set], [set]) $\to$ [set] | Returns a new set containing elements of the first set that are not in the second set. |
 | `subset` | Subset | ([set], [set]) $\to$ [bool] | `true` if first set is a subset of the second. |
