@@ -74,6 +74,9 @@ operator_declare(OP,(T,()),int) :- T = (multimap), OP = (countKeys;countEntries;
 operator_declare(OP,(T1,()),T2) :- T1 = (multimap),_type(T2), T2 != (multimap), OP = (maxEntries;minEntries).
 operator_declare(OP,(T1,(T2,())),bool) :- _type(T1), T2 = (multimap), membershipOperator(OP), OP != notin.
 
+% Conditionals
+operator_declare(OP,(T,()),bool) :- _type(T), OP = hasValue.
+
 _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 
 % Variadic operators
