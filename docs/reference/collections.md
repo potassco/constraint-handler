@@ -331,7 +331,7 @@ Just like for sets, the constraint handler provides a `multimap_make` operator t
     To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimap_make`, you would use the following code:
 
     ```prolog
-    assign(bla, my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
+    variable_define(bla, my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
     ```
 
     This results in the following output atoms:
@@ -358,7 +358,7 @@ can be used in expressions.
 | `maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ V | Returns the maximum value stored in the map (by value, not key). |
 | `minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ V | Returns the minimum value stored in the map. |
 | **Operations** | | | |
-| `find` | Find | ([multimap]\[K, V\], K) $\to$ [list]\[V\] | Retrieves the list of value(s) associated with a specific key. |
+| `find` | Find | (K, [multimap]\[K, V\]) $\to$ [list]\[V\] | Retrieves the list of value(s) associated with a specific key. |
 | `isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
 | `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all entries in the multimap, applies a function to each value and accumulates the result. |
 | **Comparison** | | | |
