@@ -7,7 +7,7 @@ type_variable((),X,none) :- variable_declareOptional(X).
 type_variable((),X,bool) :- variable_declare(_,X,boolDomain).
 type_variable((),X,T) :- variable_declare(_,X,fromFacts), variable_domain(X,D), type_expression((),D,T).
 type_variable((),X,T) :- variable_declare(_,X,fromList(L)), D=@pythonListElements(L), type_expression((),D,T).
-
+type_variable((), X, set) :- set_declare(_, X).
 %%%%%%%%%%%%%%%%% type_expression
 
 _expression_query((),E) :- type_query(E).
@@ -42,6 +42,8 @@ numericBinOperator(add;sub;mult;div;fdiv;pow;max).
 comparisonOperator(leq;lt;geq;gt).
 equalityOperator(eq;neq).
 logicOperator(conj;disj;limp;lxor;leqv).
+setOperator(union;inter;diff;subset).
+membershipOperator(isin;notin).
 
 % All
 operator_declare(OP,(T1,(T2,())),bool) :- equalityOperator(OP), _type(T1),_type(T2), 1 { T1 = T2 ; T1 = none ; T2 = none }.
@@ -60,6 +62,11 @@ operator_declare(OP,(T,(T,())),T) :- logicOperator(OP), T = (bool).
 % Str
 operator_declare(concat,(str,(str,())),str).
 operator_declare(length,(T,()),int) :- T = (str;set).
+
+% Set
+operator_declare(OP,(T,(T,())),T) :- setOperator(OP), T = (set), OP != subset.
+operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
+operator_declare(OP,(T,(set,())),bool) :- _type(T), membershipOperator(OP).
 
 _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 
