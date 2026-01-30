@@ -1,13 +1,12 @@
 from typing import Optional, Sequence, Union
 
 import clingo
-import clingo.symbol
 import clintest.assertion
 import clintest.solver
 import clintest.test
 from clintest.quantifier import All, Any, First
 
-import constraint_handler as ch
+import constraint_handler
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 
@@ -74,7 +73,7 @@ class Solver(clintest.solver.Solver):
     def solve(self, test: clintest.test.Test) -> None:
         ctl = clingo.Control(self.__arguments)
 
-        ch.add_to_control(ctl, propagator_check_only=self.__propagator_check_only)
+        constraint_handler.add_to_control(ctl, propagator_check_only=self.__propagator_check_only)
         ctl.add(self.__program)
 
         for file in self.__files:
