@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %% snippet(input: x, output: y):
 %%     if x is not None and x = False:
 %%         y := 5

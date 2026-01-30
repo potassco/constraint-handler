@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% x in { 0,1, ... 9 }
 %%% y = x+10(x+10(x+...))   with K occurrences of x if maxDepth(K).
 

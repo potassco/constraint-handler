@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% m1 = { "a" : 1, "b" : 2,3 }
 %%% m2 = declare multimap
 %%% assign m2 "a" 4

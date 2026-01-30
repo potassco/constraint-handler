@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %% x = true or false
 %% y = true or false
 %% a = false or nothing

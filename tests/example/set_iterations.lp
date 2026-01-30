@@ -1,6 +1,3 @@
-#include "includeAll.lp".
-
-
 %%% declare empty
 %%% set_fold(+,empty,0) = 0
 

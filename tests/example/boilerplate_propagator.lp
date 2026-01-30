@@ -1,10 +1,10 @@
 defaultEngine(propagator).
 
 #script (python)
-import constraint_handler as ch
+import constraint_handler
 
 def main(ctrl):
-    ch.add_to_control(ctrl)
+    constraint_handler.add_to_control(ctrl)
     ctrl.ground()
     ctrl.solve()
 #end.

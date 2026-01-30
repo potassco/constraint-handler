@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 variable_declare(dummy,gx,fromFacts).
 variable_domain(gx,val(int,1..3)).
 variable_declare(dummy,gy,fromFacts).

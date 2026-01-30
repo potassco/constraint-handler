@@ -1,4 +1,3 @@
-#include "includeAll.lp".
 % Cautious output: c = True
 % Brave output: a = 1, a = 2, b = 1, b = 2, c = True
 

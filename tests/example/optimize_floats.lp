@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 capacity(6).
 item(a,4,float("5")).
 item(b,3,float("3.12")).

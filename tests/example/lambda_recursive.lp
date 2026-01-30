@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 define(dmf,myfactorial,(n,()),EXP) :-
   VAR = variable(n),
   ONE = val(int,1),

@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%%% x = 0
 %%%% if cond:
 %%%%     x = 1

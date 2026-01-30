@@ -1,6 +1,3 @@
-#include "includeAll.lp".
-
-
 %%% p_e1: e1 = guess true or false
 %%% p_e2: e2 = guess true or false
 %%% p_ec: ec = e1 & e2

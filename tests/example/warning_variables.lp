@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% doesn't raise anything
 variable_declare(d_i,itsfine,boolDomain).
 variable_declare(d_i,itsfine,boolDomain).

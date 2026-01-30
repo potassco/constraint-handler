@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 variable_declare(d_x,x,boolDomain).
 variable_define(d_y,y,operation(lnot,(variable(x),()))).
 evaluate(neq,(variable(x),(variable(y),()))).

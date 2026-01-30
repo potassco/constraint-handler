@@ -1,4 +1,3 @@
-#include "includeAll.lp".
 #show warning/1.
 #show value/3.
 #show evaluated/4.

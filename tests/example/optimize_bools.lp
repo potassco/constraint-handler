@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 capacity(6).
 item(a,4).
 item(b,3).
