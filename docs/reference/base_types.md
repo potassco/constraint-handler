@@ -153,9 +153,9 @@ value(name, val(int, -7))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Arithmetic** | | | |
-| `add` | Addition | ([int], [int]) $\to$ [int] | Adds two integers. |
+| `add` | Addition | ([list]\[[int]\]) $\to$ [int] | Adds all provided integers together. |
 | `sub` | Subtraction | ([int], [int]) $\to$ [int] | Subtracts the second integer from the first. |
-| `mult` | Multiplication | ([int], [int]) $\to$ [int] | Multiplies two integers. |
+| `mult` | Multiplication | ([list]\[[int]\]) $\to$ [int] | Multiplies all provided integers together. |
 | `div` | Integer Division | ([int], [int]) $\to$ [int] | Divides the first integer by the second. |
 | `pow` | Exponentiation | ([int], [int]) $\to$ [int] | Raises the first integer to the power of the second. |
 | `abs` | Absolute Value | ([int]) $\to$ [int] | Returns the absolute value of the integer. |
@@ -214,9 +214,9 @@ value(name, val(float, float("-0.001")))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Arithmetic** | | | |
-| `add` | Addition | ([float], [float]) $\to$ [float] | Adds two floats. |
+| `add` | Addition | ([list]\[[int] \| [float]\]) $\to$ [float] | Adds all provided numbers together. |
 | `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
-| `mult` | Multiplication | ([float], [float]) $\to$ [float] | Multiplies two floats. |
+| `mult` | Multiplication | ([list]\[[int] \| [float]\]) $\to$ [float] | Multiplies all provided numbers together. |
 | `div` | Division | ([float], [float]) $\to$ [float] | Performs integer division on two floats. |
 | `fdiv` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
 | `ceil` | Ceiling | ([float]) $\to$ [float] | Rounds the float up to the nearest integer value. |
