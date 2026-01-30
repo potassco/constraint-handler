@@ -1,25 +1,21 @@
-variable_declare(bla,numeric(int),fromFacts).
-variable_domain(numeric(int),val(int,1..3)).
-variable_declare(bla,numeric(float),fromFacts).
-variable_domain(numeric(float),val(float,float(1..3))).
-variable_declare(bla,boolean,boolDomain).
+%%% Setup
+variable_declare(check, v(int), fromFacts).
+variable_domain(v(int), val(int,1..3)).
+variable_declare(check, v(float), fromFacts).
+variable_domain(v(float), val(float,float(1..3))).
+variable_declare(check, v(str), fromFacts).
+variable_domain(v(str), val(str, "some_string")).
+variable_declare(check, v(bool), boolDomain).
+variable_declare(check, v(symbol), fromFacts).
+variable_domain(v(symbol), val(symbol, some_symbol)).
+variable_define(check, v(none), val(none,none)).
+set_declare(check, v(set)).
+1 { selected_S(S) : S=1..3 } 1.
+set_assign(check, v(set), val(int, S*V)) :- selected_S(S), V=1..3.
+multimap_declare(check, v(multimap)).
+1 { selected_M(M) : M=1..3 } 1.
+multimap_assign(check, v(multimap), val(int, K), val(int, M*K*V)) :- selected_M(M), K=1..3,V=1..3.
 
-variable_define(bla,yep(O,X1,X2),EXPR) :-
-  X1=(numeric(int;float)),
-  X2=(numeric(int;float)),
-  O=(add;mult),
-  EXPR=operation(O,(variable(X1),(variable(X2),()))).
-
-variable_define(bla,nah(O,X1,X2),EXPR) :-
-  X1=(boolean),
-  X2=(numeric(int;float);boolean),
-  O=(add;mult),
-  EXPR=operation(O,(variable(X1),(variable(X2),()))).
-
-% the tests would pass with these declarations included, but they don't belong here.
-%operator_declare(add,(float,(float,())),float).
-%operator_declare(add,(float,(int,())),float).
-%operator_declare(add,(int,(float,())),float).
-%operator_declare(mult,(float,(float,())),float).
-%operator_declare(mult,(float,(int,())),float).
-%operator_declare(mult,(int,(float,())),float).
+% Conditionals
+variable_define(types, cond(T,OP), operation(OP, (variable(v(T)),()))) :- _type(T), OP = hasValue.
+failed(hasValue) :- warning(type(failed_operation),(),(_,hasValue,_)).
