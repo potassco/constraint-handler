@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 variable_declare(example1_x,x,fromFacts).
 variable_domain(x,val(int,0..5)).
 %1 { variable_define(example1_x,x,val(float,float("0";"3";"5"))) } 1.

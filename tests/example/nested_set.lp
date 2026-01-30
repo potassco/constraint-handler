@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% v1 = 1 + 1
 %%% v2 = 2
 %%% s1 = { v1 } = { 2 }

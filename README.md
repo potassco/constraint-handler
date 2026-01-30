@@ -45,7 +45,7 @@ mkdocs serve
 To try to solve a set of facts in the (undocumented) input format call
 
 ```bash
-clingo your_facts.lp tests/example/includeAll.lp 0
+clingo your_facts.lp tests/example/boilerplate.lp 0
 ```
 
 to solve all your described constraints.

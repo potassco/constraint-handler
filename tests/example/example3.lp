@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% i=42.0                default
 %%% f=47.1                default
 %%% y= 2i+1               ground

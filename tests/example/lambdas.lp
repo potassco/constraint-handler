@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 multimap_declare(dummy,a).
 multimap_assign(dummy,a,val(symbol,kind),val(symbol,rectangle)).
 multimap_assign(dummy,a,val(symbol,width),val(int,2)).

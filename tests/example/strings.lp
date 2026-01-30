@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %% x = "foo" or "bar"
 %% y = "bla" or "bar" or "foobar"
 

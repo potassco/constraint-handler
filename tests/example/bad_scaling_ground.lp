@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% v1, v2, ... v4 in { 0, ... 9 }
 %%% y = max(v4,max(v3,max(v2,v1) ))
 

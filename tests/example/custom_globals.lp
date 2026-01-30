@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %% flooring(input: "x", output: "y"):
 %%     y := math.floor(x)
 execution_declare(dummy,flooring,STMT,("x",()),("y",())) :-

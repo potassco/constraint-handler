@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% a = {a} = { { a } } = { { { a } } } = ...
 %%% b = {b}
 %%% c = {c}

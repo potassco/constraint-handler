@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% ensure X  means X has to have value true
 
 %%% usc_a1: a1 = true

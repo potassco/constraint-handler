@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% b = true
 %%% i = 42
 %%% f = 47.1

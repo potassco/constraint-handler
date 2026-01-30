@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %#show direct_query/1.
 %#show value/3.
 variable_define(example1_pi,pi,val(float,float("3.14159"))).

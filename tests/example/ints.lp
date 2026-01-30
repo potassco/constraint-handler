@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% x = 20     two = 2     ten = 10
 %%% addtwoten = two+ten = 12     addtentwo = ten+two = 12
 %%% multtwoten = two*ten = 20     multtentwo = ten*two = 20

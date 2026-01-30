@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% raise warning(variable(undeclared),...)
 variable_define(d_0,v0,val(int,2)).
 variable_define(d_1,execution_input(stmt,v1),variable(v0)).

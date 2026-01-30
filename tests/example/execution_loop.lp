@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %% factorial(input: n, output: f):
 %%     f := 1
 %%     while n >=1:

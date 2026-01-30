@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% capitals = { "germany" : "berlin"; "france" : "paris";  "belarus" : "minsk" }
 %%% cities = { "germany" : "berlin", "potsdam", "brest";
 %%%            "france" : "paris", "brest";

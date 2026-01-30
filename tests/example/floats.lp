@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% x = 5.0     y = 2.5     z = 2.
 %%% y == x / z = true
 %%% z == x / y = true

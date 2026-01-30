@@ -1,5 +1,3 @@
-#include "includeAll.lp".
-
 %%% raises warning(variable(undeclared),(),a) etc.
 multimap_assign(d_a,a,val(str,"hello"),val(int,0)).
 set_assign(d_b,b,val(str,"good bye")).

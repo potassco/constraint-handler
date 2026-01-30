@@ -3,13 +3,36 @@
 !!! info
     Since **constraint_handler** is a library, it is intended to be used within your own projects and not as a standalone application.
 
-This guide will help you get started with using the library in your Python projects.
+This guide will help you get started with using the library in your Python projects or in your Clingo programss.
 
 Make sure the **constraint_handler** is [installed][installation] as a dependency of your project. Additionally, ensure that you have [Clingo](https://potassco.org/clingo/) installed, as it is required for using the constraint_handler library.
 
-## Adding to Clingo Control Object
+## Adding to a Clingo program
 
-The easiest way to use the library is to add it to a Python clingo control object.
+The easiest way to use the library is to load it from a script section in a clingo program.
+In the following example, this is done in the last 8 lines of the file.
+
+```prolog
+variable_define(some_name, x, val(int,42)).
+#show value/2.
+
+#script (python)
+import constraint_handler
+
+def main(ctrl):
+    constraint_handler.add_to_control(ctrl)
+    ctrl.ground()
+    ctrl.solve()
+#end.
+```
+
+    ```python
+    from clingo.control import Control
+    control = Control()
+    ```
+## Adding to Clingo Control Object in a Python program
+
+The library can also be used from Python by adding it to a clingo control object.
 
 1. Create a standard clingo control object:
 
