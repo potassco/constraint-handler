@@ -71,7 +71,7 @@ variadicOperator(OP) :- logicOperator(OP), OP != limp.
 _variadic_check(SCOPE, OP, ARGS,0,T) :-
     _expression_query(SCOPE,E),
     E=operation(OP,ARGS),
-    _type_listArg(SCOPE, ARGS, I, ARG),
+    _type_listArg(SCOPE, ARGS, 0, ARG),
     type_expression(SCOPE,ARG,T),
     variadicOperator(OP).
 
