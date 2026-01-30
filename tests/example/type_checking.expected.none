@@ -1,0 +1,6 @@
+warning(type(failed_operation),(),((),add,(variable(numeric(float)),(variable(numeric(int)),()))))
+warning(type(failed_operation),(),((),add,(variable(numeric(int)),(variable(numeric(float)),()))))
+warning(type(failed_operation),(),((),add,(variable(numeric(float)),(variable(numeric(float)),()))))
+warning(type(failed_operation),(),((),mult,(variable(numeric(float)),(variable(numeric(int)),()))))
+warning(type(failed_operation),(),((),mult,(variable(numeric(int)),(variable(numeric(float)),()))))
+warning(type(failed_operation),(),((),mult,(variable(numeric(float)),(variable(numeric(float)),()))))

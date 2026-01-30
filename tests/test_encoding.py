@@ -58,6 +58,7 @@ base_tests = [
     "set_manipulations",
     "set_selfref",
     "strings",
+    # "type_checking",
     "variables",
     "warning_type",
     "warning_variables",

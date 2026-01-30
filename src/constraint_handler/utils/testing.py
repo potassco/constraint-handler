@@ -26,10 +26,15 @@ def build_expectations(name):
     contains = lambda a: clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
     # opt_contains = lambda a: clintest.assertion.Implies(clintest.assertion.Optimal(), contains(a)) # TODO: this should work
     opt_contains = contains
+    absent = lambda a: clintest.assertion.Not(
+        clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
+    )
     expected_all = atoms_from_file(name + ".expected.all")
     test_all = clintest.test.And(*(clintest.test.Assert(All(), opt_contains(a)) for a in expected_all))
     expected_any = atoms_from_file(name + ".expected.any")
     test_any = clintest.test.And(*(clintest.test.Assert(Any(), opt_contains(a)) for a in expected_any))
+    expected_none = atoms_from_file(name + ".expected.none")
+    test_none = clintest.test.And(*(clintest.test.Assert(All(), absent(a)) for a in expected_none))
     expected_first = atoms_from_file(name + ".expected.first")
     test_first = clintest.test.And(*(clintest.test.Assert(First(), contains(a)) for a in expected_first))
     test_exists = (
@@ -37,7 +42,7 @@ def build_expectations(name):
         if (expected_all or expected_first) and not expected_any
         else clintest.test.True_()
     )
-    return clintest.test.And(test_exists, test_all, test_any, test_first)
+    return clintest.test.And(test_exists, test_all, test_any, test_none, test_first)
 
 
 class TheoryContains(clintest.assertion.Assertion):
@@ -59,7 +64,7 @@ class Solver(clintest.solver.Solver):
         arguments: Optional[Sequence[str]] = None,
         program: Optional[str] = None,
         files: Optional[Sequence[str]] = None,
-        propagator_check_only: bool = False
+        propagator_check_only: bool = False,
     ) -> None:
         self.__arguments = [] if arguments is None else arguments
         self.__program = "" if program is None else program
@@ -69,7 +74,7 @@ class Solver(clintest.solver.Solver):
     def solve(self, test: clintest.test.Test) -> None:
         ctl = clingo.Control(self.__arguments)
 
-        ch.add_to_control(ctl,propagator_check_only=self.__propagator_check_only)
+        ch.add_to_control(ctl, propagator_check_only=self.__propagator_check_only)
         ctl.add(self.__program)
 
         for file in self.__files:
