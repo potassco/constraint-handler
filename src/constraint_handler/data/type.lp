@@ -8,6 +8,7 @@ type_variable((),X,bool) :- variable_declare(_,X,boolDomain).
 type_variable((),X,T) :- variable_declare(_,X,fromFacts), variable_domain(X,D), type_expression((),D,T).
 type_variable((),X,T) :- variable_declare(_,X,fromList(L)), D=@pythonListElements(L), type_expression((),D,T).
 type_variable((), X, set) :- set_declare(_, X).
+type_variable((), X, multimap) :- multimap_declare(_, X).
 %%%%%%%%%%%%%%%%% type_expression
 
 _expression_query((),E) :- type_query(E).
@@ -67,6 +68,11 @@ operator_declare(length,(T,()),int) :- T = (str;set).
 operator_declare(OP,(T,(T,())),T) :- setOperator(OP), T = (set), OP != subset.
 operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
 operator_declare(OP,(T,(set,())),bool) :- _type(T), membershipOperator(OP).
+
+% Multimap
+operator_declare(OP,(T,()),int) :- T = (multimap), OP = (countKeys;countEntries;sumIntEntries).
+operator_declare(OP,(T1,()),T2) :- T1 = (multimap),_type(T2), T2 != (multimap), OP = (maxEntries;minEntries).
+operator_declare(OP,(T1,(T2,())),bool) :- _type(T1), T2 = (multimap), membershipOperator(OP), OP != notin.
 
 _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 
