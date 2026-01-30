@@ -51,4 +51,9 @@ _variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), _variable_exists(SC
 _variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), _variable_found(OUTER,X).
 _warning(variable(undeclared),(),(SCOPE,X)) :- _variable_query(SCOPE,X), not _variable_found(SCOPE,X).
 
+_variable_confusingNameName(variable;none;bool;int;float;str;symbol;set;multimap).
+
+warning(variable(confusingName),(),(SCOPE,X)) :- _variable_exists(SCOPE,X), _variable_confusingNameName(X).
+warning(variable(confusingName),(),(SCOPE,X)) :- _variable_exists(SCOPE,X), X = variable(_).
+
 % TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
