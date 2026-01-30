@@ -38,7 +38,7 @@ _numeric_type(int;float).
 
 % Operators
 numericUnFOperator(sqrt;cos;sin;tan;acos;asin;atan).
-numericUnOperator(abs;minus;floor).
+numericUnOperator(abs;minus).
 numericBinOperator(add;sub;mult;div;fdiv;pow;max).
 comparisonOperator(leq;lt;geq;gt).
 equalityOperator(eq;neq).
@@ -54,6 +54,7 @@ operator_declare(OP,(T1,(T2,())),bool) :- comparisonOperator(OP), _numeric_type(
 operator_declare(OP,(T,()),float) :- numericUnFOperator(OP), _numeric_type(T).
 operator_declare(OP,(T,()),T) :- numericUnOperator(OP), _numeric_type(T).
 operator_declare(OP,(T,(T,())),float) :- _numeric_type(T), OP = fdiv.
+operator_declare(OP,(T,(T,())),int) :- _numeric_type(T), OP = floor.
 operator_declare(OP,(T,(T,())),T)    :- numericBinOperator(OP), _numeric_type(T), OP != fdiv.
 operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
 % Bool
