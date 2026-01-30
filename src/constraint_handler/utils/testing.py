@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 
 import clingo
 import clintest.assertion
@@ -124,7 +124,7 @@ class PropPrint(clingo.propagator.Propagator):
             _model.extend([fact])
 
 
-def incorrect_arity_error(operator, expected_arity, given_arity):
+def incorrect_arity_error(operator: Any, expected_arity: Union[int, str], given_arity: int) -> TypeError:
     """
     Create a TypeError for incorrect operator arity.
 
