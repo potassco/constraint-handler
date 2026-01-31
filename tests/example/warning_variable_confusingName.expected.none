@@ -1,0 +1,7 @@
+warning(variable(confusingName),(),(((),"float"),type))
+warning(variable(confusingName),(),(((),x),type))
+warning(variable(confusingName),(),(((),x),operator))
+warning(variable(confusingName),(),(((),x),keyword))
+warning(variable(confusingName),(),(((),x(16)),number))
+warning(variable(confusingName),(),(((),x(set)),type))
+warning(variable(confusingName),(),(((),x(variable)),keyword))

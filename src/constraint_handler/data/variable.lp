@@ -57,7 +57,7 @@ _variable_confusingName(K,keyword) :- K=(boolDomain;fromFacts;fromList). % domai
 _variable_confusingName(T,type) :- T=(none;bool;int;float;str;symbol;set;multimap).
 _variable_confusingName(O,operator) :- operator_declare(O,INS,OUT).
 
-warning(variable(confusingName),(),((SCOPE,X),REASON)) :- _variable_exists(SCOPE,X), _variable_confusingName(X,REASON).
-warning(variable(confusingName),(),((SCOPE,X),keyword)) :- _variable_exists(SCOPE,X), X = variable(_).
+warning(variable(confusingName),(),((SCOPE,X),REASON)) :- _variable_exists(SCOPE,X), _variable_confusingName(BAD,REASON), (function,BAD,N,ARGS) = @pythonReify(X).
+warning(variable(confusingName),(),((SCOPE,X),number)) :- _variable_exists(SCOPE,X), (number,_,_,_) = @pythonReify(X).
 
 % TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
