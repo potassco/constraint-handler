@@ -62,6 +62,7 @@ base_tests = [
     "variables",
     "warning_type",
     "warning_variables",
+    "warning_variable_confusingName",
     "warning_variable_undeclared",
     "warning_variable_undeclared_statement",
 ]
@@ -115,7 +116,6 @@ def test_engine_propagator(name, check_mode):
         "optimize_ints",
         "set_iterations",
         "set_selfref",
-        "warning_type",
         "warning_variables",
         "warning_variable_undeclared",
         "warning_variable_undeclared_statement",
