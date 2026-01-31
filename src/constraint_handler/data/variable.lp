@@ -51,9 +51,13 @@ _variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), _variable_exists(SC
 _variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), _variable_found(OUTER,X).
 _warning(variable(undeclared),(),(SCOPE,X)) :- _variable_query(SCOPE,X), not _variable_found(SCOPE,X).
 
-_variable_confusingNameName(variable;none;bool;int;float;str;symbol;set;multimap).
+_variable_confusingName(K,keyword) :- K=(assert;assign;if;noop;statement_python;seq2;while). % statement
+_variable_confusingName(K,keyword) :- K=(lambda;operation;python;val;variable). % expression
+_variable_confusingName(K,keyword) :- K=(boolDomain;fromFacts;fromList). % domain
+_variable_confusingName(T,type) :- T=(none;bool;int;float;str;symbol;set;multimap).
+_variable_confusingName(O,operator) :- operator_declare(O,INS,OUT).
 
-warning(variable(confusingName),(),(SCOPE,X)) :- _variable_exists(SCOPE,X), _variable_confusingNameName(X).
-warning(variable(confusingName),(),(SCOPE,X)) :- _variable_exists(SCOPE,X), X = variable(_).
+warning(variable(confusingName),(),((SCOPE,X),REASON)) :- _variable_exists(SCOPE,X), _variable_confusingName(X,REASON).
+warning(variable(confusingName),(),((SCOPE,X),keyword)) :- _variable_exists(SCOPE,X), X = variable(_).
 
 % TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)

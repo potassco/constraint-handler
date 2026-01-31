@@ -68,6 +68,7 @@ base_tests = [
     "warning_python",
     "warning_type",
     "warning_variables",
+    "warning_variable_confusingName",
     "warning_variable_undeclared",
     "warning_variable_undeclared_statement",
 ]
