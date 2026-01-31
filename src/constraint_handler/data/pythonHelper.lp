@@ -150,4 +150,14 @@ def pythonInit(clX):
     print("init",pX)
     return []
 
+def pythonReify(term):
+    if term.type == clingo.SymbolType.Function:
+        symb = clingo.symbol.Function(term.name)
+        n = len(term.arguments)
+        return myClorm.pytocl((clingo.symbol.Function("function"),symb,n,term.arguments))
+    elif term.type == clingo.SymbolType.Number:
+        return myClorm.pytocl((clingo.symbol.Function("number"),term,0,()))
+    else:
+        return myClorm.pytocl((clingo.symbol.Function("string"),term,0,()))
+
 #end.
