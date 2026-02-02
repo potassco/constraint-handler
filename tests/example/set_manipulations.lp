@@ -28,6 +28,8 @@
 %%% usubx = u subset x = false
 %%% vsubx = v subset x = false
 
+%%% vp = { 5, 6, 7 } cap { 7, 8, 9 } = { 7 }
+
 %%% TODO
 %%% y = add f v = { 47.1 true }
 %%% z = rem true  w = { 1, 5, false }
@@ -136,3 +138,7 @@ variable_define(test_subset, usubw, operation(subset,(variable(u),(variable(w),(
 variable_define(test_subset, vsubw, operation(subset,(variable(v),(variable(w),())))).
 variable_define(test_subset, usubx, operation(subset,(variable(u),(variable(x),())))).
 variable_define(test_subset, vsubx, operation(subset,(variable(v),(variable(x),())))).
+
+variable_define(assign_vp, vp, operation(inter,
+                                  (operation(makeSet,(val(int,5),(val(int,6),(val(int,7),())))),
+                                  (operation(makeSet,(val(int,7),(val(int,8),(val(int,9),())))),())))).
