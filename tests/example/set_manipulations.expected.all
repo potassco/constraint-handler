@@ -52,3 +52,5 @@ value(usubw,val(bool,false))
 value(vsubw,val(bool,true))
 value(usubx,val(bool,false))
 value(vsubx,val(bool,false))
+
+set_value(vp,val(int,7))
