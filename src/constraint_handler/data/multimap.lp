@@ -4,14 +4,14 @@
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multimap_declare(CNAME,X).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multimap_assign(CNAME,X,EKEY,EVAL).
 _multimap_declare(CNAME,X) :- engine(CNAME,compile), multimap_declare(CNAME,X).
-_multimap_assign(CNAME,X,EK,EV) :- engine(CNAME,compile), multimap_assign(CNAME,X,EK,EV).
+_multimap_assign(CNAME,variable(X),EK,EV) :- engine(CNAME,compile), multimap_assign(CNAME,X,EK,EV).
 
-direct_query(EK;EV) :- _multimap_assign(CNAME,X,EK,EV).
+direct_query(EK;EV) :- _multimap_assign(CNAME,EX,EK,EV).
 
 representation(multimap,intensional).
 
-_se_value(EX,val(multimap,X)) :- _multimap_declare(CNAME,X), EX=variable(X), ER = ref(EX).
-_multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,X,EK,EV), EX = variable(X), _se_value(EX,val(multimap,ER)).
+_se_value(EX,val(multimap,EX)) :- _multimap_declare(CNAME,X), EX=variable(X), ER = ref(EX).
+_multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,EX,EK,EV), _se_value(EX,val(multimap,ER)).
 
 %%%%%%%%%%%%%%%%% pairstuples
 direct_query(E1;E2) :- direct_query(E), E=(E1,E2).
@@ -45,9 +45,9 @@ multimap_value(X,KEY,VAL) :- _se_value(E,val(multimap,EM)), _multimap_entry(EM,K
 %%%%%%%%%%%%%%%%%% find
 
 %%% TODO: this is fragile, maybe buggy.
-computed(O,ARGS,val(set,ref(find(ARGS)))) :- compute(O,ARGS), O=find, ARGS=(K,(val(multimap,EM),())).
+computed(O,ARGS,ref(set,find(ARGS))) :- compute(O,ARGS), O=find, ARGS=(K,(val(multimap,EM),())).
 
-_set_contains(ER,V) :- compute(O,ARGS), O=find, computed(O,ARGS,val(set,ER)),
+_set_contains(ER,V) :- compute(O,ARGS), O=find, computed(O,ARGS,ref(set,ER)),
     ARGS=(K,(val(multimap,EM),())),
     _multimap_entry(EM,K,V).
 

@@ -5,7 +5,7 @@
 
 %%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
 _se_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
-_se_assign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,compile).
+_se_assign(CNAME,variable(X),E) :- assign(CNAME,X,E), engine(CNAME,compile).
 _se_evaluate(_se_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(compile).
 
 evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(E,V), E=operation(OP,ARGS).
@@ -13,7 +13,7 @@ evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(E,V), E=operation
 
 direct_query(E)  :- _se_ensure(NAME,E).
 direct_query(E)  :- _se_assign(NAME,X,E).
-direct_query(EX) :- _se_assign(NAME,X,E), EX=variable(X).
+direct_query(X)  :- _se_assign(NAME,X,E).
 direct_query(E)  :- _se_evaluate(CNAME,OP,ARGS), E=operation(OP,ARGS).
 direct_query(SE) :- direct_query(E), E=operation(OP,ES), not _direct_lazy(OP), SE=@pythonListElements(ES).
 
@@ -22,7 +22,7 @@ _se_value(E,E) :- direct_query(E), E=val(T,V).
 
 _se_value(E,val(function,E)) :- direct_query(E), E=lambda(VARS,ERES).
 
-_se_value(E,V) :- direct_query(E), E=variable(X), _se_assign(NAME,X,E2), _se_value(E2,V), usc_active(NAME).
+_se_value(E,V) :- direct_query(E), E=variable(X), _se_assign(NAME,E,E2), _se_value(E2,V), usc_active(NAME).
 
 
 
@@ -85,6 +85,7 @@ _direct_imploded(E,E) :- _direct_implode(E), E=val(T,V), representation(T,extens
 
 _direct_imploded(E,V) :- _direct_implode(E), E=variable(X), _se_value(E,V).
 
+engine(_internal,compile).
 %:- engine(NAME,E), not ensure(NAME,_), not assign(NAME,_,_).
 %:- not engine(NAME,_), ensure(NAME,E).
 #external usc_relax(NAME) : engine(NAME,E).
