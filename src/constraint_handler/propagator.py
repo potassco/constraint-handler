@@ -63,7 +63,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.errors: list[Exception] = []
 
         self.reasoning_mode: ReasoningMode = ReasoningMode.STANDARD
-        self.reasoning_mode_stage_lits: dict[int, int] = {1: -1, 2: -1}
+        self.reasoning_mode_stage_lits: dict[Literal[1, 2, 3], int] = {1: -1, 2: -1, 3: -1}
         self.reasoning_stage: Literal[0, 1, 2] = 0
         # this is used for cautious reasoning
         # for the first model, the set is assigned the first model
@@ -134,6 +134,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
                 elif a.symbol.arguments[0].number == 2:
                     self.reasoning_mode_stage_lits[2] = ctl.solver_literal(a.literal)
+
+                elif a.symbol.arguments[0].number == 3:
+                    self.reasoning_mode_stage_lits[3] = ctl.solver_literal(a.literal)
+
+                else:
+                    assert False, f"Unknown reasoning stage atom: {a.symbol}"
+
             # self.reasoning_mode_stage_lits[1] = ctl.add_literal(freeze=True)
             # self.reasoning_mode_stage_lits[2] = ctl.add_literal(freeze=True)
             # ctl.add_watch(self.reasoning_mode_stage_lits[1])
@@ -144,6 +151,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # ctl.add_clause([self.reasoning_mode_stage_lits[1], self.reasoning_mode_stage_lits[2]])
 
         for var in self.symbol2var.values():
+            if isinstance(var, EnsureVariable):
+                continue
             lit = ctl.add_literal(freeze=True)
             self.variable_lits[var] = lit
 
@@ -260,6 +269,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         assert ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]), "stage 2 should be true!"
 
+        print("Values of changes in stage 2:")
+        for v, i in self.variable_lits.items():
+            print(f"lit {i} for var {v} is {ctl.assignment.value(i)}")
+            print(f"with reasons: {[(l, ctl.assignment.value(l)) for l in list(self.get_reasons(v))]}")
+
         if not self.previously_stage_2:
             # First time in stage 2
             self.previously_stage_2 = True
@@ -268,7 +282,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.nogood_queue.extend(self.get_reasoning_mode_nogoods(self.python_model))
 
             # add nogoods to ensure at least 1 var changes
-            self.nogood_queue.append([-lit for lit in self.variable_lits.values()])
+            self.nogood_queue.append(
+                [-lit for lit in self.variable_lits.values()] + [self.reasoning_mode_stage_lits[2]]
+            )
 
             return self.add_nogoods_from_queue(ctl)
 
@@ -281,7 +297,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             return self.add_nogoods_from_queue(ctl)
 
-        assert False, "should never get here?"
+        assert ctl.assignment.is_true(self.reasoning_mode_stage_lits[3]), "stage 3 should be true!"
 
     def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom]) -> list[Iterable[int]]:
         nogoods: list[Iterable[int]] = []
@@ -293,6 +309,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             var: VariableType = self.symbol2var[result_var.name]
             ng = self.get_reasons(var).union({self.variable_lits[var]})
+            ng.add(self.reasoning_mode_stage_lits[2])
             nogoods.append(ng)
 
         return nogoods
