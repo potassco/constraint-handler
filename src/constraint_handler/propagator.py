@@ -279,7 +279,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.previously_stage_2 = True
 
             # add nogoods for the stuff in the current model
-            self.nogood_queue.extend(self.get_reasoning_mode_nogoods(self.python_model))
+            self.nogood_queue.extend(self.get_reasoning_mode_nogoods(self.python_model, first_call=True))
 
             # add nogoods to ensure at least 1 var changes
             self.nogood_queue.append(
@@ -293,13 +293,33 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             assert old_model is not None
 
             # add nogoods for the new stuff
-            self.nogood_queue.extend(self.get_reasoning_mode_nogoods(self.python_model.difference(old_model)))
+            if self.reasoning_mode == ReasoningMode.BRAVE:
+                variables_considered = self.python_model.difference(old_model)
+            elif self.reasoning_mode == ReasoningMode.CAUTIOUS:
+                variables_considered = old_model.difference(self.python_model)
+
+            self.nogood_queue.extend(self.get_reasoning_mode_nogoods(variables_considered, first_call=False))
 
             return self.add_nogoods_from_queue(ctl)
 
         assert ctl.assignment.is_true(self.reasoning_mode_stage_lits[3]), "stage 3 should be true!"
 
-    def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom]) -> list[Iterable[int]]:
+        return False
+
+    def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom], first_call) -> list[Iterable[int]]:
+        """
+        Add nogoods for brave/cautious reasoning mode based on the variables in the model.
+        For brave reasoning, we add nogoods to ensure that the next models found contain at least 1 variable with a different value.
+        This way we expand the amount of values in the brave model after every model found.
+
+        For Cautious reasoning, on the first call, we add nogoods to ensure that the next models found contain at least 1 variable with a different value.
+        Similar to brave reasoning.
+        On Subsequent calls, we expect that the variable in the argument is the difference between the old and new model.
+        Specifically, the variables which CHANGED.
+        For those variables, we add a nogood to disable the change for that variable.
+        """
+        assert self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS)
+
         nogoods: list[Iterable[int]] = []
         for result_var in variables:
             if isinstance(result_var, atom.Evaluated):
@@ -307,10 +327,21 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             assert type(result_var) in (atom.Value, atom.Set_value, atom.Multimap_value)
             assert isinstance(result_var.name, clingo.Symbol)
 
-            var: VariableType = self.symbol2var[result_var.name]
-            ng = self.get_reasons(var).union({self.variable_lits[var]})
-            ng.add(self.reasoning_mode_stage_lits[2])
-            nogoods.append(ng)
+            if self.reasoning_mode == ReasoningMode.BRAVE or first_call:
+                # The first time we add nogoods, it is the same for brave and cautious
+                var: VariableType = self.symbol2var[result_var.name]
+                ng = self.get_reasons(var).union({self.variable_lits[var]})
+                ng.add(self.reasoning_mode_stage_lits[2])
+                nogoods.append(ng)
+
+            elif self.reasoning_mode == ReasoningMode.CAUTIOUS and not first_call:
+                # Second time for cautious we only add nogoods that disable the changes for the variable
+                var: VariableType = self.symbol2var[result_var.name]
+                ng = {self.variable_lits[var]}
+                ng.add(self.reasoning_mode_stage_lits[2])
+                nogoods.append(ng)
+            else:
+                assert False, "Should not reach here"
 
         return nogoods
 
