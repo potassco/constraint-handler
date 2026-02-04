@@ -219,6 +219,7 @@ value(name, val(float, float("-0.001")))
 | `mult` | Multiplication | ([float], [float]) $\to$ [float] | Multiplies two floats. |
 | `div` | Division | ([float], [float]) $\to$ [float] | Performs integer division on two floats. |
 | `fdiv` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
+| `ceil` | Ceiling | ([float]) $\to$ [float] | Rounds the float up to the nearest integer value. |
 | `floor` | Floor | ([float]) $\to$ [float] | Rounds the float down to the nearest integer value. |
 | `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
 | `abs` | Absolute Value | ([float]) $\to$ [float] | Returns the absolute value. |
