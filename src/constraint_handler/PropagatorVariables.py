@@ -132,6 +132,16 @@ class VariableValue:
             self.assigned = None
             self.errors = []
 
+    @property
+    def literals(self) -> set[int]:
+        if self.value != ValueStatus.NOT_SET:
+            if self.assigned:
+                return {self.literal}
+            else:
+                return {-self.literal}
+
+        return set()
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, VariableValue):
             return False
@@ -216,7 +226,7 @@ class EnsureVariable:
         changed is True if the value has changed.
         conflict is True if there is a conflict.
         """
-        if ctl.assignment.is_false(self.expression.literal):
+        if self.expression.assigned is not None and not self.expression.assigned:
             # Ensure is false, so no conflict
             return EvaluationResult.NOT_CHANGED
 
@@ -252,7 +262,7 @@ class EnsureVariable:
 
     @property
     def literals(self) -> set[int]:
-        return {self.expression.literal}
+        return self.expression.literals
 
     @property
     def decision_level(self) -> int:
@@ -365,11 +375,7 @@ class Variable:
     def literals(self) -> set[int]:
         lits = set()
         for value in self.expressions:
-            if value.value != ValueStatus.NOT_SET:
-                if value.assigned:
-                    lits.add(value.literal)
-                else:
-                    lits.add(-value.literal)
+            lits.update(value.literals)
         return lits
 
     def reset(self, dl: int) -> None:
@@ -391,7 +397,7 @@ class Variable:
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Variable):
-            assert False, "Variable can only be compared to another Variable"
+            return False
         return self.var == other.var and self.expressions == other.expressions
 
     def __hash__(self) -> int:
@@ -424,11 +430,7 @@ class SetVariableValue:
     def literals(self) -> set[int]:
         lits = set()
         for value in self.values:
-            if value.value != ValueStatus.NOT_SET:
-                if value.assigned:
-                    lits.add(value.literal)
-                else:
-                    lits.add(-value.literal)
+            lits.update(value.literals)
         return lits
 
     @property
@@ -517,7 +519,11 @@ class SetVariable:
     @property
     def literals(self) -> set[int]:
         lits = self.expressions.literals
-        lits.add(self.literal)
+        if self.assigned is not None:
+            if self.assigned:
+                lits.add(self.literal)
+            else:
+                lits.add(-self.literal)
         return lits
 
     def get_value(self) -> ValueStatus | frozenset[Any]:
@@ -585,7 +591,7 @@ class SetVariable:
 
     def __eq__(self, value) -> bool:
         if not isinstance(value, SetVariable):
-            assert False, "SetVariable can only be compared to another SetVariable"
+            return False
         return self.var == value.var and self.expressions == value.expressions
 
     def __hash__(self) -> int:
@@ -641,9 +647,15 @@ class DictVariable:
     @property
     def literals(self) -> set[int]:
         lits = set()
-        for value in self.expressions.values():
+        for key, value in self.expressions.items():
             lits.update(value.literals)
-        lits.add(self.literal)
+            lits.update(key.literals)
+
+        if self.assigned is not None:
+            if self.assigned:
+                lits.add(self.literal)
+            else:
+                lits.add(-self.literal)
 
         return lits
 
@@ -740,7 +752,7 @@ class DictVariable:
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, DictVariable):
-            assert False, "DictVariable can only be compared to another DictVariable"
+            return False
         return self.var == other.var and self.expressions == other.expressions
 
     def __hash__(self) -> int:
@@ -767,11 +779,7 @@ class OptimizationSum:
     def literals(self) -> set[int]:
         lits = set()
         for var, expr in self.expressions:
-            if expr.value != ValueStatus.NOT_SET:
-                if expr.assigned:
-                    lits.add(expr.literal)
-                else:
-                    lits.add(-expr.literal)
+            lits.update(expr.literals)
         return lits
 
     def get_value(self) -> Any:
@@ -852,7 +860,8 @@ class Execution:
         # this is for the execution run atom
         # assuming the declaration atom is always a fact?
         # otherwise, we might need a literal for that as well
-        self.literal: int = 0
+        # if there is no execution_run atom, this is always false, which means the execution is never run
+        self.literal: int = -1
         self.assigned: bool | None = None
 
         self.decision_level: int = sys.maxsize
@@ -875,7 +884,18 @@ class Execution:
 
     @property
     def literals(self) -> set[int]:
-        return {self.literal}
+        """
+        Return the literal(s) associated with this execution.
+        If the execution is run return the positive literal.
+        If the execution is not run return the negative literal.
+        If the execution is unassigned return an empty set.
+        """
+        if self.assigned:
+            return {self.literal}
+        elif self.assigned is False:
+            return {-self.literal}
+        else:
+            return set()
 
     def convert_vars(self, vars: list[clingo.Symbol], input=True) -> list[clingo.Symbol]:
         """
@@ -979,6 +999,16 @@ class Execution:
 
     def __repr__(self) -> str:
         return f"Execution({self.name}, {self.func_name}, {self.stmt})"
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Execution):
+            return False
+        return (
+            self.func_name == other.func_name
+            and self.stmt == other.stmt
+            and self.in_vars == other.in_vars
+            and self.out_vars == other.out_vars
+        )
 
 
 def make_dict_from_variables(
