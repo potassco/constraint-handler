@@ -122,6 +122,8 @@ class Evaluator:
                 return math.atan(val)
             case UnaryOperator.minus:
                 return -val
+            case UnaryOperator.ceil:
+                return math.ceil(val)
             case UnaryOperator.floor:
                 return math.floor(val)
             case _:

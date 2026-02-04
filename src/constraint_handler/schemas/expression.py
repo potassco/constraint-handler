@@ -12,7 +12,9 @@ import constraint_handler.set as myset
 from constraint_handler.utils.common import PPEnum
 
 BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
-UnaryOperator = PPEnum("UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor"])
+UnaryOperator = PPEnum(
+    "UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor", "ceil"]
+)
 LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 BinaryOperator = PPEnum(
     "BinaryOperator",
