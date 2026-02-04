@@ -483,12 +483,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         return eval_result == EvaluationResult.CHANGED
 
     def get_reasons(self, var: VariableType) -> set[int]:
-        # TODO: optimize this in the future?
-        # This might get the reasons from the same variable multiple times
-        # maybe some caching would help here, but we have to reset the caching every time...
-        # might not be worth it
         reasons = var.literals
         for dvar in var.vars():
+            if dvar.name == EXECUTION_OUTPUT:
+                dvar = dvar.arguments[0]
             reasons = reasons.union(self.get_reasons(self.symbol2var[dvar]))
         myprint(f"Reasons for variable {var}: {reasons}")
         return reasons
