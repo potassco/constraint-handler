@@ -150,11 +150,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # ctl.add_clause([-self.reasoning_mode_stage_lits[1], -self.reasoning_mode_stage_lits[2]])
             # ctl.add_clause([self.reasoning_mode_stage_lits[1], self.reasoning_mode_stage_lits[2]])
 
-        for var in self.symbol2var.values():
-            if isinstance(var, EnsureVariable):
-                continue
-            lit = ctl.add_literal(freeze=True)
-            self.variable_lits[var] = lit
+            for var in self.symbol2var.values():
+                if isinstance(var, EnsureVariable):
+                    continue
+                lit = ctl.add_literal(freeze=True)
+                self.variable_lits[var] = lit
 
     # def decide(self, thread_id: int, assignment: clingo.Assignment, fallback: int) -> int:
     #     """
