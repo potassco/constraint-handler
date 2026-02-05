@@ -1,0 +1,2 @@
+multimap_value(taken,val(symbol,a),val(int,2))
+multimap_value(taken,val(symbol,c),val(int,3))

@@ -113,11 +113,18 @@ class Optimize_maximizeSum(NamedTuple):
     id: expression.constant
 
 
+class Optimize_maximizeSum_priority(NamedTuple):
+    label: expression.constant
+    value: expression.Expr
+    id: expression.constant
+    priority: expression.Expr
+
+
 class Optimize_precision(NamedTuple):
     value: expression.Expr
 
 
-type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
+type OptimizeAtom = Optimize_maximizeSum | Optimize_maximizeSum_priority | Optimize_precision
 
 
 class Preference_maximizeScore(NamedTuple):
@@ -225,6 +232,10 @@ class Propagator_multimap_assign(Multimap_assign):
 
 
 class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
+    pass
+
+
+class Propagator_optimize_maximizeSum_priority(Optimize_maximizeSum_priority):
     pass
 
 

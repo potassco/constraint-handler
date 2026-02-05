@@ -6,10 +6,11 @@ This page documents the native optimization capabilities of the constraint handl
 
 **[Declaration]**{.badge .declaration }
 
-The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/3` predicate.
+The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/3` or `optimize_maximizeSum/4` predicate.
 
 ```prolog
 optimize_maximizeSum(Identifier, Expression, Key)
+optimize_maximizeSum(Identifier, Expression, Key, Priority)
 ```
 
 | Name | Description |
@@ -17,6 +18,7 @@ optimize_maximizeSum(Identifier, Expression, Key)
 | `Identifier` | A unique identifier for this specific expression. |
 | `Expression` | The expression whose value is used in the maximization. |
 | `Key` | The key under which the value of the expression is used in the maximization. |
+| `Priority` | (Optional) The priority level for this optimization criterion. Higher priorities are optimized first. Defaults to `1` if not specified. |
 
 
 ### Single Value
@@ -98,6 +100,35 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     multimap_value(taken,symbol,a,int,2)
     multimap_value(taken,symbol,b,int,4)
     ```
+
+!!! Example "Example 4: Optimization with Priorities"
+    Priorities allow you to specify multiple optimization criteria where higher-priority goals are optimized first. Consider a program with two criteria: maximizing value (priority 2) and minimizing weight (priority 1).
+
+    ```prolog
+    item(a,2,5).
+    item(b,4,3).
+    item(c,3,4).
+    
+    multimap_declare(dummy,taken).
+    { multimap_assign(dummy,taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
+    
+    % Maximize value with priority 2 (higher priority)
+    optimize_maximizeSum(opt_value,EXPR,X,2) :- item(X,W,V),
+        ITEM = val(symbol,X),
+        COND = operation(isin,(ITEM,(variable(taken),()))),
+        VALU = val(int,V),
+        EXPR = operation(if,(COND,(VALU,()))).
+    
+    % Minimize weight with priority 1 (lower priority)
+    optimize_maximizeSum(opt_weight,EXPR,X,1) :- item(X,W,V),
+        ITEM = val(symbol,X),
+        COND = operation(isin,(ITEM,(variable(taken),()))),
+        WGHT = val(int,-W),
+        EXPR = operation(if,(COND,(WGHT,()))).
+    ```
+
+    The solver will first maximize value (priority 2), and among solutions with equal value, it will minimize weight (priority 1).
+
 ---
 
 ## Precision
