@@ -2,12 +2,13 @@
 Test cases for operator argument validation.
 """
 
+import constraint_handler.evaluator as evltr
 
 def test_set_diff_arg_validation():
     """Test that set diff operator only accepts exactly 2 arguments."""
     from constraint_handler.set import Evaluator, Operator
 
-    evaluator = Evaluator()
+    evaluator = Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
     result = evaluator.operator(Operator.diff, [])
@@ -43,7 +44,7 @@ def test_set_isin_arg_validation():
     """Test that set isin operator only accepts exactly 2 arguments."""
     from constraint_handler.set import Evaluator, Operator
 
-    evaluator = Evaluator()
+    evaluator = Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
     result = evaluator.operator(Operator.isin, [])
@@ -79,7 +80,7 @@ def test_set_notin_arg_validation():
     """Test that set notin operator only accepts exactly 2 arguments."""
     from constraint_handler.set import Evaluator, Operator
 
-    evaluator = Evaluator()
+    evaluator = Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
     result = evaluator.operator(Operator.notin, [])
@@ -115,7 +116,7 @@ def test_set_inter_arg_validation():
     """Test that set inter operator requires at least 1 argument."""
     from constraint_handler.set import Evaluator, Operator
 
-    evaluator = Evaluator()
+    evaluator = Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
     result = evaluator.operator(Operator.inter, [])
@@ -147,7 +148,7 @@ def test_set_subset_arg_validation():
     """Test that set subset operator only accepts exactly 2 arguments."""
     from constraint_handler.set import Evaluator, Operator
 
-    evaluator = Evaluator()
+    evaluator = Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
     result = evaluator.operator(Operator.subset, [])
@@ -184,7 +185,7 @@ def test_set_fold_arg_validation():
     from constraint_handler.schemas.expression import BinaryOperator
     from constraint_handler.set import Evaluator, Operator
 
-    evaluator = Evaluator()
+    evaluator = Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
     result = evaluator.operator(Operator.set_fold, [])

@@ -11,4 +11,4 @@ stageCompute(OP,ARGS,L) :- compute(OP,ARGS), OP=(eq;neq), ARGS=(val(T1,V1),(val(
 
 _expression_eval_exec(OP,ARGS,RES) :- stageCompute(OP,ARGS,L), RES = @pythonEvalExpr(operation(OP,ARGS),(),ID), _main_solverIdentifier(ID).
 computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
-warning((OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(MSG)).
+_warning(expression(pythonError),(),(OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(MSG)).

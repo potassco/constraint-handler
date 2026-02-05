@@ -1,8 +1,8 @@
-import constraint_handler.evaluator as full_evaluator
-from constraint_handler.utils import testing
-from constraint_handler.utils.common import PPEnum
+import constraint_handler.schemas.warning as warning
+import constraint_handler.utils.testing as testing
+import constraint_handler.utils.common as common
 
-Operator = PPEnum("Operator", ["makeSet", "isin", "notin", "union", "inter", "diff", "subset", "set_fold"])
+Operator = common.PPEnum("Operator", ["makeSet", "isin", "notin", "union", "inter", "diff", "subset", "set_fold"])
 
 
 def fold(f, s, start):
@@ -14,7 +14,8 @@ def fold(f, s, start):
 
 
 class Evaluator:
-    def __init__(self, errors=None):
+    def __init__(self, expr_evaluator, errors=None):
+        self.expr_evaluator = expr_evaluator
         if errors is None:
             errors = []
         self.errors = errors
@@ -56,9 +57,10 @@ class Evaluator:
                 if len(args) != 3:
                     self.errors.append(testing.incorrect_arity_error(o, 3, len(args)))
                     return None
-                evaluator = full_evaluator.Evaluator()
+                evaluator = self.expr_evaluator()
                 o = lambda *aaa: evaluator.operator(args[0], aaa)
+                # TODO: log errors from evaluator
                 return fold(o, args[1], args[2])
             case _:
-                self.errors.append(NotImplementedError(f"set.operator {o}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError),f"set.operator {o}"))
                 return None

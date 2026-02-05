@@ -2,27 +2,27 @@ from __future__ import annotations
 
 import types
 from enum import Enum
-from typing import NamedTuple
+import typing
 
 import clingo
 
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.set as myset
-from constraint_handler.utils.common import PPEnum
+import constraint_handler.utils.common as common
 
-BaseType = PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
-UnaryOperator = PPEnum(
+BaseType = common.PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
+UnaryOperator = common.PPEnum(
     "UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor", "ceil"]
 )
-LogicOperator = PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
-BinaryOperator = PPEnum(
+LogicOperator = common.PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
+BinaryOperator = common.PPEnum(
     "BinaryOperator",
     ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
 )
-EqOperator = PPEnum("LogicOperator", ["eq", "neq"])
-StringOperator = PPEnum("StringOperator", ["concat", "length"])
-OtherOperator = PPEnum("OtherOperator", ["max", "min", "length"])
+EqOperator = common.PPEnum("LogicOperator", ["eq", "neq"])
+StringOperator = common.PPEnum("StringOperator", ["concat", "length"])
+OtherOperator = common.PPEnum("OtherOperator", ["max", "min", "length"])
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
@@ -32,11 +32,11 @@ class ConditionalOperator(Enum):
     hasValue = "hasValue"
 
 
-class CustomOperator(NamedTuple):
+class CustomOperator(typing.NamedTuple):
     name: clingo.Symbol
 
 
-class Python(NamedTuple):
+class Python(typing.NamedTuple):
     fn: str
 
 
@@ -57,7 +57,7 @@ Operator = (
 constant = bool | float | int | str | types.NoneType | clingo.Symbol
 
 
-class Val(NamedTuple):
+class Val(typing.NamedTuple):
     type_: BaseType | clingo.Symbol
     value: constant
 
@@ -65,7 +65,7 @@ class Val(NamedTuple):
         return f"Val({str(self.type_)},{str(self.value)})"
 
 
-class Operation(NamedTuple):
+class Operation(typing.NamedTuple):
     op: Operator | Variable | Lambda
     args: myClorm.HashableList[Expr]
 
@@ -74,14 +74,14 @@ class Operation(NamedTuple):
         return f"{self.op}({comma.join(str(arg) for arg in self.args)})"
 
 
-class Variable(NamedTuple):
+class Variable(typing.NamedTuple):
     arg: constant
 
     def __repr__(self):
         return f"{self.arg}"
 
 
-class Lambda(NamedTuple):
+class Lambda(typing.NamedTuple):
     vars: myClorm.HashableList[clingo.Symbol]
     expr: Expr
 

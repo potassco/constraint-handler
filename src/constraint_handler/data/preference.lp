@@ -4,7 +4,7 @@
 #defined preference_variableValue/3.
 #defined preference_maximizeScore/0.
 
-warning((unsupported,"multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
+_warning(preference(unsupported),(),("multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
 
 %%% convenience
 preference_variableValue(CNAME,X,E,1) :- preference_variableValue(CNAME,X,E).

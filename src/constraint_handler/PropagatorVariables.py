@@ -10,6 +10,7 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
+import constraint_handler.solver_environment as solver_environment
 from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
     EXECUTION_INPUT,
@@ -950,7 +951,7 @@ class Execution:
 
         try:
             self.errors = evaluator.evaluate_stmt(self.stmt, env, evals)
-        except evaluator.FailIntegrityExn:
+        except solver_environment.FailIntegrityExn:
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CONFLICT
 

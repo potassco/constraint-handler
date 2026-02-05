@@ -10,7 +10,7 @@ _execution_declare(NAME,STMT,INS,OUTS) :- execution_declare(CNAME,NAME,STMT,INS,
 _execution_input_var(NAME,X) :- _execution_declare(NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
 _execution_output_var(NAME,X) :- _execution_declare(NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 _execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), execution_run(CNAME,NAME), engine(CNAME,compile).
-%warning(("undeclared run",NAME)) :- execution_run(NAME), not execution_declare(_,NAME,_).
+%_warning(("undeclared run",NAME)) :- execution_run(NAME), not execution_declare(_,NAME,_).
 
 _execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), _se_value(variable(execution_input(NAME,X)),V).
 
@@ -78,7 +78,7 @@ _execution_exec(NAME,R) :- _execution_run(NAME,STMT), STMT = statement_python(ST
 :- _execution_exec(NAME,failIntegrity).
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,(X,V)).
 _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,true).
-warning(("error running python",STR,MSG,NAME)) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(MSG)).
+_warning(KIND,(NAME,()),(STR,MSG,NAME)) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(KIND,MSG)).
 
 %_statement_extract_vars(SCOPE,INS,OUS) :- _statement_query(SCOPE,STMT), STMT = statement_python(S), _main_solverIdentifier(ID), (INS,OUS)=@pythonGetVariablesFromPython(S,ID).
 

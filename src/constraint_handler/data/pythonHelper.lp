@@ -11,6 +11,8 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
+import constraint_handler.schemas.warning as warning
+import constraint_handler.solver_environment as solver_environment
 
 
 def pythonExpressionVariable(clExpr):
@@ -38,6 +40,7 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
 
 def pythonEvalExpr(clExpr,clArgs,clId):
     # print("pythonEvalExpr",clExpr,clArgs)
+    eval_error = warning.Expression(warning.ExpressionWarning.pythonError)
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
@@ -49,23 +52,24 @@ def pythonEvalExpr(clExpr,clArgs,clId):
             val,errors = evaluator.evaluate_expr(vexpr,globals)
             locals[var] = val
             for error in errors:
-                results.append(atom.Error(repr(error)))
+                results.append(warning.Error(eval_error,repr(error)))
         prettyD = { str(var) : val for (var,val) in locals.items() }
         pRes,errors = evaluator.evaluate_expr(pExpr, globals, locals)
         for error in errors:
-            results.append(atom.Error(repr(error)))
+            results.append(warning.Error(eval_error,repr(error)))
         # print(f"eval expr: {pExpr} = {pRes} assuming {prettyD}\nerrors: {results}")
         results.append(evaluator.reducedExpr(pRes))
         return map(myClorm.pytocl,results)
     except myClorm.FailedInstantiationExn as exn:
         print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {repr(exn)}.")
-        return myClorm.pytocl(atom.Error(repr(exn)))
+        return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
     except Exception as exn:
         print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
-        return myClorm.pytocl(atom.Error(repr(exn)))
+        return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
 
 
 def pythonExec(clStmt,clEnv,clId):
+    exec_error = warning.Statement(warning.StatementWarning.pythonError)
     try:
         pStmt = myClorm.cltopy(clStmt,statement.Stmt)
         pEnv  = myClorm.cltopy(clEnv,list[tuple[expression.constant,expression.ReducedExpr]])
@@ -77,11 +81,11 @@ def pythonExec(clStmt,clEnv,clId):
             val,errors = evaluator.evaluate_expr(vexpr,globals)
             locals[var] = val
             for error in errors:
-                results.append(atom.Error(repr(error)))
+                results.append(warning.Error(exec_error,repr(error)))
         # print((pStmt, globals, locals))
         errors = evaluator.evaluate_stmt(pStmt, globals, locals)
         for error in errors:
-            results.append(atom.Error(repr(error)))
+            results.append(warning.Error(exec_error,repr(error)))
         if not results:
             results.append(True)
         for (x,val) in locals.items():
@@ -90,14 +94,14 @@ def pythonExec(clStmt,clEnv,clId):
             except NotImplementedError:
                 pass
         return map(myClorm.pytocl,results)
-    except evaluator.FailIntegrityExn:
+    except solver_environment.FailIntegrityExn:
         return myClorm.pytocl(atom.FailIntegrity())
     except myClorm.FailedInstantiationExn as exn:
         print(f"pythonExec: error when converting {(clStmt,clEnv,clId)}: {repr(exn)}.")
-        return myClorm.pytocl(atom.Error(str(exn)))
+        return myClorm.pytocl(warning.Error(exec_error,str(exn)))
     except Exception as exn:
         print(f"pythonExec: uncaught exception {repr(exn)} in context {(clStmt,clEnv,clId)}")
-        return myClorm.pytocl(atom.Error(repr(exn)))
+        return myClorm.pytocl(warning.Error(exec_error,repr(exn)))
 
 
 def pythonReversed(clExpr):

@@ -1,10 +1,12 @@
 from collections.abc import Callable
 
-import constraint_handler.evaluator as full_evaluator
-import constraint_handler.set as myset
-from constraint_handler.utils.common import PPEnum
+import typing
 
-Operator = PPEnum(
+import constraint_handler.set as myset
+import constraint_handler.schemas.warning as warning
+import constraint_handler.utils.common as common
+
+Operator = common.PPEnum(
     "Operator",
     [
         "find",
@@ -50,7 +52,7 @@ def fold_i(f, m, start):
 
 def compare(multimap: HashableDict, op: Callable):
     best_val = None
-    errors: list[Exception] = []
+    errors: list[tuple[warning.Kind,typing.Any]] = []
     try:
         for key, value in multimap.items():
             local_best = op(value)
@@ -59,14 +61,15 @@ def compare(multimap: HashableDict, op: Callable):
             elif local_best is not None:
                 best_val = op(best_val, local_best)
     except TypeError as exn:
-        errors.append(NotImplementedError(f"multimap does not support comparison of values of some types: {exn}"))
+        errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError),f"multimap does not support comparison of values of some types: {exn}"))
     except Exception as exn:
-        errors.append(exn)
+        errors.append((warning.OtherError(),f"{exn}"))
     return best_val, errors
 
 
 class Evaluator:
-    def __init__(self, errors=None):
+    def __init__(self, expr_evaluator, errors=None):
+        self.expr_evaluator = expr_evaluator
         if errors is None:
             errors = []
         self.errors = errors
@@ -87,11 +90,11 @@ class Evaluator:
                 assert len(args) == 3
                 return args[1] in args[0] and args[2] in args[0][args[1]]
             case Operator.multimap_fold:
-                evaluator = full_evaluator.Evaluator()
+                evaluator = self.expr_evaluator.Evaluator()
                 o = lambda *aaa: evaluator.operator(args[0], aaa)  # TODO: check
                 return fold(o, args[1], args[2])
             case Operator.multimap_fold_i:
-                evaluator = full_evaluator.Evaluator()
+                evaluator = self.expr_evaluator.Evaluator()
                 o = lambda *aaa: evaluator.operator(args[0], aaa)  # TODO: check
                 return fold_i(o, args[1], args[2])
             case Operator.multimap_make:
@@ -129,5 +132,5 @@ class Evaluator:
                 self.errors.extend(erros)
                 return __min
             case _:
-                self.errors.append(NotImplementedError(f"multimap.operator {o}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError),f"multimap.operator {o}"))
                 return None
