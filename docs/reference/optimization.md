@@ -34,7 +34,7 @@ When wanting to optimize over a single value, the result could be captured in a 
     The variable `x` can then be maximized using:
 
     ```prolog
-    optimize_maximizeSum(max_x, variable(x), total, 1).
+    optimize_maximizeSum(max_x, variable(x), total, 0).
     ```
 
     The result will be the model where `x` takes the value `10`.
@@ -53,7 +53,7 @@ When wanting to optimize over a single value, the result could be captured in a 
     The sum of the variables `x` and `y` can then be maximized using:
 
     ```prolog
-    optimize_maximizeSum(max_x_and_y, operation(add, (variable(x),(variable(y),()))), total, 1).
+    optimize_maximizeSum(max_x_and_y, operation(add, (variable(x),(variable(y),()))), total, 0).
     ```
 
     The result will be the model where both `x` and `y` take the value `10`, maximizing their sum to `20`.
@@ -86,7 +86,7 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     We can now optimize the selection such that we get the highest possible sum of values as follows:
 
     ```prolog
-    optimize_maximizeSum(dummy_opt,EXPR,X,1) :- item(X,V),
+    optimize_maximizeSum(dummy_opt,EXPR,X,0) :- item(X,V),
         ITEM = val(symbol,X),
         COND = operation(isin,(ITEM,(variable(taken),()))),
         VALU = val(int,V),
@@ -101,7 +101,7 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     ```
 
 !!! Example "Example 4: Optimization with Priorities"
-    Priorities allow you to specify multiple optimization criteria where higher-priority goals are optimized first. Consider a program with two criteria: maximizing value (priority 2) and minimizing weight (priority 1).
+    Priorities allow you to specify multiple optimization criteria where higher-priority goals are optimized first. Consider a program with two criteria: maximizing value (priority 1) and minimizing weight (priority 0).
 
     ```prolog
     item(a,2,5).
@@ -111,22 +111,22 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     multimap_declare(dummy,taken).
     { multimap_assign(dummy,taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
     
-    % Maximize value with priority 2 (higher priority)
-    optimize_maximizeSum(opt_value,EXPR,X,2) :- item(X,W,V),
+    % Maximize value with priority 1 (higher priority)
+    optimize_maximizeSum(opt_value,EXPR,X,1) :- item(X,W,V),
         ITEM = val(symbol,X),
         COND = operation(isin,(ITEM,(variable(taken),()))),
         VALU = val(int,V),
         EXPR = operation(if,(COND,(VALU,()))).
     
-    % Minimize weight with priority 1 (lower priority) by maximizing negative weight
-    optimize_maximizeSum(opt_weight,EXPR,X,1) :- item(X,W,V),
+    % Minimize weight with priority 0 (lower priority) by maximizing negative weight
+    optimize_maximizeSum(opt_weight,EXPR,X,0) :- item(X,W,V),
         ITEM = val(symbol,X),
         COND = operation(isin,(ITEM,(variable(taken),()))),
         WGHT = val(int,-W),  % Negate weight to minimize it
         EXPR = operation(if,(COND,(WGHT,()))).
     ```
 
-    The solver will first maximize value (priority 2), and among solutions with equal value, it will minimize weight (priority 1).
+    The solver will first maximize value (priority 1), and among solutions with equal value, it will minimize weight (priority 0).
 
 ---
 
