@@ -4,6 +4,7 @@ Test cases for operator argument validation.
 
 import constraint_handler.evaluator as evltr
 
+
 def test_set_diff_arg_validation():
     """Test that set diff operator only accepts exactly 2 arguments."""
     from constraint_handler.set import Evaluator, Operator

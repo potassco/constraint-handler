@@ -1,9 +1,8 @@
+import typing
 from collections.abc import Callable
 
-import typing
-
-import constraint_handler.set as myset
 import constraint_handler.schemas.warning as warning
+import constraint_handler.set as myset
 import constraint_handler.utils.common as common
 
 Operator = common.PPEnum(
@@ -52,7 +51,7 @@ def fold_i(f, m, start):
 
 def compare(multimap: HashableDict, op: Callable):
     best_val = None
-    errors: list[tuple[warning.Kind,typing.Any]] = []
+    errors: list[tuple[warning.Kind, typing.Any]] = []
     try:
         for key, value in multimap.items():
             local_best = op(value)
@@ -61,9 +60,14 @@ def compare(multimap: HashableDict, op: Callable):
             elif local_best is not None:
                 best_val = op(best_val, local_best)
     except TypeError as exn:
-        errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError),f"multimap does not support comparison of values of some types: {exn}"))
+        errors.append(
+            (
+                warning.Expression(warning.ExpressionWarning.NotImplementedError),
+                f"multimap does not support comparison of values of some types: {exn}",
+            )
+        )
     except Exception as exn:
-        errors.append((warning.OtherError(),f"{exn}"))
+        errors.append((warning.OtherError(), f"{exn}"))
     return best_val, errors
 
 
@@ -132,5 +136,7 @@ class Evaluator:
                 self.errors.extend(erros)
                 return __min
             case _:
-                self.errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError),f"multimap.operator {o}"))
+                self.errors.append(
+                    (warning.Expression(warning.ExpressionWarning.NotImplementedError), f"multimap.operator {o}")
+                )
                 return None

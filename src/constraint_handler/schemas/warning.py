@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing
 
-#import constraint_handler.schemas.expression as expression
+# import constraint_handler.schemas.expression as expression
 import constraint_handler.utils.common as common
 
 
@@ -12,8 +12,9 @@ class Error(typing.NamedTuple):
 
 
 ExpressionWarning = common.PPEnum(
-    "ExpressionWarning", ["notImplemented","pythonError","syntaxError","zeroDivisionError"]
+    "ExpressionWarning", ["notImplemented", "pythonError", "syntaxError", "zeroDivisionError"]
 )
+
 
 class Expression(typing.NamedTuple):
     symbol: ExpressionWarning
@@ -22,9 +23,9 @@ class Expression(typing.NamedTuple):
 class OtherError(typing.NamedTuple):
     pass
 
-PreferenceWarning = common.PPEnum(
-    "PreferenceWarning", ["unsupported"]
-)
+
+PreferenceWarning = common.PPEnum("PreferenceWarning", ["unsupported"])
+
 
 class Preference(typing.NamedTuple):
     symbol: PreferenceWarning
@@ -34,21 +35,20 @@ class Propagator(typing.NamedTuple):
     pass
 
 
-StatementWarning = common.PPEnum(
-    "StatementWarning", ["notImplemented","pythonError"]
-)
+StatementWarning = common.PPEnum("StatementWarning", ["notImplemented", "pythonError"])
+
 
 class Statement(typing.NamedTuple):
     symbol: StatementWarning
 
 
 # TODO: rename failed_operation to failedOperation
-TypeWarning = common.PPEnum(
-    "TypeWarning", ["failed_operation"]
-)
+TypeWarning = common.PPEnum("TypeWarning", ["failed_operation"])
+
 
 class Type(typing.NamedTuple):
     symbol: TypeWarning
+
 
 VariableWarning = common.PPEnum(
     "VariableWarning", ["emptyDomain", "multipleDeclarations", "multipleDefinitions", "undeclared"]
@@ -58,13 +58,16 @@ VariableWarning = common.PPEnum(
 class Variable(typing.NamedTuple):
     symbol: VariableWarning
 
+
 type Kind = Expression | OtherError | Preference | Propagator | Statement | Type | Variable
+
+
 class Warning(typing.NamedTuple):
     id: Kind
-    declarations: list[typing.Any]#expression.constant]
+    declarations: list[typing.Any]  # expression.constant]
     info: typing.Any
 
 
 class Forbid_warning(typing.NamedTuple):
-    label: typing.Any#expression.constant
+    label: typing.Any  # expression.constant
     symbol: Kind
