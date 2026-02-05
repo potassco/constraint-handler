@@ -1,6 +1,6 @@
 import constraint_handler.schemas.warning as warning
-import constraint_handler.utils.testing as testing
 import constraint_handler.utils.common as common
+import constraint_handler.utils.testing as testing
 
 Operator = common.PPEnum("Operator", ["makeSet", "isin", "notin", "union", "inter", "diff", "subset", "set_fold"])
 
@@ -62,5 +62,7 @@ class Evaluator:
                 # TODO: log errors from evaluator
                 return fold(o, args[1], args[2])
             case _:
-                self.errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError),f"set.operator {o}"))
+                self.errors.append(
+                    (warning.Expression(warning.ExpressionWarning.NotImplementedError), f"set.operator {o}")
+                )
                 return None
