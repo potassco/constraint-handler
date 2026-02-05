@@ -107,17 +107,17 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     item(a,2,5).
     item(b,4,3).
     item(c,3,4).
-    
+
     multimap_declare(dummy,taken).
     { multimap_assign(dummy,taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
-    
+
     % Maximize value with priority 1 (higher priority)
     optimize_maximizeSum(opt_value,EXPR,X,1) :- item(X,W,V),
         ITEM = val(symbol,X),
         COND = operation(isin,(ITEM,(variable(taken),()))),
         VALU = val(int,V),
         EXPR = operation(if,(COND,(VALU,()))).
-    
+
     % Minimize weight with priority 0 (lower priority) by maximizing negative weight
     optimize_maximizeSum(opt_weight,EXPR,X,0) :- item(X,W,V),
         ITEM = val(symbol,X),
