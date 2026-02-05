@@ -124,7 +124,6 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "execution_run" "(" <term> "," <term> ")"
 
 <optimize-atom> ::=
-    | "optimize_maximizeSum" "(" <term> "," <expression> "," <term> ")"
     | "optimize_maximizeSum" "(" <term> "," <expression> "," <term> "," <expression> ")"
     | "optimize_precision" "(" <expression>  ")"
 

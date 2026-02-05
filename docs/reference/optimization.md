@@ -6,10 +6,9 @@ This page documents the native optimization capabilities of the constraint handl
 
 **[Declaration]**{.badge .declaration }
 
-The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/3` or `optimize_maximizeSum/4` predicate.
+The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/4` predicate.
 
 ```prolog
-optimize_maximizeSum(Identifier, Expression, Key)
 optimize_maximizeSum(Identifier, Expression, Key, Priority)
 ```
 
@@ -18,12 +17,12 @@ optimize_maximizeSum(Identifier, Expression, Key, Priority)
 | `Identifier` | A unique identifier for this specific expression. |
 | `Expression` | The expression whose value is used in the maximization. |
 | `Key` | The key under which the value of the expression is used in the maximization. |
-| `Priority` | (Optional) The priority level for this optimization criterion. Higher priorities are optimized first. Defaults to `1` if not specified. |
+| `Priority` | The priority level for this optimization criterion. Higher priorities are optimized first. |
 
 
 ### Single Value
 
-When wanting to optimize over a single value, the result could be captured in a [Variable] which is then optimized using the `optimize_maximizeSum/3` predicate directly. Here, single value doesn't mean the result has to be based on a single variable, just that the result can be captured in a single [Expression].
+When wanting to optimize over a single value, the result could be captured in a [Variable] which is then optimized using the `optimize_maximizeSum/4` predicate directly. Here, single value doesn't mean the result has to be based on a single variable, just that the result can be captured in a single [Expression].
 
 !!! Example "Example 1: Optimization Over a Single Variable"
     Consider a program that defines the variables `x` with a single value between `1` and `10`.
@@ -35,7 +34,7 @@ When wanting to optimize over a single value, the result could be captured in a 
     The variable `x` can then be maximized using:
 
     ```prolog
-    optimize_maximizeSum(max_x, variable(x), total).
+    optimize_maximizeSum(max_x, variable(x), total, 1).
     ```
 
     The result will be the model where `x` takes the value `10`.
@@ -54,7 +53,7 @@ When wanting to optimize over a single value, the result could be captured in a 
     The sum of the variables `x` and `y` can then be maximized using:
 
     ```prolog
-    optimize_maximizeSum(max_x_and_y, operation(add, (variable(x),(variable(y),()))), total).
+    optimize_maximizeSum(max_x_and_y, operation(add, (variable(x),(variable(y),()))), total, 1).
     ```
 
     The result will be the model where both `x` and `y` take the value `10`, maximizing their sum to `20`.
@@ -87,7 +86,7 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     We can now optimize the selection such that we get the highest possible sum of values as follows:
 
     ```prolog
-    optimize_maximizeSum(dummy_opt,EXPR,X) :- item(X,V),
+    optimize_maximizeSum(dummy_opt,EXPR,X,1) :- item(X,V),
         ITEM = val(symbol,X),
         COND = operation(isin,(ITEM,(variable(taken),()))),
         VALU = val(int,V),
