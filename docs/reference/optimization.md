@@ -119,11 +119,11 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
         VALU = val(int,V),
         EXPR = operation(if,(COND,(VALU,()))).
     
-    % Minimize weight with priority 1 (lower priority)
+    % Minimize weight with priority 1 (lower priority) by maximizing negative weight
     optimize_maximizeSum(opt_weight,EXPR,X,1) :- item(X,W,V),
         ITEM = val(symbol,X),
         COND = operation(isin,(ITEM,(variable(taken),()))),
-        WGHT = val(int,-W),
+        WGHT = val(int,-W),  % Negate weight to minimize it
         EXPR = operation(if,(COND,(WGHT,()))).
     ```
 

@@ -2,6 +2,11 @@
 % This example demonstrates multi-level optimization where:
 % - Priority 2: Maximize total value
 % - Priority 1: Minimize total weight (among solutions with max value)
+%
+% Expected result: All items (a, b, c) are selected
+% - Total value: 5+3+4 = 12 (maximum possible)
+% - Total weight: 2+4+3 = 9
+% - This is the only solution with maximum value, so weight minimization doesn't apply
 
 item(a,2,5).
 item(b,4,3).
