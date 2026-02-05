@@ -1,18 +1,11 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from typing import Any, NamedTuple
-
-import clingo
+from typing import NamedTuple
 
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
-from constraint_handler.schemas.expression import BaseType, constant
-from constraint_handler.utils.common import PPEnum
-
-
-class Error(NamedTuple):
-    message: str
+import constraint_handler.schemas.warning as warning
 
 
 class FailIntegrity(NamedTuple):
@@ -35,42 +28,42 @@ type Domain = BoolDomain | FromFacts | FromList
 
 
 class Variable_declare(NamedTuple):
-    label: constant
-    name: constant
+    label: expression.constant
+    name: expression.constant
     domain: Domain
 
 
 class Variable_define(NamedTuple):
-    label: constant
-    name: constant
+    label: expression.constant
+    name: expression.constant
     value: expression.Expr
 
 
 class Variable_domain(NamedTuple):
-    name: constant
+    name: expression.constant
     value: expression.Expr
 
 
 class Variable_declareOptional(NamedTuple):
-    name: constant
+    name: expression.constant
 
 
 type VariableAtom = Variable_declare | Variable_define | Variable_domain | Variable_declareOptional
 
 
 class Set_declare(NamedTuple):
-    label: constant
-    name: constant
+    label: expression.constant
+    name: expression.constant
 
 
 class Set_assign(NamedTuple):
-    label: constant
-    name: constant
+    label: expression.constant
+    name: expression.constant
     member: expression.Expr
 
 
 class Set_value(NamedTuple):
-    name: constant
+    name: expression.constant
     elt: expression.Val
 
 
@@ -78,19 +71,19 @@ type SetAtom = Set_declare | Set_assign
 
 
 class Multimap_declare(NamedTuple):
-    label: constant
-    name: constant
+    label: expression.constant
+    name: expression.constant
 
 
 class Multimap_assign(NamedTuple):
-    label: constant
-    name: constant
+    label: expression.constant
+    name: expression.constant
     key: expression.Expr
     val: expression.Expr
 
 
 class Multimap_value(NamedTuple):
-    name: constant
+    name: expression.constant
     key: expression.Val
     cst: expression.Val
 
@@ -99,25 +92,25 @@ type MultimapAtom = Multimap_declare | Multimap_assign
 
 
 class Execution_declare(NamedTuple):
-    label: constant
-    name: constant
+    label: expression.constant
+    name: expression.constant
     body: statement.Stmt
-    inputs_vars: list[constant]
-    outputs_vars: list[constant]
+    inputs_vars: list[expression.constant]
+    outputs_vars: list[expression.constant]
 
 
 class Execution_run(NamedTuple):
-    label: constant
-    name: constant
+    label: expression.constant
+    name: expression.constant
 
 
 type ExecutionAtom = Execution_declare | Execution_run
 
 
 class Optimize_maximizeSum(NamedTuple):
-    label: constant
+    label: expression.constant
     value: expression.Expr
-    id: constant
+    id: expression.constant
 
 
 class Optimize_precision(NamedTuple):
@@ -132,14 +125,14 @@ class Preference_maximizeScore(NamedTuple):
 
 
 class Preference_holds(NamedTuple):
-    label: constant
+    label: expression.constant
     value: expression.Expr
     factor: int
 
 
 class Preference_variableValue(NamedTuple):
-    label: constant
-    variable: constant
+    label: expression.constant
+    variable: expression.constant
     value: expression.Expr
     factor: int
 
@@ -151,43 +144,19 @@ class Preference_score(NamedTuple):
     score: int
 
 
-Warning1 = namedtuple("warning", ["content"])
-Warning1.__annotations__ = {"id": constant}
-
-
-VariableWarning = PPEnum(
-    "VariableWarning", ["emptyDomain", "multipleDeclarations", "multipleDefinitions", "undeclared"]
-)
-
-
-class Variable(NamedTuple):
-    symbol: VariableWarning
-
-
-class Warning(NamedTuple):
-    id: Variable
-    declarations: list[constant]
-    info: Any
-
-
-class Forbid_warning(NamedTuple):
-    label: constant
-    symbol: constant
-
-
 class Assign(NamedTuple):
-    label: constant
-    var: constant
+    label: expression.constant
+    var: expression.constant
     expr: expression.Expr
 
 
 class Ensure(NamedTuple):
-    label: constant
+    label: expression.constant
     expr: expression.Expr
 
 
 class Value(NamedTuple):
-    name: constant
+    name: expression.constant
     val: expression.Val
 
     def __repr__(self):
@@ -202,17 +171,17 @@ class Evaluate(NamedTuple):
 class Evaluated(NamedTuple):
     name: expression.Operator
     expr: list[expression.Expr]
-    type_: BaseType
-    value: constant
+    type_: expression.BaseType
+    value: expression.constant
 
 
 type MainAtom = Assign | Ensure | Evaluate
 type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
-type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_score | Warning1 | Warning
+type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_score | warning.Warning
 
 
 Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
-Main_solverIdentifier.__annotations__ = {"id": constant}
+Main_solverIdentifier.__annotations__ = {"id": expression.constant}
 
 
 class Propagator_variable_declare(Variable_declare):
@@ -271,5 +240,5 @@ class Propagator_evaluate(Evaluate):
     pass
 
 
-class Propagator_forbid_warning(Forbid_warning):
+class Propagator_forbid_warning(warning.Forbid_warning):
     pass

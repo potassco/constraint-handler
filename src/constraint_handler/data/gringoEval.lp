@@ -48,4 +48,4 @@ ge_mapped(EXPR,M) :- ge_mapAux(EXPR,I,M), ge_nbVars(EXPR,I).
 
 _ge_eval_exec(EXPR,M,RES) :- ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifier(ID).
 ge_result(EXPR,V) :- _ge_eval_exec(EXPR,M,V), #false: V=error(_).
-warning((EXPR,M,MSG)) :- _ge_eval_exec(EXPR,M,error(MSG)).
+_warning(expression(pythonError),(),(EXPR,M,MSG)) :- _ge_eval_exec(EXPR,M,error(MSG)).

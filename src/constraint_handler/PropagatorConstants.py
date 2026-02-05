@@ -39,21 +39,5 @@ REASONING_MODE_PROGRAM = f"""
 """
 
 
-class EmptyDomain(Exception):
-    pass
-
-
-class MultipleDeclarations(Exception):
-    pass
-
-
-class Undeclared(Exception):
-    pass
-
-
-class MultipleDefinitions(Exception):
-    pass
-
-
 class NoValueSet(Exception):
     pass

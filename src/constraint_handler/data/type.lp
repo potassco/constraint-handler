@@ -27,7 +27,7 @@ _type_list(SCOPE,ARGS,TS) :- _type_listAux(SCOPE,ARGS,0,TS).
 %%%%%%%%%%%%%%%%% type_statement
 % TODO statements.
 
-warning(type(failed_operation),(),(SCOPE,O,ARGS)) :- _expression_query(SCOPE,E), E=operation(O,ARGS), not type_expression(SCOPE,E,_).
+_warning(type(failed_operation),(),(SCOPE,O,ARGS)) :- _expression_query(SCOPE,E), E=operation(O,ARGS), not type_expression(SCOPE,E,_).
 
 
 %%% temporary stuff until more uniform handling of operators.

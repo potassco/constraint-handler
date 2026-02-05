@@ -1,41 +1,41 @@
 from __future__ import annotations
 
-from typing import NamedTuple
+import typing
 
-from constraint_handler.schemas.expression import Expr, constant
-
-
-class Assert(NamedTuple):
-    expr: Expr
+import constraint_handler.schemas.expression as expression
 
 
-class Assign(NamedTuple):
-    var: constant
-    expr: Expr
+class Assert(typing.NamedTuple):
+    expr: expression.Expr
 
 
-class If(NamedTuple):
-    cond: Expr
+class Assign(typing.NamedTuple):
+    var: expression.constant
+    expr: expression.Expr
+
+
+class If(typing.NamedTuple):
+    cond: expression.Expr
     then: Stmt
     else_: Stmt
 
 
-class Noop(NamedTuple):
+class Noop(typing.NamedTuple):
     pass
 
 
-class Statement_python(NamedTuple):
+class Statement_python(typing.NamedTuple):
     code: str
 
 
-class Seq2(NamedTuple):
+class Seq2(typing.NamedTuple):
     fst: Stmt
     snd: Stmt
 
 
-class While(NamedTuple):
+class While(typing.NamedTuple):
     max_iterations: int
-    cond: Expr
+    cond: expression.Expr
     body: Stmt
 
 

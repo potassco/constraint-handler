@@ -11,6 +11,7 @@ import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
+import constraint_handler.schemas.warning as warning
 import constraint_handler.set as myset
 from constraint_handler.schemas.expression import (
     BaseType,
@@ -22,7 +23,7 @@ from constraint_handler.schemas.expression import (
     StringOperator,
     UnaryOperator,
 )
-from constraint_handler.solver_environment import FailIntegrityExn
+import constraint_handler.solver_environment as solver_environment
 
 _shared_environment = {
     "math": importlib.import_module("math"),
@@ -99,8 +100,8 @@ class Evaluator:
         self.globals = globals if globals is not None else dict()
         self.locals = locals if locals is not None else dict()
         self.errors = []
-        self.multimap = multimap.Evaluator(self.errors)
-        self.set = myset.Evaluator(self.errors)
+        self.multimap = multimap.Evaluator(Evaluator,self.errors)
+        self.set = myset.Evaluator(Evaluator,self.errors)
 
     def unop(self, o, val):
         match o:
@@ -127,7 +128,7 @@ class Evaluator:
             case UnaryOperator.floor:
                 return math.floor(val)
             case _:
-                self.errors.append(NotImplementedError(f"unop {o}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented),f"unop {o}"))
                 return None
 
     def logic_operator(self, o, args):
@@ -178,7 +179,7 @@ class Evaluator:
                     return True
                 return not args[0]
             case _:
-                self.errors.append(NotImplementedError(f"logic_operator {o}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented),f"logic_operator {o}"))
                 return None
 
     def string_operator(self, o, args):
@@ -187,13 +188,13 @@ class Evaluator:
         match o:
             case StringOperator.length:
                 if len(args) != 1:
-                    self.errors.append(TypeError(f"len takes one argument ({len(args)} were given)"))
+                    self.errors.append((warning.Expression(warning.ExpressionWarning.syntaxError),f"len takes one argument ({len(args)} were given)"))
                     return None
                 return len(args[0])
             case StringOperator.concat:
                 return "".join(args)
             case _:
-                self.errors.append(NotImplementedError(f"string operator {o}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented),f"string operator {o}"))
                 return None
 
     def binop(self, o, lval, rval):
@@ -208,12 +209,12 @@ class Evaluator:
                 return lval * rval
             case BinaryOperator.div:
                 if rval == 0:
-                    self.errors.append(ZeroDivisionError())
+                    self.errors.append((warning.Expression(warning.ExpressionWarning.zeroDivisionError),f"{lval}/{rval}"))
                     return None
                 return lval // rval
             case BinaryOperator.fdiv:
                 if rval == 0:
-                    self.errors.append(ZeroDivisionError())
+                    self.errors.append((warning.Expression(warning.ExpressionWarning.zeroDivisionError),f"{lval}/{rval}"))
                     return None
                 return lval / rval
             case BinaryOperator.pow:
@@ -227,7 +228,7 @@ class Evaluator:
             case BinaryOperator.gt:
                 return lval > rval
             case _:
-                self.errors.append(NotImplementedError(f"binary operator {o}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented),f"binary operator {o}"))
                 return None
 
     def eq_operator(self, o, lval, rval):
@@ -237,7 +238,7 @@ class Evaluator:
             case EqOperator.neq:
                 return lval != rval
             case _:
-                self.errors.append(NotImplementedError(f"equality operator {o}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented),f"equality operator {o}"))
                 return None
 
     def conditional_operator(self, o, args):
@@ -255,7 +256,7 @@ class Evaluator:
             case ConditionalOperator.hasValue:
                 return args[0] is not None
             case _:
-                self.errors.append(NotImplementedError(f"conditional operator {o}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented),f"conditional operator {o}"))
                 return None
 
     def python_operator(self, fn, args):
@@ -263,7 +264,8 @@ class Evaluator:
             call = eval(fn, self.globals, self.locals)
             result = call(*args)
         except Exception as exn:
-            self.errors.append(exn)
+            kind = warning.Expression(warning.ExpressionWarning.pythonError)
+            self.errors.append((kind,exn))
             return None
         return result
 
@@ -272,9 +274,10 @@ class Evaluator:
             case expression.Python(fn):
                 return self.python_operator(fn, args)
             case expression.Lambda(vars, expr):
-                if len(vars) != len(args):
+                if len(vars) != len(args): #TODO create a warning instead?
                     self.errors.append(
-                        ValueError(f"evaluate_operator inconsistent parameters and argument lengths for {o}")
+                        (warning.Expression(warning.ExpressionWarning.syntaxError),
+                        ValueError(f"evaluate_operator inconsistent parameters and argument lengths for {o}"))
                     )
                     return None
                 locals = dict(self.locals)
@@ -314,7 +317,7 @@ class Evaluator:
                 elif len(args) == 2:
                     return self.binop(o, args[0], args[1])
                 else:
-                    self.errors.append(NotImplementedError(f"operator {o}"))
+                    self.errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError),f"operator {o}"))
                     return None
 
     def expr(self, expr):
@@ -327,7 +330,7 @@ class Evaluator:
                 if a in self.locals:
                     return self.locals[a]  # TODO : and globals?
                 else:
-                    self.errors.append(NameError(f"variable {a} undefined"))
+                    self.errors.append((warning.Variable(warning.VariableWarning.undeclared),f"{a}"))
                     return None
             case expression.Val(type_, val):
                 return val
@@ -350,23 +353,24 @@ class Evaluator:
             case None:
                 return None
             case _:
-                self.errors.append(NotImplementedError(f"expr {expr}"))
+                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented),NotImplementedError(f"expr {expr}")))
                 return None
 
     def stmt_python(self, code):
         try:
             exec(code, self.globals, self.locals)
-        except FailIntegrityExn:
+        except solver_environment.FailIntegrityExn:
             raise
         except Exception as exn:
-            self.errors.append(exn)
+            kind = warning.Statement(warning.StatementWarning.pythonError)
+            self.errors.append((kind,exn))
 
     def stmt(self, stmt):
         match stmt:
             case statement.Assert(expr):
                 condition = self.expr(expr)
                 if condition != True:
-                    raise FailIntegrityExn
+                    raise solver_environment.FailIntegrityExn
             case statement.Assign(var, expr):
                 self.locals[var] = self.expr(expr)  # TODO eval?
             case statement.If(cond, stmt1, stmt2):
@@ -387,7 +391,7 @@ class Evaluator:
                     iter += 1
                     self.stmt(body)
             case _:
-                self.errors.append(NotImplementedError(f"stmt {stmt}"))
+                self.errors.append((warning.Statement(warning.StatementWarning.notImplemented),f"{stmt}"))
 
 
 def evaluate_expr(expr, globals=None, locals=None):

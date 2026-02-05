@@ -16,7 +16,6 @@ execution_declare(dummy,empty,STMT,(),("y",())) :-
 execution_run(dummy,empty).
 
 #show value/2.
-#show warning/1.
 #show warning/3.
 
 #script (python)

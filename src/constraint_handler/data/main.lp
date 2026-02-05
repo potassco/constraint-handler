@@ -7,6 +7,7 @@
 #defined defaultEngine/1.
 #defined main_solverIdentifier/1.
 #defined forbid_warning/2.
+#defined ignore_warning/1.
 
 %%%%%%%%%%%%%%%%% engines
 %%% compile
@@ -36,3 +37,6 @@ engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execu
 value(X,V) :- _se_value(variable(X),V).
 
 representation((bool;int;str;float;symbol;none),extensional).
+
+:- warning(KIND,INFO,MSG), forbid_warning(NAME,KIND).
+warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not ignore_warning(KIND).
