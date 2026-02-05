@@ -41,6 +41,7 @@ REASONING_MODE_PROGRAM = f"""
 1{{{REASONING_STAGE_ATOM}(1;2;3)}}1.
 #heuristic {REASONING_STAGE_ATOM}(1). [990,true]
 #heuristic {REASONING_STAGE_ATOM}(2). [989,true]
+#show __stage__/1.
 """
 
 
