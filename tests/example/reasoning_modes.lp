@@ -1,6 +1,14 @@
 % Cautious output: c = True
 % Brave output: a = 1, a = 2, b = 1, b = 2, c = True
 
+a.
+
+1{p;q}1.
+
+#show a/0.
+#show p/0.
+#show q/0.
+
 variable_declare(dummy,a,fromFacts).
 variable_domain(a,val(int,(1..2))).
 variable_declare(dummy,b,fromFacts).
@@ -12,3 +20,6 @@ ensure(dummy,operation(eq,(variable(c),(val(bool,true),())))).
 
 set_declare(dummy,s1).
 {set_assign(dummy,s1,val(int,1..2))}.
+
+#show value/2.
+#show set_value/2.

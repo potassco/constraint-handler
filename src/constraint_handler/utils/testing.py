@@ -4,7 +4,7 @@ import clingo
 import clintest.assertion
 import clintest.solver
 import clintest.test
-from clintest.quantifier import All, Any, First
+from clintest.quantifier import All, Any, First, Last
 
 import constraint_handler
 import constraint_handler.evaluator as evaluator
@@ -42,6 +42,18 @@ def build_expectations(name):
         else clintest.test.True_()
     )
     return clintest.test.And(test_exists, test_all, test_any, test_none, test_first)
+
+
+def build_reasoning_mode_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
+    contains = lambda a: clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
+
+    expected_brave = atoms_from_file(name + ".expected.brave")
+    test_brave = clintest.test.And(*(clintest.test.Assert(Last(), contains(a)) for a in expected_brave))
+
+    expected_cautious = atoms_from_file(name + ".expected.cautious")
+    test_cautious = clintest.test.And(*(clintest.test.Assert(Last(), contains(a)) for a in expected_cautious))
+
+    return [(test_brave, ["--enum-mode=brave"]), (test_cautious, ["--enum-mode=cautious"])]
 
 
 class TheoryContains(clintest.assertion.Assertion):

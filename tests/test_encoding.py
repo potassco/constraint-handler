@@ -1,3 +1,5 @@
+from typing import Literal
+
 import pytest
 
 import constraint_handler.utils.testing as chut
@@ -5,33 +7,18 @@ import constraint_handler.utils.testing as chut
 ctrl_options = ["0", "--heuristic=Domain"]
 
 
-def run_test_compile(name):
+def run_test(name: str, engine: Literal["compile", "ground", "propagator"], check_mode: bool = False):
     name = "tests/example/" + name
-    solver = chut.Solver(ctrl_options, "defaultEngine(compile).", files=[name + ".lp"])
+    engine_prg = f"defaultEngine({engine})."
+    solver = chut.Solver(ctrl_options, engine_prg, files=[name + ".lp"], propagator_check_only=check_mode)
     test = chut.build_expectations(name)
     solver.solve(test)
     test.assert_()
 
-
-def run_test_ground(name):
-    name = "tests/example/" + name
-    solver = chut.Solver(ctrl_options, "defaultEngine(ground).", files=[name + ".lp"])
-    test = chut.build_expectations(name)
-    solver.solve(test)
-    test.assert_()
-
-
-def run_test_propagator(name: str, check_mode: bool):
-    name = "tests/example/" + name
-    solver = chut.Solver(
-        ctrl_options,
-        "defaultEngine(propagator).",
-        files=[name + ".lp"],
-        propagator_check_only=check_mode,
-    )
-    test = chut.build_expectations(name)
-    solver.solve(test)
-    test.assert_()
+    for test, extra_args in chut.build_reasoning_mode_expectations(name):
+        solver = chut.Solver(ctrl_options + extra_args, engine_prg, files=[name + ".lp"])
+        solver.solve(test)
+        test.assert_()
 
 
 base_tests = [
@@ -57,6 +44,7 @@ base_tests = [
     "optimize_floats",
     "optimize_ints",
     "optimize_priority",
+    "reasoning_modes",
     "set_iterations",
     "set_manipulations",
     "set_selfref",
@@ -91,7 +79,7 @@ def test_engine_compile(name: str):
         "optimize_priority",
     ]
     if name not in unsupported:
-        run_test_compile(name)
+        run_test(name, "compile")
 
 
 @pytest.mark.parametrize(
@@ -114,7 +102,7 @@ def test_engine_ground(name: str):
         "set_selfref",
     ]
     if name not in unsupported:
-        run_test_ground(name)
+        run_test(name, "ground")
 
 
 @pytest.mark.parametrize(
@@ -143,4 +131,4 @@ def test_engine_propagator(name, check_mode):
         "warning_variable_undeclared_statement",
     ]
     if name not in unsupported:
-        run_test_propagator(name, check_mode)
+        run_test(name, "propagator", check_mode)
