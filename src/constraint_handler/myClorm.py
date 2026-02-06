@@ -243,7 +243,6 @@ def cltopy(func, dtarget=typing.Any):
                 elif issubclass(utarget, tuple):
                     subtargets = typing.get_args(target)
                     if len(subtargets) >= 2 and subtargets[-1] == Ellipsis and func.type == clingo.SymbolType.Function:
-                        print("feb6",utarget,subtargets,func)
                         subtargets = subtargets[:-1] + tuple(subtargets[-2] for _ in range(len(func.arguments) - 1))
                     if (
                         func.type == clingo.SymbolType.Function
