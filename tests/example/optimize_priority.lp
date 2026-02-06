@@ -3,21 +3,25 @@
 % - Priority 1: Maximize total value
 % - Priority 0: Minimize total weight (among solutions with same value)
 %
-% Items: a(weight=5,value=10), b(weight=3,value=10), c(weight=2,value=10)
-% Capacity: 8 (can only take 2 items max)
+% Items: a(weight=6,value=12), b(weight=3,value=10), c(weight=4,value=11), d(weight=5,value=11)
+% Capacity: 11 (can only take 2 items max)
 %
-% Multiple solutions achieve maximum value of 20:
-% - Take 'a' and 'b': value=20, weight=8
-% - Take 'a' and 'c': value=20, weight=7
-% - Take 'b' and 'c': value=20, weight=5 (BEST - minimum weight!)
+% Multiple feasible solutions:
+% - Take 'a' and 'b': value=22, weight= 9
+% - Take 'a' and 'c': value=23, weight=10
+% - Take 'a' and 'd': value=23, weight=11
+% - Take 'b' and 'c': value=21, weight= 7
+% - Take 'b' and 'd': value=21, weight= 8
+% - Take 'c' and 'd': value=22, weight= 9
+% - All the single-item or zero-item solutions.
 %
-% Expected: Take 'b' and 'c' (value=20, weight=5)
-% All three solutions have value=20, but 'b'+'c' has minimum weight
+% Expected: Take 'a' and 'c' (value=23, weight=10)
 
-capacity(8).
-item(a,5,10).
+capacity(11).
+item(a,6,12).
 item(b,3,10).
-item(c,2,10).
+item(c,4,11).
+item(d,5,11).
 
 multimap_declare(dummy,taken).
 { multimap_assign(dummy,taken,val(symbol,X),val(int,W)) } :- item(X,W,V).

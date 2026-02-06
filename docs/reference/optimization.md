@@ -106,9 +106,11 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     Priorities allow you to specify multiple optimization criteria where higher-priority goals are optimized first. Consider a program with two criteria: maximizing value (priority 1) and minimizing weight (priority 0).
 
     ```prolog
-    item(a,2,5).
-    item(b,4,3).
-    item(c,3,4).
+    capacity(11).
+    item(a,6,12).
+    item(b,3,10).
+    item(c,4,11).
+    item(d,5,11).
 
     multimap_declare(dummy,taken).
     { multimap_assign(dummy,taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
@@ -126,10 +128,17 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
         COND = operation(isin,(ITEM,(variable(taken),()))),
         WGHT = val(int,-W),  % Negate weight to minimize it
         EXPR = operation(if,(COND,(WGHT,()))).
+
+    ensure(dummy,operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
     ```
 
     The solver will first maximize value (priority 1), and among solutions with equal value, it will minimize weight (priority 0).
+    This corresponds to the model where items `a` and `c` are taken.
 
+    ```prolog
+    multimap_value(taken,symbol,a,int,6)
+    multimap_value(taken,symbol,c,int,4)
+    ```
 ---
 
 ## Precision
