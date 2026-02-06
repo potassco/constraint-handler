@@ -1,16 +1,23 @@
-% Test case for optimization with priorities
-% This example demonstrates multi-level optimization where:
+% Test case for optimization with competing priorities
+% This example demonstrates multi-level optimization where priority 0 breaks ties:
 % - Priority 1: Maximize total value
-% - Priority 0: Minimize total weight (among solutions with max value)
+% - Priority 0: Minimize total weight (among solutions with same value)
 %
-% Expected result: All items (a, b, c) are selected
-% - Total value: 5+3+4 = 12 (maximum possible)
-% - Total weight: 2+4+3 = 9
-% - This is the only solution with maximum value, so weight minimization doesn't apply
+% Items: a(weight=5,value=10), b(weight=3,value=10), c(weight=2,value=10)
+% Capacity: 8 (can only take 2 items max)
+%
+% Multiple solutions achieve maximum value of 20:
+% - Take 'a' and 'b': value=20, weight=8
+% - Take 'a' and 'c': value=20, weight=7
+% - Take 'b' and 'c': value=20, weight=5 (BEST - minimum weight!)
+%
+% Expected: Take 'b' and 'c' (value=20, weight=5)
+% All three solutions have value=20, but 'b'+'c' has minimum weight
 
-item(a,2,5).
-item(b,4,3).
-item(c,3,4).
+capacity(8).
+item(a,5,10).
+item(b,3,10).
+item(c,2,10).
 
 multimap_declare(dummy,taken).
 { multimap_assign(dummy,taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
@@ -28,3 +35,16 @@ optimize_maximizeSum(opt_weight,EXPR,X,0) :- item(X,W,V),
   COND = operation(isin,(ITEM,(variable(taken),()))),
   WGHT = val(int,-W),
   EXPR = operation(if,(COND,(WGHT,()))).
+
+% Capacity constraint
+variable_define(dummy,carried,EXPR) :-
+  EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),
+  MAP  = variable(taken),
+  ACCU = variable(accu),
+  STAR = val(int,0),
+  VARS = (w,(accu,())),
+  WEIG = variable(w),
+  PLUS = operation(add,(WEIG,(ACCU,()))),
+  LAMB = lambda(VARS,PLUS).
+
+ensure(dummy,operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
