@@ -1,0 +1,12 @@
+a
+p
+q
+value(c,val(bool,true))
+value(b,val(int,2))
+value(a,val(int,2))
+value(a,val(int,1))
+value(b,val(int,1))
+set_value(s1,val(int,1))
+set_value(s1,val(int,2))
+__stage__(1)
+__stage__(3)

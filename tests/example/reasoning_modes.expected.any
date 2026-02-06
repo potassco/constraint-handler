@@ -1,0 +1,6 @@
+value(c,val(bool,true))
+value(b,val(int,2))
+value(a,val(int,2))
+value(c,val(bool,true))
+value(a,val(int,1))
+value(b,val(int,1))
