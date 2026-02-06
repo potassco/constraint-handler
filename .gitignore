@@ -48,3 +48,4 @@ untracked
 *.fdb_latexmk
 *.fls
 *.log
+PROPAGATOR_PRIORITY_ISSUE.md
