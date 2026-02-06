@@ -54,6 +54,7 @@ base_tests = [
     "optimize_bools",
     "optimize_floats",
     "optimize_ints",
+    "optimize_priority",
     "set_iterations",
     "set_manipulations",
     "set_selfref",
@@ -79,7 +80,7 @@ propagator_extra = []
     base_tests + compile_extra,
 )
 def test_engine_compile(name: str):
-    unsupported: list[str] = ["optimize_bools", "optimize_floats", "optimize_ints"]
+    unsupported: list[str] = ["optimize_bools", "optimize_floats", "optimize_ints", "optimize_priority"]
     if name not in unsupported:
         run_test_compile(name)
 
@@ -97,6 +98,7 @@ def test_engine_ground(name: str):
         "optimize_bools",
         "optimize_floats",
         "optimize_ints",
+        "optimize_priority",
         "set_iterations",
         "set_selfref",
     ]
@@ -116,6 +118,7 @@ def test_engine_propagator(name, check_mode):
         "optimize_bools",
         "optimize_floats",
         "optimize_ints",
+        "optimize_priority",
         "set_iterations",
         "set_selfref",
         "variable_parallel_declaration",

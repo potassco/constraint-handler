@@ -111,10 +111,12 @@ class Optimize_maximizeSum(NamedTuple):
     label: expression.constant
     value: expression.Expr
     id: expression.constant
+    priority: expression.Expr
 
 
 class Optimize_precision(NamedTuple):
     value: expression.Expr
+    priority: expression.Expr
 
 
 type OptimizeAtom = Optimize_maximizeSum | Optimize_precision

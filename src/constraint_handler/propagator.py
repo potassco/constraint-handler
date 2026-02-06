@@ -668,7 +668,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         maxSums = myClorm.findInPropagateInit(ctl, atom.Propagator_optimize_maximizeSum)
-        for (_, expr, symbol), literal in maxSums.items():
+        for (_, expr, symbol, priority), literal in maxSums.items():
             self.using_optimization = True
             self.optimization_sum.add_value(symbol, expr, literal)
 
