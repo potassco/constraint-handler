@@ -1,15 +1,25 @@
 #defined optimize_precision/1.
+#defined optimize_precision/2.
+#defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
 
+engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), optimize_maximizeSum(CNAME,E,X).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), optimize_maximizeSum(CNAME,E,X,P).
 
+% Map 3-parameter version to 4-parameter version with priority 0
+_optimize_maximizeSum(CNAME,E,X,0) :- engine(CNAME,compile), optimize_maximizeSum(CNAME,E,X).
+% 4-parameter version with explicit priority
 _optimize_maximizeSum(CNAME,E,X,P) :- engine(CNAME,compile), optimize_maximizeSum(CNAME,E,X,P).
 
-_optimize_precision(PREC) :- optimize_precision(PREC).
-_optimize_precision(val(int,1)) :- not optimize_precision(_).
+% Default precision for all priorities if not specified
+_optimize_precision(P,PREC) :- optimize_precision(PREC), not optimize_precision(P,_), _optimize_maximizeSum(_,_,_,P).
+% Precision for specific priority
+_optimize_precision(P,PREC) :- optimize_precision(P,PREC).
+% Default precision value of 1 if no precision is specified at all
+_optimize_precision(P,val(int,1)) :- _optimize_maximizeSum(_,_,_,P), not optimize_precision(_), not optimize_precision(P,_).
 
 optimize_component(ME,X,P) :- _optimize_maximizeSum(CNAME,E,X,P),
-  _optimize_precision(PREC),
+  _optimize_precision(P,PREC),
   ME = operation(CAST,(E,(PREC,()))),
   CAST = python("lambda v,p: math.floor(v*p)").
 
