@@ -6,10 +6,9 @@ This page documents the native optimization capabilities of the constraint handl
 
 **[Declaration]**{.badge .declaration }
 
-The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/3` or `optimize_maximizeSum/4` predicate.
+The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/4` predicate.
 
 ```prolog
-optimize_maximizeSum(Identifier, Expression, Key)
 optimize_maximizeSum(Identifier, Expression, Key, Priority)
 ```
 
@@ -18,7 +17,9 @@ optimize_maximizeSum(Identifier, Expression, Key, Priority)
 | `Identifier` | A unique identifier for this specific expression. |
 | `Expression` | The expression whose value is used in the maximization. |
 | `Key` | The key under which the value of the expression is used in the maximization. |
-| `Priority` | (Optional) The priority level for this optimization criterion. Higher priorities are optimized first. Defaults to `0` if not specified. |
+| `Priority` | The priority level for this optimization criterion. Higher priorities are optimized first. |
+
+For convenience, there also exists a shorthand version `optimize_maximizeSum/3` where the `Priority` is set to `0` by default.
 
 
 ### Single Value
@@ -135,19 +136,18 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
 
 **[Declaration]**{.badge .declaration }
 
-By default, the optimization module uses a precision of `1` for floating-point calculations. This can be adjusted using the `optimize_precision/1` predicate for all priorities, or `optimize_precision/2` to set precision for specific priorities.
+By default, the optimization module uses a precision of `1` for floating-point calculations. This can be adjusted using the `optimize_precision/2` predicate.
 
 ```prolog
-optimize_precision(Precision)
-optimize_precision(Priority, Precision)
+optimize_precision(Precision, Priority)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Priority` | The priority level for which to set the precision. Only used in the 2-parameter version. |
 | `Precision` | The [Value] to be used for floating-point calculations. Must be a positive [Int]. |
+| `Priority` | The priority level for which to set the precision. |
 
-When using `optimize_precision/1`, the precision applies to all priorities that don't have a specific precision set via `optimize_precision/2`. When using `optimize_precision/2`, you can set different precisions for different priority levels.
+For convenience, there also exists a shorthand version `optimize_precision/1` where the precision applies to all priorities that don't have a specific precision set.
 
 !!! Example
     Given the following variable `x` with a set of possible [Float] values:

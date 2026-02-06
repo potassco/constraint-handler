@@ -12,11 +12,11 @@ _optimize_maximizeSum(CNAME,E,X,0) :- engine(CNAME,compile), optimize_maximizeSu
 _optimize_maximizeSum(CNAME,E,X,P) :- engine(CNAME,compile), optimize_maximizeSum(CNAME,E,X,P).
 
 % Default precision for all priorities if not specified
-_optimize_precision(P,PREC) :- optimize_precision(PREC), not optimize_precision(P,_), _optimize_maximizeSum(_,_,_,P).
-% Precision for specific priority
-_optimize_precision(P,PREC) :- optimize_precision(P,PREC).
+_optimize_precision(P,PREC) :- optimize_precision(PREC), not optimize_precision(_,P), _optimize_maximizeSum(_,_,_,P).
+% Precision for specific priority (priority is last argument)
+_optimize_precision(P,PREC) :- optimize_precision(PREC,P).
 % Default precision value of 1 if no precision is specified at all
-_optimize_precision(P,val(int,1)) :- _optimize_maximizeSum(_,_,_,P), not optimize_precision(_), not optimize_precision(P,_).
+_optimize_precision(P,val(int,1)) :- _optimize_maximizeSum(_,_,_,P), not optimize_precision(_), not optimize_precision(_,P).
 
 optimize_component(ME,X,P) :- _optimize_maximizeSum(CNAME,E,X,P),
   _optimize_precision(P,PREC),

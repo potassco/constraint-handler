@@ -667,13 +667,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It reads the optimize_maximizeSum atoms and creates an OptimizationSum instance.
         """
 
-        # Handle 3-parameter convenience version
-        maxSumsConvenience = myClorm.findInPropagateInit(ctl, atom.Propagator_optimize_maximizeSum_convenience)
-        for (_, expr, symbol), literal in maxSumsConvenience.items():
-            self.using_optimization = True
-            self.optimization_sum.add_value(symbol, expr, literal)
-
-        # Handle 4-parameter version with explicit priority
         maxSums = myClorm.findInPropagateInit(ctl, atom.Propagator_optimize_maximizeSum)
         for (_, expr, symbol, priority), literal in maxSums.items():
             self.using_optimization = True
