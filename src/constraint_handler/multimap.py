@@ -94,7 +94,7 @@ class Evaluator:
                 assert len(args) == 3
                 return args[1] in args[0] and args[2] in args[0][args[1]]
             case Operator.multimap_fold:
-                evaluator = self.expr_evaluator.Evaluator()
+                evaluator = self.expr_evaluator()
                 o = lambda *aaa: evaluator.operator(args[0], aaa)  # TODO: check
                 return fold(o, args[1], args[2])
             case Operator.multimap_fold_i:
