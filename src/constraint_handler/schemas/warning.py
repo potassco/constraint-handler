@@ -64,7 +64,7 @@ type Kind = Expression | OtherError | Preference | Propagator | Statement | Type
 
 class Warning(typing.NamedTuple):
     id: Kind
-    declarations: list[typing.Any]  # expression.constant]
+    declarations: tuple[typing.Any, ...]  # expression.constant
     info: typing.Any
 
 
