@@ -767,10 +767,10 @@ class DictVariable:
 
 
 class OptimizationSum:
-    def __init__(self) -> None:
+    def __init__(self, priority: int = 0) -> None:
         self.expressions: list[tuple[clingo.Symbol, VariableValue]] = []
-        self.value: Any = ValueStatus.NOT_SET
-
+        self.value: int | float = -sys.maxsize
+        self.priority: int = priority
         self.decision_level: int = sys.maxsize
 
     def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int) -> None:
@@ -783,7 +783,7 @@ class OptimizationSum:
             lits.update(expr.literals)
         return lits
 
-    def get_value(self) -> Any:
+    def discern_value(self) -> int | float:
         vals = set()
         for var, expr in self.expressions:
             myprint(f"Summing {expr} with value {expr.value}")
@@ -795,6 +795,9 @@ class OptimizationSum:
                 vals.add((var, expr.value))
 
         return sum(value for var, value in vals)
+
+    def get_value(self) -> int | float:
+        return self.value
 
     def get_errors(self) -> list[Exception]:
         errors: list[Exception] = []
@@ -812,7 +815,7 @@ class OptimizationSum:
             changed |= expr.evaluate(evaluations, ctl, env)
 
         if changed:
-            total = self.get_value()
+            total = self.discern_value()
             if total != self.value:
                 self.decision_level = ctl.assignment.decision_level
                 self.value = total
@@ -832,13 +835,67 @@ class OptimizationSum:
 
         if self.decision_level >= dl:
             self.decision_level = sys.maxsize
-            self.value = ValueStatus.NOT_SET
+            self.value = -sys.maxsize
 
     def has_unassigned(self) -> bool:
         return any(expr.value == ValueStatus.NOT_SET for var, expr in self.expressions)
 
     def __repr__(self) -> str:
         return f"OptimizationSum({self.expressions})"
+
+
+class OptimizationHandler:
+    def __init__(self):
+        self.sums: list[OptimizationSum] = []
+
+    def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int, priority: int = 0) -> None:
+        for _sum in self.sums:
+            if _sum.priority == priority:
+                _sum.add_value(var, expr, lit)
+                return
+        new_sum = OptimizationSum(priority)
+        new_sum.add_value(var, expr, lit)
+        self.sums.append(new_sum)
+
+        self.sums.sort(key=lambda x: x.priority, reverse=True)  # higher priority first
+
+    def get_sum_count(self) -> int:
+        return len(self.sums)
+
+    def evaluate(
+        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
+    ) -> bool:
+        changed = False
+        for _sum in self.sums:
+            changed |= _sum.evaluate(evaluations, ctl, env)
+        return changed
+
+    def vars(self) -> set[clingo.Symbol]:
+        vars = set()
+        for _sum in self.sums:
+            vars.update(_sum.vars())
+        return vars
+
+    def reset(self, dl: int):
+        for _sum in self.sums:
+            _sum.reset(dl)
+
+    def get_errors(self) -> list[Exception]:
+        errors: list[Exception] = []
+        for _sum in self.sums:
+            errors.extend(_sum.get_errors())
+        return errors
+
+    def get_value(self) -> list[int | float]:
+        return [_sum.get_value() for _sum in self.sums]
+
+    def has_unassigned(self, position: int) -> bool:
+        """
+        Note that position is the index of the optimization sum in the sums list, which is sorted by priority.
+        So position 0 is the highest priority sum, position 1 is the second highest priority sum, and so on.
+        It is NOT the priority!
+        """
+        return self.sums[position].has_unassigned()
 
 
 class Execution:

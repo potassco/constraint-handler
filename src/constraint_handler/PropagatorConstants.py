@@ -28,6 +28,11 @@ class ReasoningMode(enum.Enum):
     CAUTIOUS = "cautious"
 
 
+class OptimizationStrength(enum.Enum):
+    STRICT = "strict"
+    LENIENT = "lenient"
+
+
 REASONING_STAGE_ATOM = "__stage__"
 
 
