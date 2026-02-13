@@ -111,7 +111,7 @@ class Optimize_maximizeSum(NamedTuple):
     label: expression.constant
     value: expression.Expr
     id: expression.constant
-    priority: expression.Expr
+    priority: expression.Expr | expression.constant
 
 
 class Optimize_precision(NamedTuple):

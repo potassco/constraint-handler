@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import operator
-from typing import Any, Callable, Iterable, Literal, Sequence, cast
+import sys
+from typing import Any, Iterable, Literal, Sequence, cast
 
 import clingo
 
@@ -19,6 +20,7 @@ from constraint_handler.PropagatorConstants import (
     REASONING_STAGE_ATOM,
     EvaluationResult,
     NoValueSet,
+    OptimizationStrength,
     ReasoningMode,
     ValueStatus,
 )
@@ -27,7 +29,7 @@ from constraint_handler.PropagatorVariables import (
     EnsureVariable,
     EvaluateVariable,
     Execution,
-    OptimizationSum,
+    OptimizationHandler,
     SetVariable,
     Variable,
     VariableType,
@@ -47,11 +49,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.evaluatevars: list[EvaluateVariable] = []
 
-        self.optimization_sum: OptimizationSum = OptimizationSum()
-        self.best_value: int | float = -1
+        self.optimization_sum: OptimizationHandler = OptimizationHandler()
+        self.best_value: list[int | float] = [-sys.maxsize]
         self.using_optimization: bool = False
-        self.optimization_check_func: Callable[[int | float, int | float], bool]
-        self.set_optimization_check_strength("le")
+        self.optimization_strength: OptimizationStrength = OptimizationStrength.STRICT
 
         self.environment: dict[Any, Any] = {}
 
@@ -93,7 +94,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.symbol2var.clear()
         self.literal2var.clear()
         self.evaluatevars.clear()
-        self.optimization_sum = OptimizationSum()
+        self.optimization_sum = OptimizationHandler()
         self.environment = {}
         self.errors.clear()
 
@@ -191,7 +192,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         else:
             raise ValueError(f"Unknown optimization check strength: {strength}")
 
-    def set_optimization_best_value(self, value: int | float) -> None:
+    def set_optimization_best_value(self, value: list[int | float]) -> None:
         """
         This method sets the best optimization value.
         """
@@ -220,7 +221,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         # If not backtracking, check optimization sums
         backtrack = self.evaluate_optimization_sum(control)
-        myprint(f"Optimization sum evaluated to {self.optimization_sum.value}")
+        myprint(f"Optimization sum evaluated to {self.optimization_sum.get_value()}")
         if backtrack:
             myprint(f"backtracking {backtrack} due to optimization sum being worse than best value {self.best_value}")
             return
@@ -239,9 +240,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # if everything is good, we update the best value
         # TODO: Maybe we have to move this next stuff to the on_model function
         # in case there are multiple propagators?
-        if self.using_optimization and self.optimization_sum.value > self.best_value:
-            print(f"New best optimization value found: {self.optimization_sum.value} (old: {self.best_value})")
-            self.best_value = self.optimization_sum.value
+        if self.using_optimization and self.optimization_sum.get_value() > self.best_value:
+            print(f"New best optimization value found: {self.optimization_sum.get_value()} (old: {self.best_value})")
+            self.best_value = self.optimization_sum.get_value()
 
     def evaluate_model(self, ctl: clingo.PropagateControl) -> bool:
         old_model = self.python_model
@@ -391,7 +392,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         # If not backtracking, check optimization sums
         self.evaluate_optimization_sum(control)
-        myprint(f"Optimization sum evaluated to {self.optimization_sum.value}")
+        myprint(f"Optimization sum evaluated to {self.optimization_sum.get_value()}")
 
     def evaluate_optimization_sum(self, ctl: clingo.PropagateControl) -> bool:
         """
@@ -404,24 +405,45 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if not self.using_optimization:
             return False
 
-        self.optimization_sum.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
+        changed = self.optimization_sum.evaluate(
+            make_dict_from_variables(self.symbol2var.values()), ctl, self.environment
+        )
+        if not changed:
+            return False
 
-        if self.optimization_sum.value != ValueStatus.NOT_SET:
-            if (
-                self.optimization_check_func(self.optimization_sum.value, self.best_value)
-                and not self.optimization_sum.has_unassigned()
-            ):
-                ng: set[int] = set()
-                for symbol_var in self.optimization_sum.vars():
-                    var = self.symbol2var[symbol_var]
-                    ng = ng.union(self.get_reasons(var))
-                # ng = (l for l in ng if l < 0)  # only keep negative literals
-                myprint(f"Adding nogood {list(ng)} to enforce optimization")
-                if ctl.add_nogood(ng, tag=True):
-                    assert False, "Added violated constraint but solver did not detect it"
+        for i, _sum in enumerate(self.optimization_sum.get_value()):
+            if _sum > self.best_value[i] or self.optimization_sum.has_unassigned(i):
+                # if the value is better already,
+                # rest of the priorities do not matter
+
+                # if the value is not yet better but has unassigned variables, we cannot be sure yet
+                # so we also break (since the behaviour for the rest of the priorities depends if this one is better, the same, or worse)
+                break
+            elif _sum == self.best_value[i]:
+                # value is the same and has been fully assigned, check next priority
+                # if this is the last value, all priorities were the same.
+                if i == len(self.best_value) - 1 and self.optimization_strength == OptimizationStrength.STRICT:
+                    # last priority and strict mode, add nogood to exclude this solution
+                    self.add_nogood_for_variable(ctl, self.optimization_sum)
+                    return True
+                else:
+                    # not last priority or lenient mode, keep looking at next priority
+                    continue
+            elif _sum < self.best_value[i] and not self.optimization_sum.has_unassigned(i):
+                # if the value is worse and fully assigned, we can already add a nogood to exclude this solution
+                self.add_nogood_for_variable(ctl, self.optimization_sum)
                 return True
 
         return False
+
+    def add_nogood_for_variable(self, ctl: clingo.PropagateControl, var: VariableType | OptimizationHandler) -> None:
+        ng: set[int] = set()
+        for symbol_var in var.vars():
+            v = self.symbol2var[symbol_var]
+            ng = ng.union(self.get_reasons(v))
+        myprint(f"Adding nogood {list(ng)} for variable {var}")
+        if ctl.add_nogood(ng, tag=True):
+            assert False, f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"
 
     def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]) -> bool:
         """
@@ -468,7 +490,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # check if any errors are forbidden
         for error, msg in var.get_errors():
             if error in self.forbidden_warnings:
-                myprint(f"Forbidden warning {(error,msg)} exists, making program unsat!")
+                myprint(f"Forbidden warning {(error, msg)} exists, making program unsat!")
                 ng = self.get_reasons(var)
                 myprint(f"Adding nogood {ng}")
                 if ctl.add_nogood(ng):
@@ -670,7 +692,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         maxSums = myClorm.findInPropagateInit(ctl, atom.Propagator_optimize_maximizeSum)
         for (_, expr, symbol, priority), literal in maxSums.items():
             self.using_optimization = True
-            self.optimization_sum.add_value(symbol, expr, literal)
+            self.optimization_sum.add_value(symbol, expr, literal, priority)
+
+        self.best_value = [-sys.maxsize] * self.optimization_sum.get_sum_count()
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
         """
@@ -782,7 +806,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # Since the warning comes from just reading the input
         for error, msg in self.errors:
             if error in self.forbidden_warnings:
-                myprint(f"Forbidden warning {(error,msg)} exists, making program unsat!")
+                myprint(f"Forbidden warning {(error, msg)} exists, making program unsat!")
                 ctl.add_clause([])
                 return
 
@@ -842,7 +866,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         if self.using_optimization:
             self.handle_on_model_warning(self.optimization_sum.get_errors())
-            print(f"Optimization value: {self.optimization_sum.value}")
+            myprint(f"Optimization value: {self.optimization_sum.get_value()}")
 
         self.handle_on_model_warning(self.errors)
 
