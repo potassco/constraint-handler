@@ -19,6 +19,7 @@
     * [Error Handling](reference/error_handling.md)
 * Developer Reference
     * [Fact Format](developer/fact-format.md)
+    * [Python API](developer/python.md)
 * Community
     * [Welcome](community/welcome.md)
     * [Changes](community/CHANGES.md)
