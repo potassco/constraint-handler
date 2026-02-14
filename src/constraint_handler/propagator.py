@@ -884,9 +884,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # alternatively, we have a separate part of the dict that tells you which refs are for which key/value
 
         # TODO: Type for dict is not handled here which results in a none value being output for the type in the value atom
-        pyVal = expression.Val(
-            evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
-        )
+        pyVal = expression.Val(evaluator.get_baseType(final_value), var)
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
