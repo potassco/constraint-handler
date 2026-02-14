@@ -1,4 +1,4 @@
-a
+m
 p
 q
 value(c,val(bool,true))
@@ -8,5 +8,10 @@ value(a,val(int,1))
 value(b,val(int,1))
 set_value(s1,val(int,1))
 set_value(s1,val(int,2))
+set_value(s2,val(int,1))
+set_value(s2,val(int,2))
+multimap_value(m1,val(int,1),val(int,1))
+multimap_value(m1,val(int,1),val(int,2))
+multimap_value(m1,val(int,2),val(int,1))
 __stage__(1)
 __stage__(3)

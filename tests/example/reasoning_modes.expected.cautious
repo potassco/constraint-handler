@@ -1,2 +1,5 @@
+m
 value(c,val(bool,true))
-a
+set_value(s2,val(int,1))
+multimap_value(m1,val(int,2),val(int,1))
+value(m1,val(multimap,m1))

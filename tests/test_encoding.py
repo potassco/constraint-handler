@@ -100,6 +100,7 @@ def test_engine_ground(name: str):
         "optimize_priority",
         "set_iterations",
         "set_selfref",
+        "reasoning_modes",
     ]
     if name not in unsupported:
         run_test(name, "ground")
