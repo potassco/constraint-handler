@@ -1,1 +1,1 @@
-evaluated(limp,(variable(active),(variable(good_y),())),bool,true)
+evaluated(limp,(variable(active),(variable(good_y),())),val(bool,true))

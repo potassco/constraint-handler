@@ -860,7 +860,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             print(eval_var, eval_var.get_value())
             self.handle_on_model_warning(eval_var.get_errors())
             pyAtom = atom.Evaluated(
-                eval_var.op, eval_var.args, evaluator.get_baseType(eval_var.get_value()), eval_var.get_value()
+                eval_var.op,
+                eval_var.args,
+                expression.Val(evaluator.get_baseType(eval_var.get_value()), eval_var.get_value()),
             )
             self.python_model.add(pyAtom)
 

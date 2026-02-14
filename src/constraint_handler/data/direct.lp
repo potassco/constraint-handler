@@ -8,7 +8,7 @@ _se_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 _se_assign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,compile).
 _se_evaluate(_se_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(compile).
 
-evaluated(OP,ARGS,T,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(E,val(T,V)), E=operation(OP,ARGS).
+evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(E,V), E=operation(OP,ARGS).
 
 
 direct_query(E)  :- _se_ensure(NAME,E).

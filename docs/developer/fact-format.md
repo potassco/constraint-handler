@@ -160,7 +160,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <atom> ::=
     | "value" "(" <term> "," <val> ")"
-    | "evaluated" "(" <operator> "," <expression-list>  "," <type> "," <term> ")"
+    | "evaluated" "(" <operator> "," <expression-list>  "," <val> ")"
     | "set_value" "(" <term> "," <val> ")"
     | "multimap_value" "(" <term> "," <val> "," <val> ")"
     | "preference_score" "(" <int> ")"

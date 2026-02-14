@@ -1,1 +1,1 @@
-evaluated(variable(myfactorial),(val(int,5),()),int,120)
+evaluated(variable(myfactorial),(val(int,5),()),val(int,120))

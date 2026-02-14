@@ -12,7 +12,7 @@ ge_value(X,val(T,V)) :- ge_vQuery(X), value(X,val(T,V)), representation(T,extens
 value(X,val(T,V)) :- ge_value(X,val(T,V)), representation(T,extensional).
 value(X,val(set,V)) :- ge_value(X,V), V=set(S).
 set_value(X,VAL) :- ge_value(X,VS), VS=set(S), VAL=@pythonListElements(S).
-evaluated(OP,ARGS,T,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(EXPR,val(T,V)).
+evaluated(OP,ARGS,V) :- evaluate(OP,ARGS), EXPR=operation(OP,ARGS), ge_result(EXPR,V).
 
 ge_expressionQuery(EXPR) :- _main_defaultEngine(ground), evaluate(OP,ARGS), EXPR=operation(OP,ARGS).
 ge_expressionQuery(EXPR) :- _ge_ensure(CNAME,EXPR).

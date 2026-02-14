@@ -173,8 +173,7 @@ class Evaluate(NamedTuple):
 class Evaluated(NamedTuple):
     name: expression.Operator
     expr: list[expression.Expr]
-    type_: expression.BaseType
-    value: expression.constant
+    value: expression.Val
 
 
 type MainAtom = Assign | Ensure | Evaluate
