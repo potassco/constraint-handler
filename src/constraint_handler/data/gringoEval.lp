@@ -35,16 +35,11 @@ _ge_setAssigns(X,L) :- _ge_setAssignsAux(X,E,L),
 
 _ge_assign(CNAME,X,EXPR) :- _ge_set_declare(CNAME,X), _ge_setAssigns(X,L), EXPR=set(L).
 
-ge_indexVar(EXPR,#inf,-1) :- ge_expressionQuery(EXPR).
-ge_indexVar(EXPR,Y,I+1) :- ge_indexVar(EXPR,X,I), involvedVars(EXPR,Y), X < Y,
-  0 = #count { Z : involvedVars(EXPR,Z), X < Z, Z < Y }.
-ge_nbVars(EXPR,N) :- ge_expressionQuery(EXPR),
-  N = #count { Y : involvedVars(EXPR,Y) }.
+_ge_enumeratedVariables(EXPR,R) :- ge_expressionQuery(EXPR), R=@pythonEnumerateVariables(EXPR).
 
-
-ge_mapAux(EXPR,0,()) :- ge_expressionQuery(EXPR).
-ge_mapAux(EXPR,I+1,((X,V),M)) :- ge_mapAux(EXPR,I,M), ge_indexVar(EXPR,X,I), ge_value(X,V).
-ge_mapped(EXPR,M) :- ge_mapAux(EXPR,I,M), ge_nbVars(EXPR,I).
+ge_mapAux(EXPR,N,()) :- _ge_enumeratedVariables(EXPR,length(N)).
+ge_mapAux(EXPR,I,((X,V),M)) :- ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), ge_value(X,V).
+ge_mapped(EXPR,M) :- ge_mapAux(EXPR,0,M).
 
 _ge_eval_exec(EXPR,M,RES) :- ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifier(ID).
 ge_result(EXPR,V) :- _ge_eval_exec(EXPR,M,V), #false: V=error(_).
