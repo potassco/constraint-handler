@@ -32,5 +32,5 @@ variable_declare(conditionals,a,fromFacts).
 variable_domain(a,(val(int,0..1);val(none,none))).
 evaluate(hasValue,(variable(a),())).
 evaluate(leqv,(operation(hasValue,(variable(a),())),
-             (operation(default,(operation(leq,(variable(a),(val(int,2),()))),(val(bool,false),()))),
+             (operation(leq,(operation(default,(variable(a),(val(int,20),()))),(val(int,3),()))),
              ()))).

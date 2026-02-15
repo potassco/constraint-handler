@@ -30,7 +30,7 @@
 \subsection{Building expression terms}
 \begin{grammar}
 
-<val> ::= `val' `(' <type> `,' <term> `)'
+<val> ::= `bad' | `val' `(' <type> `,' <term> `)'
 
 <operator> ::=
 ~\alt `python' `(' <str> `)'
@@ -156,6 +156,23 @@
 \subsection{Result fact format}
 \begin{grammar}
 
+<expression-warning> ::=
+~\alt `notImplemented'
+\alt `pythonError'
+\alt `syntaxError'
+\alt `zeroDivisionError'
+
+<preference-warning> ::=
+~\alt `unsupported'
+
+<statement-warning> ::=
+~\alt `evaluatorError'
+\alt `notImplemented'
+\alt `pythonError'
+
+<type-warning> ::=
+~\alt `failed_operation'
+
 <variable-warning> ::=
 ~\alt `emptyDomain'
 \alt `multipleDeclarations'
@@ -163,15 +180,20 @@
 \alt `undeclared'
 
 <warning-symbol> ::=
-~\alt `variable' `(' <variable-warning> `)'
+~\alt `expression' `(' <expression-warning> `)'
+\alt `otherError'
+\alt `preference' `(' <preference-warning> `)'
+\alt `propagator'
+\alt `statement' `(' <statement-warning> `)'
+\alt `type' `(' <type-warning> `)'
+\alt `variable' `(' <variable-warning> `)'
 
 <atom> ::=
 ~\alt `value' `(' <term> `,' <val> `)'
-\alt `evaluated' `(' <operator> `,' <expression-list>  `,' <type> `,' <term> `)'
+\alt `evaluated' `(' <operator> `,' <expression-list>  `,' <val> `)'
 \alt `set_value' `(' <term> `,' <val> `)'
 \alt `multimap_value' `(' <term> `,' <val> `,' <val> `)'
 \alt `preference_score' `(' <int> `)'
-\alt `warning' `(' <term> `)'
 \alt `warning' `(' <warning-symbol> `,' <term-list> `,' <term> `)'
 \end{grammar}
 

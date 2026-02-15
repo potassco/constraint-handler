@@ -8,3 +8,6 @@ class PPEnum(Enum):
 
     def __str__(self):
         return self.name
+
+
+Bad = PPEnum("Bad", ["bad"])

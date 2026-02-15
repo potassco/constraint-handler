@@ -6,23 +6,21 @@ from enum import Enum
 
 import clingo
 
+import constraint_handler.arithmetic as arithmetic
+import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.set as myset
 import constraint_handler.utils.common as common
 
 BaseType = common.PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
-UnaryOperator = common.PPEnum(
-    "UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor", "ceil"]
-)
-LogicOperator = common.PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
-BinaryOperator = common.PPEnum(
-    "BinaryOperator",
-    ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
-)
-EqOperator = common.PPEnum("LogicOperator", ["eq", "neq"])
+
+EqOperator = common.PPEnum("EqOperator", ["eq", "neq"])
 StringOperator = common.PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = common.PPEnum("OtherOperator", ["max", "min", "length"])
+
+
+Bad = common.Bad
 
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
@@ -41,10 +39,9 @@ class Python(typing.NamedTuple):
 
 
 Operator = (
-    UnaryOperator
-    | BinaryOperator
+    arithmetic.Operator
     | EqOperator
-    | LogicOperator
+    | logic.Operator
     | StringOperator
     | multimap.Operator
     | myset.Operator
@@ -89,5 +86,5 @@ class Lambda(typing.NamedTuple):
         return f"Lambda({[str(x) for x in self.vars]},{str(self.expr)})"
 
 
-type ReducedExpr = Val | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
-type Expr = Variable | Operation | Val | Lambda | frozenset[Expr] | tuple[Expr, ...]
+type ReducedExpr = Bad | Val | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
+type Expr = Bad | Variable | Operation | Val | Lambda | frozenset[Expr] | tuple[Expr, ...]

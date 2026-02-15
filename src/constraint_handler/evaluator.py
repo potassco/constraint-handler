@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import functools
 import importlib
-import math
-import operator
 
 import clingo
 
+import constraint_handler.arithmetic as arithmetic
+import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.expression as expression
@@ -16,13 +15,10 @@ import constraint_handler.set as myset
 import constraint_handler.solver_environment as solver_environment
 from constraint_handler.schemas.expression import (
     BaseType,
-    BinaryOperator,
     ConditionalOperator,
     EqOperator,
-    LogicOperator,
     OtherOperator,
     StringOperator,
-    UnaryOperator,
 )
 
 _shared_environment = {
@@ -68,8 +64,10 @@ def get_baseType(v):
         return BaseType.multimap
     elif isinstance(v, clingo.Symbol):
         return BaseType.symbol
+    elif v is None:
+        return BaseType.none
     else:
-        return None
+        raise NotImplementedError(f"get_baseType is not implemented for {v}")
 
 
 def reducedExpr(v):
@@ -91,6 +89,8 @@ def reducedExpr(v):
         raise NotImplementedError(f"reducedExpr is not implemented for {dict} {v}")
     elif isinstance(v, expression.Lambda):
         return v
+    elif isinstance(v, expression.Bad):
+        return v
     else:
         raise NotImplementedError(f"reducedExpr is not implemented for {v}")
 
@@ -100,89 +100,10 @@ class Evaluator:
         self.globals = globals if globals is not None else dict()
         self.locals = locals if locals is not None else dict()
         self.errors = []
+        self.arithmetic = arithmetic.Evaluator(Evaluator, self.errors)
+        self.logic = logic.Evaluator(Evaluator, self.errors)
         self.multimap = multimap.Evaluator(Evaluator, self.errors)
         self.set = myset.Evaluator(Evaluator, self.errors)
-
-    def unop(self, o, val):
-        match o:
-            case UnaryOperator.sqrt:
-                return math.sqrt(val)
-            case UnaryOperator.cos:
-                return math.cos(val)
-            case UnaryOperator.sin:
-                return math.sin(val)
-            case UnaryOperator.tan:
-                return math.tan(val)
-            case UnaryOperator.abs:
-                return abs(val)
-            case UnaryOperator.acos:
-                return math.acos(val)
-            case UnaryOperator.asin:
-                return math.asin(val)
-            case UnaryOperator.atan:
-                return math.atan(val)
-            case UnaryOperator.minus:
-                return -val
-            case UnaryOperator.ceil:
-                return math.ceil(val)
-            case UnaryOperator.floor:
-                return math.floor(val)
-            case _:
-                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented), f"unop {o}"))
-                return None
-
-    def logic_operator(self, o, args):
-        match o:
-            case LogicOperator.conj:
-                if False in args:
-                    return False
-                elif None in args:
-                    return None
-                else:
-                    return True
-            case LogicOperator.disj:
-                if True in args:
-                    return True
-                elif None in args:
-                    return None
-                else:
-                    return False
-            case LogicOperator.ite:
-                assert len(args) == 3
-                if args[0] is None:
-                    return None
-                return args[1] if args[0] else args[2]
-            case LogicOperator.leqv:
-                if None in args:
-                    return None
-                return functools.reduce(operator.eq, args)
-            case LogicOperator.limp:
-                assert len(args) == 2
-                return args[1] if args[0] else True
-            case LogicOperator.lnot:
-                assert len(args) == 1
-                if None in args:
-                    return None
-                return not args[0]
-            case LogicOperator.lxor:
-                if None in args:
-                    return None
-                return functools.reduce(operator.xor, args)
-            case LogicOperator.snot:
-                assert len(args) == 1
-                if None in args:
-                    return False
-                return not args[0]
-            case LogicOperator.wnot:
-                assert len(args) == 1
-                if None in args:
-                    return True
-                return not args[0]
-            case _:
-                self.errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), f"logic_operator {o}")
-                )
-                return None
 
     def string_operator(self, o, args):
         if None in args:
@@ -196,7 +117,7 @@ class Evaluator:
                             f"len takes one argument ({len(args)} were given)",
                         )
                     )
-                    return None
+                    return expression.Bad.bad
                 return len(args[0])
             case StringOperator.concat:
                 return "".join(args)
@@ -204,47 +125,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"string operator {o}")
                 )
-                return None
-
-    def binop(self, o, lval, rval):
-        if lval is None or rval is None:
-            return None
-        match o:
-            case BinaryOperator.add:
-                return lval + rval
-            case BinaryOperator.sub:
-                return lval - rval
-            case BinaryOperator.mult:
-                return lval * rval
-            case BinaryOperator.div:
-                if rval == 0:
-                    self.errors.append(
-                        (warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}")
-                    )
-                    return None
-                return lval // rval
-            case BinaryOperator.fdiv:
-                if rval == 0:
-                    self.errors.append(
-                        (warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}")
-                    )
-                    return None
-                return lval / rval
-            case BinaryOperator.pow:
-                return lval ** rval  # fmt: skip
-            case BinaryOperator.leq:
-                return lval <= rval
-            case BinaryOperator.lt:
-                return lval < rval
-            case BinaryOperator.geq:
-                return lval >= rval
-            case BinaryOperator.gt:
-                return lval > rval
-            case _:
-                self.errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), f"binary operator {o}")
-                )
-                return None
+                return expression.Bad.bad
 
     def eq_operator(self, o, lval, rval):
         match o:
@@ -256,7 +137,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"equality operator {o}")
                 )
-                return None
+                return expression.Bad.bad
 
     def conditional_operator(self, o, args):
         match o:
@@ -276,7 +157,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"conditional operator {o}")
                 )
-                return None
+                return expression.Bad.bad
 
     def python_operator(self, fn, args):
         try:
@@ -293,14 +174,14 @@ class Evaluator:
             case expression.Python(fn):
                 return self.python_operator(fn, args)
             case expression.Lambda(vars, expr):
-                if len(vars) != len(args):  # TODO create a warning instead?
+                if len(vars) != len(args):
                     self.errors.append(
                         (
                             warning.Expression(warning.ExpressionWarning.syntaxError),
                             ValueError(f"evaluate_operator inconsistent parameters and argument lengths for {o}"),
                         )
                     )
-                    return None
+                    return expression.Bad.bad
                 locals = dict(self.locals)
                 for v, e in zip(vars, args):
                     locals[v] = e
@@ -310,9 +191,17 @@ class Evaluator:
                 if len(args) == 2:
                     return self.eq_operator(o, args[0], args[1])
                 else:
-                    assert False  # TODO
-            case LogicOperator():
-                return self.logic_operator(o, args)
+                    self.errors.append(
+                        (
+                            warning.Expression(warning.ExpressionWarning.syntaxError),
+                            ValueError(f"eq takes two arguments, not {args}"),
+                        )
+                    )
+                    return expression.Bad.bad
+            case arithmetic.Operator():
+                return self.arithmetic.operator(o, args)
+            case logic.Operator():
+                return self.logic.operator(o, args)
             case multimap.Operator():
                 return self.multimap.operator(o, args)
             case myset.Operator():
@@ -327,34 +216,24 @@ class Evaluator:
             case OtherOperator.min:
                 assert len(args)
                 return min(args)
-            case o:
-                foldable = {BinaryOperator.add: sum, BinaryOperator.mult: math.prod}
-
-                if o in foldable:
-                    return foldable[o](args)
-
-                if len(args) == 1:
-                    return self.unop(o, args[0])
-                elif len(args) == 2:
-                    return self.binop(o, args[0], args[1])
-                else:
-                    self.errors.append(
-                        (warning.Expression(warning.ExpressionWarning.NotImplementedError), f"operator {o}")
-                    )
-                    return None
+            case _:
+                self.errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError), f"operator {o}"))
+                return expression.Bad.bad
 
     def expr(self, expr):
         match expr:
             case expression.Operation(eo, eargs):
                 args = [self.expr(a) for a in eargs]
                 o = self.expr(eo)
+                if expression.Bad.bad == eo or expression.Bad.bad in args:
+                    return expression.Bad.bad
                 return self.operator(o, args)
             case expression.Variable(a):
                 if a in self.locals:
                     return self.locals[a]  # TODO : and globals?
                 else:
                     self.errors.append((warning.Variable(warning.VariableWarning.undeclared), f"{a}"))
-                    return None
+                    return expression.Bad.bad
             case expression.Val(type_, val):
                 return val
             case expression.Lambda(vars, body):
@@ -379,7 +258,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), NotImplementedError(f"expr {expr}"))
                 )
-                return None
+                return expression.Bad.bad
 
     def stmt_python(self, code):
         try:
@@ -394,6 +273,9 @@ class Evaluator:
         match stmt:
             case statement.Assert(expr):
                 condition = self.expr(expr)
+                if condition == expression.Bad.bad:
+                    assert self.errors
+                    return
                 if condition != True:
                     raise solver_environment.FailIntegrityExn
             case statement.Assign(var, expr):
@@ -421,13 +303,22 @@ class Evaluator:
 
 def evaluate_expr(expr, globals=None, locals=None):
     env = Evaluator(globals, locals)
-    result = env.expr(expr)
+    try:
+        result = env.expr(expr)
+    except Exception as exn:
+        env.errors.append((warning.Statement(warning.StatementWarning.evaluatorError), repr(exn)))
+        return expression.Bad.bad, env.errors
     return result, env.errors
 
 
 def evaluate_stmt(stmt, globals=None, locals=None):
     env = Evaluator(globals, locals)
-    env.stmt(stmt)
+    try:
+        env.stmt(stmt)
+    except solver_environment.FailIntegrityExn:
+        raise solver_environment.FailIntegrityExn
+    except Exception as exn:
+        env.errors.append((warning.Statement(warning.StatementWarning.evaluatorError), repr(exn)))
     return env.errors
 
 

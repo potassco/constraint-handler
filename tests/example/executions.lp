@@ -1,9 +1,3 @@
-#show warning/1.
-#show value/3.
-#show evaluated/4.
-
-
-
 %% absolut(input: x, output: y):
 %%     if x >=0:
 %%         y := x

@@ -17,7 +17,7 @@ _execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,
 assign(_internal,execution_output(NAME,X),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_ou(NAME,X,V).
 assign(_internal,execution_output(NAME,X),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_in(NAME,X,V), not _execution_ou_proj(NAME,X).
 assign(_internal,execution_output(NAME,X),val(none,none)) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), not _execution_input_var(NAME,X), not _execution_ou_proj(NAME,X).
-assign(_internal,execution_output(NAME,X),val(none,none)) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), not _execution_succeeds(NAME,STMT).
+assign(_internal,execution_output(NAME,X),bad) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_fails(NAME,STMT).
 
 
 _execution_ou_proj(NAME,X) :- _execution_ou(NAME,X,V).
@@ -42,6 +42,8 @@ _execution_in((subr,NAME),X,V) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,S
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT2), _execution_ou((subr,NAME),X,V), _execution_succeeds((subr,NAME),STMT2).
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT2), _execution_ou((subl,NAME),X,V), not _execution_ou_proj((subr,NAME),X), _execution_succeeds((subr,NAME),STMT2).
 _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT2), _execution_succeeds((subr,NAME),STMT2).
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT2), _execution_fails((subl,NAME),STMT1).
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT2), _execution_fails((subr,NAME),STMT2).
 
 %%%%%%%%%%%%%%%%% _execution_equery -> _execution_evaled
 %_execution_eval_aux(NAME,EXPR,EXP2) :- _execution_equery(NAME,EXPR), EXP2=@pythonTagVars(EXPR,NAME).
@@ -50,22 +52,24 @@ _execution_eval_aux(NAME,STMT,EXPR,EXP2) :- _execution_equery(NAME,STMT,EXPR), E
 direct_query(EXP2) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2).
 _set_declare(_internal,E) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L).
 _set_assign(_internal,E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L), V=@pythonListElements(L).
-_se_value(E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=val(T,VAL).
+_se_value(E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V).
 %_execution_evaled(NAME,EXPR,V) :- _execution_eval_aux(NAME,EXPR,EXP2), _se_value(EXP2,V), V=val(T,VAL).
-_execution_evaled(NAME,STMT,EXPR,V) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2), _se_value(EXP2,V), V=val(T,VAL).
+_execution_evaled(NAME,STMT,EXPR,V) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2), _se_value(EXP2,V).
 
 
 %%%%%%%%%%%%%%%%% assign
 _execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR).
-_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR).
+_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_evaled(NAME,STMT,EXPR,V), V!=bad.
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_evaled(NAME,STMT,EXPR,bad).
 %_execution_ou(NAME,Y,V) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_in(NAME,Y,V), X != Y. % TODO:???
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_evaled(NAME,STMT,EXPR,V).
 
 
 %%%%%%%%%%%%%%%%% assert
 _execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = assert(EXPR).
-:- _execution_run(NAME,STMT), STMT = assert(EXPR), _execution_evaled(NAME,STMT,EXPR,V), V != val(bool,true).
-_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assert(EXPR).
+:- _execution_run(NAME,STMT), STMT = assert(EXPR), _execution_evaled(NAME,STMT,EXPR,V), V != val(bool,true), V != bad.
+_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assert(EXPR), _execution_evaled(NAME,STMT,EXPR,V), V!=bad.
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assert(EXPR), _execution_evaled(NAME,STMT,EXPR,bad).
 
 
 %%%%%%%%%%%%%%%%% statement_python
@@ -78,6 +82,7 @@ _execution_exec(NAME,R) :- _execution_run(NAME,STMT), STMT = statement_python(ST
 :- _execution_exec(NAME,failIntegrity).
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,(X,V)).
 _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,true).
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(KIND,MSG)).
 _warning(KIND,(NAME,()),(STR,MSG,NAME)) :- _execution_run(NAME,STMT), STMT = statement_python(STR), _execution_exec(NAME,error(KIND,MSG)).
 
 %_statement_extract_vars(SCOPE,INS,OUS) :- _statement_query(SCOPE,STMT), STMT = statement_python(S), _main_solverIdentifier(ID), (INS,OUS)=@pythonGetVariablesFromPython(S,ID).
@@ -88,11 +93,12 @@ _execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = if(EXPR,T
 
 _execution_branch((then,NAME),THEN) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_evaled(NAME,STMT,EXPR,val(bool,true)).
 _execution_branch((else,NAME),ELSE) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_evaled(NAME,STMT,EXPR,val(bool,false)).
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_evaled(NAME,STMT,EXPR,V), V!=val(bool,false), V!=val(bool,true).
 _execution_run(BNAME,BSTMT) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME).
 _execution_in(((then;else),NAME),X,V) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_in(NAME,X,V).
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_ou(BNAME,X,V), _execution_succeeds(BNAME,BSTMT).
 _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_succeeds(BNAME,BSTMT).
-
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_fails(BNAME,BSTMT).
 
 
 %%%%%%%%%%%%%%%%% while
@@ -106,3 +112,4 @@ _execution_run(BNAME,BSTMT) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,
 _execution_in(BNAME,X,V) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_in(NAME,X,V), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME).
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_ou(BNAME,X,V), _execution_succeeds(BNAME,BSTMT).
 _execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_succeeds(BNAME,BSTMT).
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_fails(BNAME,BSTMT).

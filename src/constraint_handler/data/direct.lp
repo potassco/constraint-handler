@@ -8,7 +8,7 @@ _se_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 _se_assign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,compile).
 _se_evaluate(_se_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(compile).
 
-evaluated(OP,ARGS,T,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(E,val(T,V)), E=operation(OP,ARGS).
+evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(E,V), E=operation(OP,ARGS).
 
 
 direct_query(E)  :- _se_ensure(NAME,E).
@@ -66,6 +66,7 @@ _direct_implode_args_aux(ARGS,IDX,K) :- _direct_implode_args_aux(ARGS,IDX+1,L),
     _direct_imploded(ARG,IMP), K=(IMP,L).
 _expression_eval_exec(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L), RES = @pythonEvalExpr(operation(OP,L),(),ID), _main_solverIdentifier(ID).
 computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
+computed(OP,ARGS,bad) :- _expression_eval_exec(OP,ARGS,error(MSG)).
 _warning(expression(pythonError),(),(OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(MSG)).
 %%% TODO duplicated code in groundEval.lp
 
@@ -73,6 +74,11 @@ _warning(expression(pythonError),(),(OP,ARGS,MSG)) :- _expression_eval_exec(OP,A
 assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).
 %direct_query(ER) :- direct_query(E), beta_reduction(E,ER).
 %_se_value(E,T,V) :- direct_query(E), beta_reduction(E,ER), _se_value(ER,T,V).
+
+%%%%%%%%%%%%%%%%% bad
+_se_value(E,bad) :- direct_query(E), E=operation(OP,ARGS), _se_value(ARG,bad), ARG=@pythonListElements(ARGS).
+_se_value(E,bad) :- direct_query(E), E=operation(OP,ARGS), _se_value(OP,bad).
+_se_value(E,bad) :- direct_query(E), E=bad.
 
 %%%%%%%%%%%%%%%%% implode
 _direct_imploded(E,E) :- _direct_implode(E), E=val(T,V), representation(T,extensional).
@@ -84,4 +90,4 @@ _direct_imploded(E,V) :- _direct_implode(E), E=variable(X), _se_value(E,V).
 #external usc_relax(NAME) : engine(NAME,E).
 { usc_active(NAME) } :- engine(NAME,E).
 usc_active(NAME) :- engine(NAME,E), not usc_relax(NAME).
-:- _se_ensure(NAME,E), not _se_value(E,val(bool,true)), usc_active(NAME).
+:- _se_ensure(NAME,E), not _se_value(E,val(bool,true)), not _se_value(E,bad), usc_active(NAME).

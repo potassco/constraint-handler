@@ -22,6 +22,13 @@ def pythonExpressionVariable(clExpr):
     clVars = [myClorm.pytocl(var) for var in pVars]
     return clVars
 
+def pythonEnumerateVariables(clExpr):
+    pExpr = myClorm.cltopy(clExpr,expression.Expr)
+    pVars = list(evaluator.collectVars(pExpr))
+    result = [myClorm.pytocl(e) for e in enumerate(pVars)]
+    result.append(clingo.Function("length",[clingo.Number(len(pVars))]))
+    return result
+
  # TODO: dead?
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars)

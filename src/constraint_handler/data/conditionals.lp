@@ -1,6 +1,7 @@
 %%%%%%%%%%%%%%%%% conditional_hasValue/1 conditional_hasNoValue/1
-conditional_hasValue(E) :- _se_value(E,V), V != val(none,none).
-conditional_hasNoValue(E) :- direct_query(E), not conditional_hasValue(E).
+conditional_hasValue(E) :- _se_value(E,V), V != val(none,none), V !=bad.
+conditional_hasNoValue(E) :- direct_query(E), _se_value(E,val(none,none)).
+%1 { conditional_hasNoValue(E); conditional_hasValue(E) } 1 :- _se_value(E,bad).
 
 %%%%%%%%%%%%%%%%% eq neq
 computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=eq,  ARGS = (val(none,V1),(val(none,V2),())).
@@ -25,8 +26,8 @@ _se_value(E,val(none,none)) :- direct_query(E), E=operation(if,(E1,(E2,()))), _s
 
 %%%%%%%%%%%%%%%%% default
 _se_value(E,V) :- direct_query(E), E=operation(default,(E1,TL)), _se_value(E1,V), V != val(none,none).
-_se_value(E,V) :- direct_query(E), E=operation(default,(E1,(E2,()))), not conditional_hasValue(E1), _se_value(E2,V).
+_se_value(E,V) :- direct_query(E), E=operation(default,(E1,(E2,()))), _se_value(E1,val(none,none)), _se_value(E2,V).
 
 %%%%%%%%%%%%%%%%% hasValue
 _se_value(E,val(bool,true))  :- direct_query(E), E=operation(hasValue,(E1,())), conditional_hasValue(E1).
-_se_value(E,val(bool,false)) :- direct_query(E), E=operation(hasValue,(E1,())), conditional_hasNoValue(E1).
+_se_value(E,val(bool,false)) :- direct_query(E), E=operation(hasValue,(E1,())), _se_value(E1,val(none,none)).

@@ -20,7 +20,3 @@ variable_define(dummy,gz,variable(execution_output(myfun,z))).
 variable_define(dummy,same,operation(eq,(variable(gx),(variable(gy),())))).
 
 evaluate(neq,(variable(gx),(variable(gy),()))).
-
-#show value/2.
-#show _gex_exec/2.
-#show evaluated/4.
