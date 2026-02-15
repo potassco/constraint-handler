@@ -29,7 +29,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 ## Building Expression Terms
 
 ```ebnf
-<val> ::= "val" "(" <type> "," <term> ")"
+<val> ::= "bad" | "val" "(" <type> "," <term> ")"
 
 <operator> ::=
     | "python" "(" <str> ")"
@@ -149,6 +149,24 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 ```
 ## Result Facts
 ```ebnf
+
+<expression-warning> ::=
+    | "notImplemented"
+    | "pythonError"
+    | "syntaxError"
+    | "zeroDivisionError"
+
+<preference-warning> ::=
+    | "unsupported"
+
+<statement-warning> ::=
+    | "evaluatorError"
+    | "notImplemented"
+    | "pythonError"
+
+<type-warning> ::=
+    | "failed_operation"
+
 <variable-warning> ::=
     | "emptyDomain"
     | "multipleDeclarations"
@@ -156,6 +174,12 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "undeclared"
 
 <warning-symbol> ::=
+    | "expression" "(" <expression-warning> ")"
+    | "otherError"
+    | "preference" "(" <preference-warning> ")"
+    | "propagator"
+    | "statement" "(" <statement-warning> ")"
+    | "type" "(" <type-warning> ")"
     | "variable" "(" <variable-warning> ")"
 
 <atom> ::=
@@ -164,6 +188,5 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "set_value" "(" <term> "," <val> ")"
     | "multimap_value" "(" <term> "," <val> "," <val> ")"
     | "preference_score" "(" <int> ")"
-    | "warning" "(" <term> ")"
     | "warning" "(" <warning-symbol> "," <term-list> "," <term> ")"
 ```
