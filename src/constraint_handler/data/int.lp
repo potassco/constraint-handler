@@ -17,7 +17,7 @@ computed(OP, ARGS, val(int, V1 * VTAIL)) :-
 computed(OP,ARGS,val(int,V1-V2))  :- compute(OP,ARGS), OP=sub,  ARGS = (val(int,V1),(val(int,V2),())).
 computed(OP,ARGS,val(int,V1/V2))  :- compute(OP,ARGS), OP=div,  ARGS = (val(int,V1),(val(int,V2),())), V2!=0.
 computed(OP,ARGS,bad) :- compute(OP,ARGS), OP=(div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
-warning(int(divisionByZero),(),(OP,ARGS))  :- compute(OP,ARGS), OP=(div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
+warning(expression(zeroDivisionError),(),(OP,ARGS))  :- compute(OP,ARGS), OP=(div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
 computed(OP,ARGS,val(int,V1**V2)) :- compute(OP,ARGS), OP=pow,  ARGS = (val(int,V1),(val(int,V2),())).
 
 computed(OP,ARGS,val(int,|V|)) :- compute(OP,ARGS), OP=abs,   ARGS = (val(int,V),()).

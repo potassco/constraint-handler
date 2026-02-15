@@ -20,13 +20,6 @@ class Expression(typing.NamedTuple):
     symbol: ExpressionWarning
 
 
-IntWarning = common.PPEnum("IntWarning", ["divisionByZero"])
-
-
-class Int(typing.NamedTuple):
-    symbol: IntWarning
-
-
 class OtherError(typing.NamedTuple):
     pass
 
@@ -66,7 +59,7 @@ class Variable(typing.NamedTuple):
     symbol: VariableWarning
 
 
-type Kind = Expression | Int | OtherError | Preference | Propagator | Statement | Type | Variable
+type Kind = Expression | OtherError | Preference | Propagator | Statement | Type | Variable
 
 
 class Warning(typing.NamedTuple):
