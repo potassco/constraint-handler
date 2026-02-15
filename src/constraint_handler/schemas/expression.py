@@ -6,6 +6,7 @@ from enum import Enum
 
 import clingo
 
+import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.set as myset
@@ -13,12 +14,9 @@ import constraint_handler.utils.common as common
 
 BaseType = common.PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
 
-Bad = common.PPEnum("Bad", ["bad"])
-
 UnaryOperator = common.PPEnum(
     "UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor", "ceil"]
 )
-LogicOperator = common.PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 BinaryOperator = common.PPEnum(
     "BinaryOperator",
     ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
@@ -27,6 +25,8 @@ EqOperator = common.PPEnum("EqOperator", ["eq", "neq"])
 StringOperator = common.PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = common.PPEnum("OtherOperator", ["max", "min", "length"])
 
+
+Bad = common.Bad
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
 class ConditionalOperator(Enum):
@@ -47,7 +47,7 @@ Operator = (
     UnaryOperator
     | BinaryOperator
     | EqOperator
-    | LogicOperator
+    | logic.Operator
     | StringOperator
     | multimap.Operator
     | myset.Operator

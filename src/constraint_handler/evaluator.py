@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import functools
 import importlib
 import math
-import operator
 
 import clingo
 
+import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.expression as expression
@@ -19,7 +18,6 @@ from constraint_handler.schemas.expression import (
     BinaryOperator,
     ConditionalOperator,
     EqOperator,
-    LogicOperator,
     OtherOperator,
     StringOperator,
     UnaryOperator,
@@ -104,6 +102,7 @@ class Evaluator:
         self.globals = globals if globals is not None else dict()
         self.locals = locals if locals is not None else dict()
         self.errors = []
+        self.logic = logic.Evaluator(Evaluator, self.errors)
         self.multimap = multimap.Evaluator(Evaluator, self.errors)
         self.set = myset.Evaluator(Evaluator, self.errors)
 
@@ -133,59 +132,6 @@ class Evaluator:
                 return math.floor(val)
             case _:
                 self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented), f"unop {o}"))
-                return expression.Bad.bad
-
-    def logic_operator(self, o, args):
-        match o:
-            case LogicOperator.conj:
-                if False in args:
-                    return False
-                elif None in args:
-                    return None
-                else:
-                    return True
-            case LogicOperator.disj:
-                if True in args:
-                    return True
-                elif None in args:
-                    return None
-                else:
-                    return False
-            case LogicOperator.ite:
-                assert len(args) == 3
-                if args[0] is None:
-                    return None
-                return args[1] if args[0] else args[2]
-            case LogicOperator.leqv:
-                if None in args:
-                    return None
-                return functools.reduce(operator.eq, args)
-            case LogicOperator.limp:
-                assert len(args) == 2
-                return args[1] if args[0] else True
-            case LogicOperator.lnot:
-                assert len(args) == 1
-                if None in args:
-                    return None
-                return not args[0]
-            case LogicOperator.lxor:
-                if None in args:
-                    return None
-                return functools.reduce(operator.xor, args)
-            case LogicOperator.snot:
-                assert len(args) == 1
-                if None in args:
-                    return False
-                return not args[0]
-            case LogicOperator.wnot:
-                assert len(args) == 1
-                if None in args:
-                    return True
-                return not args[0]
-            case _:
-                self.errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), f"logic_operator {o}")
-                )
                 return expression.Bad.bad
 
     def string_operator(self, o, args):
@@ -323,8 +269,8 @@ class Evaluator:
                         )
                     )
                     return expression.Bad.bad
-            case LogicOperator():
-                return self.logic_operator(o, args)
+            case logic.Operator():
+                return self.logic.operator(o, args)
             case multimap.Operator():
                 return self.multimap.operator(o, args)
             case myset.Operator():
