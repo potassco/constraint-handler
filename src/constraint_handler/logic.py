@@ -8,6 +8,7 @@ import constraint_handler.utils.common as common
 
 Operator = common.PPEnum("Operator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 
+
 class Evaluator:
     def __init__(self, expr_evaluator, errors=None):
         self.expr_evaluator = expr_evaluator

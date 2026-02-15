@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import importlib
-import math
 
 import clingo
 
+import constraint_handler.arithmetic as arithmetic
 import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
@@ -15,12 +15,10 @@ import constraint_handler.set as myset
 import constraint_handler.solver_environment as solver_environment
 from constraint_handler.schemas.expression import (
     BaseType,
-    BinaryOperator,
     ConditionalOperator,
     EqOperator,
     OtherOperator,
     StringOperator,
-    UnaryOperator,
 )
 
 _shared_environment = {
@@ -102,37 +100,10 @@ class Evaluator:
         self.globals = globals if globals is not None else dict()
         self.locals = locals if locals is not None else dict()
         self.errors = []
+        self.arithmetic = arithmetic.Evaluator(Evaluator, self.errors)
         self.logic = logic.Evaluator(Evaluator, self.errors)
         self.multimap = multimap.Evaluator(Evaluator, self.errors)
         self.set = myset.Evaluator(Evaluator, self.errors)
-
-    def unop(self, o, val):
-        match o:
-            case UnaryOperator.sqrt:
-                return math.sqrt(val)
-            case UnaryOperator.cos:
-                return math.cos(val)
-            case UnaryOperator.sin:
-                return math.sin(val)
-            case UnaryOperator.tan:
-                return math.tan(val)
-            case UnaryOperator.abs:
-                return abs(val)
-            case UnaryOperator.acos:
-                return math.acos(val)
-            case UnaryOperator.asin:
-                return math.asin(val)
-            case UnaryOperator.atan:
-                return math.atan(val)
-            case UnaryOperator.minus:
-                return -val
-            case UnaryOperator.ceil:
-                return math.ceil(val)
-            case UnaryOperator.floor:
-                return math.floor(val)
-            case _:
-                self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented), f"unop {o}"))
-                return expression.Bad.bad
 
     def string_operator(self, o, args):
         if None in args:
@@ -153,48 +124,6 @@ class Evaluator:
             case _:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"string operator {o}")
-                )
-                return expression.Bad.bad
-
-    def binop(self, o, lval, rval):
-        if expression.Bad.bad in [lval, rval]:
-            return expression.Bad.bad
-        if lval is None or rval is None:
-            return None
-        match o:
-            case BinaryOperator.add:
-                return lval + rval
-            case BinaryOperator.sub:
-                return lval - rval
-            case BinaryOperator.mult:
-                return lval * rval
-            case BinaryOperator.div:
-                if rval == 0:
-                    self.errors.append(
-                        (warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}")
-                    )
-                    return expression.Bad.bad
-                return lval // rval
-            case BinaryOperator.fdiv:
-                if rval == 0:
-                    self.errors.append(
-                        (warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}")
-                    )
-                    return expression.Bad.bad
-                return lval / rval
-            case BinaryOperator.pow:
-                return lval ** rval  # fmt: skip
-            case BinaryOperator.leq:
-                return lval <= rval
-            case BinaryOperator.lt:
-                return lval < rval
-            case BinaryOperator.geq:
-                return lval >= rval
-            case BinaryOperator.gt:
-                return lval > rval
-            case _:
-                self.errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), f"binary operator {o}")
                 )
                 return expression.Bad.bad
 
@@ -269,6 +198,8 @@ class Evaluator:
                         )
                     )
                     return expression.Bad.bad
+            case arithmetic.Operator():
+                return self.arithmetic.operator(o, args)
             case logic.Operator():
                 return self.logic.operator(o, args)
             case multimap.Operator():
@@ -285,21 +216,9 @@ class Evaluator:
             case OtherOperator.min:
                 assert len(args)
                 return min(args)
-            case o:
-                foldable = {BinaryOperator.add: sum, BinaryOperator.mult: math.prod}
-
-                if o in foldable:
-                    return foldable[o](args)
-
-                if len(args) == 1:
-                    return self.unop(o, args[0])
-                elif len(args) == 2:
-                    return self.binop(o, args[0], args[1])
-                else:
-                    self.errors.append(
-                        (warning.Expression(warning.ExpressionWarning.NotImplementedError), f"operator {o}")
-                    )
-                    return expression.Bad.bad
+            case _:
+                self.errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError), f"operator {o}"))
+                return expression.Bad.bad
 
     def expr(self, expr):
         match expr:

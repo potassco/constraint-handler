@@ -183,13 +183,13 @@ def test_set_subset_arg_validation():
 
 def test_set_fold_arg_validation():
     """Test that set_fold operator only accepts exactly 3 arguments."""
-    from constraint_handler.schemas.expression import BinaryOperator
-    from constraint_handler.set import Evaluator, Operator
+    import constraint_handler.arithmetic as arithmetic
+    import constraint_handler.set as myset
 
-    evaluator = Evaluator(evltr.Evaluator)
+    evaluator = myset.Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
-    result = evaluator.operator(Operator.set_fold, [])
+    result = evaluator.operator(myset.Operator.set_fold, [])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
@@ -197,7 +197,7 @@ def test_set_fold_arg_validation():
 
     # Test with 1 argument
     evaluator.errors = []
-    result = evaluator.operator(Operator.set_fold, [BinaryOperator.add])
+    result = evaluator.operator(myset.Operator.set_fold, [arithmetic.Operator.add])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
@@ -205,7 +205,7 @@ def test_set_fold_arg_validation():
 
     # Test with 2 arguments
     evaluator.errors = []
-    result = evaluator.operator(Operator.set_fold, [BinaryOperator.add, frozenset({1, 2, 3})])
+    result = evaluator.operator(myset.Operator.set_fold, [arithmetic.Operator.add, frozenset({1, 2, 3})])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
@@ -213,13 +213,13 @@ def test_set_fold_arg_validation():
 
     # Test with 3 arguments (correct case)
     evaluator.errors = []
-    result = evaluator.operator(Operator.set_fold, [BinaryOperator.add, frozenset({1, 2, 3}), 0])
+    result = evaluator.operator(myset.Operator.set_fold, [arithmetic.Operator.add, frozenset({1, 2, 3}), 0])
     assert result == 6
     assert len(evaluator.errors) == 0
 
     # Test with 4 arguments
     evaluator.errors = []
-    result = evaluator.operator(Operator.set_fold, [BinaryOperator.add, frozenset({1, 2, 3}), 0, "extra"])
+    result = evaluator.operator(myset.Operator.set_fold, [arithmetic.Operator.add, frozenset({1, 2, 3}), 0, "extra"])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)

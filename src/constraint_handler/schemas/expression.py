@@ -6,6 +6,7 @@ from enum import Enum
 
 import clingo
 
+import constraint_handler.arithmetic as arithmetic
 import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
@@ -14,19 +15,13 @@ import constraint_handler.utils.common as common
 
 BaseType = common.PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
 
-UnaryOperator = common.PPEnum(
-    "UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor", "ceil"]
-)
-BinaryOperator = common.PPEnum(
-    "BinaryOperator",
-    ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
-)
 EqOperator = common.PPEnum("EqOperator", ["eq", "neq"])
 StringOperator = common.PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = common.PPEnum("OtherOperator", ["max", "min", "length"])
 
 
 Bad = common.Bad
+
 
 # ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
 class ConditionalOperator(Enum):
@@ -44,8 +39,7 @@ class Python(typing.NamedTuple):
 
 
 Operator = (
-    UnaryOperator
-    | BinaryOperator
+    arithmetic.Operator
     | EqOperator
     | logic.Operator
     | StringOperator
