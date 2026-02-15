@@ -18,5 +18,6 @@ _warning(KIND,(NAME,()),("error running",MSG)) :- _gex_exec(NAME,error(KIND,MSG)
 
 value(EX,val(T,V)) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), _gex_exec(NAME,(X,val(T,V))).
 value(EX,val(none,none)) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), not _gex_exec(NAME,(X,_)).
+value(EX,bad) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,error(KIND,MSG)).
 
 _direct_imploded(variable(X),V) :- ge_value(X,V), _direct_implode(variable(X)). % TODO double check

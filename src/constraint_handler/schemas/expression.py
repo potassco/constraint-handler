@@ -12,6 +12,9 @@ import constraint_handler.set as myset
 import constraint_handler.utils.common as common
 
 BaseType = common.PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
+
+Bad = common.PPEnum("Bad", ["bad"])
+
 UnaryOperator = common.PPEnum(
     "UnaryOperator", ["abs", "sqrt", "cos", "sin", "tan", "acos", "asin", "atan", "minus", "floor", "ceil"]
 )
@@ -89,5 +92,5 @@ class Lambda(typing.NamedTuple):
         return f"Lambda({[str(x) for x in self.vars]},{str(self.expr)})"
 
 
-type ReducedExpr = Val | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
-type Expr = Variable | Operation | Val | Lambda | frozenset[Expr] | tuple[Expr, ...]
+type ReducedExpr = Bad | Val | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
+type Expr = Bad | Variable | Operation | Val | Lambda | frozenset[Expr] | tuple[Expr, ...]

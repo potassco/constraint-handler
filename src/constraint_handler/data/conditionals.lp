@@ -1,6 +1,7 @@
 %%%%%%%%%%%%%%%%% conditional_hasValue/1 conditional_hasNoValue/1
-conditional_hasValue(E) :- _se_value(E,V), V != val(none,none).
+conditional_hasValue(E) :- _se_value(E,V), V != val(none,none), V !=bad.
 conditional_hasNoValue(E) :- direct_query(E), _se_value(E,val(none,none)).
+%1 { conditional_hasNoValue(E); conditional_hasValue(E) } 1 :- _se_value(E,bad).
 
 %%%%%%%%%%%%%%%%% eq neq
 computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=eq,  ARGS = (val(none,V1),(val(none,V2),())).

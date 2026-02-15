@@ -68,8 +68,10 @@ def get_baseType(v):
         return BaseType.multimap
     elif isinstance(v, clingo.Symbol):
         return BaseType.symbol
+    elif v is None:
+        return BaseType.none
     else:
-        return None
+        raise NotImplementedError(f"get_baseType is not implemented for {v}")
 
 
 def reducedExpr(v):
@@ -90,6 +92,8 @@ def reducedExpr(v):
     elif isinstance(v, dict):
         raise NotImplementedError(f"reducedExpr is not implemented for {dict} {v}")
     elif isinstance(v, expression.Lambda):
+        return v
+    elif isinstance(v, expression.Bad):
         return v
     else:
         raise NotImplementedError(f"reducedExpr is not implemented for {v}")
@@ -129,7 +133,7 @@ class Evaluator:
                 return math.floor(val)
             case _:
                 self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented), f"unop {o}"))
-                return None
+                return expression.Bad.bad
 
     def logic_operator(self, o, args):
         match o:
@@ -182,7 +186,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"logic_operator {o}")
                 )
-                return None
+                return expression.Bad.bad
 
     def string_operator(self, o, args):
         if None in args:
@@ -196,7 +200,7 @@ class Evaluator:
                             f"len takes one argument ({len(args)} were given)",
                         )
                     )
-                    return None
+                    return expression.Bad.bad
                 return len(args[0])
             case StringOperator.concat:
                 return "".join(args)
@@ -204,9 +208,11 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"string operator {o}")
                 )
-                return None
+                return expression.Bad.bad
 
     def binop(self, o, lval, rval):
+        if expression.Bad.bad in [lval,rval]:
+            return expression.Bad.bad
         if lval is None or rval is None:
             return None
         match o:
@@ -221,14 +227,14 @@ class Evaluator:
                     self.errors.append(
                         (warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}")
                     )
-                    return None
+                    return expression.Bad.bad
                 return lval // rval
             case BinaryOperator.fdiv:
                 if rval == 0:
                     self.errors.append(
                         (warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}")
                     )
-                    return None
+                    return expression.Bad.bad
                 return lval / rval
             case BinaryOperator.pow:
                 return lval ** rval  # fmt: skip
@@ -244,7 +250,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"binary operator {o}")
                 )
-                return None
+                return expression.Bad.bad
 
     def eq_operator(self, o, lval, rval):
         match o:
@@ -256,7 +262,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"equality operator {o}")
                 )
-                return None
+                return expression.Bad.bad
 
     def conditional_operator(self, o, args):
         match o:
@@ -276,7 +282,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), f"conditional operator {o}")
                 )
-                return None
+                return expression.Bad.bad
 
     def python_operator(self, fn, args):
         try:
@@ -293,14 +299,14 @@ class Evaluator:
             case expression.Python(fn):
                 return self.python_operator(fn, args)
             case expression.Lambda(vars, expr):
-                if len(vars) != len(args):  # TODO create a warning instead?
+                if len(vars) != len(args):
                     self.errors.append(
                         (
                             warning.Expression(warning.ExpressionWarning.syntaxError),
                             ValueError(f"evaluate_operator inconsistent parameters and argument lengths for {o}"),
                         )
                     )
-                    return None
+                    return expression.Bad.bad
                 locals = dict(self.locals)
                 for v, e in zip(vars, args):
                     locals[v] = e
@@ -310,7 +316,13 @@ class Evaluator:
                 if len(args) == 2:
                     return self.eq_operator(o, args[0], args[1])
                 else:
-                    assert False  # TODO
+                    self.errors.append(
+                        (
+                            warning.Expression(warning.ExpressionWarning.syntaxError),
+                            ValueError(f"eq takes two arguments, not {args}"),
+                        )
+                    )
+                    return expression.Bad.bad
             case LogicOperator():
                 return self.logic_operator(o, args)
             case multimap.Operator():
@@ -341,20 +353,22 @@ class Evaluator:
                     self.errors.append(
                         (warning.Expression(warning.ExpressionWarning.NotImplementedError), f"operator {o}")
                     )
-                    return None
+                    return expression.Bad.bad
 
     def expr(self, expr):
         match expr:
             case expression.Operation(eo, eargs):
                 args = [self.expr(a) for a in eargs]
                 o = self.expr(eo)
+                if expression.Bad.bad == eo or expression.Bad.bad in args:
+                    return expression.Bad.bad
                 return self.operator(o, args)
             case expression.Variable(a):
                 if a in self.locals:
                     return self.locals[a]  # TODO : and globals?
                 else:
                     self.errors.append((warning.Variable(warning.VariableWarning.undeclared), f"{a}"))
-                    return None
+                    return expression.Bad.bad
             case expression.Val(type_, val):
                 return val
             case expression.Lambda(vars, body):
@@ -379,7 +393,7 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), NotImplementedError(f"expr {expr}"))
                 )
-                return None
+                return expression.Bad.bad
 
     def stmt_python(self, code):
         try:
@@ -394,6 +408,9 @@ class Evaluator:
         match stmt:
             case statement.Assert(expr):
                 condition = self.expr(expr)
+                if condition == expression.Bad.bad:
+                    assert self.errors
+                    return
                 if condition != True:
                     raise solver_environment.FailIntegrityExn
             case statement.Assign(var, expr):
@@ -421,13 +438,22 @@ class Evaluator:
 
 def evaluate_expr(expr, globals=None, locals=None):
     env = Evaluator(globals, locals)
-    result = env.expr(expr)
+    try:
+        result = env.expr(expr)
+    except Exception as exn:
+        env.errors.append((warning.Statement(warning.StatementWarning.evaluatorError), repr(exn)))
+        return expression.Bad.bad, env.errors
     return result, env.errors
 
 
 def evaluate_stmt(stmt, globals=None, locals=None):
     env = Evaluator(globals, locals)
-    env.stmt(stmt)
+    try:
+        env.stmt(stmt)
+    except solver_environment.FailIntegrityExn:
+        raise solver_environment.FailIntegrityExn
+    except Exception as exn:
+        env.errors.append((warning.Statement(warning.StatementWarning.evaluatorError), repr(exn)))
     return env.errors
 
 
