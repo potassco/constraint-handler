@@ -211,7 +211,7 @@ class Evaluator:
                 return expression.Bad.bad
 
     def binop(self, o, lval, rval):
-        if expression.Bad.bad in [lval,rval]:
+        if expression.Bad.bad in [lval, rval]:
             return expression.Bad.bad
         if lval is None or rval is None:
             return None

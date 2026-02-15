@@ -23,7 +23,7 @@ BinaryOperator = common.PPEnum(
     "BinaryOperator",
     ["add", "sub", "mult", "div", "fdiv", "pow", "leq", "lt", "geq", "gt"],
 )
-EqOperator = common.PPEnum("LogicOperator", ["eq", "neq"])
+EqOperator = common.PPEnum("EqOperator", ["eq", "neq"])
 StringOperator = common.PPEnum("StringOperator", ["concat", "length"])
 OtherOperator = common.PPEnum("OtherOperator", ["max", "min", "length"])
 
