@@ -61,6 +61,7 @@ operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type
 operator_declare(OP,(T,()),T) :- OP = lnot,T = (bool;none).
 operator_declare(OP,(T,()),bool) :- OP = (wnot;snot), T = (bool;none).
 operator_declare(OP,(T,(T,())),T) :- logicOperator(OP), T = (bool).
+operator_declare(OP,(T1,(T2,())),none) :- OP = limp, T1 = (bool;none), T2 = (bool;none), (T1,T2) != (bool, bool).
 % Str
 operator_declare(concat,(str,(str,())),str).
 operator_declare(length,(T,()),int) :- T = (str;set).
