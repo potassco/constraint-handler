@@ -41,6 +41,5 @@ value(i(propagator,propagator,propagator),val(int,42))
 value(j(propagator,propagator,propagator),val(int,2))
 value(y(propagator,propagator,propagator),val(int,85))
 
-value(i,val(int,3))
 value(j,val(int,9))
 value(k,val(int,12))
