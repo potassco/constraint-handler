@@ -12,21 +12,21 @@ Here, we outline the various warning types that can be reported by the constrain
 | Type | Description |
 | :--- | :--- |
 | **Expressions** | |
-| [`expression(pythonError)`](#python-error) | An error occurred during the evaluation of a Python expression. |
+| [`expression(pythonError)`](#python-error) | An error occurred in Python during the evaluation of an expression. |
 | [`expression(syntaxError)`](#syntax-error) | A syntax error was encountered in an expression. |
-| [`expression(notImplemented)`](#not-implemented) | An expression uses a feature that is not yet implemented. |
+| [`expression(notImplemented)`](#not-implemented) | An expression uses a feature that is not (yet) implemented. |
 | [`expression(zeroDivisionError)`](#zero-division-error) | An expression attempted to divide by zero. |
 | **Statements** | |
 | [`statement(evaluatorError)`](#evaluator-error) | An error occurred within the constraint handler's evaluator. |
-| [`statement(notImplemented)`](#not-implemented_1) | A statement uses a feature that is not yet implemented. |
-| [`statement(pythonError)`](#python-error_1) | An error occurred during the evaluation of a Python statement. |
+| [`statement(notImplemented)`](#not-implemented_1) | A statement uses a feature that is not (yet) implemented. |
+| [`statement(pythonError)`](#python-error_1) | An error occurred in Python during the evaluation of a statement. |
 | **Variables** | |
 | [`variable(emptyDomain)`](#empty-domain) | A variable has an empty domain, meaning it has no possible values. |
 | [`variable(undeclared)`](#undeclared) | A variable has a defined domain but has not been declared. |
 | [`variable(multipleDeclarations)`](#multiple-declarations) | A variable has multiple declarations with different domains. |
 | [`variable(multipleDefinitions)`](#multiple-definitions) | A variable is defined more than once within the same scope. |
 | **Preference** | |
-| [`preference(unsupported)`](#unsupported) | A preference uses a feature that is not yet supported. |
+| [`preference(unsupported)`](#unsupported) | A preference uses a feature that is not (yet) supported. |
 | **propagator** | |
 | [`propagator`](#propagator) | An error occurred in the propagator. |
 | **Type** | |
@@ -74,7 +74,7 @@ warning(Type, Identifiers, Details)
 This section covers warnings related to the evaluation of expressions.
 
 ### Python Error
-This warning occurs when there is an error during the evaluation of a Python expression.
+An error occurred in Python during the evaluation of an expression.
 
 ```prolog
 warning(expression(pythonError), _, (Operator, Arguments, Message))
@@ -111,7 +111,7 @@ warning(expression(syntaxError), _, Message)
     ```
 
 ### Not Implemented
-This warning occurs when an expression uses a feature that is not yet implemented.
+This warning occurs when an expression uses a feature that is not (yet) implemented.
 
 ```prolog
 warning(expression(notImplemented), _, Message)
@@ -161,7 +161,7 @@ warning(statement(evaluatorError), _, Message)
 | `Details` | A message describing the error that occurred in the evaluator. |
 
 ### Not Implemented
-This warning occurs when a [Statement] uses a feature that is not yet implemented.
+This warning occurs when a [Statement] uses a feature that is not (yet) implemented.
 
 ```prolog
 warning(statement(notImplemented), _, Message)
@@ -306,7 +306,7 @@ warning(variable(multipleDefinitions), _, (Variable, Expressions...))
 ## Preference Warnings
 This section covers warnings related to [Preference] statements.
 ### Unsupported
-This warning occurs when a [Preference] uses a feature that is not yet supported.
+This warning occurs when a [Preference] uses a feature that is not (yet) supported.
 
 ```prolog
 warning(preference(unsupported), _, Details)
