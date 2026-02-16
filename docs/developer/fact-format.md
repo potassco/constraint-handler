@@ -172,6 +172,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "multipleDeclarations"
     | "multipleDefinitions"
     | "undeclared"
+    | "confusingName"
 
 <warning-symbol> ::=
     | "expression" "(" <expression-warning> ")"
