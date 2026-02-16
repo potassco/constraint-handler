@@ -25,6 +25,7 @@ Here, we outline the various warning types that can be reported by the constrain
 | [`variable(undeclared)`](#undeclared) | A [Variable] has a defined [Domain] but has not been declared. |
 | [`variable(multipleDeclarations)`](#multiple-declarations) | A [Variable] has multiple declarations with different [Domains]. |
 | [`variable(multipleDefinitions)`](#multiple-definitions) | A [Variable] is defined more than once within the same scope. |
+| [`variable(confusingName)`](#confusing-name) | A [Variable] has a name that could be confused with reserved keywords, operators, numbers or types. |
 | **Preference** | |
 | [`preference(unsupported)`](#unsupported) | A [Preference] uses a feature that is not (yet) supported. |
 | **propagator** | |
@@ -301,6 +302,31 @@ warning(variable(multipleDefinitions), _, (Variable, Expressions...))
     ```prolog
     warning(variable(multipleDefinitions),(d_x,(d_x,())),(x,val(int,1),val(int,2)))
     ```
+### Confusing Name
+This warning occurs when a [Variable] has a name that could be confused with reserved keywords,
+operators, numbers or types.
+
+```prolog
+warning(variable(confusingName), _, ((Scope,Name), Reason))
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `variable(confusingName)` |
+| `Details` | The scope and name of the variable, along with a message describing why the name is confusing. |
+
+!!! Example
+    Variable defined with a name that could be confused with a reserved keyword.
+
+    ```prolog
+    variable_define(d_and, assert, val(int, 1)).
+    ```
+
+    Raises the warning:
+    ```prolog
+    warning(variable(confusingName),(),(((),assert),keyword))
+    ```
+
 ---
 
 ## Preference Warnings
