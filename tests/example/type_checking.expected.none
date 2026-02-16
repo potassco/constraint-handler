@@ -1,1 +1,3 @@
-failed(hasValue)
+typed(check(add,2,non_numeric))
+typed(check(mult,2,non_numeric))
+typed(check(limp,2,non_none_bool))
