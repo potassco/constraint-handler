@@ -39,6 +39,7 @@ base_tests = [
     "booleans",
     "conditional_assign",
     "custom_globals",
+    "engine_request",
     "executions",
     "execution_assert",
     "execution_conditional",

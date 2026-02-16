@@ -1,0 +1,4 @@
+value(ni,val(int,42))
+value(ny,val(int,85))
+value(i(n,n),val(int,42))
+value(y(n,n),val(int,85))
