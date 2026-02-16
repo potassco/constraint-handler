@@ -39,6 +39,8 @@ base_tests = [
     "booleans",
     "conditional_assign",
     "custom_globals",
+    "engine_request",
+    "engine_request_mult",
     "executions",
     "execution_assert",
     "execution_conditional",
@@ -80,7 +82,14 @@ propagator_extra = []
     base_tests + compile_extra,
 )
 def test_engine_compile(name: str):
-    unsupported: list[str] = ["optimize_bools", "optimize_floats", "optimize_ints", "optimize_priority"]
+    unsupported: list[str] = [
+        "engine_request",
+        "engine_request_mult",
+        "optimize_bools",
+        "optimize_floats",
+        "optimize_ints",
+        "optimize_priority",
+    ]
     if name not in unsupported:
         run_test_compile(name)
 
@@ -91,6 +100,8 @@ def test_engine_compile(name: str):
 )
 def test_engine_ground(name: str):
     unsupported: list[str] = [
+        "engine_request",
+        "engine_request_mult",
         "lambdas",
         "lambda_recursive",
         "multimap_basics",
@@ -113,6 +124,8 @@ def test_engine_ground(name: str):
 )
 def test_engine_propagator(name, check_mode):
     unsupported: list[str] = [
+        "engine_request",
+        "engine_request_mult",
         "lambda_recursive",
         "multimaps",
         "optimize_bools",
