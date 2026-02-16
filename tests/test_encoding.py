@@ -125,7 +125,6 @@ def test_engine_propagator(name, check_mode):
         "optimize_priority",
         "set_iterations",
         "set_selfref",
-        "variable_parallel_declaration",
         "warning_fake_forbid",
         "warning_python",
         "warning_type",

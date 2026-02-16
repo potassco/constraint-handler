@@ -539,15 +539,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for (name, symbol_var, expr), __literal in var_defines.items():
             if symbol_var in self.symbol2var:
-                self.errors.append(
-                    (
-                        warning.Variable(warning.VariableWarning.multipleDefinitions),
-                        f"Variable '{symbol_var}' has multiple definitions!",
-                    )
-                )
-                continue
-            define_variable = Variable(name, symbol_var)
-            self.symbol2var[symbol_var] = define_variable
+                define_variable: Variable = cast(Variable, self.symbol2var[symbol_var])
+            else:
+                define_variable = Variable(name, symbol_var)
+                self.symbol2var[symbol_var] = define_variable
+
             define_variable.add_value(expr, __literal)
             ctl.add_watch(__literal)
             ctl.add_watch(-__literal)
