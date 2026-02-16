@@ -5,6 +5,37 @@ This page documents the types of errors and warnings that can be reported by the
 !!! Warning
     This section may frequently change as error messages get more streamlined.
 
+## Overview
+
+Here, we outline the various warning types that can be reported by the constraint handler.
+
+| Type | Description |
+| :--- | :--- |
+| **Expressions** | |
+| [`expression(pythonError)`](#python-error) | An error occurred during the evaluation of a Python expression. |
+| [`expression(syntaxError)`](#syntax-error) | A syntax error was encountered in an expression. |
+| [`expression(notImplemented)`](#not-implemented) | An expression uses a feature that is not yet implemented. |
+| [`expression(zeroDivisionError)`](#zero-division-error) | An expression attempted to divide by zero. |
+| **Statements** | |
+| [`statement(evaluatorError)`](#evaluator-error) | An error occurred within the constraint handler's evaluator. |
+| [`statement(notImplemented)`](#not-implemented_1) | A statement uses a feature that is not yet implemented. |
+| [`statement(pythonError)`](#python-error_1) | An error occurred during the evaluation of a Python statement. |
+| **Variables** | |
+| [`variable(emptyDomain)`](#empty-domain) | A variable has an empty domain, meaning it has no possible values. |
+| [`variable(undeclared)`](#undeclared) | A variable has a defined domain but has not been declared. |
+| [`variable(multipleDeclarations)`](#multiple-declarations) | A variable has multiple declarations with different domains. |
+| [`variable(multipleDefinitions)`](#multiple-definitions) | A variable is defined more than once within the same scope. |
+| **Preference** | |
+| [`preference(unsupported)`](#unsupported) | A preference uses a feature that is not yet supported. |
+| **propagator** | |
+| [`propagator`](#propagator) | An error occurred in the propagator. |
+| **Type** | |
+| [`type(failed_operation)`](#failed-operation) | An operation failed due to a type error. |
+| **Other** | |
+| [`otherError`](#other-error) | A generic error that does not fit into the other categories. |
+
+---
+
 ## Warning
 
 **[Result]**{.badge .result }
@@ -14,17 +45,7 @@ The constraint handler has the ability to capture certain types of errors withou
 !!! Note
     In order to get useful warnings, users are advised to provide statements with meaningful identifiers in their encodings.
 
-Currently, there are two such predicates in use.
-
-```prolog
-warning(Warning)
-```
-
-| Name | Description |
-| :--- | :--- |
-| `Warning` | Usually a tuple containing information about the identified problem. |
-
-A version that provides more details:
+Warnings will appear as atoms of the `warning/3` predicate:
 
 ```prolog
 warning(Type, Identifiers, Details)
@@ -33,29 +54,158 @@ warning(Type, Identifiers, Details)
 | Name | Description |
 | :--- | :--- |
 | `Type` | The type of warning being issued. |
-| `Identifiers` | A list of statement identifiers related to the warning. |
-| `Details` | Additional details about the warning. |
+| `Identifiers` | A list of terms, usually the statement identifiers, related to the warning. |
+| `Details` | Additional details about the warning (e.g. variable names, expressions, etc.) that can help users understand the issue. |
 
 !!! Example
     The following resembles a warning being issued when a variable is defined multiple times:
 
     ```prolog
-    warning((x, "was defined twice:", my_expression_1, my_expression_2)).
+    warning(variable(multipleDefinitions),(d_x,(d_x_2,())),(x,val(int,1),val(int,2)))
     ```
 
-    This warning provides the variable name `x` and the two expressions that defined it, making it easy for users to identify and resolve the issue.
+    This warning indicates that the variable `x` was defined multiple times with different values, and it provides the details of the definitions that caused the conflict.
+
+    Here, the variable was once defined in `d_x` with the value `val(int,1)` and then again in `d_x_2` with the value `val(int,2)`, which is not allowed.
 
 ---
 
-## Error Types
+## Expression Warnings
+This section covers warnings related to the evaluation of expressions.
 
-Here, we outline the various error types that can be reported by the constraint handler.
+### Python Error
+This warning occurs when there is an error during the evaluation of a Python expression.
 
-### Variable
-This section covers errors related to [Variable] declarations and definitions.
+```prolog
+warning(expression(pythonError), _, (Operator, Arguments, Message))
+```
 
-#### Empty Domain
-This error occurs when a [Variable] does not have any possible values in its [Domain].
+| Name | Description |
+| :--- | :--- |
+| `Type` | `expression(pythonError)` |
+| `Details` | The operator, arguments, and a message describing the error. |
+
+### Syntax Error
+This warning occurs when there is a syntax error in an expression.
+
+```prolog
+warning(expression(syntaxError), _, Message)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `expression(syntaxError)` |
+| `Details` | A message describing the syntax error. |
+
+!!! Example
+    ```prolog
+    variable_define(d_a, a, val(str, "a")).
+    variable_define(d_b, b, val(str, "b")).
+    variable_define(d_c, c, val(str, "c")).
+    variable_define(d_x,x, operation(eq, (variable(a),(variable(b),(variable(c),()))))).
+    ```
+
+    Raises the warning:
+    ```prolog
+    warning(expression(syntaxError),(),"eq takes two arguments, not ['a', 'b', 'c']")
+    ```
+
+### Not Implemented
+This warning occurs when an expression uses a feature that is not yet implemented.
+
+```prolog
+warning(expression(notImplemented), _, Message)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `expression(notImplemented)` |
+| `Details` | A message describing the feature that is not implemented. |
+
+### Zero Division Error
+This warning occurs when an expression attempts to divide by zero.
+
+```prolog
+warning(expression(zeroDivisionError), _, Message)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `expression(zeroDivisionError)` |
+| `Details` | A message describing the division by zero error. |
+
+!!! Example
+    ```prolog
+    variable_define(d_x,x, operation(div, (val(int, 2),(val(int, 0),())))).
+    ```
+
+    Raises the warning:
+    ```prolog
+    warning(expression(zeroDivisionError),(),"2/0")
+    ```
+---
+
+## Statement Warnings
+This section covers warnings related to the evaluation of [Statements].
+
+### Evaluator Error
+This warning occurs when there is an error within the constraint handler's evaluator.
+
+```prolog
+warning(statement(evaluatorError), _, Message)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `statement(evaluatorError)` |
+| `Details` | A message describing the error that occurred in the evaluator. |
+
+### Not Implemented
+This warning occurs when a [Statement] uses a feature that is not yet implemented.
+
+```prolog
+warning(statement(notImplemented), _, Message)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `statement(notImplemented)` |
+| `Details` | A message describing the feature that is not implemented. |
+
+### Python Error
+This warning occurs when there is an error in Python during the evaluation of a [Statement].
+
+```prolog
+warning(statement(pythonError), (Identifier,()), ("error running", Message))
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `statement(pythonError)` |
+| `Identifiers` | The identifier of the statement that caused the error. |
+| `Details` | A message describing the error that occurred in Python. |
+
+!!! Example
+    ```prolog
+    variable_define(some_identifier, execution_input(my_exec, a), val(int, 5)).
+
+    execution_declare(dummy, my_exec, S, (a,()), (a,())) :-
+        S = assign(a, operation(div, (val(int, 2),(val(int, 0),())))).
+
+    execution_run(dummy, my_exec).
+    ```
+
+    Raises the warning:
+    ```prolog
+    warning(statement(pythonError),(my_exec,()),("error running","(Expression(symbol=<ExpressionWarning.zeroDivisionError: 'zeroDivisionError'>), '2/0')"))
+    ```
+---
+
+## Variable Warnings
+This section covers warnings related to [Variable] declarations and definitions.
+
+### Empty Domain
+This warning occurs when a [Variable] does not have any possible values in its [Domain].
 
 ```prolog
 warning(variable(emptyDomain), _,Variable)
@@ -78,7 +228,7 @@ warning(variable(emptyDomain), _,Variable)
     warning(variable(emptyDomain),(d_a,()),a)
     ```
 
-#### Undeclared
+### Undeclared
 This error occurs when a [Variable] has a defined [Domain] but has not been [declared][variable_declare].
 
 ```prolog
@@ -102,7 +252,7 @@ warning(variable(undeclared), (), Variable)
     warning(variable(undeclared),(),c)
     ```
 
-#### Multiple Declarations
+### Multiple Declarations
 This error occurs when a [Variable] has multiple declarations with different [Domains].
 
 ```prolog
@@ -127,7 +277,7 @@ warning(variable(multipleDeclarations), _, (Variable, Domains...))
     warning(variable(multipleDeclarations),(d_u,(d_u,())),(u,boolDomain,fromFacts))
     ```
 
-#### Multiple Definitions
+### Multiple Definitions
 This error occurs when a [Variable] is defined more than once within the same scope.
 
 ```prolog
@@ -151,16 +301,84 @@ warning(variable(multipleDefinitions), _, (Variable, Expressions...))
     ```prolog
     warning(variable(multipleDefinitions),(d_x,(d_x,())),(x,val(int,1),val(int,2)))
     ```
+---
 
-### Expression Evaluation Error
-This error occurs when there is an issue evaluating an expression.
+## Preference Warnings
+This section covers warnings related to [Preference] statements.
+### Unsupported
+This warning occurs when a [Preference] uses a feature that is not yet supported.
 
 ```prolog
-warning((Operator, Arguments, Message))
+warning(preference(unsupported), _, Details)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Operator` | The operator involved in the evaluation error. |
-| `Arguments` | The arguments passed to the operator that caused the error. |
-| `Message` | A message describing the nature of the evaluation error. |
+| `Type` | `preference(unsupported)` |
+| `Details` | A tuple describing the feature that is not supported. |
+
+!!! Example
+    Defining multiple preference values for the same variable.
+
+    ```prolog
+    preference_variableValue(dummy,z,val(int,2),5).
+    preference_variableValue(dummy,z,val(int,2),7).
+    ```
+
+    Raises the warning:
+    ```prolog
+    warning(preference(unsupported),(),("multiple scores for the same expression",operation(eq,(variable(z),(val(int,2),()))),5,7))
+    ```
+
+    Here, the details indicate that there are multiple scores defined for the same expression `z == 2`, which is not supported.
+
+---
+
+## Propagator Warnings
+This section covers warnings related to the propagator.
+
+### Propagator
+This warning occurs when there is an error in the propagator.
+
+```prolog
+warning(propagator, _, Message)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `propagator` |
+| `Details` | A message describing the error that occurred in the propagator. |
+
+---
+
+## Type Warnings
+This section covers warnings related to type errors.
+
+### Failed Operation
+This warning occurs when the type system is not able to resolve the type of an operation.
+
+```prolog
+warning(type(failed_operation), _, (Scope, Operator, Arguments))
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `type(failed_operation)` |
+| `Details` | The scope, operator, and arguments of the operation that failed. |
+
+---
+
+## Other Warnings
+This section covers warnings that do not fit into the previous categories.
+### Other Error
+
+This warning is a generic error that does not fit into the other categories.
+
+```prolog
+warning(otherError, _, Message)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `otherError` |
+| `Details` | A message describing the error. |
