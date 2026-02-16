@@ -12,25 +12,25 @@ Here, we outline the various warning types that can be reported by the constrain
 | Type | Description |
 | :--- | :--- |
 | **Expressions** | |
-| [`expression(pythonError)`](#python-error) | An error occurred in Python during the evaluation of an expression. |
-| [`expression(syntaxError)`](#syntax-error) | A syntax error was encountered in an expression. |
-| [`expression(notImplemented)`](#not-implemented) | An expression uses a feature that is not (yet) implemented. |
-| [`expression(zeroDivisionError)`](#zero-division-error) | An expression attempted to divide by zero. |
+| [`expression(pythonError)`](#python-error) | An error occurred in Python during the evaluation of an [Expression]. |
+| [`expression(syntaxError)`](#syntax-error) | A syntax error was encountered in an [Expression]. |
+| [`expression(notImplemented)`](#not-implemented) | An [Expression] uses a feature that is not (yet) implemented. |
+| [`expression(zeroDivisionError)`](#zero-division-error) | An [Expression] attempted to divide by zero. |
 | **Statements** | |
 | [`statement(evaluatorError)`](#evaluator-error) | An error occurred within the constraint handler's evaluator. |
-| [`statement(notImplemented)`](#not-implemented_1) | A statement uses a feature that is not (yet) implemented. |
-| [`statement(pythonError)`](#python-error_1) | An error occurred in Python during the evaluation of a statement. |
+| [`statement(notImplemented)`](#not-implemented_1) | A [Statement] uses a feature that is not (yet) implemented. |
+| [`statement(pythonError)`](#python-error_1) | An error occurred in Python during the evaluation of a [Statement]. |
 | **Variables** | |
-| [`variable(emptyDomain)`](#empty-domain) | A variable has an empty domain, meaning it has no possible values. |
-| [`variable(undeclared)`](#undeclared) | A variable has a defined domain but has not been declared. |
-| [`variable(multipleDeclarations)`](#multiple-declarations) | A variable has multiple declarations with different domains. |
-| [`variable(multipleDefinitions)`](#multiple-definitions) | A variable is defined more than once within the same scope. |
+| [`variable(emptyDomain)`](#empty-domain) | A [Variable] has an empty [Domain], meaning it has no possible [Values]. |
+| [`variable(undeclared)`](#undeclared) | A [Variable] has a defined [Domain] but has not been declared. |
+| [`variable(multipleDeclarations)`](#multiple-declarations) | A [Variable] has multiple declarations with different [Domains]. |
+| [`variable(multipleDefinitions)`](#multiple-definitions) | A [Variable] is defined more than once within the same scope. |
 | **Preference** | |
-| [`preference(unsupported)`](#unsupported) | A preference uses a feature that is not (yet) supported. |
+| [`preference(unsupported)`](#unsupported) | A [Preference] uses a feature that is not (yet) supported. |
 | **propagator** | |
 | [`propagator`](#propagator) | An error occurred in the propagator. |
 | **Type** | |
-| [`type(failed_operation)`](#failed-operation) | An operation failed due to a type error. |
+| [`type(failed_operation)`](#failed-operation) | An [Operation] failed due to a type error. |
 | **Other** | |
 | [`otherError`](#other-error) | A generic error that does not fit into the other categories. |
 
@@ -43,7 +43,7 @@ Here, we outline the various warning types that can be reported by the constrain
 The constraint handler has the ability to capture certain types of errors without interrupting the solving process. Instead, whenever such errors are encountered, a `warning` predicate is used to report these issues.
 
 !!! Note
-    In order to get useful warnings, users are advised to provide statements with meaningful identifiers in their encodings.
+    In order to get useful warnings, users are advised to provide [Declarations] and [Definitions] with meaningful identifiers in their encodings.
 
 Warnings will appear as atoms of the `warning/3` predicate:
 
@@ -54,7 +54,7 @@ warning(Type, Identifiers, Details)
 | Name | Description |
 | :--- | :--- |
 | `Type` | The type of warning being issued. |
-| `Identifiers` | A list of terms, usually the statement identifiers, related to the warning. |
+| `Identifiers` | A list of terms, usually identifiers, related to the warning. |
 | `Details` | Additional details about the warning (e.g. variable names, expressions, etc.) that can help users understand the issue. |
 
 !!! Example
@@ -71,10 +71,10 @@ warning(Type, Identifiers, Details)
 ---
 
 ## Expression Warnings
-This section covers warnings related to the evaluation of expressions.
+This section covers warnings related to the evaluation of [Expressions].
 
 ### Python Error
-An error occurred in Python during the evaluation of an expression.
+An error occurred in Python during the evaluation of an [Expression].
 
 ```prolog
 warning(expression(pythonError), _, (Operator, Arguments, Message))
@@ -86,7 +86,7 @@ warning(expression(pythonError), _, (Operator, Arguments, Message))
 | `Details` | The operator, arguments, and a message describing the error. |
 
 ### Syntax Error
-This warning occurs when there is a syntax error in an expression.
+This warning occurs when there is a syntax error in an [Expression].
 
 ```prolog
 warning(expression(syntaxError), _, Message)
@@ -111,7 +111,7 @@ warning(expression(syntaxError), _, Message)
     ```
 
 ### Not Implemented
-This warning occurs when an expression uses a feature that is not (yet) implemented.
+This warning occurs when an [Expression] uses a feature that is not (yet) implemented.
 
 ```prolog
 warning(expression(notImplemented), _, Message)
@@ -123,7 +123,7 @@ warning(expression(notImplemented), _, Message)
 | `Details` | A message describing the feature that is not implemented. |
 
 ### Zero Division Error
-This warning occurs when an expression attempts to divide by zero.
+This warning occurs when an [Expression] attempts to divide by zero.
 
 ```prolog
 warning(expression(zeroDivisionError), _, Message)
@@ -355,7 +355,7 @@ warning(propagator, _, Message)
 This section covers warnings related to type errors.
 
 ### Failed Operation
-This warning occurs when the type system is not able to resolve the type of an operation.
+This warning occurs when the type system is not able to resolve the type of an [Operation].
 
 ```prolog
 warning(type(failed_operation), _, (Scope, Operator, Arguments))
@@ -370,9 +370,8 @@ warning(type(failed_operation), _, (Scope, Operator, Arguments))
 
 ## Other Warnings
 This section covers warnings that do not fit into the previous categories.
-### Other Error
 
-This warning is a generic error that does not fit into the other categories.
+### Other Error
 
 ```prolog
 warning(otherError, _, Message)
