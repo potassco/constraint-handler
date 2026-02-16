@@ -16,10 +16,17 @@ Operators are described using a function signature notation:
 Where `input_type` and `output_type` refer to the data types involved in the [Operation].
 
 #### Simple
-Simple operators often only require a single input type and produce a single output type. For example, an addition operator for integers would be represented as:
+Simple operators often only require a single input type and produce a single output type. For example, an addition operator for two integers would be represented as:
 
 ```prolog
 (int, int) -> int
+```
+
+#### Variadic
+To represent operators that can take a variable number of inputs, we use notation similar to regex, where a `*` indicates zero or more occurrences of a type. For example, an operator that sums any number of integers could be represented as:
+
+```prolog
+(int*) -> int
 ```
 
 #### Union
@@ -102,9 +109,6 @@ value(name, val(bool, false))
 ```
 
 ### Supported Operators
-!!! info
-    Some of the operators like `conj` and `disj` accept any number of arguments, these use the [list] notation as shown in the expression section. Others are strictly unary or binary.
-
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
@@ -112,11 +116,11 @@ value(name, val(bool, false))
 | `eq` | Equality | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
 | `neq` | Inequality | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 | **Logical** | | | | |
-| `conj` | Conjunction | ([list]\[[bool]\]) $\to$ [bool] | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
-| `disj` | Disjunction | ([list]\[[bool]\]) $\to$ [bool] | `true` if *at least one* argument in the list is true. |
+| `conj` | Conjunction | ([bool]\*) $\to$ [bool] | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
+| `disj` | Disjunction | ([bool]\*) $\to$ [bool] | `true` if *at least one* argument in the list is true. |
 | `limp` | Implication | ([bool], [bool]) $\to$ [bool] | `false` only if the first argument is `true` and the second is `false`. Otherwise `true`. | [bool] \| [none] |
-| `lxor` | Exclusive OR | ([list]\[[bool]\]) $\to$ [bool]  | `true` if an **odd** number of arguments are `true`. |
-| `leqv` | Equivalence | ([list]\[[bool]\]) $\to$ [bool]  | `true` if an **even** number of arguments are `true`. |
+| `lxor` | Exclusive OR | ([bool]\*) $\to$ [bool]  | `true` if an **odd** number of arguments are `true`. |
+| `leqv` | Equivalence | ([bool]\*) $\to$ [bool]  | `true` if an **even** number of arguments are `true`. |
 | **Negation** | | | | |
 | `lnot` | Logical | ([bool]) $\to$ [bool] | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). |
 | `snot` | Strong | ([bool]) $\to$ [bool] | Treats undefined/missing values as `false`. |
@@ -153,9 +157,9 @@ value(name, val(int, -7))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Arithmetic** | | | |
-| `add` | Addition | ([list]\[[int]\]) $\to$ [int] | Adds all provided integers together. |
+| `add` | Addition | ([int]\*) $\to$ [int] | Adds all provided integers together. |
 | `sub` | Subtraction | ([int], [int]) $\to$ [int] | Subtracts the second integer from the first. |
-| `mult` | Multiplication | ([list]\[[int]\]) $\to$ [int] | Multiplies all provided integers together. |
+| `mult` | Multiplication | ([int]\*) $\to$ [int] | Multiplies all provided integers together. |
 | `div` | Integer Division | ([int], [int]) $\to$ [int] | Divides the first integer by the second. |
 | `pow` | Exponentiation | ([int], [int]) $\to$ [int] | Raises the first integer to the power of the second. |
 | `abs` | Absolute Value | ([int]) $\to$ [int] | Returns the absolute value of the integer. |
@@ -214,9 +218,9 @@ value(name, val(float, float("-0.001")))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Arithmetic** | | | |
-| `add` | Addition | ([list]\[[int] \| [float]\]) $\to$ [float] | Adds all provided numbers together. |
+| `add` | Addition | (\[[int] \| [float]\]\*) $\to$ [float] | Adds all provided numbers together. |
 | `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
-| `mult` | Multiplication | ([list]\[[int] \| [float]\]) $\to$ [float] | Multiplies all provided numbers together. |
+| `mult` | Multiplication | (\[[int] \| [float]\]\*) $\to$ [float] | Multiplies all provided numbers together. |
 | `div` | Division | ([float], [float]) $\to$ [float] | Performs integer division on two floats. |
 | `fdiv` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
 | `ceil` | Ceiling | ([float]) $\to$ [float] | Rounds the float up to the nearest integer value. |
