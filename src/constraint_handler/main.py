@@ -4,7 +4,8 @@ import clingo
 import clingo.script
 
 import constraint_handler.evaluator as evaluator
-#import constraint_handler.post_processor as post_processor
+
+# import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
 
 modules = [
@@ -65,10 +66,10 @@ def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
     def combine_on_model(on_model):
         def om(m):
             if p.on_model(m) != False:
-                #setattr(m,"constraint_handler_valuation",post_processor.ch_vars(m))
+                # setattr(m,"constraint_handler_valuation",post_processor.ch_vars(m))
                 return on_model(m)
             else:
-                #setattr(m,"constraint_handler_valuation",post_processor.ch_vars(m))
+                # setattr(m,"constraint_handler_valuation",post_processor.ch_vars(m))
                 return True
 
         return om
