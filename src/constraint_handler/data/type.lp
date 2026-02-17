@@ -20,6 +20,12 @@ type_expression(SCOPE,E,T) :- _expression_query(SCOPE,E), E=operation(O,ARGS), _
 _type_listArg(SCOPE,ARGS,IDX,ARG) :- _expression_query(SCOPE,E), E=operation(O,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 _type_listAux(SCOPE,ARGS,N,()) :- _expression_query(SCOPE,E), E=operation(O,ARGS), N=@pythonListLength(ARGS).
 _type_listAux(SCOPE,ARGS,N-1,(T,TS)) :- _type_listAux(SCOPE,ARGS,N,TS), _type_listArg(SCOPE,ARGS,N-1,ARG), type_expression(SCOPE,ARG,T).
+_type_listAux(SCOPE,ARGS,N-1,((T1,T2),TS)) :-
+    _type_listAux(SCOPE,ARGS,N,TS),
+    _type_listArg(SCOPE,ARGS,N-1,(ARG1,ARG2)),
+    type_expression(SCOPE,ARG1,T1),
+    type_expression(SCOPE,ARG2,T2).
+
 _type_list(SCOPE,ARGS,TS) :- _type_listAux(SCOPE,ARGS,0,TS).
 
 % TODO lambdas
@@ -75,17 +81,21 @@ operator_declare(OP,(T,(set,())),bool) :- _type(T), membershipOperator(OP).
 operator_declare(OP,(T,()),int) :- T = (multimap), OP = (countKeys;countEntries;sumIntEntries).
 operator_declare(OP,(T1,()),T2) :- T1 = (multimap),_type(T2), T2 != (multimap), OP = (maxEntries;minEntries).
 operator_declare(OP,(T1,(T2,())),bool) :- _type(T1), T2 = (multimap), membershipOperator(OP), OP != notin.
+operator_declare(OP,(T1,(T2,())),set) :- _type(T1), T2 = (multimap), OP = find.
+operator_declare(OP,((T1,T2),()),multimap) :- _type(T1), _type(T2), OP = multimap_make.
 
 % Conditionals
 operator_declare(OP,(T,()),bool) :- _type(T), OP = hasValue.
 
 _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 
-% Variadic operators
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% VARIADIC OPERATORS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 variadicOperator(add;mult).
 variadicOperator(OP) :- logicOperator(OP), OP != limp.
 
+% Recursive
 _variadic_check(SCOPE, OP, ARGS,0,T) :-
     _expression_query(SCOPE,E),
     E=operation(OP,ARGS),
@@ -108,11 +118,43 @@ _type_operator(SCOPE,OP,function((),T)) :-
     variadicOperator(OP).
 
 _type_operator(SCOPE,OP,function(TS,T)) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,ARGS),
     _type_listAux(SCOPE,ARGS,N,()),
     _variadic_check(SCOPE, OP, ARGS,N-1,T),
     _type_list(SCOPE,ARGS,TS).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LIST BASED OPERATORS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+list_based_operator(multimap_make).
+_list_check(SCOPE, OP, ARGS,0) :-
+    _expression_query(SCOPE,E),
+    E=operation(OP,ARGS),
+    _type_listArg(SCOPE, ARGS, 0, (ARG1,ARG2)),
+    list_based_operator(OP),
+    operator_declare(OP,((T1,T2),()), _),
+    type_expression(SCOPE,ARG1,T1),
+    type_expression(SCOPE,ARG2,T2).
+
+_list_check(SCOPE, OP, ARGS,I) :-
+    _expression_query(SCOPE,E),
+    E=operation(OP,ARGS),
+    _list_check(SCOPE, OP, ARGS,I-1),
+    _type_listArg(SCOPE, ARGS, I, (ARG1,ARG2)),
+    operator_declare(OP,((T1,T2),()), _),
+    type_expression(SCOPE,ARG1,T1),
+    type_expression(SCOPE,ARG2,T2).
+
+_type_operator(SCOPE,OP,function((),T)) :-
+    _expression_query(SCOPE,E),
+    E=operation(OP,()),
+    operator_declare(OP, (_, ()), T),
+    list_based_operator(OP).
+
+_type_operator(SCOPE,OP,function(TS,T)) :-
+    _type_listAux(SCOPE,ARGS,N,()),
+    _list_check(SCOPE, OP, ARGS,N-1),
+    _type_list(SCOPE,ARGS,TS),
+    operator_declare(OP,_, T).
 
 % More complex operators (union types needed?)
 operator_declare(ite,(bool,(int,(int,()))),int).
