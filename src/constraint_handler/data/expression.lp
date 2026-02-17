@@ -9,8 +9,9 @@ _expression_query((),K) :- multimap_assign(_,X,K,B).
 _expression_query((),B) :- multimap_assign(_,X,K,B).
 
 %%%%%%%%%%%%%%%%% _expression_query from expressions
-% TODO tuples, lambda?.
+% TODO lambda?.
 _expression_query(SCOPE,D) :- _expression_query(SCOPE,E), E=operation(O,L), D=@pythonListElements(L).
+_expression_query(SCOPE,E) :- _expression_query(SCOPE,D), D=((E,_);(_,E)).
 
 %%%%%%%%%%%%%%%%% _expression_query from statements
 _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = assert(EXPR).
