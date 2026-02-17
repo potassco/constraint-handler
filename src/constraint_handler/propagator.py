@@ -86,7 +86,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.configuration.solver.heuristic = "Domain"  # ty:ignore[invalid-assignment]
             ctl.add("base", [], REASONING_MODE_PROGRAM)
 
-        print(f"Propagator reasoning mode set to {self.reasoning_mode}")
+        myprint(f"Propagator reasoning mode set to {self.reasoning_mode}")
 
     def init(self, init: clingo.PropagateInit) -> None:
         self.symbol2var.clear()
