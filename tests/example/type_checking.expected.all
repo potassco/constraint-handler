@@ -8,6 +8,8 @@ type_variable((),check(add,numeric(int)),int)
 type_variable((),check(add,numeric(non_int)),float)
 type_variable((),check(mult,numeric(int)),int)
 type_variable((),check(mult,numeric(non_int)),float)
+type_variable((),check(multimap_make_empty),multimap)
+type_variable((),check(multimap_make),multimap)
 
 
 warning(type(failed_operation),(),((),add,(variable(v(str)),(variable(v(bool)),()))))
