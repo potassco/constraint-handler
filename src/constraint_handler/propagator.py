@@ -71,8 +71,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.nogood_queue: list[Iterable[int]] = []
         self.previously_stage_2: bool = False
 
-        self.first_decision_level: int = -1
-
         self.forbidden_warnings: list[warning.Kind] = []
 
     def get_configuration(self, ctl: clingo.Control):
@@ -88,7 +86,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.configuration.solver.heuristic = "Domain"  # ty:ignore[invalid-assignment]
             ctl.add("base", [], REASONING_MODE_PROGRAM)
 
-        print(f"Propagator reasoning mode set to {self.reasoning_mode}")
+        myprint(f"Propagator reasoning mode set to {self.reasoning_mode}")
 
     def init(self, init: clingo.PropagateInit) -> None:
         self.symbol2var.clear()
@@ -139,42 +137,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 else:
                     assert False, f"Unknown reasoning stage atom: {a.symbol}"
 
-            # self.reasoning_mode_stage_lits[1] = ctl.add_literal(freeze=True)
-            # self.reasoning_mode_stage_lits[2] = ctl.add_literal(freeze=True)
-            # ctl.add_watch(self.reasoning_mode_stage_lits[1])
-            # ctl.add_watch(self.reasoning_mode_stage_lits[2])
-            # ctl.add_watch(-self.reasoning_mode_stage_lits[1])
-            # ctl.add_watch(-self.reasoning_mode_stage_lits[2])
-            # ctl.add_clause([-self.reasoning_mode_stage_lits[1], -self.reasoning_mode_stage_lits[2]])
-            # ctl.add_clause([self.reasoning_mode_stage_lits[1], self.reasoning_mode_stage_lits[2]])
-
             for var in self.symbol2var.values():
                 if isinstance(var, EnsureVariable):
                     continue
                 lit = ctl.add_literal(freeze=True)
                 self.variable_lits[var] = lit
-
-    # def decide(self, thread_id: int, assignment: clingo.Assignment, fallback: int) -> int:
-    #     """
-    #     This method is called to decide on literals in the propagator.
-    #     When we are in brave or cautious mode, we make a special decision on decision level 1.
-    #     we first decide on the first stage literal to be true.
-    #     the second time we decide on the second stage literal to be true.
-    #     """
-    #     if self.first_decision_level == -1:
-    #         self.first_decision_level = assignment.decision_level
-    #     if self.reasoning_mode != ReasoningMode.STANDARD and self.first_decision_level == assignment.decision_level:
-    #         if self.reasoning_stage == 0:
-    #             assert not assignment.is_true(self.reasoning_mode_stage_lits[1])
-    #             print("Deciding first stage literal for brave/cautious reasoning", self.reasoning_mode_stage_lits[1])
-    #             self.reasoning_stage = 1
-    #             return self.reasoning_mode_stage_lits[1]
-    #         elif self.reasoning_stage == 1:
-    #             assert not assignment.is_true(self.reasoning_mode_stage_lits[2])
-    #             print("Deciding second stage literal for brave/cautious reasoning", self.reasoning_mode_stage_lits[2])
-    #             self.reasoning_stage = 2
-    #             return self.reasoning_mode_stage_lits[2]
-    #     return fallback
 
     def set_optimization_check_strength(self, strength: Literal["lt", "le"]) -> None:
         """
@@ -252,7 +219,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return False
 
         # This part onwards is only for brave/cautious reasoning
-        print(f"old model: {old_model}\nnew model: {self.python_model}")
+        myprint(f"old model: {old_model}\nnew model: {self.python_model}")
         assert type(self.python_model) is set
         if old_model is not None:
             if self.reasoning_mode == ReasoningMode.CAUTIOUS:
@@ -260,17 +227,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if self.reasoning_mode == ReasoningMode.BRAVE:
                 self.python_model = old_model.union(self.python_model)
 
-            print(f"dif model: {self.python_model.difference(old_model)}")
+            myprint(f"dif model: {self.python_model.difference(old_model)}")
 
         if not ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]):
             return False
 
         assert ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]), "stage 2 should be true!"
-
-        print("Values of changes in stage 2:")
-        for v, i in self.variable_lits.items():
-            print(f"lit {i} for var {v} is {ctl.assignment.value(i)}")
-            print(f"with reasons: {[(l, ctl.assignment.value(l)) for l in list(self.get_reasons(v))]}")
 
         if not self.previously_stage_2:
             # First time in stage 2
@@ -350,7 +312,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         while len(self.nogood_queue) > 0:
             ng = self.nogood_queue.pop(0)
-            print(f"Adding nogood from queue: {ng}")
             if not ctl.add_nogood(ng):
                 return True
 
@@ -857,7 +818,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.handle_on_model_value(var.var, final_value)
 
         for eval_var in self.evaluatevars:
-            print(eval_var, eval_var.get_value())
+            myprint(eval_var, eval_var.get_value())
             self.handle_on_model_warning(eval_var.get_errors())
             pyAtom = atom.Evaluated(
                 eval_var.op,
@@ -923,9 +884,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # alternatively, we have a separate part of the dict that tells you which refs are for which key/value
 
         # TODO: Type for dict is not handled here which results in a none value being output for the type in the value atom
-        pyVal = expression.Val(
-            evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
-        )
+        pyVal = expression.Val(evaluator.get_baseType(final_value), var)
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
@@ -945,7 +904,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
-    def handle_on_model_warning(self, errors: list[tuple[warning.Kind, type.Any]]):
+    def handle_on_model_warning(self, errors: list[tuple[warning.Kind, Any]]):
         for error_kind, msg in errors:
-            atom_ = warning.Warning(error_kind, (), str(msg))
+            atom_ = warning.Warning(error_kind, tuple(), str(msg))
             self.python_model.add(atom_)
