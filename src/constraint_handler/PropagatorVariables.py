@@ -903,13 +903,12 @@ class Execution:
         self,
         name: str,
         func_name: clingo.Symbol,
-        stmt: statement.Stmt,
         in_vars: list[clingo.Symbol],
         out_vars: list[clingo.Symbol],
     ):
         self.name: str = name
         self.func_name: clingo.Symbol = func_name
-        self.stmt: statement.Stmt = stmt
+        self.statements: list[ExecutionStatement] = []
         self.in_vars: list[clingo.Symbol] = in_vars
         self.converted_in_vars: list[clingo.Symbol] = self.convert_vars(in_vars, input=True)
         self.out_vars: list[clingo.Symbol] = out_vars
@@ -929,6 +928,9 @@ class Execution:
         self.parents: list[VariableType] = []
 
         self.errors: list[Exception] = []
+
+    def add_statement(self, stmt: statement.Stmt, lit: int) -> None:
+        self.statements.append(ExecutionStatement(stmt, lit))
 
     def has_domain(self) -> bool:
         return True  # executions always have a domain
@@ -1002,22 +1004,37 @@ class Execution:
                 assert self.values == ValueStatus.NOT_SET
                 return EvaluationResult.NOT_CHANGED
 
+        # TODO: see if we can improve this code.
+        # There is a lot of copying of the evaluations dictionary!
         evals = {}
         for c_var, var in zip(self.converted_in_vars, self.in_vars):
             evals[var] = evaluations[c_var]
 
-        try:
-            self.errors = evaluator.evaluate_stmt(self.stmt, env, evals)
-        except solver_environment.FailIntegrityExn:
+        final_evals = dict()
+        for stmt in self.statements:
+            __evals = evals.copy()
+            result = stmt.evaluate(__evals, ctl, env)
+            if result == EvaluationResult.CONFLICT:
+                self.decision_level = ctl.assignment.decision_level
+                return EvaluationResult.CONFLICT
+            elif result == EvaluationResult.CHANGED:
+                final_evals = __evals.copy()
+
+        # check if multiple statements were run
+        # if so, take the last one run and add warning
+        # TODO: check if this is fine or better return conflict?
+        if sum([1 for stmt in self.statements if stmt.assigned]) > 1:
+            self.errors.append(
+                ValueError("Multiple statements in the same execution were run! Only the last one will be used!")
+            )
             self.decision_level = ctl.assignment.decision_level
-            return EvaluationResult.CONFLICT
 
         self.values: list[tuple[clingo.Symbol, Any]] = []
         for c_out_var, out_var in zip(self.converted_out_vars, self.out_vars):
-            if out_var not in evals:
+            if out_var not in final_evals:
                 self.values.append((c_out_var, None))
             else:
-                self.values.append((c_out_var, evals[out_var]))
+                self.values.append((c_out_var, final_evals[out_var]))
 
         return EvaluationResult.CHANGED
 
@@ -1053,17 +1070,17 @@ class Execution:
                 d[out_var] = val
 
     def __hash__(self) -> int:
-        return hash((self.func_name, self.stmt, tuple(self.in_vars), tuple(self.out_vars)))
+        return hash((self.func_name, tuple(self.statements), tuple(self.in_vars), tuple(self.out_vars)))
 
     def __repr__(self) -> str:
-        return f"Execution({self.name}, {self.func_name}, {self.stmt})"
+        return f"Execution({self.name}, {self.func_name}, {self.statements})"
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Execution):
             return False
         return (
             self.func_name == other.func_name
-            and self.stmt == other.stmt
+            and self.statements == other.statements
             and self.in_vars == other.in_vars
             and self.out_vars == other.out_vars
         )
@@ -1114,7 +1131,7 @@ class ExecutionStatement:
         if ctl.assignment.is_false(self.literal):
             # if a particular statement is not executed,
             # then the value of this statement is just a false assignment
-            # TODO: see what makes to return here, change or not?
+            # TODO: see what to return here, change or not?
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.NOT_CHANGED

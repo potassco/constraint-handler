@@ -732,15 +732,27 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_execution_declare)
         for (name, symbol_var, stmt, in_v, out_v), literal in declares.items():
-            variable = Execution(name, symbol_var, stmt, in_v, out_v)
+            if symbol_var in self.symbol2var:
+                variable = cast(Execution, self.symbol2var[symbol_var])
+            else:
+                variable = Execution(name, symbol_var, in_v, out_v)
+                self.symbol2var[symbol_var] = variable
 
-            if literal != 1:
-                self.errors.append((warning.Propagator(), SyntaxError(f"Execution {name} declaration is not a fact!")))
-
-            self.symbol2var[symbol_var] = variable
+            variable.add_statement(stmt, literal)
+            if literal not in self.literal2var:
+                self.literal2var[literal] = []
+            self.literal2var[literal].append(variable)
 
         exec_runs = myClorm.findInPropagateInit(ctl, atom.Propagator_execution_run)
         for (name, symbol_var), literal in exec_runs.items():
+            if symbol_var not in self.symbol2var:
+                self.errors.append(
+                    (
+                        warning.Variable(warning.VariableWarning.undeclared),
+                        f"Execution variable '{symbol_var}' run exists but variable not declared!",
+                    )
+                )
+                continue
             execvar: Execution = cast(Execution, self.symbol2var[symbol_var])
             execvar.add_run_literal(literal)
             if literal not in self.literal2var:
