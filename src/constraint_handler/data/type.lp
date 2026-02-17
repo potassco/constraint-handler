@@ -76,6 +76,7 @@ operator_declare(length,(T,()),int) :- T = (str;set).
 operator_declare(OP,(T,(T,())),T) :- setOperator(OP), T = (set), OP != subset.
 operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
 operator_declare(OP,(T,(set,())),bool) :- _type(T), membershipOperator(OP).
+operator_declare(OP,(T,()),set) :- _type(T), OP = makeSet.
 
 % Multimap
 operator_declare(OP,(T,()),int) :- T = (multimap), OP = (countKeys;countEntries;sumIntEntries).
@@ -125,7 +126,26 @@ _type_operator(SCOPE,OP,function(TS,T)) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LIST BASED OPERATORS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-list_based_operator(multimap_make).
+list_based_operator(multimap_make; makeSet).
+
+% Single Value
+_list_check(SCOPE, OP, ARGS,0) :-
+    _expression_query(SCOPE,E),
+    E=operation(OP,ARGS),
+    _type_listArg(SCOPE, ARGS, 0, ARG),
+    list_based_operator(OP),
+    operator_declare(OP,(T,()), _),
+    type_expression(SCOPE,ARG,T).
+
+_list_check(SCOPE, OP, ARGS,I) :-
+    _expression_query(SCOPE,E),
+    E=operation(OP,ARGS),
+    _list_check(SCOPE, OP, ARGS,I-1),
+    _type_listArg(SCOPE, ARGS, I, ARG),
+    operator_declare(OP,(T,()), _),
+    type_expression(SCOPE,ARG,T).
+
+% Tuples
 _list_check(SCOPE, OP, ARGS,0) :-
     _expression_query(SCOPE,E),
     E=operation(OP,ARGS),

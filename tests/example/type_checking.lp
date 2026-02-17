@@ -60,6 +60,10 @@ variable_define(check, check(multimap_make), MAP) :-
     KEY2 = variable(v(symbol)),
     ITEM3 = (KEY2, variable(v(int))).
 
+% Set make
+variable_define(check, check(set_make_empty), operation(makeSet, ())).
+variable_define(check, check(set_make), operation(makeSet, (variable(v(int)),(variable(v(int)),())))).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % EXPECTED TO FAIL
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
