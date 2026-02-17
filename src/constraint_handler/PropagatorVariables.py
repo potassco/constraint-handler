@@ -1069,6 +1069,65 @@ class Execution:
         )
 
 
+class ExecutionStatement:
+    def __init__(self, statement, literal):
+        self.statement: statement.Stmt = statement
+        self.literal: int = literal
+        self.value: ValueStatus | list[tuple[clingo.Symbol, Any]] = ValueStatus.NOT_SET
+        self.errors: list[Exception] = []
+        self.assigned: bool | None = None
+        self.decision_level: int = sys.maxsize
+
+    @property
+    def literals(self) -> set[int]:
+        if self.assigned is None:
+            return set()
+        elif self.assigned:
+            return {self.literal}
+        else:
+            return {-self.literal}
+
+    def get_value(self) -> ValueStatus | list[tuple[clingo.Symbol, Any]]:
+        return self.value
+
+    def get_errors(self) -> list[Exception]:
+        return self.errors
+
+    def reset(self, dl: int):
+        if self.decision_level >= dl:
+            self.decision_level = sys.maxsize
+            self.errors = []
+            self.value = ValueStatus.NOT_SET
+            self.assigned = None
+
+    def evaluate(
+        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
+    ) -> EvaluationResult:
+        self.assigned = ctl.assignment.value(self.literal)
+        if self.assigned is None:
+            return EvaluationResult.NOT_CHANGED
+
+        if self.value != ValueStatus.NOT_SET:
+            # already assigned
+            return EvaluationResult.NOT_CHANGED
+
+        if ctl.assignment.is_false(self.literal):
+            # if a particular statement is not executed,
+            # then the value of this statement is just a false assignment
+            # TODO: see what makes to return here, change or not?
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+            self.decision_level = ctl.assignment.decision_level
+            return EvaluationResult.NOT_CHANGED
+
+        try:
+            self.errors = evaluator.evaluate_stmt(self.statement, env, evaluations)
+        except solver_environment.FailIntegrityExn:
+            self.decision_level = ctl.assignment.decision_level
+            return EvaluationResult.CONFLICT
+
+        return EvaluationResult.CHANGED
+
+
 def make_dict_from_variables(
     variables: Iterable[VariableType],
 ) -> dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]:
