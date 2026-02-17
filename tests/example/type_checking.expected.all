@@ -12,6 +12,7 @@ type_variable((),check(multimap_make_empty),multimap)
 type_variable((),check(multimap_make),multimap)
 type_variable((),check(set_make_empty),set)
 type_variable((),check(set_make),set)
+type_variable((),check(length_find_multimap_make),int)
 
 
 warning(type(failed_operation),(),((),add,(variable(v(str)),(variable(v(bool)),()))))

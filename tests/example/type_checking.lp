@@ -64,6 +64,16 @@ variable_define(check, check(multimap_make), MAP) :-
 variable_define(check, check(set_make_empty), operation(makeSet, ())).
 variable_define(check, check(set_make), operation(makeSet, (variable(v(int)),(variable(v(int)),())))).
 
+% Chained (multimap_make -> find -> length)
+variable_define(check, check(length_find_multimap_make), operation(length, (SET,()))) :-
+    SET = operation(find,(KEY,(MAP,()))),
+    MAP = operation(multimap_make, (ITEM1,(ITEM2,(ITEM3,())))),
+    KEY = variable(v(str)),
+    ITEM1 = (KEY, variable(v(int))),
+    ITEM2 = (KEY, variable(v(float))),
+    KEY2 = variable(v(symbol)),
+    ITEM3 = (KEY2, variable(v(int))).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % EXPECTED TO FAIL
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
