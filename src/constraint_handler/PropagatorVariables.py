@@ -108,7 +108,7 @@ class VariableValue:
             return True
 
         for var in self.vars():
-            if var not in evaluations:  # and var not in evaluations[FALSE_ASSIGNMENTS]:
+            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.value == ValueStatus.NOT_SET
@@ -998,7 +998,7 @@ class Execution:
             return EvaluationResult.CHANGED
 
         for var in self.converted_in_vars:
-            if var not in evaluations:  # and var not in evaluations[FALSE_ASSIGNMENTS]:
+            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.values == ValueStatus.NOT_SET
@@ -1148,7 +1148,7 @@ class ExecutionStatement:
 def make_dict_from_variables(
     variables: Iterable[VariableType],
 ) -> dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]:
-    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {}
+    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {FALSE_ASSIGNMENTS: []}  # type: ignore
     for var in variables:
         var.add_self_to_dict(result)
 
