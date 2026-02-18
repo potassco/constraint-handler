@@ -89,86 +89,33 @@ _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % VARIADIC OPERATORS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Recursive
-variadicOperator(recursive, OP) :- OP = (add;mult).
-variadicOperator(recursive, OP) :- logicOperator(OP), OP != limp.
+_variadic_ranked_result(OP, int,   int,   1) :- OP = (mult;add).
+_variadic_ranked_result(OP, float, float, 2) :- OP = (mult;add).
+_variadic_ranked_result(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
+_variadic_ranked_result(makeSet, T, set, 1) :- _type(T).
 
-_variadic_recursive_check(SCOPE, OP, ARGS,0,T) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,ARGS),
-    _type_listArg(SCOPE, ARGS, 0, ARG),
-    type_expression(SCOPE,ARG,T),
-    variadicOperator(recursive, OP).
+_arg_rank(SCOPE, OP, ARGS, IDX, RANK) :-
+    _type_listArg(SCOPE, ARGS, IDX, ARG),
+    type_expression(SCOPE, ARG, T),
+    _variadic_ranked_result(OP, T, _, RANK).
 
-_variadic_recursive_check(SCOPE, OP, ARGS,I,T) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,ARGS),
-    _variadic_recursive_check(SCOPE,OP,ARGS,I-1,T1),
-    _type_listArg(SCOPE, ARGS, I, ARG),
-    type_expression(SCOPE,ARG,T2),
-    operator_declare(OP, (T1, (T2,())), T).
+_valid_args_count(SCOPE, OP, ARGS, COUNT) :-
+    _expression_query(SCOPE, operation(OP, ARGS)),
+    COUNT = #count { IDX : _arg_rank(SCOPE, OP, ARGS, IDX, _) }.
 
-_type_operator(SCOPE,OP,function((),T)) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,()),
-    operator_declare(OP, (_, (_,())), T),
-    variadicOperator(recursive, OP).
+_max_rank(SCOPE, OP, ARGS, 1) :-
+    _valid_args_count(SCOPE, OP, ARGS, 0).
 
-_type_operator(SCOPE,OP,function(TS,T)) :-
-    _type_listAux(SCOPE,ARGS,N,()),
-    _variadic_recursive_check(SCOPE, OP, ARGS,N-1,T),
-    _type_list(SCOPE,ARGS,TS).
+_max_rank(SCOPE, OP, ARGS, MAXR) :-
+    _valid_args_count(SCOPE, OP, ARGS, C), C > 0,
+    MAXR = #max { RANK : _arg_rank(SCOPE, OP, ARGS, _, RANK) }.
 
-% List based
-variadicOperator(list, OP) :- OP = (multimap_make; makeSet).
-
-% Single Value
-_variadic_list_check(SCOPE, OP, ARGS,0) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,ARGS),
-    _type_listArg(SCOPE, ARGS, 0, ARG),
-    variadicOperator(list, OP),
-    operator_declare(OP,(T,()), _),
-    type_expression(SCOPE,ARG,T).
-
-_variadic_list_check(SCOPE, OP, ARGS,I) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,ARGS),
-    _variadic_list_check(SCOPE, OP, ARGS,I-1),
-    _type_listArg(SCOPE, ARGS, I, ARG),
-    operator_declare(OP,(T,()), _),
-    type_expression(SCOPE,ARG,T).
-
-% Tuples
-_variadic_list_check(SCOPE, OP, ARGS,0) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,ARGS),
-    _type_listArg(SCOPE, ARGS, 0, (ARG1,ARG2)),
-    variadicOperator(list, OP),
-    operator_declare(OP,((T1,T2),()), _),
-    type_expression(SCOPE,ARG1,T1),
-    type_expression(SCOPE,ARG2,T2).
-
-_variadic_list_check(SCOPE, OP, ARGS,I) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,ARGS),
-    _variadic_list_check(SCOPE, OP, ARGS,I-1),
-    _type_listArg(SCOPE, ARGS, I, (ARG1,ARG2)),
-    operator_declare(OP,((T1,T2),()), _),
-    type_expression(SCOPE,ARG1,T1),
-    type_expression(SCOPE,ARG2,T2).
-
-_type_operator(SCOPE,OP,function((),T)) :-
-    _expression_query(SCOPE,E),
-    E=operation(OP,()),
-    operator_declare(OP, (_, ()), T),
-    variadicOperator(list, OP).
-
-_type_operator(SCOPE,OP,function(TS,T)) :-
-    _type_listAux(SCOPE,ARGS,N,()),
-    _variadic_list_check(SCOPE, OP, ARGS,N-1),
-    _type_list(SCOPE,ARGS,TS),
-    operator_declare(OP,_, T).
+_type_operator(SCOPE, OP, function(TS, T_RESULT)) :-
+    _type_listAux(SCOPE, ARGS, N, ()),
+    _type_list(SCOPE, ARGS, TS),
+    _valid_args_count(SCOPE, OP, ARGS, N),
+    _max_rank(SCOPE, OP, ARGS, MAXR),
+    _variadic_ranked_result(OP, _, T_RESULT, MAXR).
 
 % More complex operators (union types needed?)
 operator_declare(ite,(bool,(int,(int,()))),int).
