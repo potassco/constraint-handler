@@ -49,7 +49,7 @@ base_tests = [
     "set_manipulations",
     "set_selfref",
     "strings",
-    # "type_checking",
+    "type_checking",
     "variable_parallel_declaration",
     "variables",
     "warning_fake_forbid",
