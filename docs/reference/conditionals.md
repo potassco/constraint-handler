@@ -83,7 +83,7 @@ The `default` operator is used to provide a fallback value if the first [Express
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `default` | Default | (A, B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
+| `default` | Default | (A | [none], B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
 
 !!! Example
     ```prolog
