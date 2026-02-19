@@ -47,3 +47,11 @@ code.doc-clingo-symbol-predicate::after {
     -webkit-mask-image: var(--md-admonition-icon--asp-doc-ref);
     mask-image: var(--md-admonition-icon--asp-doc-ref);
 }
+
+.md-grid {
+    max-width: 90%;
+}
+
+.md-content {
+    max-width: none;
+}
