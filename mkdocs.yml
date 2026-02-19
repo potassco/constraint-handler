@@ -95,7 +95,7 @@ markdown_extensions:
 
 plugins:
   - search
-  - autorefs
+  # - autorefs
   - literate-nav:
       nav_file: SUMMARY.md
   - gen-files:
@@ -105,6 +105,8 @@ plugins:
       handlers:
         python:
           paths: [src]
+          inventories:
+            - https://docs.python.org/3/objects.inv
           options:
             show_symbol_type_heading: true
             show_symbol_type_toc: true
