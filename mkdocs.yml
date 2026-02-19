@@ -34,7 +34,7 @@ theme:
     - content.code.copy
     - content.tooltips
     # - navigation.instant.preview
-    - navigation.expand
+    # - navigation.expand
   icon:
     repo: fontawesome/brands/github
     admonition:
@@ -98,6 +98,9 @@ plugins:
   - autorefs
   - literate-nav:
       nav_file: SUMMARY.md
+  - gen-files:
+      scripts:
+        - docs/_scripts/generate_python_documentation.py
   - mkdocstrings:
       handlers:
         python:
@@ -108,6 +111,14 @@ plugins:
             show_signature_annotations: true
             signature_crossrefs: true
             show_source: false
+            separate_signature: true
+            heading_level: 2
+            docstring_section_style: table
 
 hooks:
   - docs/_hooks/links_hook.py
+
+# literate-nav handles SUMMARY.md files.
+exclude_docs: |
+  SUMMARY.md
+  **/SUMMARY.md
