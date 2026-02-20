@@ -21,8 +21,11 @@ def atoms_from_file(file_name):
         return []
 
 
+def contains(a):
+    return clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
+
+
 def build_expectations(name):
-    contains = lambda a: clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
     # opt_contains = lambda a: clintest.assertion.Implies(clintest.assertion.Optimal(), contains(a)) # TODO: this should work
     opt_contains = contains
     absent = lambda a: clintest.assertion.Not(
@@ -45,8 +48,6 @@ def build_expectations(name):
 
 
 def build_reasoning_mode_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
-    contains = lambda a: clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
-
     expected_brave = atoms_from_file(name + ".expected.brave")
     test_brave = clintest.test.And(*(clintest.test.Assert(Last(), contains(a)) for a in expected_brave))
 
@@ -83,6 +84,9 @@ class Solver(clintest.solver.Solver):
         self.__propagator_check_only = propagator_check_only
 
     def solve(self, test: clintest.test.Test) -> None:
+        if test.outcome().is_certain():
+            return
+
         ctl = clingo.Control(self.__arguments)
 
         constraint_handler.add_to_control(ctl, propagator_check_only=self.__propagator_check_only)
