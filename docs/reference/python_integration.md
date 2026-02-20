@@ -69,7 +69,7 @@ Lambda functions can be defined directly within the `String` argument of the `py
 #### Named Functions
 To use named custom functions, you need to ensure that the function is passed to the Python environment before executing the operation.
 
-Currently, this can be done by manipulating the `_shared_environment` of the constraint handlers `evaluator`.
+This can be done by passing the desired environment into the `add_to_control` function during initialization of the constraint handler.
 
 !!! Example
     Assuming you have a Python function defined as follows:
@@ -79,19 +79,19 @@ Currently, this can be done by manipulating the `_shared_environment` of the con
         return x * y + 10
     ```
 
-    You would add this function to the `_shared_environment` before executing the operation:
+    You would add this function to a dictionary representing the environment and pass it to the `add_to_control` function:
 
     ```python
-    import constraint_handler.evaluator as evaluator
-    evaluator._shared_environment["custom_function"] = custom_function
+    my_environment = {"my_function": custom_function}
+    constraint_handler.add_to_control(control, environment=my_environment)
     ```
 
-    Then, you can use this function in your operation:
+    Then, you can use this function in your operation using the identifier you provided in the environment:
 
     ```prolog
     variable_define(
         z,
-        operation(python("custom_function"), (val(int, 5), (val(int, 3), ())))
+        operation(python("my_function"), (val(int, 5), (val(int, 3), ())))
     ).
     ```
 
