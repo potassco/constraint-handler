@@ -116,6 +116,13 @@ plugins:
             separate_signature: true
             heading_level: 2
             docstring_section_style: table
+        asp:
+          options:
+            predicate_table:
+              include_undocumented: false
+            glossary:
+              include_undocumented: false
+            encodings: false
 
 hooks:
   - docs/_hooks/links_hook.py
