@@ -13,7 +13,6 @@ import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 
 
-
 def print_results(res):
     s = ""
     for a, v in res.items():
@@ -126,7 +125,7 @@ def set_valuation(ctrl, model) -> dict[Any, Any]:
     acyclic = False
     try:
         ts.prepare()
-        acyclic = True
+        acyclic = True  # fmt: skip
     except graphlib.CycleError as exn:
         print("cycle:", exn)
     # step = 0
