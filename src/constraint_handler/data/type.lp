@@ -44,7 +44,6 @@ numericUnOperator(abs;minus).
 numericBinOperator(add;sub;mult;div;fdiv;pow;max).
 comparisonOperator(leq;lt;geq;gt).
 equalityOperator(eq;neq).
-logicOperator(conj;disj;limp;lxor;leqv).
 setOperator(union;inter;diff;subset).
 membershipOperator(isin;notin).
 
@@ -59,11 +58,6 @@ operator_declare(OP,(T,(T,())),float) :- _numeric_type(T), OP = fdiv.
 operator_declare(OP,(T,(T,())),int) :- _numeric_type(T), OP = floor.
 operator_declare(OP,(T,(T,())),T)    :- numericBinOperator(OP), _numeric_type(T), OP != fdiv.
 operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
-% Bool
-operator_declare(OP,(T,()),T) :- OP = lnot,T = (bool;none).
-operator_declare(OP,(T,()),bool) :- OP = (wnot;snot), T = (bool;none).
-operator_declare(OP,(T,(T,())),T) :- logicOperator(OP), T = (bool).
-operator_declare(OP,(T1,(T2,())),none) :- OP = limp, T1 = (bool;none), T2 = (bool;none), (T1,T2) != (bool, bool).
 % Str
 operator_declare(concat,(str,(str,())),str).
 operator_declare(length,(T,()),int) :- T = (str;set).
@@ -89,15 +83,15 @@ _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % VARIADIC OPERATORS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-_variadic_ranked_result(OP, int,   int,   1) :- OP = (mult;add).
-_variadic_ranked_result(OP, float, float, 2) :- OP = (mult;add).
-_variadic_ranked_result(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
-_variadic_ranked_result(makeSet, T, set, 1) :- _type(T).
+operator_declare_variadic(OP, int,   int,   1) :- OP = (mult;add).
+operator_declare_variadic(OP, float, float, 2) :- OP = (mult;add).
+operator_declare_variadic(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
+operator_declare_variadic(makeSet, T, set, 1) :- _type(T).
 
 _arg_rank(SCOPE, OP, ARGS, IDX, RANK) :-
     _type_listArg(SCOPE, ARGS, IDX, ARG),
     type_expression(SCOPE, ARG, T),
-    _variadic_ranked_result(OP, T, _, RANK).
+    operator_declare_variadic(OP, T, _, RANK).
 
 _valid_args_count(SCOPE, OP, ARGS, COUNT) :-
     _expression_query(SCOPE, operation(OP, ARGS)),
@@ -115,7 +109,7 @@ _type_operator(SCOPE, OP, function(TS, T_RESULT)) :-
     _type_list(SCOPE, ARGS, TS),
     _valid_args_count(SCOPE, OP, ARGS, N),
     _max_rank(SCOPE, OP, ARGS, MAXR),
-    _variadic_ranked_result(OP, _, T_RESULT, MAXR).
+    operator_declare_variadic(OP, _, T_RESULT, MAXR).
 
 % More complex operators (union types needed?)
 operator_declare(ite,(bool,(int,(int,()))),int).

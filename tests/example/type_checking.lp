@@ -24,11 +24,21 @@ variable_domain(none_bool, val(none,none)).
 variable_domain(none_bool, variable(v(bool))).
 
 %%%%%%%%%%%%%%%%% Bool
+variable_define(check, check(OP, bool), EXPR) :-
+    EXPR = operation(OP, (variable(v(bool)),())),
+    OP = (lnot;snot;wnot).
+
+variable_define(check, check(OP, bool), EXPR) :-
+    EXPR = operation(OP, (variable(v(bool)),(variable(v(bool)),()))),
+    OP = (eq).
+
+variable_define(check, check(OP, bool), EXPR) :-
+    EXPR = operation(OP, (variable(v(bool)),(variable(v(bool)),(variable(v(bool)),())))),
+    OP = (conj;disj;lxor;leqv).
 
 variable_define(check, check(OP, none_bool), EXPR) :-
     EXPR = operation(OP, (variable(v(none_bool(1))),(variable(v(none_bool(2))),()))),
-    OP = limp.
-
+    OP = (limp).
 
 % Addition / multiplication for 0 to N (here 5) numeric types
 1{arity(N):N=1..5}1.
