@@ -85,6 +85,8 @@ def reducedExpr(v):
         return expression.Val(BaseType.none, None)
     elif isinstance(v, frozenset) or isinstance(v, set):
         return frozenset({reducedExpr(x) for x in v})
+    elif isinstance(v, tuple):
+        return tuple(reducedExpr(x) for x in v)
     elif isinstance(v, dict):
         raise NotImplementedError(f"reducedExpr is not implemented for {dict} {v}")
     elif isinstance(v, expression.Lambda):
