@@ -99,9 +99,10 @@ def test_engine_ground(name: str):
         "optimize_floats",
         "optimize_ints",
         "optimize_priority",
+        "reasoning_modes",
         "set_iterations",
         "set_selfref",
-        "reasoning_modes",
+        "type_checking",
     ]
     if name not in unsupported:
         run_test(name, "ground")

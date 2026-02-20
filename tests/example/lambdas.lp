@@ -70,5 +70,5 @@ variable_define(dummy,nb_squares2,E) :-
   PLUS = operation(add,(MONE,(ACCU,()))),
   LAMB = lambda(VARS,PLUS).
 
-#show value/3.
+#show value/2.
 #show _ge_eval_exec/3.

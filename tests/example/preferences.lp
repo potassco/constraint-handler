@@ -58,6 +58,6 @@ preference_variableValue(dummy,p,val(int,2),2).
 preference_variableValue(dummy,q,val(int,N),N) :- smallInt(N).
 
 
-#show evaluated/4.
+#show evaluated/3.
 #show value/2.
 #show preference_score/1.

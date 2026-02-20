@@ -115,7 +115,7 @@ def pytocl(v, dtarget=None):
         elif issubclass(target, tuple):
             return clingo.Function("", [pytocl(e) for e in v])
         else:
-            print("myclorm pytocl", v, target)
+            # print("myclorm pytocl", v, target)
             name = getattr(target, "name", target.__name__)
             name = predicatedefn_default_predicate_name(name)
             args = typing.get_type_hints(target)
