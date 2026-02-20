@@ -17,5 +17,5 @@ evaluate(leqv,
   (operation(eq,(variable(execution_output(snippet,y)),(val(int,5),()))),
   (operation(eq,(variable(execution_input(snippet,x)),(val(bool,false),()))),()))).
 
-#show value/3.
-#show evaluated/4.
+#show value/2.
+#show evaluated/3.
