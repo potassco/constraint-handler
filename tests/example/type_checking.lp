@@ -40,27 +40,46 @@ variable_define(check, check(OP, none_bool), EXPR) :-
     EXPR = operation(OP, (variable(v(none_bool(1))),(variable(v(none_bool(2))),()))),
     OP = (limp).
 
+%%%%%%%%%%%%%%%%% Int
+
 % Addition / multiplication for 0 to N (here 5) numeric types
 1{arity(N):N=1..5}1.
 count(1..N) :- arity(N).
 
-numeric_args(0, (int;non_int),()).
-numeric_args(N, int, (variable(v(int)), TAIL)) :- numeric_args(N-1, int, TAIL), count(N).
+_int_args(0,()).
+_int_args(N, (variable(v(int)), TAIL)) :- _int_args(N-1, TAIL), count(N).
+variable_define(check, check(OP, int), EXPR) :-
+    EXPR = operation(OP, ARGS),
+    OP = (add;mult),
+    _int_args(N, ARGS),
+    arity(N).
 
-1{numeric_args(N, non_int, (variable(v(T)),TAIL)):T = (int;float)}1 :-
-    numeric_args(N-1, non_int, TAIL),
+variable_define(check, check(OP, int), EXPR) :-
+    EXPR = operation(OP, (variable(v(int)),(variable(v(int)),()))),
+    OP = (sub;div;pow;eq;neq;leq;lt;geq;gt).
+
+variable_define(check, check(OP, int), EXPR) :-
+    EXPR = operation(OP, (variable(v(int)),())),
+    OP = (abs;minus).
+
+%%%%%%%%%%%%%%%%% Float / Mixed
+
+_float_args(0,()).
+1{_float_args(N, (variable(v(T)),TAIL)):T = (int;float)}1 :-
+    _float_args(N-1, TAIL),
     count(N),
     arity(A),
     N < A.
 
-numeric_args(N, non_int, (variable(v(float)), TAIL)) :- numeric_args(N-1, non_int, TAIL), arity(N).
+_float_args(N, (variable(v(float)), TAIL)) :- _float_args(N-1, TAIL), arity(N).
 
-variable_define(check, check(OP, numeric(TYPES)), EXPR) :-
+variable_define(check, check(OP, float), EXPR) :-
     EXPR = operation(OP, ARGS),
     OP = (add;mult),
-    numeric_args(N, TYPES, ARGS),
+    _float_args(N, ARGS),
     arity(N).
 
+%%%%%%%%%%%%%%%%% Multimap
 % Multimap make
 variable_define(check, check(multimap_make_empty), operation(multimap_make, ())).
 variable_define(check, check(multimap_make), MAP) :-

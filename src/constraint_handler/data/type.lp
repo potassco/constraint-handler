@@ -48,16 +48,16 @@ setOperator(union;inter;diff;subset).
 membershipOperator(isin;notin).
 
 % All
-operator_declare(OP,(T1,(T2,())),bool) :- equalityOperator(OP), _type(T1),_type(T2), 1 { T1 = T2 ; T1 = none ; T2 = none }.
-operator_declare(OP,(T,(T,())),bool) :- comparisonOperator(OP), _type(T), T != str.
+% operator_declare(OP,(T1,(T2,())),bool) :- equalityOperator(OP), _type(T1),_type(T2), 1 { T1 = T2 ; T1 = none ; T2 = none }.
+% operator_declare(OP,(T,(T,())),bool) :- comparisonOperator(OP), _type(T), T != str.
 % Numeric
 operator_declare(OP,(T1,(T2,())),bool) :- comparisonOperator(OP), _numeric_type(T1), _numeric_type(T2).
 operator_declare(OP,(T,()),float) :- numericUnFOperator(OP), _numeric_type(T).
-operator_declare(OP,(T,()),T) :- numericUnOperator(OP), _numeric_type(T).
+% operator_declare(OP,(T,()),T) :- numericUnOperator(OP), _numeric_type(T).
 operator_declare(OP,(T,(T,())),float) :- _numeric_type(T), OP = fdiv.
 operator_declare(OP,(T,(T,())),int) :- _numeric_type(T), OP = floor.
-operator_declare(OP,(T,(T,())),T)    :- numericBinOperator(OP), _numeric_type(T), OP != fdiv.
-operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
+% operator_declare(OP,(T,(T,())),T)    :- numericBinOperator(OP), _numeric_type(T), OP != fdiv.
+% operator_declare(OP,(T1,(T2,())),float) :- numericBinOperator(OP), _numeric_type(T1), _numeric_type(T2), T1 != T2.
 % Str
 operator_declare(concat,(str,(str,())),str).
 operator_declare(length,(T,()),int) :- T = (str;set).
@@ -83,8 +83,8 @@ _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % VARIADIC OPERATORS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-operator_declare_variadic(OP, int,   int,   1) :- OP = (mult;add).
-operator_declare_variadic(OP, float, float, 2) :- OP = (mult;add).
+% operator_declare_variadic(OP, int,   int,   1) :- OP = (mult;add).
+% operator_declare_variadic(OP, float, float, 2) :- OP = (mult;add).
 operator_declare_variadic(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
 operator_declare_variadic(makeSet, T, set, 1) :- _type(T).
 
