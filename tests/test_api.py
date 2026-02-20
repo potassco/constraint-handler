@@ -90,7 +90,7 @@ def test_add():
     solve_handle = ctrl.solve(yield_=True)
     for model in solve_handle:
         solution = set()
-        for fact in model.symbols(shown=True,theory=True):
+        for fact in model.symbols(shown=True, theory=True):
             solution.add(fact.__str__())
 
         assert solution == {"value(x,val(int,20))", "value(y,val(int,30))"}
