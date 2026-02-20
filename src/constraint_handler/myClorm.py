@@ -299,18 +299,16 @@ def findInControl(ctl, dtarget=typing.Any):
     for target in rows:
         if target == typing.Any:
             for atom in ctl.symbolic_atoms:
-                if atom.literal not in result:
-                    result[atom.literal] = cltopy(atom.symbol)
+                result[atom] = cltopy(atom.symbol)
         elif getattr(target, "_fields", None) is not None:
             assert getattr(target, "__name__", None) is not None
             name = predicatedefn_default_predicate_name(target.__name__)
             arity = len(target._fields)
             for atom in ctl.symbolic_atoms.by_signature(name, arity):
-                if atom.literal not in result:
-                    try:
-                        result[atom.literal] = cltopy(atom.symbol, target)
-                    except FailedInstantiationExn:
-                        pass
+                try:
+                    result[atom] = cltopy(atom.symbol, target)
+                except FailedInstantiationExn:
+                    pass
         else:
             raise ValueError("findInControl: not sure what to do with target", target)
     return result

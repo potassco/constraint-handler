@@ -1,11 +1,12 @@
 from importlib.resources import files
 
+import typing
+
 import clingo
 import clingo.script
 
 import constraint_handler.evaluator as evaluator
-
-# import constraint_handler.post_processor as post_processor
+import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
 
 modules = [
@@ -32,6 +33,8 @@ modules = [
 ]
 
 python_enabled = False
+ground_patched = False
+model_patched = False
 
 
 def add_to_control(
@@ -54,23 +57,40 @@ def add_to_control(
             evaluator._solver_environment[idx] = environment
             _environment_ids[eid] = idx
         ctrl.add(f"main_solverIdentifier({idx}).")
+    #patch_clingo(ctrl)
     setup_propagator(ctrl, propagator_check_only)
+
+def patch_clingo(ctrl):
+    global ground_patched
+    if not ground_patched:
+        old_control_ground = clingo.Control.ground
+        def new_control_ground(self, *k, **kw):
+            old_control_ground(self, *k, **kw)
+            post_processor.set_map(self)
+        setattr(clingo.Control,"ground",new_control_ground)
+        ground_patched = True
+    global model_patched
+    if not model_patched or True:
+        old_model_init = clingo.Model.__init__
+        def new_model_init(self, *k, **kw):
+            old_model_init(self, *k, **kw)
+            post_processor.set_valuation(ctrl,self)
+        setattr(clingo.Model,"__init__",new_model_init)
+        model_patched = True
 
 
 def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
-    p = propagator.ConstraintHandlerPropagator(check_only)
-    ctrl.register_propagator(p)
-    p.get_configuration(ctrl)
+    prop = propagator.ConstraintHandlerPropagator(check_only)
+    ctrl.register_propagator(prop)
+    prop.get_configuration(ctrl)
     original_solve = ctrl.solve
 
-    def combine_on_model(on_model):
-        def om(m):
-            if p.on_model(m) != False:
-                # setattr(m,"constraint_handler_valuation",post_processor.ch_vars(m))
-                return on_model(m)
-            else:
-                # setattr(m,"constraint_handler_valuation",post_processor.ch_vars(m))
-                return True
+    def combine_on_model(on_model: typing.Callable[[clingo.Model], bool | None] | None = None):
+        def om(model):
+            if prop.on_model(model) == False:
+                return False
+            if on_model is not None:
+                return on_model(model)
 
         return om
 
@@ -80,7 +100,7 @@ def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
         elif "on_model" in kwargs:
             kwargs["on_model"] = combine_on_model(kwargs["on_model"])
         else:
-            kwargs["on_model"] = p.on_model
+            kwargs["on_model"] = combine_on_model()
         return original_solve(*args, **kwargs)
 
     ctrl.solve = new_solve
