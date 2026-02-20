@@ -1,6 +1,5 @@
-from importlib.resources import files
-
 import typing
+from importlib.resources import files
 
 import clingo
 import clingo.script
@@ -57,25 +56,30 @@ def add_to_control(
             evaluator._solver_environment[idx] = environment
             _environment_ids[eid] = idx
         ctrl.add(f"main_solverIdentifier({idx}).")
-    #patch_clingo(ctrl)
+    # patch_clingo(ctrl)
     setup_propagator(ctrl, propagator_check_only)
+
 
 def patch_clingo(ctrl):
     global ground_patched
     if not ground_patched:
         old_control_ground = clingo.Control.ground
+
         def new_control_ground(self, *k, **kw):
             old_control_ground(self, *k, **kw)
             post_processor.set_map(self)
-        setattr(clingo.Control,"ground",new_control_ground)
+
+        setattr(clingo.Control, "ground", new_control_ground)
         ground_patched = True
     global model_patched
     if not model_patched or True:
         old_model_init = clingo.Model.__init__
+
         def new_model_init(self, *k, **kw):
             old_model_init(self, *k, **kw)
-            post_processor.set_valuation(ctrl,self)
-        setattr(clingo.Model,"__init__",new_model_init)
+            post_processor.set_valuation(ctrl, self)
+
+        setattr(clingo.Model, "__init__", new_model_init)
         model_patched = True
 
 
