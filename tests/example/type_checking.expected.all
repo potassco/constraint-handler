@@ -46,6 +46,11 @@ type_variable((),check(leq,float),bool)
 type_variable((),check(gt,float),bool)
 type_variable((),check(geq,float),bool)
 
+type_variable((),check(concat,str),str)
+type_variable((),check(length,str),int)
+type_variable((),check(eq,str),bool)
+type_variable((),check(neq,str),bool)
+
 
 type_variable((),check(add,float),float)
 type_variable((),check(mult,float),float)

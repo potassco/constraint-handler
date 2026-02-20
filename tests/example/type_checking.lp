@@ -87,6 +87,15 @@ variable_define(check, check(OP, float), EXPR) :-
     EXPR = operation(OP, (variable(v(float)),())),
     OP = (abs;minus;floor).
 
+%%%%%%%%%%%%%%%%% str
+variable_define(check, check(OP, str), EXPR) :-
+    EXPR = operation(OP, (variable(v(str)),(variable(v(str)),()))),
+    OP = (eq;neq;concat).
+
+variable_define(check, check(OP, str), EXPR) :-
+    EXPR = operation(OP, (variable(v(str)),())),
+    OP = length.
+
 %%%%%%%%%%%%%%%%% Multimap
 % Multimap make
 variable_define(check, check(multimap_make_empty), operation(multimap_make, ())).
