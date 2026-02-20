@@ -19,6 +19,16 @@ variable_declare(check, v(bool), boolDomain).
 variable_declare(check, v(symbol), fromFacts).
 variable_domain(v(symbol), val(symbol, some_symbol)).
 variable_define(check, v(none), val(none,none)).
+variable_define(check, none_bool((1;2)), fromFacts).
+variable_domain(none_bool, val(none,none)).
+variable_domain(none_bool, variable(v(bool))).
+
+%%%%%%%%%%%%%%%%% Bool
+
+variable_define(check, check(OP, none_bool), EXPR) :-
+    EXPR = operation(OP, (variable(v(none_bool(1))),(variable(v(none_bool(2))),()))),
+    OP = limp.
+
 
 % Addition / multiplication for 0 to N (here 5) numeric types
 1{arity(N):N=1..5}1.
@@ -40,15 +50,6 @@ variable_define(check, check(OP, numeric(TYPES)), EXPR) :-
     OP = (add;mult),
     numeric_args(N, TYPES, ARGS),
     arity(N).
-
-1 {none_bool(N,T):T = (none;bool)} 1 :- N=1..2.
-
-% Implication for none / bool
-variable_define(check, check(OP, none_bool), EXPR) :-
-    EXPR = operation(OP, (variable(v(T1)),(variable(v(T2)),()))),
-    OP = limp,
-    none_bool(1, T1),
-    none_bool(2, T2).
 
 % Multimap make
 variable_define(check, check(multimap_make_empty), operation(multimap_make, ())).
