@@ -30,7 +30,7 @@ variable_define(check, check(OP, bool), EXPR) :-
 
 variable_define(check, check(OP, bool), EXPR) :-
     EXPR = operation(OP, (variable(v(bool)),(variable(v(bool)),()))),
-    OP = (eq).
+    OP = (eq;neq).
 
 variable_define(check, check(OP, bool), EXPR) :-
     EXPR = operation(OP, (variable(v(bool)),(variable(v(bool)),(variable(v(bool)),())))),

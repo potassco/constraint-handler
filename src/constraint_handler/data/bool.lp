@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%% eq neq
-operator_declare(OP,(T,(T,())),T) :- T = bool, OP = eq.
+operator_declare(OP,(T,(T,())),T) :- T = bool, OP = (eq;neq).
 computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=eq,  ARGS = (val(bool,V1),(val(bool,V2),())), V1 =  V2.
 computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=eq,  ARGS = (val(bool,V1),(val(bool,V2),())), V1 != V2.
 computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=neq, ARGS = (val(bool,V1),(val(bool,V2),())), V1 != V2.
