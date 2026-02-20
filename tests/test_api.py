@@ -13,8 +13,8 @@ def test_add_ctrl():
     ctrl = Control("0")
     constraint_handler.add_to_control(ctrl)
     ctrl.add("""
-    assign(assign_x,x,val(int,20)).
-    assign(assign_y,y,operation(add,(variable(x),(val(int,10),())))).
+    variable_define(assign_x,x,val(int,20)).
+    variable_define(assign_y,y,operation(add,(variable(x),(val(int,10),())))).
     #show value/2.
     """)
     ctrl.ground()
@@ -34,9 +34,9 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
         ctrl.add("defaultEngine(propagator).")
 
     constraint_handler.add_to_control(ctrl)
-    ctrl.add("base", [], program)
+    ctrl.add(program)
 
-    ctrl.ground([("base", [])])
+    ctrl.ground()
     with ctrl.solve(yield_=True) as solve_handle:
         for model in solve_handle:
             solution = set()
@@ -48,8 +48,8 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
 
 def test_prop():
     constraint_expr = """
-    assign(assign_bike_frame_size, bike_frame_size, val(int,26)).
-    assign(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(str,"Mountain"), (val(str,"Road"), ()))))).
+    variable_define(assign_bike_frame_size, bike_frame_size, val(int,26)).
+    variable_define(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(str,"Mountain"), (val(str,"Road"), ()))))).
     #show value/2.
     """
 
@@ -62,8 +62,8 @@ def test_prop():
 
 def test_noprop():
     constraint_expr = """
-    assign(assign_bike_frame_size, bike_frame_size, val(int,26)).
-    assign(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(str,"Mountain"), (val(str,"Road"), ()))))).
+    variable_define(assign_bike_frame_size, bike_frame_size, val(int,26)).
+    variable_define(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(str,"Mountain"), (val(str,"Road"), ()))))).
     #show value/2.
     """
 
@@ -76,8 +76,8 @@ def test_noprop():
 
 def test_add():
     constraint_expr = """
-    assign(assign_x, x, val(int,20)).
-    assign(assign_y, y, operation(add, (variable(x), (val(int,10), ())))).
+    variable_define(assign_x, x, val(int,20)).
+    variable_define(assign_y, y, operation(add, (variable(x), (val(int,10), ())))).
     #show value/2.
     """
 
@@ -90,7 +90,7 @@ def test_add():
     solve_handle = ctrl.solve(yield_=True)
     for model in solve_handle:
         solution = set()
-        for fact in model.symbols(shown=True):
+        for fact in model.symbols(shown=True,theory=True):
             solution.add(fact.__str__())
 
         assert solution == {"value(x,val(int,20))", "value(y,val(int,30))"}
