@@ -56,7 +56,7 @@ variable_define(check, check(OP, int), EXPR) :-
 
 variable_define(check, check(OP, int), EXPR) :-
     EXPR = operation(OP, (variable(v(int)),(variable(v(int)),()))),
-    OP = (sub;div;pow;eq;neq;leq;lt;geq;gt).
+    OP = (sub;div;fdiv;pow;eq;neq;leq;lt;geq;gt).
 
 variable_define(check, check(OP, int), EXPR) :-
     EXPR = operation(OP, (variable(v(int)),())),
@@ -78,6 +78,14 @@ variable_define(check, check(OP, float), EXPR) :-
     OP = (add;mult),
     _float_args(N, ARGS),
     arity(N).
+
+variable_define(check, check(OP, float), EXPR) :-
+    EXPR = operation(OP, (variable(v(float)),(variable(v((int;float))),()))),
+    OP = (sub;div;fdiv;pow;eq;neq;leq;lt;geq;gt).
+
+variable_define(check, check(OP, float), EXPR) :-
+    EXPR = operation(OP, (variable(v(float)),())),
+    OP = (abs;minus;floor).
 
 %%%%%%%%%%%%%%%%% Multimap
 % Multimap make
