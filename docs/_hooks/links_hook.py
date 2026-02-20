@@ -25,6 +25,8 @@ documentation.
 """
 
 import os
+import re
+from mkdocs import utils
 
 LINKS = {
     # User Guide
@@ -149,3 +151,26 @@ def on_page_markdown(markdown, page, config, files):
             definitions.append(f"[{label}s]: {final_link}")
 
     return markdown + "\n".join(definitions)
+
+def on_page_content(html, page, config, files):
+    for label, target in LINKS.items():
+        target_path, anchor = target.split("#", 1) if "#" in target else (target, "")
+        target_file = files.get_file_from_path(target_path)
+        
+        if target_file:
+            target_url = target_file.url
+            
+            rel_url = utils.get_relative_url(target_url, page.url)
+            
+            if anchor:
+                rel_url += f"#{anchor}"
+            
+            pattern = rf"\[{re.escape(label)}(s?)\](?!\()"
+            
+            def replace_with_link(match):
+                found_text = f"{label}{match.group(1)}"
+                return f'<a href="{rel_url}">{found_text}</a>'
+
+            html = re.sub(pattern, replace_with_link, html)
+
+    return html
