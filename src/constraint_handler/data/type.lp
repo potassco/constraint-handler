@@ -63,10 +63,10 @@ membershipOperator(isin;notin).
 % operator_declare(length,(T,()),int) :- T = (str;set).
 
 % Set
-operator_declare(OP,(T,(T,())),T) :- setOperator(OP), T = (set), OP != subset.
-operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
-operator_declare(OP,(T,(set,())),bool) :- _type(T), membershipOperator(OP).
-operator_declare(OP,(T,()),set) :- _type(T), OP = makeSet.
+% operator_declare(OP,(T,(T,())),T) :- setOperator(OP), T = (set), OP != subset.
+% operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
+% operator_declare(OP,(T,(set,())),bool) :- _type(T), membershipOperator(OP).
+% operator_declare(OP,(T,()),set) :- _type(T), OP = makeSet.
 
 % Multimap
 operator_declare(OP,(T,()),int) :- T = (multimap), OP = (countKeys;countEntries;sumIntEntries).

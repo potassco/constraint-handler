@@ -22,6 +22,8 @@ variable_define(check, v(none), val(none,none)).
 variable_define(check, none_bool((1;2)), fromFacts).
 variable_domain(none_bool, val(none,none)).
 variable_domain(none_bool, variable(v(bool))).
+set_declare(check, v(set)).
+set_assign(v(set), variable(v(int))).
 
 %%%%%%%%%%%%%%%%% Bool
 variable_define(check, check(OP, bool), EXPR) :-
@@ -96,6 +98,23 @@ variable_define(check, check(OP, str), EXPR) :-
     EXPR = operation(OP, (variable(v(str)),())),
     OP = length.
 
+%%%%%%%%%%%%%%%%% set
+variable_define(check, check(OP, set), EXPR) :-
+    EXPR = operation(OP, (variable(v(set)),(variable(v(set)),()))),
+    OP = (eq;neq;union;inter;diff;subset).
+
+variable_define(check, check(OP, set), EXPR) :-
+    EXPR = operation(OP, (variable(v(set)),())),
+    OP = length.
+
+variable_define(check, check(OP, set), EXPR) :-
+    EXPR = operation(OP, (variable(VAR),(variable(v(set)),()))),
+    variable_declare(_,VAR,_),
+    OP = (isin;notin).
+
+variable_define(check, check(OP, set), EXPR) :-
+    EXPR = operation(OP, (variable(v(int)),(variable(v(int)),(variable(v(int)),())))),
+    OP = makeSet.
 %%%%%%%%%%%%%%%%% Multimap
 % Multimap make
 variable_define(check, check(multimap_make_empty), operation(multimap_make, ())).

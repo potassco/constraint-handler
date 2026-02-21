@@ -11,7 +11,7 @@ direct_query(E)    :- _set_assign(NAME,X,E).
 representation(set,intensional).
 
 %%%%%%%%%%%%%%%%% length
-
+operator_declare(OP,(T,()),int) :- T = set, OP = length.
 computed(length,ARGS,val(int,N)) :- compute(length,ARGS),
     ARGS = (ref(set,SET),()),
     N = #count { V : _set_contains(SET,V) }.
@@ -32,7 +32,7 @@ _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ER), ER=ref(set,S).
 set_value(X,V) :- _se_value(EX,ref(set,E)), _set_contains(E,V), EX=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
-
+operator_declare(OP,(T1,(T2,())),bool) :- _type(T1),T2=set, OP = (isin;notin).
 compute(eq,(V1,(V2,())))  :- compute((isin;notin),ARGS), ARGS = (V1,(ref(set,S),())),
     _set_contains(S,V2).
 
@@ -46,7 +46,7 @@ computed(notin,ARGS,val(bool,true))  :- compute(notin,ARGS), ARGS = (V1,(ref(set
     #false : _set_contains(S,V2), computed(eq,(V1,(V2,())),val(bool,true)).
 
 %%%%%%%%%%%%%%%%% makeSet
-
+operator_declare_variadic(makeSet, T, set, 1) :- _type(T).
 _set_declare(_internal,E) :- direct_query(E), E=operation(makeSet,L).
 _set_assign(_internal,E,SE) :- direct_query(E), E=operation(makeSet,L), SE=@pythonListElements(L).
 
@@ -59,8 +59,8 @@ _set_assign(_internal,E,SE) :- direct_query(E), E=set(L), SE=@pythonListElements
 %%%%%%%%%%%%%%%%%% add
 %%% TODO
 
-%%%%%%%%%%%%%%%%% union inter
-
+%%%%%%%%%%%%%%%%% union inter diff
+operator_declare(OP,(T,(T,())),T) :- T = set, OP = (union;inter;diff).
 _set_declare(_internal,E) :- direct_query(E), E=operation((diff;inter;union),L).
 _set_assign(_internal,E,V) :- direct_query(E), E=operation(union,L), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
@@ -76,8 +76,6 @@ _set_assign(_internal,E,VSMALL) :- direct_query(E), E=operation(inter,L), L=(S1,
     _set_contains(R2,V2), computed(eq,(VSMALL,(VBIG,())),val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
-%%%%%%%%%%%%%%%%% diff
-
 _set_assign(_internal,E,V1) :- direct_query(E), E=operation(diff,L), L=(S1,(S2,())),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
@@ -85,6 +83,7 @@ _set_assign(_internal,E,V1) :- direct_query(E), E=operation(diff,L), L=(S1,(S2,(
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 %%%%%%%%%%%%%%%%% Equality
+operator_declare(OP,(T,(T,())),bool) :- T = set, OP = (eq;neq).
 compute(eq,ARGS) :- compute(neq,ARGS), ARGS = (set(T1,S1),(set(T2,S2),())), (T1;T2)=set.
 computed(neq,ARGS,val(bool,NEQ)) :- computed(eq,ARGS,val(bool,EQ)), ARGS = (ref(T1,S1),(ref(T2,S2),())), (T1;T2)=set, (EQ,NEQ)=((true,false);(false,true)).
 
@@ -117,7 +116,7 @@ compute(eq,(V1,(V2,()))) :- compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())
     X != Y, Y !=Z, X != Z. %%% transitivity
 
 %%%%%%%%%%%%%%%%% Subset
-
+operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
 compute(eq,(V1,(V2,()))) :- compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
     _set_contains(S1,V1), _set_contains(S2,V2).
 computed(subset,ARGS,val(bool,false)) :- compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
