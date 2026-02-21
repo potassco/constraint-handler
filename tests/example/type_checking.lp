@@ -98,6 +98,11 @@ variable_define(check, check(OP, str), EXPR) :-
     EXPR = operation(OP, (variable(v(str)),())),
     OP = length.
 
+%%%%%%%%%%%%%%%%% symbol
+variable_define(check, check(OP, symbol), EXPR) :-
+    EXPR = operation(OP, (variable(v(symbol)),(variable(v(symbol)),()))),
+    OP = (eq;neq;concat).
+
 %%%%%%%%%%%%%%%%% set
 variable_define(check, check(OP, set), EXPR) :-
     EXPR = operation(OP, (variable(v(set)),(variable(v(set)),()))),

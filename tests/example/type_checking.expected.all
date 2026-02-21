@@ -52,6 +52,9 @@ type_variable((),check(length,str),int)
 type_variable((),check(eq,str),bool)
 type_variable((),check(neq,str),bool)
 
+type_variable((),check(eq,symbol),bool)
+type_variable((),check(neq,symbol),bool)
+
 type_variable((),check(length,set),int)
 type_variable((),check(eq,set),bool)
 type_variable((),check(neq,set),bool)
