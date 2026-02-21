@@ -298,8 +298,13 @@ class Variable:
         self.parents: list[VariableType] = []
         self.decision_level: int = sys.maxsize
 
-    def add_value(self, expr: expression.Expr, lit: int) -> None:
-        self.expressions.add(VariableValue(expr, lit))
+        # literals for atoms that can define a domain
+        # (variable_define, variable_declare, variable_optinal)
+        self.domain_literals: set[int] = set()
+
+    def add_value(self, expr: expression.Expr, value_lit: int, domain_lit: int) -> None:
+        self.expressions.add(VariableValue(expr, value_lit))
+        self.domain_literals.add(domain_lit)
 
     def get_value(self) -> Any:
         return self.value
@@ -326,9 +331,7 @@ class Variable:
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
     ) -> EvaluationResult:
         """
-        Evaluate the expression and return a tuple (changed, conflict).
-        changed is True if the value has changed.
-        conflict is True if there is a conflict (multiple values assigned).
+        Evaluate the expression and return an EvaluationResult.
         """
         changed = False
         for value in self.expressions:
@@ -349,11 +352,17 @@ class Variable:
                 # some values are unassigned
                 # so we cannot determine the value yet
                 val = [ValueStatus.NOT_SET]
-            else:
+
+            # if at least one domain lit is true, then a value MUST be chosen
+            elif any(ctl.assignment.is_true(domain_lit) for domain_lit in self.domain_literals):
                 # if all values are set and none are true, then it is set to false assignment
+                # And there is a conflict, as a having a domain true, means that the variable MUST have a value
                 self.decision_level = ctl.assignment.decision_level
                 self.value = ValueStatus.ASSIGNMENT_IS_FALSE
                 return EvaluationResult.CONFLICT
+            else:
+                # if no domain lit is true, then we can treat it as false
+                val = [ValueStatus.ASSIGNMENT_IS_FALSE]
 
         elif len(val) == 1:
             if val[0] == self.value:
