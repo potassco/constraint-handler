@@ -10,6 +10,7 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
+import constraint_handler.schemas.warning as warning
 import constraint_handler.solver_environment as solver_environment
 from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
@@ -18,6 +19,7 @@ from constraint_handler.PropagatorConstants import (
     FALSE_ASSIGNMENTS,
     EvaluationResult,
     ValueStatus,
+    propagator_warning_t,
 )
 
 
@@ -54,7 +56,7 @@ class VariableType(Protocol):
     def reset(self, dl: int) -> None: ...
 
     @abstractmethod
-    def get_errors(self) -> list[Exception]: ...
+    def get_errors(self) -> propagator_warning_t: ...
 
     @abstractmethod
     def vars(self) -> set[clingo.Symbol]: ...
@@ -81,7 +83,7 @@ class VariableValue:
         self.assigned: bool | None = None
         self.decision_level: int = sys.maxsize
 
-        self.errors: list[Exception] = []
+        self.errors: propagator_warning_t = []
 
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
@@ -114,13 +116,17 @@ class VariableValue:
                 assert self.value == ValueStatus.NOT_SET
                 return False
 
-        self.value, self.errors = evaluator.evaluate_expr(self.expr, env, evaluations)
+        self.value, errors = evaluator.evaluate_expr(self.expr, env, evaluations)
+
+        for error, msg in errors:
+            self.errors.append(warning.Warning(error, (), repr(msg)))
+
         myprint(f"{self.expr} evaluated to {self.value}")
 
         self.decision_level = min(self.decision_level, ctl.assignment.decision_level)
         return True
 
-    def get_errors(self) -> list[Exception]:
+    def get_errors(self) -> propagator_warning_t:
         return self.errors
 
     def vars(self) -> frozenset[clingo.Symbol]:
@@ -165,7 +171,7 @@ class EvaluateVariable:
         self.value: Any = ValueStatus.NOT_SET
         self.literal: int = literal
 
-        self.errors: list[Exception] = []
+        self.errors: propagator_warning_t = []
 
     def evaluate(
         self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
@@ -174,14 +180,16 @@ class EvaluateVariable:
         if not ctl.assignment.is_true(self.literal):
             return False
         myprint(f"Evaluating {self.op}({self.args})")
-        value, self.errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations)
+        value, errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations)
         self.value = value
+        for error, msg in errors:
+            self.errors.append(warning.Warning(error, (), repr(msg)))
         return True
 
     def get_value(self) -> Any:
         return self.value
 
-    def get_errors(self) -> list[Exception]:
+    def get_errors(self) -> propagator_warning_t:
         return self.errors
 
     def __eq__(self, other) -> bool:
@@ -258,7 +266,7 @@ class EnsureVariable:
     def vars(self) -> set[clingo.Symbol]:
         return set(self.expression.vars())
 
-    def get_errors(self) -> list[Exception]:
+    def get_errors(self) -> propagator_warning_t:
         return self.expression.get_errors()
 
     @property
@@ -302,6 +310,8 @@ class Variable:
         # (variable_define, variable_declare, variable_optinal)
         self.domain_literals: set[int] = set()
 
+        self.errors: propagator_warning_t = []
+
     def add_value(self, expr: expression.Expr, value_lit: int, domain_lit: int) -> None:
         self.expressions.add(VariableValue(expr, value_lit))
         self.domain_literals.add(domain_lit)
@@ -309,8 +319,8 @@ class Variable:
     def get_value(self) -> Any:
         return self.value
 
-    def get_errors(self) -> list[Exception]:
-        errors: list[Exception] = []
+    def get_errors(self) -> propagator_warning_t:
+        errors: propagator_warning_t = []
         for var_value in self.expressions:
             errors.extend(var_value.get_errors())
         return errors
@@ -371,6 +381,15 @@ class Variable:
 
         self.decision_level = ctl.assignment.decision_level
         self.value = val[0]
+        if sum(ctl.assignment.is_true(domain_lit) for domain_lit in self.domain_literals) > 1:
+            # In this instance we add a warning to say that a value was chosen out of multiple domains
+            self.errors.append(
+                warning.Warning(
+                    warning.Variable(warning.VariableWarning.multipleDeclarations),  # ty:ignore[unresolved-attribute]
+                    (self.var,),
+                    f"Multiple domain literals are true for variable {self.var}",
+                )
+            )
         return EvaluationResult.CHANGED
 
     def get_values(self) -> list[Any]:
@@ -403,7 +422,7 @@ class Variable:
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
             d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
 
-        d[self.var] = value  # type: ignore
+        d[self.var] = value
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Variable):
@@ -430,8 +449,8 @@ class SetVariableValue:
     def add_value(self, arg: expression.Expr, lit: int) -> None:
         self.values.add(VariableValue(arg, lit))
 
-    def get_errors(self) -> list[Exception]:
-        errors: list[Exception] = []
+    def get_errors(self) -> propagator_warning_t:
+        errors: propagator_warning_t = []
         for var_value in self.values:
             errors.extend(var_value.get_errors())
         return errors
@@ -515,7 +534,7 @@ class SetVariable:
 
         self.parents: list[VariableType] = []
 
-        self.errors: list[Exception] = []
+        self.errors: propagator_warning_t = []
 
     def has_domain(self) -> bool:
         return self.expressions.has_domain()
@@ -523,7 +542,7 @@ class SetVariable:
     def add_value(self, arg: expression.Expr, lit: int) -> None:
         self.expressions.add_value(arg, lit)
 
-    def get_errors(self) -> list[Exception]:
+    def get_errors(self) -> propagator_warning_t:
         return self.expressions.get_errors() + self.errors
 
     @property
@@ -568,7 +587,11 @@ class SetVariable:
             # Assignment is false, so value is set to false assignment
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            self.errors.append(ValueError(f"Set declaration for {self.var} is False!"))
+            self.errors.append(
+                warning.Warning(
+                    warning.ExpressionWarning.syntaxError, (self.var,), "Set declaration is False"
+                )  # ty:ignore[unresolved-attribute]
+            )
             return EvaluationResult.CHANGED
 
         changed = self.expressions.evaluate(evaluations, ctl, env)
@@ -597,7 +620,7 @@ class SetVariable:
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
             d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
 
-        d[self.var] = value  # type: ignore
+        d[self.var] = value
 
     def __eq__(self, value) -> bool:
         if not isinstance(value, SetVariable):
@@ -634,7 +657,7 @@ class DictVariable:
 
         self.parents: list[VariableType] = []
 
-        self.errors: list[Exception] = []
+        self.errors: propagator_warning_t = []
 
     def add_value(self, key: expression.Expr, expr: expression.Expr, lit: int) -> None:
         # setting lit for key to 1 since it does not have its own literal
@@ -647,8 +670,8 @@ class DictVariable:
     def has_domain(self) -> bool:
         return len(self.expressions) > 0
 
-    def get_errors(self) -> list[Exception]:
-        errors: list[Exception] = []
+    def get_errors(self) -> propagator_warning_t:
+        errors: propagator_warning_t = []
         for key, value in self.expressions.items():
             errors.extend(key.get_errors())
             errors.extend(value.get_errors())
@@ -724,7 +747,9 @@ class DictVariable:
         elif ctl.assignment.is_false(self.literal):
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            self.errors.append(ValueError(f"Dict declaration for {self.var} is False!"))
+            self.errors.append(
+                warning.Warning(warning.ExpressionWarning.syntaxError, (self.var,), "Dict declaration is False")  # type: ignore[unresolved-attribute]
+            )
             return EvaluationResult.CHANGED
 
         changed = False
@@ -758,7 +783,7 @@ class DictVariable:
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
             d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
 
-        d[self.var] = value  # type: ignore
+        d[self.var] = value
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, DictVariable):
@@ -808,8 +833,8 @@ class OptimizationSum:
     def get_value(self) -> int | float:
         return self.value
 
-    def get_errors(self) -> list[Exception]:
-        errors: list[Exception] = []
+    def get_errors(self) -> propagator_warning_t:
+        errors: propagator_warning_t = []
         for _, expr in self.expressions:
             errors.extend(expr.get_errors())
         return errors
@@ -889,8 +914,8 @@ class OptimizationHandler:
         for _sum in self.sums:
             _sum.reset(dl)
 
-    def get_errors(self) -> list[Exception]:
-        errors: list[Exception] = []
+    def get_errors(self) -> propagator_warning_t:
+        errors: propagator_warning_t = []
         for _sum in self.sums:
             errors.extend(_sum.get_errors())
         return errors
@@ -936,7 +961,7 @@ class Execution:
 
         self.parents: list[VariableType] = []
 
-        self.errors: list[Exception] = []
+        self.errors: propagator_warning_t = []
 
     def add_statement(self, stmt: statement.Stmt, lit: int) -> None:
         self.statements.append(ExecutionStatement(stmt, lit))
@@ -1034,7 +1059,11 @@ class Execution:
         # TODO: check if this is fine or better return conflict?
         if sum([1 for stmt in self.statements if stmt.assigned]) > 1:
             self.errors.append(
-                ValueError("Multiple statements in the same execution were run! Only the last one will be used!")
+                warning.Warning(
+                    warning.Variable(warning.VariableWarning.multipleAssignments),  # ty:ignore[unresolved-attribute]
+                    (self.func_name,),
+                    "Multiple statements in the same execution were run! Only the last one will be used!",
+                )
             )
             self.decision_level = ctl.assignment.decision_level
 
@@ -1050,7 +1079,7 @@ class Execution:
     def get_value(self) -> ValueStatus | list[tuple[clingo.Symbol, Any]]:
         return self.values
 
-    def get_errors(self) -> list[Exception]:
+    def get_errors(self) -> propagator_warning_t:
         return self.errors
 
     def add_run_literal(self, lit: int):
@@ -1100,7 +1129,7 @@ class ExecutionStatement:
         self.statement: statement.Stmt = statement
         self.literal: int = literal
         self.value: ValueStatus | list[tuple[clingo.Symbol, Any]] = ValueStatus.NOT_SET
-        self.errors: list[Exception] = []
+        self.errors: propagator_warning_t = []
         self.assigned: bool | None = None
         self.decision_level: int = sys.maxsize
 
@@ -1116,7 +1145,7 @@ class ExecutionStatement:
     def get_value(self) -> ValueStatus | list[tuple[clingo.Symbol, Any]]:
         return self.value
 
-    def get_errors(self) -> list[Exception]:
+    def get_errors(self) -> propagator_warning_t:
         return self.errors
 
     def reset(self, dl: int):
@@ -1146,7 +1175,9 @@ class ExecutionStatement:
             return EvaluationResult.NOT_CHANGED
 
         try:
-            self.errors = evaluator.evaluate_stmt(self.statement, env, evaluations)
+            errors = evaluator.evaluate_stmt(self.statement, env, evaluations)
+            for error, msg in errors:
+                self.errors.append(warning.Warning(error, (), repr(msg)))
         except solver_environment.FailIntegrityExn:
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CONFLICT

@@ -1,5 +1,7 @@
 import enum
 
+from constraint_handler.schemas.warning import Warning
+
 DEBUG_PRINT = False
 
 FALSE_ASSIGNMENTS = "__FALSE_ASSIGNMENTS__"
@@ -47,3 +49,6 @@ REASONING_MODE_PROGRAM = f"""
 
 class NoValueSet(Exception):
     pass
+
+
+type propagator_warning_t = list[Warning]
