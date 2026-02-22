@@ -69,11 +69,11 @@ membershipOperator(isin;notin).
 % operator_declare(OP,(T,()),set) :- _type(T), OP = makeSet.
 
 % Multimap
-operator_declare(OP,(T,()),int) :- T = (multimap), OP = (countKeys;countEntries;sumIntEntries).
-operator_declare(OP,(T1,()),T2) :- T1 = (multimap),_type(T2), T2 != (multimap), OP = (maxEntries;minEntries).
-operator_declare(OP,(T1,(T2,())),bool) :- _type(T1), T2 = (multimap), membershipOperator(OP), OP != notin.
-operator_declare(OP,(T1,(T2,())),set) :- _type(T1), T2 = (multimap), OP = find.
-operator_declare(OP,((T1,T2),()),multimap) :- _type(T1), _type(T2), OP = multimap_make.
+% operator_declare(OP,(T,()),int) :- T = (multimap), OP = (countKeys;countEntries;sumIntEntries).
+% operator_declare(OP,(T1,()),T2) :- T1 = (multimap),_type(T2), T2 != (multimap), OP = (maxEntries;minEntries).
+% operator_declare(OP,(T1,(T2,())),bool) :- _type(T1), T2 = (multimap), membershipOperator(OP), OP != notin.
+% operator_declare(OP,(T1,(T2,())),set) :- _type(T1), T2 = (multimap), OP = find.
+% operator_declare(OP,((T1,T2),()),multimap) :- _type(T1), _type(T2), OP = multimap_make.
 
 % Conditionals
 operator_declare(OP,(T,()),bool) :- _type(T), OP = hasValue.
@@ -85,8 +85,8 @@ _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % operator_declare_variadic(OP, int,   int,   1) :- OP = (mult;add).
 % operator_declare_variadic(OP, float, float, 2) :- OP = (mult;add).
-operator_declare_variadic(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
-operator_declare_variadic(makeSet, T, set, 1) :- _type(T).
+% operator_declare_variadic(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
+% operator_declare_variadic(makeSet, T, set, 1) :- _type(T).
 
 _arg_rank(SCOPE, OP, ARGS, IDX, RANK) :-
     _type_listArg(SCOPE, ARGS, IDX, ARG),

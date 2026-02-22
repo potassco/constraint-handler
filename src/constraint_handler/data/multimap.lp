@@ -17,7 +17,7 @@ _multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,EX,EK,EV), _se_value(EX,val(mu
 direct_query(E1;E2) :- direct_query(E), E=(E1,E2).
 
 %%%%%%%%%%%%%%%%% multimap_make
-
+operator_declare_variadic(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
 _se_value(E,val(multimap,ER)) :- direct_query(E), E=operation(multimap_make,L), ER=ref(E).
 _multimap_add(ER,EK,EV) :- direct_query(E), E=operation(multimap_make,L), _se_value(E,val(multimap,ER)),
     (EK,EV)=@pythonListElements(L).
@@ -43,7 +43,7 @@ _multimap_entry(EM,RK,RV) :- _multimap_add(EM,EK,EV),
 multimap_value(X,KEY,VAL) :- _se_value(E,val(multimap,EM)), _multimap_entry(EM,KEY,VAL), E=variable(X).
 
 %%%%%%%%%%%%%%%%%% find
-
+operator_declare(OP,(T1,(T2,())),set) :- _type(T1), T2 = multimap, OP = find.
 %%% TODO: this is fragile, maybe buggy.
 computed(O,ARGS,ref(set,find(ARGS))) :- compute(O,ARGS), O=find, ARGS=(K,(val(multimap,EM),())).
 
@@ -52,7 +52,7 @@ _set_contains(ER,V) :- compute(O,ARGS), O=find, computed(O,ARGS,ref(set,ER)),
     _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% count keys and entries
-
+operator_declare(OP,(T,()),int) :- T = multimap, OP = (countKeys;countEntries;sumIntEntries).
 computed(O,ARGS,val(int,N)) :- compute(O,ARGS), O=countKeys, ARGS=(val(multimap,EM),()),
     N = #count { K : _multimap_entry(EM,K,V) }.
 
@@ -74,6 +74,7 @@ computed(O,ARGS,M) :- compute(O,ARGS), O=minEntries, ARGS=(val(multimap,EM),()),
 %%%%%%%%%%%%%%%%%% union inter
 
 %%%%%%%%%%%%%%%%%% Equality
+operator_declare(OP,(T,(T,())),bool) :- T = multimap, OP = (eq;neq).
 compute(eq,ARGS) :- compute(neq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())).
 computed(neq,ARGS,val(bool,NEQ)) :- computed(eq,ARGS,val(bool,EQ)), ARGS = (val(T1,M1),(val(T2,M2),())), (T1;T2)=multimap, (EQ,NEQ)=((true,false);(false,true)).
 computed(eq,ARGS,val(bool,true))  :- compute(eq,ARGS),  ARGS = (val(multimap,S1),(val(multimap,S2),())), not computed(eq,ARGS,val(bool,false)).
@@ -126,7 +127,7 @@ _multimap_lastIndex(EM,0) :- _multimap_makeIndex(EM),
     #false : _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% isin
-
+operator_declare(OP,(T1,(T2,())),bool) :- _type(T1),T2=multimap, OP = (isin).
 computed(O,ARGS,val(bool,true)) :- compute(O,ARGS), O=isin, ARGS=(K,(val(multimap,EM),())),
     _multimap_entry(EM,K,V).
 computed(O,ARGS,val(bool,false)) :- compute(O,ARGS), O=isin, ARGS=(K,(val(multimap,EM),())),

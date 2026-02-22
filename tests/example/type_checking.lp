@@ -24,6 +24,8 @@ variable_domain(none_bool, val(none,none)).
 variable_domain(none_bool, variable(v(bool))).
 set_declare(check, v(set)).
 set_assign(v(set), variable(v(int))).
+multimap_declare(check, v(multimap)).
+multimap_assign(v(multimap), variable(v(symbol)), variable(v(int))).
 
 %%%%%%%%%%%%%%%%% Bool
 variable_define(check, check(OP, bool), EXPR) :-
@@ -117,11 +119,24 @@ variable_define(check, check(OP, set), EXPR) :-
     variable_declare(_,VAR,_),
     OP = (isin;notin).
 
-variable_define(check, check(OP, set), EXPR) :-
+variable_define(check, check(OP), EXPR) :-
     EXPR = operation(OP, (variable(v(int)),(variable(v(int)),(variable(v(int)),())))),
     OP = makeSet.
+
 %%%%%%%%%%%%%%%%% Multimap
-% Multimap make
+variable_define(check, check(OP, multimap), EXPR) :-
+    EXPR = operation(OP, (variable(v(multimap)),(variable(v(multimap)),()))),
+    OP = (eq;neq).
+
+variable_define(check, check(OP, multimap), EXPR) :-
+    EXPR = operation(OP, (variable(VAR),(variable(v(multimap)),()))),
+    variable_declare(_,VAR,_),
+    OP = (isin; find).
+
+variable_define(check, check(OP, multimap), EXPR) :-
+    EXPR = operation(OP, (variable(v(multimap)),())),
+    OP = (countKeys;countEntries;sumIntEntries;maxEntries;minEntries).
+
 variable_define(check, check(multimap_make_empty), operation(multimap_make, ())).
 variable_define(check, check(multimap_make), MAP) :-
     MAP = operation(multimap_make, (ITEM1,(ITEM2,(ITEM3,())))),
@@ -131,10 +146,7 @@ variable_define(check, check(multimap_make), MAP) :-
     KEY2 = variable(v(symbol)),
     ITEM3 = (KEY2, variable(v(int))).
 
-% Set make
-variable_define(check, check(set_make_empty), operation(makeSet, ())).
-variable_define(check, check(set_make), operation(makeSet, (variable(v(int)),(variable(v(int)),())))).
-
+%%%%%%%%%%%%%%%%% More complex
 % Chained (multimap_make -> find -> length)
 variable_define(check, check(length_find_multimap_make), operation(length, (SET,()))) :-
     SET = operation(find,(KEY,(MAP,()))),
