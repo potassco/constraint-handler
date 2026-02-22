@@ -39,6 +39,10 @@ _warning(type(failed_operation),(),(SCOPE,O,ARGS)) :- _expression_query(SCOPE,E)
 _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 
 % This is for variadic operators
+% - All valid elements get assigned their respective rank (from the declaration).
+% - If the number of elements with a rank is equal to the number of arguments,
+%   then all arguments were valid.
+% - If all elements were valid, the result with the highest rank will be picked as the return type
 _arg_rank(SCOPE, OP, ARGS, IDX, RANK) :-
     _type_listArg(SCOPE, ARGS, IDX, ARG),
     type_expression(SCOPE, ARG, T),
