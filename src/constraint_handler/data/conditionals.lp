@@ -11,6 +11,7 @@ computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=neq, ARGS = (val(none,
 computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=neq, ARGS = (val(T1,V1),(val(T2,V2),())), (T1;T2) = none, (T1;T2) != none.
 
 %%%%%%%%%%%%%%%%% ite
+operator_declare(ite,(bool,(T,(T,()))),T) :-  _type(T), OP = ite.
 _direct_lazy(ite).
 direct_query(E1) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))).
 direct_query(E2) :- direct_query(E), E=operation(ite,(E1,(E2,(E3,())))), _se_value(E1,val(bool,true)).
