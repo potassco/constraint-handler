@@ -1,7 +1,3 @@
-% Here, a test
-% - passes: if a variable is typed when it should be
-% - fails:  if a variable is typed when it should not be
-
 typed(VAR) :- type_variable(_, VAR, _).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,6 +22,18 @@ set_declare(check, v(set)).
 set_assign(v(set), variable(v(int))).
 multimap_declare(check, v(multimap)).
 multimap_assign(v(multimap), variable(v(symbol)), variable(v(int))).
+
+check_types(T) :- variable_declare(_,v(T),_).
+check_types(T) :- T = (set;multimap).
+
+%%%%%%%%%%%%%%%%% None
+variable_define(check, check(OP, none), EXPR) :-
+    EXPR = operation(OP, (variable(v(none)),(variable(v(bool)),()))),
+    OP = (eq;neq).
+
+variable_define(check, check(OP, none), EXPR) :-
+    EXPR = operation(OP, (variable(v(none)),())),
+    OP = (lnot).
 
 %%%%%%%%%%%%%%%%% Bool
 variable_define(check, check(OP, bool), EXPR) :-
@@ -115,8 +123,8 @@ variable_define(check, check(OP, set), EXPR) :-
     OP = length.
 
 variable_define(check, check(OP, set), EXPR) :-
-    EXPR = operation(OP, (variable(VAR),(variable(v(set)),()))),
-    variable_declare(_,VAR,_),
+    EXPR = operation(OP, (variable(v(T)),(variable(v(set)),()))),
+    check_types(T),
     OP = (isin;notin).
 
 variable_define(check, check(OP), EXPR) :-
@@ -129,8 +137,8 @@ variable_define(check, check(OP, multimap), EXPR) :-
     OP = (eq;neq).
 
 variable_define(check, check(OP, multimap), EXPR) :-
-    EXPR = operation(OP, (variable(VAR),(variable(v(multimap)),()))),
-    variable_declare(_,VAR,_),
+    EXPR = operation(OP, (variable(v(T)),(variable(v(multimap)),()))),
+    check_types(T),
     OP = (isin; find).
 
 variable_define(check, check(OP, multimap), EXPR) :-
@@ -145,6 +153,12 @@ variable_define(check, check(multimap_make), MAP) :-
     ITEM2 = (KEY, variable(v(float))),
     KEY2 = variable(v(symbol)),
     ITEM3 = (KEY2, variable(v(int))).
+
+%%%%%%%%%%%%%%%%% Conditionals
+variable_define(check, check(OP, T), EXPR) :-
+    EXPR = operation(OP, (variable(v(T)),())),
+    check_types(T),
+    OP = (hasValue).
 
 %%%%%%%%%%%%%%%%% More complex
 % Chained (multimap_make -> find -> length)
