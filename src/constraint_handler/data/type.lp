@@ -65,9 +65,3 @@ _type_operator(SCOPE, OP, function(TS, T_RESULT)) :-
     _valid_args_count(SCOPE, OP, ARGS, N),
     _max_rank(SCOPE, OP, ARGS, MAXR),
     operator_declare_variadic(OP, _, T_RESULT, MAXR).
-
-
-% Conditionals
-operator_declare(OP,(T,()),bool) :- _type(T), OP = hasValue.
-% More complex operators (union types needed?)
-operator_declare(ite,(bool,(int,(int,()))),int).
