@@ -435,7 +435,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         It returns True if the variable's value changed, False if it did not change,
         and None if there was a conflict.
         """
-        eval_result = var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
+        eval_result: EvaluationResult = var.evaluate(
+            make_dict_from_variables(self.symbol2var.values()), ctl, self.environment
+        )
         myprint(f"Variable {var} evaluation result: {eval_result}")
 
         if eval_result == EvaluationResult.CONFLICT:
@@ -517,11 +519,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 literal_true = ctl.add_literal(freeze=True)
                 literal_false = ctl.add_literal(freeze=True)
                 variable.add_value(
-                    expression.Val(expression.BaseType.bool, True), literal_true, __literal
-                )  # ty:ignore[unresolved-attribute]
+                    expression.Val(expression.BaseType.bool, True),  # ty:ignore[unresolved-attribute]
+                    literal_true,
+                    __literal,
+                )
                 variable.add_value(
-                    expression.Val(expression.BaseType.bool, False), literal_false, __literal
-                )  # ty:ignore[unresolved-attribute]
+                    expression.Val(expression.BaseType.bool, False),  # ty:ignore[unresolved-attribute]
+                    literal_false,
+                    __literal,
+                )
                 ctl.add_watch(literal_true)
                 ctl.add_watch(-literal_true)
                 ctl.add_watch(literal_false)
@@ -677,7 +683,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def get_evaluate(self, ctl: clingo.PropagateInit):
         """
         This method initializes the variables from the ASP encoding.
-        It reads the propagator_assign atoms and creates Variable instances.
+        It reads the evaluate atoms and creates EvaluateVariable instances.
         """
 
         for (op, args), literal in myClorm.findInPropagateInit(ctl, atom.Propagator_evaluate).items():
@@ -804,6 +810,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if literal not in self.literal2var:
                 self.literal2var[literal] = []
             self.literal2var[literal].append(variable)
+
+            ctl.add_watch(literal)
+            ctl.add_watch(-literal)
 
         exec_runs = myClorm.findInPropagateInit(ctl, atom.Propagator_execution_run)
         for (name, symbol_var), literal in exec_runs.items():

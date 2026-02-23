@@ -125,12 +125,8 @@ def test_engine_propagator(name, check_mode):
         "optimize_priority",
         "set_iterations",
         "set_selfref",
-        "warning_fake_forbid",
-        "warning_python",
-        "warning_type",
         "warning_variables",
         "warning_variable_undeclared",
-        "warning_variable_undeclared_statement",
     ]
     if name not in unsupported:
         run_test(name, "propagator", check_mode)

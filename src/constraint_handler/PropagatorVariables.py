@@ -1078,7 +1078,10 @@ class Execution:
         return self.values
 
     def get_errors(self) -> propagator_warning_t:
-        return self.errors
+        errors = self.errors.copy()
+        for stmt in self.statements:
+            errors.extend(stmt.get_errors())
+        return errors
 
     def add_run_literal(self, lit: int):
         self.literal = lit
@@ -1177,10 +1180,11 @@ class ExecutionStatement:
 
         try:
             errors = evaluator.evaluate_stmt(self.statement, env, evaluations)
+            self.decision_level: int = ctl.assignment.decision_level
             for error, msg in errors:
                 self.errors.append(warning.Warning(error, (), repr(msg)))
         except solver_environment.FailIntegrityExn:
-            self.decision_level = ctl.assignment.decision_level
+            self.decision_level: int = ctl.assignment.decision_level
             return EvaluationResult.CONFLICT
 
         return EvaluationResult.CHANGED
