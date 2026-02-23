@@ -56,11 +56,11 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 <float-operator> ::=
     | <comp-operator> | "sqrt" | "cos" | "sin" | "tan"
     | "acos" | "asin" | "atan" | "abs" | "minus"
-    | "add" | "sub" | "mult" | "fdiv" | "pow" | "floor"
+    | "add" | "sub" | "mult" | "int_div" | "fdiv" | "pow" | "floor"
 
 <int-operator> ::=
     | <comp-operator> | "add" | "sub" | "mult"
-    | "div" | "fdiv" | "pow" | "abs" | "minus" | "max" | "min"
+    | "int_div" | "fdiv" | "pow" | "abs" | "minus" | "max" | "min"
 
 <multimap-operator> ::=
     | <eq-operator> | "find" | "multimap_fold" | "isin" | "multimap_make"

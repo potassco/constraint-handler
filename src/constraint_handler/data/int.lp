@@ -16,12 +16,13 @@ _computed(OP, ARGS, val(int, V1 * VTAIL)) :-
     ARGS = (val(int, V1), TAIL),
     _computed(OP, TAIL, val(int, VTAIL)).
 
-%%%%%%%%%%%%%%%%% sub div pow
-operator_declare(OP,(T,(T,())),T) :- T = int, OP = (sub;div;pow).
+%%%%%%%%%%%%%%%%% sub int_div pow
+operator_declare(OP,(T,(T,())),T) :- T = int, OP = (sub;pow).
+operator_declare(OP,(T1,(T2,())),T) :- T = int, T1 = (int;float), T2 = (int;float), OP = int_div.
 _computed(OP,ARGS,val(int,V1-V2))  :- _compute(OP,ARGS), OP=sub,  ARGS = (val(int,V1),(val(int,V2),())).
-_computed(OP,ARGS,val(int,V1/V2))  :- _compute(OP,ARGS), OP=div,  ARGS = (val(int,V1),(val(int,V2),())), V2!=0.
-_computed(OP,ARGS,bad) :- _compute(OP,ARGS), OP=(div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
-warning(expression(zeroDivisionError),(),(OP,ARGS))  :- _compute(OP,ARGS), OP=(div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
+_computed(OP,ARGS,val(int,V1/V2))  :- _compute(OP,ARGS), OP=int_div,  ARGS = (val(int,V1),(val(int,V2),())), V2!=0.
+_computed(OP,ARGS,bad) :- _compute(OP,ARGS), OP=(int_div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
+warning(expression(zeroDivisionError),(),(OP,ARGS))  :- _compute(OP,ARGS), OP=(int_div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
 _computed(OP,ARGS,val(int,V1**V2)) :- _compute(OP,ARGS), OP=pow,  ARGS = (val(int,V1),(val(int,V2),())).
 
 %%%%%%%%%%%%%%%%% abs minus

@@ -28,8 +28,8 @@ variable_define(a_int, multtentwo, operation(mult,(variable(ten),(variable(two),
 variable_define(a_int, subtwoten, operation(sub,(variable(two),(variable(ten),())))).
 variable_define(a_int, subtentwo, operation(sub,(variable(ten),(variable(two),())))).
 
-variable_define(a_int, divtwoten, operation(div,(variable(two),(variable(ten),())))).
-variable_define(a_int, divtentwo, operation(div,(variable(ten),(variable(two),())))).
+variable_define(a_int, divtwoten, operation(int_div,(variable(two),(variable(ten),())))).
+variable_define(a_int, divtentwo, operation(int_div,(variable(ten),(variable(two),())))).
 variable_define(a_int, powtwoten, operation(pow,(variable(two),(variable(ten),())))).
 variable_define(a_int, powtentwo, operation(pow,(variable(ten),(variable(two),())))).
 
@@ -62,7 +62,7 @@ evaluate(leq,(variable(addtwoten),(variable(addtentwo),()))).
 evaluate(lt,(variable(addtwoten),(variable(addtentwo),()))).
 evaluate(geq,(variable(addtwoten),(variable(addtentwo),()))).
 evaluate(gt,(variable(addtwoten),(variable(addtentwo),()))).
-evaluate(eq,(operation(div,(val(int,6),(val(int,2),()))),(val(int,3),()))).
-evaluate(eq,(operation(div,(val(int,5),(val(int,2),()))),(val(int,2),()))).
+evaluate(eq,(operation(int_div,(val(int,6),(val(int,2),()))),(val(int,3),()))).
+evaluate(eq,(operation(int_div,(val(int,5),(val(int,2),()))),(val(int,2),()))).
 evaluate(eq,(operation(fdiv,(val(int,6),(val(int,2),()))),(val(float,float("3.0")),()))).
 evaluate(eq,(operation(fdiv,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),()))).

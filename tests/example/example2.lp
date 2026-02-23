@@ -17,5 +17,5 @@ ensure(example_check1,
                     (val(int,10),())))).
 %ensure(example_check2,
 %       operation(leq,
-%                    (operation(div,(variable(y),(val(int,3),()))),
+%                    (operation(int_div,(variable(y),(val(int,3),()))),
 %                    (val(int,15),())))).
