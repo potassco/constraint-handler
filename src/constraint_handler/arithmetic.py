@@ -22,8 +22,8 @@ Operator = common.PPEnum(
         "add",
         "sub",
         "mult",
-        "div",
-        "fdiv",
+        "int_div",
+        "float_div",
         "pow",
         "leq",
         "lt",
@@ -80,14 +80,14 @@ class Evaluator:
             match o:
                 case Operator.sub:
                     return lval - rval
-                case Operator.div:
+                case Operator.int_div:
                     if rval == 0:
                         self.errors.append(
                             (warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}")
                         )
                         return common.Bad.bad
-                    return lval // rval
-                case Operator.fdiv:
+                    return int(lval // rval)
+                case Operator.float_div:
                     if rval == 0:
                         self.errors.append(
                             (warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}")

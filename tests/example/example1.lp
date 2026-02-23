@@ -9,11 +9,11 @@ variable_define(example1_y,y,
                 (variable(pi),())))).
 %ensure(example_check1,
 %       operation(geq,
-%                (operation(div,(variable(y),(val(float,float("3")),()))),
+%                (operation(int_div,(variable(y),(val(float,float("3")),()))),
 %                (val(float,float("10")),())))).
 %ensure(example_check2,
 %       operation(leq,
-%                (operation(div,(variable(y),(val(float,float("3")),()))),
+%                (operation(int_div,(variable(y),(val(float,float("3")),()))),
 %                (val(float,float("15")),())))).
 
 %#show value/3.

@@ -160,7 +160,7 @@ value(name, val(int, -7))
 | `add` | Addition | ([int]\*) $\to$ [int] | Adds all provided integers together. |
 | `sub` | Subtraction | ([int], [int]) $\to$ [int] | Subtracts the second integer from the first. |
 | `mult` | Multiplication | ([int]\*) $\to$ [int] | Multiplies all provided integers together. |
-| `div` | Integer Division | ([int], [int]) $\to$ [int] | Divides the first integer by the second. |
+| `int_div` | Integer Division | ([int] \| [float], [int] \| [float]) $\to$ [int] | Divides the first argument by the second and rounds down to the nearest integer. |
 | `pow` | Exponentiation | ([int], [int]) $\to$ [int] | Raises the first integer to the power of the second. |
 | `abs` | Absolute Value | ([int]) $\to$ [int] | Returns the absolute value of the integer. |
 | `minus` | Unary Minus | ([int]) $\to$ [int] | Negates the integer. |
@@ -222,7 +222,7 @@ value(name, val(float, float("-0.001")))
 | `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
 | `mult` | Multiplication | (\[[int] \| [float]\]\*) $\to$ [float] | Multiplies all provided numbers together. |
 | `div` | Division | ([float], [float]) $\to$ [float] | Performs integer division on two floats. |
-| `fdiv` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
+| `float_div` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
 | `ceil` | Ceiling | ([float]) $\to$ [float] | Rounds the float up to the nearest integer value. |
 | `floor` | Floor | ([float]) $\to$ [float] | Rounds the float down to the nearest integer value. |
 | `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
