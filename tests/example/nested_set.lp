@@ -29,13 +29,13 @@
 
 variable_define(assign_v1, v1, operation(add,(val(int,1),(val(int,1),())))).
 variable_define(assign_v2, v2, val(int,2)).
-variable_define(assign_s1, s1, operation(makeSet,
+variable_define(assign_s1, s1, operation(set_make,
                                    (variable(v1),()))).
-variable_define(assign_s2, s2, operation(makeSet,
+variable_define(assign_s2, s2, operation(set_make,
                                    (variable(v2),()))).
-variable_define(assign_s3, s3, operation(makeSet,
+variable_define(assign_s3, s3, operation(set_make,
                                    (val(int,3),()))).
-variable_define(assign_s4, s4, operation(makeSet,
+variable_define(assign_s4, s4, operation(set_make,
                                    (val(int,4),()))).
 variable_define(assign_u, u, operation(union,
                                  (variable(s1),
@@ -44,14 +44,14 @@ variable_define(assign_i, i, operation(inter,
                                  (variable(s1),
                                  (variable(s2),())))).
 
-variable_define(assign_ss1, ss1, operation(makeSet,
+variable_define(assign_ss1, ss1, operation(set_make,
                                      (variable(s1),(variable(s3),())))).
-variable_define(assign_ss2, ss2, operation(makeSet,
+variable_define(assign_ss2, ss2, operation(set_make,
                                      (variable(s2),(variable(s4),())))).
-variable_define(assign_ss3, ss3, operation(makeSet,
+variable_define(assign_ss3, ss3, operation(set_make,
                                      (variable(s2),
-                                     (operation(makeSet,(val(int,3),())),())))).
-variable_define(assign_sa, sa, operation(makeSet,
+                                     (operation(set_make,(val(int,3),())),())))).
+variable_define(assign_sa, sa, operation(set_make,
                                    (variable(ss1),
                                    (variable(ss2),
                                    (variable(ss3),()))))).

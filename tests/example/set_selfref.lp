@@ -40,8 +40,8 @@ set_assign(set_selfref,d,variable(a)).
 set_assign(set_selfref,d,variable(b)).
 set_declare(set_selfref,e).
 set_assign(set_selfref,e,SSA) :-
-    SSA = operation(makeSet,(SA,())),
-    SA = operation(makeSet,(A,())),
+    SSA = operation(set_make,(SA,())),
+    SA = operation(set_make,(A,())),
     A = variable(a).
 set_declare(set_selfref,f).
 set_assign(set_selfref,f,variable(f)).

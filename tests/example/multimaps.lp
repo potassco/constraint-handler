@@ -59,9 +59,9 @@ multimap_assign(ac,cities,val(str,"usa"),val(str,"paris")).
 multimap_assign(ac,cities,val(str,"belarus"),val(str,"brest")).
 
 multimap_declare(dpd,properDivisors).
-multimap_assign(apd,properDivisors,val(int,4),operation(makeSet,(val(int,1),(val(int,2), ())))).
+multimap_assign(apd,properDivisors,val(int,4),operation(set_make,(val(int,1),(val(int,2), ())))).
 multimap_assign(apd,properDivisors,val(int,5),variable(div5)).
-variable_define(apd,div5,operation(makeSet,(val(int,1),()))).
+variable_define(apd,div5,operation(set_make,(val(int,1),()))).
 multimap_assign(apd,properDivisors,val(int,6), variable(div6)).
 set_declare(dpd,div6).
 set_assign(apd,div6,val(int,1)).
@@ -107,25 +107,25 @@ evaluate(maxEntries,(variable(properDivisors2),())).
 evaluate(minEntries,(variable(properDivisors2),())).
 
 variable_define(aa, a, operation(multimap_make,
-                       ((operation(makeSet,(val(int,1),(val(int,2),()))),operation(makeSet,(val(int,2),(val(int,4),())))),
-                       ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,4),(val(int,8),())))),
-                       ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,1),(val(int,2),())))),
+                       ((operation(set_make,(val(int,1),(val(int,2),()))),operation(set_make,(val(int,2),(val(int,4),())))),
+                       ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,4),(val(int,8),())))),
+                       ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,1),(val(int,2),())))),
                        ()))))).
 
 multimap_declare(ab,b).
 multimap_assign(ab,b,
-    operation(makeSet,(val(int,1),(val(int,2),()))),
-    operation(makeSet,
+    operation(set_make,(val(int,1),(val(int,2),()))),
+    operation(set_make,
              (operation(add,(val(int,1),(val(int,1),()))),
              (operation(add,(val(int,2),(val(int,2),()))),())))).
 
 variable_define(abs,b24,
-    operation(makeSet,
+    operation(set_make,
         (operation(mult,(val(int,2),(val(int,1),()))),
         (operation(mult,(val(int,2),(val(int,2),()))),())))).
 multimap_assign(ab,b,
     variable(b24),
-    operation(makeSet,
+    operation(set_make,
              (operation(add,(val(int,1),(val(int,1),()))),
              (val(int,1),
              ())))).
@@ -139,17 +139,17 @@ multimap_assign(ab,b,
     variable(b48)).
 
 variable_define(ac, c, operation(multimap_make,
-                       ((operation(makeSet,(val(int,1),(val(int,2),()))), operation(makeSet,(val(int,2),(val(int,4),())))),
-                       ((operation(makeSet,(val(int,2),(val(int,4),()))), operation(makeSet,(val(int,4),(val(int,7),())))),
-                       ((operation(makeSet,(val(int,2),(val(int,4),()))), operation(makeSet,(val(int,1),(val(int,2),())))),
+                       ((operation(set_make,(val(int,1),(val(int,2),()))), operation(set_make,(val(int,2),(val(int,4),())))),
+                       ((operation(set_make,(val(int,2),(val(int,4),()))), operation(set_make,(val(int,4),(val(int,7),())))),
+                       ((operation(set_make,(val(int,2),(val(int,4),()))), operation(set_make,(val(int,1),(val(int,2),())))),
                        ()))))).
 
 variable_define(ad,d,operation(multimap_make,
-                     ((operation(makeSet,(val(int,1),(val(int,2),()))),operation(makeSet,(val(int,2),(val(int,4),())))),
-                     ((operation(makeSet,(val(int,2),(val(int,4),()))),operation(makeSet,(val(int,4),(val(int,8),())))),
+                     ((operation(set_make,(val(int,1),(val(int,2),()))),operation(set_make,(val(int,2),(val(int,4),())))),
+                     ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,4),(val(int,8),())))),
                      ())))).
 variable_define(ae,e,operation(multimap_make,
-                     ((operation(makeSet,(val(int,1),(val(int,2),()))), operation(makeSet,(val(int,2),(val(int,4),())))),
+                     ((operation(set_make,(val(int,1),(val(int,2),()))), operation(set_make,(val(int,2),(val(int,4),())))),
                      ()))).
 
 evaluate(eq,(variable(a),(variable(b),()))).

@@ -2,7 +2,7 @@ import constraint_handler.schemas.warning as warning
 import constraint_handler.utils.common as common
 import constraint_handler.utils.testing as testing
 
-Operator = common.PPEnum("Operator", ["makeSet", "isin", "notin", "union", "inter", "diff", "subset", "set_fold"])
+Operator = common.PPEnum("Operator", ["set_make", "isin", "notin", "union", "inter", "diff", "subset", "set_fold"])
 
 
 def fold(f, s, start):
@@ -24,7 +24,7 @@ class Evaluator:
         if None in args:
             return None
         match o:
-            case Operator.makeSet:
+            case Operator.set_make:
                 return frozenset(args)
             case Operator.isin:
                 if len(args) != 2:
