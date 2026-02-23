@@ -165,11 +165,11 @@ evaluate(neq,(variable(e),(variable(d),()))).
 
 
 evaluate(multimap_fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
-computed(myproduct,ARGS,val(int,VA * VB)) :- compute(myproduct,ARGS),
+_computed(myproduct,ARGS,val(int,VA * VB)) :- _compute(myproduct,ARGS),
     ARGS = (val(int,VA),(val(int,VB),())).
 
 evaluate(multimap_fold,(val(function,snoc),(variable(properDivisors2),(val(symbol,()),())))).
-computed(snoc,ARGS,val(TN,VN)) :- compute(snoc,ARGS),
+_computed(snoc,ARGS,val(TN,VN)) :- _compute(snoc,ARGS),
     ARGS = (val(TA,VA),(val(TB,VB),())),
     TN = TB, VN = (VB, VA).
 

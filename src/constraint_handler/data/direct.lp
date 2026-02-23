@@ -28,45 +28,45 @@ _se_value(E,V) :- direct_query(E), E=variable(X), _se_assign(NAME,E,E2), _se_val
 
 
 
-%%%%%%%%%%%%%%%%% computedIdx operators
+%%%%%%%%%%%%%%%%% _computedIdx operators
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _se_value(EOP,val(function,OP)).
-computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
+_computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
-computeIdx(E,IDX,V) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,V).
-_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), computedIdx(E,VO).
+_computeIdx(E,IDX,V) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,V).
+_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 
-%%%%%%%%%%%%%%%%% computed operators
+%%%%%%%%%%%%%%%%% _computed operators
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _se_value(EOP,val(function,OP)).
 %% _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 %% _direct_compMapAux(ARGS,N,()) :- _direct_queryArgsValues(E,OP,ARGS), N=@pythonListLength(ARGS).
 %% _direct_compMapAux(ARGS,IDX,K) :- _direct_compMapAux(ARGS,IDX+1,L), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,T,V), K=(val(T,V),L).
-%% compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS).
-%% _se_value(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS), computed(OP,VS,val(TO,VO)).
+%% _compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS).
+%% _se_value(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS), _computed(OP,VS,val(TO,VO)).
 _direct_revMapAux(ARGS,ES,()) :- _direct_queryArgsValues(E,OP,ARGS), ES=@pythonReversed(ARGS).
 _direct_revMapAux(ARGS,ES,(V,VS)) :- _direct_revMapAux(ARGS,(E,ES),VS), _se_value(E,V).
-compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS).
-_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS), computed(OP,VS,VO).
+_compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS).
+_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS), _computed(OP,VS,VO).
 
 %%%%%%%%%%%%%%%%% lambda
-_lambda_aux(LAMB,ARGS,RED) :- compute(LAMB,ARGS),
+_lambda_aux(LAMB,ARGS,RED) :- _compute(LAMB,ARGS),
     LAMB=lambda(VARS,ERES),
     RED=@pythonBetaReduction(ERES,VARS,ARGS).
 
 direct_query(RED) :- _lambda_aux(LAMB,ARGS,RED).
-computed(LAMB,ARGS,VO) :- _lambda_aux(LAMB,ARGS,RED), _se_value(RED,VO).
+_computed(LAMB,ARGS,VO) :- _lambda_aux(LAMB,ARGS,RED), _se_value(RED,VO).
 
 %%%%%%%%%%%%%%%%% python
-_direct_implode_arg(OP,ARGS,IDX,ARG) :- compute(OP,ARGS), OP=python(S), (IDX,ARG)=@pythonEnumerateElements(ARGS).
+_direct_implode_arg(OP,ARGS,IDX,ARG) :- _compute(OP,ARGS), OP=python(S), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 _direct_implode(ARG) :- _direct_implode_arg(OP,ARGS,IDX,ARG).
-_direct_implode_args_aux(ARGS,N,()) :- compute(OP,ARGS), OP=python(S), N=@pythonListLength(ARGS).
+_direct_implode_args_aux(ARGS,N,()) :- _compute(OP,ARGS), OP=python(S), N=@pythonListLength(ARGS).
 _direct_implode_args_aux(ARGS,IDX,K) :- _direct_implode_args_aux(ARGS,IDX+1,L),
     _direct_implode_arg(OP,ARGS,IDX,ARG),
     _direct_imploded(ARG,IMP), K=(IMP,L).
-_expression_eval_exec(OP,ARGS,RES) :- compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L), RES = @pythonEvalExpr(operation(OP,L),(),ID), _main_solverIdentifier(ID).
-computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
-computed(OP,ARGS,bad) :- _expression_eval_exec(OP,ARGS,error(KIND,MSG)).
+_expression_eval_exec(OP,ARGS,RES) :- _compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L), RES = @pythonEvalExpr(operation(OP,L),(),ID), _main_solverIdentifier(ID).
+_computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
+_computed(OP,ARGS,bad) :- _expression_eval_exec(OP,ARGS,error(KIND,MSG)).
 _warning(KIND,(),(OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(KIND,MSG)).
 %%% TODO duplicated code in groundEval.lp
 
