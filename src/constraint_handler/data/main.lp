@@ -2,7 +2,7 @@
 % #include "gringoEval.lp".
 % #include "display.lp".
 
-#defined computed/4.
+#defined _computed/4.
 #defined requestEngine/2.
 #defined defaultEngine/1.
 #defined main_solverIdentifier/1.

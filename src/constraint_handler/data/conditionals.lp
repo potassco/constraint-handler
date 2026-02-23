@@ -5,10 +5,10 @@ conditional_hasNoValue(E) :- direct_query(E), _se_value(E,val(none,none)).
 
 %%%%%%%%%%%%%%%%% eq neq
 operator_declare(OP,(T1,(T2,())),bool) :- _type(T1), _type(T2), OP = (eq;neq).
-computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=eq,  ARGS = (val(none,V1),(val(none,V2),())).
-computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=eq,  ARGS = (val(T1,V1),(val(T2,V2),())), (T1;T2) = none, (T1;T2) != none.
-computed(OP,ARGS,val(bool,false)) :- compute(OP,ARGS), OP=neq, ARGS = (val(none,V1),(val(none,V2),())).
-computed(OP,ARGS,val(bool,true))  :- compute(OP,ARGS), OP=neq, ARGS = (val(T1,V1),(val(T2,V2),())), (T1;T2) = none, (T1;T2) != none.
+_computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=eq,  ARGS = (val(none,V1),(val(none,V2),())).
+_computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=eq,  ARGS = (val(T1,V1),(val(T2,V2),())), (T1;T2) = none, (T1;T2) != none.
+_computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=neq, ARGS = (val(none,V1),(val(none,V2),())).
+_computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=neq, ARGS = (val(T1,V1),(val(T2,V2),())), (T1;T2) = none, (T1;T2) != none.
 
 %%%%%%%%%%%%%%%%% ite
 operator_declare(ite,(bool,(T,(T,()))),T) :-  _type(T), OP = ite.

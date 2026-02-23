@@ -137,8 +137,6 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 <atom> ::=
     | "assign" "(" <term> "," <term> "," <expression> ")"
     | "ensure" "(" <term> "," <expression> ")"
-    | "compute" "(" <term> "," <val-list> ")"
-    | "computed" "(" <term> "," <val-list> "," <type> "," <term> ")"
     | "evaluate" "(" <operator> "," <expression-list> ")"
     | <variable-atom>
     | <multimap-atom>

@@ -152,8 +152,6 @@ A list of declarations used to define problems.
 | Declaration | Description |
 |-|-|
 | [ensure] | Declares a constraint that must hold in all valid solutions. |
-| [compute] | Experimental and not documented. |
-| [computed] | Experimental and not documented. |
 | [evaluate] | Experimental and not documented. |
 | **Variable** | |
 | [domain] | Defines a domain of possible values for variables. |

@@ -12,7 +12,7 @@ representation(set,intensional).
 
 %%%%%%%%%%%%%%%%% length
 operator_declare(OP,(T,()),int) :- T = set, OP = length.
-computed(length,ARGS,val(int,N)) :- compute(length,ARGS),
+_computed(length,ARGS,val(int,N)) :- _compute(length,ARGS),
     ARGS = (ref(set,SET),()),
     N = #count { V : _set_contains(SET,V) }.
 
@@ -20,12 +20,12 @@ computed(length,ARGS,val(int,N)) :- compute(length,ARGS),
 
 _se_value(EX,ref(set,EX)) :- _set_declare(NAME,EX).
 
-compute(eq,(V1,(V2,()))) :-
+_compute(eq,(V1,(V2,()))) :-
     _set_assign(N1,EX,E1), _se_value(E1,V1),
     _set_assign(N2,EX,E2), _se_value(E2,V2), V1 < V2.
 _set_contains(EX,V1) :-
     _set_assign(NAME,EX,E1), _se_value(E1,V1), %_se_value(EX,ref(set,ER)),
-    #false : _set_assign(N2,EX,E2), _se_value(E2,V2), computed(eq,(V2,(V1,())),val(bool,true)), V2 < V1.
+    #false : _set_assign(N2,EX,E2), _se_value(E2,V2), _computed(eq,(V2,(V1,())),val(bool,true)), V2 < V1.
 
 _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ER), ER=ref(set,S).
 
@@ -33,17 +33,17 @@ set_value(X,V) :- _se_value(EX,ref(set,E)), _set_contains(E,V), EX=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
 operator_declare(OP,(T1,(T2,())),bool) :- _type(T1),T2=set, OP = (isin;notin).
-compute(eq,(V1,(V2,())))  :- compute((isin;notin),ARGS), ARGS = (V1,(ref(set,S),())),
+_compute(eq,(V1,(V2,())))  :- _compute((isin;notin),ARGS), ARGS = (V1,(ref(set,S),())),
     _set_contains(S,V2).
 
-computed(isin,ARGS,val(bool,true))   :- compute(isin,ARGS), ARGS = (V1,(ref(set,S),())),
-    _set_contains(S,V2), computed(eq,(V1,(V2,())),val(bool,true)).
-computed(isin,ARGS,val(bool,false))  :- compute(isin,ARGS), ARGS = (V1,(ref(set,S),())),
-    #false : _set_contains(S,V2), computed(eq,(V1,(V2,())),val(bool,true)).
-computed(notin,ARGS,val(bool,false)) :- compute(notin,ARGS), ARGS = (V1,(ref(set,S),())),
-    _set_contains(S,V2), computed(eq,(V1,(V2,())),val(bool,true)).
-computed(notin,ARGS,val(bool,true))  :- compute(notin,ARGS), ARGS = (V1,(ref(set,S),())),
-    #false : _set_contains(S,V2), computed(eq,(V1,(V2,())),val(bool,true)).
+_computed(isin,ARGS,val(bool,true))   :- _compute(isin,ARGS), ARGS = (V1,(ref(set,S),())),
+    _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
+_computed(isin,ARGS,val(bool,false))  :- _compute(isin,ARGS), ARGS = (V1,(ref(set,S),())),
+    #false : _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
+_computed(notin,ARGS,val(bool,false)) :- _compute(notin,ARGS), ARGS = (V1,(ref(set,S),())),
+    _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
+_computed(notin,ARGS,val(bool,true))  :- _compute(notin,ARGS), ARGS = (V1,(ref(set,S),())),
+    #false : _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
 
 %%%%%%%%%%%%%%%%% makeSet
 operator_declare_variadic(makeSet, T, set, 1) :- _type(T).
@@ -64,7 +64,7 @@ operator_declare(OP,(T,(T,())),T) :- T = set, OP = (union;inter;diff).
 _set_declare(_internal,E) :- direct_query(E), E=operation((diff;inter;union),L).
 _set_assign(_internal,E,V) :- direct_query(E), E=operation(union,L), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
-compute(eq,(VSMALL,(VBIG,()))) :- direct_query(E), E=operation((diff;inter),L), L=(S1,(S2,())),
+_compute(eq,(VSMALL,(VBIG,()))) :- direct_query(E), E=operation((diff;inter),L), L=(S1,(S2,())),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
     _set_contains(R2,V2),
@@ -73,43 +73,43 @@ compute(eq,(VSMALL,(VBIG,()))) :- direct_query(E), E=operation((diff;inter),L), 
 _set_assign(_internal,E,VSMALL) :- direct_query(E), E=operation(inter,L), L=(S1,(S2,())),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
-    _set_contains(R2,V2), computed(eq,(VSMALL,(VBIG,())),val(bool,true)),
+    _set_contains(R2,V2), _computed(eq,(VSMALL,(VBIG,())),val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 _set_assign(_internal,E,V1) :- direct_query(E), E=operation(diff,L), L=(S1,(S2,())),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
-    #false : _set_contains(R2,V2), computed(eq,(VSMALL,(VBIG,())),val(bool,true)),
+    #false : _set_contains(R2,V2), _computed(eq,(VSMALL,(VBIG,())),val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 %%%%%%%%%%%%%%%%% Equality
 operator_declare(OP,(T,(T,())),bool) :- T = set, OP = (eq;neq).
-compute(eq,ARGS) :- compute(neq,ARGS), ARGS = (set(T1,S1),(set(T2,S2),())), (T1;T2)=set.
-computed(neq,ARGS,val(bool,NEQ)) :- computed(eq,ARGS,val(bool,EQ)), ARGS = (ref(T1,S1),(ref(T2,S2),())), (T1;T2)=set, (EQ,NEQ)=((true,false);(false,true)).
+_compute(eq,ARGS) :- _compute(neq,ARGS), ARGS = (set(T1,S1),(set(T2,S2),())), (T1;T2)=set.
+_computed(neq,ARGS,val(bool,NEQ)) :- _computed(eq,ARGS,val(bool,EQ)), ARGS = (ref(T1,S1),(ref(T2,S2),())), (T1;T2)=set, (EQ,NEQ)=((true,false);(false,true)).
 
-computed(eq,ARGS,val(bool,true))  :- compute(eq,ARGS),  ARGS = (ref(set,S1),(ref(set,S2),())), not computed(eq,ARGS,val(bool,false)).
+_computed(eq,ARGS,val(bool,true))  :- _compute(eq,ARGS),  ARGS = (ref(set,S1),(ref(set,S2),())), not _computed(eq,ARGS,val(bool,false)).
 
-computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS),  ARGS = (ref(set,S1),(val(T2,S2),())), T2 != set.
-computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS),  ARGS = (val(T1,S1),(ref(set,S2),())), T1 != set.
+_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS),  ARGS = (ref(set,S1),(val(T2,S2),())), T2 != set.
+_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS),  ARGS = (val(T1,S1),(ref(set,S2),())), T1 != set.
 
-computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
+_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
     _set_contains(S1,V1),
-    #false : _set_contains(S2,V2), computed(eq,(V1,(V2,())),val(bool,true)).
-computed(eq,ARGS,val(bool,false)) :- compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
+    #false : _set_contains(S2,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
+_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
     _set_contains(S2,V2),
-    #false : _set_contains(S1,V1), computed(eq,(V1,(V2,())),val(bool,true)).
+    #false : _set_contains(S1,V1), _computed(eq,(V1,(V2,())),val(bool,true)).
 
-compute(eq,(V1,(V2,()))) :- compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
+_compute(eq,(V1,(V2,()))) :- _compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
     _set_contains(S1,V1), _set_contains(S2,V2).
 
 %%%%%%%%%%%%%%%%% Equality axioms
 
-:- computed(eq,(ref(set,X),(ref(set,X),())),val(bool,false)). %%% reflexivity
-:- computed(eq,(ref(set,X),(ref(set,Y),())),val(bool,true)),
-   computed(eq,(ref(set,Y),(ref(set,X),())),val(bool,false)). %%% symmetry
-:- computed(eq,(ref(set,L1),(ref(set,R1),())),val(bool,true)),
-   computed(eq,(ref(set,L2),(ref(set,R2),())),val(bool,true)),
-   computed(eq,(ref(set,L3),(ref(set,R3),())),val(bool,false)),
+:- _computed(eq,(ref(set,X),(ref(set,X),())),val(bool,false)). %%% reflexivity
+:- _computed(eq,(ref(set,X),(ref(set,Y),())),val(bool,true)),
+   _computed(eq,(ref(set,Y),(ref(set,X),())),val(bool,false)). %%% symmetry
+:- _computed(eq,(ref(set,L1),(ref(set,R1),())),val(bool,true)),
+   _computed(eq,(ref(set,L2),(ref(set,R2),())),val(bool,true)),
+   _computed(eq,(ref(set,L3),(ref(set,R3),())),val(bool,false)),
     X=(L1;R1), Y=(L1;R1),
     Y=(L2;R2), Z=(L2;R2),
     X=(L3;R3), Z=(L3;R3),
@@ -117,30 +117,30 @@ compute(eq,(V1,(V2,()))) :- compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())
 
 %%%%%%%%%%%%%%%%% Subset
 operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
-compute(eq,(V1,(V2,()))) :- compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
+_compute(eq,(V1,(V2,()))) :- _compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
     _set_contains(S1,V1), _set_contains(S2,V2).
-computed(subset,ARGS,val(bool,false)) :- compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
+_computed(subset,ARGS,val(bool,false)) :- _compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
     _set_contains(S1,V1),
-    #false : _set_contains(S2,V2), computed(eq,(V1,(V2,())),val(bool,true)).
+    #false : _set_contains(S2,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
 
-computed(subset,ARGS,val(bool,true))  :- compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
-    not computed(subset,ARGS,val(bool,false)).
-computed(subset,ARGS,val(bool,false)) :- compute(subset,ARGS), ARGS = (val(T1,S1),(val(T2,S2),())),
+_computed(subset,ARGS,val(bool,true))  :- _compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
+    not _computed(subset,ARGS,val(bool,false)).
+_computed(subset,ARGS,val(bool,false)) :- _compute(subset,ARGS), ARGS = (val(T1,S1),(val(T2,S2),())),
     (T1;T2) != set, (T1;T2) = set.
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% set_fold: a -> b -> b
 
-_set_makeIndex(VM) :- compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))).
-_set_foldStep(set_fold,ARGS,0,ACC) :- compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))).
-compute(VO,SUBARGS) :- compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))),
+_set_makeIndex(VM) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))).
+_set_foldStep(set_fold,ARGS,0,ACC) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))).
+_compute(VO,SUBARGS) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))),
     _set_index(VM,I,VI), _set_foldStep(set_fold,ARGS,I,VB),
     SUBARGS = (VI,(VB,())).
-_set_foldStep(set_fold,ARGS,I+1,NEXT) :- compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(START,()))),
+_set_foldStep(set_fold,ARGS,I+1,NEXT) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(START,()))),
     _set_foldStep(set_fold,ARGS,I,VB), _set_index(VM,I,VI),
     SUBARGS = (VI,(VB,())),
-    computed(VO,SUBARGS,NEXT).
-computed(set_fold,ARGS,VB) :- compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(START,()))),
+    _computed(VO,SUBARGS,NEXT).
+_computed(set_fold,ARGS,VB) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(START,()))),
     _set_foldStep(set_fold,ARGS,I,VB),
     _set_lastIndex(VM,I).
 

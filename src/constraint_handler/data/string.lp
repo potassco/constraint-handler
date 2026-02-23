@@ -1,15 +1,15 @@
 %%%%%%%%%%%%%%%%% eq neq
 operator_declare(OP,(T,(T,())),bool) :- T = str, OP = (eq;neq).
-computed(O,ARGS,val(bool,true))  :- compute(O,ARGS), O=eq,  ARGS = (val(str,S1),(val(str,S2),())), S1 =  S2.
-computed(O,ARGS,val(bool,true))  :- compute(O,ARGS), O=neq, ARGS = (val(str,S1),(val(str,S2),())), S1 != S2.
-computed(O,ARGS,val(bool,false)) :- compute(O,ARGS), O=eq,  ARGS = (val(str,S1),(val(str,S2),())), S1 != S2.
-computed(O,ARGS,val(bool,false)) :- compute(O,ARGS), O=neq, ARGS = (val(str,S1),(val(str,S2),())), S1 =  S2.
+_computed(O,ARGS,val(bool,true))  :- _compute(O,ARGS), O=eq,  ARGS = (val(str,S1),(val(str,S2),())), S1 =  S2.
+_computed(O,ARGS,val(bool,true))  :- _compute(O,ARGS), O=neq, ARGS = (val(str,S1),(val(str,S2),())), S1 != S2.
+_computed(O,ARGS,val(bool,false)) :- _compute(O,ARGS), O=eq,  ARGS = (val(str,S1),(val(str,S2),())), S1 != S2.
+_computed(O,ARGS,val(bool,false)) :- _compute(O,ARGS), O=neq, ARGS = (val(str,S1),(val(str,S2),())), S1 =  S2.
 
 %%%%%%%%%%%%%%%%% length concat
 operator_declare(OP,(T,()),int) :- T = str, OP = length.
 operator_declare(OP,(T,(T,())),T) :- T = str, OP = concat.
-computed(O,ARGS,val(int,N)) :- compute(O,ARGS), O=length, ARGS = (val(str,S),()), N=@pythonStringLength(S).
-computed(O,ARGS,val(str,R)) :- compute(O,ARGS), O=concat, ARGS = (val(str,S1),(val(str,S2),())), R=@pythonStringAdd(S1,S2).
+_computed(O,ARGS,val(int,N)) :- _compute(O,ARGS), O=length, ARGS = (val(str,S),()), N=@pythonStringLength(S).
+_computed(O,ARGS,val(str,R)) :- _compute(O,ARGS), O=concat, ARGS = (val(str,S1),(val(str,S2),())), R=@pythonStringAdd(S1,S2).
 
 #script(python)
 
