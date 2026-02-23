@@ -64,5 +64,5 @@ evaluate(geq,(variable(addtwoten),(variable(addtentwo),()))).
 evaluate(gt,(variable(addtwoten),(variable(addtentwo),()))).
 evaluate(eq,(operation(int_div,(val(int,6),(val(int,2),()))),(val(int,3),()))).
 evaluate(eq,(operation(int_div,(val(int,5),(val(int,2),()))),(val(int,2),()))).
-evaluate(eq,(operation(fdiv,(val(int,6),(val(int,2),()))),(val(float,float("3.0")),()))).
-evaluate(eq,(operation(fdiv,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),()))).
+evaluate(eq,(operation(float_div,(val(int,6),(val(int,2),()))),(val(float,float("3.0")),()))).
+evaluate(eq,(operation(float_div,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),()))).

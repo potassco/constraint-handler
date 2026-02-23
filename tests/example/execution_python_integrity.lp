@@ -6,7 +6,7 @@
 
 %%% version 1
 %%% using fact format
-execution_declare(dummy,myprog(1),seq2(assign("z",operation(fdiv,(variable("x"),(variable("y"),())))),assert(operation(lt,(val(float,float("1.5")),(variable("z"),()))))),("x",("y",())),("z",())) :- active_version(1).
+execution_declare(dummy,myprog(1),seq2(assign("z",operation(float_div,(variable("x"),(variable("y"),())))),assert(operation(lt,(val(float,float("1.5")),(variable("z"),()))))),("x",("y",())),("z",())) :- active_version(1).
 
 %%% version 2
 %%% using solver_environment.constrain

@@ -21,8 +21,8 @@ operator_declare(OP,(T,(T,())),T) :- T = int, OP = (sub;pow).
 operator_declare(OP,(T1,(T2,())),T) :- T = int, T1 = (int;float), T2 = (int;float), OP = int_div.
 _computed(OP,ARGS,val(int,V1-V2))  :- _compute(OP,ARGS), OP=sub,  ARGS = (val(int,V1),(val(int,V2),())).
 _computed(OP,ARGS,val(int,V1/V2))  :- _compute(OP,ARGS), OP=int_div,  ARGS = (val(int,V1),(val(int,V2),())), V2!=0.
-_computed(OP,ARGS,bad) :- _compute(OP,ARGS), OP=(int_div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
-warning(expression(zeroDivisionError),(),(OP,ARGS))  :- _compute(OP,ARGS), OP=(int_div;fdiv),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
+_computed(OP,ARGS,bad) :- _compute(OP,ARGS), OP=(int_div;float_div),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
+warning(expression(zeroDivisionError),(),(OP,ARGS))  :- _compute(OP,ARGS), OP=(int_div;float_div),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
 _computed(OP,ARGS,val(int,V1**V2)) :- _compute(OP,ARGS), OP=pow,  ARGS = (val(int,V1),(val(int,V2),())).
 
 %%%%%%%%%%%%%%%%% abs minus
@@ -45,6 +45,6 @@ _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=lt,  ARGS = (val(int
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=geq, ARGS = (val(int,V1),(val(int,V2),())), V1 <  V2.
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=gt,  ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
 
-_computed(OP,ARGS,RES) :- _compute(OP,ARGS), OP=fdiv, ARGS = (val(int,_),(val(int,V2),())), V2!=0,
+_computed(OP,ARGS,RES) :- _compute(OP,ARGS), OP=float_div, ARGS = (val(int,_),(val(int,V2),())), V2!=0,
   RES = @pythonEvalExpr(operation(OP,ARGS),(),ID),
   _main_solverIdentifier(ID).

@@ -222,7 +222,7 @@ value(name, val(float, float("-0.001")))
 | `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
 | `mult` | Multiplication | (\[[int] \| [float]\]\*) $\to$ [float] | Multiplies all provided numbers together. |
 | `div` | Division | ([float], [float]) $\to$ [float] | Performs integer division on two floats. |
-| `fdiv` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
+| `float_div` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
 | `ceil` | Ceiling | ([float]) $\to$ [float] | Rounds the float up to the nearest integer value. |
 | `floor` | Floor | ([float]) $\to$ [float] | Rounds the float down to the nearest integer value. |
 | `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
