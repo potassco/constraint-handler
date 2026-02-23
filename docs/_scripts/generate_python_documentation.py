@@ -1,4 +1,5 @@
 import pathlib
+
 import mkdocs_gen_files
 
 nav = mkdocs_gen_files.Nav()

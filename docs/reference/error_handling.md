@@ -31,7 +31,7 @@ Here, we outline the various warning types that can be reported by the constrain
 | **propagator** | |
 | [`propagator`](#propagator) | An error occurred in the propagator. |
 | **Type** | |
-| [`type(failed_operation)`](#failed-operation) | An [Operation] failed due to a type error. |
+| `[type(failed_operation)]` | An [Operation] failed due to a type error. |
 | **Other** | |
 | [`otherError`](#other-error) | A generic error that does not fit into the other categories. |
 

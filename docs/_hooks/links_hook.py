@@ -26,6 +26,7 @@ documentation.
 
 import os
 import re
+
 from mkdocs import utils
 
 LINKS = {
@@ -108,6 +109,7 @@ LINKS = {
     "warning": "reference/error_handling.md#warning",
     "Error Handling": "reference/error_handling.md",
     "Python Error": "reference/error_handling.md#python-error",
+    "type(failed_operation)": "reference/error_handling.md#failed-operation",
 }
 """
 The dictionary of link labels to their corresponding target paths.
@@ -152,21 +154,22 @@ def on_page_markdown(markdown, page, config, files):
 
     return markdown + "\n".join(definitions)
 
+
 def on_page_content(html, page, config, files):
     for label, target in LINKS.items():
         target_path, anchor = target.split("#", 1) if "#" in target else (target, "")
         target_file = files.get_file_from_path(target_path)
-        
+
         if target_file:
             target_url = target_file.url
-            
+
             rel_url = utils.get_relative_url(target_url, page.url)
-            
+
             if anchor:
                 rel_url += f"#{anchor}"
-            
+
             pattern = rf"\[{re.escape(label)}(s?)\](?!\()"
-            
+
             def replace_with_link(match):
                 found_text = f"{label}{match.group(1)}"
                 return f'<a href="{rel_url}">{found_text}</a>'
