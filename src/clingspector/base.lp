@@ -74,7 +74,7 @@ cs__unary_operator(abs; sqrt; cos; sin; tan; acos; asin; atan; minus).
 cs__logic_operator(conj; disj; ite; leqv; limp; lnot; lxor).
 cs__comparison_operator(eq; neq; leq; lt; geq; gt).
 cs__binary_operator(add; sub; mult; div; pow).
-cs__set_operator(makeSet; isin; notin; union; inter; subset).
+cs__set_operator(set_make; isin; notin; union; inter; subset).
 cs__other_operator(minus; max; min; length; concat).
 
 cs__operator(O) :- cs__unary_operator(O).
@@ -108,7 +108,7 @@ cs__valid_operation(length, (str, ()), int).
 cs__valid_operation(concat, (str, (str, ())), str).
 
 % Valid operations for set
-cs__valid_operation(makeSet, (T, ()), set) :- cs__type(T).
+cs__valid_operation(set_make, (T, ()), set) :- cs__type(T).
 cs__valid_operation((isin; notin), (set, (set, ())), bool).
 cs__valid_operation((union; inter; subset), (set, (set, ())), set).
 

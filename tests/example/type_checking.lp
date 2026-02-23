@@ -129,7 +129,7 @@ variable_define(check, check(OP, set), EXPR) :-
 
 variable_define(check, check(OP), EXPR) :-
     EXPR = operation(OP, (variable(v(int)),(variable(v(int)),(variable(v(int)),())))),
-    OP = makeSet.
+    OP = set_make.
 
 %%%%%%%%%%%%%%%%% Multimap
 variable_define(check, check(OP, multimap), EXPR) :-

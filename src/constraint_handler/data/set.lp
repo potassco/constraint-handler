@@ -45,10 +45,10 @@ _computed(notin,ARGS,val(bool,false)) :- _compute(notin,ARGS), ARGS = (V1,(ref(s
 _computed(notin,ARGS,val(bool,true))  :- _compute(notin,ARGS), ARGS = (V1,(ref(set,S),())),
     #false : _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
 
-%%%%%%%%%%%%%%%%% makeSet
-operator_declare_variadic(makeSet, T, set, 1) :- _type(T).
-_set_declare(_internal,E) :- direct_query(E), E=operation(makeSet,L).
-_set_assign(_internal,E,SE) :- direct_query(E), E=operation(makeSet,L), SE=@pythonListElements(L).
+%%%%%%%%%%%%%%%%% set_make
+operator_declare_variadic(set_make, T, set, 1) :- _type(T).
+_set_declare(_internal,E) :- direct_query(E), E=operation(set_make,L).
+_set_assign(_internal,E,SE) :- direct_query(E), E=operation(set_make,L), SE=@pythonListElements(L).
 
 _set_declare(_internal,E) :- direct_query(E), E=set(L).
 _set_assign(_internal,E,SE) :- direct_query(E), E=set(L), SE=@pythonListElements(L).

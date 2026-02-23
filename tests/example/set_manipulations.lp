@@ -38,10 +38,10 @@
 variable_define(assign_b, b, val(bool,true)).
 variable_define(assign_i, i, val(int,42)).
 variable_define(assign_f, f, val(float,float("47.1"))).
-variable_define(assign_s, s, operation(makeSet,
+variable_define(assign_s, s, operation(set_make,
                                   (variable(b),
                                   (operation(add,(variable(i),(variable(f), ()))),())))).
-variable_define(assign_t, t, operation(makeSet,
+variable_define(assign_t, t, operation(set_make,
                                   (val(int,10),
                                   (val(int,2),
                                   (val(int,3),
@@ -61,18 +61,18 @@ variable_define(assign_cduv, cduv, operation(length,(variable(duv),()))).
 
 variable_define(assign_cu, cu, operation(length,(variable(u),()))).
 
-variable_define(assign_w, w, operation(makeSet,
+variable_define(assign_w, w, operation(set_make,
                                   (operation(length,(variable(u),())),
                                   (operation(add,(operation(length,(variable(v),())),(val(int,1),()))),
                                   (operation(isin,(variable(b),(variable(v),()))),
                                   (operation(notin,(val(bool,true),
                                                        (variable(u),()))),())))))).
-variable_define(assign_x, x, operation(makeSet,
+variable_define(assign_x, x, operation(set_make,
                                   (val(int,3),
                                   (operation(add,(val(int,1),(val(int,2),()))),
                                   (variable(u),
                                   (variable(v),
-                                  (operation(makeSet,(val(bool,true),())),()))))))).
+                                  (operation(set_make,(val(bool,true),())),()))))))).
 
 variable_define(assign_cx, cx, operation(length,(variable(x),()))).
 
@@ -80,7 +80,7 @@ set_declare(declare_d, d).
 set_assign(assign_d, d, operation(add,(val(int,1),(val(int,3),())))).
 set_assign(assign_d, d, variable(s)).
 set_assign(assign_d, d, operation(add,(val(int,2),(val(int,2),())))).
-set_assign(assign_d, d, operation(makeSet,(val(bool,true),(val(float,float("89.1")),())))).
+set_assign(assign_d, d, operation(set_make,(val(bool,true),(val(float,float("89.1")),())))).
 
 variable_define(assign_cd, cd, operation(length,(variable(d),()))).
 
@@ -92,38 +92,38 @@ evaluate(isin,(val(int,17),(variable(t),()))).
 %%% eqx = x == { 3, { true }, { 10, 2, 3, true, 89.1 } } = true
 %%% nqx = x == { 3, { true }, { 10, 2, 4, true, 89.1 } } = false
 variable_define(tset_eq,eqx3,operation(eq,(variable(x),(X,())))) :-
-    X=operation(makeSet,(THREE,(STRUE,(SET,())))),
+    X=operation(set_make,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
-    STRUE=operation(makeSet,(TRUE,())),
-    SET=operation(makeSet,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
+    STRUE=operation(set_make,(TRUE,())),
+    SET=operation(set_make,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
     ONE=val(int,10),
     TWO=val(int,2),
     TRUE=val(bool,true),
     EIGHTYNINE=val(float,float("89.1")).
 variable_define(tset_eq,nqx3,operation(neq,(variable(x),(X,())))) :-
-    X=operation(makeSet,(THREE,(STRUE,(SET,())))),
+    X=operation(set_make,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
-    STRUE=operation(makeSet,(TRUE,())),
-    SET=operation(makeSet,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
+    STRUE=operation(set_make,(TRUE,())),
+    SET=operation(set_make,(ONE,(TWO,(THREE,(TRUE,(EIGHTYNINE,())))))),
     ONE=val(int,10),
     TWO=val(int,2),
     TRUE=val(bool,true),
     EIGHTYNINE=val(float,float("89.1")).
 variable_define(tset_neq,eqx4,operation(eq,(variable(x),(X,())))) :-
-    X=operation(makeSet,(THREE,(STRUE,(SET,())))),
+    X=operation(set_make,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
-    STRUE=operation(makeSet,(TRUE,())),
-    SET=operation(makeSet,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
+    STRUE=operation(set_make,(TRUE,())),
+    SET=operation(set_make,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
     ONE=val(int,10),
     TWO=val(int,2),
     FOUR=val(int,4),
     TRUE=val(bool,true),
     EIGHTYNINE=val(float,float("89.1")).
 variable_define(tset_neq,nqx4,operation(neq,(variable(x),(X,())))) :-
-    X=operation(makeSet,(THREE,(STRUE,(SET,())))),
+    X=operation(set_make,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
-    STRUE=operation(makeSet,(TRUE,())),
-    SET=operation(makeSet,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
+    STRUE=operation(set_make,(TRUE,())),
+    SET=operation(set_make,(ONE,(TWO,(FOUR,(TRUE,(EIGHTYNINE,())))))),
     ONE=val(int,10),
     TWO=val(int,2),
     FOUR=val(int,4),
@@ -140,5 +140,5 @@ variable_define(test_subset, usubx, operation(subset,(variable(u),(variable(x),(
 variable_define(test_subset, vsubx, operation(subset,(variable(v),(variable(x),())))).
 
 variable_define(assign_vp, vp, operation(inter,
-                                  (operation(makeSet,(val(int,5),(val(int,6),(val(int,7),())))),
-                                  (operation(makeSet,(val(int,7),(val(int,8),(val(int,9),())))),())))).
+                                  (operation(set_make,(val(int,5),(val(int,6),(val(int,7),())))),
+                                  (operation(set_make,(val(int,7),(val(int,8),(val(int,9),())))),())))).

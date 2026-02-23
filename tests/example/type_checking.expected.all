@@ -72,7 +72,7 @@ type_variable((),check(union,set),set)
 type_variable((),check(inter,set),set)
 type_variable((),check(diff,set),set)
 type_variable((),check(subset,set),bool)
-type_variable((),check(makeSet),set)
+type_variable((),check(set_make),set)
 type_variable((),check(hasValue,set),bool)
 
 type_variable((),check(countKeys,multimap),int)

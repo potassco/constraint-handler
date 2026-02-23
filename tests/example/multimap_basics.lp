@@ -67,15 +67,15 @@ variable_define(dummy,m2a,operation(find,(val(str,"a"),(variable(m2),())))).
 variable_define(dummy,m2b,operation(find,(val(str,"b"),(variable(m2),())))).
 variable_define(dummy,m2c,operation(find,(val(str,"c"),(variable(m2),())))).
 
-evaluate(eq,(variable(m1a),(operation(makeSet,(val(int,1),())),()))).
-evaluate(eq,(variable(m1b),(operation(makeSet,(val(int,2),(val(int,3),()))),()))).
-evaluate(eq,(variable(m1c),(operation(makeSet,(())),()))).
-evaluate(eq,(variable(m2a),(operation(makeSet,(val(int,4),())),()))).
-evaluate(eq,(variable(m2b),(operation(makeSet,(val(int,5),(val(int,6),()))),()))).
-evaluate(eq,(variable(m2c),(operation(makeSet,()),()))).
-evaluate(eq,(variable(in5),(operation(makeSet,(val(str,"c"),())),()))).
-evaluate(eq,(variable(inc),(operation(makeSet,(val(int,6),())),()))).
-evaluate(eq,(variable(in6),(operation(makeSet,()),()))).
+evaluate(eq,(variable(m1a),(operation(set_make,(val(int,1),())),()))).
+evaluate(eq,(variable(m1b),(operation(set_make,(val(int,2),(val(int,3),()))),()))).
+evaluate(eq,(variable(m1c),(operation(set_make,(())),()))).
+evaluate(eq,(variable(m2a),(operation(set_make,(val(int,4),())),()))).
+evaluate(eq,(variable(m2b),(operation(set_make,(val(int,5),(val(int,6),()))),()))).
+evaluate(eq,(variable(m2c),(operation(set_make,()),()))).
+evaluate(eq,(variable(in5),(operation(set_make,(val(str,"c"),())),()))).
+evaluate(eq,(variable(inc),(operation(set_make,(val(int,6),())),()))).
+evaluate(eq,(variable(in6),(operation(set_make,()),()))).
 
 evaluate(isin,(val(str,"a"),(variable(m1),()))).
 evaluate(isin,(val(str,"c"),(variable(m1),()))).

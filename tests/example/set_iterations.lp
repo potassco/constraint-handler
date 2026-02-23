@@ -13,7 +13,7 @@
 set_declare(d_empty,empty).
 evaluate(set_fold,(val(function,add),(variable(empty),(val(int,0),())))).
 
-variable_define(a_numbers, numbers, operation(makeSet,
+variable_define(a_numbers, numbers, operation(set_make,
                                     (val(float,float("-2.0")),
                                     (val(int,-1),
                                     (val(int, 0),

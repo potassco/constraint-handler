@@ -145,19 +145,19 @@ set_value(Name, Value)
 
 ### Make Set
 
-The constraint handler provides a `makeSet` operator to create sets directly within expressions.
+The constraint handler provides a `set_make` operator to create sets directly within expressions.
 
 !!! Example
-    To create the same set `my_set` and add the [ints] `1`, `3` and `5` to it using `makeSet`, you would use the following code:
+    To create the same set `my_set` and add the [ints] `1`, `3` and `5` to it using `set_make`, you would use the following code:
 
     ```prolog
-    variable_define(name, my_set, operation(makeSet, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
+    variable_define(name, my_set, operation(set_make, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
     ```
 
     This results in the following output atoms:
 
     ```prolog
-    value(my_set, val(set, ref(makeSet((val(int,1),(val(int,3),(val(int,5),())))))))
+    value(my_set, val(set, ref(set_make((val(int,1),(val(int,3),(val(int,5),())))))))
     set_value(my_set, val(int, 1))
     set_value(my_set, val(int, 3))
     set_value(my_set, val(int, 5))
@@ -169,7 +169,7 @@ Once a set is created (either via declaration or returned from another operation
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `makeSet` | Make Set | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
+| `set_make` | Make Set | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
 | **Set Theory** | | | |
 | `union` | Union | ([set]\*) $\to$ [set] | Returns a new set containing elements from all sets. |
 | `inter` | Intersection | ([set], [set]) $\to$ [set] | Returns a new set containing only elements common to both sets. |
