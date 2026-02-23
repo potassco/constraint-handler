@@ -14,6 +14,7 @@ import constraint_handler.schemas.warning as warning
 import constraint_handler.solver_environment as solver_environment
 from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
+    DEFAULT_DECISION_LEVEL,
     EXECUTION_INPUT,
     EXECUTION_OUTPUT,
     FALSE_ASSIGNMENTS,
@@ -81,7 +82,7 @@ class VariableValue:
 
         self.literal: int = lit
         self.assigned: bool | None = None
-        self.decision_level: int = sys.maxsize
+        self.decision_level: int = DEFAULT_DECISION_LEVEL
 
         self.errors: propagator_warning_t = []
 
@@ -123,7 +124,7 @@ class VariableValue:
 
         myprint(f"{self.expr} evaluated to {self.value}")
 
-        self.decision_level = min(self.decision_level, ctl.assignment.decision_level)
+        self.decision_level = ctl.assignment.decision_level
         return True
 
     def get_errors(self) -> propagator_warning_t:
@@ -135,7 +136,7 @@ class VariableValue:
     def reset(self, dl):
         if self.decision_level >= dl:
             self.value = ValueStatus.NOT_SET
-            self.decision_level = sys.maxsize
+            self.decision_level = DEFAULT_DECISION_LEVEL
             self.assigned = None
             self.errors = []
 
@@ -215,6 +216,7 @@ class EnsureVariable:
         self.expression: VariableValue = VariableValue(expr, literal)
 
         self.value: ValueStatus | bool = ValueStatus.NOT_SET
+        self.decision_level: int = DEFAULT_DECISION_LEVEL
 
     @property
     def var(self) -> clingo.Symbol:
@@ -249,6 +251,7 @@ class EnsureVariable:
             return EvaluationResult.NOT_CHANGED
 
         self.value = self.expression.value
+        self.decision_level = ctl.assignment.decision_level
         # assert isinstance(self.value, bool), "EnsureVariable evaluated to non-boolean value"
 
         conflict = self.value is False or self.value is None
@@ -273,14 +276,11 @@ class EnsureVariable:
     def literals(self) -> set[int]:
         return self.expression.literals
 
-    @property
-    def decision_level(self) -> int:
-        return self.expression.decision_level
-
     def reset(self, dl: int) -> None:
         self.expression.reset(dl)
         if self.decision_level >= dl:
             self.value = ValueStatus.NOT_SET
+            self.decision_level = DEFAULT_DECISION_LEVEL
 
     def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
         return
@@ -304,7 +304,7 @@ class Variable:
         self.expressions: set[VariableValue] = set()
         self.value: Any = ValueStatus.NOT_SET
         self.parents: list[VariableType] = []
-        self.decision_level: int = sys.maxsize
+        self.decision_level: int = DEFAULT_DECISION_LEVEL
 
         # literals for atoms that can define a domain
         # (variable_define, variable_declare, variable_optinal)
@@ -412,8 +412,9 @@ class Variable:
             value.reset(dl)
 
         if self.decision_level >= dl:
-            self.decision_level = sys.maxsize
+            self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = ValueStatus.NOT_SET
+            self.errors = []
 
     def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
         value = self.get_value()
@@ -461,10 +462,6 @@ class SetVariableValue:
         for value in self.values:
             lits.update(value.literals)
         return lits
-
-    @property
-    def decision_level(self) -> int:
-        return min(value.decision_level for value in self.values)
 
     def get_value(self) -> ValueStatus | frozenset[Any]:
         """
@@ -530,7 +527,7 @@ class SetVariable:
 
         self.literal: int = lit  # this is the literal for the set declaration
         self.assigned: bool | None = None  # Truth value of the set declaration
-        self.decision_level: int = sys.maxsize  # decision level of the set declaration
+        self.decision_level: int = DEFAULT_DECISION_LEVEL  # decision level of the set declaration
 
         self.parents: list[VariableType] = []
 
@@ -609,7 +606,7 @@ class SetVariable:
     def reset(self, dl: int) -> None:
         self.expressions.reset(dl)
         if self.decision_level >= dl:
-            self.decision_level = sys.maxsize
+            self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
@@ -653,7 +650,7 @@ class DictVariable:
 
         self.literal: int = lit
         self.assigned: bool | None = None
-        self.decision_level: int = sys.maxsize
+        self.decision_level: int = DEFAULT_DECISION_LEVEL
 
         self.parents: list[VariableType] = []
 
@@ -768,11 +765,12 @@ class DictVariable:
         return EvaluationResult.NOT_CHANGED
 
     def reset(self, dl: int) -> None:
-        for value in self.expressions.values():
+        for key, value in self.expressions.items():
+            key.reset(dl)
             value.reset(dl)
 
         if self.decision_level >= dl:
-            self.decision_level = sys.maxsize
+            self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
@@ -805,7 +803,7 @@ class OptimizationSum:
         self.expressions: list[tuple[clingo.Symbol, VariableValue]] = []
         self.value: int | float = -sys.maxsize
         self.priority: int = priority
-        self.decision_level: int = sys.maxsize
+        self.decision_level: int = DEFAULT_DECISION_LEVEL
 
     def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int) -> None:
         self.expressions.append((var, VariableValue(expr, lit)))
@@ -868,7 +866,7 @@ class OptimizationSum:
             expr.reset(dl)
 
         if self.decision_level >= dl:
-            self.decision_level = sys.maxsize
+            self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = -sys.maxsize
 
     def has_unassigned(self) -> bool:
@@ -949,13 +947,10 @@ class Execution:
         self.converted_out_vars: list[clingo.Symbol] = self.convert_vars(out_vars, input=False)
 
         # this is for the execution run atom
-        # assuming the declaration atom is always a fact?
-        # otherwise, we might need a literal for that as well
-        # if there is no execution_run atom, this is always false, which means the execution is never run
         self.literal: int = -1
         self.assigned: bool | None = None
 
-        self.decision_level: int = sys.maxsize
+        self.decision_level: int = DEFAULT_DECISION_LEVEL
 
         self.values: ValueStatus | list[tuple[clingo.Symbol, Any]] = ValueStatus.NOT_SET
 
@@ -967,7 +962,7 @@ class Execution:
         self.statements.append(ExecutionStatement(stmt, lit))
 
     def has_domain(self) -> bool:
-        return True  # executions always have a domain
+        return len(self.statements) > 0
 
     def has_unassigned(self) -> bool:
         return self.values == ValueStatus.NOT_SET
@@ -984,12 +979,14 @@ class Execution:
         If the execution is not run return the negative literal.
         If the execution is unassigned return an empty set.
         """
+        lits = set()
         if self.assigned:
-            return {self.literal}
+            lits.add(self.literal)
         elif self.assigned is False:
-            return {-self.literal}
-        else:
-            return set()
+            lits.add(-self.literal)
+        for stmt in self.statements:
+            lits.update(stmt.literals)
+        return lits
 
     def convert_vars(self, vars: list[clingo.Symbol], input=True) -> list[clingo.Symbol]:
         """
@@ -1065,7 +1062,8 @@ class Execution:
                     "Multiple statements in the same execution were run! Only the last one will be used!",
                 )
             )
-            self.decision_level = ctl.assignment.decision_level
+
+        self.decision_level = ctl.assignment.decision_level
 
         self.values: list[tuple[clingo.Symbol, Any]] = []
         for c_out_var, out_var in zip(self.converted_out_vars, self.out_vars):
@@ -1089,8 +1087,11 @@ class Execution:
         return set(self.converted_in_vars)
 
     def reset(self, dl: int):
+        for stmt in self.statements:
+            stmt.reset(dl)
+
         if self.decision_level >= dl:
-            self.decision_level = sys.maxsize
+            self.decision_level = DEFAULT_DECISION_LEVEL
             self.errors = []
             self.values = ValueStatus.NOT_SET
 
@@ -1125,13 +1126,13 @@ class Execution:
 
 
 class ExecutionStatement:
-    def __init__(self, statement, literal):
-        self.statement: statement.Stmt = statement
+    def __init__(self, stmt, literal):
+        self.statement: statement.Stmt = stmt
         self.literal: int = literal
         self.value: ValueStatus | list[tuple[clingo.Symbol, Any]] = ValueStatus.NOT_SET
         self.errors: propagator_warning_t = []
         self.assigned: bool | None = None
-        self.decision_level: int = sys.maxsize
+        self.decision_level: int = DEFAULT_DECISION_LEVEL
 
     @property
     def literals(self) -> set[int]:
@@ -1150,7 +1151,7 @@ class ExecutionStatement:
 
     def reset(self, dl: int):
         if self.decision_level >= dl:
-            self.decision_level = sys.maxsize
+            self.decision_level = DEFAULT_DECISION_LEVEL
             self.errors = []
             self.value = ValueStatus.NOT_SET
             self.assigned = None
