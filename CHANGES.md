@@ -1,18 +1,19 @@
 # Changes
 
-## [2026-02-23] Renames
+## 2026-02-23
 
-### External
+### Renames
 
-- makeSet $\\to$ set_make
-
-### Internal
-
-- compute $\\to$ \_compute
-- computeIdx $\\to$ \_computeIdx
-- computed $\\to$ \_computed
-- computedIdx $\\to$ \_computedIdx
-- stageCompute $\\to$ \_stageCompute
+| Old Name       | New Name        |
+| -------------- | --------------- |
+| **External**   |                 |
+| `makeSet`      | `set_make`      |
+| **Internal**   |                 |
+| `compute`      | `_compute`      |
+| `computeIdx`   | `_computeIdx`   |
+| `computed`     | `_computed`     |
+| `computedIdx`  | `_computedIdx`  |
+| `stageCompute` | `_stageCompute` |
 
 ## v0.1.0
 
