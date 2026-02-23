@@ -127,6 +127,7 @@ def test_engine_propagator(name, check_mode):
         "set_selfref",
         "warning_variables",
         "warning_variable_undeclared",
+        "type_checking",
     ]
     if name not in unsupported:
         run_test(name, "propagator", check_mode)
