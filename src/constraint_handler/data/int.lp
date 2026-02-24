@@ -45,6 +45,9 @@ _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=lt,  ARGS = (val(int
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=geq, ARGS = (val(int,V1),(val(int,V2),())), V1 <  V2.
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=gt,  ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
 
+_computed(OP,ARGS,val(int,V2)) :- _compute(OP,ARGS), OP=max, ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
+_computed(OP,ARGS,val(int,V1)) :- _compute(OP,ARGS), OP=max, ARGS = (val(int,V1),(val(int,V2),())), V1 > V2.
+
 _computed(OP,ARGS,RES) :- _compute(OP,ARGS), OP=float_div, ARGS = (val(int,_),(val(int,V2),())), V2!=0,
   RES = @pythonEvalExpr(operation(OP,ARGS),(),ID),
   _main_solverIdentifier(ID).
