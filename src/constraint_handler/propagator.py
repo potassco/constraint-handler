@@ -43,7 +43,36 @@ def myprint(*args, **kwargs):
 
 
 class ConstraintHandlerPropagator(clingo.Propagator):
+    """
+    Propagator that evaluates constraint_handler variables during solving.
+
+    The propagator maintains a mapping from clingo symbols and solver literals to
+    variable objects (see `constraint_handler.PropagatorVariables`). During
+    propagation/check it evaluates affected variables, checks ensure constraints,
+    and can add nogoods for conflicts or for pruning based on optimization or reasoning mode(brave/cautious).
+
+    Attributes:
+        symbol2var: Maps variable symbols to variable objects.
+        literal2var: Maps solver literals to variable objects.
+        evaluatevars: List of `EvaluateVariable` instances to evaluate.
+        optimization_sum: Optimization handler tracking objective sums.
+        best_value: Current best objective optimization vector.
+        using_optimization: Whether optimization is active.
+        optimization_strength: Whether equal quality solutions are allowed when optimizing.
+        environment: Evaluation environment built from solver identifier.
+        check_only: If True, `propagate` becomes a no-op. Will only evaluate variables in `check`.
+        errors: Warnings collected while evaluating variables or reading the input program.
+        reasoning_mode: STANDARD/BRAVE/CAUTIOUS mode.
+        python_model: Stores the python-level model for output.
+    """
+
     def __init__(self, check_only: bool = False):
+        """
+        Initialize the propagator.
+
+        Args:
+            check_only: If True, do not perform propagation (only allow checks).
+        """
         self.symbol2var: dict[clingo.Symbol, VariableType] = {}
         self.literal2var: dict[int, list[VariableType]] = {}
 
@@ -74,6 +103,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.forbidden_warnings: dict[warning.Kind, int] = {}
 
     def get_configuration(self, ctl: clingo.Control):
+        """
+        Read clingo configuration and initialize reasoning-mode settings.
+
+        For brave/cautious modes, this configures the solver heuristic and adds a
+        helper program to facilitate the reasoning stages.
+
+        Args:
+            ctl: Clingo control instance.
+        """
         match ctl.configuration.solve.enum_mode:  # ty:ignore[unresolved-attribute]
             case "brave":
                 self.reasoning_mode = ReasoningMode.BRAVE
@@ -89,6 +127,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         myprint(f"Propagator reasoning mode set to {self.reasoning_mode}")
 
     def init(self, init: clingo.PropagateInit) -> None:
+        """
+        Function implementing the init method of a Propagator.
+        See clingo Propagator documentation for more details.
+
+        Args:
+            init: Clingo PropagateInit object
+        """
         self.symbol2var.clear()
         self.literal2var.clear()
         self.evaluatevars.clear()
@@ -118,9 +163,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def add_reasoning_mode_helper_atoms(self, ctl: clingo.PropagateInit) -> None:
         """
-        This method adds helper atoms for brave and cautious reasoning modes.
-        An atom marks the stage where we let clingo do the reasoning for variables handled by the solver
-        The second atom marks the stage where we evaluate the atoms of the propagator.
+        Register helper literals for brave/cautious reasoning.
+
+        In brave/cautious mode, the encoding provides stage atoms that separate
+        (1) clingo reasoning for solver-handled variables and (2) propagator-side
+        evaluation.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
         if self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS):
             myprint("Adding reasoning mode helper atoms")
@@ -145,9 +195,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def set_optimization_check_strength(self, strength: Literal["lt", "le"]) -> None:
         """
-        This method sets the optimization check strength.
-        'lt' means that only better solutions are accepted(i.e. solution with lower sum).
-        'le' means that better or equal solutions are accepted(i.e. solution with lower or equal sum).
+        Configure whether optimization pruning requires strict improvement.
+
+        Args:
+            strength: Comparison mode.
+                - `"lt"`: only strictly better solutions are accepted.
+                - `"le"`: better or equal solutions are accepted.
+
+        Raises:
+            ValueError: If `strength` is not one of `"lt"` or `"le"`.
         """
 
         assert strength in ("lt", "le"), f"Unknown optimization check strength: {strength}"
@@ -161,17 +217,23 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def set_optimization_best_value(self, value: list[int | float]) -> None:
         """
-        This method sets the best optimization value.
+        Set the best (incumbent) optimization value used for pruning.
+
+        Args:
+            value: Objective vector ordered by priority.
         """
         self.best_value = value
 
     def check(self, control: clingo.PropagateControl) -> None:
         """
-        This method is called to check the constraints in the propagator.
-        It evaluates all variables in case there were changes from the last propagation call.
-        It then evaluates the optimization sums.
-        If a variable evaluation has a conflict, any ensure constraint is violated
-        or the optimization value is below the best it adds a nogood and backtracks.
+        Perform a full consistency check using the current solver assignment.
+
+        This evaluates all variables, checks ensure constraints and forbidden
+        warnings, and applies optimization pruning by adding nogoods when
+        necessary.
+
+        Args:
+            control: Clingo PropagateControl object.
         """
         myprint("CHECKING")
         if self.add_nogoods_from_queue(control):
@@ -197,6 +259,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.check_total(control)
 
     def check_total(self, control: clingo.PropagateControl) -> None:
+        """
+        Handle a total assignment.
+
+        This evaluates `evaluate` atoms, updates the python-side model for
+        brave/cautious reasoning, and updates the incumbent objective value.
+
+        Args:
+            control: Clingo PropagateControl object.
+        """
         self.check_evaluate(control)
         backtrack = self.evaluate_model(control)
         myprint(f"Standard/Brave/Cautious model evaluated to {self.python_model}")
@@ -212,6 +283,19 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.best_value = self.optimization_sum.get_value()
 
     def evaluate_model(self, ctl: clingo.PropagateControl) -> bool:
+        """
+        Update and (if needed) refine the accumulated python model.
+
+        In STANDARD mode this only rebuilds the python model and never
+        backtracks. In BRAVE/CAUTIOUS mode, the model is accumulated across
+        models and nogoods may be enqueued to force progress between stages.
+
+        Args:
+            ctl: Clingo propagation control.
+
+        Returns:
+            bool: True if nogoods were added and propagation should stop.
+        """
         old_model = self.python_model
         self.update_python_model()
 
@@ -268,15 +352,19 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom], first_call) -> list[Iterable[int]]:
         """
-        Add nogoods for brave/cautious reasoning mode based on the variables in the model.
-        For brave reasoning, we add nogoods to ensure that the next models found contain at least 1 variable with a different value.
-        This way we expand the amount of values in the brave model after every model found.
+        Create nogoods used to drive brave/cautious reasoning.
 
-        For Cautious reasoning, on the first call, we add nogoods to ensure that the next models found contain at least 1 variable with a different value.
-        Similar to brave reasoning.
-        On Subsequent calls, we expect that the variable in the argument is the difference between the old and new model.
-        Specifically, the variables which CHANGED.
-        For those variables, we add a nogood to disable the change for that variable.
+        - BRAVE: force the next model to differ in at least one variable so the
+            accumulated model can grow.
+        - CAUTIOUS: on first call behaves like brave; on subsequent calls, block
+            exactly the changes observed to converge to the intersection.
+
+        Args:
+                variables: Result atoms relevant for the current step.
+                first_call: Whether this is the first stage-2 call for the run.
+
+        Returns:
+                list[Iterable[int]]: Nogoods to add (each is a collection of solver literals).
         """
         assert self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS)
 
@@ -307,8 +395,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def add_nogoods_from_queue(self, ctl: clingo.PropagateControl) -> bool:
         """
-        Add nogoods from queue until propagation must be stopped or queue is empty.
-        returns True if propagation must be stopped
+        Add queued nogoods until the queue is empty or clingo refuses one.
+
+        Args:
+            ctl: Clingo PropagateControl object.
+
+        Returns:
+            bool: True if adding a nogood failed (propagation must stop).
         """
         while len(self.nogood_queue) > 0:
             ng = self.nogood_queue.pop(0)
@@ -318,6 +411,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         return False
 
     def check_evaluate(self, ctl: clingo.PropagateControl):
+        """
+        Evaluate `evaluate` atoms against the current assignments.
+
+        Args:
+            ctl: Clingo PropagateControl object.
+        """
         myprint("Checking evaluate atoms")
         myprint(f"Evaluated assignments before evaluate: {make_dict_from_variables(self.symbol2var.values())}")
         for var in self.evaluatevars:
@@ -325,11 +424,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def propagate(self, control: clingo.PropagateControl, changes: Sequence[int]) -> None:
         """
-        This method is called to propagate the constraints in the propagator.
-        It evaluates the expressions assigned to variables and checks the ensures.
-        If a variable evaluation has a conflict, any ensure constraint is violated
-        or the optimization value if below the best and has been completely assigned
-        it adds a nogood and backtracks.
+        Propagate after a solver assignment change.
+        Checks which variables are affected by the change, evaluates them,
+        and applies optimization pruning if enabled.
+
+        Args:
+            control: Clingo propagation control.
+            changes: Sequence of (signed) solver literals that changed.
         """
         if self.check_only:
             return
@@ -357,11 +458,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def evaluate_optimization_sum(self, ctl: clingo.PropagateControl) -> bool:
         """
-        This method evaluates the optimization sum in the propagator.
-        It uses the current solver assignment to determine its value.
-        If the optimization sum value is worse than the best value and all variables are assigned,
-        it adds a nogood to enforce the optimization.
-        return True if a backtrack is needed, False otherwise.
+        Evaluate the current objective value and optionally prune.
+
+        If the objective is already worse than the incumbent and the relevant
+        parts are fully assigned, a nogood is added to exclude the current
+        partial/total assignment.
+
+        Args:
+            ctl: Clingo propagation control.
+
+        Returns:
+            bool: True if a nogood was added requiring a backtrack.
         """
         if not self.using_optimization:
             return False
@@ -398,6 +505,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         return False
 
     def add_nogood_for_variable(self, ctl: clingo.PropagateControl, var: VariableType | OptimizationHandler) -> None:
+        """
+        Add a nogood blocking the current assignment for a variable.
+
+        The nogood is constructed from the literals that explain the variable's
+        current value.
+
+        Args:
+            ctl: Clingo PropagateControl object.
+            var: Variable (or optimization handler) to block.
+        """
         ng: set[int] = set()
         for symbol_var in var.vars():
             v = self.symbol2var[symbol_var]
@@ -408,10 +525,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]) -> bool:
         """
-        This method evaluates the variables given using the current solver assignment.
-        If a variable's value changes, it also evaluates its parents.
-        Return value should say if a backtrack is needed!
-        It returns False if a conflict is detected (No backtracking needed), True otherwise.
+        Evaluate a set of variables under the current solver assignment.
+
+        If a variable changes, its parents are scheduled for evaluation.
+
+        Args:
+            ctl: Clingo PropagateControl object.
+            to_evaluate: Variables that may have been affected by recent changes.
+
+        Returns:
+            bool: True if propagation should stop (conflict/forbidden warning),
+            False otherwise.
         """
         while len(to_evaluate) > 0:
             var = to_evaluate.pop()
@@ -430,10 +554,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def evaluate_variable(self, ctl: clingo.PropagateControl, var: VariableType) -> bool | None:
         """
-        This method evaluates a variable in the propagator.
-        It uses the current solver assignment to determine its value.
-        It returns True if the variable's value changed, False if it did not change,
-        and None if there was a conflict.
+        Evaluate one variable against the current assignment.
+
+        Args:
+            ctl: Clingo PropagateControl object.
+            var: Variable to evaluate.
+
+        Returns:
+            bool | None:
+                - True if the variable's value changed.
+                - False if it did not change.
+                - None if evaluation detected a conflict (nogood added).
         """
         eval_result: EvaluationResult = var.evaluate(
             make_dict_from_variables(self.symbol2var.values()), ctl, self.environment
@@ -467,6 +598,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         return eval_result == EvaluationResult.CHANGED
 
     def get_reasons(self, var: VariableType) -> set[int]:
+        """Compute the set of literals explaining a variable's current value.
+
+        This is used when constructing nogoods for conflicts, forbidden warnings,
+        and optimization pruning.
+
+        Args:
+            var: Variable whose reasons should be collected.
+
+        Returns:
+            set[int]: Set of signed solver literals.
+        """
         reasons = var.literals
         for dvar in var.vars():
             if dvar.name == EXECUTION_OUTPUT:
@@ -477,7 +619,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def undo(self, thread_id: int, assignment: clingo.Assignment, changes: Sequence[int]) -> None:
         """
-        Resets the evaluations and reasons based on the current assignment.
+        Undo propagator state on backtracking.
+
+        This resets variable evaluations whose decision level is higher or equal to the current backtracking level
+        and clears derived optimization state.
+
+        Args:
+            thread_id: Clingo thread id (unused).
+            assignment: Current assignment after backtracking.
+            changes: Literals undone by clingo.
         """
         myprint(f"UNDOING for decision level {assignment.decision_level} with changes {changes}")
         for var in self.symbol2var.values():
@@ -490,9 +640,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_variables(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the variables from the ASP encoding.
-        It reads the propagator_variable_declare, propagator_variable_define, propagator_variable_domain
-        atoms and creates Variable instances.
+        Load base variable declarations/definitions/domains from ASP facts.
+
+        Reads variable-related atoms and creates/extends `Variable` instances.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
         var_declares = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declare)
         var_defines = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_define)
@@ -641,8 +794,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the variables from the ASP encoding.
-        It reads the propagator_assign atoms and creates Variable instances.
+        Load `propagator_assign/..` atoms and attach values to variables.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
 
         assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_assign)
@@ -664,8 +819,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_ensure(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the ensure constraints from the ASP encoding.
-        It reads the propagator_ensure atoms and stores them with their literals.
+        Load ensure constraints from ASP facts and create EnsureVariable instances.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
 
         ensures = myClorm.findInPropagateInit(ctl, atom.Propagator_ensure)
@@ -682,8 +839,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_evaluate(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the variables from the ASP encoding.
-        It reads the evaluate atoms and creates EvaluateVariable instances.
+        Load `evaluate` atoms into `EvaluateVariable` instances.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
 
         for (op, args), literal in myClorm.findInPropagateInit(ctl, atom.Propagator_evaluate).items():
@@ -700,7 +859,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_solver_identifier(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the solver identifier from the ASP encoding.
+        Initialize the Python evaluation environment using the solver identifier.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
 
         for id, _ in myClorm.findInPropagateInit(ctl, atom.Main_solverIdentifier).items():
@@ -708,8 +870,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the optimization sum from the ASP encoding.
-        It reads the optimize_maximizeSum atoms and creates an OptimizationSum instance.
+        Load optimization sum declarations from ASP facts and create OptimizationSum instances.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
 
         maxSums = myClorm.findInPropagateInit(ctl, atom.Propagator_optimize_maximizeSum)
@@ -721,8 +885,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the set variables from the ASP encoding.
-        It reads the set_declare and set_assign atoms and creates SetVariable instances.
+        Load set declarations and assignments from ASP facts.
+
+        Args:
+            ctl: Clingo propagation initializer.
         """
 
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_set_declare)
@@ -758,8 +924,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_multimap_declarations(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the dict variables from the ASP encoding.
-        It reads the multimap_declare and multimap_assign atoms and creates DictVariable instances.
+        Load multimap (dict) declarations and assignments from ASP facts.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_declare)
         for (name, symbol_var), literal in declares.items():
@@ -795,8 +963,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_execution_declarations(self, ctl: clingo.PropagateInit):
         """
-        This method initializes the execution declarations from the ASP encoding.
-        It reads the execution_declare and execution_run atoms and creates Execution instances.
+        Load execution blocks and run-atoms from ASP facts and create Execution instances.
+
+        Args:
+            ctl: Clingo PropagateInit object.
         """
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_execution_declare)
         for (name, symbol_var, stmt, in_v, out_v), literal in declares.items():
@@ -836,7 +1006,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_forbidden_warnings(self, ctl) -> None:
         """
-        Returns the list of forbidden warnings given by the atoms in the input program.
+        Load `forbid_warning` atoms.
+
+        Args:
+            ctl: Clingo propagation initializer.
         """
 
         forbidden_warnings = myClorm.findInPropagateInit(ctl, warning.Forbid_warning)
@@ -855,7 +1028,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def set_parents(self):
         """
-        Sets the parents of each variable based on the variables they depend on.
+        Populate parent relationships between variables.
+
+        Parents are variables that depend on another variable's value; if a child
+        changes, parents are scheduled for re-evaluation.
         """
         for var in self.symbol2var.values():
             for symbol_var in var.vars():
