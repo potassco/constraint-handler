@@ -39,15 +39,27 @@ _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 %%%%%%%%%%%%%%%%% _computed operators
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _se_value(EOP,val(function,OP)).
+% Some operators should not build the full evaluated argument tuple `VS` via
+% _direct_revMapAux/3 because this can create Cartesian-product grounding
+% blowups (one rule instance per combination of argument values). Such
+% operators are expected to provide results via _computedIdx/2 (or another
+% specialized route).
+%
+% Positive gate: tuple-building is allowed only when needed.
+% For `add`, enable tuple-building if at least one argument is not statically
+% typed as int. Integer-only adds can be handled cheaply via _computedIdx/2.
+_direct_doCompute(OP, ARGS) :- _direct_queryArgsValues(E, OP, ARGS), OP != add.
+_direct_doCompute(add, ARGS) :- _direct_queryArgsValues(E, add, ARGS),
+    (_, ARG) = @pythonEnumerateElements(ARGS), type_expression((), ARG, T), T != int.
 %% _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 %% _direct_compMapAux(ARGS,N,()) :- _direct_queryArgsValues(E,OP,ARGS), N=@pythonListLength(ARGS).
 %% _direct_compMapAux(ARGS,IDX,K) :- _direct_compMapAux(ARGS,IDX+1,L), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,T,V), K=(val(T,V),L).
 %% _compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS).
 %% _se_value(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS), _computed(OP,VS,val(TO,VO)).
-_direct_revMapAux(ARGS,ES,()) :- _direct_queryArgsValues(E,OP,ARGS), ES=@pythonReversed(ARGS).
+_direct_revMapAux(ARGS,ES,()) :- _direct_queryArgsValues(E,OP,ARGS), _direct_doCompute(OP, ARGS), ES=@pythonReversed(ARGS).
 _direct_revMapAux(ARGS,ES,(V,VS)) :- _direct_revMapAux(ARGS,(E,ES),VS), _se_value(E,V).
-_compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS).
-_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS), _computed(OP,VS,VO).
+_compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_doCompute(OP, ARGS), _direct_revMapAux(ARGS,(),VS).
+_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_doCompute(OP, ARGS), _direct_revMapAux(ARGS,(),VS), _computed(OP,VS,VO).
 
 %%%%%%%%%%%%%%%%% lambda
 _lambda_aux(LAMB,ARGS,RED) :- _compute(LAMB,ARGS),

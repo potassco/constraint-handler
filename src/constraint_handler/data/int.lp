@@ -1,12 +1,20 @@
 %%%%%%%%%%%%%%%%% add mult
 operator_declare_variadic(OP,T,T,1) :- T = int, OP = (add;mult).
-_computed(OP, ARGS, val(int, 0)) :- _compute(OP, ARGS), OP=add, ARGS = ().
-_compute(OP, TAIL) :- _compute(OP, ARGS), OP=add, ARGS = (val(int, _), TAIL).
-_computed(OP, ARGS, val(int, V1 + VTAIL)) :-
-    _compute(OP, ARGS),
-    OP=add,
-    ARGS = (val(int, V1), TAIL),
-    _computed(OP, TAIL, val(int, VTAIL)).
+
+% Direct (compile-engine) computation for addition.
+% This avoids constructing the fully-evaluated argument tuple and instead
+% aggregates over per-argument values derived by direct.lp via _computeIdx/3.
+_computedIdx(E, val(int, N)) :- _computeIdx(E, add), E = operation(add, ARGS), not _direct_doCompute(add, ARGS),
+    N = #sum { V, IDX : _computeIdx(E, IDX, val(int, V)) }.
+
+% Value-tuple computation for addition.
+% Used by encodings that explicitly create `_compute(add,ARGS)` with ARGS being
+% a tuple of `val(int,_)` terms (e.g. set_fold).
+_computed(add, ARGS, val(int, N)) :- _compute(add, ARGS),
+    0 = #sum { 1, IDX : (IDX, _) = @pythonEnumerateElements(ARGS);
+              -1, IDX : (IDX, val(int, _)) = @pythonEnumerateElements(ARGS) },
+    N = #sum { V, IDX : (IDX, val(int, V)) = @pythonEnumerateElements(ARGS) }.
+
 
 _computed(OP, ARGS, val(int, 1)) :- _compute(OP, ARGS), OP=mult, ARGS = ().
 _compute(OP, TAIL) :- _compute(OP, ARGS), OP=mult, ARGS = (val(int, _), TAIL).
