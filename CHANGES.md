@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-02-24
+
+- `max` operator now available for `int` (previously only `float` supported `max`)
+- `min` operator now available for `int`
+- `min` operator now available for `float`
+
 ## 2026-02-23
 
 ### Functionality
