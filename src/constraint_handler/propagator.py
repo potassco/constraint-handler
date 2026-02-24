@@ -1051,6 +1051,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.symbol2var[symbol_var].parents.append(var)
 
     def update_python_model(self):
+        """Build the python-side model representation from current variable values.
+
+        Populates `self.python_model` with result atoms (values, sets, multimaps,
+        evaluated atoms) and warning atoms. This is used by `on_model` to extend
+        the clingo model and by brave/cautious reasoning to accumulate results.
+        """
         self.python_model = set()
 
         for var in self.symbol2var.values():
@@ -1094,6 +1100,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.handle_on_model_warning(self.errors)
 
     def on_model(self, model: clingo.Model):
+        """Extend the clingo model with python-side result atoms.
+
+        Args:
+            model: Current clingo model.
+        """
         # add to the clingo output the final result based on reasoning mode
         # For brave and cautious, we output the accumulated result (similar to clingo)
         # For standard, we output the current model
@@ -1106,6 +1117,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 model.extend([clAtom])
 
     def handle_on_model_value(self, var: clingo.Symbol, final_value: Any):
+        """Dispatch model export based on the final value type.
+
+        Args:
+            var: Variable symbol.
+            final_value: Evaluated value for the variable.
+        """
         if final_value is ValueStatus.NOT_SET:
             assert False, f"Variable {var} has no value set in on_model!"
 
@@ -1122,6 +1139,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"Unknown model type {type(final_value)} for variable {var} in on_model!")
 
     def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset):
+        """Add atoms for a set-typed variable to the python model.
+
+        Args:
+            var: Variable symbol.
+            final_value: Set/frozenset value.
+        """
         assert self.python_model is not None
 
         pyVal = expression.Val(
@@ -1140,6 +1163,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.python_model.add(set_pyAtom)
 
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict):
+        """Add atoms for a dict/multimap-typed variable to the python model.
+
+        Args:
+            var: Variable symbol.
+            final_value: Mapping value (may be a `HashableDict`).
+        """
         assert self.python_model is not None
 
         pyVal = expression.Val(evaluator.get_baseType(final_value), var)
@@ -1158,6 +1187,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.python_model.add(mm_pyAtom)
 
     def handle_on_model_normal_type(self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol):
+        """Add atoms for a scalar variable (bool/int/float/str/symbol) to the python model.
+
+        Args:
+            var: Variable symbol.
+            final_value: Scalar value.
+        """
         assert self.python_model is not None
 
         pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
@@ -1165,6 +1200,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.python_model.add(pyAtom)
 
     def handle_on_model_warning(self, errors: propagator_warning_t):
+        """Add warning atoms to the python model.
+
+        Args:
+            errors: Iterable of warning atoms.
+        """
         assert self.python_model is not None
 
         for __warning in errors:
