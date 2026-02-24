@@ -1051,7 +1051,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.symbol2var[symbol_var].parents.append(var)
 
     def update_python_model(self):
-        """Build the python-side model representation from current variable values.
+        """
+        Build the python-side model representation from current variable values.
 
         Populates `self.python_model` with result atoms (values, sets, multimaps,
         evaluated atoms) and warning atoms. This is used by `on_model` to extend
@@ -1100,7 +1101,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.handle_on_model_warning(self.errors)
 
     def on_model(self, model: clingo.Model):
-        """Extend the clingo model with python-side result atoms.
+        """
+        Extend the clingo model using python-side result atoms.
 
         Args:
             model: Current clingo model.
@@ -1117,7 +1119,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 model.extend([clAtom])
 
     def handle_on_model_value(self, var: clingo.Symbol, final_value: Any):
-        """Dispatch model export based on the final value type.
+        """
+        Dispatch model export based on the final value type.
 
         Args:
             var: Variable symbol.
@@ -1139,7 +1142,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"Unknown model type {type(final_value)} for variable {var} in on_model!")
 
     def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset):
-        """Add atoms for a set-typed variable to the python model.
+        """
+        Add atoms for a set-typed variable to the python model.
 
         Args:
             var: Variable symbol.
@@ -1163,7 +1167,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.python_model.add(set_pyAtom)
 
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict):
-        """Add atoms for a dict/multimap-typed variable to the python model.
+        """
+        Add atoms for a dict/multimap-typed variable to the python model.
 
         Args:
             var: Variable symbol.
@@ -1187,7 +1192,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.python_model.add(mm_pyAtom)
 
     def handle_on_model_normal_type(self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol):
-        """Add atoms for a scalar variable (bool/int/float/str/symbol) to the python model.
+        """
+        Add atoms for a variable (bool/int/float/str/symbol) to the python model.
 
         Args:
             var: Variable symbol.
@@ -1200,7 +1206,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.python_model.add(pyAtom)
 
     def handle_on_model_warning(self, errors: propagator_warning_t):
-        """Add warning atoms to the python model.
+        """
+        Add warning atoms to the python model.
 
         Args:
             errors: Iterable of warning atoms.
