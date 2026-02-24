@@ -57,6 +57,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | <comp-operator> | "sqrt" | "cos" | "sin" | "tan"
     | "acos" | "asin" | "atan" | "abs" | "minus"
     | "add" | "sub" | "mult" | "int_div" | "float_div" | "pow" | "floor"
+    | "max"
 
 <int-operator> ::=
     | <comp-operator> | "add" | "sub" | "mult"
