@@ -164,6 +164,8 @@ value(name, val(int, -7))
 | `pow` | Exponentiation | ([int], [int]) $\to$ [int] | Raises the first integer to the power of the second. |
 | `abs` | Absolute Value | ([int]) $\to$ [int] | Returns the absolute value of the integer. |
 | `minus` | Unary Minus | ([int]) $\to$ [int] | Negates the integer. |
+| `max` | Maximum | ([int], [int]) $\to$ [int] | Returns the larger of the two integers. |
+| `min` | Minimum | ([int], [int]) $\to$ [int] | Returns the smaller of the two integers. |
 | **Trigonometry** | | | |
 | `sqrt` | Square Root | ([int]) $\to$ [float] | Calculates the square root of the integer. |
 | `sin` | Sine | ([int]) $\to$ [float] | Calculates the sine of the integer. |
@@ -228,7 +230,8 @@ value(name, val(float, float("-0.001")))
 | `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
 | `abs` | Absolute Value | ([float]) $\to$ [float] | Returns the absolute value. |
 | `minus` | Unary Minus | ([float]) $\to$ [float] | Negates the value. |
-| `max` | Maximum | ([float], [float]) $\to$ [float] | Returns the larger of the two values. |
+| `max` | Maximum | (A\[[int] \| [float]\], B\[[int] \| [float]\]) $\to$ A \| B | Returns the larger of the two values, keeping the respective type. |
+| `min` | Minimum | (A\[[int] \| [float]\], B\[[int] \| [float]\]) $\to$ A \| B | Returns the smaller of the two values, keeping the respective type. |
 | **Trigonometry** | | | |
 | `sqrt` | Square Root | ([float]) $\to$ [float] | Calculates the square root. |
 | `sin` | Sine | ([float]) $\to$ [float] | Calculates the sine. |
