@@ -51,6 +51,16 @@ _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _s
 _direct_doCompute(OP, ARGS) :- _direct_queryArgsValues(E, OP, ARGS), OP != add.
 _direct_doCompute(add, ARGS) :- _direct_queryArgsValues(E, add, ARGS),
     (_, ARG) = @pythonEnumerateElements(ARGS), type_expression((), ARG, T), T != int.
+
+% For `eq`, avoid building the fully-evaluated argument tuple if the operation
+% is a binary int equality. This case can be handled via _computedIdx/2 in
+% int.lp without Cartesian-product grounding.
+_direct_eq_int_int_binary(E, eq, ARGS) :- _direct_queryArgsValues(E, eq, ARGS),
+    ARGS = (A, (B, ())),
+    type_expression((), A, int),
+    type_expression((), B, int).
+_direct_doCompute(eq, ARGS) :- _direct_queryArgsValues(E, eq, ARGS), not _direct_eq_int_int_binary(E, eq, ARGS).
+
 %% _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 %% _direct_compMapAux(ARGS,N,()) :- _direct_queryArgsValues(E,OP,ARGS), N=@pythonListLength(ARGS).
 %% _direct_compMapAux(ARGS,IDX,K) :- _direct_compMapAux(ARGS,IDX+1,L), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,T,V), K=(val(T,V),L).

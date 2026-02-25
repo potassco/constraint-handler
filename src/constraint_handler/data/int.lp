@@ -40,6 +40,21 @@ _computed(OP,ARGS,val(int,-V))  :- _compute(OP,ARGS), OP=minus, ARGS = (val(int,
 
 %%%%%%%%%%%%%%%%% comparison equality
 operator_declare(OP,(T,(T,())),bool) :- T = int, OP = (eq;neq;leq;lt;geq;gt).
+
+% Direct (compile-engine) computation for binary integer equality.
+% This avoids building the fully-evaluated argument tuple (and thus avoids
+% Cartesian-product grounding) by iterating over values of the first argument
+% and checking for a matching value in the second argument.
+%COULD BE CORRECT, but type inference is not ready yet
+_computedIdx(E, val(bool,true)) :- _direct_eq_int_int_binary(E, eq, ARGS),
+    E = operation(eq, (A, (B, ()))),
+    _computeIdx(E, 0, val(int, V1)),
+    _computeIdx(E, 1, val(int, V1)).
+_computedIdx(E, val(bool,false)) :- _direct_eq_int_int_binary(E, eq, ARGS),
+    E = operation(eq, (A, (B, ()))),
+    _computeIdx(E, 0, val(int, V1)),
+    not _computeIdx(E, 1, val(int, V1)).
+
 _computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=eq,  ARGS = (val(int,V1),(val(int,V2),())), V1 =  V2.
 _computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=neq, ARGS = (val(int,V1),(val(int,V2),())), V1 != V2.
 _computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=leq, ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
