@@ -17,6 +17,21 @@ project is part of the Potassco suite.
 
 ## Build and Test Commands
 
+
+## Environment Requirements
+
+This repo is typically developed and tested inside the **conda environment named `constraint-handler`**.
+
+If you run `nox`/`pytest` outside that conda env, imports or the `clingo` dependency may not be available.
+
+### Activate the conda environment (required)
+
+```bash
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate constraint-handler
+```
+
+
 ### Initial Setup
 
 **ALWAYS install nox first** before running any build/test commands:

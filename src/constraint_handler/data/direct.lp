@@ -24,6 +24,11 @@ _se_value(E,val(function,E)) :- direct_query(E), E=lambda(VARS,ERES).
 
 _se_value(E,V) :- direct_query(E), E=variable(X), _se_assign(NAME,E,E2), _se_value(E2,V), usc_active(NAME).
 
+% Execution outputs (and other internal assignments) can assign already-evaluated
+% reference values for intensional types (e.g., ref(set,_)). Treat those refs as
+% final values rather than trying to evaluate them as expressions.
+_se_value(E,E2) :- direct_query(E), E=variable(X), _se_assign(NAME,E,E2), E2=ref(_,_), usc_active(NAME).
+
 
 
 

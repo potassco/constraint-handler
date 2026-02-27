@@ -61,7 +61,7 @@ base_tests = [
     "warning_variable_undeclared_statement",
 ]
 
-compile_extra = ["preferences", "sum_aggregates"]
+compile_extra = ["preferences", "sum_aggregates", "execution_set_output"]
 ground_extra = []
 propagator_extra = []
 
