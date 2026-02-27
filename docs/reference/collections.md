@@ -141,7 +141,7 @@ set_value(Name, Value)
     set_value(my_set, val(int, 5))
     ```
 
-### Make Set
+### Make
 
 The constraint handler provides a `set_make` operator to create sets directly within expressions.
 
@@ -167,7 +167,7 @@ Once a set is created (either via declaration or returned from another operation
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `set_make` | Make Set | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
+| `set_make` | Make | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
 | **Set Theory** | | | |
 | `union` | Union | ([set]\*) $\to$ [set] | Returns a new set containing elements from all sets. |
 | `inter` | Intersection | ([set], [set]) $\to$ [set] | Returns a new set containing only elements common to both sets. |
@@ -320,7 +320,7 @@ multimap_value(Name, Key, Value)
     multimap_value(my_map, val(int,2), val(str,"two"))
     ```
 
-### Make Multimap
+### Make
 Just like for sets, the constraint handler provides a `multimap_make` operator to create multimaps directly within expressions. Here, all key-value pairs are provided as a list of [Tuple Expressions].
 
 !!! Example
@@ -346,7 +346,7 @@ can be used in expressions.
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `multimap_make` | Make Map | ([list]\[(K, V)\]) $\to$ [multimap]\[K, V\] | Creates a new multimap from a list of `(Key, Value)` tuples. |
+| `multimap_make` | Make | ([list]\[(K, V)\]) $\to$ [multimap]\[K, V\] | Creates a new multimap from a list of `(Key, Value)` tuples. |
 | **Analysis** | | | |
 | `countKeys` | Count Keys | ([multimap]) $\to$ [int] | Returns the number of unique keys in the map. |
 | `countEntries` | Count Entries | ([multimap]) $\to$ [int] | Returns the total number of key-value pairs. |
