@@ -13,4 +13,7 @@ evaluate(eq,(variable(z),(operation(float_div,(variable(x),(variable(y),()))),()
 evaluate(neq,(variable(z),(operation(float_div,(variable(x),(variable(z),()))),()))).
 evaluate(neq,(variable(y),(operation(float_div,(variable(x),(variable(y),()))),()))).
 
+evaluate(max,(variable(x), (variable(y),()))).
+evaluate(min,(variable(x), (variable(y),()))).
+
 evaluate(python("int"),(variable(y),())).
