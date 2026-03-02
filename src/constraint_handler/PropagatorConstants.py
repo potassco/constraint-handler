@@ -1,12 +1,17 @@
 import enum
+from typing import Literal
+
+from constraint_handler.schemas.warning import Warning
 
 DEBUG_PRINT = False
 
-FALSE_ASSIGNMENTS = "__FALSE_ASSIGNMENTS__"
+DEFAULT_DECISION_LEVEL: Literal[-1] = -1
 
-ENSURE_VAR_NAME = "__ensure__"
-EXECUTION_INPUT = "execution_input"
-EXECUTION_OUTPUT = "execution_output"
+FALSE_ASSIGNMENTS: Literal["__FALSE_ASSIGNMENTS__"] = "__FALSE_ASSIGNMENTS__"
+
+ENSURE_VAR_NAME: Literal["__ensure__"] = "__ensure__"
+EXECUTION_INPUT: Literal["execution_input"] = "execution_input"
+EXECUTION_OUTPUT: Literal["execution_output"] = "execution_output"
 
 
 # enum for value_not_set, assignment_is_false, and value_is_none
@@ -33,7 +38,7 @@ class OptimizationStrength(enum.Enum):
     LENIENT = "lenient"
 
 
-REASONING_STAGE_ATOM = "__stage__"
+REASONING_STAGE_ATOM: Literal["__stage__"] = "__stage__"
 
 
 REASONING_MODE_PROGRAM = f"""
@@ -47,3 +52,6 @@ REASONING_MODE_PROGRAM = f"""
 
 class NoValueSet(Exception):
     pass
+
+
+type propagator_warning_t = list[Warning]
