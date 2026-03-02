@@ -17,6 +17,7 @@ _warning(KIND,(NAME,()),("error running",MSG)) :- _gex_exec(NAME,error(KIND,MSG)
 :- _gex_exec(NAME,failIntegrity).
 
 value(EX,val(T,V)) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), _gex_exec(NAME,(X,val(T,V))).
+value(EX,val(set,V)) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), _gex_exec(NAME,(X,V)), V = set(S).
 value(EX,val(none,none)) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), not _gex_exec(NAME,(X,_)).
 value(EX,bad) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,error(KIND,MSG)).
 

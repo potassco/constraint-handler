@@ -9,6 +9,7 @@ _ge_evaluate(_ge_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(ground).
 :- _ge_ensure(CNAME,EXPR), not ge_result(EXPR,val(bool,true)), not ge_result(EXPR,bad).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
 ge_value(X,val(T,V)) :- _ge_vQuery(X), value(X,val(T,V)), representation(T,extensional).
+ge_value(X,V) :- _ge_vQuery(X), value(X,val(set,V)), V=set(S).
 
 value(X,val(T,V)) :- ge_value(X,val(T,V)), representation(T,extensional).
 value(X,val(set,V)) :- ge_value(X,V), V=set(S).
