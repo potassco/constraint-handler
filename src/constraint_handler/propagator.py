@@ -643,6 +643,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Load base variable declarations/definitions/domains from ASP facts.
 
         Reads variable-related atoms and creates/extends `Variable` instances.
+        Note that nogoods are added to prevent True assignments to values that are parts of domains that are assigned False.
 
         Args:
             ctl: Clingo PropagateInit object.
