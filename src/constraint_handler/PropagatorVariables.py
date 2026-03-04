@@ -43,6 +43,8 @@ class VariableType(Protocol):
     Protocol for variable types used in the propagator. Defines the required interface for variables.
     """
 
+    name: str
+
     @property
     @abstractmethod
     def var(self) -> clingo.Symbol: ...
@@ -593,6 +595,8 @@ class Variable:
             # multiple values assigned to the same variable
             # this is True even if the same value is assigned multiple times
             myprint(f"Variable vals: {val}")
+            self.decision_level = ctl.assignment.decision_level
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             return EvaluationResult.CONFLICT
         elif len(val) == 0:
             if self.has_unassigned():

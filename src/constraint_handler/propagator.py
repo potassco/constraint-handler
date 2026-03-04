@@ -16,6 +16,7 @@ from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
     ENSURE_VAR_NAME,
     EXECUTION_OUTPUT,
+    OTHER_ENGINE_VAR_NAME,
     REASONING_MODE_PROGRAM,
     REASONING_STAGE_ATOM,
     EvaluationResult,
@@ -150,6 +151,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.get_multimap_declarations(init)
         self.get_optimization_sums(init)
         self.get_execution_declarations(init)
+        self.get_engine_variables(init)
         self.set_parents()
 
         self.get_evaluate(init)
@@ -370,9 +372,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         nogoods: list[Iterable[int]] = []
         for result_var in variables:
-            if isinstance(result_var, atom.Evaluated):
+            # TODO: add support for evaluate and warnings
+            if isinstance(result_var, (atom.Evaluated, warning.Warning)):
                 continue
-            assert type(result_var) in (atom.Value, atom.Set_value, atom.Multimap_value)
+            assert type(result_var) in (
+                atom.Value,
+                atom.Set_value,
+                atom.Multimap_value,
+            ), f"Unexpected variable type: {type(result_var)} with value {result_var}"
             assert isinstance(result_var.name, clingo.Symbol)
 
             if self.reasoning_mode == ReasoningMode.BRAVE or first_call:
@@ -637,6 +644,67 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             var.reset(assignment.decision_level)
 
         self.optimization_sum.reset(assignment.decision_level)
+
+    def get_engine_variables(self, ctl: clingo.PropagateInit):
+        """
+        Load atoms that represent the values of variables from the input program.
+
+        This reads `Value`, `Set_value`, and `Multimap_value` atoms and updates the
+        corresponding variables with the assigned values.
+        This is used for variables whose values are defined by other engines
+
+        Args:
+            ctl: Clingo PropagateInit object.
+        """
+        if len(self.symbol2var) == 0:
+            # if there are no variables, we can skip this part since propagator is not used
+            return
+        value_atoms = myClorm.findInPropagateInit(ctl, atom.Value)
+        set_value_atoms = myClorm.findInPropagateInit(ctl, atom.Set_value)
+        multimap_value_atoms = myClorm.findInPropagateInit(ctl, atom.Multimap_value)
+
+        for (name, val), __literal in value_atoms.items():
+            if name not in self.symbol2var:
+                variable = Variable(OTHER_ENGINE_VAR_NAME, name)
+                self.symbol2var[name] = variable
+            else:
+                variable = cast(Variable, self.symbol2var[name])
+
+            variable.add_value(val, __literal, __literal)
+
+            ctl.add_watch(__literal)
+            ctl.add_watch(-__literal)
+
+        for (name, val_set), __literal in set_value_atoms.items():
+            if name not in self.symbol2var:
+                set_variable = SetVariable(OTHER_ENGINE_VAR_NAME, name, __literal)
+                self.symbol2var[name] = set_variable
+            else:
+                if name in self.symbol2var and not isinstance(self.symbol2var[name], SetVariable):
+                    # TODO: fix issue where value(myvar, ref(set...)) makes a variable when it should not
+                    set_variable = SetVariable(OTHER_ENGINE_VAR_NAME, name, __literal)
+                    self.symbol2var[name] = set_variable
+                set_variable = cast(SetVariable, self.symbol2var[name])
+
+            set_variable.add_value(val_set, __literal)
+            ctl.add_watch(__literal)
+            ctl.add_watch(-__literal)
+
+        for (name, key, val), __literal in multimap_value_atoms.items():
+            if name not in self.symbol2var:
+                multimap_variable = DictVariable(OTHER_ENGINE_VAR_NAME, name, __literal)
+                self.symbol2var[name] = multimap_variable
+            else:
+                if name in self.symbol2var and not isinstance(self.symbol2var[name], DictVariable):
+                    # TODO: fix issue where value(myvar, ref(dict...)) makes a variable when it should not
+                    multimap_variable = DictVariable(OTHER_ENGINE_VAR_NAME, name, __literal)
+                    self.symbol2var[name] = multimap_variable
+                multimap_variable = cast(DictVariable, self.symbol2var[name])
+
+            multimap_variable.add_value(key, val, __literal)
+
+            ctl.add_watch(__literal)
+            ctl.add_watch(-__literal)
 
     def get_variables(self, ctl: clingo.PropagateInit):
         """
@@ -1034,6 +1102,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Parents are variables that depend on another variable's value; if a child
         changes, parents are scheduled for re-evaluation.
         """
+        useless_other_engine_vars: list[VariableType] = []
+
         for var in self.symbol2var.values():
             for symbol_var in var.vars():
                 if symbol_var.name.startswith(EXECUTION_OUTPUT):
@@ -1050,6 +1120,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     continue
                     assert False, f"Variable {symbol_var} not found in symbol2var"
                 self.symbol2var[symbol_var].parents.append(var)
+            if var.name == OTHER_ENGINE_VAR_NAME and var.parents == []:
+                useless_other_engine_vars.append(var)
+
+        for var in useless_other_engine_vars:
+            myprint(f"Variable {var} is an other engine variable with no parents, removing it since it is useless")
+            del self.symbol2var[var.var]
 
     def update_python_model(self):
         """
@@ -1065,11 +1141,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.handle_on_model_warning(var.get_errors())
             if isinstance(var, EnsureVariable):
                 continue
+            if var.name == OTHER_ENGINE_VAR_NAME:
+                # these variables are only used to get values from other engines, they should not be exported to the model
+                continue
             final_value = var.get_value()
             # myprint(var.var, final_value, type(final_value))
             if final_value is ValueStatus.NOT_SET:
+                # print(f"Variable {var} has no value set in on_model!")
                 self.errors.append(
-                    warning.Warning(warning.Propagator(), (var,), "Variable has no value set in on_model!")
+                    warning.Warning(warning.Propagator(), (str(var),), "Variable has no value set in on_model!")
                 )
                 continue
 
