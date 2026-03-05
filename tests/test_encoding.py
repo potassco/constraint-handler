@@ -45,6 +45,7 @@ base_tests = [
     "optimize_ints",
     "optimize_priority",
     "reasoning_modes",
+    "set_comparisons",
     "set_iterations",
     "set_manipulations",
     "set_selfref",
