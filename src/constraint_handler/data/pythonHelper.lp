@@ -3,6 +3,7 @@
 import itertools
 import operator
 import typing
+import functools
 
 import clingo
 
@@ -15,6 +16,20 @@ import constraint_handler.schemas.warning as warning
 import constraint_handler.solver_environment as solver_environment
 
 
+def cltopy_context(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except myClorm.FailedInstantiationExn as exn:
+            raise myClorm.FailedInstantiationExn(
+                f"{exn} (in {func.__name__}; args={args!r}; kwargs={kwargs!r})"
+            ) from exn
+
+    return wrapper
+
+
+@cltopy_context
 def pythonExpressionVariable(clExpr):
     # print("pythonExpressionVariable",clExpr)
     pExpr = myClorm.cltopy(clExpr,expression.Expr)
@@ -22,6 +37,7 @@ def pythonExpressionVariable(clExpr):
     clVars = [myClorm.pytocl(var) for var in pVars]
     return clVars
 
+@cltopy_context
 def pythonEnumerateVariables(clExpr):
     pExpr = myClorm.cltopy(clExpr,expression.Expr)
     pVars = list(evaluator.collectVars(pExpr))
@@ -30,6 +46,7 @@ def pythonEnumerateVariables(clExpr):
     return result
 
  # TODO: dead?
+@cltopy_context
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars)
     pArgs = myClorm.cltopy(clArgs,list[expression.Val])
@@ -111,20 +128,24 @@ def pythonExec(clStmt,clEnv,clId):
         return myClorm.pytocl(warning.Error(exec_error,repr(exn)))
 
 
+@cltopy_context
 def pythonReversed(clExpr):
     pL = myClorm.cltopy(clExpr,list)
     pRL = list(reversed(pL))
     return myClorm.pytocl(pRL)
 
+@cltopy_context
 def pythonListElements(clExpr):
     pL = myClorm.cltopy(clExpr,list)
     return [myClorm.pytocl(e) for e in pL]
 
 
+@cltopy_context
 def pythonEnumerateElements(clExpr):
     pL = myClorm.cltopy(clExpr,list)
     return [myClorm.pytocl(e) for e in enumerate(pL)]
 
+@cltopy_context
 def pythonListLength(clExpr):
     pL = myClorm.cltopy(clExpr,list)
     return myClorm.pytocl(len(pL))
@@ -134,6 +155,7 @@ class Local(typing.NamedTuple):
     name: typing.Any
     var: expression.Variable
 
+@cltopy_context
 def pythonTupleElements(clExpr):
     pT = myClorm.cltopy(clExpr)
 
@@ -146,6 +168,7 @@ def pythonDebug(clExpr):
     #print("debug: ",clExpr)
     return clExpr
 
+@cltopy_context
 def pythonStop(clExpr):
     #print("stop: ",clExpr)
     pExpr = myClorm.cltopy(clExpr)
@@ -153,6 +176,7 @@ def pythonStop(clExpr):
         assert False
     return clExpr
 
+@cltopy_context
 def pythonTagVars(clExpr,clName):
     # print("pythonTagVars",clName,clExpr)
     pName = myClorm.cltopy(clName)
@@ -163,6 +187,7 @@ def pythonTagVars(clExpr,clName):
     return myClorm.pytocl(pExp2)
 
 
+@cltopy_context
 def pythonInit(clX):
     pX = myClorm.cltopy(clX)
     print("init",pX)
