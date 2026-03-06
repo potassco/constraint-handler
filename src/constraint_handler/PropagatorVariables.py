@@ -312,6 +312,7 @@ class EvaluateVariable:
 class EnsureVariable:
     """
     Represents an 'ensure' atom, which ensures a certain expression holds.
+    Implements the VariableType protocol.
 
     Attributes:
         name: Name of the ensure atom.
@@ -477,9 +478,10 @@ class Variable:
     A variable with a name and a value expression.
 
     Class to hold the expressions assigned to a variable (via variable_define, variable_declare, etc).
-    It also evaluates them and discern the appropriate value for the variable,
+    It also evaluates them and discerns the appropriate value for the variable,
     while keeping track of the decision level and errors.
 
+    Implements the VariableType protocol.
 
     Attributes:
         name: Name of the variable.
@@ -834,6 +836,8 @@ class SetVariable:
     This is supposed to mirror the set_declare/2 and set_assign/3 atom in the ASP encoding.
     set_declare is this class, while each set_assign adds a possible value to the set.
 
+    Implements the VariableType protocol.
+
     Attributes:
         name: Name of the set variable.
         var: Clingo symbol for the variable.
@@ -1028,6 +1032,8 @@ class DictVariable:
 
     This is supposed to mirror the multimap_declare/2 and multimap_assign/4 atom in the ASP encoding.
     multimap_declare is this class, while each multimap_assign adds a possible key-value pair to the dict.
+
+    Implements the VariableType protocol.
 
     Attributes:
         name: Name of the dict variable.
@@ -1544,6 +1550,8 @@ class OptimizationHandler:
 class Execution:
     """
     Represents an execution block, holding statements and input/output variables.
+
+    Implements the VariableType protocol.
 
     Attributes:
         name: Name of the execution.
