@@ -321,7 +321,10 @@ class EnsureVariable:
         decision_level: Decision level at which the value was set.
     """
 
-    __var = clingo.Function("ensure")
+    # used to define the variable for ensure variables
+    # __c serves as an ID and is incremented in every __init__ call
+    __var = "ensure"
+    __c = 0
 
     def __init__(self, name: str, expr: expression.Expr, literal: int):
         """
@@ -338,15 +341,8 @@ class EnsureVariable:
         self.value: ValueStatus | bool = ValueStatus.NOT_SET
         self.decision_level: int = DEFAULT_DECISION_LEVEL
 
-    @property
-    def var(self) -> clingo.Symbol:
-        """
-        Return the clingo symbol representing the ensure variable.
-
-        Returns:
-            clingo.Symbol: The ensure symbol.
-        """
-        return self.__var
+        self.var = clingo.Function(EnsureVariable.__var, [clingo.Number(EnsureVariable.__c)])
+        EnsureVariable.__c += 1
 
     @property
     def parents(self) -> list[VariableType]:

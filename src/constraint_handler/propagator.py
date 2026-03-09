@@ -604,7 +604,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         return eval_result == EvaluationResult.CHANGED
 
-    def get_reasons(self, var: VariableType) -> set[int]:
+    def get_reasons(self, var: VariableType, seen: set[VariableType] | None = None) -> set[int]:
         """Compute the set of literals explaining a variable's current value.
 
         This is used when constructing nogoods for conflicts, forbidden warnings,
@@ -616,11 +616,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Returns:
             set[int]: Set of signed solver literals.
         """
+        if seen is None:
+            seen = set()
         reasons = var.literals
         for dvar in var.vars():
             if dvar.name == EXECUTION_OUTPUT:
                 dvar = dvar.arguments[0]
-            reasons = reasons.union(self.get_reasons(self.symbol2var[dvar]))
+            if self.symbol2var[dvar] not in seen:
+                seen.add(self.symbol2var[dvar])
+                reasons = reasons.union(self.get_reasons(self.symbol2var[dvar], seen))
+
         myprint(f"Reasons for variable {var}: {reasons}")
         return reasons
 
