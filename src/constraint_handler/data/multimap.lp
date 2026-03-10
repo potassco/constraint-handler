@@ -101,13 +101,13 @@ _compute(eq,SUBARGS) :- _compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multima
 
 _multimap_makeIndex(VM) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(ACC,()))).
 _multimap_foldStep(multimap_fold,ARGS,0,ACC) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(ACC,()))).
-_compute(VO,SUBARGS) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(START,()))),
+direct_query(E) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(START,()))),
     _multimap_index(VM,I,K,VI), _multimap_foldStep(multimap_fold,ARGS,I,VB),
-    SUBARGS = (VI,(VB,())).
+    E=operation(VO,(VI,(VB,()))).
 _multimap_foldStep(multimap_fold,ARGS,I+1,NEXT) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(START,()))),
     _multimap_foldStep(multimap_fold,ARGS,I,VB), _multimap_index(VM,I,K,VI),
-    SUBARGS = (VI,(VB,())),
-    _computed(VO,SUBARGS,NEXT).
+    E=operation(VO,(VI,(VB,()))),
+    _se_value(E,NEXT).
 _computed(multimap_fold,ARGS,VB) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(START,()))),
     _multimap_foldStep(multimap_fold,ARGS,I,VB),
     _multimap_lastIndex(VM,I).
