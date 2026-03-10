@@ -45,6 +45,7 @@ base_tests = [
     "optimize_ints",
     "optimize_priority",
     "reasoning_modes",
+    "set_fold_bools",
     "set_iterations",
     "set_manipulations",
     "set_selfref",
@@ -78,6 +79,7 @@ def test_engine_compile(name: str):
         "optimize_floats",
         "optimize_ints",
         "optimize_priority",
+        "set_fold_bools",
     ]
     if name not in unsupported:
         run_test(name, "compile")
@@ -100,6 +102,7 @@ def test_engine_ground(name: str):
         "optimize_ints",
         "optimize_priority",
         "reasoning_modes",
+        "set_fold_bools",
         "set_iterations",
         "set_selfref",
         "type_checking",
@@ -123,6 +126,7 @@ def test_engine_propagator(name, check_mode):
         "optimize_floats",
         "optimize_ints",
         "optimize_priority",
+        "set_fold_bools",
         "set_iterations",
         "set_selfref",
         "warning_variables",
