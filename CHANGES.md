@@ -2,6 +2,7 @@
 
 ## 2026-03-10
 
+- Drop blanket declaration of `eq` and `neq` for any type `T`.
 - Fix type declaration of some operators that do not return floats
   (int_div,leq,etc.)
 - Fix #167 and fix multimap_fold only working for some operators in compile
