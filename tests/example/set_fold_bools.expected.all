@@ -1,0 +1,8 @@
+evaluated(set_fold,(val(function,conj),(variable(bools(e)),(val(bool,true),()))),val(bool,true))
+evaluated(set_fold,(val(function,conj),(variable(bools(t)),(val(bool,true),()))),val(bool,true))
+evaluated(set_fold,(val(function,conj),(variable(bools(f)),(val(bool,true),()))),val(bool,false))
+evaluated(set_fold,(val(function,conj),(variable(bools(b)),(val(bool,true),()))),val(bool,false))
+evaluated(set_fold,(val(function,disj),(variable(bools(e)),(val(bool,false),()))),val(bool,false))
+evaluated(set_fold,(val(function,disj),(variable(bools(t)),(val(bool,false),()))),val(bool,true))
+evaluated(set_fold,(val(function,disj),(variable(bools(f)),(val(bool,false),()))),val(bool,false))
+evaluated(set_fold,(val(function,disj),(variable(bools(b)),(val(bool,false),()))),val(bool,true))
