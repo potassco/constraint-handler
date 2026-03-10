@@ -2,6 +2,13 @@ evaluated(eq,(variable(y),(operation(float_div,(variable(x),(variable(z),()))),(
 evaluated(eq,(variable(z),(operation(float_div,(variable(x),(variable(y),()))),())),val(bool,true))
 evaluated(neq,(variable(z),(operation(float_div,(variable(x),(variable(z),()))),())),val(bool,true))
 evaluated(neq,(variable(y),(operation(float_div,(variable(x),(variable(y),()))),())),val(bool,true))
+
+evaluated(int_div,(variable(x),(variable(z),())),val(int,2))
+evaluated(int_div,(variable(x),(variable(y),())),val(int,2))
+evaluated(int_div,(variable(x),(val(int,2),())),val(int,2))
+evaluated(int_div,(val(int,5),(variable(z),())),val(int,2))
+evaluated(int_div,(val(int,5),(variable(y),())),val(int,2))
+
 evaluated(max,(variable(x),(variable(y),())),val(float,float("5.0")))
 evaluated(min,(variable(x),(variable(y),())),val(float,float("2.5")))
 evaluated(python("int"),(variable(y),()),val(int,2))
