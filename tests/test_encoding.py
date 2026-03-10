@@ -79,7 +79,6 @@ def test_engine_compile(name: str):
         "optimize_floats",
         "optimize_ints",
         "optimize_priority",
-        "set_fold_bools",
     ]
     if name not in unsupported:
         run_test(name, "compile")

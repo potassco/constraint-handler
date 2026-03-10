@@ -133,13 +133,13 @@ _computed(subset,ARGS,val(bool,false)) :- _compute(subset,ARGS), ARGS = (val(T1,
 
 _set_makeIndex(VM) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))).
 _set_foldStep(set_fold,ARGS,0,ACC) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))).
-_compute(VO,SUBARGS) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))),
+direct_query(E) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))),
     _set_index(VM,I,VI), _set_foldStep(set_fold,ARGS,I,VB),
-    SUBARGS = (VI,(VB,())).
+    E=operation(VO,(VI,(VB,()))).
 _set_foldStep(set_fold,ARGS,I+1,NEXT) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(START,()))),
     _set_foldStep(set_fold,ARGS,I,VB), _set_index(VM,I,VI),
-    SUBARGS = (VI,(VB,())),
-    _computed(VO,SUBARGS,NEXT).
+    E=operation(VO,(VI,(VB,()))),
+    _se_value(E,NEXT).
 _computed(set_fold,ARGS,VB) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(START,()))),
     _set_foldStep(set_fold,ARGS,I,VB),
     _set_lastIndex(VM,I).
