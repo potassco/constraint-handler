@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-03-10
+
+- Fix #167 and fix multimap_fold only working for some operators in compile
+  engine
+
 ## 2026-02-24
 
 - `max` operator now available for `int` (previously only `float` supported
