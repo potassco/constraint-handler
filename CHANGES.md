@@ -2,6 +2,8 @@
 
 ## 2026-03-10
 
+- Fix type declaration of some operators that do not return floats
+  (int_div,leq,etc.)
 - Fix #167 and fix multimap_fold only working for some operators in compile
   engine
 

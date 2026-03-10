@@ -1,12 +1,14 @@
 intToFloatOperator(sqrt;cos;sin;tan;acos;asin;atan).
 floatUnOperator(abs;sqrt;cos;sin;tan;acos;asin;atan;minus;floor).
-floatBinOperator(add;sub;mult;int_div;float_div;pow;leq;lt;geq;gt;max;min).
+floatFloatFloatOperator(add;sub;mult;float_div;pow;max;min).
+floatBinOperator(OP) :- floatFloatFloatOperator(OP).
+floatBinOperator(int_div;leq;lt;geq;gt).
 
 operator_declare_variadic(OP,T,T,2) :- T = float, OP = (add;mult).
 operator_declare(OP,(T,()),float) :- T = (int;float), intToFloatOperator(OP).
 operator_declare(OP,(T,()),float) :- T = float, OP = (abs;minus).
 operator_declare(OP,(T,()),int) :- T = float, OP = floor.
-operator_declare(OP,(T1,(T2,())),float) :- T1 = (int;float),T2 = (int;float), (T1,T2) != (int,int), floatBinOperator(OP).
+operator_declare(OP,(T1,(T2,())),float) :- T1 = (int;float),T2 = (int;float), (T1,T2) != (int,int), floatFloatFloatOperator(OP).
 operator_declare(OP,(T,(T,())),float) :- T = int, OP = float_div.
 operator_declare(OP,(T1,(T2,())),bool) :- T1 = (int;float),T2 = (int;float), (T1,T2) != (int,int), OP = (leq;lt;geq;gt).
 operator_declare(OP,(T,(T,())),bool) :- T = float, OP = (eq;neq).
