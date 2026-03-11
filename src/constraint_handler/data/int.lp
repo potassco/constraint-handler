@@ -8,13 +8,12 @@ _computed(OP, ARGS, val(int, V1 + VTAIL)) :-
     ARGS = (val(int, V1), TAIL),
     _computed(OP, TAIL, val(int, VTAIL)).
 
-_computed(OP, ARGS, val(int, 1)) :- _compute(OP, ARGS), OP=mult, ARGS = ().
-_compute(OP, TAIL) :- _compute(OP, ARGS), OP=mult, ARGS = (val(int, _), TAIL).
-_computed(OP, ARGS, val(int, V1 * VTAIL)) :-
-    _compute(OP, ARGS),
-    OP=mult,
-    ARGS = (val(int, V1), TAIL),
-    _computed(OP, TAIL, val(int, VTAIL)).
+% short circuit if there is a 0
+_computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,0)).
+_computedIdx(E,val(int,1)) :- _computeIdx(E,mult), not _computeIdx(E, 0, _).
+_int_mult(E,0,val(int,1)) :- _computeIdx(E,mult).
+_int_mult(E,IDX+1,val(int,VO*V)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,V)), _int_mult(E,IDX,val(int,VO)).
+_computedIdx(E,V)  :- _computeIdx(E,mult), _int_mult(E,IDX,V),_computeIdx(E,IDX-1,_), not _computeIdx(E,IDX,_).
 
 %%%%%%%%%%%%%%%%% sub int_div pow
 operator_declare(OP,(T,(T,())),T) :- T = int, OP = (sub;pow).
@@ -44,6 +43,11 @@ _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=leq, ARGS = (val(int
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=lt,  ARGS = (val(int,V1),(val(int,V2),())), V1 >= V2.
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=geq, ARGS = (val(int,V1),(val(int,V2),())), V1 <  V2.
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=gt,  ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
+
+_computed(OP,ARGS,val(int,V2)) :- _compute(OP,ARGS), OP=max, ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
+_computed(OP,ARGS,val(int,V1)) :- _compute(OP,ARGS), OP=max, ARGS = (val(int,V1),(val(int,V2),())), V1 > V2.
+_computed(OP,ARGS,val(int,V2)) :- _compute(OP,ARGS), OP=min, ARGS = (val(int,V1),(val(int,V2),())), V1 > V2.
+_computed(OP,ARGS,val(int,V1)) :- _compute(OP,ARGS), OP=min, ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
 
 _computed(OP,ARGS,RES) :- _compute(OP,ARGS), OP=float_div, ARGS = (val(int,_),(val(int,V2),())), V2!=0,
   RES = @pythonEvalExpr(operation(OP,ARGS),(),ID),
