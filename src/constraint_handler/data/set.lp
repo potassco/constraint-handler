@@ -84,8 +84,8 @@ _set_assign(_internal,E,V1) :- direct_query(E), E=operation(diff,L), L=(S1,(S2,(
 
 %%%%%%%%%%%%%%%%% Equality
 operator_declare(OP,(T,(T,())),bool) :- T = set, OP = (eq;neq).
-_compute(eq,ARGS) :- _compute(neq,ARGS), ARGS = (set(T1,S1),(set(T2,S2),())), (T1;T2)=set.
-_computed(neq,ARGS,val(bool,NEQ)) :- _computed(eq,ARGS,val(bool,EQ)), ARGS = (ref(T1,S1),(ref(T2,S2),())), (T1;T2)=set, (EQ,NEQ)=((true,false);(false,true)).
+_compute(eq,ARGS) :- _compute(neq,ARGS), ARGS = (ARG1,(ARG2,())), (ARG1;ARG2) = ref(set,X).
+_computed(neq,ARGS,val(bool,NEQ)) :- _computed(eq,ARGS,val(bool,EQ)), ARGS = (ARG1,(ARG2,())), (ARG1;ARG2) = ref(set,X), (EQ,NEQ)=((true,false);(false,true)).
 
 _computed(eq,ARGS,val(bool,true))  :- _compute(eq,ARGS),  ARGS = (ref(set,S1),(ref(set,S2),())), not _computed(eq,ARGS,val(bool,false)).
 

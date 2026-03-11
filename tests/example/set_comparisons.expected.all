@@ -1,0 +1,6 @@
+evaluated(eq,(variable(declared_set),(val(none,none),())),val(bool,false))
+evaluated(neq,(val(none,none),(variable(declared_set),())),val(bool,true))
+evaluated(eq,(variable(declared_set),(val(int,1),())),val(bool,false))
+evaluated(neq,(val(int,1),(variable(declared_set),())),val(bool,true))
+evaluated(eq,(variable(declared_set),(variable(made_set_1),())),val(bool,true))
+evaluated(neq,(variable(declared_set),(variable(made_set_2),())),val(bool,true))

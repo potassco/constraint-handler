@@ -8,11 +8,10 @@ _ge_evaluate(_ge_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(ground).
 
 :- _ge_ensure(CNAME,EXPR), not ge_result(EXPR,val(bool,true)), not ge_result(EXPR,bad).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
-ge_value(X,val(T,V)) :- _ge_vQuery(X), value(X,val(T,V)), representation(T,extensional).
 
-value(X,val(T,V)) :- ge_value(X,val(T,V)), representation(T,extensional).
-value(X,val(set,V)) :- ge_value(X,V), V=set(S).
-set_value(X,VAL) :- ge_value(X,VS), VS=set(S), VAL=@pythonListElements(S).
+_se_assign(_internal,variable(X),val(T,V)) :- ge_value(X,val(T,V)), representation(T,extensional).
+_set_declare(_internal,variable(X)) :- ge_value(X,V), V=set(S).
+_set_assign(_internal,variable(X),VAL) :- ge_value(X,VS), VS=set(S), VAL=@pythonListElements(S).
 evaluated(OP,ARGS,V) :- _ge_evaluate(CNAME,OP,ARGS), EXPR=operation(OP,ARGS), ge_result(EXPR,V).
 
 %ge_expressionQuery(EXPR) :- _main_defaultEngine(ground), evaluate(OP,ARGS), EXPR=operation(OP,ARGS).
