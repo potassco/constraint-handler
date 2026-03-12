@@ -655,7 +655,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         Load atoms that represent the values of variables from the input program.
 
-        This reads `Value`, `Set_value`, and `Multimap_value` atoms and updates the
+        This reads `_se_value`, `_set_contains`, and `Multimap_value` atoms and updates the
         corresponding variables with the assigned values.
         This is used for variables whose values are defined by other engines
 
