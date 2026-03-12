@@ -9,6 +9,7 @@ import clingo
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
+import constraint_handler.post_processor as post_processor
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.warning as warning
@@ -664,52 +665,89 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if len(self.symbol2var) == 0:
             # if there are no variables, we can skip this part since propagator is not used
             return
-        value_atoms = myClorm.findInPropagateInit(ctl, atom.Value)
-        set_value_atoms = myClorm.findInPropagateInit(ctl, atom.Set_value)
+        value_atoms = myClorm.findInPropagateInit(ctl, post_processor._se_value)
+        set_value_atoms = myClorm.findInPropagateInit(ctl, post_processor._set_contains)
         multimap_value_atoms = myClorm.findInPropagateInit(ctl, atom.Multimap_value)
 
-        for (name, val), __literal in value_atoms.items():
-            if name not in self.symbol2var:
-                variable = Variable(OTHER_ENGINE_VAR_NAME, name)
-                self.symbol2var[name] = variable
+        for (name, val), _literal in value_atoms.items():
+            if isinstance(name, expression.Variable):
+                # if it is a variable, get the symbol for it
+                _name = myClorm.pytocl(name).arguments[0]
             else:
-                variable = cast(Variable, self.symbol2var[name])
+                # ignore other stuff
+                continue
+            if _name not in self.symbol2var:
+                if (
+                    isinstance(val, post_processor.Ref)
+                    and isinstance(val.expr, expression.Variable)
+                    and val.expr == name
+                ):
+                    # TODO: make a difference for sets and multimaps,
+                    # currently, Ref is only implemented for sets so we do nothing for multimaps here
+                    variable = SetVariable(OTHER_ENGINE_VAR_NAME, _name, _literal)
+                    self.symbol2var[_name] = variable
+                    ctl.add_watch(_literal)
+                    ctl.add_watch(-_literal)
+                    continue
 
-            variable.add_value(val, __literal, __literal)
+                variable = Variable(OTHER_ENGINE_VAR_NAME, _name)
+                self.symbol2var[_name] = variable
 
-            ctl.add_watch(__literal)
-            ctl.add_watch(-__literal)
-
-        for (name, val_set), __literal in set_value_atoms.items():
-            if name not in self.symbol2var:
-                set_variable = SetVariable(OTHER_ENGINE_VAR_NAME, name, __literal)
-                self.symbol2var[name] = set_variable
+            variable = cast(Variable, self.symbol2var[_name])
+            if isinstance(val, post_processor.Ref):
+                expr: expression.Expr = val.expr
             else:
-                if name in self.symbol2var and not isinstance(self.symbol2var[name], SetVariable):
-                    # TODO: fix issue where value(myvar, ref(set...)) makes a variable when it should not
-                    set_variable = SetVariable(OTHER_ENGINE_VAR_NAME, name, __literal)
-                    self.symbol2var[name] = set_variable
-                set_variable = cast(SetVariable, self.symbol2var[name])
+                expr: expression.Expr = val
 
-            set_variable.add_value(val_set, __literal)
-            ctl.add_watch(__literal)
-            ctl.add_watch(-__literal)
+            variable.add_value(expr, _literal, _literal)
 
-        for (name, key, val), __literal in multimap_value_atoms.items():
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
+
+        for (name, val_set), _literal in set_value_atoms.items():
+            if isinstance(name, expression.Variable):
+                # if it is a variable, get the symbol for it
+                _name = myClorm.pytocl(name).arguments[0]
+            else:
+                # ignore other stuff
+                continue
+
+            if _name not in self.symbol2var:
+                self.errors.append(
+                    warning.Warning(
+                        warning.Variable(warning.VariableWarning.undeclared),  # ty:ignore[unresolved-attribute]
+                        (_name,),
+                        f"Warning: Got set value of another engine for variable that does not exist! Ignoring value {_name}, {val_set}.",
+                    )
+                )
+                continue
+
+            set_variable = cast(SetVariable, self.symbol2var[_name])
+
+            if isinstance(val_set, post_processor.Ref):
+                expr: expression.Expr = val_set.expr
+            else:
+                expr: expression.Expr = val_set
+
+            set_variable.add_value(expr, _literal)
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
+
+        for (name, key, val), _literal in multimap_value_atoms.items():
             if name not in self.symbol2var:
-                multimap_variable = DictVariable(OTHER_ENGINE_VAR_NAME, name, __literal)
+                multimap_variable = DictVariable(OTHER_ENGINE_VAR_NAME, name, _literal)
                 self.symbol2var[name] = multimap_variable
             else:
                 if name in self.symbol2var and not isinstance(self.symbol2var[name], DictVariable):
                     # TODO: fix issue where value(myvar, ref(dict...)) makes a variable when it should not
-                    multimap_variable = DictVariable(OTHER_ENGINE_VAR_NAME, name, __literal)
+                    multimap_variable = DictVariable(OTHER_ENGINE_VAR_NAME, name, _literal)
                     self.symbol2var[name] = multimap_variable
                 multimap_variable = cast(DictVariable, self.symbol2var[name])
 
-            multimap_variable.add_value(key, val, __literal)
+            multimap_variable.add_value(key, val, _literal)
 
-            ctl.add_watch(__literal)
-            ctl.add_watch(-__literal)
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
 
     def get_variables(self, ctl: clingo.PropagateInit):
         """
@@ -1125,6 +1163,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     continue
                     assert False, f"Variable {symbol_var} not found in symbol2var"
                 self.symbol2var[symbol_var].parents.append(var)
+
+        for var in self.symbol2var.values():
             if var.name == OTHER_ENGINE_VAR_NAME and var.parents == []:
                 useless_other_engine_vars.append(var)
 
