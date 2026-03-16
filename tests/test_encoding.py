@@ -26,15 +26,18 @@ base_tests = [
     "booleans",
     "conditional_assign",
     "custom_globals",
+    "empty_variadics",
     "engine_request",
     "engine_request_mult",
     "executions",
     "execution_assert",
     "execution_conditional",
     "execution_loop",
+    "eq_compound_int",
     "floats",
     "ints",
     "integrity",
+    "lambda_zero_args",
     "lambdas",
     "lambda_recursive",
     "multimap_basics",
@@ -45,6 +48,7 @@ base_tests = [
     "optimize_floats",
     "optimize_ints",
     "optimize_priority",
+    "python_multi_args",
     "reasoning_modes",
     "set_comparisons",
     "set_executions",
@@ -65,7 +69,10 @@ base_tests = [
     "warning_variable_undeclared_statement",
 ]
 
-compile_extra = ["preferences"]
+compile_extra = [
+    "preferences",
+    "sum_aggregates",
+]
 ground_extra = []
 propagator_extra = []
 
@@ -95,6 +102,7 @@ def test_engine_ground(name: str):
     unsupported: list[str] = [
         "engine_request",
         "engine_request_mult",
+        "lambda_zero_args",
         "lambdas",
         "lambda_recursive",
         "multimap_basics",

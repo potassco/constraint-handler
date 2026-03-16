@@ -12,20 +12,24 @@ representation(set,intensional).
 
 %%%%%%%%%%%%%%%%% length
 operator_declare(OP,(T,()),int) :- T = set, OP = length.
-_computed(length,ARGS,val(int,N)) :- _compute(length,ARGS),
-    ARGS = (ref(set,SET),()),
+_computedIdx(E,val(int,N)) :- _computeIdx(E, length),
+    _computeIdx(E, 0, ref(set,SET)),
     N = #count { V : _set_contains(SET,V) }.
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
 
 _se_value(EX,ref(set,EX)) :- _set_declare(NAME,EX).
 
-_compute(eq,(V1,(V2,()))) :-
-    _set_assign(N1,EX,E1), _se_value(E1,V1),
-    _set_assign(N2,EX,E2), _se_value(E2,V2), V1 < V2.
 _set_contains(EX,V1) :-
     _set_assign(NAME,EX,E1), _se_value(E1,V1), %_se_value(EX,ref(set,ER)),
-    #false : _set_assign(N2,EX,E2), _se_value(E2,V2), _computed(eq,(V2,(V1,())),val(bool,true)), V2 < V1.
+    #false : _set_assign(N2,EX,E2), _se_value(E2,V2),
+        _se_value(operation(eq,(V2,(V1,()))), val(bool,true)),
+        V2 < V1.
+
+% Request semantic equality checks between set-assigned values.
+direct_query(operation(eq,(V1,(V2,())))) :-
+    _set_assign(_,EX,E1), _se_value(E1,V1),
+    _set_assign(_,EX,E2), _se_value(E2,V2).
 
 _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ER), ER=ref(set,S).
 
@@ -33,17 +37,33 @@ set_value(X,V) :- _se_value(EX,ref(set,E)), _set_contains(E,V), EX=variable(X).
 
 %%%%%%%%%%%%%%%%% isin notin
 operator_declare(OP,(T1,(T2,())),bool) :- _type(T1),T2=set, OP = (isin;notin).
-_compute(eq,(V1,(V2,())))  :- _compute((isin;notin),ARGS), ARGS = (V1,(ref(set,S),())),
+direct_query(operation(eq,(V1,(V2,())))) :-
+    _computeIdx(E, (isin;notin)),
+    _computeIdx(E, 0, V1),
+    _computeIdx(E, 1, ref(set,S)),
     _set_contains(S,V2).
 
-_computed(isin,ARGS,val(bool,true))   :- _compute(isin,ARGS), ARGS = (V1,(ref(set,S),())),
-    _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
-_computed(isin,ARGS,val(bool,false))  :- _compute(isin,ARGS), ARGS = (V1,(ref(set,S),())),
-    #false : _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
-_computed(notin,ARGS,val(bool,false)) :- _compute(notin,ARGS), ARGS = (V1,(ref(set,S),())),
-    _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
-_computed(notin,ARGS,val(bool,true))  :- _compute(notin,ARGS), ARGS = (V1,(ref(set,S),())),
-    #false : _set_contains(S,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
+_computedIdx(E,val(bool,true)) :- _computeIdx(E, isin),
+    _computeIdx(E, 0, V1),
+    _computeIdx(E, 1, ref(set,S)),
+    _set_contains(S,V2),
+    _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
+
+_computedIdx(E,val(bool,false)) :- _computeIdx(E, isin),
+    _computeIdx(E, 0, V1),
+    _computeIdx(E, 1, ref(set,S)),
+    #false : _set_contains(S,V2), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
+
+_computedIdx(E,val(bool,false)) :- _computeIdx(E, notin),
+    _computeIdx(E, 0, V1),
+    _computeIdx(E, 1, ref(set,S)),
+    _set_contains(S,V2),
+    _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
+
+_computedIdx(E,val(bool,true)) :- _computeIdx(E, notin),
+    _computeIdx(E, 0, V1),
+    _computeIdx(E, 1, ref(set,S)),
+    #false : _set_contains(S,V2), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
 %%%%%%%%%%%%%%%%% set_make
 operator_declare_variadic(set_make, T, set, 1) :- _type(T).
@@ -64,7 +84,7 @@ operator_declare(OP,(T,(T,())),T) :- T = set, OP = (union;inter;diff).
 _set_declare(_internal,E) :- direct_query(E), E=operation((diff;inter;union),L).
 _set_assign(_internal,E,V) :- direct_query(E), E=operation(union,L), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
-_compute(eq,(VSMALL,(VBIG,()))) :- direct_query(E), E=operation((diff;inter),L), L=(S1,(S2,())),
+direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(E), E=operation((diff;inter),L), L=(S1,(S2,())),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
     _set_contains(R2,V2),
@@ -73,43 +93,67 @@ _compute(eq,(VSMALL,(VBIG,()))) :- direct_query(E), E=operation((diff;inter),L),
 _set_assign(_internal,E,VSMALL) :- direct_query(E), E=operation(inter,L), L=(S1,(S2,())),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
-    _set_contains(R2,V2), _computed(eq,(VSMALL,(VBIG,())),val(bool,true)),
+    _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))), val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 _set_assign(_internal,E,V1) :- direct_query(E), E=operation(diff,L), L=(S1,(S2,())),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
-    #false : _set_contains(R2,V2), _computed(eq,(VSMALL,(VBIG,())),val(bool,true)),
+    #false : _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))), val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 %%%%%%%%%%%%%%%%% Equality
 operator_declare(OP,(T,(T,())),bool) :- T = set, OP = (eq;neq).
-_compute(eq,ARGS) :- _compute(neq,ARGS), ARGS = (ARG1,(ARG2,())), (ARG1;ARG2) = ref(set,X).
-_computed(neq,ARGS,val(bool,NEQ)) :- _computed(eq,ARGS,val(bool,EQ)), ARGS = (ARG1,(ARG2,())), (ARG1;ARG2) = ref(set,X), (EQ,NEQ)=((true,false);(false,true)).
+direct_query(operation(eq,(A,(B,())))) :- _computeIdx(E, neq), _computeIdx(E, 0, A), _computeIdx(E, 1, B).
 
-_computed(eq,ARGS,val(bool,true))  :- _compute(eq,ARGS),  ARGS = (ref(set,S1),(ref(set,S2),())), not _computed(eq,ARGS,val(bool,false)).
+_computedIdx(E,val(bool,NEQ)) :- _computeIdx(E, neq),
+    _computeIdx(E, 0, A),
+    _computeIdx(E, 1, B),
+    _se_value(operation(eq,(A,(B,()))), val(bool,EQ)),
+    (EQ,NEQ)=((true,false);(false,true)).
 
-_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS),  ARGS = (ref(set,S1),(val(T2,S2),())), T2 != set.
-_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS),  ARGS = (val(T1,S1),(ref(set,S2),())), T1 != set.
+_computedIdx(E,val(bool,true)) :- _computeIdx(E, eq),
+    _computeIdx(E, 0, ref(set,S1)),
+    _computeIdx(E, 1, ref(set,S2)),
+    not _computedIdx(E,val(bool,false)).
 
-_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
+_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
+    _computeIdx(E, 0, ref(set,_)),
+    _computeIdx(E, 1, val(T2,_)),
+    T2 != set.
+
+_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
+    _computeIdx(E, 0, val(T1,_)),
+    _computeIdx(E, 1, ref(set,_)),
+    T1 != set.
+
+% Request element equality checks for set equality/subset.
+direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E, eq),
+    _computeIdx(E, 0, ref(set,S1)),
+    _computeIdx(E, 1, ref(set,S2)),
     _set_contains(S1,V1),
-    #false : _set_contains(S2,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
-_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
-    _set_contains(S2,V2),
-    #false : _set_contains(S1,V1), _computed(eq,(V1,(V2,())),val(bool,true)).
+    _set_contains(S2,V2).
 
-_compute(eq,(V1,(V2,()))) :- _compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),())),
-    _set_contains(S1,V1), _set_contains(S2,V2).
+_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
+    _computeIdx(E, 0, ref(set,S1)),
+    _computeIdx(E, 1, ref(set,S2)),
+    _set_contains(S1,V1),
+    #false : _set_contains(S2,V2), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
+
+_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
+    _computeIdx(E, 0, ref(set,S1)),
+    _computeIdx(E, 1, ref(set,S2)),
+    _set_contains(S2,V2),
+    #false : _set_contains(S1,V1), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
 %%%%%%%%%%%%%%%%% Equality axioms
 
-:- _computed(eq,(ref(set,X),(ref(set,X),())),val(bool,false)). %%% reflexivity
-:- _computed(eq,(ref(set,X),(ref(set,Y),())),val(bool,true)),
-   _computed(eq,(ref(set,Y),(ref(set,X),())),val(bool,false)). %%% symmetry
-:- _computed(eq,(ref(set,L1),(ref(set,R1),())),val(bool,true)),
-   _computed(eq,(ref(set,L2),(ref(set,R2),())),val(bool,true)),
-   _computed(eq,(ref(set,L3),(ref(set,R3),())),val(bool,false)),
+:- _computedIdx(E,val(bool,false)), E=operation(eq,(ref(set,X),(ref(set,X),()))). %%% reflexivity
+:- _computedIdx(E1,val(bool,true)), E1=operation(eq,(ref(set,X),(ref(set,Y),()))),
+   _computedIdx(E2,val(bool,false)), E2=operation(eq,(ref(set,Y),(ref(set,X),()))). %%% symmetry
+:- _computedIdx(E1,val(bool,true)), E1=operation(eq,(ref(set,L1),(ref(set,R1),()))),
+   _computedIdx(E2,val(bool,true)), E2=operation(eq,(ref(set,L2),(ref(set,R2),()))),
+   _computedIdx(E3,val(bool,false)), E3=operation(eq,(ref(set,L3),(ref(set,R3),()))),
     X=(L1;R1), Y=(L1;R1),
     Y=(L2;R2), Z=(L2;R2),
     X=(L3;R3), Z=(L3;R3),
@@ -117,31 +161,49 @@ _compute(eq,(V1,(V2,()))) :- _compute(eq,ARGS), ARGS=(ref(set,S1),(ref(set,S2),(
 
 %%%%%%%%%%%%%%%%% Subset
 operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
-_compute(eq,(V1,(V2,()))) :- _compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
-    _set_contains(S1,V1), _set_contains(S2,V2).
-_computed(subset,ARGS,val(bool,false)) :- _compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
+direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E, subset),
+    _computeIdx(E, 0, ref(set,S1)),
+    _computeIdx(E, 1, ref(set,S2)),
     _set_contains(S1,V1),
-    #false : _set_contains(S2,V2), _computed(eq,(V1,(V2,())),val(bool,true)).
+    _set_contains(S2,V2).
 
-_computed(subset,ARGS,val(bool,true))  :- _compute(subset,ARGS), ARGS = (ref(set,S1),(ref(set,S2),())),
-    not _computed(subset,ARGS,val(bool,false)).
-_computed(subset,ARGS,val(bool,false)) :- _compute(subset,ARGS), ARGS = (val(T1,S1),(val(T2,S2),())),
+_computedIdx(E,val(bool,false)) :- _computeIdx(E, subset),
+    _computeIdx(E, 0, ref(set,S1)),
+    _computeIdx(E, 1, ref(set,S2)),
+    _set_contains(S1,V1),
+    #false : _set_contains(S2,V2), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
+
+_computedIdx(E,val(bool,true)) :- _computeIdx(E, subset),
+    _computeIdx(E, 0, ref(set,_)),
+    _computeIdx(E, 1, ref(set,_)),
+    not _computedIdx(E,val(bool,false)).
+
+_computedIdx(E,val(bool,false)) :- _computeIdx(E, subset),
+    _computeIdx(E, 0, val(T1,_)),
+    _computeIdx(E, 1, val(T2,_)),
     (T1;T2) != set, (T1;T2) = set.
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% set_fold: a -> b -> b
+_set_makeIndex(VM) :- _computeIdx(E, set_fold), _computeIdx(E, 1, ref(set,VM)).
+_set_foldStep(E,0,ACC) :- _computeIdx(E, set_fold), _computeIdx(E, 2, ACC).
 
-_set_makeIndex(VM) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))).
-_set_foldStep(set_fold,ARGS,0,ACC) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))).
-direct_query(E) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(ACC,()))),
-    _set_index(VM,I,VI), _set_foldStep(set_fold,ARGS,I,VB),
-    E=operation(VO,(VI,(VB,()))).
-_set_foldStep(set_fold,ARGS,I+1,NEXT) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(START,()))),
-    _set_foldStep(set_fold,ARGS,I,VB), _set_index(VM,I,VI),
-    E=operation(VO,(VI,(VB,()))),
-    _se_value(E,NEXT).
-_computed(set_fold,ARGS,VB) :- _compute(set_fold,ARGS), ARGS = (val(function,VO),(ref(set,VM),(START,()))),
-    _set_foldStep(set_fold,ARGS,I,VB),
+direct_query(operation(VO,(VI,(VB,())))) :- _computeIdx(E, set_fold),
+    _computeIdx(E, 0, val(function,VO)),
+    _computeIdx(E, 1, ref(set,VM)),
+    _set_index(VM,I,VI),
+    _set_foldStep(E,I,VB).
+
+_set_foldStep(E,I+1,NEXT) :- _computeIdx(E, set_fold),
+    _computeIdx(E, 0, val(function,VO)),
+    _computeIdx(E, 1, ref(set,VM)),
+    _set_foldStep(E,I,VB),
+    _set_index(VM,I,VI),
+    _se_value(operation(VO,(VI,(VB,()))), NEXT).
+
+_computedIdx(E,VB) :- _computeIdx(E, set_fold),
+    _computeIdx(E, 1, ref(set,VM)),
+    _set_foldStep(E,I,VB),
     _set_lastIndex(VM,I).
 
 

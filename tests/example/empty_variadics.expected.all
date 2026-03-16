@@ -1,0 +1,6 @@
+value(add0,val(int,0))
+value(mult0,val(int,1))
+value(conj0,val(bool,true))
+value(disj0,val(bool,false))
+value(lxor0,val(bool,false))
+value(leqv0,val(bool,true))

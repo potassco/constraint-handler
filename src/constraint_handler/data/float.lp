@@ -13,13 +13,44 @@ operator_declare(OP,(T,(T,())),float) :- T = int, OP = float_div.
 operator_declare(OP,(T1,(T2,())),bool) :- T1 = (int;float),T2 = (int;float), (T1,T2) != (int,int), OP = (leq;lt;geq;gt).
 operator_declare(OP,(T,(T,())),bool) :- T = float, OP = (eq;neq).
 
-_stageCompute(OP,ARGS,L) :- _compute(OP,ARGS), intToFloatOperator(OP), ARGS = (val(int,V),()), L=(V,()).
-_stageCompute(OP,ARGS,L) :- _compute(OP,ARGS), floatUnOperator(OP), ARGS=(val(float,V),()), L=(V,()).
-_stageCompute(OP,ARGS,L) :- _compute(OP,ARGS), floatBinOperator(OP), ARGS=(val(T1,V1),(val(T2,V2),())), L=(V1,(V2,())),
-    (T1;T2)=float, T1=(float;int), T2=(float;int).
-_stageCompute(OP,ARGS,L) :- _compute(OP,ARGS), OP=(eq;neq), ARGS=(val(T1,V1),(val(T2,V2),())), L=(V1,(V2,())),
-    T1=float, T2=float.
+_float_eval_exec(E, RES) :-
+    _computeIdx(E, OP),
+    intToFloatOperator(OP),
+    _computeIdx(E, 0, val(int, V)),
+    ARGS = (val(int, V), ()),
+    RES = @pythonEvalExpr(operation(OP, ARGS), (), ID),
+    _main_solverIdentifier(ID).
 
-_expression_eval_exec(OP,ARGS,RES) :- _stageCompute(OP,ARGS,L), RES = @pythonEvalExpr(operation(OP,ARGS),(),ID), _main_solverIdentifier(ID).
-_computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
-_warning(KIND,(),(OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(KIND,MSG)).
+_float_eval_exec(E, RES) :-
+    _computeIdx(E, OP),
+    floatUnOperator(OP),
+    _computeIdx(E, 0, val(float, V)),
+    ARGS = (val(float, V), ()),
+    RES = @pythonEvalExpr(operation(OP, ARGS), (), ID),
+    _main_solverIdentifier(ID).
+
+_float_eval_exec(E, RES) :-
+    _computeIdx(E, OP),
+    floatBinOperator(OP),
+    _computeIdx(E, 0, val(T1, V1)),
+    _computeIdx(E, 1, val(T2, V2)),
+    (T1;T2) = float,
+    T1 = (float;int),
+    T2 = (float;int),
+    ARGS = (val(T1, V1), (val(T2, V2), ())),
+    RES = @pythonEvalExpr(operation(OP, ARGS), (), ID),
+    _main_solverIdentifier(ID).
+
+% Float equality/inequality must be numeric (e.g., float("2") == float("2.0")).
+_float_eval_exec(E, RES) :-
+    _computeIdx(E, OP),
+    OP = (eq;neq),
+    _computeIdx(E, 0, val(float, V1)),
+    _computeIdx(E, 1, val(float, V2)),
+    ARGS = (val(float, V1), (val(float, V2), ())),
+    RES = @pythonEvalExpr(operation(OP, ARGS), (), ID),
+    _main_solverIdentifier(ID).
+
+_computedIdx(E, val(TYPE, V)) :- _float_eval_exec(E, val(TYPE, V)).
+_computedIdx(E, bad) :- _float_eval_exec(E, error(KIND, MSG)).
+_warning(KIND,(),(OP,E,MSG)) :- _float_eval_exec(E, error(KIND, MSG)), _computeIdx(E, OP).

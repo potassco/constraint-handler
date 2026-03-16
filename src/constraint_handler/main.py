@@ -12,6 +12,7 @@ modules = [
     "bool",
     "conditionals",
     "direct",
+    "equality",
     "execution",
     "expression",
     "float",

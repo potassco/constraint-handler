@@ -18,7 +18,8 @@ direct_query(E)  :- _se_evaluate(CNAME,OP,ARGS), E=operation(OP,ARGS).
 direct_query(SE) :- direct_query(E), E=operation(OP,ES), not _direct_lazy(OP), SE=@pythonListElements(ES).
 
 _se_value(E,E) :- direct_query(E), E=val(T,V).
-_se_value(E,E) :- direct_query(E), E=ref(_,_).
+_se_value(E,E) :- direct_query(E), E=ref(T,V).
+
 
 _se_value(E,val(function,E)) :- direct_query(E), E=lambda(VARS,ERES).
 
@@ -36,38 +37,38 @@ _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@
 _computeIdx(E,IDX,V) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,V).
 _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 
-%%%%%%%%%%%%%%%%% _computed operators
-_direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
-_direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _se_value(EOP,val(function,OP)).
-%% _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
-%% _direct_compMapAux(ARGS,N,()) :- _direct_queryArgsValues(E,OP,ARGS), N=@pythonListLength(ARGS).
-%% _direct_compMapAux(ARGS,IDX,K) :- _direct_compMapAux(ARGS,IDX+1,L), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,T,V), K=(val(T,V),L).
-%% _compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS).
-%% _se_value(E,TO,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS), _computed(OP,VS,val(TO,VO)).
-_direct_revMapAux(ARGS,ES,()) :- _direct_queryArgsValues(E,OP,ARGS), ES=@pythonReversed(ARGS).
-_direct_revMapAux(ARGS,ES,(V,VS)) :- _direct_revMapAux(ARGS,(E,ES),VS), _se_value(E,V).
-_compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS).
-_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS), _computed(OP,VS,VO).
+%%%%%%%%%%%%%%%%% argument-list helpers (compile engine)
+_direct_args_list_aux(E,IDX,()) :- _direct_queryArgsValues(E,_,ARGS), IDX=@pythonListLength(ARGS).
+_direct_args_list_aux(E,IDX,(V,VS)) :- _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
+_direct_args_list(E,VS) :- _direct_args_list_aux(E,0,VS).
 
-%%%%%%%%%%%%%%%%% lambda
-_lambda_aux(LAMB,ARGS,RED) :- _compute(LAMB,ARGS),
+%%%%%%%%%%%%%%%%% lambda application
+_lambda_aux(E,RED) :- _computeIdx(E,LAMB),
     LAMB=lambda(VARS,ERES),
+    _direct_args_list(E,ARGS),
     RED=@pythonBetaReduction(ERES,VARS,ARGS).
 
-direct_query(RED) :- _lambda_aux(LAMB,ARGS,RED).
-_computed(LAMB,ARGS,VO) :- _lambda_aux(LAMB,ARGS,RED), _se_value(RED,VO).
+direct_query(RED) :- _lambda_aux(E,RED).
+_computedIdx(E,VO) :- _lambda_aux(E,RED), _se_value(RED,VO).
 
-%%%%%%%%%%%%%%%%% python
-_direct_implode_arg(OP,ARGS,IDX,ARG) :- _compute(OP,ARGS), OP=python(S), (IDX,ARG)=@pythonEnumerateElements(ARGS).
-_direct_implode(ARG) :- _direct_implode_arg(OP,ARGS,IDX,ARG).
-_direct_implode_args_aux(ARGS,N,()) :- _compute(OP,ARGS), OP=python(S), N=@pythonListLength(ARGS).
-_direct_implode_args_aux(ARGS,IDX,K) :- _direct_implode_args_aux(ARGS,IDX+1,L),
-    _direct_implode_arg(OP,ARGS,IDX,ARG),
-    _direct_imploded(ARG,IMP), K=(IMP,L).
-_expression_eval_exec(OP,ARGS,RES) :- _compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L), RES = @pythonEvalExpr(operation(OP,L),(),ID), _main_solverIdentifier(ID).
-_computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
-_computed(OP,ARGS,bad) :- _expression_eval_exec(OP,ARGS,error(KIND,MSG)).
-_warning(KIND,(),(OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(KIND,MSG)).
+%%%%%%%%%%%%%%%%% python operator (compile engine)
+_direct_implode(V) :- _computeIdx(E,python(_)), _computeIdx(E,_,V).
+
+_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(_),ARGS), IDX=@pythonListLength(ARGS).
+_direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L),
+    _computeIdx(E,IDX,V),
+    _direct_imploded(V,IMP).
+
+_direct_imploded_args(E,L) :- _direct_imploded_args_aux(E,0,L).
+
+_expression_eval_exec(E,RES) :- _computeIdx(E,python(S)),
+    _direct_imploded_args(E,L),
+    RES = @pythonEvalExpr(operation(python(S),L),(),ID),
+    _main_solverIdentifier(ID).
+
+_computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,val(TYPE,V)).
+_computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
+_warning(KIND,(),(python(S),E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)), _computeIdx(E,python(S)).
 %%% TODO duplicated code in groundEval.lp
 
 %%%%%%%%%%%%%%%%% function definitions
