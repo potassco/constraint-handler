@@ -30,12 +30,12 @@ To represent operators that can take a variable number of inputs, we use notatio
 ```
 
 #### Union
-Sometimes the output type may be a union of multiple types, indicating that the operator can return different types based on the inputs. This is denoted using the pipe symbol `|`. For example:
+Sometimes, arguments or return values may allow for multiple types. In such cases, the overall type is represented as a union of possible types. This is denoted using the pipe symbol `|`. For example:
 
 ```prolog
-(int, int) -> int | float
+(int | float, int | float) -> int
 ```
-Could represent some division [Operation] that returns an integer when the division is exact, and a float otherwise.
+Could represent an [Operation] like the integer division. This accepts two arguments that may be any combination of integers and floats, but always returns an integer.
 
 #### Generic Variables
 Capitalized letters act as placeholders for any type.
@@ -223,8 +223,7 @@ value(name, val(float, float("-0.001")))
 | `add` | Addition | (\[[int] \| [float]\]\*) $\to$ [float] | Adds all provided numbers together. |
 | `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
 | `mult` | Multiplication | (\[[int] \| [float]\]\*) $\to$ [float] | Multiplies all provided numbers together. |
-| `div` | Division | ([float], [float]) $\to$ [float] | Performs integer division on two floats. |
-| `float_div` | Float Division | ([float], [float]) $\to$ [float] | Performs explicit floating point division. |
+| `float_div` | Float Division | ([int] \| [float], [int] \| [float]) $\to$ [float] | Performs explicit floating point division. |
 | `ceil` | Ceiling | ([float]) $\to$ [float] | Rounds the float up to the nearest integer value. |
 | `floor` | Floor | ([float]) $\to$ [float] | Rounds the float down to the nearest integer value. |
 | `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
