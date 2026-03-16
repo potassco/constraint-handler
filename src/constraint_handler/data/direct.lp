@@ -17,8 +17,8 @@ direct_query(X)  :- _se_assign(NAME,X,E).
 direct_query(E)  :- _se_evaluate(CNAME,OP,ARGS), E=operation(OP,ARGS).
 direct_query(SE) :- direct_query(E), E=operation(OP,ES), not _direct_lazy(OP), SE=@pythonListElements(ES).
 
-_se_value(E,E) :- direct_query(E), E=val(T,V).
-_se_value(E,E) :- direct_query(E), E=ref(T,V).
+_se_value(E,E) :- direct_query(E), E=val(_,_).
+_se_value(E,E) :- direct_query(E), E=ref(_,_).
 
 
 _se_value(E,val(function,E)) :- direct_query(E), E=lambda(VARS,ERES).
