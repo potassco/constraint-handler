@@ -38,9 +38,13 @@ _computeIdx(E,IDX,V) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,
 _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 
 %%%%%%%%%%%%%%%%% argument-list helpers (compile engine)
-_direct_args_list_aux(E,IDX,()) :- _direct_queryArgsValues(E,_,ARGS), IDX=@pythonListLength(ARGS).
-_direct_args_list_aux(E,IDX,(V,VS)) :- _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
-_direct_args_list(E,VS) :- _direct_args_list_aux(E,0,VS).
+% Only needed for lambda application. Guarding this prevents grounding
+% all argument combinations for every operation.
+_direct_needs_args_list(E) :- _direct_queryArgsValues(E,OP,_), OP=lambda(_,_).
+
+_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E), _direct_queryArgsValues(E,_,ARGS), IDX=@pythonListLength(ARGS).
+_direct_args_list_aux(E,IDX,(V,VS)) :- _direct_needs_args_list(E), _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
+_direct_args_list(E,VS) :- _direct_needs_args_list(E), _direct_args_list_aux(E,0,VS).
 
 %%%%%%%%%%%%%%%%% lambda application
 _lambda_aux(E,RED) :- _computeIdx(E,LAMB),
