@@ -1,10 +1,9 @@
 name: deploy to pypi
 
 on:
-  workflow_dispatch:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v*'
 
 jobs:
   test:
@@ -16,21 +15,39 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    environment: release
     runs-on: ubuntu-latest
     steps:
+      - name: determine release target
+        id: release_meta
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "version=${TAG_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "repository_url=https://pypi.org/legacy/" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.dev[0-9]+$ ]]; then
+            echo "version=${TAG_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "repository_url=https://test.pypi.org/legacy/" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release tag must match vMajor.Minor.Revision or vMajor.Minor.Revision.devN, got: $TAG_NAME" >&2
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
 
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: '3.12'
 
       - name: install build dependencies
         run: python3 -m pip install build
   
       - name: build package
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ steps.release_meta.outputs.version }}
         run: python3 -m build --sdist --wheel --outdir dist/
 
       - name: upload package
@@ -39,14 +56,7 @@ jobs:
           name: package
           path: dist/
 
-      - name: publish package (pypi)
-        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+      - name: publish package
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: "https://pypi.org/legacy/"
-
-      - name: publish package (test.pypi)
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: "https://test.pypi.org/legacy/"
+          repository-url: ${{ steps.release_meta.outputs.repository_url }}
