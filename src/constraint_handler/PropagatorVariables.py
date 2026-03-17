@@ -43,6 +43,8 @@ class VariableType(Protocol):
     Protocol for variable types used in the propagator. Defines the required interface for variables.
     """
 
+    name: str
+
     @property
     @abstractmethod
     def var(self) -> clingo.Symbol: ...
@@ -310,6 +312,7 @@ class EvaluateVariable:
 class EnsureVariable:
     """
     Represents an 'ensure' atom, which ensures a certain expression holds.
+    Implements the VariableType protocol.
 
     Attributes:
         name: Name of the ensure atom.
@@ -318,7 +321,10 @@ class EnsureVariable:
         decision_level: Decision level at which the value was set.
     """
 
-    __var = clingo.Function("ensure")
+    # used to define the variable for ensure variables
+    # __c serves as an ID and is incremented in every __init__ call
+    __var = "ensure"
+    __c = 0
 
     def __init__(self, name: str, expr: expression.Expr, literal: int):
         """
@@ -335,15 +341,8 @@ class EnsureVariable:
         self.value: ValueStatus | bool = ValueStatus.NOT_SET
         self.decision_level: int = DEFAULT_DECISION_LEVEL
 
-    @property
-    def var(self) -> clingo.Symbol:
-        """
-        Return the clingo symbol representing the ensure variable.
-
-        Returns:
-            clingo.Symbol: The ensure symbol.
-        """
-        return self.__var
+        self.var = clingo.Function(EnsureVariable.__var, [clingo.Number(EnsureVariable.__c)])
+        EnsureVariable.__c += 1
 
     @property
     def parents(self) -> list[VariableType]:
@@ -475,9 +474,10 @@ class Variable:
     A variable with a name and a value expression.
 
     Class to hold the expressions assigned to a variable (via variable_define, variable_declare, etc).
-    It also evaluates them and discern the appropriate value for the variable,
+    It also evaluates them and discerns the appropriate value for the variable,
     while keeping track of the decision level and errors.
 
+    Implements the VariableType protocol.
 
     Attributes:
         name: Name of the variable.
@@ -593,6 +593,8 @@ class Variable:
             # multiple values assigned to the same variable
             # this is True even if the same value is assigned multiple times
             myprint(f"Variable vals: {val}")
+            self.decision_level = ctl.assignment.decision_level
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             return EvaluationResult.CONFLICT
         elif len(val) == 0:
             if self.has_unassigned():
@@ -830,6 +832,8 @@ class SetVariable:
     This is supposed to mirror the set_declare/2 and set_assign/3 atom in the ASP encoding.
     set_declare is this class, while each set_assign adds a possible value to the set.
 
+    Implements the VariableType protocol.
+
     Attributes:
         name: Name of the set variable.
         var: Clingo symbol for the variable.
@@ -1024,6 +1028,8 @@ class DictVariable:
 
     This is supposed to mirror the multimap_declare/2 and multimap_assign/4 atom in the ASP encoding.
     multimap_declare is this class, while each multimap_assign adds a possible key-value pair to the dict.
+
+    Implements the VariableType protocol.
 
     Attributes:
         name: Name of the dict variable.
@@ -1540,6 +1546,8 @@ class OptimizationHandler:
 class Execution:
     """
     Represents an execution block, holding statements and input/output variables.
+
+    Implements the VariableType protocol.
 
     Attributes:
         name: Name of the execution.

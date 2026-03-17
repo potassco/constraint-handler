@@ -13,6 +13,8 @@ ENSURE_VAR_NAME: Literal["__ensure__"] = "__ensure__"
 EXECUTION_INPUT: Literal["execution_input"] = "execution_input"
 EXECUTION_OUTPUT: Literal["execution_output"] = "execution_output"
 
+OTHER_ENGINE_VAR_NAME: Literal["__other_engine_var__"] = "__other_engine_var__"
+
 
 # enum for value_not_set, assignment_is_false, and value_is_none
 class ValueStatus(enum.Enum):
