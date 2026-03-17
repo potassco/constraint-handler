@@ -1,5 +1,10 @@
 # Changes
 
+## v0.0.2.dev1
+
+- updated python version in CI
+- updated docs
+
 ## 2026-03-10
 
 - Drop blanket declaration of `eq` and `neq` for any type `T`.
