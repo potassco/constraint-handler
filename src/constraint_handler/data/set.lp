@@ -190,27 +190,29 @@ _computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, subset),
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% set_fold: a -> b -> b
-_set_makeIndex(VM) :- _computeIdx(E, set_fold), _computeIdx(E, 1, ref(set,VM)).
-_set_foldStep(E,0,ACC) :- _computeIdx(E, set_fold), _computeIdx(E, 2, ACC).
+_set_makeIndex_id(E_ID,VM) :- _computeIdx_id(E_ID, set_fold), _computeIdx_id(E_ID, 1, ref(set,VM)).
+_set_foldStep_id(E_ID,0,ACC) :- _computeIdx_id(E_ID, set_fold), _computeIdx_id(E_ID, 2, ACC).
 
-direct_query(operation(VO,(VI,(VB,())))) :- _computeIdx(E, set_fold),
-    _computeIdx(E, 0, val(function,VO)),
-    _computeIdx(E, 1, ref(set,VM)),
+direct_query(operation(VO,(VI,(VB,())))) :- _computeIdx_id(E_ID, set_fold),
+    _computeIdx_id(E_ID, 0, val(function,VO)),
+    _computeIdx_id(E_ID, 1, ref(set,VM)),
     _set_index(VM,I,VI),
-    _set_foldStep(E,I,VB).
+    _set_foldStep_id(E_ID,I,VB).
 
-_set_foldStep(E,I+1,NEXT) :- _computeIdx(E, set_fold),
-    _computeIdx(E, 0, val(function,VO)),
-    _computeIdx(E, 1, ref(set,VM)),
-    _set_foldStep(E,I,VB),
+_set_foldStep_id(E_ID,I+1,NEXT) :- _computeIdx_id(E_ID, set_fold),
+    _computeIdx_id(E_ID, 0, val(function,VO)),
+    _computeIdx_id(E_ID, 1, ref(set,VM)),
+    _set_foldStep_id(E_ID,I,VB),
     _set_index(VM,I,VI),
     _se_value(operation(VO,(VI,(VB,()))), NEXT).
 
 _computedIdx_id(E_ID,VB) :- _computeIdx_id(E_ID, set_fold),
     _computeIdx_id(E_ID, 1, ref(set,VM)),
-    _set_foldStep(E,I,VB),
+    _set_foldStep_id(E_ID,I,VB),
     _set_lastIndex(VM,I).
 
+
+_set_makeIndex(EM) :- _set_makeIndex_id(E_ID,EM).
 
 
 _set_index(EM,0,V) :- _set_makeIndex(EM),

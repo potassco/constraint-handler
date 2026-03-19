@@ -71,6 +71,7 @@ base_tests = [
 
 compile_extra = [
     "preferences",
+    "python_empty_set_brave",
     "sum_aggregates",
 ]
 ground_extra = []

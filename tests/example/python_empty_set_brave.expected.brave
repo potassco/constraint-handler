@@ -1,0 +1,2 @@
+evaluated(python("len"),(variable(my_set),()),val(int,0))
+evaluated(python("len"),(variable(my_set),()),val(int,1))

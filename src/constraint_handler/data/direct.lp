@@ -40,10 +40,6 @@ _direct_queryArgsValues_id(E_ID,OP,ARGS) :- _expr_id(E_ID,E), _direct_queryArgsV
 _computeIdx_id(E_ID,OP) :- _direct_queryArgsValues_id(E_ID,OP,ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 _computeIdx_id(E_ID,IDX,V) :- _direct_queryArgsValues_id(E_ID,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), ARG_ID=@pythonId(ARG), _se_value_id(ARG_ID,V).
-_computeIdx(E,OP) :- _expr_id(E_ID,E), _computeIdx_id(E_ID,OP).
-_computeIdx(E,IDX,V) :- _expr_id(E_ID,E), _computeIdx_id(E_ID,IDX,V).
-_computedIdx_id(E_ID,VO) :- _expr_id(E_ID,E), _computedIdx(E,VO).
-_computedIdx(E,VO) :- _expr_id(E_ID,E), _computedIdx_id(E_ID,VO).
 _se_value(E,VO) :- _expr_id(E_ID,E), _computedIdx_id(E_ID,VO).
 
 %%%%%%%%%%%%%%%%% argument-list helpers (compile engine)

@@ -18,7 +18,6 @@ _se_value(E,val(bool,true))  :- direct_query(E), E=operation(wnot,(E1,())), E1_I
 %% The _compute/_computed interface is given below the eValue interface
 %% We use the eValue interface because it allows short-circuit evaluation
 operator_declare_variadic(OP,T,T,1) :- T = bool, OP = (conj;disj).
-%_computedIdx(E,bool,true)  :- _computeIdx(E,conj), E=operation(conj,L), _se_value(E1,val(bool,true)) : E1=@pythonListElements(L).
 _computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID,conj), _computeIdx_id(E_ID,IDX,val(bool,false)).
 _computedIdx_id(E_ID,val(bool,true))  :- _computeIdx_id(E_ID,conj), _computeIdx_id(E_ID,IDX,val(bool,true)) : _computeIdx_id(E_ID,IDX,V).
 
