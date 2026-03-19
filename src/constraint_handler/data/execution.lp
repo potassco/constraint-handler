@@ -12,7 +12,7 @@ _execution_output_var(NAME,X) :- _execution_declare(NAME,STMT,INS,OUTS), X=@pyth
 _execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), execution_run(CNAME,NAME), engine(CNAME,compile).
 %_warning(("undeclared run",NAME)) :- execution_run(NAME), not execution_declare(_,NAME,_).
 
-_execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), _se_value(variable(execution_input(NAME,X)),V).
+_execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), E=variable(execution_input(NAME,X)), E_ID=@pythonId(E), _se_value_id(E_ID,V).
 
 _se_assign(_internal,variable(execution_output(NAME,X)),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_ou(NAME,X,V).
 _se_assign(_internal,variable(execution_output(NAME,X)),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_in(NAME,X,V), not _execution_ou_proj(NAME,X).
@@ -55,9 +55,8 @@ _execution_eval_aux(NAME,STMT_ID,EXPR_ID,EXP2) :- _execution_equery(NAME,STMT_ID
 direct_query(EXP2) :- _execution_eval_aux(NAME,STMT_ID,EXPR_ID,EXP2).
 _set_declare(_internal,E) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L).
 _set_assign(_internal,E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L), V=@pythonListElements(L).
-_se_value(E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V).
-%_execution_evaled(NAME,EXPR,V) :- _execution_eval_aux(NAME,EXPR,EXP2), _se_value(EXP2,V), V=val(T,VAL).
-_execution_evaled(NAME,STMT_ID,EXPR_ID,V) :- _execution_eval_aux(NAME,STMT_ID,EXPR_ID,EXP2), _se_value(EXP2,V).
+_se_value_id(E_ID,V) :- _expr_id(E_ID,E), E=local(NAME,X), _execution_in(NAME,X,V).
+_execution_evaled(NAME,STMT_ID,EXPR_ID,V) :- _execution_eval_aux(NAME,STMT_ID,EXPR_ID,EXP2), EXP2_ID=@pythonId(EXP2), _se_value_id(EXP2_ID,V).
 
 
 %%%%%%%%%%%%%%%%% assign

@@ -11,16 +11,19 @@ direct_query(EK;EV) :- _multimap_assign(CNAME,EX,EK,EV).
 
 representation(multimap,intensional).
 
-_se_value(EX,val(multimap,EX)) :- _multimap_declare(CNAME,X), EX=variable(X), ER = ref(EX).
-_multimap_add(ER,EK_ID,EV_ID) :- _multimap_assign_id(CNAME,EX,EK_ID,EV_ID), _se_value(EX,val(multimap,ER)).
+_se_value_id(EX_ID,val(multimap,ER)) :- _multimap_declare(CNAME,X), EX=variable(X), ER = ref(EX), EX_ID=@pythonId(EX).
+_multimap_add(ER,EK_ID,EV_ID) :- _multimap_assign_id(CNAME,EX,EK_ID,EV_ID), EX_ID=@pythonId(EX), _se_value_id(EX_ID,val(multimap,ER)).
+
+_multimap_eq_true(A,B) :- _expr_id(EQ_ID,EQ), EQ=operation(eq,(A,(B,()))), _se_value_id(EQ_ID,val(bool,true)).
+_multimap_eq_result(A,B,EQ) :- _expr_id(E_ID,E), E=operation(eq,(A,(B,()))), _se_value_id(E_ID,val(bool,EQ)).
 
 %%%%%%%%%%%%%%%%% pairstuples
 direct_query(E1;E2) :- direct_query(E), E=(E1,E2).
 
 %%%%%%%%%%%%%%%%% multimap_make
 operator_declare_variadic(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
-_se_value(E,val(multimap,ER)) :- direct_query(E), E=operation(multimap_make,L), ER=ref(E).
-_multimap_add(ER,EK_ID,EV_ID) :- direct_query(E), E=operation(multimap_make,L), _se_value(E,val(multimap,ER)),
+_se_value_id(E_ID,val(multimap,ER)) :- _expr_id(E_ID,E), E=operation(multimap_make,L), ER=ref(E).
+_multimap_add(ER,EK_ID,EV_ID) :- direct_query(E), E=operation(multimap_make,L), E_ID=@pythonId(E), _se_value_id(E_ID,val(multimap,ER)),
     (EK,EV)=@pythonListElements(L), EK_ID=@pythonId(EK), EV_ID=@pythonId(EV).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value
@@ -34,8 +37,8 @@ _multimap_has(val(R),EM,V) :- _multimap_add(EM,EK_ID,EV_ID),
     _se_value_id(EK_ID,K), _se_value_id(EV_ID,V),
     _multimap_representative(key,EM,K,R).
 _multimap_representative(D,E,V,R) :- _multimap_has(D,E,V),
-    _multimap_has(D,E,R), R <= V, _se_value(operation(eq,(R,(V,()))), val(bool,true)),
-    #false: _multimap_has(D,E,W), W < R, _se_value(operation(eq,(W,(R,()))), val(bool,true)).
+    _multimap_has(D,E,R), R <= V, _multimap_eq_true(R,V),
+    #false: _multimap_has(D,E,W), W < R, _multimap_eq_true(W,R).
 
 _multimap_entry(EM,RK,RV) :- _multimap_add(EM,EK_ID,EV_ID),
     _se_value_id(EK_ID,K), _multimap_representative(key,EM,K,RK),
@@ -43,7 +46,8 @@ _multimap_entry(EM,RK,RV) :- _multimap_add(EM,EK_ID,EV_ID),
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-multimap_value(X,KEY,VAL) :- _se_value(E,val(multimap,EM)), _multimap_entry(EM,KEY,VAL), E=variable(X).
+multimap_value(X,KEY,VAL) :- _expr_id(E_ID,E), E=variable(X), _se_value_id(E_ID,val(multimap,EM)), _multimap_entry(EM,KEY,VAL).
+multimap_value(X,KEY,VAL) :- _multimap_declare(_,X), E=variable(X), E_ID=@pythonId(E), _se_value_id(E_ID,val(multimap,EM)), _multimap_entry(EM,KEY,VAL).
 
 %%%%%%%%%%%%%%%%%% find
 operator_declare(OP,(T1,(T2,())),set) :- _type(T1), T2 = multimap, OP = find.
@@ -87,7 +91,7 @@ direct_query(operation(eq,(A,(B,())))) :- _expr_id(E_ID,E), _computeIdx_id(E_ID,
 _computedIdx_id(E_ID,val(bool,NEQ)) :- _computeIdx_id(E_ID, neq),
     _computeIdx_id(E_ID, 0, A),
     _computeIdx_id(E_ID, 1, B),
-    _se_value(operation(eq,(A,(B,()))), val(bool,EQ)),
+    _multimap_eq_result(A,B,EQ),
     (EQ,NEQ)=((true,false);(false,true)).
 
 % Request key/value equality checks for multimap equality.
@@ -108,16 +112,16 @@ _computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, eq),
     _computeIdx_id(E_ID, 1, val(multimap,M2)),
     _multimap_entry(M1,K1,V1),
     #false : _multimap_entry(M2,K2,V2),
-        _se_value(operation(eq,(K1,(K2,()))), val(bool,true)),
-        _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
+        _multimap_eq_true(K1,K2),
+        _multimap_eq_true(V1,V2).
 
 _computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, eq),
     _computeIdx_id(E_ID, 0, val(multimap,M1)),
     _computeIdx_id(E_ID, 1, val(multimap,M2)),
     _multimap_entry(M2,K2,V2),
     #false : _multimap_entry(M1,K1,V1),
-        _se_value(operation(eq,(K1,(K2,()))), val(bool,true)),
-        _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
+        _multimap_eq_true(K1,K2),
+        _multimap_eq_true(V1,V2).
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
@@ -135,7 +139,7 @@ _multimap_foldStep_id(E_ID,I+1,NEXT) :- _computeIdx_id(E_ID, multimap_fold),
     _computeIdx_id(E_ID, 1, val(multimap,VM)),
     _multimap_foldStep_id(E_ID,I,VB),
     _multimap_index(VM,I,_,VI),
-    _se_value(operation(VO,(VI,(VB,()))), NEXT).
+    E=operation(VO,(VI,(VB,()))), NEXT_ID=@pythonId(E), _se_value_id(NEXT_ID,NEXT).
 
 _computedIdx_id(E_ID,VB) :- _computeIdx_id(E_ID, multimap_fold),
     _computeIdx_id(E_ID, 1, val(multimap,VM)),

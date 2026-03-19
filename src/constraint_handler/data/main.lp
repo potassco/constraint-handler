@@ -33,7 +33,8 @@ engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multi
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execution_declare(CNAME,FNAME,STMT,IN,OUT).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execution_run(CNAME,FNAME).
 
-value(X,V) :- _se_value(variable(X),V).
+value(X,V) :- _expr_id(E_ID,E), E=variable(X), _se_value_id(E_ID,V).
+value(X,V) :- ge_value(X,V).
 
 representation((bool;int;str;float;symbol;none),extensional).
 

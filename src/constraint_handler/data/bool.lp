@@ -9,10 +9,10 @@ _computedIdx_id(E_ID,val(none,none)) :- _computeIdx_id(E_ID, lnot), _computeIdx_
 
 %% strong negation / strict negation
 operator_declare(OP,(T1,()),T2) :- T1 = bool,T2 = none, OP = (snot;wnot).
-_se_value(E,val(bool,false))  :- direct_query(E), E=operation(snot,(E1,())), E1_ID=@pythonId(E1), conditional_hasNoValue_id(E1_ID).
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, snot), _computeIdx_id(E_ID, 0, val(none, none)).
 
 %% weak negation / negation as weak failure
-_se_value(E,val(bool,true))  :- direct_query(E), E=operation(wnot,(E1,())), E1_ID=@pythonId(E1), conditional_hasNoValue_id(E1_ID).
+_computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, wnot), _computeIdx_id(E_ID, 0, val(none, none)).
 
 %%%%%%%%%%%%%%%%% conj disj limp
 %% The _compute/_computed interface is given below the eValue interface
@@ -20,9 +20,6 @@ _se_value(E,val(bool,true))  :- direct_query(E), E=operation(wnot,(E1,())), E1_I
 operator_declare_variadic(OP,T,T,1) :- T = bool, OP = (conj;disj).
 _computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID,conj), _computeIdx_id(E_ID,IDX,val(bool,false)).
 _computedIdx_id(E_ID,val(bool,true))  :- _computeIdx_id(E_ID,conj), _computeIdx_id(E_ID,IDX,val(bool,true)) : _computeIdx_id(E_ID,IDX,V).
-
-%_se_value(E,val(bool,true))  :- direct_query(E), E=operation(conj,L), _se_value(E1,val(bool,true)) : E1=@pythonListElements(L).
-%_se_value(E,val(bool,false)) :- direct_query(E), E=operation(conj,L), _se_value(E1,val(bool,false)), E1=@pythonListElements(L).
 
 _computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, disj), _computeIdx_id(E_ID, _, val(bool, true)).
 _computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, disj), _computeIdx_id(E_ID, IDX, val(bool, false)) : _computeIdx_id(E_ID, IDX, V).

@@ -8,7 +8,7 @@ _se_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 _se_assign(CNAME,variable(X),E) :- assign(CNAME,X,E), engine(CNAME,compile).
 _se_evaluate(_se_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(compile).
 
-evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(E,V), E=operation(OP,ARGS).
+evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), E=operation(OP,ARGS), _expr_id(E_ID,E), _se_value_id(E_ID,V).
 
 
 direct_query(E)  :- _se_ensure(NAME,E).
@@ -19,15 +19,13 @@ direct_query(SE) :- direct_query(E), E=operation(OP,ES), not _direct_lazy(OP), S
 
 _expr_id(E_ID,E) :- direct_query(E), E_ID=@pythonId(E).
 
-_se_value(E,E) :- direct_query(E), E=val(_,_).
-_se_value(E,E) :- direct_query(E), E=ref(_,_).
+_se_value_id(E_ID,E) :- _expr_id(E_ID,E), E=val(_,_).
+_se_value_id(E_ID,E) :- _expr_id(E_ID,E), E=ref(_,_).
 
 
-_se_value(E,val(function,E)) :- direct_query(E), E=lambda(VARS,ERES).
+_se_value_id(E_ID,val(function,E)) :- _expr_id(E_ID,E), E=lambda(VARS,ERES).
 
-_se_value(E,V) :- direct_query(E), E=variable(X), _se_assign(NAME,E,E2), _se_value(E2,V), usc_active(NAME).
-
-_se_value_id(E_ID,V) :- _se_value(E,V), E_ID=@pythonId(E).
+_se_value_id(E_ID,V) :- _expr_id(E_ID,E), E=variable(X), _se_assign(NAME,E,E2), _expr_id(E2_ID,E2), _se_value_id(E2_ID,V), usc_active(NAME).
 
 
 
@@ -35,12 +33,12 @@ _se_value_id(E_ID,V) :- _se_value(E,V), E_ID=@pythonId(E).
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
-_direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _se_value(EOP,val(function,OP)).
+_direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _expr_id(EOP_ID,EOP), _se_value_id(EOP_ID,val(function,OP)).
 _direct_queryArgsValues_id(E_ID,OP,ARGS) :- _expr_id(E_ID,E), _direct_queryArgsValues(E,OP,ARGS).
 _computeIdx_id(E_ID,OP) :- _direct_queryArgsValues_id(E_ID,OP,ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 _computeIdx_id(E_ID,IDX,V) :- _direct_queryArgsValues_id(E_ID,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), ARG_ID=@pythonId(ARG), _se_value_id(ARG_ID,V).
-_se_value(E,VO) :- _expr_id(E_ID,E), _computedIdx_id(E_ID,VO).
+_se_value_id(E_ID,VO) :- _computedIdx_id(E_ID,VO).
 
 %%%%%%%%%%%%%%%%% argument-list helpers (compile engine)
 % Only needed for lambda application. Guarding this prevents grounding
@@ -62,7 +60,7 @@ _lambda_aux_id(E_ID,RED) :- _computeIdx_id(E_ID,LAMB),
 _lambda_aux(E,RED) :- _expr_id(E_ID,E), _lambda_aux_id(E_ID,RED).
 
 direct_query(RED) :- _lambda_aux_id(E_ID,RED).
-_computedIdx_id(E_ID,VO) :- _lambda_aux_id(E_ID,RED), _se_value(RED,VO).
+_computedIdx_id(E_ID,VO) :- _lambda_aux_id(E_ID,RED), _expr_id(RED_ID,RED), _se_value_id(RED_ID,VO).
 
 %%%%%%%%%%%%%%%%% python operator (compile engine)
 _direct_implode_id(E_ID,V) :- _computeIdx_id(E_ID,python(_)), _computeIdx_id(E_ID,_,V).
@@ -90,18 +88,16 @@ _warning(KIND,(),(python(S),E,MSG)) :- _expr_id(E_ID,E), _expression_eval_exec_i
 
 %%%%%%%%%%%%%%%%% function definitions
 assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).
-%direct_query(ER) :- direct_query(E), beta_reduction(E,ER).
-%_se_value(E,T,V) :- direct_query(E), beta_reduction(E,ER), _se_value(ER,T,V).
 
 %%%%%%%%%%%%%%%%% bad
-_se_value(E,bad) :- direct_query(E), E=operation(OP,ARGS), _se_value(ARG,bad), ARG=@pythonListElements(ARGS).
-_se_value(E,bad) :- direct_query(E), E=operation(OP,ARGS), _se_value(OP,bad).
-_se_value(E,bad) :- direct_query(E), E=bad.
+_se_value_id(E_ID,bad) :- _expr_id(E_ID,E), E=operation(OP,ARGS), ARG=@pythonListElements(ARGS), _expr_id(ARG_ID,ARG), _se_value_id(ARG_ID,bad).
+_se_value_id(E_ID,bad) :- _expr_id(E_ID,E), E=operation(OP,ARGS), _expr_id(OP_ID,OP), _se_value_id(OP_ID,bad).
+_se_value_id(E_ID,bad) :- _expr_id(E_ID,E), E=bad.
 
 %%%%%%%%%%%%%%%%% implode
 _direct_imploded(E,E) :- _direct_implode(E), E=val(T,V), representation(T,extensional).
 
-_direct_imploded(E,V) :- _direct_implode(E), E=variable(X), _se_value(E,V).
+_direct_imploded(E,V) :- _direct_implode(E), E=variable(X), _expr_id(E_ID,E), _se_value_id(E_ID,V).
 
 engine(_internal,compile).
 %:- engine(NAME,E), not ensure(NAME,_), not assign(NAME,_,_).
@@ -109,4 +105,4 @@ engine(_internal,compile).
 #external usc_relax(NAME) : engine(NAME,E).
 { usc_active(NAME) } :- engine(NAME,E).
 usc_active(NAME) :- engine(NAME,E), not usc_relax(NAME).
-:- _se_ensure(NAME,E), not _se_value(E,val(bool,true)), not _se_value(E,bad), usc_active(NAME).
+:- _se_ensure(NAME,E), _expr_id(E_ID,E), not _se_value_id(E_ID,val(bool,true)), not _se_value_id(E_ID,bad), usc_active(NAME).
