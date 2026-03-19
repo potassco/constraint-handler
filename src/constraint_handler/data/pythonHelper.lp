@@ -3,6 +3,7 @@
 import itertools
 import operator
 import typing
+import hashlib
 
 import clingo
 
@@ -161,6 +162,11 @@ def pythonTagVars(clExpr,clName):
     map = { var : Local(pName,var) for var in vars }
     pExp2 = evaluator.beta_reduction(map,pExpr)
     return myClorm.pytocl(pExp2)
+
+
+def pythonId(clTerm):
+    digest = hashlib.blake2b(str(clTerm).encode("utf-8"), digest_size=16).hexdigest()
+    return clingo.Function("id", [clingo.String(digest)])
 
 
 def pythonInit(clX):

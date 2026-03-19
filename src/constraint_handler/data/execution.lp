@@ -47,28 +47,32 @@ _execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = seq2(STMT1,STMT
 %%%%%%%%%%%%%%%%% _execution_equery -> _execution_evaled
 %_execution_eval_aux(NAME,EXPR,EXP2) :- _execution_equery(NAME,EXPR), EXP2=@pythonTagVars(EXPR,NAME).
 %direct_query(EXP2) :- _execution_eval_aux(NAME,EXPR,EXP2).
-_execution_eval_aux(NAME,STMT,EXPR,EXP2) :- _execution_equery(NAME,STMT,EXPR), EXP2=@pythonTagVars(EXPR,NAME).
-direct_query(EXP2) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2).
+_statement_id(STMT_ID,STMT) :- _execution_run(NAME,STMT), STMT_ID=@pythonId(STMT).
+_expr_id(EXPR_ID,EXPR) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), EXPR_ID=@pythonId(EXPR).
+_expr_id(EXPR_ID,EXPR) :- _execution_run(NAME,STMT), STMT = assert(EXPR), EXPR_ID=@pythonId(EXPR).
+_expr_id(EXPR_ID,EXPR) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), EXPR_ID=@pythonId(EXPR).
+_execution_eval_aux(NAME,STMT_ID,EXPR_ID,EXP2) :- _execution_equery(NAME,STMT_ID,EXPR_ID), _expr_id(EXPR_ID,EXPR), EXP2=@pythonTagVars(EXPR,NAME).
+direct_query(EXP2) :- _execution_eval_aux(NAME,STMT_ID,EXPR_ID,EXP2).
 _set_declare(_internal,E) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L).
 _set_assign(_internal,E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V), V=set(L), V=@pythonListElements(L).
 _se_value(E,V) :- direct_query(E), E=local(NAME,X), _execution_in(NAME,X,V).
 %_execution_evaled(NAME,EXPR,V) :- _execution_eval_aux(NAME,EXPR,EXP2), _se_value(EXP2,V), V=val(T,VAL).
-_execution_evaled(NAME,STMT,EXPR,V) :- _execution_eval_aux(NAME,STMT,EXPR,EXP2), _se_value(EXP2,V).
+_execution_evaled(NAME,STMT_ID,EXPR_ID,V) :- _execution_eval_aux(NAME,STMT_ID,EXPR_ID,EXP2), _se_value(EXP2,V).
 
 
 %%%%%%%%%%%%%%%%% assign
-_execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR).
-_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_evaled(NAME,STMT,EXPR,V), V!=bad.
-_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_evaled(NAME,STMT,EXPR,bad).
+_execution_equery(NAME,STMT_ID,EXPR_ID) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _statement_id(STMT_ID,STMT), _expr_id(EXPR_ID,EXPR).
+_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assign(X,_), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,V), V!=bad.
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assign(X,_), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,bad).
 %_execution_ou(NAME,Y,V) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_in(NAME,Y,V), X != Y. % TODO:???
-_execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = assign(X,EXPR), _execution_evaled(NAME,STMT,EXPR,V).
+_execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = assign(X,_), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,V).
 
 
 %%%%%%%%%%%%%%%%% assert
-_execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = assert(EXPR).
-:- _execution_run(NAME,STMT), STMT = assert(EXPR), _execution_evaled(NAME,STMT,EXPR,V), V != val(bool,true), V != bad.
-_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assert(EXPR), _execution_evaled(NAME,STMT,EXPR,V), V!=bad.
-_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assert(EXPR), _execution_evaled(NAME,STMT,EXPR,bad).
+_execution_equery(NAME,STMT_ID,EXPR_ID) :- _execution_run(NAME,STMT), STMT = assert(EXPR), _statement_id(STMT_ID,STMT), _expr_id(EXPR_ID,EXPR).
+:- _execution_run(NAME,STMT), STMT = assert(_), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,V), V != val(bool,true), V != bad.
+_execution_succeeds(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assert(_), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,V), V!=bad.
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = assert(_), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,bad).
 
 
 %%%%%%%%%%%%%%%%% statement_python
@@ -88,11 +92,11 @@ _warning(KIND,(NAME,()),(STR,MSG,NAME)) :- _execution_run(NAME,STMT), STMT = sta
 
 
 %%%%%%%%%%%%%%%%% ifthenelse
-_execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE).
+_execution_equery(NAME,STMT_ID,EXPR_ID) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _statement_id(STMT_ID,STMT), _expr_id(EXPR_ID,EXPR).
 
-_execution_branch((then,NAME),THEN) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_evaled(NAME,STMT,EXPR,val(bool,true)).
-_execution_branch((else,NAME),ELSE) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_evaled(NAME,STMT,EXPR,val(bool,false)).
-_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_evaled(NAME,STMT,EXPR,V), V!=val(bool,false), V!=val(bool,true).
+_execution_branch((then,NAME),THEN) :- _execution_run(NAME,STMT), STMT = if(_,THEN,ELSE), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,val(bool,true)).
+_execution_branch((else,NAME),ELSE) :- _execution_run(NAME,STMT), STMT = if(_,THEN,ELSE), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,val(bool,false)).
+_execution_fails(NAME,STMT) :- _execution_run(NAME,STMT), STMT = if(_,THEN,ELSE), _statement_id(STMT_ID,STMT), _execution_equery(NAME,STMT_ID,EXPR_ID), _execution_evaled(NAME,STMT_ID,EXPR_ID,V), V!=val(bool,false), V!=val(bool,true).
 _execution_run(BNAME,BSTMT) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME).
 _execution_in(((then;else),NAME),X,V) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_in(NAME,X,V).
 _execution_ou(NAME,X,V) :- _execution_run(NAME,STMT), STMT = if(EXPR,THEN,ELSE), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_ou(BNAME,X,V), _execution_succeeds(BNAME,BSTMT).

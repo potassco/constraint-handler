@@ -20,11 +20,18 @@ _optimize_precision(val(int,1),P) :- _optimize_maximizeSum(_,_,_,P), not optimiz
 
 _optimize_se_maximizeSum(CNAME,E,X,P) :- _optimize_maximizeSum(CNAME,E,X,P), engine(CNAME,compile).
 
-_optimize_se_component(ME,X,P) :- _optimize_se_maximizeSum(CNAME,E,X,P),
+_optimize_se_component(ME_ID,X,P) :- _optimize_se_maximizeSum(CNAME,E,X,P),
   _optimize_precision(PREC,P),
   ME = operation(CAST,(E,(PREC,()))),
-  CAST = python("lambda v,p: math.floor(v*p)").
+  CAST = python("lambda v,p: math.floor(v*p)"),
+  _expr_id(ME_ID,ME).
 
-direct_query(E) :- _optimize_se_component(E,X,P).
+_expr_id(ME_ID,ME) :- _optimize_se_maximizeSum(CNAME,E,X,P),
+  _optimize_precision(PREC,P),
+  ME = operation(CAST,(E,(PREC,()))),
+  CAST = python("lambda v,p: math.floor(v*p)"),
+  ME_ID=@pythonId(ME).
 
-#maximize { I@P,X : _optimize_se_component(E,X,P), _se_value(E,val(int,I)) }.
+direct_query(E) :- _optimize_se_component(E_ID,X,P), _expr_id(E_ID,E).
+
+#maximize { I@P,X : _optimize_se_component(E_ID,X,P), _se_value_id(E_ID,val(int,I)) }.

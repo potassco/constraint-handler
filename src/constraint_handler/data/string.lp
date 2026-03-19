@@ -1,8 +1,8 @@
 %%%%%%%%%%%%%%%%% length concat
 operator_declare(OP,(T,()),int) :- T = str, OP = length.
 operator_declare(OP,(T,(T,())),T) :- T = str, OP = concat.
-_computedIdx(E,val(int,N)) :- _computeIdx(E, length), _computeIdx(E, 0, val(str, S)), N=@pythonStringLength(S).
-_computedIdx(E,val(str,R)) :- _computeIdx(E, concat), _computeIdx(E, 0, val(str, S1)), _computeIdx(E, 1, val(str, S2)), R=@pythonStringAdd(S1,S2).
+_computedIdx_id(E_ID,val(int,N)) :- _computeIdx_id(E_ID, length), _computeIdx_id(E_ID, 0, val(str, S)), N=@pythonStringLength(S).
+_computedIdx_id(E_ID,val(str,R)) :- _computeIdx_id(E_ID, concat), _computeIdx_id(E_ID, 0, val(str, S1)), _computeIdx_id(E_ID, 1, val(str, S2)), R=@pythonStringAdd(S1,S2).
 
 #script(python)
 

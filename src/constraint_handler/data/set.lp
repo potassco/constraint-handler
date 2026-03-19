@@ -7,13 +7,14 @@ _set_assign(CNAME,variable(X),E) :- engine(CNAME,compile), set_assign(CNAME,X,E)
 _set_declare(CNAME,variable(X)) :- engine(CNAME,compile), set_declare(CNAME,X).
 
 direct_query(E)    :- _set_assign(NAME,X,E).
+_set_assign_id(NAME,EX,E_ID) :- _set_assign(NAME,EX,E), E_ID=@pythonId(E).
 
 representation(set,intensional).
 
 %%%%%%%%%%%%%%%%% length
 operator_declare(OP,(T,()),int) :- T = set, OP = length.
-_computedIdx(E,val(int,N)) :- _computeIdx(E, length),
-    _computeIdx(E, 0, ref(set,SET)),
+_computedIdx_id(E_ID,val(int,N)) :- _computeIdx_id(E_ID, length),
+    _computeIdx_id(E_ID, 0, ref(set,SET)),
     N = #count { V : _set_contains(SET,V) }.
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
@@ -21,15 +22,15 @@ _computedIdx(E,val(int,N)) :- _computeIdx(E, length),
 _se_value(EX,ref(set,EX)) :- _set_declare(NAME,EX).
 
 _set_contains(EX,V1) :-
-    _set_assign(NAME,EX,E1), _se_value(E1,V1), %_se_value(EX,ref(set,ER)),
-    #false : _set_assign(N2,EX,E2), _se_value(E2,V2),
+    _set_assign_id(NAME,EX,E1_ID), _se_value_id(E1_ID,V1),
+    #false : _set_assign_id(N2,EX,E2_ID), _se_value_id(E2_ID,V2),
         _se_value(operation(eq,(V2,(V1,()))), val(bool,true)),
         V2 < V1.
 
 % Request semantic equality checks between set-assigned values.
 direct_query(operation(eq,(V1,(V2,())))) :-
-    _set_assign(_,EX,E1), _se_value(E1,V1),
-    _set_assign(_,EX,E2), _se_value(E2,V2).
+    _set_assign_id(_,EX,E1_ID), _se_value_id(E1_ID,V1),
+    _set_assign_id(_,EX,E2_ID), _se_value_id(E2_ID,V2).
 
 _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ER), ER=ref(set,S).
 
@@ -38,31 +39,32 @@ set_value(X,V) :- _se_value(EX,ref(set,E)), _set_contains(E,V), EX=variable(X).
 %%%%%%%%%%%%%%%%% isin notin
 operator_declare(OP,(T1,(T2,())),bool) :- _type(T1),T2=set, OP = (isin;notin).
 direct_query(operation(eq,(V1,(V2,())))) :-
-    _computeIdx(E, (isin;notin)),
-    _computeIdx(E, 0, V1),
-    _computeIdx(E, 1, ref(set,S)),
+    _expr_id(E_ID,E),
+    _computeIdx_id(E_ID, (isin;notin)),
+    _computeIdx_id(E_ID, 0, V1),
+    _computeIdx_id(E_ID, 1, ref(set,S)),
     _set_contains(S,V2).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E, isin),
-    _computeIdx(E, 0, V1),
-    _computeIdx(E, 1, ref(set,S)),
+_computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, isin),
+    _computeIdx_id(E_ID, 0, V1),
+    _computeIdx_id(E_ID, 1, ref(set,S)),
     _set_contains(S,V2),
     _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, isin),
-    _computeIdx(E, 0, V1),
-    _computeIdx(E, 1, ref(set,S)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, isin),
+    _computeIdx_id(E_ID, 0, V1),
+    _computeIdx_id(E_ID, 1, ref(set,S)),
     #false : _set_contains(S,V2), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, notin),
-    _computeIdx(E, 0, V1),
-    _computeIdx(E, 1, ref(set,S)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, notin),
+    _computeIdx_id(E_ID, 0, V1),
+    _computeIdx_id(E_ID, 1, ref(set,S)),
     _set_contains(S,V2),
     _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E, notin),
-    _computeIdx(E, 0, V1),
-    _computeIdx(E, 1, ref(set,S)),
+_computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, notin),
+    _computeIdx_id(E_ID, 0, V1),
+    _computeIdx_id(E_ID, 1, ref(set,S)),
     #false : _set_contains(S,V2), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
 %%%%%%%%%%%%%%%%% set_make
@@ -82,78 +84,81 @@ _set_assign(_internal,E,SE) :- direct_query(E), E=set(L), SE=@pythonListElements
 %%%%%%%%%%%%%%%%% union inter diff
 operator_declare(OP,(T,(T,())),T) :- T = set, OP = (union;inter;diff).
 _set_declare(_internal,E) :- direct_query(E), E=operation((diff;inter;union),L).
-_set_assign(_internal,E,V) :- direct_query(E), E=operation(union,L), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
+_set_assign(_internal,E,V) :- direct_query(E), E=operation(union,L), SE=@pythonListElements(L), SE_ID=@pythonId(SE), _se_value_id(SE_ID,ref(set,ER)), _set_contains(ER,V).
 
 direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(E), E=operation((diff;inter),L), L=(S1,(S2,())),
-    _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
+    S1_ID=@pythonId(S1), S2_ID=@pythonId(S2),
+    _se_value_id(S1_ID,ref(set,R1)), _se_value_id(S2_ID,ref(set,R2)),
     _set_contains(R1,V1),
     _set_contains(R2,V2),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 _set_assign(_internal,E,VSMALL) :- direct_query(E), E=operation(inter,L), L=(S1,(S2,())),
-    _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
+    S1_ID=@pythonId(S1), S2_ID=@pythonId(S2),
+    _se_value_id(S1_ID,ref(set,R1)), _se_value_id(S2_ID,ref(set,R2)),
     _set_contains(R1,V1),
     _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))), val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 _set_assign(_internal,E,V1) :- direct_query(E), E=operation(diff,L), L=(S1,(S2,())),
-    _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
+    S1_ID=@pythonId(S1), S2_ID=@pythonId(S2),
+    _se_value_id(S1_ID,ref(set,R1)), _se_value_id(S2_ID,ref(set,R2)),
     _set_contains(R1,V1),
     #false : _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))), val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 %%%%%%%%%%%%%%%%% Equality
 operator_declare(OP,(T,(T,())),bool) :- T = set, OP = (eq;neq).
-direct_query(operation(eq,(A,(B,())))) :- _computeIdx(E, neq), _computeIdx(E, 0, A), _computeIdx(E, 1, B).
+direct_query(operation(eq,(A,(B,())))) :- _expr_id(E_ID,E), _computeIdx_id(E_ID, neq), _computeIdx_id(E_ID, 0, A), _computeIdx_id(E_ID, 1, B).
 
-_computedIdx(E,val(bool,NEQ)) :- _computeIdx(E, neq),
-    _computeIdx(E, 0, A),
-    _computeIdx(E, 1, B),
+_computedIdx_id(E_ID,val(bool,NEQ)) :- _computeIdx_id(E_ID, neq),
+    _computeIdx_id(E_ID, 0, A),
+    _computeIdx_id(E_ID, 1, B),
     _se_value(operation(eq,(A,(B,()))), val(bool,EQ)),
     (EQ,NEQ)=((true,false);(false,true)).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E, eq),
-    _computeIdx(E, 0, ref(set,S1)),
-    _computeIdx(E, 1, ref(set,S2)),
-    not _computedIdx(E,val(bool,false)).
+_computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 0, ref(set,S1)),
+    _computeIdx_id(E_ID, 1, ref(set,S2)),
+    not _computedIdx_id(E_ID,val(bool,false)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
-    _computeIdx(E, 0, ref(set,_)),
-    _computeIdx(E, 1, val(T2,_)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 0, ref(set,_)),
+    _computeIdx_id(E_ID, 1, val(T2,_)),
     T2 != set.
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
-    _computeIdx(E, 0, val(T1,_)),
-    _computeIdx(E, 1, ref(set,_)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 0, val(T1,_)),
+    _computeIdx_id(E_ID, 1, ref(set,_)),
     T1 != set.
 
 % Request element equality checks for set equality/subset.
-direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E, eq),
-    _computeIdx(E, 0, ref(set,S1)),
-    _computeIdx(E, 1, ref(set,S2)),
+direct_query(operation(eq,(V1,(V2,())))) :- _expr_id(E_ID,E), _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 0, ref(set,S1)),
+    _computeIdx_id(E_ID, 1, ref(set,S2)),
     _set_contains(S1,V1),
     _set_contains(S2,V2).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
-    _computeIdx(E, 0, ref(set,S1)),
-    _computeIdx(E, 1, ref(set,S2)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 0, ref(set,S1)),
+    _computeIdx_id(E_ID, 1, ref(set,S2)),
     _set_contains(S1,V1),
     #false : _set_contains(S2,V2), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
-    _computeIdx(E, 0, ref(set,S1)),
-    _computeIdx(E, 1, ref(set,S2)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 0, ref(set,S1)),
+    _computeIdx_id(E_ID, 1, ref(set,S2)),
     _set_contains(S2,V2),
     #false : _set_contains(S1,V1), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
 %%%%%%%%%%%%%%%%% Equality axioms
 
-:- _computedIdx(E,val(bool,false)), E=operation(eq,(ref(set,X),(ref(set,X),()))). %%% reflexivity
-:- _computedIdx(E1,val(bool,true)), E1=operation(eq,(ref(set,X),(ref(set,Y),()))),
-   _computedIdx(E2,val(bool,false)), E2=operation(eq,(ref(set,Y),(ref(set,X),()))). %%% symmetry
-:- _computedIdx(E1,val(bool,true)), E1=operation(eq,(ref(set,L1),(ref(set,R1),()))),
-   _computedIdx(E2,val(bool,true)), E2=operation(eq,(ref(set,L2),(ref(set,R2),()))),
-   _computedIdx(E3,val(bool,false)), E3=operation(eq,(ref(set,L3),(ref(set,R3),()))),
+:- _expr_id(E_ID,E), _computedIdx_id(E_ID,val(bool,false)), E=operation(eq,(ref(set,X),(ref(set,X),()))). %%% reflexivity
+:- _expr_id(E1_ID,E1), _computedIdx_id(E1_ID,val(bool,true)), E1=operation(eq,(ref(set,X),(ref(set,Y),()))),
+   _expr_id(E2_ID,E2), _computedIdx_id(E2_ID,val(bool,false)), E2=operation(eq,(ref(set,Y),(ref(set,X),()))). %%% symmetry
+:- _expr_id(E1_ID,E1), _computedIdx_id(E1_ID,val(bool,true)), E1=operation(eq,(ref(set,L1),(ref(set,R1),()))),
+   _expr_id(E2_ID,E2), _computedIdx_id(E2_ID,val(bool,true)), E2=operation(eq,(ref(set,L2),(ref(set,R2),()))),
+   _expr_id(E3_ID,E3), _computedIdx_id(E3_ID,val(bool,false)), E3=operation(eq,(ref(set,L3),(ref(set,R3),()))),
     X=(L1;R1), Y=(L1;R1),
     Y=(L2;R2), Z=(L2;R2),
     X=(L3;R3), Z=(L3;R3),
@@ -161,26 +166,26 @@ _computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
 
 %%%%%%%%%%%%%%%%% Subset
 operator_declare(OP,(T,(T,())),bool) :- T = (set), OP = subset.
-direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E, subset),
-    _computeIdx(E, 0, ref(set,S1)),
-    _computeIdx(E, 1, ref(set,S2)),
+direct_query(operation(eq,(V1,(V2,())))) :- _expr_id(E_ID,E), _computeIdx_id(E_ID, subset),
+    _computeIdx_id(E_ID, 0, ref(set,S1)),
+    _computeIdx_id(E_ID, 1, ref(set,S2)),
     _set_contains(S1,V1),
     _set_contains(S2,V2).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, subset),
-    _computeIdx(E, 0, ref(set,S1)),
-    _computeIdx(E, 1, ref(set,S2)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, subset),
+    _computeIdx_id(E_ID, 0, ref(set,S1)),
+    _computeIdx_id(E_ID, 1, ref(set,S2)),
     _set_contains(S1,V1),
     #false : _set_contains(S2,V2), _se_value(operation(eq,(V1,(V2,()))), val(bool,true)).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E, subset),
-    _computeIdx(E, 0, ref(set,_)),
-    _computeIdx(E, 1, ref(set,_)),
-    not _computedIdx(E,val(bool,false)).
+_computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, subset),
+    _computeIdx_id(E_ID, 0, ref(set,_)),
+    _computeIdx_id(E_ID, 1, ref(set,_)),
+    not _computedIdx_id(E_ID,val(bool,false)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, subset),
-    _computeIdx(E, 0, val(T1,_)),
-    _computeIdx(E, 1, val(T2,_)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, subset),
+    _computeIdx_id(E_ID, 0, val(T1,_)),
+    _computeIdx_id(E_ID, 1, val(T2,_)),
     (T1;T2) != set, (T1;T2) = set.
 
 %%%%%%%%%%%%%%%%%% Fold
@@ -201,8 +206,8 @@ _set_foldStep(E,I+1,NEXT) :- _computeIdx(E, set_fold),
     _set_index(VM,I,VI),
     _se_value(operation(VO,(VI,(VB,()))), NEXT).
 
-_computedIdx(E,VB) :- _computeIdx(E, set_fold),
-    _computeIdx(E, 1, ref(set,VM)),
+_computedIdx_id(E_ID,VB) :- _computeIdx_id(E_ID, set_fold),
+    _computeIdx_id(E_ID, 1, ref(set,VM)),
     _set_foldStep(E,I,VB),
     _set_lastIndex(VM,I).
 

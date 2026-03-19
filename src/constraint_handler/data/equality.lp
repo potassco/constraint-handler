@@ -10,32 +10,32 @@
 %
 operator_declare(OP,(T,(T,())),bool) :- representation(T,extensional), T != none, T != float, OP = (eq;neq).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E, eq),
-    _computeIdx(E, 0, val(T, V)),
-    _computeIdx(E, 1, val(T, V)),
+_computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 0, val(T, V)),
+    _computeIdx_id(E_ID, 1, val(T, V)),
     representation(T, extensional), T != none, T != float.
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
-    _computeIdx(E, 0, val(T, V)),
-    not _computeIdx(E, 1, val(T, V)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 0, val(T, V)),
+    not _computeIdx_id(E_ID, 1, val(T, V)),
     representation(T, extensional), T != none, T != float.
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, eq),
-    _computeIdx(E, 1, val(T, V)),
-    not _computeIdx(E, 0, val(T, V)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, eq),
+    _computeIdx_id(E_ID, 1, val(T, V)),
+    not _computeIdx_id(E_ID, 0, val(T, V)),
     representation(T, extensional), T != none, T != float.
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E, neq),
-    _computeIdx(E, 0, val(T, V)),
-    not _computeIdx(E, 1, val(T, V)),
+_computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, neq),
+    _computeIdx_id(E_ID, 0, val(T, V)),
+    not _computeIdx_id(E_ID, 1, val(T, V)),
     representation(T, extensional), T != none, T != float.
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E, neq),
-    _computeIdx(E, 1, val(T, V)),
-    not _computeIdx(E, 0, val(T, V)),
+_computedIdx_id(E_ID,val(bool,true)) :- _computeIdx_id(E_ID, neq),
+    _computeIdx_id(E_ID, 1, val(T, V)),
+    not _computeIdx_id(E_ID, 0, val(T, V)),
     representation(T, extensional), T != none, T != float.
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E, neq),
-    _computeIdx(E, 0, val(T, V)),
-    _computeIdx(E, 1, val(T, V)),
+_computedIdx_id(E_ID,val(bool,false)) :- _computeIdx_id(E_ID, neq),
+    _computeIdx_id(E_ID, 0, val(T, V)),
+    _computeIdx_id(E_ID, 1, val(T, V)),
     representation(T, extensional), T != none, T != float.
