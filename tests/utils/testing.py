@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 import clingo
 import clintest.assertion
@@ -13,32 +13,30 @@ import constraint_handler.myClorm as myClorm
 
 def atoms_from_file(file_name):
     try:
-        with open(file_name, "r") as f:
-            contents = f.read().split()
+        with open(file_name, "r", encoding="utf-8") as file_handle:
+            contents = file_handle.read().split()
             return [clingo.symbol.parse_term(atom) for atom in contents]
     except FileNotFoundError:
-        # print("missing file",file_name)
         return []
 
 
-def contains(a):
-    return clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
+def contains(atom):
+    return clintest.assertion.Or(*(clintest.assertion.Contains(atom), TheoryContains(atom)))
 
 
 def build_expectations(name):
-    # opt_contains = lambda a: clintest.assertion.Implies(clintest.assertion.Optimal(), contains(a)) # TODO: this should work
     opt_contains = contains
-    absent = lambda a: clintest.assertion.Not(
-        clintest.assertion.Or(*(clintest.assertion.Contains(a), TheoryContains(a)))
+    absent = lambda atom: clintest.assertion.Not(
+        clintest.assertion.Or(*(clintest.assertion.Contains(atom), TheoryContains(atom)))
     )
     expected_all = atoms_from_file(name + ".expected.all")
-    test_all = clintest.test.And(*(clintest.test.Assert(All(), opt_contains(a)) for a in expected_all))
+    test_all = clintest.test.And(*(clintest.test.Assert(All(), opt_contains(atom)) for atom in expected_all))
     expected_any = atoms_from_file(name + ".expected.any")
-    test_any = clintest.test.And(*(clintest.test.Assert(Any(), opt_contains(a)) for a in expected_any))
+    test_any = clintest.test.And(*(clintest.test.Assert(Any(), opt_contains(atom)) for atom in expected_any))
     expected_none = atoms_from_file(name + ".expected.none")
-    test_none = clintest.test.And(*(clintest.test.Assert(All(), absent(a)) for a in expected_none))
+    test_none = clintest.test.And(*(clintest.test.Assert(All(), absent(atom)) for atom in expected_none))
     expected_first = atoms_from_file(name + ".expected.first")
-    test_first = clintest.test.And(*(clintest.test.Assert(First(), contains(a)) for a in expected_first))
+    test_first = clintest.test.And(*(clintest.test.Assert(First(), contains(atom)) for atom in expected_first))
     test_exists = (
         clintest.test.Assert(Any(), clintest.assertion.True_())
         if (expected_all or expected_first) and not expected_any
@@ -49,17 +47,16 @@ def build_expectations(name):
 
 def build_reasoning_mode_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
     expected_brave = atoms_from_file(name + ".expected.brave")
-    test_brave = clintest.test.And(*(clintest.test.Assert(Last(), contains(a)) for a in expected_brave))
+    test_brave = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_brave))
 
     expected_cautious = atoms_from_file(name + ".expected.cautious")
-    test_cautious = clintest.test.And(*(clintest.test.Assert(Last(), contains(a)) for a in expected_cautious))
+    test_cautious = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_cautious))
 
     return [(test_brave, ["--enum-mode=brave"]), (test_cautious, ["--enum-mode=cautious"])]
 
 
 class TheoryContains(clintest.assertion.Assertion):
     def __init__(self, symbol: Union[clingo.Symbol, str]) -> None:
-        # self.__symbol = _into_symbol(symbol)
         self.__symbol = symbol
 
     def __repr__(self):
@@ -92,8 +89,8 @@ class Solver(clintest.solver.Solver):
         constraint_handler.add_to_control(ctl, propagator_check_only=self.__propagator_check_only)
         ctl.add(self.__program)
 
-        for file in self.__files:
-            ctl.load(file)
+        for file_name in self.__files:
+            ctl.load(file_name)
         ctl.ground()
 
         if not test.outcome().is_certain():
@@ -122,44 +119,19 @@ class PropPrint(clingo.propagator.Propagator):
         print("init")
 
     def propagate(self, ctl, changes):
-        for a in changes:
-            print(a, end=" ")
+        for atom in changes:
+            print(atom, end=" ")
         print()
 
     def check(self, ctl):
         print("check", len(ctl.assignment.trail))
 
-    def on_model(self, _model):
+    def on_model(self, model):
         value_map = {"b": True, "i": 42, "y": 85, "s": "foo", "x": "foo", "f": 47.1}
         for var, val in value_map.items():
-            x = clingo.Function(var)
-            t = myClorm.pytocl(evaluator.get_baseType(val))
-            v = myClorm.pytocl(val)
-            fact = clingo.Function("value", [x, t, v])
+            symbol = clingo.Function(var)
+            base_type = myClorm.pytocl(evaluator.get_baseType(val))
+            value = myClorm.pytocl(val)
+            fact = clingo.Function("value", [symbol, base_type, value])
             print(f"extending with {fact}")
-            _model.extend([fact])
-
-
-def incorrect_arity_error(operator: Any, expected_arity: Union[int, str], given_arity: int) -> TypeError:
-    """
-    Create a TypeError for incorrect operator arity.
-
-    Args:
-        operator: The operator that was called
-        expected_arity: Expected number of arguments (int or string like "at least 1")
-        given_arity: Actual number of arguments provided
-
-    Returns:
-        TypeError instance with appropriate message
-    """
-    operator_name = str(operator).split(".")[-1]
-    if isinstance(expected_arity, int):
-        arity_desc = f"exactly {expected_arity}"
-        arg_word = "argument" if expected_arity == 1 else "arguments"
-    else:
-        arity_desc = str(expected_arity)
-        arg_word = "arguments"
-
-    given_word = "was given" if given_arity == 1 else "were given"
-
-    return TypeError(f"{operator_name} takes {arity_desc} {arg_word} ({given_arity} {given_word})")
+            model.extend([fact])

@@ -2,7 +2,7 @@ from typing import Literal
 
 import pytest
 
-import constraint_handler.utils.testing as chut
+import tests.utils.testing as chut
 
 ctrl_options = ["0", "--heuristic=Domain"]
 
