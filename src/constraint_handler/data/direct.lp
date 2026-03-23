@@ -33,6 +33,7 @@ _se_value(E,V) :- direct_query(E), E=variable(X), _se_assign(NAME,E,E2), _se_val
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
 _direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _se_value(EOP,val(function,OP)).
 _computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
+_length(E,LEN) :- _direct_queryArgsValues(E,_,ARGS), LEN=@pythonListLength(ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 _computeIdx(E,IDX,V) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,V).
 _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
@@ -42,7 +43,7 @@ _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 % all argument combinations for every operation.
 _direct_needs_args_list(E) :- _direct_queryArgsValues(E,OP,_), OP=lambda(_,_).
 
-_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E), _direct_queryArgsValues(E,_,ARGS), IDX=@pythonListLength(ARGS).
+_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E), _length(E,IDX).
 _direct_args_list_aux(E,IDX,(V,VS)) :- _direct_needs_args_list(E), _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
 _direct_args_list(E,VS) :- _direct_needs_args_list(E), _direct_args_list_aux(E,0,VS).
 
@@ -58,7 +59,7 @@ _computedIdx(E,VO) :- _lambda_aux(E,RED), _se_value(RED,VO).
 %%%%%%%%%%%%%%%%% python operator (compile engine)
 _direct_implode(V) :- _computeIdx(E,python(_)), _computeIdx(E,_,V).
 
-_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(_),ARGS), IDX=@pythonListLength(ARGS).
+_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(_),_), _length(E,IDX).
 _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L),
     _computeIdx(E,IDX,V),
     _direct_imploded(V,IMP).

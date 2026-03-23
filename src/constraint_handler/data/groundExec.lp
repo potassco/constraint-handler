@@ -7,7 +7,8 @@ _gex_outputVar(NAME,X,EX) :- _gex_declare(NAME,STMT,INS,OUTS), X=@pythonListElem
 
 direct_query(V) :- _gex_run(NAME,STMT,INS,OUTS), _gex_inputVar(NAME,I,X,EX), V=variable(EX).
 _direct_implode(V) :- _gex_run(NAME,STMT,INS,OUTS), _gex_inputVar(NAME,I,X,EX), V=variable(EX).
-_gex_mapAux(NAME,N,()) :- _gex_run(NAME,STMT,INS,OUTS), N=@pythonListLength(INS).
+_length(inputs(NAME),N) :- _gex_run(NAME,STMT,INS,OUTS), N=@pythonListLength(INS).
+_gex_mapAux(NAME,N,()) :- _gex_run(NAME,STMT,INS,OUTS), _length(inputs(NAME),N).
 _gex_mapAux(NAME,I,K) :- _gex_mapAux(NAME,I+1,M), _gex_inputVar(NAME,I,X,EX), V=variable(EX), _direct_imploded(V,W), K=((X,W),M).
 _gex_mapped(NAME,M) :- _gex_mapAux(NAME,0,M).
 

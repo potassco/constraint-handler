@@ -5,8 +5,7 @@ operator_declare_variadic(OP,T,T,1) :- T = int, OP = (add;mult).
 % This avoids building tail tuples of evaluated arguments.
 _computedIdx(E, val(int, N)) :-
     _computeIdx(E, add),
-    E = operation(add, ARGS),
-    LEN = @pythonListLength(ARGS),
+    _length(E, LEN),
     LEN = #count { IDX : _computeIdx(E, IDX, val(int, _)) },
     N = #sum { V, IDX : _computeIdx(E, IDX, val(int, V)) }.
 
@@ -14,10 +13,14 @@ _computedIdx(E, val(int, N)) :-
 % Short-circuit to 0 if any argument is 0.
 _computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,0)).
 % Empty product is 1.
-_computedIdx(E,val(int,1)) :- _computeIdx(E,mult), not _computeIdx(E, 0, _).
-_int_mult(E,0,val(int,1)) :- _computeIdx(E,mult).
-_int_mult(E,IDX+1,val(int,VO*V)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,V)), _int_mult(E,IDX,val(int,VO)).
-_computedIdx(E,V)  :- _computeIdx(E,mult), _int_mult(E,IDX,V),_computeIdx(E,IDX-1,_), not _computeIdx(E,IDX,_).
+_computedIdx(E,val(int,1)) :- _computeIdx(E,mult), _length(E,0).
+_int_mult(E,0,val(int,V)) :- _computeIdx(E,mult), _computeIdx(E,0,val(int,V)).
+_int_mult(E,IDX,val(int,VO*V)) :-
+    _computeIdx(E,mult),
+    IDX > 0,
+    _computeIdx(E,IDX,val(int,V)),
+    _int_mult(E,IDX-1,val(int,VO)).
+_computedIdx(E,V)  :- _computeIdx(E,mult), _length(E,LEN), LEN > 0, LAST = LEN - 1, _int_mult(E,LAST,V).
 
 %%%%%%%%%%%%%%%%% sub int_div pow
 operator_declare(OP,(T,(T,())),T) :- T = int, OP = (sub;pow).
