@@ -40,8 +40,10 @@
     width: 1.5rem;
 }
 
-.md-nav--primary .md-nav__title {
-    display: none !important;
+@media (min-width: 1220px) {
+    .md-nav--primary .md-nav__title {
+        display: none !important;
+    }
 }
 
 /* Prevent wrapping in the first column of all tables */
