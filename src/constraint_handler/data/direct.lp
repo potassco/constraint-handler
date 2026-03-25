@@ -8,14 +8,14 @@ _se_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 _se_assign(CNAME,variable(X),E) :- assign(CNAME,X,E), engine(CNAME,compile).
 _se_evaluate(_se_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(compile).
 
-evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(E,V), E=operation(OP,ARGS).
+evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(operation(OP,ARGS),V).
 
 
 direct_query(E)  :- _se_ensure(NAME,E).
 direct_query(E)  :- _se_assign(NAME,X,E).
 direct_query(X)  :- _se_assign(NAME,X,E).
-direct_query(E)  :- _se_evaluate(CNAME,OP,ARGS), E=operation(OP,ARGS).
-direct_query(SE) :- direct_query(E), E=operation(OP,ES), not _direct_lazy(OP), SE=@pythonListElements(ES).
+direct_query(operation(OP,ARGS))  :- _se_evaluate(CNAME,OP,ARGS).
+direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 
 _se_value(E,E) :- direct_query(E), E=val(_,_).
 _se_value(E,E) :- direct_query(E), E=ref(_,_).
@@ -30,8 +30,8 @@ _se_value(E,V) :- direct_query(E), E=variable(X), _se_assign(NAME,E,E2), _se_val
 
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
-_direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(OP,ARGS). % decl operator
-_direct_queryArgsValues(E,OP,ARGS) :- direct_query(E), E=operation(EOP,ARGS), _se_value(EOP,val(function,OP)).
+_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)). % decl operator
+_direct_queryArgsValues(operation(EOP,ARGS),OP,ARGS) :- direct_query(operation(EOP,ARGS)), _se_value(EOP,val(function,OP)).
 _computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
 _length(E,LEN) :- _direct_queryArgsValues(E,_,ARGS), LEN=@pythonListLength(ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
@@ -82,9 +82,9 @@ assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).
 %_se_value(E,T,V) :- direct_query(E), beta_reduction(E,ER), _se_value(ER,T,V).
 
 %%%%%%%%%%%%%%%%% bad
-_se_value(E,bad) :- direct_query(E), E=operation(OP,ARGS), _se_value(ARG,bad), ARG=@pythonListElements(ARGS).
-_se_value(E,bad) :- direct_query(E), E=operation(OP,ARGS), _se_value(OP,bad).
-_se_value(E,bad) :- direct_query(E), E=bad.
+_se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS).
+_se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(OP,bad).
+_se_value(bad,bad) :- direct_query(bad).
 
 %%%%%%%%%%%%%%%%% implode
 _direct_imploded(E,E) :- _direct_implode(E), E=val(T,V), representation(T,extensional).

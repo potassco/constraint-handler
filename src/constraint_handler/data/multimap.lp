@@ -18,8 +18,8 @@ direct_query(E1;E2) :- direct_query(E), E=(E1,E2).
 
 %%%%%%%%%%%%%%%%% multimap_make
 operator_declare_variadic(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
-_se_value(E,val(multimap,ER)) :- direct_query(E), E=operation(multimap_make,L), ER=ref(E).
-_multimap_add(ER,EK,EV) :- direct_query(E), E=operation(multimap_make,L), _se_value(E,val(multimap,ER)),
+_se_value(operation(multimap_make,L),val(multimap,ref(operation(multimap_make,L)))) :- direct_query(operation(multimap_make,L)).
+_multimap_add(ER,EK,EV) :- direct_query(operation(multimap_make,L)), _se_value(operation(multimap_make,L),val(multimap,ER)),
     (EK,EV)=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value

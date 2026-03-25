@@ -35,15 +35,15 @@ _se_value(operation(ite,(E1,(E2,(E3,())))),V2) :- direct_query(operation(ite,(E1
 _se_value(operation(ite,(E1,(E2,(E3,())))),V3) :- direct_query(operation(ite,(E1,(E2,(E3,()))))), _se_value(E1,val(bool,false)), _se_value(E3,V3).
 
 %%%%%%%%%%%%%%%%% if
-_se_value(E,V2) :- direct_query(E), E=operation(if,(E1,(E2,()))), _se_value(E1,val(bool,true)), _se_value(E2,V2).
-_se_value(E,val(none,none)) :- direct_query(E), E=operation(if,(E1,(E2,()))), _se_value(E1,val(bool,false)).
-_se_value(E,val(none,none)) :- direct_query(E), E=operation(if,(E1,(E2,()))), _se_value(E1,val(none,none)).
+_se_value(operation(if,(E1,(E2,()))),V2) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,val(bool,true)), _se_value(E2,V2).
+_se_value(operation(if,(E1,(E2,()))),val(none,none)) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,val(bool,false)).
+_se_value(operation(if,(E1,(E2,()))),val(none,none)) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,val(none,none)).
 
 %%%%%%%%%%%%%%%%% default
-_se_value(E,V) :- direct_query(E), E=operation(default,(E1,TL)), _se_value(E1,V), V != val(none,none).
-_se_value(E,V) :- direct_query(E), E=operation(default,(E1,(E2,()))), _se_value(E1,val(none,none)), _se_value(E2,V).
+_se_value(operation(default,(E1,TL)),V) :- direct_query(operation(default,(E1,TL))), _se_value(E1,V), V != val(none,none).
+_se_value(operation(default,(E1,(E2,()))),V) :- direct_query(operation(default,(E1,(E2,())))), _se_value(E1,val(none,none)), _se_value(E2,V).
 
 %%%%%%%%%%%%%%%%% hasValue
 operator_declare(OP,(T,()),bool) :- _type(T), OP = hasValue.
-_se_value(E,val(bool,true))  :- direct_query(E), E=operation(hasValue,(E1,())), conditional_hasValue(E1).
-_se_value(E,val(bool,false)) :- direct_query(E), E=operation(hasValue,(E1,())), _se_value(E1,val(none,none)).
+_se_value(operation(hasValue,(E1,())),val(bool,true))  :- direct_query(operation(hasValue,(E1,()))), conditional_hasValue(E1).
+_se_value(operation(hasValue,(E1,())),val(bool,false)) :- direct_query(operation(hasValue,(E1,()))), _se_value(E1,val(none,none)).
