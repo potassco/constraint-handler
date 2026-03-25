@@ -26,8 +26,8 @@ _computed(OP,ARGS,val(int,V1**V2)) :- _compute(OP,ARGS), OP=pow,  ARGS = (val(in
 
 %%%%%%%%%%%%%%%%% abs minus
 operator_declare(OP,(T,()),T) :- T = int, OP = (abs;minus).
-_computed(OP,ARGS,val(int,|V|)) :- _compute(OP,ARGS), OP=abs,   ARGS = (val(int,V),()).
-_computed(OP,ARGS,val(int,-V))  :- _compute(OP,ARGS), OP=minus, ARGS = (val(int,V),()).
+_computedIdx(E,val(int,|V|)) :- _computeIdx(E,abs), _computeIdx(E,0,val(int,V)).
+_computedIdx(E,val(int,-V))  :- _computeIdx(E,minus), _computeIdx(E,0,val(int,V)).
 
 %%%%%%%%%%%%%%%%% comparison equality
 operator_declare(OP,(T,(T,())),bool) :- T = int, OP = (eq;neq;leq;lt;geq;gt).
@@ -44,10 +44,10 @@ _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=lt,  ARGS = (val(int
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=geq, ARGS = (val(int,V1),(val(int,V2),())), V1 <  V2.
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=gt,  ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
 
-_computed(OP,ARGS,val(int,V2)) :- _compute(OP,ARGS), OP=max, ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
-_computed(OP,ARGS,val(int,V1)) :- _compute(OP,ARGS), OP=max, ARGS = (val(int,V1),(val(int,V2),())), V1 > V2.
-_computed(OP,ARGS,val(int,V2)) :- _compute(OP,ARGS), OP=min, ARGS = (val(int,V1),(val(int,V2),())), V1 > V2.
-_computed(OP,ARGS,val(int,V1)) :- _compute(OP,ARGS), OP=min, ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
+_computedIdx(E,val(int,V2)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
+_computedIdx(E,val(int,V1)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
+_computedIdx(E,val(int,V2)) :- _computeIdx(E,min), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
+_computedIdx(E,val(int,V1)) :- _computeIdx(E,min), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
 
 _computed(OP,ARGS,RES) :- _compute(OP,ARGS), OP=float_div, ARGS = (val(int,_),(val(int,V2),())), V2!=0,
   RES = @pythonEvalExpr(operation(OP,ARGS),(),ID),
