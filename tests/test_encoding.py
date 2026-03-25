@@ -102,7 +102,6 @@ def test_engine_compile(name: str):
 )
 def test_engine_ground(name: str):
     unsupported: list[str] = [
-        "empty_variadics",
         "engine_request",
         "engine_request_mult",
         "lambdas",
@@ -133,7 +132,6 @@ def test_engine_ground(name: str):
 )
 def test_engine_propagator(name, check_mode):
     unsupported: list[str] = [
-        "empty_variadics",
         "engine_request",
         "engine_request_mult",
         "lambda_recursive",

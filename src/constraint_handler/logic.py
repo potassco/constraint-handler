@@ -40,7 +40,7 @@ class Evaluator:
             case Operator.leqv:
                 if None in args:
                     return None
-                return functools.reduce(operator.eq, args)
+                return functools.reduce(operator.eq, args, True)
             case Operator.limp:
                 assert len(args) == 2
                 return args[1] if args[0] else True
@@ -52,7 +52,7 @@ class Evaluator:
             case Operator.lxor:
                 if None in args:
                     return None
-                return functools.reduce(operator.xor, args)
+                return functools.reduce(operator.xor, args, False)
             case Operator.snot:
                 assert len(args) == 1
                 if None in args:
