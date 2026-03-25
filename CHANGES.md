@@ -1,5 +1,10 @@
 # Changes
 
+- declaration `Identifiers` are now optional
+- convenience case for `optimize_maximizeSum` was removed, priority has to be specified at all times
+- convenience case for `preference_variableValue` was removed, preference value has to be specified at all times
+- convenience case for `preference_holds` was removed, preference value has to be specified at all times
+
 ## v0.0.2.dev3
 
 - use computeIdx instead of compute

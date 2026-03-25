@@ -130,9 +130,9 @@ value(name, val(bool, false))
     Checking for inequality of two variables
 
     ```prolog
-    variable_define(example, a, val(bool, true)).
-    variable_define(example, b, val(bool, false)).
-    variable_define(example, c, operation(neq, (variable(a), (variable(b), ())))).
+    variable_define(a, val(bool, true)).
+    variable_define(b, val(bool, false)).
+    variable_define(c, operation(neq, (variable(a), (variable(b), ())))).
     ```
 
     This would assign the value `true` to the variable `c`.
@@ -186,9 +186,9 @@ value(name, val(int, -7))
     Adding two integers
 
     ```prolog
-    variable_define(example, a, val(int, 5)).
-    variable_define(example, b, val(int, 10)).
-    variable_define(example, c, operation(add, (variable(a), (variable(b), ())))).
+    variable_define(a, val(int, 5)).
+    variable_define(b, val(int, 10)).
+    variable_define(c, operation(add, (variable(a), (variable(b), ())))).
     ```
     This would assign the value `15` to the variable `c`.
 
@@ -251,9 +251,9 @@ value(name, val(float, float("-0.001")))
     Multiplying two floats
 
     ```prolog
-    variable_define(example, a, val(float, float("2.5"))).
-    variable_define(example, b, val(float, float("4.0"))).
-    variable_define(example, c, operation(mult, (variable(a), (variable(b), ())))).
+    variable_define(a, val(float, float("2.5"))).
+    variable_define(b, val(float, float("4.0"))).
+    variable_define(c, operation(mult, (variable(a), (variable(b), ())))).
     ```
     This would assign the value `float("10.0")` to the variable `c`.
 
@@ -289,9 +289,9 @@ value(name, val(str, "Constraint Handling"))
 !!! Example
     Concatenating a prefix to a name.
     ```prolog
-    variable_define(example, prefix, val(str, "var_")).
-    variable_define(example, suffix, val(str, "x")).
-    variable_define(example, full_name, operation(concat, (variable(prefix), (variable(suffix), ())))).
+    variable_define(prefix, val(str, "var_")).
+    variable_define(suffix, val(str, "x")).
+    variable_define(full_name, operation(concat, (variable(prefix), (variable(suffix), ())))).
     ```
 
     This would assign the value `"var_x"` to the variable `full_name`.
@@ -330,8 +330,8 @@ value(name, val(symbol, state(idle)))
     Checking if a status variable is set to error.
 
     ```prolog
-    variable_define(system, current_status, val(symbol, error)).
-    variable_define(system, is_critical, operation(eq, (variable(current_status), (val(symbol, error), ())))).
+    variable_define(current_status, val(symbol, error)).
+    variable_define(is_critical, operation(eq, (variable(current_status), (val(symbol, error), ())))).
     ```
 
     This would assign `true` to `is_critical`.

@@ -13,7 +13,7 @@ The easiest way to use the library is to load it from a script section in a clin
 In the following example, this is done in the last 8 lines of the file.
 
 ```prolog
-variable_define(some_name, x, val(int,42)).
+variable_define(x, val(int,42)).
 #show value/2.
 
 #script (python)
@@ -67,7 +67,7 @@ control = Control()
 constraint_handler.add_to_control(control)
 # Add a small example
 control.add("base", [], """
-variable_define(some_name, x, val(int,42)).
+variable_define(x, val(int,42)).
 #show value/2.
 """)
 # Ground the program

@@ -1,12 +1,12 @@
 #show value/2.
 #show set_value/2.
 
-set_declare(d,num_set).
-set_assign(d,num_set,val(float,float("3.5"))).
-{ set_assign(d,num_set,val(float,float(F))) : F=("1.5";"2.5";"4.5";"5.5") }.
+set_declare(num_set).
+set_assign(num_set,val(float,float("3.5"))).
+{ set_assign(num_set,val(float,float(F))) : F=("1.5";"2.5";"4.5";"5.5") }.
 
 
-variable_define(d,the_sum,EXPR) :-
+variable_define(the_sum,EXPR) :-
   STEP = val(function,add),
   SET = variable(num_set),
   INIT = val(int,0),
@@ -15,13 +15,13 @@ variable_define(d,the_sum,EXPR) :-
 
 
 %%% we can define the step function separately if we want.
-variable_define(d,square_and_add,lambda(VARS,RESULT)) :-
+variable_define(square_and_add,lambda(VARS,RESULT)) :-
   VARS   = (x,(accu,())),
   VARX   = variable(x),
   SQUARE = operation(mult,(VARX,(VARX,()))),
   RESULT = operation(add,(SQUARE,(variable(accu),()))).
 
-variable_define(d,sum_squares,EXPR) :-
+variable_define(sum_squares,EXPR) :-
   STEP = variable(square_and_add),
   SET  = variable(num_set),
   INIT = val(int,0),
@@ -29,7 +29,7 @@ variable_define(d,sum_squares,EXPR) :-
 
 
 
-variable_define(d,manual_count,EXPR) :-
+variable_define(manual_count,EXPR) :-
   STEP = lambda((elt,(accu,())),operation(add,(val(int,1),(variable(accu),())))),
   SET = variable(num_set),
   INIT = val(int,0),
@@ -37,7 +37,7 @@ variable_define(d,manual_count,EXPR) :-
 
 
 
-variable_define(d,the_max,EXPR) :-
+variable_define(the_max,EXPR) :-
   STEP = val(function,max),
   SET = variable(num_set),
   INIT = val(int,-1000), % #inf is not supported
@@ -45,7 +45,7 @@ variable_define(d,the_max,EXPR) :-
 
 
 
-variable_define(d,any_between_four_five,EXPR) :-
+variable_define(any_between_four_five,EXPR) :-
   VAR  = variable(elt),
   FOUR = operation(lt,(val(int,4),(VAR,()))),
   FIVE = operation(lt,(VAR,(val(int,5),()))),
@@ -57,7 +57,7 @@ variable_define(d,any_between_four_five,EXPR) :-
 
 
 
-variable_define(d,all_between_two_five,EXPR) :-
+variable_define(all_between_two_five,EXPR) :-
   VAR  = variable(elt),
   TWO  = operation(leq,(val(int,2),(VAR,()))),
   FIVE = operation(leq,(VAR,(val(int,5),()))),

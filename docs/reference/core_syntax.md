@@ -12,9 +12,7 @@ While in the previous [Language Concepts] page we used an abstract syntax to int
 
 However, for documentation purposes, we will often use more meaningful names for arguments instead of the generic ones introduced previously and will refer to their respective concepts accordingly.
 
-For example, we will use `Identifier` to refer to unique names assigned to specific [Declarations]. These identifiers can be any term, but we want to make it more specific. They typically appear as the first argument in their respective predicates.
-
-Similarly, we will use the term `Name` to refer to unique names assigned to variables. Like `Identifier`, these can be any term. They typically appear as the second argument in their respective predicates.
+For example, we will use the term `Name` to refer to unique names assigned to variables.
 
 ---
 
@@ -26,19 +24,18 @@ The base syntax follows standard ASP predicates and function symbols.
 A simple [Declaration] with a fixed number of arguments could be represented as follows:
 
 ```prolog
-some_predicate(Identifier, Term, Term)
+some_predicate(Term, Term)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `some_predicate` | The identifier of the predicate. |
-| `Identifier` | A term used as a unique identifier of this specific atom. |
 | `Term` | Some argument of the predicate. |
 
 !!! Example
     A simple declaration `some_predicate` with the unique identifier `my_predicate` and three terms:
     ```prolog
-    some_predicate(my_predicate, term_1, term_2, term_3)
+    some_predicate(term_1, term_2, term_3)
     ```
 
 ### List
@@ -51,13 +48,34 @@ Lists are represented as recursive tuples. More precisely, a list is either the 
     Given some predicate with a definition like:
 
     ```prolog
-    some_predicate(Identifier, Terms)
+    some_predicate(Terms)
     ```
 
     where Terms represents a list of terms, one could represent a list with three terms as follows:
 
     ```prolog
-    some_predicate(my_predicate, (term_1, (term_2, (term_3, ()))))
+    some_predicate((term_1, (term_2, (term_3, ()))))
+    ```
+
+### Labels
+Many [Declarations] in the constraint handler support an optional leading argument called a **Label**.
+
+- If you **omit** the label, the system will use an anonymous label internally.
+- If you **provide** a label, it can be used for engine selection via [requestEngine] and can identify the source of warnings that refer to declaration labels (see [warning]).
+
+In other words: if you do not use `requestEngine/2` and you do not rely on label provenance in warnings, you can omit labels everywhere for shorter encodings.
+
+!!! Example
+    A variable definition without a label:
+
+    ```prolog
+    variable_define(x, val(int, 42)).
+    ```
+
+    The equivalent form with an explicit label:
+
+    ```prolog
+    variable_define(my_label, x, val(int, 42)).
     ```
 
 ---
@@ -125,12 +143,11 @@ value(Name, Value)
 The simplest way to create variables is to use the `variable_define/3` predicate to define them with a specific value.
 
 ```prolog
-variable_define(Identifier, Name, Expression).
+variable_define(Name, Expression).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific [Declaration]. |
 | `Name` | A unique identifier for the variable. |
 | `Expression` | An [Expression] to be associated with the variable. |
 
@@ -148,12 +165,11 @@ A more advanced technique is to declare variables using the `variable_declare/3`
     While [Define](#define) creates a single `value/2` atom in all models. The [Declare](#declare) approach creates multiple models with different `value/2` atoms based on the domain.
 
 ```prolog
-variable_declare(Identifier, Name, Domain).
+variable_declare(Name, Domain).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific [Declaration]. |
 | `Name` | A unique identifier for the variable. |
 | `Domain` | An [Expression] that evaluates to a domain of possible values. |
 
@@ -161,7 +177,7 @@ variable_declare(Identifier, Name, Domain).
     Declaring a variable `x` that can take the boolean values `true` or `false`:
 
     ```prolog
-    variable_declare(some_id, x, boolDomain).
+    variable_declare(x, boolDomain).
     ```
 
     This creates models for both possible assignments:
@@ -199,7 +215,7 @@ fromList(Values)
     Creating a variable `y` that can take the integer values `1`, `2`, or `3`:
 
     ```prolog
-    variable_declare(some_id, y, fromList((val(int,1), (val(int,2), (val(int,3), ()))))).
+    variable_declare(y, fromList((val(int,1), (val(int,2), (val(int,3), ()))))).
     ```
 
     This creates models for each possible assignment:
@@ -232,7 +248,7 @@ variable_domain(Name, Domain).
 !!! Example
     Creating a variable `y` that can take the integer values `1`, `2`, or `3`:
     ```prolog
-    variable_declare(some_id, y, fromFacts).
+    variable_declare(y, fromFacts).
     variable_domain(y, val(int,(1;2;3))).
     ```
 
@@ -260,7 +276,7 @@ variable_declareOptional(Name).
 
 | Name | Description |
 | :--- | :--- |
-| `Name` | A unique identifier for the variable. |s
+| `Name` | A unique identifier for the variable. |
 
 !!! Example
     Marking the variable `y` from the previous example as optional:
@@ -295,8 +311,8 @@ variable(Name)
     Getting the value assigned to variable `x` and assign it to variable `y`:
 
     ```prolog
-    variable_define(some_name, x, val(int,42)).
-    variable_define(some_name, y, variable(x)).
+    variable_define(x, val(int,42)).
+    variable_define(y, variable(x)).
     ```
 
 ---
@@ -319,9 +335,9 @@ operation(Operator, Terms).
 !!! Example
     Adding two variables `x` and `y` and assigning the result to variable `z`
     ```prolog
-    variable_define(some_name, x, val(int,5)).
-    variable_define(some_name, y, val(int,7)).
-    variable_define(some_name, z, operation(add, (variable(x), (variable(y),())))).
+    variable_define(x, val(int,5)).
+    variable_define(y, val(int,7)).
+    variable_define(z, operation(add, (variable(x), (variable(y),())))).
     ```
 
 While simple operations may be sufficient for many use cases, more complex programs often require combining multiple operations together. For this reason, the constraint handler fully supports nesting operations within each other.
@@ -379,12 +395,11 @@ In this case, one or more elements of the argument list will be entire `operatio
 Ensures allow users to specify conditions that must hold true in the model. For this, the constraint handler provides the `ensure/2` predicate.
 
 ```prolog
-ensure(Identifier, Condition).
+ensure(Condition).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific statement. |
 | `Condition` | The condition that must be satisfied in the model. |
 
 ### Condition
@@ -398,7 +413,7 @@ If a variable itself is of type [Bool], it can be used directly as a condition.
 !!! Example
     Ensure that a variable `x` is true:
     ```prolog
-    ensure(some_name, variable(x)).
+    ensure(variable(x)).
     ```
 
 Conditions can also be more complex expressions, such as comparisons or operations that yield a boolean result.
@@ -406,7 +421,7 @@ Conditions can also be more complex expressions, such as comparisons or operatio
 !!! Example
     Ensure the variable `x` has a greater value than the variable `y`.
     ```prolog
-    ensure(some_name, operation(gt, (variable(x),(variable(y),())))).
+    ensure(operation(gt, (variable(x),(variable(y),())))).
     ```
 
 Because **all** ensures must hold true for the model to be valid, they can be used to enforce multiple conditions at the same time. It is recommended to use this feature to break down complex constraints into smaller, more manageable parts.
@@ -415,14 +430,14 @@ Because **all** ensures must hold true for the model to be valid, they can be us
     To ensure that variable `x` is greater than `y` and that variable `z` is true, one could write:
 
     ```prolog
-    ensure(greater_than_and_true, operation(conj, (operation(gt, (variable(x),(variable(y),()))),(variable(z),())))).
+    ensure(operation(conj, (operation(gt, (variable(x),(variable(y),()))),(variable(z),())))).
     ```
 
-    While this works, it gets harder to read the more conditions are added. A better approach is to use multiple `ensure/2` calls:
+    While this works, it gets harder to read the more conditions are added. A better approach is to use multiple `ensure/1` atoms:
 
     ```prolog
-    ensure(greater_than, operation(gt, (variable(x),(variable(y),())))).
-    ensure(is_true, variable(z)).
+    ensure(operation(gt, (variable(x),(variable(y),())))).
+    ensure(variable(z)).
     ```
 
     This way, each condition is clearly separated and easier to understand and debug.

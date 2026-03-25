@@ -27,62 +27,62 @@
 %%% notin3 = s3 \notin se = false
 %%% notin2 = s2 \notin se = false
 
-variable_define(assign_v1, v1, operation(add,(val(int,1),(val(int,1),())))).
-variable_define(assign_v2, v2, val(int,2)).
-variable_define(assign_s1, s1, operation(set_make,
+variable_define(v1, operation(add,(val(int,1),(val(int,1),())))).
+variable_define(v2, val(int,2)).
+variable_define(s1, operation(set_make,
                                    (variable(v1),()))).
-variable_define(assign_s2, s2, operation(set_make,
+variable_define(s2, operation(set_make,
                                    (variable(v2),()))).
-variable_define(assign_s3, s3, operation(set_make,
+variable_define(s3, operation(set_make,
                                    (val(int,3),()))).
-variable_define(assign_s4, s4, operation(set_make,
+variable_define(s4, operation(set_make,
                                    (val(int,4),()))).
-variable_define(assign_u, u, operation(union,
+variable_define(u, operation(union,
                                  (variable(s1),
                                  (variable(s2),())))).
-variable_define(assign_i, i, operation(inter,
+variable_define(i, operation(inter,
                                  (variable(s1),
                                  (variable(s2),())))).
 
-variable_define(assign_ss1, ss1, operation(set_make,
+variable_define(ss1, operation(set_make,
                                      (variable(s1),(variable(s3),())))).
-variable_define(assign_ss2, ss2, operation(set_make,
+variable_define(ss2, operation(set_make,
                                      (variable(s2),(variable(s4),())))).
-variable_define(assign_ss3, ss3, operation(set_make,
+variable_define(ss3, operation(set_make,
                                      (variable(s2),
                                      (operation(set_make,(val(int,3),())),())))).
-variable_define(assign_sa, sa, operation(set_make,
+variable_define(sa, operation(set_make,
                                    (variable(ss1),
                                    (variable(ss2),
                                    (variable(ss3),()))))).
-variable_define(assign_su, su, operation(union,
+variable_define(su, operation(union,
                                    (variable(ss1),
                                    (variable(ss2),())))).
-variable_define(assign_si, si, operation(inter,
+variable_define(si, operation(inter,
                                    (variable(ss1),
                                    (variable(ss2),())))).
 
-variable_define(assign_se, se, operation(union,
+variable_define(se, operation(union,
                                    (variable(ss1),
                                    (variable(ss1),())))).
 
-variable_define(assign_e, e, operation(conj, (E12,(E2U,(EUI,(N14,())))))) :-
+variable_define(e, operation(conj, (E12,(E2U,(EUI,(N14,())))))) :-
     E12 = operation(eq,(variable(s1),(variable(s2),()))),
     E2U = operation(eq,(variable(s2),(variable(u),()))),
     EUI = operation(eq,(variable(u),(variable(i),()))),
     N14 = operation(neq,(variable(s1),(variable(s4),()))).
-variable_define(assign_n, n, operation(disj, (N12,(N2U,(NUI,(E14,())))))) :-
+variable_define(n, operation(disj, (N12,(N2U,(NUI,(E14,())))))) :-
     N12 = operation(neq,(variable(s1),(variable(s2),()))),
     N2U = operation(neq,(variable(s2),(variable(u),()))),
     NUI = operation(neq,(variable(u),(variable(i),()))),
     E14 = operation(eq,(variable(s1),(variable(s4),()))).
-variable_define(a_lsa, lsa, operation(length,(variable(sa),()))).
-variable_define(a_lsu, lsu, operation(length,(variable(su),()))).
-variable_define(a_lsi, lsi, operation(length,(variable(si),()))).
-variable_define(a_lse, lse, operation(length,(variable(se),()))).
-variable_define(a_in4, in4e, operation(isin, (variable(s4),(variable(se),())))).
-variable_define(a_in3, in3e, operation(isin, (variable(s3),(variable(se),())))).
-variable_define(a_in2, in2e, operation(isin, (variable(s2),(variable(se),())))).
-variable_define(a_nin4, notin4e, operation(notin, (variable(s4),(variable(se),())))).
-variable_define(a_nin3, notin3e, operation(notin, (variable(s3),(variable(se),())))).
-variable_define(a_nin2, notin2e, operation(notin, (variable(s2),(variable(se),())))).
+variable_define(lsa, operation(length,(variable(sa),()))).
+variable_define(lsu, operation(length,(variable(su),()))).
+variable_define(lsi, operation(length,(variable(si),()))).
+variable_define(lse, operation(length,(variable(se),()))).
+variable_define(in4e, operation(isin, (variable(s4),(variable(se),())))).
+variable_define(in3e, operation(isin, (variable(s3),(variable(se),())))).
+variable_define(in2e, operation(isin, (variable(s2),(variable(se),())))).
+variable_define(notin4e, operation(notin, (variable(s4),(variable(se),())))).
+variable_define(notin3e, operation(notin, (variable(s3),(variable(se),())))).
+variable_define(notin2e, operation(notin, (variable(s2),(variable(se),())))).

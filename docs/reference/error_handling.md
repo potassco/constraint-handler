@@ -49,13 +49,13 @@ The constraint handler has the ability to capture certain types of errors withou
 Warnings will appear as atoms of the `warning/3` predicate:
 
 ```prolog
-warning(Type, Identifiers, Details)
+warning(Type, Labels, Details)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Type` | The type of warning being issued. |
-| `Identifiers` | A list of terms, usually identifiers, related to the warning. |
+| `Labels` | A list of terms, usually identifiers, related to the warning. |
 | `Details` | Additional details about the warning (e.g. variable names, expressions, etc.) that can help users understand the issue. |
 
 !!! Example
@@ -137,12 +137,12 @@ warning(expression(zeroDivisionError), _, Message)
 
 !!! Example
     ```prolog
-    variable_define(d_x,x, operation(div, (val(int, 2),(val(int, 0),())))).
+    variable_define(d_x,x, operation(int_div, (val(int, 2),(val(int, 0),())))).
     ```
 
     Raises the warning:
     ```prolog
-    warning(expression(zeroDivisionError),(),"2/0")
+    warning(expression(zeroDivisionError),(),(int_div,(val(int,2),(val(int,0),()))))
     ```
 ---
 
@@ -177,23 +177,23 @@ warning(statement(notImplemented), _, Message)
 This warning occurs when there is an error in Python during the evaluation of a [Statement].
 
 ```prolog
-warning(statement(pythonError), (Identifier,()), ("error running", Message))
+warning(statement(pythonError), (Label,()), ("error running", Message))
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Type` | `statement(pythonError)` |
-| `Identifiers` | The identifier of the statement that caused the error. |
+| `Labels` | The identifier of the statement that caused the error. |
 | `Details` | A message describing the error that occurred in Python. |
 
 !!! Example
     ```prolog
-    variable_define(some_identifier, execution_input(my_exec, a), val(int, 5)).
+    variable_define(execution_input(my_exec, a), val(int, 5)).
 
-    execution_declare(dummy, my_exec, S, (a,()), (a,())) :-
-        S = assign(a, operation(div, (val(int, 2),(val(int, 0),())))).
+    execution_declare(my_exec, S, (a,()), (a,())) :-
+        S = assign(a, operation(int_div, (val(int, 2),(val(int, 0),())))).
 
-    execution_run(dummy, my_exec).
+    execution_run(my_exec).
     ```
 
     Raises the warning:

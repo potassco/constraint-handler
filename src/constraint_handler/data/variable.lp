@@ -1,7 +1,13 @@
 #defined variable_define/3.
+#defined variable_define/2.
+#defined variable_declare/3.
+#defined variable_declare/2.
 #defined variable_declare/3.
 #defined variable_declareOptional/1.
 #defined variable_domain/2.
+
+variable_define(_label_anonymous,X,E) :- variable_define(X,E).
+variable_declare(_label_anonymous,X,E) :- variable_declare(X,E).
 
 _warning(variable(multipleDeclarations),(CNAME1,(CNAME2,())),(X,D1,D2)) :-
   variable_declare(CNAME1,X,D1), variable_declare(CNAME2,X,D2), (CNAME1,D1) < (CNAME2,D2),

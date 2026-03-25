@@ -8,25 +8,25 @@ m :- p.
 m :- q.
 
 
-variable_declare(dummy,a,fromFacts).
+variable_declare(a,fromFacts).
 variable_domain(a,val(int,(1..2))).
-variable_declare(dummy,b,fromFacts).
+variable_declare(b,fromFacts).
 variable_domain(b,val(int,(1..2))).
 
-variable_declare(dummy,c,boolDomain).
+variable_declare(c,boolDomain).
 
-ensure(dummy,operation(eq,(variable(c),(val(bool,true),())))).
+ensure(operation(eq,(variable(c),(val(bool,true),())))).
 
-set_declare(dummy,s1).
-{set_assign(dummy,s1,val(int,1..2))}.
+set_declare(s1).
+{set_assign(s1,val(int,1..2))}.
 
-set_declare(dummy,s2).
-set_assign(dummy,s2,val(int,1)).
-{set_assign(dummy,s2,val(int,2))}.
-{set_assign(dummy,s2,variable(a))}.
+set_declare(s2).
+set_assign(s2,val(int,1)).
+{set_assign(s2,val(int,2))}.
+{set_assign(s2,variable(a))}.
 
 
-multimap_declare(dummy,m1).
-{multimap_assign(dummy,m1,val(int,1),val(int,1))}.
-{multimap_assign(dummy,m1,val(int,1),val(int,2))}.
-multimap_assign(dummy,m1,val(int,2),val(int,1)).
+multimap_declare(m1).
+{multimap_assign(m1,val(int,1),val(int,1))}.
+{multimap_assign(m1,val(int,1),val(int,2))}.
+multimap_assign(m1,val(int,2),val(int,1)).

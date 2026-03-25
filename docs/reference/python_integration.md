@@ -32,7 +32,6 @@ One of the modules the environment provides by default is the `math` module, whi
 
     ```prolog
     variable_define(
-        python_sqrt,
         x,
         operation(python("math.sqrt"), (val(int, 16), ()))
     ).
@@ -56,7 +55,6 @@ Lambda functions can be defined directly within the `String` argument of the `py
 
     ```prolog
     variable_define(
-        python_cube,
         y,
         operation(python("lambda x: x ** 3"), (val(int, 3), ()))
     ).
@@ -92,7 +90,6 @@ Currently, this can be done by manipulating the `_shared_environment` of the con
 
     ```prolog
     variable_define(
-        custom_op,
         z,
         operation(python("custom_function"), (val(int, 5), (val(int, 3), ())))
     ).
@@ -136,12 +133,12 @@ statement_python(String)
 
     Declaring the input variable:
     ```prolog
-    variable_define(d_a,execution_input(python_add_twice, "x"),val(int,5)).
+    variable_define(execution_input(python_add_twice, "x"),val(int,5)).
     ```
 
     Declaring the execution using a python statement `x = x + 1`:
     ```prolog
-    execution_declare(dummy, python_add_twice, S, ("x",()), ("x",())) :-
+    execution_declare(python_add_twice, S, ("x",()), ("x",())) :-
         ADD_ONE = statement_python("x = x + 1"),
         S = seq2(
             ADD_ONE,
@@ -151,7 +148,7 @@ statement_python(String)
 
     Executing the program:
     ```prolog
-    execution_run(dummy, python_add_twice).
+    execution_run(python_add_twice).
     ```
 
     This will yield the following result:
@@ -168,7 +165,7 @@ Since only the Python statements require this format, a convenient way to map be
 
     Define the input variables to the statement:
     ```prolog
-    variable_define(d_a,execution_input(python_add_twice, x),val(int,5)).
+    variable_define(execution_input(python_add_twice, x),val(int,5)).
     ```
 
     To deal with the mapping, assignments can be used like so:
@@ -179,7 +176,7 @@ Since only the Python statements require this format, a convenient way to map be
 
     Using these, the execution can be written as:
     ```prolog
-    execution_declare(dummy, python_add_twice, S, (x,()), (x,())) :-
+    execution_declare(python_add_twice, S, (x,()), (x,())) :-
         SYM_TO_STR = assign("x", variable(x)),
         STR_TO_SYM = assign(x, variable("x")),
         ADD_ONE = statement_python("x = x + 1"),
@@ -188,7 +185,7 @@ Since only the Python statements require this format, a convenient way to map be
 
     Executing the program:
     ```prolog
-    execution_run(dummy, python_add_twice).
+    execution_run(python_add_twice).
     ```
 
     This will yield the following result:

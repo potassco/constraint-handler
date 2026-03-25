@@ -7,8 +7,8 @@
 _warning(preference(unsupported),(),("multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
 
 %%% convenience
-preference_variableValue(CNAME,X,E,1) :- preference_variableValue(CNAME,X,E).
-preference_holds(CNAME,E,1) :- preference_holds(CNAME,E).
+preference_variableValue(_label_anonymous,X,E,K) :- preference_variableValue(X,E,K).
+preference_holds(_label_anonymous,E,K) :- preference_holds(E,K).
 
 _preference_expressionScore(operation(eq,(variable(X),(E,()))), K) :- preference_variableValue(CNAME,X,E,K), K > 0.
 _preference_expressionScore(operation(wnot,(operation(eq,(variable(X),(E,()))),())),-K) :- preference_variableValue(CNAME,X,E,K), K < 0.

@@ -18,20 +18,20 @@
 %%% 6//2==3   5//2==2
 %%% 6/2==3.0    5/2==2.5
 
-variable_define(assign_x, x, val(int,20)).
-variable_define(a_int, two, val(int,2)).
-variable_define(a_int, ten, val(int,10)).
-variable_define(a_int, addtwoten, operation(add,(variable(two),(variable(ten),())))).
-variable_define(a_int, addtentwo, operation(add,(variable(ten),(variable(two),())))).
-variable_define(a_int, multtwoten, operation(mult,(variable(two),(variable(ten),())))).
-variable_define(a_int, multtentwo, operation(mult,(variable(ten),(variable(two),())))).
-variable_define(a_int, subtwoten, operation(sub,(variable(two),(variable(ten),())))).
-variable_define(a_int, subtentwo, operation(sub,(variable(ten),(variable(two),())))).
+variable_define(x, val(int,20)).
+variable_define(two, val(int,2)).
+variable_define(ten, val(int,10)).
+variable_define(addtwoten, operation(add,(variable(two),(variable(ten),())))).
+variable_define(addtentwo, operation(add,(variable(ten),(variable(two),())))).
+variable_define(multtwoten, operation(mult,(variable(two),(variable(ten),())))).
+variable_define(multtentwo, operation(mult,(variable(ten),(variable(two),())))).
+variable_define(subtwoten, operation(sub,(variable(two),(variable(ten),())))).
+variable_define(subtentwo, operation(sub,(variable(ten),(variable(two),())))).
 
-variable_define(a_int, divtwoten, operation(int_div,(variable(two),(variable(ten),())))).
-variable_define(a_int, divtentwo, operation(int_div,(variable(ten),(variable(two),())))).
-variable_define(a_int, powtwoten, operation(pow,(variable(two),(variable(ten),())))).
-variable_define(a_int, powtentwo, operation(pow,(variable(ten),(variable(two),())))).
+variable_define(divtwoten, operation(int_div,(variable(two),(variable(ten),())))).
+variable_define(divtentwo, operation(int_div,(variable(ten),(variable(two),())))).
+variable_define(powtwoten, operation(pow,(variable(two),(variable(ten),())))).
+variable_define(powtentwo, operation(pow,(variable(ten),(variable(two),())))).
 
 evaluate(add,(variable(x),(val(int,10),()))).
 evaluate(add,()).

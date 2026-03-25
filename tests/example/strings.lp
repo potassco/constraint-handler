@@ -9,13 +9,13 @@
 %%% f != g
 %%% y + x == "barfoo" | |y| == |x| | y == "foobar" | y + y == "blabla"
 
-variable_declare(a_x,x,fromFacts).
+variable_declare(x,fromFacts).
 variable_domain(x,val(str,("foo";"bar"))).
-variable_declare(a_y,y,fromFacts).
+variable_declare(y,fromFacts).
 variable_domain(y,val(str,("bla";"bar";"foobar"))).
 
-variable_define(a_f,f,operation(eq,(variable(x),(variable(y),())))).
-variable_define(a_g,g,operation(neq,(variable(x),(variable(y),())))).
+variable_define(f,operation(eq,(variable(x),(variable(y),())))).
+variable_define(g,operation(neq,(variable(x),(variable(y),())))).
 
 evaluate(neq,(variable(f),(variable(g),()))).
 evaluate(length,(variable(x),())).

@@ -29,67 +29,67 @@
 %%% 7 in odd
 
 
-set_declare(set_selfref,a).
-set_assign(set_selfref,a,variable(a)).
-set_declare(set_selfref,b).
-set_assign(set_selfref,b,variable(b)).
-set_declare(set_selfref,c).
-set_assign(set_selfref,c,variable(c)).
-set_declare(set_selfref,d).
-set_assign(set_selfref,d,variable(a)).
-set_assign(set_selfref,d,variable(b)).
-set_declare(set_selfref,e).
-set_assign(set_selfref,e,SSA) :-
+set_declare(a).
+set_assign(a,variable(a)).
+set_declare(b).
+set_assign(b,variable(b)).
+set_declare(c).
+set_assign(c,variable(c)).
+set_declare(d).
+set_assign(d,variable(a)).
+set_assign(d,variable(b)).
+set_declare(e).
+set_assign(e,SSA) :-
     SSA = operation(set_make,(SA,())),
     SA = operation(set_make,(A,())),
     A = variable(a).
-set_declare(set_selfref,f).
-set_assign(set_selfref,f,variable(f)).
-set_assign(set_selfref,f,val(int,1)).
-set_declare(set_selfref,g).
-set_assign(set_selfref,g,variable(g)).
-set_assign(set_selfref,g,val(int,1)).
-set_assign(set_selfref,g,val(int,2)).
-set_declare(set_selfref,h).
-set_assign(set_selfref,h,variable(f)).
-set_assign(set_selfref,h,val(int,1)).
-set_assign(set_selfref,h,val(int,2)).
-set_declare(set_selfref,i).
-set_assign(set_selfref,i,variable(i)).
-set_assign(set_selfref,i,val(int,1)).
-set_assign(set_selfref,i,val(int,2)).
+set_declare(f).
+set_assign(f,variable(f)).
+set_assign(f,val(int,1)).
+set_declare(g).
+set_assign(g,variable(g)).
+set_assign(g,val(int,1)).
+set_assign(g,val(int,2)).
+set_declare(h).
+set_assign(h,variable(f)).
+set_assign(h,val(int,1)).
+set_assign(h,val(int,2)).
+set_declare(i).
+set_assign(i,variable(i)).
+set_assign(i,val(int,1)).
+set_assign(i,val(int,2)).
 
-set_declare(set_selfref,nb).
-set_assign(set_selfref,nb,val(int,0..10)).
+set_declare(nb).
+set_assign(nb,val(int,0..10)).
 
-set_declare(set_selfref,even).
-set_assign(set_selfref,even,val(int,0)).
-set_assign(set_selfref,even,EX) :-
+set_declare(even).
+set_assign(even,val(int,0)).
+set_assign(even,EX) :-
     EX = val(int,X),
     set_value(nb,EX),
     set_value(odd,val(int,X-1)).
 
-set_declare(set_selfref,odd).
-set_assign(set_selfref,odd,EX) :-
+set_declare(odd).
+set_assign(odd,EX) :-
     EX = val(int,X),
     set_value(nb,EX),
     set_value(even,val(int,X-1)).
 
-set_declare(set_selfref,doubles).
-set_assign(set_selfref,doubles,TWOX) :-
+set_declare(doubles).
+set_assign(doubles,TWOX) :-
     TWO = val(int,2),
     EX = val(int,X),
     TWOX = operation(mult,(TWO,(EX,()))),
     set_value(nb,EX).
 
-set_declare(set_selfref,es).
-set_assign(set_selfref,es,EX) :-
+set_declare(es).
+set_assign(es,EX) :-
     EX = val(int,X),
     set_value(nb,EX),
     not set_value(os,EX).
 
-set_declare(set_selfref,os).
-set_assign(set_selfref,os,EX) :-
+set_declare(os).
+set_assign(os,EX) :-
     EX = val(int,X),
     set_value(nb,EX),
     set_value(es,val(int,X-1)).

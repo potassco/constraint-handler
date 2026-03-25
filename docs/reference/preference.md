@@ -11,37 +11,34 @@ However, sometimes we may not want only the best solution but also the second or
 The constraint handler provides multiple ways of specifying preferences. Here, we will cover the different ways of declaring preferences using preference values and how to combine them to express more complex preferences.
 
 ### Variable Value
-One way to provide a preference is to assign a preference value to a variable having a specific value. For this, we can use the `preference_variableValue/4` predicate.
+One way to provide a preference is to assign a preference value to a variable having a specific value. For this, we can use the `preference_variableValue/3` predicate.
 
 ```prolog
-preference_variableValue(Identifier, Name, Expression, Value)
+preference_variableValue(Name, Expression, Value)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific preference. |
 | `Name` | The name of the variable for which we are specifying a preference. |
 | `Expression` | The expression representing the value of the variable we are assigning a preference to. |
 | `Value` | The preference value assigned to the variable having the specified value. |
 
 The preference value is a numeric value that indicates how much we prefer that variable to take that specific value. Higher preference values indicate stronger preferences.
 
-For convenience, there also exists a shorthand version `preference_variableValue/3` where the `Value` is set to 1 by default.
-
 !!! Example
     Consider a program that defines a variable `color` with possible values `red`, `green`, `blue`, and `yellow`.
 
     ```prolog
-    variable_declare(declare_color, color, fromFacts).
+    variable_declare(color, fromFacts).
     variable_domain(color, val(symbol, (red;green;blue;yellow))).
     ```
 
     If we want to express that we prefer `red` the most, followed by `blue` and `green`, and finally `yellow`, we can assign preference values as follows:
 
     ```prolog
-    preference_variableValue(dummy,color,val(symbol,red),5).
-    preference_variableValue(dummy,color,val(symbol,(green;blue)),3).
-    preference_variableValue(dummy,color,val(symbol,yellow)).
+    preference_variableValue(color,val(symbol,red),5).
+    preference_variableValue(color,val(symbol,(green;blue)),3).
+    preference_variableValue(color,val(symbol,yellow),1).
     ```
 
     In this example, the variable `color` has the highest preference value of `5` for the value `red`, a preference value of `3` for both `green` and `blue`, and the lowest preference value of `1` for `yellow`. When the solver evaluates solutions, it will prioritize those where `color` is `red`, followed by those where it is `green` or `blue`, and lastly those where it is `yellow`.
@@ -49,15 +46,14 @@ For convenience, there also exists a shorthand version `preference_variableValue
     This leads to an ordering of solutions based on our specified preferences for the variable `color` with the highest values appearing first.
 
 ### Holds
-In addition to assigning preference values to variable-value pairs, we can also express preferences based on certain conditions using the `preference_holds/3` predicate.
+In addition to assigning preference values to variable-value pairs, we can also express preferences based on certain conditions using the `preference_holds/2` predicate.
 
 ```prolog
-preference_holds(Identifier, Condition, Value)
+preference_holds(Condition, Value)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific preference. |
 | `Condition` | An [Expression] representing the condition we are assigning a preference to. |
 | `Value` | The preference value assigned when the condition holds true. |
 
@@ -66,17 +62,18 @@ preference_holds(Identifier, Condition, Value)
     Taking the previous example further, suppose we want to express a preference for a combination of colors `color(a)` and `color(b)`.
 
     ```prolog
-    variable_declare(declare_color, color(a;b), fromFacts).
+    variable_declare(color(a;b), fromFacts).
     variable_domain(color(a;b), val(symbol, (red;green;blue;yellow))).
     ```
 
     If we wanted to express that we prefer combinations where `a` and `b` are equal, we could do so as follows:
 
     ```prolog
-    preference_holds(name, operation(eq, (variable(color(a)),(variable(color(b)),()))), 2).
-    preference_holds(name, operation(neq, (variable(color(a)),(variable(color(b)),())))).
+    preference_holds(operation(eq, (variable(color(a)),(variable(color(b)),()))), 2).
+    preference_holds(operation(neq, (variable(color(a)),(variable(color(b)),()))), 1).
     ```
-    In this example, we express a preference value of `2` for the condition where `color(a)` is equal to `color(b)`. Additionally, we have a default preference (with an implicit value of `1`) for the condition where they are not equal.
+
+    In this example, we express a preference value of `2` for the condition where `color(a)` is equal to `color(b)` and a preference value of `1` for the condition where they are not equal. Thus, when the solver evaluates solutions, it will prioritize those where `color(a)` and `color(b)` are the same, followed by those where they differ.
 
     Thus, first models will appear where `color(a)` and `color(b)` are the same, followed by models where they differ.
 
@@ -87,13 +84,13 @@ Preferences can also be combined to create more complex preference structures. F
     Continuing from the previous examples, suppose we want to combine the preferences of the variable `color` with the preference for `color(a)` and `color(b)` being equal.
 
     ```prolog
-    variable_declare(declare_color, color(a;b), fromFacts).
+    variable_declare(color(a;b), fromFacts).
     variable_domain(color(a;b), val(symbol, (red;green;blue;yellow))).
 
-    preference_holds(name, operation(eq, (variable(color(a)),(variable(color(b)),()))), 10).
-    preference_variableValue(dummy,color(a;b),val(symbol,red),3).
-    preference_variableValue(dummy,color(a;b),val(symbol,(green;blue)),2).
-    preference_variableValue(dummy,color(a;b),val(symbol,yellow)).
+    preference_holds(operation(eq, (variable(color(a)),(variable(color(b)),()))), 10).
+    preference_variableValue(color(a;b),val(symbol,red),3).
+    preference_variableValue(color(a;b),val(symbol,(green;blue)),2).
+    preference_variableValue(color(a;b),val(symbol,yellow),1).
     ```
 
     This describes both, a preference where `color(a)` and `color(b)` are equal, as well as individual preferences for the values of `color(a)` and `color(b)`.
@@ -128,13 +125,13 @@ However, instead of decreasing the overall score, negative preference values wil
     Extending the previous example, suppose we want to express that we strongly dislike the color `yellow` appearing in any model.
 
     ```
-    variable_declare(declare_color, color(a;b), fromFacts).
+    variable_declare(color(a;b), fromFacts).
     variable_domain(color(a;b), val(symbol, (red;green;blue;yellow))).
 
-    preference_holds(name, operation(eq, (variable(color(a)),(variable(color(b)),()))), 10).
-    preference_variableValue(dummy,color(a;b),val(symbol,red),3).
-    preference_variableValue(dummy,color(a;b),val(symbol,(green;blue)),2).
-    preference_variableValue(dummy,color(a;b),val(symbol,yellow),-5).
+    preference_holds(operation(eq, (variable(color(a)),(variable(color(b)),()))), 10).
+    preference_variableValue(color(a;b),val(symbol,red),3).
+    preference_variableValue(color(a;b),val(symbol,(green;blue)),2).
+    preference_variableValue(color(a;b),val(symbol,yellow),-5).
     ```
 
     One might be inclined to believe that models containing yellow have `5` subtracted from their total score for each occurrence. This would lead the model containing the combination `color(a) = yellow` and `color(b) = yellow` to have a total score of `0`.

@@ -61,14 +61,14 @@ Given this input, we will first transform the items and capacity into suitable v
 
 The capacity can be directly defined as a single float variable:
 ```prolog
-variable_define(dummy, total_capacity, val(float, float(C))) :- capacity(C).
+variable_define(total_capacity, val(float, float(C))) :- capacity(C).
 ```
 
 To transform the items into variable definitions, we will define two variables for each item: one for its weight and one for its value. We will use the item ID to uniquely identify each variable.
 
 ```prolog
-variable_define(dummy, item_weight(ID), val(float, float(WEIGHT))) :- item(ID, WEIGHT, _).
-variable_define(dummy, item_value(ID), val(float, float(VALUE))) :- item(ID, _, VALUE).
+variable_define(item_weight(ID), val(float, float(WEIGHT))) :- item(ID, WEIGHT, _).
+variable_define(item_value(ID), val(float, float(VALUE))) :- item(ID, _, VALUE).
 ```
 
 This concludes the data setup part of our encoding.
@@ -77,7 +77,7 @@ This concludes the data setup part of our encoding.
 Given our data setup, we now have to define how we want to select items to include in the knapsack. For this, we will [declare][variable_declare] a binary variable for each item indicating whether the item is included in the knapsack or not.
 
 ```prolog
-variable_declare(dummy, item_included(ID), boolDomain) :- item(ID, _,_).
+variable_declare(item_included(ID), boolDomain) :- item(ID, _,_).
 ```
 
 This defines `item_included(ID)` as a boolean variable for each item. Remember, while [variable_define] assigns a specific value to a variable, [variable_declare] declares a variable with a domain of possible values.
@@ -131,7 +131,7 @@ Now that we have a way to calculate the total weight of the selected items, we n
 We can achieve this by using the [ensure] to add a constraint to our model:
 
 ```prolog
-ensure(capacity_constraint, operation(leq, (TOTAL_WEIGHT,(variable(total_capacity),())))) :- weight(_, TOTAL_WEIGHT).
+ensure(operation(leq, (TOTAL_WEIGHT,(variable(total_capacity),())))) :- weight(_, TOTAL_WEIGHT).
 ```
 
 This line states that the `TOTAL_WEIGHT` calculated at any point must be less than or equal to the `total_capacity` variable we defined earlier.
@@ -141,10 +141,10 @@ Again, just a single line is sufficient to enforce the capacity constraint in ou
 ### Optimization
 Finally, we need to define our optimization objective, which is to maximize the total value of the selected items.
 
-For this, we will use the [`optimize_maximizeSum/2`][optimize_maximizeSum] predicate as follows:
+For this, we will use the [`optimize_maximizeSum/3`][optimize_maximizeSum] predicate as follows:
 
 ```prolog
-optimize_maximizeSum(dummy, EXPR, ID) :-
+optimize_maximizeSum(EXPR, ID, 0) :-
     item(ID, _, _),
     COND = variable(item_included(ID)),
     EXPR = operation(if, (COND, (variable(item_value(ID)),()))).
@@ -163,12 +163,12 @@ Our encoding is now complete and should look similar to the following:
 
 ```prolog
 % Data Setup
-variable_define(dummy, total_capacity, val(float, float(C))) :- capacity(C).
-variable_define(dummy, item_weight(ID), val(float, float(WEIGHT))) :- item(ID, WEIGHT, _).
-variable_define(dummy, item_value(ID), val(float, float(VALUE))) :- item(ID, _, VALUE).
+variable_define(total_capacity, val(float, float(C))) :- capacity(C).
+variable_define(item_weight(ID), val(float, float(WEIGHT))) :- item(ID, WEIGHT, _).
+variable_define(item_value(ID), val(float, float(VALUE))) :- item(ID, _, VALUE).
 
 % Item Selection
-variable_declare(dummy, item_included(ID), boolDomain) :- item(ID, _,_).
+variable_declare(item_included(ID), boolDomain) :- item(ID, _,_).
 
 % Total Weight
 weight(0, val(float, float("0.0"))).
@@ -180,10 +180,10 @@ weight(N, NEXT) :-
     NEXT = operation(ite, (COND, (ADD,(PREV,())))).
 
 % Capacity Constraint
-ensure(capacity_constraint, operation(leq, (TOTAL_WEIGHT,(variable(total_capacity),())))) :- weight(_, TOTAL_WEIGHT).
+ensure(operation(leq, (TOTAL_WEIGHT,(variable(total_capacity),())))) :- weight(_, TOTAL_WEIGHT).
 
 % Optimization for Value
-optimize_maximizeSum(dummy, EXPR, ID) :-
+optimize_maximizeSum(EXPR, ID, 0) :-
     item(ID, _, _),
     COND = variable(item_included(ID)),
     EXPR = operation(if, (COND, (variable(item_value(ID)),()))).
