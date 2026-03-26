@@ -14,15 +14,15 @@ type_variable((), X, multimap) :- multimap_declare(_, X).
 
 %%%%%%%%%%%%%%%%% type_expression
 _expression_query((),E) :- type_query(E).
-type_expression(SCOPE,E,T) :- _expression_query(SCOPE,E), E=variable(X), type_variable(SCOPE,X,T).
-type_expression(SCOPE,E,T) :- _expression_query(SCOPE,E), E=val(T,_).
-type_expression(SCOPE,E,top) :- _expression_query(SCOPE,E), E=python(S).
-type_expression(SCOPE,E,T) :- _expression_query(SCOPE,E), E=operation(O,ARGS), _type_operator(SCOPE,O,function(TS,T)), _type_list(SCOPE,ARGS,TS).
+type_expression(SCOPE,variable(X),T) :- _expression_query(SCOPE,variable(X)), type_variable(SCOPE,X,T).
+type_expression(SCOPE,val(T,V),T) :- _expression_query(SCOPE,val(T,V)).
+type_expression(SCOPE,python(S),top) :- _expression_query(SCOPE,python(S)).
+type_expression(SCOPE,operation(O,ARGS),T) :- _expression_query(SCOPE,operation(O,ARGS)), _type_operator(SCOPE,O,function(TS,T)), _type_list(SCOPE,ARGS,TS).
 type_expression(SCOPE, (H, T), (TH, TT)) :- _expression_query(SCOPE, (H, T)), type_expression(SCOPE, H, TH), type_expression(SCOPE, T, TT).
 
-_length(ARGS,N) :- _expression_query(SCOPE,E), E=operation(_,ARGS), N=@pythonListLength(ARGS).
-_type_listArg(SCOPE,ARGS,IDX,ARG) :- _expression_query(SCOPE,E), E=operation(O,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
-_type_listAux(SCOPE,ARGS,N,()) :- _expression_query(SCOPE,E), E=operation(O,ARGS), _length(ARGS,N).
+_length(ARGS,N) :- _expression_query(SCOPE,operation(_,ARGS)), N=@pythonListLength(ARGS).
+_type_listArg(SCOPE,ARGS,IDX,ARG) :- _expression_query(SCOPE,operation(O,ARGS)), (IDX,ARG)=@pythonEnumerateElements(ARGS).
+_type_listAux(SCOPE,ARGS,N,()) :- _expression_query(SCOPE,operation(O,ARGS)), _length(ARGS,N).
 _type_listAux(SCOPE,ARGS,N-1,(T,TS)) :- _type_listAux(SCOPE,ARGS,N,TS), _type_listArg(SCOPE,ARGS,N-1,ARG), type_expression(SCOPE,ARG,T).
 
 _type_list(SCOPE,ARGS,TS) :- _type_listAux(SCOPE,ARGS,0,TS).
@@ -33,7 +33,7 @@ _type_list(SCOPE,ARGS,TS) :- _type_listAux(SCOPE,ARGS,0,TS).
 %%%%%%%%%%%%%%%%% type_statement
 % TODO statements.
 
-_warning(type(failed_operation),(),(SCOPE,O,ARGS)) :- _expression_query(SCOPE,E), E=operation(O,ARGS), not type_expression(SCOPE,E,_).
+_warning(type(failed_operation),(),(SCOPE,O,ARGS)) :- _expression_query(SCOPE,operation(O,ARGS)), not type_expression(SCOPE,operation(O,ARGS),_).
 
 
 %%%%%%%%%%%%%%%%% type_operator

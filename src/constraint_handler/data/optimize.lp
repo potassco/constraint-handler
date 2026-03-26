@@ -20,10 +20,8 @@ _optimize_precision(val(int,1),P) :- _optimize_maximizeSum(_,_,_,P), not optimiz
 
 _optimize_se_maximizeSum(CNAME,E,X,P) :- _optimize_maximizeSum(CNAME,E,X,P), engine(CNAME,compile).
 
-_optimize_se_component(ME,X,P) :- _optimize_se_maximizeSum(CNAME,E,X,P),
-  _optimize_precision(PREC,P),
-  ME = operation(CAST,(E,(PREC,()))),
-  CAST = python("lambda v,p: math.floor(v*p)").
+_optimize_se_component(operation(python("lambda v,p: math.floor(v*p)"),(E,(PREC,()))),X,P) :- _optimize_se_maximizeSum(CNAME,E,X,P),
+  _optimize_precision(PREC,P).
 
 direct_query(E) :- _optimize_se_component(E,X,P).
 
