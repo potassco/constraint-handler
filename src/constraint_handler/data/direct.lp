@@ -62,11 +62,13 @@ _direct_implode_args_aux(ARGS,N,()) :- _compute(OP,ARGS), OP=python(S), N=@pytho
 _direct_implode_args_aux(ARGS,IDX,K) :- _direct_implode_args_aux(ARGS,IDX+1,L),
     _direct_implode_arg(OP,ARGS,IDX,ARG),
     _direct_imploded(ARG,IMP), K=(IMP,L).
-_expression_eval_exec(OP,ARGS,RES) :- _compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L), RES = @pythonEvalExpr(operation(OP,L),(),ID), _main_solverIdentifier(ID).
-_computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(OP,ARGS,val(TYPE,V)).
-_computed(OP,ARGS,bad) :- _expression_eval_exec(OP,ARGS,error(KIND,MSG)).
-_warning(KIND,(),(OP,ARGS,MSG)) :- _expression_eval_exec(OP,ARGS,error(KIND,MSG)).
-%%% TODO duplicated code in groundEval.lp
+_expression_pythonEval(operation(OP,ARGS),operation(OP,L)) :- _compute(OP,ARGS), OP=python(S), _direct_implode_args_aux(ARGS,0,L).
+_expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), RES = @pythonEvalExpr(E,(),ID), _main_solverIdentifier(ID).
+_computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(operation(OP,ARGS),val(TYPE,V)).
+_computed(OP,ARGS,bad) :- _expression_eval_exec(operation(OP,ARGS),error(KIND,MSG)).
+_computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,val(TYPE,V)).
+_computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
+_warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
 %%%%%%%%%%%%%%%%% function definitions
 assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).
