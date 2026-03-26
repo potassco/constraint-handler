@@ -15,34 +15,41 @@ _int_mult(E,0,val(int,1)) :- _computeIdx(E,mult).
 _int_mult(E,IDX+1,val(int,VO*V)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,V)), _int_mult(E,IDX,val(int,VO)).
 _computedIdx(E,V)  :- _computeIdx(E,mult), _int_mult(E,IDX,V),_computeIdx(E,IDX-1,_), not _computeIdx(E,IDX,_).
 
-%%%%%%%%%%%%%%%%% sub int_div pow
+%%%%%%%%%%%%%%%%% sub pow
 operator_declare(OP,(T,(T,())),T) :- T = int, OP = (sub;pow).
+_computedIdx(E,val(int,V0-V1))  :- _computeIdx(E,sub), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)).
+_computedIdx(E,val(int,V0**V1)) :- _computeIdx(E,pow), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)).
+
+%%%%%%%%%%%%%%%%% int_div
 operator_declare(OP,(T1,(T2,())),T) :- T = int, T1 = (int;float), T2 = (int;float), OP = int_div.
-_computed(OP,ARGS,val(int,V1-V2))  :- _compute(OP,ARGS), OP=sub,  ARGS = (val(int,V1),(val(int,V2),())).
-_computed(OP,ARGS,val(int,V1/V2))  :- _compute(OP,ARGS), OP=int_div,  ARGS = (val(int,V1),(val(int,V2),())), V2!=0.
-_computed(OP,ARGS,bad) :- _compute(OP,ARGS), OP=(int_div;float_div),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
-warning(expression(zeroDivisionError),(),(OP,ARGS))  :- _compute(OP,ARGS), OP=(int_div;float_div),  ARGS = (val(int,V1),(val(int,V2),())), V2=0.
-_computed(OP,ARGS,val(int,V1**V2)) :- _compute(OP,ARGS), OP=pow,  ARGS = (val(int,V1),(val(int,V2),())).
+_computedIdx(E,val(int,V0/V1)) :- _computeIdx(E,int_div), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)), V1 != 0.
+_computedIdx(E,bad) :- _computeIdx(E,(int_div;float_div)), _computeIdx(E,1,val(int,0)).
+warning(expression(zeroDivisionError),(),(OP,E)) :- _computeIdx(E,OP), OP = (int_div;float_div), _computeIdx(E,1,val(int,0)).
+
 
 %%%%%%%%%%%%%%%%% abs minus
 operator_declare(OP,(T,()),T) :- T = int, OP = (abs;minus).
 _computedIdx(E,val(int,|V|)) :- _computeIdx(E,abs), _computeIdx(E,0,val(int,V)).
 _computedIdx(E,val(int,-V))  :- _computeIdx(E,minus), _computeIdx(E,0,val(int,V)).
 
-%%%%%%%%%%%%%%%%% comparison equality
-operator_declare(OP,(T,(T,())),bool) :- T = int, OP = (eq;neq;leq;lt;geq;gt).
+%%%%%%%%%%%%%%%%% equality
+operator_declare(OP,(T,(T,())),bool) :- T = int, OP = (eq;neq).
 _computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=eq,  ARGS = (val(int,V1),(val(int,V2),())), V1 =  V2.
 _computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=neq, ARGS = (val(int,V1),(val(int,V2),())), V1 != V2.
-_computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=leq, ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
-_computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=lt,  ARGS = (val(int,V1),(val(int,V2),())), V1 <  V2.
-_computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=geq, ARGS = (val(int,V1),(val(int,V2),())), V1 >= V2.
-_computed(OP,ARGS,val(bool,true))  :- _compute(OP,ARGS), OP=gt,  ARGS = (val(int,V1),(val(int,V2),())), V1 >  V2.
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=eq,  ARGS = (val(int,V1),(val(int,V2),())), V1 != V2.
 _computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=neq, ARGS = (val(int,V1),(val(int,V2),())), V1 =  V2.
-_computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=leq, ARGS = (val(int,V1),(val(int,V2),())), V1 >  V2.
-_computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=lt,  ARGS = (val(int,V1),(val(int,V2),())), V1 >= V2.
-_computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=geq, ARGS = (val(int,V1),(val(int,V2),())), V1 <  V2.
-_computed(OP,ARGS,val(bool,false)) :- _compute(OP,ARGS), OP=gt,  ARGS = (val(int,V1),(val(int,V2),())), V1 <= V2.
+
+%%%%%%%%%%%%%%%%% comparison
+operator_declare(OP,(T,(T,())),bool) :- T = int, OP = (leq;lt;geq;gt).
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,leq), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,lt),  _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 < V2.
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,geq), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 >= V2.
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,gt),  _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
+
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,leq), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,lt),  _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 >= V2.
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,geq), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 < V2.
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,gt),  _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
 
 _computedIdx(E,val(int,V2)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
 _computedIdx(E,val(int,V1)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
