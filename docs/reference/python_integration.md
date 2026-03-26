@@ -205,13 +205,13 @@ This is a special exception that, when raised within a Python statement, does no
     In the following program, we specify two input variables `x` and `y` with a domain of `1..3`. The execution divides `x` by `y` and assigns the result to `z`. If `z` is less than or equal to `1.5`, it raises a `FailIntegrityExn`.
 
     ```prolog
-    variable_declare(d_x, execution_input(py_exn, ("x";"y")), fromFacts).
+    variable_declare(execution_input(py_exn, ("x";"y")), fromFacts).
     variable_domain(execution_input(py_exn, ("x";"y")), val(int, 1..3)).
 
-    execution_declare(dummy, py_exn, S, ("x",("y",())),("z",())) :-
+    execution_declare(py_exn, S, ("x",("y",())),("z",())) :-
         S = statement_python("z = x/y\nif z <= 1.5:\n  raise solver_environment.FailIntegrityExn").
 
-    execution_run(dummy,py_exn).
+    execution_run(py_exn).
     ```
 
     This means, all values where `x` = 1 will automatically violate the integrity constraint. Likewise, whenever `y` is 2 or 3, there is no way for `z` to be greater than `1.5`. The only values that satisfy the integrity constraint are when `x` is 2 or 3 and `y` is 1, which results in `z` being 2 or 3, respectively.
@@ -241,13 +241,13 @@ This function takes a boolean condition as an argument and raises a `FailIntegri
     The example used in the previous section can be rewritten using the `constrain` function as follows:
 
     ```prolog
-    variable_declare(d_x, execution_input(py_exn, ("x";"y")), fromFacts).
+    variable_declare(execution_input(py_exn, ("x";"y")), fromFacts).
     variable_domain(execution_input(py_exn, ("x";"y")), val(int, 1..3)).
 
-    execution_declare(dummy, py_exn, S, ("x",("y",())),("z",())) :-
+    execution_declare(py_exn, S, ("x",("y",())),("z",())) :-
         S = statement_python("z = x/y\nsolver_environment.constrain(z > 1.5)").
 
-    execution_run(dummy,py_exn).
+    execution_run(py_exn).
     ```
 
     >Since the `constrain` function raises a `FailIntegrityExn` when the condition is not satisfied, we had to reverse the condition from `z <= 1.5` to `z > 1.5` in order to maintain the same integrity constraint as in the previous example.

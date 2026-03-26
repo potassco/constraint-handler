@@ -104,19 +104,18 @@ Users can also choose to forbid specific warnings using the `forbid_warning/1` p
     Ignored warnings cannot be forbidden, and vice versa. If a warning type is both ignored and forbidden, it will be treated as ignored.
 
 ```prolog
-forbid_warning(Identifier, WarningType)
+forbid_warning(WarningType)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for this specific statement. |
 | `WarningType` | The type of warning to forbid. This should match the `Type` field of the warnings you wish to treat as errors. |
 
 !!! Example
     To forbid warnings about variables with empty domains, you can use:
 
     ```prolog
-    forbid_warning(empty_domain_forbidden, variable(confusingName)).
+    forbid_warning(variable(confusingName)).
     ```
 
     This will cause any warning of the type `variable(confusingName)` to be treated as an error, and it will prevent the model from being generated if such a warning is encountered.
@@ -131,12 +130,12 @@ The operations and executions that receive `bad` as an input can then choose how
 !!! Example
     Consider the following variable definitions:
     ```
-    variable_define(d_x, x, val(int, 6)).
-    variable_define(d_y, y, val(int, 2)).
-    variable_define(d_a, a, operation(add, (variable(y),(variable(y),(variable(y),()))))).
-    variable_define(d_s, s, operation(sub, (variable(x),(variable(a),())))).
-    variable_define(d_d, d, operation(div, (variable(x),(variable(s),())))).
-    variable_define(d_m, m, operation(mult, (variable(d),(variable(y),())))).
+    variable_define(x, val(int, 6)).
+    variable_define(y, val(int, 2)).
+    variable_define(a, operation(add, (variable(y),(variable(y),(variable(y),()))))).
+    variable_define(s, operation(sub, (variable(x),(variable(a),())))).
+    variable_define(d, operation(div, (variable(x),(variable(s),())))).
+    variable_define(m, operation(mult, (variable(d),(variable(y),())))).
     ```
 
     We expect `a` to be evaluated as `y + y + y`, which should yield `6`. Then, `s` would be `x - a`, which should yield `0`. Finally, when evaluating `d`, we would attempt to divide `x` by `s`, which would lead to a division by zero error.
@@ -188,10 +187,10 @@ warning(expression(syntaxError), _, Message)
 
 !!! Example
     ```prolog
-    variable_define(d_a, a, val(str, "a")).
-    variable_define(d_b, b, val(str, "b")).
-    variable_define(d_c, c, val(str, "c")).
-    variable_define(d_x,x, operation(eq, (variable(a),(variable(b),(variable(c),()))))).
+    variable_define(a, val(str, "a")).
+    variable_define(b, val(str, "b")).
+    variable_define(c, val(str, "c")).
+    variable_define(x, operation(eq, (variable(a),(variable(b),(variable(c),()))))).
     ```
 
     Raises the warning:
@@ -225,7 +224,7 @@ warning(expression(zeroDivisionError), _, Message)
 
 !!! Example
     ```prolog
-    variable_define(d_x,x, operation(int_div, (val(int, 2),(val(int, 0),())))).
+    variable_define(x, operation(int_div, (val(int, 2),(val(int, 0),())))).
     ```
 
     Raises the warning:
