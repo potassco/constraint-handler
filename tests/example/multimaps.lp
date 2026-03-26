@@ -106,63 +106,6 @@ evaluate(minEntries,(variable(cities),())).
 evaluate(maxEntries,(variable(properDivisors2),())).
 evaluate(minEntries,(variable(properDivisors2),())).
 
-variable_define(aa, a, operation(multimap_make,
-                       ((operation(set_make,(val(int,1),(val(int,2),()))),operation(set_make,(val(int,2),(val(int,4),())))),
-                       ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,4),(val(int,8),())))),
-                       ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,1),(val(int,2),())))),
-                       ()))))).
-
-multimap_declare(ab,b).
-multimap_assign(ab,b,
-    operation(set_make,(val(int,1),(val(int,2),()))),
-    operation(set_make,
-             (operation(add,(val(int,1),(val(int,1),()))),
-             (operation(add,(val(int,2),(val(int,2),()))),())))).
-
-variable_define(abs,b24,
-    operation(set_make,
-        (operation(mult,(val(int,2),(val(int,1),()))),
-        (operation(mult,(val(int,2),(val(int,2),()))),())))).
-multimap_assign(ab,b,
-    variable(b24),
-    operation(set_make,
-             (operation(add,(val(int,1),(val(int,1),()))),
-             (val(int,1),
-             ())))).
-
-set_declare(dbs,b48).
-set_assign(abs,b48,val(int,4)).
-set_assign(abs,b48,val(int,8)).
-
-multimap_assign(ab,b,
-    variable(b24),
-    variable(b48)).
-
-variable_define(ac, c, operation(multimap_make,
-                       ((operation(set_make,(val(int,1),(val(int,2),()))), operation(set_make,(val(int,2),(val(int,4),())))),
-                       ((operation(set_make,(val(int,2),(val(int,4),()))), operation(set_make,(val(int,4),(val(int,7),())))),
-                       ((operation(set_make,(val(int,2),(val(int,4),()))), operation(set_make,(val(int,1),(val(int,2),())))),
-                       ()))))).
-
-variable_define(ad,d,operation(multimap_make,
-                     ((operation(set_make,(val(int,1),(val(int,2),()))),operation(set_make,(val(int,2),(val(int,4),())))),
-                     ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,4),(val(int,8),())))),
-                     ())))).
-variable_define(ae,e,operation(multimap_make,
-                     ((operation(set_make,(val(int,1),(val(int,2),()))), operation(set_make,(val(int,2),(val(int,4),())))),
-                     ()))).
-
-evaluate(eq,(variable(a),(variable(b),()))).
-evaluate(eq,(variable(a),(variable(c),()))).
-evaluate(eq,(variable(a),(variable(d),()))).
-evaluate(eq,(variable(a),(variable(e),()))).
-evaluate(neq,(variable(a),(variable(b),()))).
-evaluate(neq,(variable(a),(variable(c),()))).
-evaluate(neq,(variable(a),(variable(d),()))).
-evaluate(neq,(variable(a),(variable(e),()))).
-evaluate(neq,(variable(d),(variable(e),()))).
-evaluate(neq,(variable(e),(variable(d),()))).
-
 
 evaluate(multimap_fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
 _computed(myproduct,(val(int,VA),(val(int,VB),())),val(int,VA * VB)) :- _compute(myproduct,(val(int,VA),(val(int,VB),()))).
