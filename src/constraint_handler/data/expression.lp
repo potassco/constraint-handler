@@ -1,4 +1,3 @@
-
 %%%%%%%%%%%%%%%%% _expression_query from variables
 _expression_query((),E) :- variable_define(_,X,E).
 _expression_query((),E) :- variable_domain(X,E).
@@ -10,11 +9,11 @@ _expression_query((),B) :- multimap_assign(_,X,K,B).
 
 %%%%%%%%%%%%%%%%% _expression_query from expressions
 % TODO lambda?.
-_expression_query(SCOPE,D) :- _expression_query(SCOPE,E), E=operation(O,L), D=@pythonListElements(L).
+_expression_query(SCOPE,D) :- _expression_query(SCOPE,operation(O,L)), D=@pythonListElements(L).
 _expression_query(SCOPE,D) :- _expression_query(SCOPE,T), D=@pythonTupleElements(T).
 
 %%%%%%%%%%%%%%%%% _expression_query from statements
-_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = assert(EXPR).
-_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = assign(X,EXPR).
-_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = if(EXPR,THEN,ELSE).
-_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,STMT), STMT = while(MAX,EXPR,BODY).
+_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,assert(EXPR)).
+_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,assign(X,EXPR)).
+_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
+_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,while(MAX,EXPR,BODY)).

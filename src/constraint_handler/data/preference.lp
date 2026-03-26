@@ -10,14 +10,11 @@ _warning(preference(unsupported),(),("multiple scores for the same expression",E
 preference_variableValue(CNAME,X,E,1) :- preference_variableValue(CNAME,X,E).
 preference_holds(CNAME,E,1) :- preference_holds(CNAME,E).
 
-_preference_expressionScore(EQ, K) :- preference_variableValue(CNAME,X,E,K), K > 0, EQ = operation(eq,(variable(X),(E,()))).
-_preference_expressionScore(NE,-K) :- preference_variableValue(CNAME,X,E,K), K < 0,
-    EQ = operation(eq,(variable(X),(E,()))),
-    NE = operation(wnot,(EQ,())).
+_preference_expressionScore(operation(eq,(variable(X),(E,()))), K) :- preference_variableValue(CNAME,X,E,K), K > 0.
+_preference_expressionScore(operation(wnot,(operation(eq,(variable(X),(E,()))),())),-K) :- preference_variableValue(CNAME,X,E,K), K < 0.
 
 _preference_expressionScore(E, K) :- preference_holds(CNAME,E,K), K > 0.
-_preference_expressionScore(F,-K) :- preference_holds(CNAME,E,K), K < 0,
-    F = operation(wnot,(E,())).
+_preference_expressionScore(operation(wnot,(E,())),-K) :- preference_holds(CNAME,E,K), K < 0.
 
 _preference_expression(E) :- _preference_expressionScore(E,K).
 direct_query(E) :- _preference_expression(E).

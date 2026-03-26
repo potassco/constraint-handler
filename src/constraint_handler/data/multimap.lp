@@ -10,16 +10,16 @@ direct_query(EK;EV) :- _multimap_assign(CNAME,EX,EK,EV).
 
 representation(multimap,intensional).
 
-_se_value(EX,val(multimap,EX)) :- _multimap_declare(CNAME,X), EX=variable(X), ER = ref(EX).
+_se_value(variable(X),val(multimap,variable(X))) :- _multimap_declare(CNAME,X), ER = ref(variable(X)).
 _multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,EX,EK,EV), _se_value(EX,val(multimap,ER)).
 
 %%%%%%%%%%%%%%%%% pairstuples
-direct_query(E1;E2) :- direct_query(E), E=(E1,E2).
+direct_query(E1;E2) :- direct_query((E1,E2)).
 
 %%%%%%%%%%%%%%%%% multimap_make
-operator_declare_variadic(multimap_make, (K,V), multimap, 1) :- _type(K), _type(V).
-_se_value(E,val(multimap,ER)) :- direct_query(E), E=operation(multimap_make,L), ER=ref(E).
-_multimap_add(ER,EK,EV) :- direct_query(E), E=operation(multimap_make,L), _se_value(E,val(multimap,ER)),
+operator_declare_variadic(multimap_make,(K,V),multimap,1) :- _type(K), _type(V).
+_se_value(operation(multimap_make,L),val(multimap,ref(operation(multimap_make,L)))) :- direct_query(operation(multimap_make,L)).
+_multimap_add(ER,EK,EV) :- direct_query(operation(multimap_make,L)), _se_value(operation(multimap_make,L),val(multimap,ER)),
     (EK,EV)=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value
@@ -40,33 +40,32 @@ _multimap_entry(EM,RK,RV) :- _multimap_add(EM,EK,EV),
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-multimap_value(X,KEY,VAL) :- _se_value(E,val(multimap,EM)), _multimap_entry(EM,KEY,VAL), E=variable(X).
+multimap_value(X,KEY,VAL) :- _se_value(variable(X),val(multimap,EM)), _multimap_entry(EM,KEY,VAL).
 
 %%%%%%%%%%%%%%%%%% find
-operator_declare(OP,(T1,(T2,())),set) :- _type(T1), T2 = multimap, OP = find.
+operator_declare(find,(T1,(multimap,())),set) :- _type(T1).
 %%% TODO: this is fragile, maybe buggy.
-_computed(O,ARGS,ref(set,find(ARGS))) :- _compute(O,ARGS), O=find, ARGS=(K,(val(multimap,EM),())).
+_computed(find,(K,(val(multimap,EM),())),ref(set,find((K,(val(multimap,EM),()))))) :- _compute(find,(K,(val(multimap,EM),()))).
 
-_set_contains(ER,V) :- _compute(O,ARGS), O=find, _computed(O,ARGS,ref(set,ER)),
-    ARGS=(K,(val(multimap,EM),())),
+_set_contains(ER,V) :- _compute(find,(K,(val(multimap,EM),()))), _computed(find,(K,(val(multimap,EM),())),ref(set,ER)),
     _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% count keys and entries
-operator_declare(OP,(T,()),int) :- T = multimap, OP = (countKeys;countEntries;sumIntEntries).
-_computed(O,ARGS,val(int,N)) :- _compute(O,ARGS), O=countKeys, ARGS=(val(multimap,EM),()),
+operator_declare((countKeys;countEntries;sumIntEntries),(multimap,()),int).
+_computed(countKeys,(val(multimap,EM),()),val(int,N)) :- _compute(countKeys,(val(multimap,EM),())),
     N = #count { K : _multimap_entry(EM,K,V) }.
 
-_computed(O,ARGS,val(int,N)) :- _compute(O,ARGS), O=countEntries, ARGS=(val(multimap,EM),()),
+_computed(countEntries,(val(multimap,EM),()),val(int,N)) :- _compute(countEntries,(val(multimap,EM),())),
     N = #count { K,V : _multimap_entry(EM,K,V) }.
 
-_computed(O,ARGS,val(int,N)) :- _compute(O,ARGS), O=sumIntEntries, ARGS=(val(multimap,EM),()),
+_computed(sumIntEntries,(val(multimap,EM),()),val(int,N)) :- _compute(sumIntEntries,(val(multimap,EM),())),
     N = #sum { RV,K : _multimap_entry(EM,K,val(int,RV)) }.
 
 %%%% TODO use type-specific greater/smaller than, instead of gringo's ordering.
-_computed(O,ARGS,M) :- _compute(O,ARGS), O=maxEntries, ARGS=(val(multimap,EM),()),
+_computed(maxEntries,(val(multimap,EM),()),M) :- _compute(maxEntries,(val(multimap,EM),())),
     M = #max { V : _multimap_entry(EM,K,V) }.
 
-_computed(O,ARGS,M) :- _compute(O,ARGS), O=minEntries, ARGS=(val(multimap,EM),()),
+_computed(minEntries,(val(multimap,EM),()),M) :- _compute(minEntries,(val(multimap,EM),())),
     M = #min { V : _multimap_entry(EM,K,V) }.
 
 %%%%%%%%%%%%%%%%%% isin notin
@@ -74,42 +73,38 @@ _computed(O,ARGS,M) :- _compute(O,ARGS), O=minEntries, ARGS=(val(multimap,EM),()
 %%%%%%%%%%%%%%%%%% union inter
 
 %%%%%%%%%%%%%%%%%% Equality
-operator_declare(OP,(T,(T,())),bool) :- T = multimap, OP = (eq;neq).
-_compute(eq,ARGS) :- _compute(neq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())).
-_computed(neq,ARGS,val(bool,NEQ)) :- _computed(eq,ARGS,val(bool,EQ)), ARGS = (val(T1,M1),(val(T2,M2),())), (T1;T2)=multimap, (EQ,NEQ)=((true,false);(false,true)).
-_computed(eq,ARGS,val(bool,true))  :- _compute(eq,ARGS),  ARGS = (val(multimap,S1),(val(multimap,S2),())), not _computed(eq,ARGS,val(bool,false)).
+operator_declare((eq;neq),(multimap,(multimap,())),bool).
+_compute(eq,(val(multimap,M1),(val(multimap,M2),()))) :- _compute(neq,(val(multimap,M1),(val(multimap,M2),()))).
+_computed(neq,(val(T1,M1),(val(T2,M2),())),val(bool,NEQ)) :- _computed(eq,(val(T1,M1),(val(T2,M2),())),val(bool,EQ)), (T1;T2)=multimap, (EQ,NEQ)=((true,false);(false,true)).
+_computed(eq,(val(multimap,S1),(val(multimap,S2),())),val(bool,true)) :- _compute(eq,(val(multimap,S1),(val(multimap,S2),()))), not _computed(eq,(val(multimap,S1),(val(multimap,S2),())),val(bool,false)).
 
-_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
+_computed(eq,(val(multimap,M1),(val(multimap,M2),())),val(bool,false)) :- _compute(eq,(val(multimap,M1),(val(multimap,M2),()))),
     _multimap_entry(M1,K1,V1),
     #false : _multimap_entry(M2,K2,V2), _computed(eq,(K1,(K2,())),val(bool,true)), _computed(eq,(V1,(V2,())),val(bool,true)).
-_computed(eq,ARGS,val(bool,false)) :- _compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
+_computed(eq,(val(multimap,M1),(val(multimap,M2),())),val(bool,false)) :- _compute(eq,(val(multimap,M1),(val(multimap,M2),()))),
     _multimap_entry(M2,K2,V2),
     #false : _multimap_entry(M1,K1,V1), _computed(eq,(K1,(K2,())),val(bool,true)), _computed(eq,(V1,(V2,())),val(bool,true)).
 
 
-_compute(eq,SUBARGS) :- _compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
+_compute(eq,(K1,(K2,()))) :- _compute(eq,(val(multimap,M1),(val(multimap,M2),()))),
     _multimap_entry(M1,K1,V1),
-    _multimap_entry(M2,K2,V2),
-    SUBARGS=(K1,(K2,())).
-_compute(eq,SUBARGS) :- _compute(eq,ARGS), ARGS = (val(multimap,M1),(val(multimap,M2),())),
+    _multimap_entry(M2,K2,V2).
+_compute(eq,(V1,(V2,()))) :- _compute(eq,(val(multimap,M1),(val(multimap,M2),()))),
     _multimap_entry(M1,K1,V1),
-    _multimap_entry(M2,K2,V2),
-    SUBARGS=(V1,(V2,())).
+    _multimap_entry(M2,K2,V2).
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
 
-_multimap_makeIndex(VM) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(ACC,()))).
-_multimap_foldStep(multimap_fold,ARGS,0,ACC) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(ACC,()))).
-direct_query(E) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(START,()))),
-    _multimap_index(VM,I,K,VI), _multimap_foldStep(multimap_fold,ARGS,I,VB),
-    E=operation(VO,(VI,(VB,()))).
-_multimap_foldStep(multimap_fold,ARGS,I+1,NEXT) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(START,()))),
-    _multimap_foldStep(multimap_fold,ARGS,I,VB), _multimap_index(VM,I,K,VI),
-    E=operation(VO,(VI,(VB,()))),
-    _se_value(E,NEXT).
-_computed(multimap_fold,ARGS,VB) :- _compute(multimap_fold,ARGS), ARGS = (val(function,VO),(val(multimap,VM),(START,()))),
-    _multimap_foldStep(multimap_fold,ARGS,I,VB),
+_multimap_makeIndex(VM) :- _compute(multimap_fold,(val(function,VO),(val(multimap,VM),(ACC,())))).
+_multimap_foldStep(multimap_fold,(val(function,VO),(val(multimap,VM),(ACC,()))),0,ACC) :- _compute(multimap_fold,(val(function,VO),(val(multimap,VM),(ACC,())))).
+direct_query(operation(VO,(VI,(VB,())))) :- _compute(multimap_fold,(val(function,VO),(val(multimap,VM),(START,())))),
+    _multimap_index(VM,I,K,VI), _multimap_foldStep(multimap_fold,(val(function,VO),(val(multimap,VM),(START,()))),I,VB).
+_multimap_foldStep(multimap_fold,(val(function,VO),(val(multimap,VM),(START,()))),I+1,NEXT) :- _compute(multimap_fold,(val(function,VO),(val(multimap,VM),(START,())))),
+    _multimap_foldStep(multimap_fold,(val(function,VO),(val(multimap,VM),(START,()))),I,VB), _multimap_index(VM,I,K,VI),
+    _se_value(operation(VO,(VI,(VB,()))),NEXT).
+_computed(multimap_fold,(val(function,VO),(val(multimap,VM),(START,()))),VB) :- _compute(multimap_fold,(val(function,VO),(val(multimap,VM),(START,())))),
+    _multimap_foldStep(multimap_fold,(val(function,VO),(val(multimap,VM),(START,()))),I,VB),
     _multimap_lastIndex(VM,I).
 
 _multimap_index(EM,0,K,V) :- _multimap_makeIndex(EM),
@@ -127,8 +122,8 @@ _multimap_lastIndex(EM,0) :- _multimap_makeIndex(EM),
     #false : _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% isin
-operator_declare(OP,(T1,(T2,())),bool) :- _type(T1),T2=multimap, OP = (isin).
-_computed(O,ARGS,val(bool,true)) :- _compute(O,ARGS), O=isin, ARGS=(K,(val(multimap,EM),())),
+operator_declare(isin,(T1,(multimap,())),bool) :- _type(T1).
+_computed(isin,(K,(val(multimap,EM),())),val(bool,true)) :- _compute(isin,(K,(val(multimap,EM),()))),
     _multimap_entry(EM,K,V).
-_computed(O,ARGS,val(bool,false)) :- _compute(O,ARGS), O=isin, ARGS=(K,(val(multimap,EM),())),
+_computed(isin,(K,(val(multimap,EM),())),val(bool,false)) :- _compute(isin,(K,(val(multimap,EM),()))),
     #false : _multimap_entry(EM,K,V).

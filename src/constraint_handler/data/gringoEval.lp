@@ -10,29 +10,28 @@ _ge_evaluate(_ge_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(ground).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
 
 _se_assign(_internal,variable(X),val(T,V)) :- ge_value(X,val(T,V)), representation(T,extensional).
-_set_declare(_internal,variable(X)) :- ge_value(X,V), V=set(S).
-_set_assign(_internal,variable(X),VAL) :- ge_value(X,VS), VS=set(S), VAL=@pythonListElements(S).
-evaluated(OP,ARGS,V) :- _ge_evaluate(CNAME,OP,ARGS), EXPR=operation(OP,ARGS), ge_result(EXPR,V).
+_set_declare(_internal,variable(X)) :- ge_value(X,set(S)).
+_set_assign(_internal,variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
+evaluated(OP,ARGS,V) :- _ge_evaluate(CNAME,OP,ARGS), ge_result(operation(OP,ARGS),V).
 
-%ge_expressionQuery(EXPR) :- _main_defaultEngine(ground), evaluate(OP,ARGS), EXPR=operation(OP,ARGS).
-ge_expressionQuery(EXPR) :- _ge_evaluate(CNAME,OP,ARGS), EXPR=operation(OP,ARGS).
+%ge_expressionQuery(operation(OP,ARGS)) :- _main_defaultEngine(ground), evaluate(OP,ARGS).
+ge_expressionQuery(operation(OP,ARGS)) :- _ge_evaluate(CNAME,OP,ARGS).
 ge_expressionQuery(EXPR) :- _ge_ensure(CNAME,EXPR).
 ge_expressionQuery(EXPR) :- _ge_assign(CNAME,X,EXPR).
 
 _ge_vQuery(X) :- ge_expressionQuery(EXPR), X=@pythonExpressionVariable(EXPR).
 
 _direct_implode(V) :- _ge_vQuery(X), _se_value(variable(X),V).
-ge_value(X,VAL) :- _ge_vQuery(X), E=variable(X), _se_value(E,val(T,V)), _direct_imploded(E,VAL).
+ge_value(X,VAL) :- _ge_vQuery(X), _se_value(variable(X),val(T,V)), _direct_imploded(variable(X),VAL).
 
 
 _ge_setAssignsAux(X,#inf,()) :- _ge_set_declare(CNAME,X).
-_ge_setAssignsAux(X,F,K) :- _ge_setAssignsAux(X,E,L), _ge_set_assign(CNAME,X,F), E < F,
-    0 = #count { G : _ge_set_assign(CNAME,X,G), E < G, G < F },
-K = (F,L).
+_ge_setAssignsAux(X,F,(F,L)) :- _ge_setAssignsAux(X,E,L), _ge_set_assign(CNAME,X,F), E < F,
+    0 = #count { G : _ge_set_assign(CNAME,X,G), E < G, G < F }.
 _ge_setAssigns(X,L) :- _ge_setAssignsAux(X,E,L),
     0 = #count { G : _ge_set_assign(CNAME,X,G), E < G }.
 
-_ge_assign(CNAME,X,EXPR) :- _ge_set_declare(CNAME,X), _ge_setAssigns(X,L), EXPR=set(L).
+_ge_assign(CNAME,X,set(L)) :- _ge_set_declare(CNAME,X), _ge_setAssigns(X,L).
 
 _ge_enumeratedVariables(EXPR,R) :- ge_expressionQuery(EXPR), R=@pythonEnumerateVariables(EXPR).
 

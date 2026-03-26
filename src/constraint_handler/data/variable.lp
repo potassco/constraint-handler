@@ -32,7 +32,7 @@ _warning(variable(emptyDomain),(CNAME,()),X) :- _variable_declare(CNAME,X,_), no
 _variable_query((),X) :- variable_domain(X,V).
 _variable_query((),X) :- set_assign(NAME,X,E).
 _variable_query((),X) :- multimap_assign(NAME,X,K,B).
-_variable_query(SCOPE,X) :- _expression_query(SCOPE,E), E=variable(X).
+_variable_query(SCOPE,X) :- _expression_query(SCOPE,variable(X)).
 _variable_query((),execution_input(NAME,X)) :- _statement_query(SCOPE,STMT), execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
 _variable_query((NAME,()),X) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
@@ -41,7 +41,7 @@ _variable_exists((),X) :- variable_define(_,X,_).
 _variable_exists((),X) :- set_declare(_,X).
 _variable_exists((),X) :- multimap_declare(_,X).
 _variable_exists((),X) :- multimap_declare(_,X).
-_variable_exists(SCOPE,X) :- _statement_query(SCOPE,STMT), STMT = assign(X,EXPR).
+_variable_exists(SCOPE,X) :- _statement_query(SCOPE,assign(X,EXPR)).
 _variable_exists((NAME,()),X) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
 _variable_exists((),execution_output(NAME,X)) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
@@ -51,13 +51,13 @@ _variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), _variable_exists(SC
 _variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), _variable_found(OUTER,X).
 _warning(variable(undeclared),(),(SCOPE,X)) :- _variable_query(SCOPE,X), not _variable_found(SCOPE,X).
 
-_variable_confusingName(K,keyword) :- K=(assert;assign;if;noop;statement_python;seq2;while). % statement
-_variable_confusingName(K,keyword) :- K=(lambda;operation;python;val;variable). % expression
-_variable_confusingName(K,keyword) :- K=(boolDomain;fromFacts;fromList). % domain
-_variable_confusingName(T,type) :- T=(none;bool;int;float;str;symbol;set;multimap).
+_variable_confusingName((assert;assign;if;noop;statement_python;seq2;while),keyword). % statement
+_variable_confusingName((lambda;operation;python;val;variable),keyword). % expression
+_variable_confusingName((boolDomain;fromFacts;fromList),keyword). % domain
+_variable_confusingName((none;bool;int;float;str;symbol;set;multimap),type).
 _variable_confusingName(O,operator) :- operator_declare(O,INS,OUT).
 
-warning(variable(confusingName),(),((SCOPE,X),REASON)) :- _variable_exists(SCOPE,X), _variable_confusingName(BAD,REASON), (function,BAD,N,ARGS) = @pythonReify(X).
-warning(variable(confusingName),(),((SCOPE,X),number)) :- _variable_exists(SCOPE,X), (number,_,_,_) = @pythonReify(X).
+warning(variable(confusingName),(),((SCOPE,X),REASON)) :- _variable_exists(SCOPE,X), _variable_confusingName(BAD,REASON), (function,BAD,N,ARGS)=@pythonReify(X).
+warning(variable(confusingName),(),((SCOPE,X),number)) :- _variable_exists(SCOPE,X), (number,_,_,_)=@pythonReify(X).
 
 % TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
