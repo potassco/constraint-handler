@@ -149,7 +149,9 @@ class Evaluator:
                 else:
                     return args[1]
             case ConditionalOperator.IF:
-                if args[0] == True:
+                if args[0] is expression.Bad.bad:
+                    return expression.Bad.bad
+                elif args[0] == True:
                     return args[1]
                 else:
                     return None
