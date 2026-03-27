@@ -230,6 +230,12 @@ class Evaluator:
 
                 recoverable = [
                     logic.Operator.conj,
+                    logic.Operator.disj,
+                    logic.Operator.limp,
+                    logic.Operator.ite,
+                    ConditionalOperator.IF,
+                    ConditionalOperator.default,
+                    arithmetic.Operator.pow,
                 ]
 
                 if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in recoverable):
