@@ -23,6 +23,8 @@ class Evaluator:
                     return False
                 elif None in args:
                     return None
+                elif common.Bad.bad in args:
+                    return common.Bad.bad
                 else:
                     return True
             case Operator.disj:
@@ -30,12 +32,18 @@ class Evaluator:
                     return True
                 elif None in args:
                     return None
+                elif common.Bad.bad in args:
+                    return common.Bad.bad
                 else:
                     return False
             case Operator.ite:
                 assert len(args) == 3
                 if args[0] is None:
                     return None
+
+                if args[0] is common.Bad.bad:
+                    return common.Bad.bad
+
                 return args[1] if args[0] else args[2]
             case Operator.leqv:
                 if None in args:
@@ -43,7 +51,14 @@ class Evaluator:
                 return functools.reduce(operator.eq, args, True)
             case Operator.limp:
                 assert len(args) == 2
-                return args[1] if args[0] else True
+                if not args[0]:
+                    return True
+                elif args[1] is True:
+                    return True
+                elif common.Bad.bad in args:
+                    return common.Bad.bad
+                else:
+                    return args[1]
             case Operator.lnot:
                 assert len(args) == 1
                 if None in args:

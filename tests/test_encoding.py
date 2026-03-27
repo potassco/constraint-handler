@@ -31,6 +31,7 @@ base_tests = [
     "engine_request_mult",
     "engine_request_set_ref",
     "eq_compound_int",
+    "error_recovery",
     "executions",
     "execution_assert",
     "execution_conditional",
@@ -136,6 +137,7 @@ def test_engine_propagator(name, check_mode):
     unsupported: list[str] = [
         "engine_request",
         "engine_request_mult",
+        "error_recovery",
         "lambda_recursive",
         "multimaps",
         "optimize_bools",

@@ -10,6 +10,7 @@ _ge_evaluate(_ge_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(ground).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
 
 _se_assign(_internal,variable(X),val(T,V)) :- ge_value(X,val(T,V)), representation(T,extensional).
+_se_assign(_internal,variable(X),bad) :- ge_value(X,bad).
 _set_declare(_internal,variable(X)) :- ge_value(X,set(S)).
 _set_assign(_internal,variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
 evaluated(OP,ARGS,V) :- _ge_evaluate(CNAME,OP,ARGS), ge_result(operation(OP,ARGS),V).

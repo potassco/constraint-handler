@@ -149,7 +149,9 @@ class Evaluator:
                 else:
                     return args[1]
             case ConditionalOperator.IF:
-                if args[0] == True:
+                if args[0] is expression.Bad.bad:
+                    return expression.Bad.bad
+                elif args[0] == True:
                     return args[1]
                 else:
                     return None
@@ -227,7 +229,18 @@ class Evaluator:
             case expression.Operation(eo, eargs):
                 args = [self.expr(a) for a in eargs]
                 o = self.expr(eo)
-                if expression.Bad.bad == eo or expression.Bad.bad in args:
+
+                recoverable = [
+                    logic.Operator.conj,
+                    logic.Operator.disj,
+                    logic.Operator.limp,
+                    logic.Operator.ite,
+                    ConditionalOperator.IF,
+                    ConditionalOperator.default,
+                    arithmetic.Operator.pow,
+                ]
+
+                if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in recoverable):
                     return expression.Bad.bad
                 return self.operator(o, args)
             case expression.Variable(a):
