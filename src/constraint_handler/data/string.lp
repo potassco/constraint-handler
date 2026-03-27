@@ -1,9 +1,5 @@
 %%%%%%%%%%%%%%%%% eq neq
-operator_declare((eq;neq),(str,(str,())),bool).
-_computed(eq,(val(str,S1),(val(str,S2),())),val(bool,true))   :- _compute(eq,(val(str,S1),(val(str,S2),()))),  S1 =  S2.
-_computed(neq,(val(str,S1),(val(str,S2),())),val(bool,true))  :- _compute(neq,(val(str,S1),(val(str,S2),()))), S1 != S2.
-_computed(eq,(val(str,S1),(val(str,S2),())),val(bool,false))  :- _compute(eq,(val(str,S1),(val(str,S2),()))),  S1 != S2.
-_computed(neq,(val(str,S1),(val(str,S2),())),val(bool,false)) :- _compute(neq,(val(str,S1),(val(str,S2),()))), S1 =  S2.
+_type_extensionalEquality(str).
 
 %%%%%%%%%%%%%%%%% length concat
 operator_declare(length,(str,()),int).

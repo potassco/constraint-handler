@@ -30,25 +30,13 @@ operator_declare((abs;minus),(int,()),int).
 _computedIdx(E,val(int,|V|)) :- _computeIdx(E,abs), _computeIdx(E,0,val(int,V)).
 _computedIdx(E,val(int,-V))  :- _computeIdx(E,minus), _computeIdx(E,0,val(int,V)).
 
-%%%%%%%%%%%%%%%%% equality
-operator_declare((eq;neq),(int,(int,())),bool).
-_computed(eq, (val(int,V1),(val(int,V2),())),val(bool,true))  :- _compute(eq, (val(int,V1),(val(int,V2),()))), V1 =  V2.
-_computed(neq,(val(int,V1),(val(int,V2),())),val(bool,true))  :- _compute(neq,(val(int,V1),(val(int,V2),()))), V1 != V2.
-_computed(eq, (val(int,V1),(val(int,V2),())),val(bool,false)) :- _compute(eq, (val(int,V1),(val(int,V2),()))), V1 != V2.
-_computed(neq,(val(int,V1),(val(int,V2),())),val(bool,false)) :- _compute(neq,(val(int,V1),(val(int,V2),()))), V1 =  V2.
+%%%%%%%%%%%%%%%%% eq neq
+_type_extensionalEquality(int).
 
-%%%%%%%%%%%%%%%%% comparison
-operator_declare((leq;lt;geq;gt),(int,(int,())),bool).
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,leq), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,lt),  _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 < V2.
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,geq), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 >= V2.
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,gt),  _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
+%%%%%%%%%%%%%%%%% leq lt geq gt
+_type_extensionalOrder(int).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,leq), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,lt),  _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 >= V2.
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,geq), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 < V2.
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,gt),  _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
-
+%%%%%%%%%%%%%%%%% max min
 _computedIdx(E,val(int,V2)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
 _computedIdx(E,val(int,V1)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
 _computedIdx(E,val(int,V2)) :- _computeIdx(E,min), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
