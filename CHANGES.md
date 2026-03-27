@@ -1,5 +1,12 @@
 # Changes
 
+## v0.0.2.dev3
+
+- use computeIdx instead of compute
+- avoid patterns of the form "p(A) :- q(A), r(A), not s(A), A=some(term)." in
+  favor of "p(some(term)) :- q(some(term)), r(some(term)), not s(some(term))."
+  to work around gringo's heuristic getting it wrong.
+
 ## v0.0.2.dev1
 
 - updated python version in CI
