@@ -41,6 +41,9 @@ _computedIdx(E,val(none,none)) :- _computeIdx(E,limp), _computeIdx(E,0,val(bool,
 _computedIdx(E,val(none,none)) :- _computeIdx(E,limp), _computeIdx(E,0,val(none,none)), _computeIdx(E,1,val(bool,false)).
 _computedIdx(E,val(none,none)) :- _computeIdx(E,limp), _computeIdx(E,0,val(none,none)), _computeIdx(E,1,val(none,none)).
 
+_computedIdx(E,bad) :- _computeIdx(E,limp), _computeIdx(E,0,val(bool,true)), _computeIdx(E,1,bad).
+_computedIdx(E,bad) :- _computeIdx(E,limp), _computeIdx(E,0,bad), _computeIdx(E,1,val(bool,V)), V!=true.
+
 %%%%%%%%%%%%%%%%% lxor leqv
 operator_declare_variadic((lxor;leqv),bool,bool,1).
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,lxor),
