@@ -227,7 +227,12 @@ class Evaluator:
             case expression.Operation(eo, eargs):
                 args = [self.expr(a) for a in eargs]
                 o = self.expr(eo)
-                if expression.Bad.bad == eo or expression.Bad.bad in args:
+
+                recoverable = [
+                    logic.Operator.conj,
+                ]
+
+                if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in recoverable):
                     return expression.Bad.bad
                 return self.operator(o, args)
             case expression.Variable(a):

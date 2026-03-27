@@ -67,7 +67,8 @@ assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).
 %_se_value(E,T,V) :- direct_query(E), beta_reduction(E,ER), _se_value(ER,T,V).
 
 %%%%%%%%%%%%%%%%% bad
-_se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS).
+_recoverable(OP) :- OP = (conj;disj;pow;limp;ite;if;default).
+_se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _recoverable(OP).
 _se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(OP,bad).
 _se_value(bad,bad) :- direct_query(bad).
 
