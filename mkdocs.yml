@@ -118,10 +118,11 @@ plugins:
             docstring_section_style: table
         asp:
           options:
-            predicate_table:
-              include_undocumented: false
-            glossary:
-              include_undocumented: false
+            predicate_info:
+              include_undocumented: true
+              include_unused: false
+            predicate_table: true
+            glossary: true
             encodings: false
 
 hooks:

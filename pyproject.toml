@@ -44,7 +44,7 @@ doc = [
     "mkdocs-material",
     "mkdocstrings[python]>=1.0.2",
     "mkdocs-literate-nav",
-    "mkdoclingo",
+    "mkdoclingo @ git+https://github.com/potassco/mkdoclingo.git@56-descriptions-in-predicate-table-too-long",
     "mkdocs_gen_files"
 ]
 dev = ["constraint_handler[test,typecheck,lint_pylint,doc]"]
