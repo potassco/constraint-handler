@@ -32,6 +32,8 @@ class Evaluator:
                     return True
                 elif None in args:
                     return None
+                elif common.Bad.bad in args:
+                    return common.Bad.bad
                 else:
                     return False
             case Operator.ite:

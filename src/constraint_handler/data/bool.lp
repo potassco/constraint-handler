@@ -31,6 +31,7 @@ _computedIdx(E,bad) :- _computeIdx(E, conj), _computeIdx(E, _, bad), not _comput
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,disj), _computeIdx(E,_,val(bool,true)).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,disj), _computeIdx(E,IDX,val(bool,false)) : _computeIdx(E,IDX,V).
+_computedIdx(E,bad) :- _computeIdx(E, disj), _computeIdx(E, _, bad), not _computedIdx(E, val(bool, true)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,limp), _computeIdx(E,0,val(bool,false)).
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,limp), _computeIdx(E,1,val(bool,true)).
