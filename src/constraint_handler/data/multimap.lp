@@ -1,6 +1,4 @@
-#defined multimap_declare/2.
 #defined multimap_declare/1.
-#defined multimap_assign/4.
 #defined multimap_assign/3.
 
 multimap_declare(_label_anonymous,X) :- multimap_declare(X).

@@ -1,6 +1,4 @@
-#defined set_declare/2.
 #defined set_declare/1.
-#defined set_assign/3.
 #defined set_assign/2.
 
 set_declare(_label_anonymous,X) :- set_declare(X).

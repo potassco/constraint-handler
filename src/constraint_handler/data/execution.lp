@@ -1,6 +1,4 @@
-#defined execution_declare/5.
 #defined execution_declare/4.
-#defined execution_run/2.
 #defined execution_run/1.
 #defined _statement_query/2.
 

@@ -1,8 +1,5 @@
-#defined assign/3.
 #defined assign/2.
-#defined define/4.
 #defined define/3.
-#defined ensure/2.
 #defined ensure/1.
 #defined evaluate/2.
 

@@ -1,7 +1,7 @@
 #defined optimize_precision/1.
 #defined optimize_precision/2.
+#defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
-#defined optimize_maximizeSum/4.
 
 optimize_maximizeSum(_label_anonymous,E,X,0) :- optimize_maximizeSum(E,X).
 optimize_maximizeSum(_label_anonymous,E,X,P) :- optimize_maximizeSum(E,X,P).

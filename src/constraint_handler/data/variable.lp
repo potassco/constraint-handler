@@ -1,8 +1,5 @@
-#defined variable_define/3.
 #defined variable_define/2.
-#defined variable_declare/3.
 #defined variable_declare/2.
-#defined variable_declare/3.
 #defined variable_declareOptional/1.
 #defined variable_domain/2.
 
