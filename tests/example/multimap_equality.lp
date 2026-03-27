@@ -11,49 +11,49 @@
 %%% a==b     not a==c     not a==d     not a==e     not a!=b     a!=c     a!=d     a!=e
 %%% d!=e     e!=d
 
-variable_define(aa, a, operation(multimap_make,
+variable_define(a, operation(multimap_make,
                        ((operation(set_make,(val(int,1),(val(int,2),()))),operation(set_make,(val(int,2),(val(int,4),())))),
                        ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,4),(val(int,8),())))),
                        ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,1),(val(int,2),())))),
                        ()))))).
 
-multimap_declare(ab,b).
-multimap_assign(ab,b,
+multimap_declare(b).
+multimap_assign(b,
     operation(set_make,(val(int,1),(val(int,2),()))),
     operation(set_make,
              (operation(add,(val(int,1),(val(int,1),()))),
              (operation(add,(val(int,2),(val(int,2),()))),())))).
 
-variable_define(abs,b24,
+variable_define(b24,
     operation(set_make,
         (operation(mult,(val(int,2),(val(int,1),()))),
         (operation(mult,(val(int,2),(val(int,2),()))),())))).
-multimap_assign(ab,b,
+multimap_assign(b,
     variable(b24),
     operation(set_make,
              (operation(add,(val(int,1),(val(int,1),()))),
              (val(int,1),
              ())))).
 
-set_declare(dbs,b48).
-set_assign(abs,b48,val(int,4)).
-set_assign(abs,b48,val(int,8)).
+set_declare(b48).
+set_assign(b48,val(int,4)).
+set_assign(b48,val(int,8)).
 
-multimap_assign(ab,b,
+multimap_assign(b,
     variable(b24),
     variable(b48)).
 
-variable_define(ac, c, operation(multimap_make,
+variable_define(c, operation(multimap_make,
                        ((operation(set_make,(val(int,1),(val(int,2),()))), operation(set_make,(val(int,2),(val(int,4),())))),
                        ((operation(set_make,(val(int,2),(val(int,4),()))), operation(set_make,(val(int,4),(val(int,7),())))),
                        ((operation(set_make,(val(int,2),(val(int,4),()))), operation(set_make,(val(int,1),(val(int,2),())))),
                        ()))))).
 
-variable_define(ad,d,operation(multimap_make,
+variable_define(d,operation(multimap_make,
                      ((operation(set_make,(val(int,1),(val(int,2),()))),operation(set_make,(val(int,2),(val(int,4),())))),
                      ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,4),(val(int,8),())))),
                      ())))).
-variable_define(ae,e,operation(multimap_make,
+variable_define(e,operation(multimap_make,
                      ((operation(set_make,(val(int,1),(val(int,2),()))), operation(set_make,(val(int,2),(val(int,4),())))),
                      ()))).
 
