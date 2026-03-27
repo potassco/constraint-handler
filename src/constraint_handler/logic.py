@@ -40,7 +40,7 @@ class Evaluator:
                 assert len(args) == 3
                 if args[0] is None:
                     return None
-                
+
                 if args[0] is common.Bad.bad:
                     return common.Bad.bad
 
@@ -53,7 +53,7 @@ class Evaluator:
                 assert len(args) == 2
                 if not args[0]:
                     return True
-                elif args[1] is True:                    
+                elif args[1] is True:
                     return True
                 elif common.Bad.bad in args:
                     return common.Bad.bad
