@@ -353,7 +353,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         return False
 
-    def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom], first_call) -> list[Iterable[int]]:
+    def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom], first_call: bool) -> list[Iterable[int]]:
         """
         Create nogoods used to drive brave/cautious reasoning.
 
@@ -1086,7 +1086,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-    def get_forbidden_warnings(self, ctl) -> None:
+    def get_forbidden_warnings(self, ctl: clingo.PropagateInit) -> None:
         """
         Load `forbid_warning` atoms.
 

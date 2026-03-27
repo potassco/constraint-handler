@@ -24,7 +24,7 @@ from constraint_handler.PropagatorConstants import (
 )
 
 
-def myprint(*args, **kwargs):
+def myprint(*args: tuple, **kwargs: dict[str, Any]):
     """Print debug output when debugging is enabled.
 
     This helper is a thin wrapper around ``print`` controlled by the
@@ -181,7 +181,7 @@ class VariableValue:
         """
         return evaluator.collectVars(self.expr)
 
-    def reset(self, dl):
+    def reset(self, dl: int):
         """
         Reset based on decision level.
 
@@ -1662,7 +1662,7 @@ class Execution:
             lits.update(stmt.literals)
         return lits
 
-    def convert_vars(self, vars: list[clingo.Symbol], input=True) -> list[clingo.Symbol]:
+    def convert_vars(self, vars: list[clingo.Symbol], input: bool = True) -> list[clingo.Symbol]:
         """
         Convert the name of the variable from e.g. x to execution_input(fname, x) or execution_output(fname, x).
 
@@ -1678,7 +1678,7 @@ class Execution:
             converted.append(self.convert_var(var, input=input))
         return converted
 
-    def convert_var(self, var: clingo.Symbol | str, input=True) -> clingo.Symbol:
+    def convert_var(self, var: clingo.Symbol | str, input: bool = True) -> clingo.Symbol:
         """
         Convert a variable to an execution input or output symbol.
 
@@ -1878,7 +1878,7 @@ class ExecutionStatement:
         decision_level: Decision level at which the value was set.
     """
 
-    def __init__(self, stmt, literal):
+    def __init__(self, stmt: statement.Stmt, literal: int):
         """
         Initialize an ExecutionStatement.
 
@@ -1886,8 +1886,8 @@ class ExecutionStatement:
             stmt: Statement to execute.
             literal: Associated literal.
         """
-        self.statement: statement.Stmt = stmt
-        self.literal: int = literal
+        self.statement = stmt
+        self.literal = literal
         self.value: ValueStatus | list[tuple[clingo.Symbol, Any]] = ValueStatus.NOT_SET
         self.errors: propagator_warning_t = []
         self.assigned: bool | None = None
