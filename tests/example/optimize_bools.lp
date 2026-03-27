@@ -6,7 +6,7 @@ item(c,3).
 multimap_declare(taken).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W).
 
-optimize_maximizeSum(EXPR,X,0) :- item(X,W),
+optimize_maximizeSum(EXPR,X) :- item(X,W),
   ITEM = val(symbol,X),
   EXPR = operation(isin,(ITEM,(variable(taken),()))).
 

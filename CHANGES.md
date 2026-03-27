@@ -5,12 +5,9 @@
 - made the following operators recoverable: `conj`, `disj`, `pow`, `limp`,
   `ite`, `if`, `default`
 - declaration `Identifiers` are now optional `Labels`
-- convenience case for `optimize_maximizeSum` was removed, priority has to be
-  specified at all times
-- convenience case for `preference_variableValue` was removed, preference value
-  has to be specified at all times
-- convenience case for `preference_holds` was removed, preference value has to
-  be specified at all times
+- convenience case `optimize_maximizeSum/3` has the label removed and is now `optimize_maximizeSum/2`
+- convenience case `preference_variableValue/3` has the label removed and is now `preference_variableValue/2` 
+- convenience case `preference_holds/2` has the label removed and is now `preference_holds/1`
 
 ## v0.0.2.dev3
 

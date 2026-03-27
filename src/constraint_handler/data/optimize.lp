@@ -3,6 +3,7 @@
 #defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
 
+optimize_maximizeSum(_label_anonymous,E,X,0) :- optimize_maximizeSum(E,X).
 optimize_maximizeSum(_label_anonymous,E,X,P) :- optimize_maximizeSum(E,X,P).
 
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), optimize_maximizeSum(CNAME,E,X,P).

@@ -34,7 +34,7 @@ optimize_maximizeSum(EXPR,X,1) :- item(X,W,V),
   EXPR = operation(if,(COND,(VALU,()))).
 
 % Minimize weight with priority 0 (lower priority) by maximizing negative weight
-optimize_maximizeSum(EXPR,X,0) :- item(X,W,V),
+optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
   COND = operation(isin,(ITEM,(variable(taken),()))),
   WGHT = val(int,-W),
