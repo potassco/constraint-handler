@@ -1,17 +1,14 @@
 %%%%%%%%%%%%%%%%% add mult
 operator_declare_variadic((add;mult),int,int,1).
-_computed(add,(),val(int,0)) :- _compute(add,()).
-_compute(add,TAIL) :- _compute(add,(val(int,_),TAIL)).
-_computed(add,(val(int,V1),TAIL),val(int,V1+VTAIL)) :-
-    _compute(add,(val(int,V1),TAIL)),
-    _computed(add,TAIL,val(int,VTAIL)).
+_int_add(E,0,val(int,0)) :- _computeIdx(E,add).
+_int_add(E,IDX+1,val(int,VO+V)) :- _computeIdx(E,add), _computeIdx(E,IDX,val(int,V)), _int_add(E,IDX,val(int,VO)).
+_computedIdx(E,V)  :- _computeIdx(E,add), _int_add(E,IDX,V), not _computeIdx(E,IDX,_). % TODO: avoid negation
 
 % short circuit if there is a 0
 _computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,0)).
-_computedIdx(E,val(int,1)) :- _computeIdx(E,mult), not _computeIdx(E, 0, _).
 _int_mult(E,0,val(int,1)) :- _computeIdx(E,mult).
 _int_mult(E,IDX+1,val(int,VO*V)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,V)), _int_mult(E,IDX,val(int,VO)).
-_computedIdx(E,V)  :- _computeIdx(E,mult), _int_mult(E,IDX,V),_computeIdx(E,IDX-1,_), not _computeIdx(E,IDX,_).
+_computedIdx(E,V)  :- _computeIdx(E,mult), _int_mult(E,IDX,V), not _computeIdx(E,IDX,_).
 
 %%%%%%%%%%%%%%%%% sub pow
 operator_declare((sub;pow),(int,(int,())),int).
@@ -42,6 +39,4 @@ _computedIdx(E,val(int,V1)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)),
 _computedIdx(E,val(int,V2)) :- _computeIdx(E,min), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
 _computedIdx(E,val(int,V1)) :- _computeIdx(E,min), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
 
-_computed(float_div,(val(int,V1),(val(int,V2),())),RES) :- _compute(float_div,(val(int,V1),(val(int,V2),()))), V2!=0,
-  RES=@pythonEvalExpr(operation(float_div,(val(int,V1),(val(int,V2),()))),(),ID),
-  _main_solverIdentifier(ID).
+_expression_pythonEval(E,operation(float_div,(val(int,V1),(val(int,V2),())))) :- _computeIdx(E,float_div), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)).

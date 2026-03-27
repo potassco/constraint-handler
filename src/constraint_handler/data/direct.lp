@@ -26,8 +26,6 @@ _se_value(variable(X),V) :- direct_query(variable(X)), _se_assign(NAME,variable(
 
 
 
-
-
 %%%%%%%%%%%%%%%%% _computedIdx operators
 _direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)). % decl operator
 _direct_queryArgsValues(operation(EOP,ARGS),OP,ARGS) :- direct_query(operation(EOP,ARGS)), _se_value(EOP,val(function,OP)).
@@ -36,35 +34,29 @@ _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@
 _computeIdx(E,IDX,V) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,V).
 _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 
-%%%%%%%%%%%%%%%%% _computed operators
-%% _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
-%% _direct_compMapAux(ARGS,N,()) :- _direct_queryArgsValues(E,OP,ARGS), N=@pythonListLength(ARGS).
-%% _direct_compMapAux(ARGS,IDX,(V,L)) :- _direct_compMapAux(ARGS,IDX+1,L), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,V).
-%% _compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS).
-%% _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_compMapAux(ARGS,0,VS), _computed(OP,VS,VO).
-_direct_revMapAux(ARGS,ES,()) :- _direct_queryArgsValues(E,OP,ARGS), ES=@pythonReversed(ARGS).
-_direct_revMapAux(ARGS,ES,(V,VS)) :- _direct_revMapAux(ARGS,(E,ES),VS), _se_value(E,V).
-_compute(OP,VS) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS).
-_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _direct_revMapAux(ARGS,(),VS), _computed(OP,VS,VO).
 
-%%%%%%%%%%%%%%%%% lambda
-_lambda_aux(lambda(VARS,ERES),ARGS,RED) :- _compute(lambda(VARS,ERES),ARGS),
+%%%%%%%%%%%%%%%%% lambda application
+_direct_needs_args_list(E) :- _direct_queryArgsValues(E,lambda(_,_),_).
+_length(ARGS,LEN) :- _direct_queryArgsValues(E,_,ARGS), LEN=@pythonListLength(ARGS).
+_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E), _length(ARGS,IDX).
+_direct_args_list_aux(E,IDX,(V,VS)) :- _direct_needs_args_list(E), _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
+_direct_args_list(E,VS) :- _direct_needs_args_list(E), _direct_args_list_aux(E,0,VS).
+
+_lambda_aux(E,RED) :- _computeIdx(E,lambda(VARS,ERES)),
+    _direct_args_list(E,ARGS),
     RED=@pythonBetaReduction(ERES,VARS,ARGS).
 
-direct_query(RED) :- _lambda_aux(LAMB,ARGS,RED).
-_computed(LAMB,ARGS,VO) :- _lambda_aux(LAMB,ARGS,RED), _se_value(RED,VO).
+direct_query(RED) :- _lambda_aux(E,RED).
+_computedIdx(E,VO) :- _lambda_aux(E,RED), _se_value(RED,VO).
 
-%%%%%%%%%%%%%%%%% python
-_direct_implode_arg(python(S),ARGS,IDX,ARG) :- _compute(python(S),ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
-_direct_implode(ARG) :- _direct_implode_arg(OP,ARGS,IDX,ARG).
-_direct_implode_args_aux(ARGS,N,()) :- _compute(python(S),ARGS), N=@pythonListLength(ARGS).
-_direct_implode_args_aux(ARGS,IDX,(IMP,L)) :- _direct_implode_args_aux(ARGS,IDX+1,L),
-    _direct_implode_arg(OP,ARGS,IDX,ARG),
-    _direct_imploded(ARG,IMP).
-_expression_pythonEval(operation(python(S),ARGS),operation(python(S),L)) :- _compute(python(S),ARGS), _direct_implode_args_aux(ARGS,0,L).
+%%%%%%%%%%%%%%%%% python operator
+_direct_implode(V) :- _computeIdx(E,python(_)), _computeIdx(E,_,V).
+_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(_),ARGS), _length(ARGS,IDX).
+_direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L), _computeIdx(E,IDX,V),
+    _direct_imploded(V,IMP).
+_expression_pythonEval(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _direct_imploded_args_aux(E,0,L).
+
 _expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), RES=@pythonEvalExpr(E,(),ID), _main_solverIdentifier(ID).
-_computed(OP,ARGS,val(TYPE,V)) :- _expression_eval_exec(operation(OP,ARGS),val(TYPE,V)).
-_computed(OP,ARGS,bad) :- _expression_eval_exec(operation(OP,ARGS),error(KIND,MSG)).
 _computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,val(TYPE,V)).
 _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
