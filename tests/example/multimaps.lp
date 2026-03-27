@@ -108,11 +108,12 @@ evaluate(minEntries,(variable(properDivisors2),())).
 
 
 evaluate(multimap_fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
-_computed(myproduct,(val(int,VA),(val(int,VB),())),val(int,VA * VB)) :- _compute(myproduct,(val(int,VA),(val(int,VB),()))).
+_computedIdx(E,val(int,VA*VB)) :- _computeIdx(E,myproduct), _computeIdx(E,0,val(int,VA)), _computeIdx(E,1,val(int,VB)).
 
 evaluate(multimap_fold,(val(function,snoc),(variable(properDivisors2),(val(symbol,()),())))).
-_computed(snoc,(val(TA,VA),(val(TB,VB),())),val(TN,VN)) :- _compute(snoc,(val(TA,VA),(val(TB,VB),()))),
-    TN = TB, VN = (VB, VA).
+_computedIdx(E,val(TN,VN)) :- _computeIdx(E,snoc), _computeIdx(E,0,val(TA,VA)), _computeIdx(E,1,val(TB,VB)),
+    TN=TB,
+    VN=(VB, VA).
 
 
 multimap_declare(m_empty,empty).
