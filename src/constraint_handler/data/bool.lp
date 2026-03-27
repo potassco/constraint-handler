@@ -1,9 +1,5 @@
 %%%%%%%%%%%%%%%%% eq neq
-operator_declare((eq;neq),(bool,(bool,())),bool).
-_computed(eq,(val(bool,V1),(val(bool,V2),())),val(bool,true))   :- _compute(eq,(val(bool,V1),(val(bool,V2),()))),  V1 =  V2.
-_computed(eq,(val(bool,V1),(val(bool,V2),())),val(bool,false))  :- _compute(eq,(val(bool,V1),(val(bool,V2),()))),  V1 != V2.
-_computed(neq,(val(bool,V1),(val(bool,V2),())),val(bool,true))  :- _compute(neq,(val(bool,V1),(val(bool,V2),()))), V1 != V2.
-_computed(neq,(val(bool,V1),(val(bool,V2),())),val(bool,false)) :- _compute(neq,(val(bool,V1),(val(bool,V2),()))), V1 =  V2.
+_type_extensionalEquality(bool).
 
 %%%%%%%%%%%%%%%%% lnot, snot, wnot
 operator_declare((lnot;snot;wnot),(bool,()),bool).
