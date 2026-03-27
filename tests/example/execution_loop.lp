@@ -3,7 +3,7 @@
 %%     while n >=1:
 %%         f := n*f
 %%         n := n-1
-execution_declare(dummy,factorial,STMT,(n,()),(f,())) :-
+execution_declare(factorial,STMT,(n,()),(f,())) :-
     GEQ  = operation(geq,(variable(n),(val(int,1),()))),
     INIT = assign(f,val(int,1)),
     MULT = assign(f,operation(mult,(variable(n),(variable(f),())))),
@@ -11,6 +11,6 @@ execution_declare(dummy,factorial,STMT,(n,()),(f,())) :-
     BODY = seq2(MULT,DECR),
     LOOP = while(8,GEQ,BODY),    %%%% CHEATING
     STMT = seq2(INIT,LOOP).
-variable_declare(dummy,execution_input(factorial,n),fromFacts).
+variable_declare(execution_input(factorial,n),fromFacts).
 variable_domain (execution_input(factorial,n),val(int,(3;5))).
-execution_run(dummy,factorial).
+execution_run(factorial).

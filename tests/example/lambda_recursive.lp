@@ -1,4 +1,4 @@
-define(dmf,myfactorial,(n,()),EXP) :-
+define(myfactorial,(n,()),EXP) :-
   VAR = variable(n),
   ONE = val(int,1),
   MIN = operation(sub,(VAR,(ONE,()))),

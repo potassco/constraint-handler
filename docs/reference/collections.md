@@ -67,19 +67,18 @@ Sets are unordered collections of unique elements. They are useful for grouping 
 
 ### Declare
 
-To declare a new set, use the `set_declare/2` predicate:
+To declare a new set, use the `set_declare/1` predicate:
 
 #### Input
 
 **[Declaration]**{.badge .declaration }
 
 ```prolog
-set_declare(Identifier, Name).
+set_declare(Name).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | Unique identifier of the statement. |
 | `Name` | A unique identifier of the set. |
 
 
@@ -94,18 +93,17 @@ value(set_name, val(set, ref(variable(set_name))))
 
 ### Assign
 
-To add elements to a set, use the `set_assign/3` predicate:
+To add elements to a set, use the `set_assign/2` predicate:
 #### Input
 
 **[Declaration]**{.badge .declaration }
 
 ```prolog
-set_assign(Identifier, Name, Value).
+set_assign(Name, Value).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | Unique identifier of the statement. |
 | `Name` | The unique identifier of the set to which the value will be added
 | `Value` | The value to be added to the set. |
 
@@ -128,10 +126,10 @@ set_value(Name, Value)
     To create the set `my_set` and add the [ints] `1`, `3` and `5` to it, you would use the following code:
 
     ```prolog
-    set_declare(name, my_set).
-    set_assign(name, my_set, val(int, 1)).
-    set_assign(name, my_set, val(int, 3)).
-    set_assign(name, my_set, val(int, 5)).
+    set_declare(my_set).
+    set_assign(my_set, val(int, 1)).
+    set_assign(my_set, val(int, 3)).
+    set_assign(my_set, val(int, 5)).
     ```
 
     This results in the following output atoms:
@@ -143,7 +141,7 @@ set_value(Name, Value)
     set_value(my_set, val(int, 5))
     ```
 
-### Make Set
+### Make
 
 The constraint handler provides a `set_make` operator to create sets directly within expressions.
 
@@ -151,7 +149,7 @@ The constraint handler provides a `set_make` operator to create sets directly wi
     To create the same set `my_set` and add the [ints] `1`, `3` and `5` to it using `set_make`, you would use the following code:
 
     ```prolog
-    variable_define(name, my_set, operation(set_make, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
+    variable_define(my_set, operation(set_make, (val(int, 1),(val(int, 3),(val(int, 5),()))))).
     ```
 
     This results in the following output atoms:
@@ -169,7 +167,7 @@ Once a set is created (either via declaration or returned from another operation
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `set_make` | Make Set | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
+| `set_make` | Make | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
 | **Set Theory** | | | |
 | `union` | Union | ([set]\*) $\to$ [set] | Returns a new set containing elements from all sets. |
 | `inter` | Intersection | ([set], [set]) $\to$ [set] | Returns a new set containing only elements common to both sets. |
@@ -201,17 +199,17 @@ Once a set is created (either via declaration or returned from another operation
 
     Given is the following set:
     ```prolog
-    set_declare(example, my_set).
-    set_assign(example, my_set, val(int, 1)).
-    set_assign(example, my_set, val(int, 2)).
-    set_assign(example, my_set, val(int, 3)).
-    set_assign(example, my_set, val(int, 4)).
-    set_assign(example, my_set, val(int, 5)).
+    set_declare(my_set).
+    set_assign(my_set, val(int, 1)).
+    set_assign(my_set, val(int, 2)).
+    set_assign(my_set, val(int, 3)).
+    set_assign(my_set, val(int, 4)).
+    set_assign(my_set, val(int, 5)).
     ```
     or for short:
     ```prolog
-    set_declare(example, my_set).
-    set_assign(example, my_set, val(int, 1..5)).
+    set_declare(my_set).
+    set_assign(my_set, val(int, 1..5)).
     ```
 
     This defines the set `my_set` containing the integers from `1` to `5`.
@@ -219,7 +217,7 @@ Once a set is created (either via declaration or returned from another operation
     In order to now sum all integers in this set, we can use the `set_fold` operator as follows:
 
     ```prolog
-    variable_define(example, set_result, FOLD) :-
+    variable_define(set_result, FOLD) :-
         FUNC = val(function,add),
         SET = variable(my_set),
         INIT = val(int, 0),
@@ -244,19 +242,18 @@ Multimaps are collections that associate keys with values. Unlike standard maps 
 
 ### Declare
 
-To declare a new multimap manually, use the `multimap_declare/2` predicate.
+To declare a new multimap manually, use the `multimap_declare/1` predicate.
 
 #### Input
 
 **[Declaration]**{.badge .declaration }
 
 ```prolog
-multimap_declare(Identifier, Name).
+multimap_declare(Name).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | Unique identifier of the statement. |
 | `Name` | A unique identifier of the multimap. |
 
 #### Output
@@ -270,18 +267,17 @@ value(Name, val(multimap, Name)).
 
 ### Assign
 
-To add key-value pairs to a multimap, use the `multimap_assign/4` predicate:
+To add key-value pairs to a multimap, use the `multimap_assign/3` predicate:
 #### Input
 
 **[Declaration]**{.badge .declaration }
 
 ```prolog
-multimap_assign(Identifier, Name, Key, Value).
+multimap_assign(Name, Key, Value).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | Unique identifier of the statement. |
 | `Name` | The unique identifier of the multimap to which the key-value pair will be added. |
 | `Key` | The key in form of a `val/2` predicate to be added to the multimap. |
 | `Value` | The value in form of a `val/2` to be associated with the key in the multimap. |
@@ -309,10 +305,10 @@ multimap_value(Name, Key, Value)
     To create the multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it, you would use the following code:
 
     ```prolog
-    multimap_declare(name, my_map).
-    multimap_assign(name, my_map, val(int, 1), val(str, "one")).
-    multimap_assign(name, my_map, val(int, 2), val(str, "two")).
-    multimap_assign(name, my_map, val(int, 1), val(str, "uno")).
+    multimap_declare(my_map).
+    multimap_assign(my_map, val(int, 1), val(str, "one")).
+    multimap_assign(my_map, val(int, 2), val(str, "two")).
+    multimap_assign(my_map, val(int, 1), val(str, "uno")).
     ```
 
     This results in the following output atoms:
@@ -324,14 +320,14 @@ multimap_value(Name, Key, Value)
     multimap_value(my_map, val(int,2), val(str,"two"))
     ```
 
-### Make Multimap
+### Make
 Just like for sets, the constraint handler provides a `multimap_make` operator to create multimaps directly within expressions. Here, all key-value pairs are provided as a list of [Tuple Expressions].
 
 !!! Example
     To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimap_make`, you would use the following code:
 
     ```prolog
-    variable_define(name, my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
+    variable_define(my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
     ```
 
     This results in the following output atoms:
@@ -350,7 +346,7 @@ can be used in expressions.
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `multimap_make` | Make Map | ([list]\[(K, V)\]) $\to$ [multimap]\[K, V\] | Creates a new multimap from a list of `(Key, Value)` tuples. |
+| `multimap_make` | Make | ([list]\[(K, V)\]) $\to$ [multimap]\[K, V\] | Creates a new multimap from a list of `(Key, Value)` tuples. |
 | **Analysis** | | | |
 | `countKeys` | Count Keys | ([multimap]) $\to$ [int] | Returns the number of unique keys in the map. |
 | `countEntries` | Count Entries | ([multimap]) $\to$ [int] | Returns the total number of key-value pairs. |
@@ -382,8 +378,8 @@ can be used in expressions.
 
     Given is the following multimap:
     ```prolog
-    multimap_declare(example, my_map).
-    multimap_assign(example, my_map, val(symbol, some_key), val(int, 1..5)).
+    multimap_declare(my_map).
+    multimap_assign(my_map, val(symbol, some_key), val(int, 1..5)).
     ```
 
     This defines the multimap `my_map` containing the key `some_key` associated with the integers from `1` to `5`.
@@ -391,7 +387,7 @@ can be used in expressions.
     In order to now sum all integers in this multimap, we can use the `multimap_fold` operator as follows:
 
     ```prolog
-    variable_define(example, map_result, FOLD) :-
+    variable_define(map_result, FOLD) :-
         FUNC = val(function, add),
         MAP = variable(my_map),
         INIT = val(int, 0),
@@ -416,9 +412,9 @@ can be used in expressions.
 
     For example, given the following multimap:
     ```prolog
-    multimap_declare(example, my_map).
-    multimap_assign(example, my_map, val(symbol, key1), val(int, 1..3)).
-    multimap_assign(example, my_map, val(symbol, key2), val(int, 4..5)).
+    multimap_declare(my_map).
+    multimap_assign(my_map, val(symbol, key1), val(int, 1..3)).
+    multimap_assign(my_map, val(symbol, key2), val(int, 4..5)).
     ```
 
     This defines the multimap `my_map` containing the key `key1` associated with the integers from `1` to `3` and the key `key2` associated with the integers from `4` to `5`.

@@ -42,7 +42,9 @@ doc = [
     "mkdocs",
     "mkdocs-material",
     "mkdocstrings[python]>=1.0.2",
-    "mkdocs-literate-nav"
+    "mkdocs-literate-nav",
+    "mkdoclingo",
+    "mkdocs_gen_files"
 ]
 dev = ["constraint_handler[test,typecheck,lint_pylint,doc]"]
 

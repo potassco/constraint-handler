@@ -29,43 +29,43 @@
 %%% m2 == m3
 %%% m1 != m1
 
-variable_define(dummy, m1, operation(multimap_make,
+variable_define(m1, operation(multimap_make,
                            ((val(str,"a"), val(int,1)),
                            ((val(str,"b"), val(int,2)),
                            ((val(str,"b"), val(int,3)),()))))).
 
-multimap_declare(dummy,m2).
-multimap_assign(dummy,m2,val(str,"a"),val(int,4)).
-multimap_assign(dummy,m2,val(str,"b"),val(int,5)).
-multimap_assign(dummy,m2,val(str,"b"),val(int,6)).
+multimap_declare(m2).
+multimap_assign(m2,val(str,"a"),val(int,4)).
+multimap_assign(m2,val(str,"b"),val(int,5)).
+multimap_assign(m2,val(str,"b"),val(int,6)).
 
-variable_define(dummy, m3, operation(multimap_make,
+variable_define(m3, operation(multimap_make,
                            ((val(str,"a"), val(int,4)),
                            ((val(str,"b"), val(int,5)),
                            ((val(str,"b"), operation(add,(val(int,3),(val(int,3),())))),()))))).
 
-variable_define(dummy,in5,EXPR) :-
+variable_define(in5,EXPR) :-
   MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))),
   EXPR = operation(find,(val(int,5),(MAP,()))).
-variable_define(dummy,inc,EXPR) :-
+variable_define(inc,EXPR) :-
   MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))),
   EXPR = operation(find,(val(str,"c"),(MAP,()))).
-variable_define(dummy,in6,EXPR) :-
+variable_define(in6,EXPR) :-
   MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))),
   EXPR = operation(find,(val(int,6),(MAP,()))).
 
-variable_define(dummy,m1a,operation(find,(val(str,"a"),(variable(m1),())))).
-variable_define(dummy,m1b,operation(find,(val(str,"b"),(variable(m1),())))).
-variable_define(dummy,m1c,operation(find,(val(str,"c"),(variable(m1),())))).
-variable_define(dummy,m2a,operation(find,(val(str,"a"),(variable(m2),())))).
-variable_define(dummy,m2b,operation(find,(val(str,"b"),(variable(m2),())))).
-variable_define(dummy,m2c,operation(find,(val(str,"c"),(variable(m2),())))).
+variable_define(m1a,operation(find,(val(str,"a"),(variable(m1),())))).
+variable_define(m1b,operation(find,(val(str,"b"),(variable(m1),())))).
+variable_define(m1c,operation(find,(val(str,"c"),(variable(m1),())))).
+variable_define(m2a,operation(find,(val(str,"a"),(variable(m2),())))).
+variable_define(m2b,operation(find,(val(str,"b"),(variable(m2),())))).
+variable_define(m2c,operation(find,(val(str,"c"),(variable(m2),())))).
 
 evaluate(eq,(variable(m1a),(operation(set_make,(val(int,1),())),()))).
 evaluate(eq,(variable(m1b),(operation(set_make,(val(int,2),(val(int,3),()))),()))).
@@ -84,11 +84,11 @@ evaluate(isin,(val(str,"a"),(variable(m2),()))).
 evaluate(isin,(val(str,"c"),(variable(m2),()))).
 evaluate(isin,(val(int,4),(variable(m2),()))).
 
-variable_define(dummy,isin5,operation(isin,(val(int,5),(MAP,())))) :-
+variable_define(isin5,operation(isin,(val(int,5),(MAP,())))) :-
   MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))).
-variable_define(dummy,isin6,operation(isin,(val(int,6),(MAP,())))) :-
+variable_define(isin6,operation(isin,(val(int,6),(MAP,())))) :-
   MAP = operation(multimap_make,
                            ((val(int,5), val(str,"c")),
                            ((val(str,"c"), val(int,6)),()))).

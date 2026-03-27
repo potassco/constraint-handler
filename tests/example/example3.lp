@@ -4,8 +4,8 @@
 %%% z=y-f                 compile
 %%% t=python(math.cos)(z) default
 %%% u=sin(z)              ground
-variable_define(assign_i, i, val(float,float("42"))).
-variable_define(assign_f, f, val(float,float("47.1"))).
+variable_define(i, val(float,float("42"))).
+variable_define(f, val(float,float("47.1"))).
 variable_define(assign_y, y, operation(add,(operation(mult,(val(int,2),
                                                            (variable(i), ()))),
                                        (val(int,1), ())))).

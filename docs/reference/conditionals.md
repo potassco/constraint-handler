@@ -19,7 +19,7 @@ Sometimes operations should only be performed when a certain condition is met. F
 
 !!! Example
     ```prolog
-    variable_define(name, z, operation(if, (val(bool, true),(val(int,2),())))).
+    variable_define(z, operation(if, (val(bool, true),(val(int,2),())))).
     ```
     Here `z` will be assigned the value `2`, since the condition is `true`.
 
@@ -31,7 +31,7 @@ Sometimes operations should only be performed when a certain condition is met. F
     However:
 
     ```prolog
-    variable_define(name, z, operation(if, (val(bool, false),(val(int,2),())))).
+    variable_define(z, operation(if, (val(bool, false),(val(int,2),())))).
     ```
 
     Here, since the condition is `false`, `z` will be assigned [none].
@@ -53,7 +53,7 @@ The `ite` operator expands on the `if` operator by allowing to specify an altern
 
 !!! Example
     ```prolog
-    variable_define(name, z, operation(ite, (val(bool, true),(val(int,2),(val(int,5),()))))).
+    variable_define(z, operation(ite, (val(bool, true),(val(int,2),(val(int,5),()))))).
     ```
     Here, just like in the `if` case, `z` will be assigned the value `2`, since the condition is `true`.
 
@@ -65,7 +65,7 @@ The `ite` operator expands on the `if` operator by allowing to specify an altern
     However:
 
     ```prolog
-    variable_define(name, z, operation(ite, (val(bool, true),(val(int,2),(val(int,5),()))))).
+    variable_define(z, operation(ite, (val(bool, true),(val(int,2),(val(int,5),()))))).
     ```
 
     This time, when the condition is `false`, `z` will be assigned the value `5`.
@@ -83,11 +83,11 @@ The `default` operator is used to provide a fallback value if the first [Express
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `default` | Default | (A, B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
+| `default` | Default | (A | [none], B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
 
 !!! Example
     ```prolog
-    variable_define(name, z, operation(default, (val(int, 2),(val(int,5),())))).
+    variable_define(z, operation(default, (val(int, 2),(val(int,5),())))).
     ```
     Here, because the value is defined, `z` will be assigned the value `2`.
 
@@ -99,7 +99,7 @@ The `default` operator is used to provide a fallback value if the first [Express
     However:
 
     ```prolog
-    variable_define(name, z, operation(default, (val(none, none),(val(int,5),())))).
+    variable_define(z, operation(default, (val(none, none),(val(int,5),())))).
     ```
 
     Here, since the first value is [none], `z` will be assigned the value `5`.
@@ -121,7 +121,7 @@ The `hasValue` operator checks whether an [Expression] is defined (not `none`).
 
 !!! Example
     ```prolog
-    variable_define(name, z, operation(hasValue, (val(none, none),()))).
+    variable_define(z, operation(hasValue, (val(none, none),()))).
     ```
     Here, since the value is `none`, `z` will be assigned the value `false`.
 

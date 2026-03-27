@@ -25,6 +25,9 @@ documentation.
 """
 
 import os
+import re
+
+from mkdocs import utils
 
 LINKS = {
     # User Guide
@@ -39,6 +42,7 @@ LINKS = {
     "Result": "reference/language_concepts.md#result",
     # Core Syntax
     "Core Syntax": "reference/core_syntax.md",
+    "Label": "reference/core_syntax.md#labels",
     "List": "reference/core_syntax.md#list",
     "Value": "reference/core_syntax.md#value",
     "Val": "reference/core_syntax.md#value",
@@ -81,6 +85,7 @@ LINKS = {
     "optimize_maximizeSum": "reference/optimization.md#maximize-sum",
     "optimize_precision": "reference/optimization.md#precision",
     # Engines
+    "Engines": "reference/engines.md",
     "requestEngine": "reference/engines.md#request",
     "defaultEngine": "reference/engines.md#default",
     # Preference
@@ -102,6 +107,9 @@ LINKS = {
     "statement_python": "reference/python_integration.md#statements",
     # Error Handling
     "warning": "reference/error_handling.md#warning",
+    "Error Handling": "reference/error_handling.md",
+    "Python Error": "reference/error_handling.md#python-error",
+    "type(failed_operation)": "reference/error_handling.md#failed-operation",
 }
 """
 The dictionary of link labels to their corresponding target paths.
@@ -145,3 +153,27 @@ def on_page_markdown(markdown, page, config, files):
             definitions.append(f"[{label}s]: {final_link}")
 
     return markdown + "\n".join(definitions)
+
+
+def on_page_content(html, page, config, files):
+    for label, target in LINKS.items():
+        target_path, anchor = target.split("#", 1) if "#" in target else (target, "")
+        target_file = files.get_file_from_path(target_path)
+
+        if target_file:
+            target_url = target_file.url
+
+            rel_url = utils.get_relative_url(target_url, page.url)
+
+            if anchor:
+                rel_url += f"#{anchor}"
+
+            pattern = rf"\[{re.escape(label)}(s?)\](?!\()"
+
+            def replace_with_link(match):
+                found_text = f"{label}{match.group(1)}"
+                return f'<a href="{rel_url}">{found_text}</a>'
+
+            html = re.sub(pattern, replace_with_link, html)
+
+    return html

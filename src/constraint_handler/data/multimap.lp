@@ -1,5 +1,8 @@
-#defined multimap_declare/2.
-#defined multimap_assign/4.
+#defined multimap_declare/1.
+#defined multimap_assign/3.
+
+multimap_declare(_label_anonymous,X) :- multimap_declare(X).
+multimap_assign(_label_anonymous,X,EKEY,EVAL) :- multimap_assign(X,EKEY,EVAL).
 
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multimap_declare(CNAME,X).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multimap_assign(CNAME,X,EKEY,EVAL).

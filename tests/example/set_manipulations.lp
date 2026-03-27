@@ -35,54 +35,54 @@
 %%% z = rem true  w = { 1, 5, false }
 %%% a = rem false u = { 1, 2, 3, true, 89.1 } = u
 
-variable_define(assign_b, b, val(bool,true)).
-variable_define(assign_i, i, val(int,42)).
-variable_define(assign_f, f, val(float,float("47.1"))).
-variable_define(assign_s, s, operation(set_make,
+variable_define(b, val(bool,true)).
+variable_define(i, val(int,42)).
+variable_define(f, val(float,float("47.1"))).
+variable_define(s, operation(set_make,
                                   (variable(b),
                                   (operation(add,(variable(i),(variable(f), ()))),())))).
-variable_define(assign_t, t, operation(set_make,
+variable_define(t, operation(set_make,
                                   (val(int,10),
                                   (val(int,2),
                                   (val(int,3),
                                   (val(bool,true),())))))).
-variable_define(assign_u, u, operation(union,
+variable_define(u, operation(union,
                                   (variable(s),
                                   (variable(t),())))).
-variable_define(assign_v, v, operation(inter,
+variable_define(v, operation(inter,
                                   (variable(s),
                                   (variable(t),())))).
 
-variable_define(assign_duv, duv, operation(diff,
+variable_define(duv, operation(diff,
                                   (variable(u),
                                   (variable(v),())))).
 
-variable_define(assign_cduv, cduv, operation(length,(variable(duv),()))).
+variable_define(cduv, operation(length,(variable(duv),()))).
 
-variable_define(assign_cu, cu, operation(length,(variable(u),()))).
+variable_define(cu, operation(length,(variable(u),()))).
 
-variable_define(assign_w, w, operation(set_make,
+variable_define(w, operation(set_make,
                                   (operation(length,(variable(u),())),
                                   (operation(add,(operation(length,(variable(v),())),(val(int,1),()))),
                                   (operation(isin,(variable(b),(variable(v),()))),
                                   (operation(notin,(val(bool,true),
                                                        (variable(u),()))),())))))).
-variable_define(assign_x, x, operation(set_make,
+variable_define(x, operation(set_make,
                                   (val(int,3),
                                   (operation(add,(val(int,1),(val(int,2),()))),
                                   (variable(u),
                                   (variable(v),
                                   (operation(set_make,(val(bool,true),())),()))))))).
 
-variable_define(assign_cx, cx, operation(length,(variable(x),()))).
+variable_define(cx, operation(length,(variable(x),()))).
 
-set_declare(declare_d, d).
-set_assign(assign_d, d, operation(add,(val(int,1),(val(int,3),())))).
-set_assign(assign_d, d, variable(s)).
-set_assign(assign_d, d, operation(add,(val(int,2),(val(int,2),())))).
-set_assign(assign_d, d, operation(set_make,(val(bool,true),(val(float,float("89.1")),())))).
+set_declare(d).
+set_assign(d, operation(add,(val(int,1),(val(int,3),())))).
+set_assign(d, variable(s)).
+set_assign(d, operation(add,(val(int,2),(val(int,2),())))).
+set_assign(d, operation(set_make,(val(bool,true),(val(float,float("89.1")),())))).
 
-variable_define(assign_cd, cd, operation(length,(variable(d),()))).
+variable_define(cd, operation(length,(variable(d),()))).
 
 evaluate(notin,(val(bool,true),(variable(d),()))).
 evaluate(notin,(val(bool,true),(variable(x),()))).
@@ -91,7 +91,7 @@ evaluate(isin,(val(int,17),(variable(t),()))).
 
 %%% eqx = x == { 3, { true }, { 10, 2, 3, true, 89.1 } } = true
 %%% nqx = x == { 3, { true }, { 10, 2, 4, true, 89.1 } } = false
-variable_define(tset_eq,eqx3,operation(eq,(variable(x),(X,())))) :-
+variable_define(eqx3,operation(eq,(variable(x),(X,())))) :-
     X=operation(set_make,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
     STRUE=operation(set_make,(TRUE,())),
@@ -100,7 +100,7 @@ variable_define(tset_eq,eqx3,operation(eq,(variable(x),(X,())))) :-
     TWO=val(int,2),
     TRUE=val(bool,true),
     EIGHTYNINE=val(float,float("89.1")).
-variable_define(tset_eq,nqx3,operation(neq,(variable(x),(X,())))) :-
+variable_define(nqx3,operation(neq,(variable(x),(X,())))) :-
     X=operation(set_make,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
     STRUE=operation(set_make,(TRUE,())),
@@ -109,7 +109,7 @@ variable_define(tset_eq,nqx3,operation(neq,(variable(x),(X,())))) :-
     TWO=val(int,2),
     TRUE=val(bool,true),
     EIGHTYNINE=val(float,float("89.1")).
-variable_define(tset_neq,eqx4,operation(eq,(variable(x),(X,())))) :-
+variable_define(eqx4,operation(eq,(variable(x),(X,())))) :-
     X=operation(set_make,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
     STRUE=operation(set_make,(TRUE,())),
@@ -119,7 +119,7 @@ variable_define(tset_neq,eqx4,operation(eq,(variable(x),(X,())))) :-
     FOUR=val(int,4),
     TRUE=val(bool,true),
     EIGHTYNINE=val(float,float("89.1")).
-variable_define(tset_neq,nqx4,operation(neq,(variable(x),(X,())))) :-
+variable_define(nqx4,operation(neq,(variable(x),(X,())))) :-
     X=operation(set_make,(THREE,(STRUE,(SET,())))),
     THREE=val(int,3),
     STRUE=operation(set_make,(TRUE,())),
@@ -131,14 +131,14 @@ variable_define(tset_neq,nqx4,operation(neq,(variable(x),(X,())))) :-
     EIGHTYNINE=val(float,float("89.1")).
 
 
-variable_define(test_subset, tsubu, operation(subset,(variable(t),(variable(u),())))).
-variable_define(test_subset, tsubv, operation(subset,(variable(t),(variable(v),())))).
-variable_define(test_subset, tsubw, operation(subset,(variable(t),(variable(w),())))).
-variable_define(test_subset, usubw, operation(subset,(variable(u),(variable(w),())))).
-variable_define(test_subset, vsubw, operation(subset,(variable(v),(variable(w),())))).
-variable_define(test_subset, usubx, operation(subset,(variable(u),(variable(x),())))).
-variable_define(test_subset, vsubx, operation(subset,(variable(v),(variable(x),())))).
+variable_define(tsubu, operation(subset,(variable(t),(variable(u),())))).
+variable_define(tsubv, operation(subset,(variable(t),(variable(v),())))).
+variable_define(tsubw, operation(subset,(variable(t),(variable(w),())))).
+variable_define(usubw, operation(subset,(variable(u),(variable(w),())))).
+variable_define(vsubw, operation(subset,(variable(v),(variable(w),())))).
+variable_define(usubx, operation(subset,(variable(u),(variable(x),())))).
+variable_define(vsubx, operation(subset,(variable(v),(variable(x),())))).
 
-variable_define(assign_vp, vp, operation(inter,
+variable_define(vp, operation(inter,
                                   (operation(set_make,(val(int,5),(val(int,6),(val(int,7),())))),
                                   (operation(set_make,(val(int,7),(val(int,8),(val(int,9),())))),())))).

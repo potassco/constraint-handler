@@ -1,5 +1,5 @@
+#defined preference_holds/1.
 #defined preference_holds/2.
-#defined preference_holds/3.
 #defined preference_variableValue/2.
 #defined preference_variableValue/3.
 #defined preference_maximizeScore/0.
@@ -7,8 +7,10 @@
 _warning(preference(unsupported),(),("multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
 
 %%% convenience
-preference_variableValue(CNAME,X,E,1) :- preference_variableValue(CNAME,X,E).
-preference_holds(CNAME,E,1) :- preference_holds(CNAME,E).
+preference_variableValue(_label_anonymous,X,E,1) :- preference_variableValue(X,E).
+preference_variableValue(_label_anonymous,X,E,K) :- preference_variableValue(X,E,K).
+preference_holds(_label_anonymous,E,1) :- preference_holds(E).
+preference_holds(_label_anonymous,E,K) :- preference_holds(E,K).
 
 _preference_expressionScore(operation(eq,(variable(X),(E,()))), K) :- preference_variableValue(CNAME,X,E,K), K > 0.
 _preference_expressionScore(operation(wnot,(operation(eq,(variable(X),(E,()))),())),-K) :- preference_variableValue(CNAME,X,E,K), K < 0.

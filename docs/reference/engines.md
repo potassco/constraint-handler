@@ -30,12 +30,12 @@ part of the program. This can be particularly useful when different parts of the
 have different characteristics that may benefit from different solving strategies.
 
 ```prolog
-requestEngine(Identifier, Engine).
+requestEngine(Label, Engine).
 ```
 
 | Name | Description |
 | :--- | :--- |
-| Identifier | A unique identifier for the [Declaration] that the engine request applies to. |
+| Label | A unique [Label] for the [Declaration] that the engine request applies to. |
 | Engine | The engine to be used for the specified [Declaration]. |
 
 ## Default

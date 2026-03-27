@@ -33,35 +33,35 @@
 %%% [usc_dd, usc_d(2), usc_de]
 
 
-variable_define(usc_a1,a1,val(bool,true)).
-variable_define(usc_a2,a2,val(bool,true)).
-variable_define(usc_ad,ad,operation(disj,(variable(a1),(variable(a2),())))).
-ensure(usc_ae,operation(lnot,(variable(ad),()))).
+variable_define(a1,val(bool,true)).
+variable_define(a2,val(bool,true)).
+variable_define(ad,operation(disj,(variable(a1),(variable(a2),())))).
+ensure(operation(lnot,(variable(ad),()))).
 
-variable_define(usc_c1,c1,val(bool,(true))).
-variable_declare(usc_c2,c2,boolDomain).
-ensure(usc_ce1,operation(leqv,(variable(c1),(variable(c2),())))).
-ensure(usc_ce2,operation(lnot,(variable(c2),()))).
+variable_define(c1,val(bool,(true))).
+variable_declare(c2,boolDomain).
+ensure(operation(leqv,(variable(c1),(variable(c2),())))).
+ensure(operation(lnot,(variable(c2),()))).
 
-variable_define(usc_d(1),d(1),val(bool,true)).
-variable_define(usc_d(2),d(2),val(bool,true)).
-variable_define(usc_dd,dd,operation(disj,(variable(d(1)),(variable(d(2)),())))).
-ensure(usc_de,operation(default,
+variable_define(d(1),val(bool,true)).
+variable_define(d(2),val(bool,true)).
+variable_define(dd,operation(disj,(variable(d(1)),(variable(d(2)),())))).
+ensure(operation(default,
                        (operation(lnot,(variable(dd),())),
                        (val(bool,true),())))).
 
-variable_define(usc_ba,b(1),val(bool,true)).
-variable_define(usc_ba,b(2),val(bool,true)).
-variable_define(usc_bd,bd,operation(disj,(variable(b(1)),(variable(b(2)),())))).
-ensure(usc_be,operation(default,
+variable_define(b(1),val(bool,true)).
+variable_define(b(2),val(bool,true)).
+variable_define(bd,operation(disj,(variable(b(1)),(variable(b(2)),())))).
+ensure(operation(default,
                        (operation(lnot,(variable(bd),())),
                        (val(bool,true),())))).
 
-variable_declare(usc_e1,e1,boolDomain).
-variable_declare(usc_e2,e2,boolDomain).
-variable_define(usc_ec,ec,operation(conj,(variable(e1),(variable(e2),())))).
-variable_define(usc_ed,ed,operation(disj,(variable(e1),(variable(e2),())))).
-ensure(usc_ee,operation(leqv,(variable(ec),(variable(ed),())))).
+variable_declare(e1,boolDomain).
+variable_declare(e2,boolDomain).
+variable_define(ec,operation(conj,(variable(e1),(variable(e2),())))).
+variable_define(ed,operation(disj,(variable(e1),(variable(e2),())))).
+ensure(operation(leqv,(variable(ec),(variable(ed),())))).
 
 #show value/3.
 #show usc_active/1.

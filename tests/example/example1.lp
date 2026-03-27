@@ -1,18 +1,16 @@
-variable_declare(example1_x,x,fromFacts).
+variable_declare(x,fromFacts).
 variable_domain(x,val(int,0..5)).
-%1 { variable_define(example1_x,x,val(float,float("0";"3";"5"))) } 1.
+%1 { variable_define(x,val(float,float("0";"3";"5"))) } 1.
 
-variable_define(example1_pi,pi,val(float,float("3.14159"))).
-variable_define(example1_y,y,
+variable_define(pi,val(float,float("3.14159"))).
+variable_define(y,
        operation(mult,
                 (operation(add,(variable(x),(val(int,2),()))),
                 (variable(pi),())))).
-%ensure(example_check1,
-%       operation(geq,
+%ensure(operation(geq,
 %                (operation(int_div,(variable(y),(val(float,float("3")),()))),
 %                (val(float,float("10")),())))).
-%ensure(example_check2,
-%       operation(leq,
+%ensure(operation(leq,
 %                (operation(int_div,(variable(y),(val(float,float("3")),()))),
 %                (val(float,float("15")),())))).
 

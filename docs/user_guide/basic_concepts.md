@@ -43,18 +43,17 @@ Because the handler supports many types, it needs a way to distinguish between t
 ---
 
 ## Variables & Assignment
-Variables allow you to store specific values and reuse them later. You can create them using the `variable_define/3` predicate.
+Variables allow you to store specific values and reuse them later. You can create them using the `variable_define/2` predicate.
 
-**Syntax:** `variable_define(Identifier, Name, Expression)`
+**Syntax:** `variable_define(Name, Expression)`
 
-* **Identifier:** Unique identifier of the statement.
 * **Name:** The name you will use to refer to this data.
 * **Expression:** The value or calculation to assign.
 
 !!! Example
     Assigning the integer `42` to a variable named `x`:
     ```prolog
-    variable_define(s1, x, val(int, 42)).
+    variable_define(x, val(int, 42)).
     ```
 
 To use this variable in a later [Expression], you reference it using `variable(x)`.
@@ -84,14 +83,14 @@ To perform calculations—such as arithmetic, logical comparisons, or set manipu
 ## Constraints
 While assignments *create* data, constraints *validate* it.
 
-The `ensure/2` predicate asserts that a specific condition must be true. If the condition fails, the constraint handler rejects the current model (similar to an integrity constraint `:- ...` in standard ASP).
+The `ensure/1` predicate asserts that a specific condition must be true. If the condition fails, the constraint handler rejects the current model (similar to an integrity constraint `:- ...` in standard ASP).
 
-**Syntax:** `ensure(Identifier, Condition)`
+**Syntax:** `ensure(Condition)`
 
 !!! Example
     Ensuring that variable `z` is greater than 10:
     ```prolog
-    ensure(check_z, operation(gt, (variable(z), (val(int, 10), ())))).
+    ensure(operation(gt, (variable(z), (val(int, 10), ())))).
     ```
 
 > For more details, see [Ensure] in the reference.

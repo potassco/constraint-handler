@@ -7,16 +7,16 @@ item(e,3,float("3")).
 
 optimize_precision(val(int,10)).
 
-multimap_declare(dummy,taken).
-{ multimap_assign(dummy,taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
+multimap_declare(taken).
+{ multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
-optimize_maximizeSum(dummy_opt,EXPR,X) :- item(X,W,V),
+optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
   COND = operation(isin,(ITEM,(variable(taken),()))),
   VALU = val(float,V),
   EXPR = operation(if,(COND,(VALU,()))).
 
-variable_define(dummy,carried,EXPR) :-
+variable_define(carried,EXPR) :-
   EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),
   MAP  = variable(taken),
   ACCU = variable(accu),
@@ -26,7 +26,7 @@ variable_define(dummy,carried,EXPR) :-
   PLUS = operation(add,(WEIG,(ACCU,()))),
   LAMB = lambda(VARS,PLUS).
 
-ensure(dummy,operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
+ensure(operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
 
 evaluate(isin,(val(symbol,a),(variable(taken),()))).
 evaluate(isin,(val(symbol,b),(variable(taken),()))).

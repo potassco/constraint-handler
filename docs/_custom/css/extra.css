@@ -110,3 +110,11 @@ a.badge,
     color: var(--doc-symbol-statement-fg-color);
     border: 1px solid var(--doc-symbol-statement-fg-color);
 }
+
+.md-grid {
+    max-width: 90%;
+}
+
+.md-content {
+    max-width: none;
+}

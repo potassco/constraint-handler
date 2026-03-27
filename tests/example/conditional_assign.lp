@@ -19,16 +19,16 @@
 %%% any:
 %%% hasValue(a)==true     hasValue(a)==false
 
-variable_declare(a_c,cond,boolDomain).
+variable_declare(cond,boolDomain).
 variable_declareOptional(cond).
-variable_define(assign_x0,x0,val(int,0)).
-variable_define(assign_x1,x1,operation(if,(variable(cond),(val(int,1),())))).
-variable_define(assign_y0,y0,operation(default,(variable(x1),(variable(x0),())))).
-variable_define(assign_z,z,operation(disj,
+variable_define(x0,val(int,0)).
+variable_define(x1,operation(if,(variable(cond),(val(int,1),())))).
+variable_define(y0,operation(default,(variable(x1),(variable(x0),())))).
+variable_define(z,operation(disj,
                              (operation(eq, (variable(y0), (val(int,1),()))),
                              (operation(eq, (variable(y0), (val(int,0),()))),())))).
 
-variable_declare(conditionals,a,fromFacts).
+variable_declare(a,fromFacts).
 variable_domain(a,(val(int,0..1);val(none,none))).
 evaluate(hasValue,(variable(a),())).
 evaluate(leqv,(operation(hasValue,(variable(a),())),

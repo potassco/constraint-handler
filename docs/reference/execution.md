@@ -21,7 +21,7 @@ execution_input(ExecutionName, Name)
     Defining an input variable with some value for a specific execution:
 
     ```prolog
-    variable_define(some_identifier, execution_input(my_execution, a), val(int, 5)).
+    variable_define(execution_input(my_execution, a), val(int, 5)).
     ```
 
     This creates a variable `a` with the integer value `5` for the execution `my_execution`.
@@ -217,15 +217,14 @@ while(Limit, Condition, Body)
 
 **[Declaration]**{.badge .declaration }
 
-In order to execute some statement, first an execution has to be declared. For this, the `execution_declare/5` predicate is used.
+In order to execute some statement, first an execution has to be declared. For this, the `execution_declare/4` predicate is used.
 
 ```prolog
-execution_declare(Identifier, Name, Statement, Input, Output)
+execution_declare(Name, Statement, Input, Output)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | A unique identifier for the specific [Declaration]. |
 | `Name` | A unique identifier for the execution. |
 | `Statement` | The [Statement] to be executed. |
 | `Input` | A [List] of terms representing the input to the statement. |
@@ -235,7 +234,7 @@ execution_declare(Identifier, Name, Statement, Input, Output)
     Declaring an execution with a simple assignment statement:
 
     ```prolog
-    execution_declare(dummy, my_exec, S, (a,()), (a,())) :-
+    execution_declare(my_exec, S, (a,()), (a,())) :-
         S = assign(a, val(int, 3)).
     ```
 
@@ -247,22 +246,21 @@ execution_declare(Identifier, Name, Statement, Input, Output)
 
 **[Declaration]**{.badge .declaration }
 
-To execute a previously declared execution, the `execution_run/2` predicate is used.
+To execute a previously declared execution, the `execution_run/1` predicate is used.
 
 ```prolog
-execution_run(Identifier, Name)
+execution_run(Name)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Identifier` | The unique identifier for the specific [Declaration] to be executed. |
 | `Name` | The unique identifier for the execution to be run. |
 
 !!! Example
     Running a previously declared execution:
 
     ```prolog
-    execution_run(dummy, my_exec).
+    execution_run(my_exec).
     ```
 
     This runs the execution named `my_execution` that was declared earlier.

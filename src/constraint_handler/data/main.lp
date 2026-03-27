@@ -6,8 +6,10 @@
 #defined requestEngine/2.
 #defined defaultEngine/1.
 #defined main_solverIdentifier/1.
-#defined forbid_warning/2.
+#defined forbid_warning/1.
 #defined ignore_warning/1.
+
+forbid_warning(_label_anonymous, KIND) :-forbid_warning(KIND).
 
 %%%%%%%%%%%%%%%%% engines
 %%% compile

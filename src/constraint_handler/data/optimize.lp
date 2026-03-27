@@ -1,13 +1,13 @@
 #defined optimize_precision/1.
 #defined optimize_precision/2.
+#defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
-#defined optimize_maximizeSum/4.
 
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), optimize_maximizeSum(CNAME,E,X).
+optimize_maximizeSum(_label_anonymous,E,X,0) :- optimize_maximizeSum(E,X).
+optimize_maximizeSum(_label_anonymous,E,X,P) :- optimize_maximizeSum(E,X,P).
+
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), optimize_maximizeSum(CNAME,E,X,P).
 
-% Map 3-parameter version to 4-parameter version with priority 0
-_optimize_maximizeSum(CNAME,E,X,0) :- optimize_maximizeSum(CNAME,E,X).
 % 4-parameter version with explicit priority
 _optimize_maximizeSum(CNAME,E,X,P) :- optimize_maximizeSum(CNAME,E,X,P).
 

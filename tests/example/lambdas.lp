@@ -1,30 +1,30 @@
-multimap_declare(dummy,a).
-multimap_assign(dummy,a,val(symbol,kind),val(symbol,rectangle)).
-multimap_assign(dummy,a,val(symbol,width),val(int,2)).
-multimap_assign(dummy,a,val(symbol,height),val(int,3)).
+multimap_declare(a).
+multimap_assign(a,val(symbol,kind),val(symbol,rectangle)).
+multimap_assign(a,val(symbol,width),val(int,2)).
+multimap_assign(a,val(symbol,height),val(int,3)).
 
-multimap_declare(dummy,b).
-multimap_assign(dummy,b,val(symbol,kind),val(symbol,rectangle)).
-multimap_assign(dummy,b,val(symbol,width),val(int,5)).
-multimap_assign(dummy,b,val(symbol,height),val(int,4)).
+multimap_declare(b).
+multimap_assign(b,val(symbol,kind),val(symbol,rectangle)).
+multimap_assign(b,val(symbol,width),val(int,5)).
+multimap_assign(b,val(symbol,height),val(int,4)).
 
-multimap_declare(dummy,c).
-multimap_assign(dummy,c,val(symbol,kind),val(symbol,square)).
-multimap_assign(dummy,c,val(symbol,side),val(int,5)).
+multimap_declare(c).
+multimap_assign(c,val(symbol,kind),val(symbol,square)).
+multimap_assign(c,val(symbol,side),val(int,5)).
 
-multimap_declare(dummy,d).
-multimap_assign(dummy,d,val(symbol,kind),val(symbol,circle)).
-multimap_assign(dummy,d,val(symbol,radius),val(int,4)).
+multimap_declare(d).
+multimap_assign(d,val(symbol,kind),val(symbol,circle)).
+multimap_assign(d,val(symbol,radius),val(int,4)).
 
-multimap_declare(dummy,e).
-multimap_assign(dummy,e,val(symbol,kind),val(symbol,rectangle)).
-multimap_assign(dummy,e,val(symbol,width),val(int,1)).
-multimap_assign(dummy,e,val(symbol,height),val(int,1)).
+multimap_declare(e).
+multimap_assign(e,val(symbol,kind),val(symbol,rectangle)).
+multimap_assign(e,val(symbol,width),val(int,1)).
+multimap_assign(e,val(symbol,height),val(int,1)).
 
-set_declare(d_s,shapes).
-set_assign(a_s,shapes,variable(S)) :- S=(a;b;c;d;e).
+set_declare(shapes).
+set_assign(shapes,variable(S)) :- S=(a;b;c;d;e).
 
-variable_define(dummy,nb_squares,E) :-
+variable_define(nb_squares,E) :-
   E    = operation(set_fold,(LAMB,(SET,(START,())))),
   SET  = variable(shapes),
   ACCU = variable(accu),
@@ -42,7 +42,7 @@ variable_define(dummy,nb_squares,E) :-
   PLUS = operation(add,(MONE,(ACCU,()))),
   LAMB = lambda(VARS,PLUS).
 
-define(dis,isSquare,(shape,()),ISSQ) :-
+define(isSquare,(shape,()),ISSQ) :-
   SHAP = variable(shape),
   KIND = operation(find,(val(symbol,kind),(SHAP,()))),
   WIDT = operation(find,(val(symbol,width),(SHAP,()))),
@@ -58,7 +58,7 @@ evaluate(variable(isSquare),(variable(c),())).
 evaluate(variable(isSquare),(variable(d),())).
 evaluate(variable(isSquare),(variable(e),())).
 
-variable_define(dummy,nb_squares2,E) :-
+variable_define(nb_squares2,E) :-
   E    = operation(set_fold,(LAMB,(SET,(START,())))),
   SET  = variable(shapes),
   ACCU = variable(accu),
