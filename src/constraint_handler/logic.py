@@ -23,6 +23,8 @@ class Evaluator:
                     return False
                 elif None in args:
                     return None
+                elif common.Bad.bad in args:
+                    return common.Bad.bad
                 else:
                     return True
             case Operator.disj:

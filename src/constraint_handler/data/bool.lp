@@ -24,6 +24,7 @@ operator_declare_variadic((conj;disj),bool,bool,1).
 %_computedIdx(E,bool,true)  :- _computeIdx(E,conj), E=operation(conj,L), _se_value(E1,val(bool,true)) : E1=@pythonListElements(L).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,conj), _computeIdx(E,IDX,val(bool,false)).
 _computedIdx(E,val(bool,true))  :- _computeIdx(E,conj), _computeIdx(E,IDX,val(bool,true)) : _computeIdx(E,IDX,V).
+_computedIdx(E,bad) :- _computeIdx(E, conj), _computeIdx(E, _, bad), not _computedIdx(E, val(bool, false)).
 
 %_se_value(E,val(bool,true))  :- direct_query(E), E=operation(conj,L), _se_value(E1,val(bool,true)) : E1=@pythonListElements(L).
 %_se_value(E,val(bool,false)) :- direct_query(E), E=operation(conj,L), _se_value(E1,val(bool,false)), E1=@pythonListElements(L).
