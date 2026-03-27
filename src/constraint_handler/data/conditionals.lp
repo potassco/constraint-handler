@@ -33,6 +33,7 @@ direct_query(E3) :- direct_query(operation(ite,(E1,(E2,(E3,()))))), _se_value(E1
 _se_value(operation(ite,(E1,(E2,(E3,())))),val(none,none)) :- direct_query(operation(ite,(E1,(E2,(E3,()))))), _se_value(E1,val(none,none)).
 _se_value(operation(ite,(E1,(E2,(E3,())))),V2) :- direct_query(operation(ite,(E1,(E2,(E3,()))))), _se_value(E1,val(bool,true)), _se_value(E2,V2).
 _se_value(operation(ite,(E1,(E2,(E3,())))),V3) :- direct_query(operation(ite,(E1,(E2,(E3,()))))), _se_value(E1,val(bool,false)), _se_value(E3,V3).
+_se_value(operation(ite,(E1,(E2,(E3,())))),bad) :- direct_query(operation(ite,(E1,(E2,(E3,()))))), _se_value(E1,bad).
 
 %%%%%%%%%%%%%%%%% if
 _se_value(operation(if,(E1,(E2,()))),V2) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,val(bool,true)), _se_value(E2,V2).

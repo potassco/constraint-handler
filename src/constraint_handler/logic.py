@@ -40,6 +40,10 @@ class Evaluator:
                 assert len(args) == 3
                 if args[0] is None:
                     return None
+                
+                if args[0] is common.Bad.bad:
+                    return common.Bad.bad
+
                 return args[1] if args[0] else args[2]
             case Operator.leqv:
                 if None in args:
