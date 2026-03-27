@@ -41,8 +41,6 @@ class Evaluator:
         self.errors = errors
 
     def operator(self, o, args):
-        if common.Bad.bad in args:
-            return common.Bad.bad
         if None in args:
             return None
         foldable = {Operator.add: sum, Operator.mult: math.prod}
@@ -95,6 +93,10 @@ class Evaluator:
                         return common.Bad.bad
                     return lval / rval
                 case Operator.pow:
+                    if rval == 0:
+                        return 1
+                    if common.Bad.bad in args:
+                        return common.Bad.bad
                     return lval ** rval  # fmt: skip
                 case Operator.leq:
                     return lval <= rval

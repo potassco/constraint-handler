@@ -14,6 +14,9 @@ _computedIdx(E,V)  :- _computeIdx(E,mult), _int_mult(E,IDX,V), not _computeIdx(E
 operator_declare((sub;pow),(int,(int,())),int).
 _computedIdx(E,val(int,V0-V1))  :- _computeIdx(E,sub), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)).
 _computedIdx(E,val(int,V0**V1)) :- _computeIdx(E,pow), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)).
+_computedIdx(E,val(int,1))      :- _computeIdx(E,pow), _computeIdx(E,0,_), _computeIdx(E,1,val(int,0)).
+_computedIdx(E,bad)             :- _computeIdx(E,pow), _computeIdx(E,0,bad), _computeIdx(E,1,val(int,V1)), V1 != 0.
+_computedIdx(E,bad)             :- _computeIdx(E,pow), _computeIdx(E,0,_), _computeIdx(E,1,bad).
 
 %%%%%%%%%%%%%%%%% int_div
 operator_declare(int_div,((int;float),((int;float),())),int).
