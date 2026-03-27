@@ -51,7 +51,14 @@ class Evaluator:
                 return functools.reduce(operator.eq, args, True)
             case Operator.limp:
                 assert len(args) == 2
-                return args[1] if args[0] else True
+                if not args[0]:
+                    return True
+                elif args[1] is True:                    
+                    return True
+                elif common.Bad.bad in args:
+                    return common.Bad.bad
+                else:
+                    return args[1]
             case Operator.lnot:
                 assert len(args) == 1
                 if None in args:
