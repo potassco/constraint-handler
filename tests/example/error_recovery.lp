@@ -21,20 +21,22 @@ variable_define(recovery, disj_recovered, operation(disj, (variable(lt_bad),(val
 variable_define(recovery, pow_bad, operation(pow, (variable(div_bad),(val(int,3),())))).
 variable_define(recovery, pow_recovered, operation(pow, (variable(div_bad),(val(int,0),())))).
 
-% Operator `limp` is recoverable when antecedent is false.
+% Operator `limp` is recoverable when antecedent is false or consequent is true, because the bad value won't affect the outcome.
 variable_define(recovery, limp_bad, operation(limp, (val(bool,true),(variable(lt_bad),())))).
+variable_define(recovery, limp_bad_also, operation(limp, (variable(lt_bad),(val(bool,false),())))).
 variable_define(recovery, limp_recovered, operation(limp, (val(bool,false),(variable(lt_bad),())))).
+variable_define(recovery, limp_recovered_also, operation(limp, (variable(lt_bad),(val(bool,true),())))).
 
 % Operator `ite` is recoverable when condition is evaluated such that the return value doesn't depend on the bad value.
 variable_define(recovery, ite_bad, operation(ite, (variable(lt_bad),(val(int,1),(val(int,2),()))))).
-variable_define(recovery, ite_recovered, operation(ite, (val(bool,false),(variable(mult_bad),(val(int,2),()))))).
+variable_define(recovery, ite_recovered, operation(ite, (val(bool,false),(variable(lt_bad),(val(int,2),()))))).
 
 % Operator `if` is recoverable when condition is false, because the branch with the bad value won't be taken.
 variable_define(recovery, if_bad, operation(if, (variable(lt_bad),(val(int,1),())))).
-variable_define(recovery, if_bad_also, operation(if, (val(bool,true),(variable(mult_bad),())))).
-variable_define(recovery, if_recovered, operation(if, (val(bool,false),(variable(mult_bad),())))).
+variable_define(recovery, if_bad_also, operation(if, (val(bool,true),(variable(lt_bad),())))).
+variable_define(recovery, if_recovered, operation(if, (val(bool,false),(variable(lt_bad),())))).
 
 % Operator `default` is recoverable if the default value is bad but not taken.
 variable_define(recovery, default_bad, operation(default, (variable(lt_bad),(val(int,1),())))).
-variable_define(recovery, default_bad_also, operation(default, (val(none,none),(variable(mult_bad),())))).
-variable_define(recovery, default_recovered, operation(default, (val(int,1),(variable(mult_bad),())))).
+variable_define(recovery, default_bad_also, operation(default, (val(none,none),(variable(lt_bad),())))).
+variable_define(recovery, default_recovered, operation(default, (val(int,1),(variable(lt_bad),())))).
