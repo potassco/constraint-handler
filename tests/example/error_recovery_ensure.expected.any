@@ -1,0 +1,6 @@
+value(ints,val(int,0))
+value(ints,val(int,1))
+value(ints,val(int,2))
+value(div_maybe_bad,bad)
+value(div_maybe_bad,val(int,3))
+value(div_maybe_bad,val(int,6))

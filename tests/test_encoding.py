@@ -32,6 +32,7 @@ base_tests = [
     "engine_request_set_ref",
     "eq_compound_int",
     "error_recovery",
+    "error_recovery_ensure",
     "executions",
     "execution_assert",
     "execution_conditional",

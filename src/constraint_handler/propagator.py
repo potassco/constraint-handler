@@ -5,7 +5,6 @@ import sys
 from typing import Any, Iterable, Literal, Sequence, cast
 
 import clingo
-import py
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
