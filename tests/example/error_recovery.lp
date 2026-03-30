@@ -7,7 +7,8 @@ variable_define(six_minus_six, operation(sub, (variable(six),(variable(add_three
 variable_define(div_bad, operation(int_div, (variable(six),(variable(six_minus_six),())))).
 variable_define(mult_bad, operation(mult, (variable(div_bad),(variable(two),())))).
 variable_define(lt_bad, operation(lt, (variable(mult_bad),(variable(two),())))).
-
+% Make sure bad also works with evaluate
+evaluate(lt, (variable(mult_bad),(variable(two),()))).
 % Use the bad value to create conjunctions
 % the false case should be recoverable since the value of bad doesn't affect the outcome.
 variable_define(conj_bad, operation(conj, (variable(lt_bad),(val(bool,true),())))).
