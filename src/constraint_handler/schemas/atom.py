@@ -159,7 +159,7 @@ class Ensure(NamedTuple):
 
 class Value(NamedTuple):
     name: expression.constant
-    val: expression.Val
+    val: expression.Val | Bad
 
     def __repr__(self):
         return f"Value({str(self.name)},{str(self.val)})"
@@ -173,7 +173,7 @@ class Evaluate(NamedTuple):
 class Evaluated(NamedTuple):
     name: expression.Operator
     expr: list[expression.Expr]
-    value: expression.Val
+    value: expression.Val | Bad
 
 
 type MainAtom = Assign | Ensure | Evaluate

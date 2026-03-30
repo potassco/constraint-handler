@@ -137,7 +137,6 @@ def test_engine_propagator(name, check_mode):
     unsupported: list[str] = [
         "engine_request",
         "engine_request_mult",
-        "error_recovery",
         "lambda_recursive",
         "multimaps",
         "optimize_bools",

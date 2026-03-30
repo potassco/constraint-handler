@@ -5,6 +5,7 @@ import sys
 from typing import Any, Iterable, Literal, Sequence, cast
 
 import clingo
+import py
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
@@ -37,6 +38,7 @@ from constraint_handler.PropagatorVariables import (
     VariableType,
     make_dict_from_variables,
 )
+from constraint_handler.utils.common import Bad
 
 
 def myprint(*args, **kwargs):
@@ -1183,10 +1185,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for eval_var in self.evaluatevars:
             myprint(eval_var, eval_var.get_value())
             self.handle_on_model_warning(eval_var.get_errors())
+            final_value = eval_var.get_value()
+            if final_value == Bad.bad:
+                pyVal = final_value
+            else:
+                pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
             pyAtom = atom.Evaluated(
                 eval_var.op,
                 eval_var.args,
-                expression.Val(evaluator.get_baseType(eval_var.get_value()), eval_var.get_value()),
+                pyVal,
             )
             self.python_model.add(pyAtom)
 
@@ -1225,7 +1232,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if final_value is ValueStatus.NOT_SET:
             assert False, f"Variable {var} has no value set in on_model!"
 
-        if isinstance(final_value, expression.constant):
+        if isinstance(final_value, expression.constant | Bad):
             self.handle_on_model_normal_type(var, final_value)
 
         elif isinstance(final_value, (set, frozenset)):
@@ -1287,7 +1294,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
                 self.python_model.add(mm_pyAtom)
 
-    def handle_on_model_normal_type(self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol):
+    def handle_on_model_normal_type(
+        self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol | Bad
+    ):
         """
         Add atoms for a variable (bool/int/float/str/symbol) to the python model.
 
@@ -1296,8 +1305,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             final_value: Scalar value.
         """
         assert self.python_model is not None
-
-        pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
+        if final_value == Bad.bad:
+            pyVal = final_value
+        else:
+            pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
