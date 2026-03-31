@@ -2,6 +2,10 @@
 
 ## Ongoing
 
+## v0.0.2.dev4
+
+- Use an aggregate to compute sum in the compule engine
+- Remove negated hypothesis in the compile implementation of multiplication
 - Add handling of bad values in the propagator
 - make the following operators recoverable: `conj`, `disj`, `pow`, `limp`,
   `ite`, `if`, `default`
