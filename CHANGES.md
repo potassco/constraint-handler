@@ -2,7 +2,8 @@
 
 ## Ongoing
 
-- made the following operators recoverable: `conj`, `disj`, `pow`, `limp`,
+- Add handling of bad values in the propagator
+- make the following operators recoverable: `conj`, `disj`, `pow`, `limp`,
   `ite`, `if`, `default`
 - declaration `Identifiers` are now optional `Labels`
 - convenience case `optimize_maximizeSum/3` has the label removed and is now
