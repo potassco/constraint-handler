@@ -15,7 +15,8 @@ def run_test(name: str, engine: Literal["compile", "ground", "propagator"], chec
     solver.solve(test)
     test.assert_()
 
-    for test, extra_args in chut.build_reasoning_mode_expectations(name):
+    for test, extra_args in chut.build_expectations_with_args(name):
+        print(test, extra_args)
         solver = chut.Solver(ctrl_options + extra_args, engine_prg, files=[name + ".lp"])
         solver.solve(test)
         test.assert_()
@@ -104,7 +105,7 @@ def test_engine_compile(name: str):
         "engine_request_mult",
         "optimize_bools",
         "optimize_floats",
-        "optimize_ints",
+        # "optimize_ints",
         "optimize_priority",
         "warning_syntax",
     ]

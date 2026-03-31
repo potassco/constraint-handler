@@ -1,8 +1,8 @@
 capacity(6).
 item(a,4,5).
-item(b,3,3).
-item(c,3,3).
-
+item(b,2,1).
+item(c,2,1).
+item(d,3,3).
 multimap_declare(taken).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 

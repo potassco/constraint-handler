@@ -1,10 +1,14 @@
+import os
 from typing import Optional, Sequence, Union
 
 import clingo
 import clintest.assertion
 import clintest.solver
 import clintest.test
-from clintest.quantifier import All, Any, First, Last
+from clingo import SolveResult
+from clintest.assertion import Assertion
+from clintest.outcome import Outcome
+from clintest.quantifier import All, Any, Finished, First, Last, Quantifier
 
 import constraint_handler
 import constraint_handler.evaluator as evaluator
@@ -25,14 +29,13 @@ def contains(atom):
 
 
 def build_expectations(name):
-    opt_contains = contains
     absent = lambda atom: clintest.assertion.Not(
         clintest.assertion.Or(*(clintest.assertion.Contains(atom), TheoryContains(atom)))
     )
     expected_all = atoms_from_file(name + ".expected.all")
-    test_all = clintest.test.And(*(clintest.test.Assert(All(), opt_contains(atom)) for atom in expected_all))
+    test_all = clintest.test.And(*(clintest.test.Assert(All(), contains(atom)) for atom in expected_all))
     expected_any = atoms_from_file(name + ".expected.any")
-    test_any = clintest.test.And(*(clintest.test.Assert(Any(), opt_contains(atom)) for atom in expected_any))
+    test_any = clintest.test.And(*(clintest.test.Assert(Any(), contains(atom)) for atom in expected_any))
     expected_none = atoms_from_file(name + ".expected.none")
     test_none = clintest.test.And(*(clintest.test.Assert(All(), absent(atom)) for atom in expected_none))
     expected_first = atoms_from_file(name + ".expected.first")
@@ -45,14 +48,35 @@ def build_expectations(name):
     return clintest.test.And(test_exists, test_all, test_any, test_none, test_first)
 
 
-def build_reasoning_mode_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
+def build_expectations_with_args(name) -> list[tuple[clintest.test.Test, list[str]]]:
+    tests = []
+
     expected_brave = atoms_from_file(name + ".expected.brave")
-    test_brave = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_brave))
+    if expected_brave:
+        test_brave = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_brave))
+        test_brave = (test_brave, ["--enum-mode=brave"])
+        tests.append(test_brave)
 
     expected_cautious = atoms_from_file(name + ".expected.cautious")
-    test_cautious = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_cautious))
+    if expected_cautious:
+        test_cautious = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_cautious))
+        test_cautious = (test_cautious, ["--enum-mode=cautious"])
+        tests.append(test_cautious)
 
-    return [(test_brave, ["--enum-mode=brave"]), (test_cautious, ["--enum-mode=cautious"])]
+    __tests_opt = []
+    expected_opt_all = atoms_from_file(name + ".expected.optall")
+    if expected_opt_all:
+        test_opt_all = clintest.test.And(*(AssertOptimal(All(), contains(atom)) for atom in expected_opt_all))
+        __tests_opt.append(test_opt_all)
+
+    expected_opt_any = atoms_from_file(name + ".expected.optany")
+    if expected_opt_any:
+        test_opt_any = clintest.test.And(*(AssertOptimal(Any(), contains(atom)) for atom in expected_opt_any))
+        __tests_opt.append(test_opt_any)
+    if __tests_opt:
+        test_opt = clintest.test.And(*__tests_opt)
+        tests.append((test_opt, ["--opt-mode=optN"]))
+    return tests
 
 
 class TheoryContains(clintest.assertion.Assertion):
@@ -65,6 +89,45 @@ class TheoryContains(clintest.assertion.Assertion):
 
     def holds_for(self, model: clingo.solving.Model) -> bool:
         return self.__symbol in model.symbols(theory=True)
+
+
+class AssertOptimal(clintest.test.Test):
+    def __init__(self, quantifier: Quantifier, assertion: Assertion) -> None:
+        self.__quantifier = quantifier
+        self.__assertion = assertion
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        quantifier = repr(self.__quantifier)
+        assertion = repr(self.__assertion)
+        return f"{name}({quantifier}, {assertion})"
+
+    def __str__(self):
+        return os.linesep.join(
+            [
+                f"[{self.outcome()}] {self.__class__.__name__}",
+                f"    quantifier: {self.__quantifier}",
+                f"    assertion:  {self.__assertion}",
+            ]
+        )
+
+    def on_model(self, _model: clingo.solving.Model) -> bool:
+        # TODO: only works for compile and ground engine, needs to be adapted for propagator
+        # Add some atom indicating optimality to the model in the propagator and check for it here
+        # print("model ", _model.optimality_proven)
+        # for s in _model.symbols(shown=True):
+        #     if s.match("multimap_value", 3):
+        #         print(s)
+        if not self.__quantifier.outcome().is_certain() and _model.optimality_proven:
+            self.__quantifier.consume(self.__assertion.holds_for(_model))
+
+        return not self.__quantifier.outcome().is_certain()
+
+    def on_finish(self, result: SolveResult) -> None:
+        self.__quantifier = Finished(self.__quantifier)
+
+    def outcome(self) -> Outcome:
+        return self.__quantifier.outcome()
 
 
 class Solver(clintest.solver.Solver):
