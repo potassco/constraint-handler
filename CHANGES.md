@@ -2,6 +2,10 @@
 
 ## Ongoing
 
+- remove `recoverable`
+- introduce `_operator_recoverable/1` and use it for every currently
+  recoverable operator
+
 ## v0.0.2.dev4
 
 - Use an aggregate to compute sum in the compule engine
