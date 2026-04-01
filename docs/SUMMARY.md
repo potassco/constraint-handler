@@ -21,6 +21,7 @@
     * [Type Checking](developer/type_checking.md)
     * [Fact Format](developer/fact-format.md)
     * [Python API](developer/python_api/)
+    * [ASP API](developer/asp_api/)
 * Community
     * [Welcome](community/welcome.md)
     * [Changes](community/CHANGES.md)

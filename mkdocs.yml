@@ -123,6 +123,8 @@ plugins:
             predicate_table: true
             glossary: true
             encodings: false
+            extra_includes:
+              - "src/constraint_handler/data/main.d.lp"
 
 hooks:
   - docs/_hooks/links_hook.py
