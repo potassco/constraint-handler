@@ -8,7 +8,6 @@ copyright: Copyright &copy; 2024 Potassco
 extra_css:
   - _custom/css/extra.css
   - _custom/css/mkdocstrings.css
-  - _custom/css/mkdoclingo.css
 
 extra_javascript:
   - _custom/javascripts/mathjax.js
