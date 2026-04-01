@@ -15,6 +15,6 @@ execution_run(exec_external).
 execution_run(exec_internal).
 execution_run(exec_internal_empty).
 
-evaluate(isin, (val(symbol,some_key),(variable(execution_output(exec_internal,internal_out)),()))).
-evaluate(isin, (val(symbol,some_key),(variable(execution_output(exec_external,external_out)),()))).
-evaluate(isin, (val(symbol,some_key),(variable(execution_output(exec_internal_empty,internal_out)),()))).
+evaluate(multimap_isin, (val(symbol,some_key),(variable(execution_output(exec_internal,internal_out)),()))).
+evaluate(multimap_isin, (val(symbol,some_key),(variable(execution_output(exec_external,external_out)),()))).
+evaluate(multimap_isin, (val(symbol,some_key),(variable(execution_output(exec_internal_empty,internal_out)),()))).

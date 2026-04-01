@@ -33,21 +33,21 @@ _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V).
 
-%%%%%%%%%%%%%%%%% isin notin
-operator_declare((isin;notin),(T1,(set,())),bool) :- _type(T1).
-direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E,(isin;notin)), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
+%%%%%%%%%%%%%%%%% set_isin set_notin
+operator_declare((set_isin;set_notin),(T1,(set,())),bool) :- _type(T1).
+direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E,(set_isin;set_notin)), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
     _set_contains(S,V2).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,isin), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,set_isin), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
     _set_contains(S,V2), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,isin), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,set_isin), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
     #false : _set_contains(S,V2), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,notin), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,set_notin), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
     _set_contains(S,V2), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,notin), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,set_notin), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
     #false : _set_contains(S,V2), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
 
 

@@ -48,33 +48,33 @@ def test_set_isin_arg_validation():
     evaluator = Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
-    result = evaluator.operator(Operator.isin, [])
+    result = evaluator.operator(Operator.set_isin, [])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "isin takes exactly 2 arguments (0 were given)" in str(evaluator.errors[0])
+    assert "set_isin takes exactly 2 arguments (0 were given)" in str(evaluator.errors[0])
 
     # Test with 1 argument
     evaluator.errors = []
-    result = evaluator.operator(Operator.isin, [1])
+    result = evaluator.operator(Operator.set_isin, [1])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "isin takes exactly 2 arguments (1 was given)" in str(evaluator.errors[0])
+    assert "set_isin takes exactly 2 arguments (1 was given)" in str(evaluator.errors[0])
 
     # Test with 2 arguments (correct case)
     evaluator.errors = []
-    result = evaluator.operator(Operator.isin, [1, frozenset({1, 2, 3})])
+    result = evaluator.operator(Operator.set_isin, [1, frozenset({1, 2, 3})])
     assert result is True
     assert len(evaluator.errors) == 0
 
     # Test with 3 arguments
     evaluator.errors = []
-    result = evaluator.operator(Operator.isin, [1, frozenset({1, 2, 3}), frozenset({1, 4, 5})])
+    result = evaluator.operator(Operator.set_isin, [1, frozenset({1, 2, 3}), frozenset({1, 4, 5})])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "isin takes exactly 2 arguments (3 were given)" in str(evaluator.errors[0])
+    assert "set_isin takes exactly 2 arguments (3 were given)" in str(evaluator.errors[0])
 
 
 def test_set_notin_arg_validation():
@@ -84,33 +84,33 @@ def test_set_notin_arg_validation():
     evaluator = Evaluator(evltr.Evaluator)
 
     # Test with 0 arguments
-    result = evaluator.operator(Operator.notin, [])
+    result = evaluator.operator(Operator.set_notin, [])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "notin takes exactly 2 arguments (0 were given)" in str(evaluator.errors[0])
+    assert "set_notin takes exactly 2 arguments (0 were given)" in str(evaluator.errors[0])
 
     # Test with 1 argument
     evaluator.errors = []
-    result = evaluator.operator(Operator.notin, [1])
+    result = evaluator.operator(Operator.set_notin, [1])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "notin takes exactly 2 arguments (1 was given)" in str(evaluator.errors[0])
+    assert "set_notin takes exactly 2 arguments (1 was given)" in str(evaluator.errors[0])
 
     # Test with 2 arguments (correct case)
     evaluator.errors = []
-    result = evaluator.operator(Operator.notin, [5, frozenset({1, 2, 3})])
+    result = evaluator.operator(Operator.set_notin, [5, frozenset({1, 2, 3})])
     assert result is True
     assert len(evaluator.errors) == 0
 
     # Test with 3 arguments
     evaluator.errors = []
-    result = evaluator.operator(Operator.notin, [5, frozenset({1, 2, 3}), frozenset({1, 4, 5})])
+    result = evaluator.operator(Operator.set_notin, [5, frozenset({1, 2, 3}), frozenset({1, 4, 5})])
     assert result is None
     assert len(evaluator.errors) == 1
     assert isinstance(evaluator.errors[0], TypeError)
-    assert "notin takes exactly 2 arguments (3 were given)" in str(evaluator.errors[0])
+    assert "set_notin takes exactly 2 arguments (3 were given)" in str(evaluator.errors[0])
 
 
 def test_set_inter_arg_validation():

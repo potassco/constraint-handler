@@ -1,3 +1,3 @@
-evaluated(isin,(val(int,2),(variable(execution_output(exec_internal,internal_out)),())),val(bool,true))
-evaluated(isin,(val(int,2),(variable(execution_output(exec_external,external_out)),())),val(bool,true))
-evaluated(isin,(val(int,2),(variable(execution_output(exec_internal_empty,internal_out)),())),val(bool,false))
+evaluated(set_isin,(val(int,2),(variable(execution_output(exec_internal,internal_out)),())),val(bool,true))
+evaluated(set_isin,(val(int,2),(variable(execution_output(exec_external,external_out)),())),val(bool,true))
+evaluated(set_isin,(val(int,2),(variable(execution_output(exec_internal_empty,internal_out)),())),val(bool,false))

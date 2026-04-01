@@ -10,7 +10,7 @@ Operator = common.PPEnum(
     [
         "find",
         "find2",
-        "isin",
+        "multimap_isin",
         "multimap_make",
         "multimap_fold",
         "multimap_fold_i",
@@ -82,7 +82,7 @@ class Evaluator:
         if None in args:
             return None
         match o:
-            case Operator.isin:
+            case Operator.multimap_isin:
                 assert len(args) == 2
                 return args[0] in args[1]
             case Operator.find:

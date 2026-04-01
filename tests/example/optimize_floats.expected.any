@@ -1,3 +1,3 @@
-evaluated(isin,(val(symbol,b),(variable(taken),())),bool,false)
-evaluated(isin,(val(symbol,c),(variable(taken),())),bool,false)
-evaluated(isin,(val(symbol,d),(variable(taken),())),bool,false)
+evaluated(multimap_isin,(val(symbol,b),(variable(taken),())),bool,false)
+evaluated(multimap_isin,(val(symbol,c),(variable(taken),())),bool,false)
+evaluated(multimap_isin,(val(symbol,d),(variable(taken),())),bool,false)
