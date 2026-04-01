@@ -8,7 +8,7 @@ multimap_declare(taken).
 
 optimize_maximizeSum(EXPR,X) :- item(X,W),
   ITEM = val(symbol,X),
-  EXPR = operation(isin,(ITEM,(variable(taken),()))).
+  EXPR = operation(multimap_isin,(ITEM,(variable(taken),()))).
 
 variable_define(carried,EXPR) :-
   EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),

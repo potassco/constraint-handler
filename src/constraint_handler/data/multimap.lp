@@ -72,7 +72,7 @@ _computedIdx(E,M) :- _computeIdx(E,maxEntries), _computeIdx(E,0,val(multimap,EM)
 _computedIdx(E,M) :- _computeIdx(E,minEntries), _computeIdx(E,0,val(multimap,EM)),
     M = #min { V : _multimap_entry(EM,K,V) }.
 
-%%%%%%%%%%%%%%%%%% isin notin
+%%%%%%%%%%%%%%%%%% multimap_isin notin
 
 %%%%%%%%%%%%%%%%%% union inter
 
@@ -130,9 +130,9 @@ _multimap_lastIndex(EM,I+1) :- _multimap_index(EM,I,K,V),
 _multimap_lastIndex(EM,0) :- _multimap_makeIndex(EM),
     #false : _multimap_entry(EM,K,V).
 
-%%%%%%%%%%%%%%%%%% isin
-operator_declare(isin,(T1,(multimap,())),bool) :- _type(T1).
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,isin), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
+%%%%%%%%%%%%%%%%%% multimap_isin
+operator_declare(multimap_isin,(T1,(multimap,())),bool) :- _type(T1).
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,multimap_isin), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
     _multimap_entry(EM,K,_).
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,isin), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,multimap_isin), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
     #false : _multimap_entry(EM,K,_).

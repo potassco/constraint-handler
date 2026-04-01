@@ -12,7 +12,7 @@ multimap_declare(taken).
 
 optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
-  COND = operation(isin,(ITEM,(variable(taken),()))),
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
   VALU = val(float,V),
   EXPR = operation(if,(COND,(VALU,()))).
 
@@ -28,8 +28,8 @@ variable_define(carried,EXPR) :-
 
 ensure(operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
 
-evaluate(isin,(val(symbol,a),(variable(taken),()))).
-evaluate(isin,(val(symbol,b),(variable(taken),()))).
-evaluate(isin,(val(symbol,c),(variable(taken),()))).
-evaluate(isin,(val(symbol,d),(variable(taken),()))).
-evaluate(isin,(val(symbol,e),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,a),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,b),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,c),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,d),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,e),(variable(taken),()))).
