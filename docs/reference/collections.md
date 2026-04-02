@@ -162,21 +162,25 @@ set_baseDomain(Name, Value).
 Each `set_baseDomain/2` fact introduces one candidate value. The solver may include or exclude each candidate independently.
 
 !!! Example
-    To create the set `my_set` with candidate values `1`, `2` and `3` (where the solver decides which ones to include), with a constraint that `1` must be included:
+    `set_assign` and `set_baseDomain` can be used together on the same set. Here, `my_set` has a base domain of candidates `1`, `2`, `3` (each optionally included by the solver), while `2` and `4` are always explicitly included via `set_assign`, and `1` is forced to appear via an `ensure` constraint:
 
     ```prolog
     set_declare(my_set).
     set_baseDomain(my_set, val(int, 1..3)).
+    set_assign(my_set, val(int, 2)).
+    set_assign(my_set, val(int, 4)).
     ensure(e1, operation(isin, (val(int, 1), (variable(my_set), ())))).
     ```
 
-    This results in (among other models):
+    This always produces (among other models):
 
     ```prolog
     set_value(my_set, val(int, 1))
+    set_value(my_set, val(int, 2))
+    set_value(my_set, val(int, 4))
     ```
 
-    The values `2` and `3` may or may not appear in the model, depending on the solver's choices, while `1` is guaranteed to appear due to the `ensure` constraint.
+    `val(int, 3)` may or may not appear, depending on the solver's choices.
 
 ### Make
 
