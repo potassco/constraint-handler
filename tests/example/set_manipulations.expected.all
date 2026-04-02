@@ -35,10 +35,10 @@ set_value(d,val(int,4))
 
 value(cd,val(int,2))
 
-evaluated(notin,(val(bool,true),(variable(d),())),val(bool,true))
-evaluated(notin,(val(bool,true),(variable(x),())),val(bool,true))
-evaluated(isin,(val(bool,true),(variable(t),())),val(bool,true))
-evaluated(isin,(val(int,17),(variable(t),())),val(bool,false))
+evaluated(set_notin,(val(bool,true),(variable(d),())),val(bool,true))
+evaluated(set_notin,(val(bool,true),(variable(x),())),val(bool,true))
+evaluated(set_isin,(val(bool,true),(variable(t),())),val(bool,true))
+evaluated(set_isin,(val(int,17),(variable(t),())),val(bool,false))
 
 value(eqx3,val(bool,true))
 value(nqx3,val(bool,false))

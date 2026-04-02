@@ -8,7 +8,7 @@ multimap_declare(taken).
 
 optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
-  COND = operation(isin,(ITEM,(variable(taken),()))),
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
   VALU = val(int,V),
   EXPR = operation(if,(COND,(VALU,()))).
 

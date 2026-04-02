@@ -15,6 +15,6 @@ execution_run(exec_external).
 execution_run(exec_internal).
 execution_run(exec_internal_empty).
 
-evaluate(isin, (val(int,2),(variable(execution_output(exec_internal,internal_out)),()))).
-evaluate(isin, (val(int,2),(variable(execution_output(exec_external,external_out)),()))).
-evaluate(isin, (val(int,2),(variable(execution_output(exec_internal_empty,internal_out)),()))).
+evaluate(set_isin, (val(int,2),(variable(execution_output(exec_internal,internal_out)),()))).
+evaluate(set_isin, (val(int,2),(variable(execution_output(exec_external,external_out)),()))).
+evaluate(set_isin, (val(int,2),(variable(execution_output(exec_internal_empty,internal_out)),()))).

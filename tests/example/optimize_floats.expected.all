@@ -1,2 +1,2 @@
-evaluated(isin,(val(symbol,a),(variable(taken),())),bool,false)
-evaluated(isin,(val(symbol,e),(variable(taken),())),bool,false)
+evaluated(multimap_isin,(val(symbol,a),(variable(taken),())),bool,false)
+evaluated(multimap_isin,(val(symbol,e),(variable(taken),())),bool,false)

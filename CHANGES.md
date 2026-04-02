@@ -5,10 +5,13 @@
 - remove `recoverable`
 - introduce `_operator_recoverable/1` and use it for every currently
   recoverable operator
+- `isin` for sets is now `set_isin`
+- `notin` for sets is now `set_notin`
+- `isin` for multimaps is now `multimap_isin`
 
 ## v0.0.2.dev4
 
-- Use an aggregate to compute sum in the compule engine
+- Use an aggregate to compute sum in the compute engine
 - Remove negated hypothesis in the compile implementation of multiplication
 - Add handling of bad values in the propagator
 - make the following operators recoverable: `conj`, `disj`, `pow`, `limp`,

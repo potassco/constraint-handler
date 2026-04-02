@@ -25,7 +25,7 @@
 %%% f subset h
 %%% es==even     os==odd
 %%% even==doubles cap nb
-%%% 6 notin odd
+%%% 6 set_notin odd
 %%% 7 in odd
 
 
@@ -118,8 +118,8 @@ evaluate(leqv,
 evaluate(subset,(variable(a),(variable(d),()))).
 evaluate(subset,(variable(f),(variable(g),()))).
 evaluate(subset,(variable(f),(variable(h),()))).
-evaluate(notin,(val(int,6),(variable(odd),()))).
-evaluate(isin,(val(int,7),(variable(odd),()))).
+evaluate(set_notin,(val(int,6),(variable(odd),()))).
+evaluate(set_isin,(val(int,7),(variable(odd),()))).
 %%% even==doubles cap nb
 evaluate(eq,
     (variable(even),
