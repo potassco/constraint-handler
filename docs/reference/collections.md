@@ -141,6 +141,43 @@ set_value(Name, Value)
     set_value(my_set, val(int, 5))
     ```
 
+### Base Domain
+
+To declare a set and specify a base domain of candidate values from which elements may be chosen, use the `set_baseDomain/2` predicate together with `set_declare/1`.
+
+#### Input
+
+**[Declaration]**{.badge .declaration }
+
+```prolog
+set_declare(Name).
+set_baseDomain(Name, Value).
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Name` | The unique identifier of the set. |
+| `Value` | A candidate value that may be included in the set. |
+
+Each `set_baseDomain/2` fact introduces one candidate value. The solver may include or exclude each candidate independently.
+
+!!! Example
+    To create the set `my_set` with candidate values `1`, `2` and `3` (where the solver decides which ones to include), with a constraint that `1` must be included:
+
+    ```prolog
+    set_declare(my_set).
+    set_baseDomain(my_set, val(int, 1..3)).
+    ensure(e1, operation(isin, (val(int, 1), (variable(my_set), ())))).
+    ```
+
+    This results in (among other models):
+
+    ```prolog
+    set_value(my_set, val(int, 1))
+    ```
+
+    The values `2` and `3` may or may not appear in the model, depending on the solver's choices, while `1` is guaranteed to appear due to the `ensure` constraint.
+
 ### Make
 
 The constraint handler provides a `set_make` operator to create sets directly within expressions.

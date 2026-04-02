@@ -119,6 +119,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 <set-atom> ::=
     | "set_declare" "(" <term> "," <term> ")"
     | "set_assign" "(" <term> "," <term> "," <expression> ")"
+    | "set_baseDomain" "(" <term> "," <term> "," <expression> ")"
 
 <execution-atom> ::=
     | "execution_declare" "(" <term> "," <term> "," <statement> "," <term-list> "," <term-list> ")"
