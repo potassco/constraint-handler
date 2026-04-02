@@ -57,6 +57,7 @@ base_tests = [
     "set_comparisons",
     "set_executions",
     "set_fold_bools",
+    "set_from_domain",
     "set_iterations",
     "set_manipulations",
     "set_selfref",
