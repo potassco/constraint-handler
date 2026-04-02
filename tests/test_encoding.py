@@ -146,6 +146,7 @@ def test_engine_propagator(name, check_mode):
         "optimize_ints",
         "optimize_priority",
         "set_fold_bools",
+        "set_from_domain",
         "set_iterations",
         "set_selfref",
         "warning_variables",

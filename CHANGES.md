@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- Introduce set_baseDomain/2 to allow non-deterministic set definitions.
+
 ## v0.0.2.dev4
 
 - Use an aggregate to compute sum in the compule engine

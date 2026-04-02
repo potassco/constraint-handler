@@ -1,14 +1,15 @@
 #defined set_declare/1.
 #defined set_assign/2.
-#defined set_declare_from/2.
-#defined set_base_domain/2.
+#defined set_baseDomain/2.
 
 
 set_declare(_label_anonymous,X) :- set_declare(X).
 set_assign(_label_anonymous,X,E) :- set_assign(X,E).
+set_baseDomain(_label_anonymous,X,V) :- set_baseDomain(X,V).
 
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_declare(CNAME,X).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_assign(CNAME,X,EXPR).
+engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_baseDomain(CNAME,X,EXPR).
 _set_assign(CNAME,variable(X),E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
 _set_declare(CNAME,variable(X)) :- engine(CNAME,compile), set_declare(CNAME,X).
 
@@ -36,23 +37,9 @@ _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V).
 
-%%%%%%%%%%%%%%%%% set_declare_from
-set_declare_from(_label_anonymous,X,From) :- set_declare_from(X,From).
-
-set_declare(CNAME,X) :- set_declare_from(CNAME,X,fromFacts).
-set_declare(CNAME,X) :- set_declare_from(CNAME,X,fromList(L)).
-_set_base_domain(X,V) :- set_declare_from(CNAME,X,fromFacts), set_base_domain(X,V).
-_set_base_domain(X,V) :- set_declare_from(CNAME,X,fromList(L)), V=@pythonListElements(L).
-
+%%%%%%%%%%%%%%%%% set_baseDomain
 { set_assign(CNAME,X,V) } :-
-    _set_base_domain(X,V), engine(CNAME, (compile;ground)), set_declare_from(CNAME,X,_).
-
-%%%% TODO - choosing the set assignment should be internal to the propagator
-{ set_assign(CNAME,X,V) } :-
-    _set_base_domain(X,V), engine(CNAME, propagator), set_declare_from(CNAME,X,_).
-
-
-
+    set_baseDomain(CNAME,X,V), engine(CNAME,(compile;ground)).
 
 %%%%%%%%%%%%%%%%% isin notin
 operator_declare((isin;notin),(T1,(set,())),bool) :- _type(T1).
