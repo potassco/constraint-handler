@@ -1,11 +1,15 @@
 #defined set_declare/1.
 #defined set_assign/2.
+#defined set_baseDomain/2.
+
 
 set_declare(_label_anonymous,X) :- set_declare(X).
 set_assign(_label_anonymous,X,E) :- set_assign(X,E).
+set_baseDomain(_label_anonymous,X,V) :- set_baseDomain(X,V).
 
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_declare(CNAME,X).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_assign(CNAME,X,EXPR).
+engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_baseDomain(CNAME,X,EXPR).
 _set_assign(CNAME,variable(X),E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
 _set_declare(CNAME,variable(X)) :- engine(CNAME,compile), set_declare(CNAME,X).
 
@@ -32,6 +36,10 @@ _set_contains(EX,V1) :-
 _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V).
+
+%%%%%%%%%%%%%%%%% set_baseDomain
+{ set_assign(CNAME,X,V) } :-
+    set_baseDomain(CNAME,X,V), engine(CNAME,(compile;ground)).
 
 %%%%%%%%%%%%%%%%% set_isin set_notin
 operator_declare((set_isin;set_notin),(T1,(set,())),bool) :- _type(T1).

@@ -122,24 +122,44 @@ set_value(Name, Value)
 | `Name` | The unique identifier of the set. |
 | `Value` | The actual value being added to the set using the `val/2` predicate. |
 
+### Base Domain
+
+To declare a set and specify a base domain of candidate values from which elements may be chosen, use the `set_baseDomain/2` predicate together with `set_declare/1`.
+
+#### Input
+
+**[Declaration]**{.badge .declaration }
+
+```prolog
+set_declare(Name).
+set_baseDomain(Name, Value).
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Name` | The unique identifier of the set. |
+| `Value` | A candidate value that may be included in the set. |
+
+Each `set_baseDomain/2` fact introduces one candidate value. The solver may include or exclude each candidate independently.
+
 !!! Example
-    To create the set `my_set` and add the [ints] `1`, `3` and `5` to it, you would use the following code:
+    `set_assign` and `set_baseDomain` can be used together on the same set. Here, `my_set` has a base domain of candidates `1`, `2`, `3` (each optionally included by the solver), while `2` and `4` are always explicitly included via `set_assign`, and `1` is forced to appear via an `ensure` constraint:
 
     ```prolog
     set_declare(my_set).
-    set_assign(my_set, val(int, 1)).
-    set_assign(my_set, val(int, 3)).
-    set_assign(my_set, val(int, 5)).
+    set_baseDomain(my_set,val(int,1..2)).
+    set_assign(my_set,val(int,3)).
+    ensure(e1,operation(isin,(val(int,1),(variable(my_set),())))).
     ```
 
-    This results in the following output atoms:
+    This always produces (among other atoms):
 
     ```prolog
-    value(my_set, val(set, ref(variable(my_set))))
-    set_value(my_set, val(int, 1))
-    set_value(my_set, val(int, 3))
-    set_value(my_set, val(int, 5))
+    set_value(my_set,val(int,1))
+    set_value(my_set,val(int,3))
     ```
+
+    The atom `set_value(my_set,val(int,2))` may or may not appear, depending on the solver's choices.
 
 ### Make
 

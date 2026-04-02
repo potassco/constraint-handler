@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- Introduce set_baseDomain/2 to allow non-deterministic set definitions.
 - remove `recoverable`
 - introduce `_operator_recoverable/1` and use it for every currently
   recoverable operator

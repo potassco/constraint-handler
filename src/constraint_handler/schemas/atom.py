@@ -62,12 +62,18 @@ class Set_assign(NamedTuple):
     member: expression.Expr
 
 
+class Set_baseDomain(NamedTuple):
+    label: expression.constant
+    name: expression.constant
+    value: expression.Expr
+
+
 class Set_value(NamedTuple):
     name: expression.constant
     elt: expression.Val
 
 
-type SetAtom = Set_declare | Set_assign
+type SetAtom = Set_declare | Set_assign | Set_baseDomain
 
 
 class Multimap_declare(NamedTuple):
@@ -214,6 +220,10 @@ class Propagator_set_declare(Set_declare):
 
 
 class Propagator_set_assign(Set_assign):
+    pass
+
+
+class Propagator_set_baseDomain(Set_baseDomain):
     pass
 
 
