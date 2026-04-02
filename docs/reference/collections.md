@@ -122,25 +122,6 @@ set_value(Name, Value)
 | `Name` | The unique identifier of the set. |
 | `Value` | The actual value being added to the set using the `val/2` predicate. |
 
-!!! Example
-    To create the set `my_set` and add the [ints] `1`, `3` and `5` to it, you would use the following code:
-
-    ```prolog
-    set_declare(my_set).
-    set_assign(my_set, val(int, 1)).
-    set_assign(my_set, val(int, 3)).
-    set_assign(my_set, val(int, 5)).
-    ```
-
-    This results in the following output atoms:
-
-    ```prolog
-    value(my_set, val(set, ref(variable(my_set))))
-    set_value(my_set, val(int, 1))
-    set_value(my_set, val(int, 3))
-    set_value(my_set, val(int, 5))
-    ```
-
 ### Base Domain
 
 To declare a set and specify a base domain of candidate values from which elements may be chosen, use the `set_baseDomain/2` predicate together with `set_declare/1`.
@@ -166,21 +147,19 @@ Each `set_baseDomain/2` fact introduces one candidate value. The solver may incl
 
     ```prolog
     set_declare(my_set).
-    set_baseDomain(my_set, val(int, 1..3)).
-    set_assign(my_set, val(int, 2)).
-    set_assign(my_set, val(int, 4)).
-    ensure(e1, operation(isin, (val(int, 1), (variable(my_set), ())))).
+    set_baseDomain(my_set,val(int,1..2)).
+    set_assign(my_set,val(int,3)).
+    ensure(e1,operation(isin,(val(int,1),(variable(my_set),())))).
     ```
 
-    This always produces (among other models):
+    This always produces (among other atoms):
 
     ```prolog
-    set_value(my_set, val(int, 1))
-    set_value(my_set, val(int, 2))
-    set_value(my_set, val(int, 4))
+    set_value(my_set,val(int,1))
+    set_value(my_set,val(int,3))
     ```
 
-    `val(int, 3)` may or may not appear, depending on the solver's choices.
+    The atom `set_value(my_set,val(int,2))` may or may not appear, depending on the solver's choices.
 
 ### Make
 
