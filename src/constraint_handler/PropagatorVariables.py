@@ -685,6 +685,7 @@ class Variable:
             return
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
             d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+            return
 
         d[self.var] = value
 
@@ -1004,6 +1005,7 @@ class SetVariable:
             return
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
             d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+            return
 
         d[self.var] = value
 
@@ -1249,6 +1251,7 @@ class DictVariable:
             return
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
             d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+            return
 
         d[self.var] = value
 
