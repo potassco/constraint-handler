@@ -1,5 +1,8 @@
 #defined set_declare/1.
 #defined set_assign/2.
+#defined set_declare_from/2.
+#defined set_base_domain/2.
+
 
 set_declare(_label_anonymous,X) :- set_declare(X).
 set_assign(_label_anonymous,X,E) :- set_assign(X,E).
@@ -32,6 +35,24 @@ _set_contains(EX,V1) :-
 _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V).
+
+%%%%%%%%%%%%%%%%% set_declare_from
+set_declare_from(_label_anonymous,X,From) :- set_declare_from(X,From).
+
+set_declare(CNAME,X) :- set_declare_from(CNAME,X,fromFacts).
+set_declare(CNAME,X) :- set_declare_from(CNAME,X,fromList(L)).
+_set_base_domain(X,V) :- set_declare_from(CNAME,X,fromFacts), set_base_domain(X,V).
+_set_base_domain(X,V) :- set_declare_from(CNAME,X,fromList(L)), V=@pythonListElements(L).
+
+{ set_assign(CNAME,X,V) } :-
+    _set_base_domain(X,V), engine(CNAME, (compile;ground)), set_declare_from(CNAME,X,_).
+
+%%%% TODO - choosing the set assignment should be internal to the propagator
+{ set_assign(CNAME,X,V) } :-
+    _set_base_domain(X,V), engine(CNAME, propagator), set_declare_from(CNAME,X,_).
+
+
+
 
 %%%%%%%%%%%%%%%%% isin notin
 operator_declare((isin;notin),(T1,(set,())),bool) :- _type(T1).
