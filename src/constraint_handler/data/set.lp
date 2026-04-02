@@ -1,6 +1,5 @@
 #defined set_declare/1.
 #defined set_assign/2.
-#defined set_declare_from/2.
 #defined set_baseDomain/2.
 
 
@@ -41,10 +40,6 @@ set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V).
 %%%%%%%%%%%%%%%%% set_baseDomain
 { set_assign(CNAME,X,V) } :-
     set_baseDomain(CNAME,X,V), engine(CNAME,(compile;ground)).
-
-%%%% TODO - choosing the set assignment should be internal to the propagator
-{ set_assign(CNAME,X,V) } :-
-    set_baseDomain(CNAME,X,V), engine(CNAME,propagator).
 
 %%%%%%%%%%%%%%%%% isin notin
 operator_declare((isin;notin),(T1,(set,())),bool) :- _type(T1).
