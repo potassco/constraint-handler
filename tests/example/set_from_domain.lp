@@ -1,17 +1,12 @@
-%%% Test set_declare_from/2 with fromList and fromFacts
+%%% Test set_declare/1 and set_baseDomain/2
 %%%
-%%% s has base domain {1, 2, 3} (via fromList)
-%%% Constrained: 1 and 2 must be in s
-%%% => s always contains 1 and 2; 3 is optional
-%%%
-%%% t has base domain {red, green, blue} (via fromFacts + set_base_domain)
-%%% Constrained: red must be in t
-%%% => t always contains red; green and blue are optional
+%%% s contains
+%%% * 1 because of set_baseDomain and ensure
+%%% * 2 because of set_assign
+%%% * maybe 3 because of set_baseDomain
+%%% * 4 because of set_assign
 
-set_declare_from(s, fromList((val(int,1),(val(int,2),(val(int,3),()))))).
+set_declare(s).
+set_baseDomain(s,val(int,1..3)).
 ensure(operation(isin,(val(int,1),(variable(s),())))).
-ensure(operation(isin,(val(int,2),(variable(s),())))).
-
-set_declare_from(t, fromFacts).
-set_base_domain(t, val(symbol,(red;green;blue))).
-ensure(operation(isin,(val(symbol,red),(variable(t),())))).
+set_assign(s,val(int,(2;4))).
