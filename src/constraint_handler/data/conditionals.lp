@@ -25,6 +25,7 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,neq),
 
 %%%%%%%%%%%%%%%%% ite
 operator_declare(ite,(bool,(T,(T,()))),T) :- _type(T).
+_operator_recoverable(ite).
 _direct_lazy(ite).
 direct_query(E1) :- direct_query(operation(ite,(E1,(E2,(E3,()))))).
 direct_query(E2) :- direct_query(operation(ite,(E1,(E2,(E3,()))))), _se_value(E1,val(bool,true)).
@@ -36,12 +37,14 @@ _se_value(operation(ite,(E1,(E2,(E3,())))),V3) :- direct_query(operation(ite,(E1
 _se_value(operation(ite,(E1,(E2,(E3,())))),bad) :- direct_query(operation(ite,(E1,(E2,(E3,()))))), _se_value(E1,bad).
 
 %%%%%%%%%%%%%%%%% if
+_operator_recoverable(if).
 _se_value(operation(if,(E1,(E2,()))),V2) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,val(bool,true)), _se_value(E2,V2).
 _se_value(operation(if,(E1,(E2,()))),val(none,none)) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,val(bool,false)).
 _se_value(operation(if,(E1,(E2,()))),val(none,none)) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,val(none,none)).
 _se_value(operation(if,(E1,(E2,()))),bad) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,bad).
 
 %%%%%%%%%%%%%%%%% default
+_operator_recoverable(default).
 _se_value(operation(default,(E1,TL)),V) :- direct_query(operation(default,(E1,TL))), _se_value(E1,V), V!=val(none,none).
 _se_value(operation(default,(E1,(E2,()))),V) :- direct_query(operation(default,(E1,(E2,())))), _se_value(E1,val(none,none)), _se_value(E2,V).
 

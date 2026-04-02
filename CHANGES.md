@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+- remove `recoverable`
+- introduce `_operator_recoverable/1` and use it for every currently
+  recoverable operator
 - `isin` for sets is now `set_isin`
 - `notin` for sets is now `set_notin`
 - `isin` for multimaps is now `multimap_isin`
