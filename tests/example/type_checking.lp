@@ -125,7 +125,7 @@ variable_define(check(OP, set), EXPR) :-
 variable_define(check(OP, set), EXPR) :-
     EXPR = operation(OP, (variable(v(T)),(variable(v(set)),()))),
     check_types(T),
-    OP = (isin;notin).
+    OP = (set_isin;set_notin).
 
 variable_define(check(OP), EXPR) :-
     EXPR = operation(OP, (variable(v(int)),(variable(v(int)),(variable(v(int)),())))),
@@ -139,7 +139,7 @@ variable_define(check(OP, multimap), EXPR) :-
 variable_define(check(OP, multimap), EXPR) :-
     EXPR = operation(OP, (variable(v(T)),(variable(v(multimap)),()))),
     check_types(T),
-    OP = (isin; find).
+    OP = (multimap_isin; find).
 
 variable_define(check(OP, multimap), EXPR) :-
     EXPR = operation(OP, (variable(v(multimap)),())),

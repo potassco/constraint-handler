@@ -17,6 +17,7 @@ _computedIdx(E,V)  :- _computeIdx(E,mult), _int_mult(E,0,V).
 
 %%%%%%%%%%%%%%%%% sub pow
 operator_declare((sub;pow),(int,(int,())),int).
+_operator_recoverable(pow).
 _computedIdx(E,val(int,V0-V1))  :- _computeIdx(E,sub), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)).
 _computedIdx(E,val(int,V0**V1)) :- _computeIdx(E,pow), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)).
 _computedIdx(E,val(int,1))      :- _computeIdx(E,pow), _computeIdx(E,0,_), _computeIdx(E,1,val(int,0)).

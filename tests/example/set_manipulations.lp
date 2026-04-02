@@ -13,7 +13,7 @@
 %%% cx = |x| = 3
 %%% set d, d.add(1+3), d.add(s), d.add({true, 89.1}), d.add(2+2)  -> d = { 4, { true, 89.1 } }
 %%% cd = 2
-%%% true notin d      true notin x     true isin t
+%%% true set_notin d      true set_notin x     true set_isin t
 
 %%% eqx3 = x == { 3, { true }, { 10, 2, 3, true, 89.1 } } = true
 %%% nqx3 = x != { 3, { true }, { 10, 2, 3, true, 89.1 } } = false
@@ -64,8 +64,8 @@ variable_define(cu, operation(length,(variable(u),()))).
 variable_define(w, operation(set_make,
                                   (operation(length,(variable(u),())),
                                   (operation(add,(operation(length,(variable(v),())),(val(int,1),()))),
-                                  (operation(isin,(variable(b),(variable(v),()))),
-                                  (operation(notin,(val(bool,true),
+                                  (operation(set_isin,(variable(b),(variable(v),()))),
+                                  (operation(set_notin,(val(bool,true),
                                                        (variable(u),()))),())))))).
 variable_define(x, operation(set_make,
                                   (val(int,3),
@@ -84,10 +84,10 @@ set_assign(d, operation(set_make,(val(bool,true),(val(float,float("89.1")),())))
 
 variable_define(cd, operation(length,(variable(d),()))).
 
-evaluate(notin,(val(bool,true),(variable(d),()))).
-evaluate(notin,(val(bool,true),(variable(x),()))).
-evaluate(isin,(val(bool,true),(variable(t),()))).
-evaluate(isin,(val(int,17),(variable(t),()))).
+evaluate(set_notin,(val(bool,true),(variable(d),()))).
+evaluate(set_notin,(val(bool,true),(variable(x),()))).
+evaluate(set_isin,(val(bool,true),(variable(t),()))).
+evaluate(set_isin,(val(int,17),(variable(t),()))).
 
 %%% eqx = x == { 3, { true }, { 10, 2, 3, true, 89.1 } } = true
 %%% nqx = x == { 3, { true }, { 10, 2, 4, true, 89.1 } } = false

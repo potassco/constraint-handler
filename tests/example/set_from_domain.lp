@@ -8,5 +8,5 @@
 
 set_declare(s).
 set_baseDomain(s,val(int,1..3)).
-ensure(operation(isin,(val(int,1),(variable(s),())))).
+ensure(operation(set_isin,(val(int,1),(variable(s),())))).
 set_assign(s,val(int,(2;4))).

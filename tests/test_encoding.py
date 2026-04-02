@@ -28,6 +28,7 @@ base_tests = [
     "custom_globals",
     "empty_variadics",
     "engine_request",
+    "engine_request_interaction",
     "engine_request_mult",
     "engine_request_set_ref",
     "eq_compound_int",

@@ -21,6 +21,7 @@ _se_value(operation(wnot,(E1,())),val(bool,true))  :- direct_query(operation(wno
 %% The _compute/_computed interface is given below the eValue interface
 %% We use the eValue interface because it allows short-circuit evaluation
 operator_declare_variadic((conj;disj),bool,bool,1).
+_operator_recoverable((conj;disj)).
 %_computedIdx(E,bool,true)  :- _computeIdx(E,conj), E=operation(conj,L), _se_value(E1,val(bool,true)) : E1=@pythonListElements(L).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,conj), _computeIdx(E,IDX,val(bool,false)).
 _computedIdx(E,val(bool,true))  :- _computeIdx(E,conj), _computeIdx(E,IDX,val(bool,true)) : _computeIdx(E,IDX,V).
@@ -33,6 +34,7 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,disj), _computeIdx(E,_,val(bool,
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,disj), _computeIdx(E,IDX,val(bool,false)) : _computeIdx(E,IDX,V).
 _computedIdx(E,bad) :- _computeIdx(E, disj), _computeIdx(E, _, bad), not _computedIdx(E, val(bool, true)).
 
+_operator_recoverable(limp).
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,limp), _computeIdx(E,0,val(bool,false)).
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,limp), _computeIdx(E,1,val(bool,true)).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,limp), _computeIdx(E,0,val(bool,true)), _computeIdx(E,1,val(bool,false)).

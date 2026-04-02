@@ -29,14 +29,14 @@ multimap_declare(taken).
 % Maximize value with priority 1 (higher priority)
 optimize_maximizeSum(EXPR,X,1) :- item(X,W,V),
   ITEM = val(symbol,X),
-  COND = operation(isin,(ITEM,(variable(taken),()))),
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
   VALU = val(int,V),
   EXPR = operation(if,(COND,(VALU,()))).
 
 % Minimize weight with priority 0 (lower priority) by maximizing negative weight
 optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
-  COND = operation(isin,(ITEM,(variable(taken),()))),
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
   WGHT = val(int,-W),
   EXPR = operation(if,(COND,(WGHT,()))).
 

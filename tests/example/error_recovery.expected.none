@@ -1,0 +1,8 @@
+value(conj_recovered,bad)
+value(disj_recovered,bad)
+value(pow_recovered,bad)
+value(limp_recovered,bad)
+value(limp_recovered_also,bad)
+value(ite_recovered,bad)
+value(if_recovered,bad)
+value(default_recovered,bad)

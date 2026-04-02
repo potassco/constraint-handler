@@ -1,0 +1,6 @@
+value(base_compile,val(int,1))
+value(base_ground,val(int,1))
+value(compile_to_ground,val(int,2))
+value(ground_to_compile,val(int,2))
+value(mixed_to_ground,val(int,2))
+value(mixed_to_compile,val(int,2))
