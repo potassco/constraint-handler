@@ -1,0 +1,2 @@
+evaluated(isin,(val(symbol,e),(variable(taken),())),val(bool,false))
+evaluated(isin,(val(symbol,a),(variable(taken),())),val(bool,false))

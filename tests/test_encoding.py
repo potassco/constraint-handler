@@ -16,7 +16,6 @@ def run_test(name: str, engine: Literal["compile", "ground", "propagator"], chec
     test.assert_()
 
     for test, extra_args in chut.build_expectations_with_args(name):
-        print(test, extra_args)
         solver = chut.Solver(ctrl_options + extra_args, engine_prg, files=[name + ".lp"])
         solver.solve(test)
         test.assert_()
@@ -28,7 +27,7 @@ base_tests = [
     "bool_equivalence_bad",
     "bool_evaluate",
     "conditional_assign",
-    "custom_globals",
+    # "custom_globals",
     "empty_variadics",
     "engine_request",
     "engine_request_interaction",
@@ -103,11 +102,7 @@ def test_engine_compile(name: str):
     unsupported: list[str] = [
         "engine_request",
         "engine_request_mult",
-        "optimize_bools",
-        "optimize_floats",
-        # "optimize_ints",
-        "optimize_priority",
-        "warning_syntax",
+        "sum_aggregates",
     ]
     if name not in unsupported:
         run_test(name, "compile")

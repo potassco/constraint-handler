@@ -28,10 +28,11 @@ def contains(atom):
     return clintest.assertion.Or(*(clintest.assertion.Contains(atom), TheoryContains(atom)))
 
 
+def absent(atom):
+    return clintest.assertion.Not(clintest.assertion.Or(*(clintest.assertion.Contains(atom), TheoryContains(atom))))
+
+
 def build_expectations(name):
-    absent = lambda atom: clintest.assertion.Not(
-        clintest.assertion.Or(*(clintest.assertion.Contains(atom), TheoryContains(atom)))
-    )
     expected_all = atoms_from_file(name + ".expected.all")
     test_all = clintest.test.And(*(clintest.test.Assert(All(), contains(atom)) for atom in expected_all))
     expected_any = atoms_from_file(name + ".expected.any")
@@ -73,6 +74,11 @@ def build_expectations_with_args(name) -> list[tuple[clintest.test.Test, list[st
         test_opt_any = clintest.test.And(*(AssertOptimal(Any(), contains(atom)) for atom in expected_opt_any))
         tests.append((test_opt_any, ["--opt-mode=optN"]))
 
+    expected_opt_none = atoms_from_file(name + ".expected.optnone")
+    if expected_opt_none:
+        test_opt_none = clintest.test.And(*(AssertOptimal(All(), absent(atom)) for atom in expected_opt_none))
+        tests.append((test_opt_none, ["--opt-mode=optN"]))
+
     return tests
 
 
@@ -111,10 +117,7 @@ class AssertOptimal(clintest.test.Test):
     def on_model(self, _model: clingo.solving.Model) -> bool:
         # TODO: only works for compile and ground engine, needs to be adapted for propagator
         # Add some atom indicating optimality to the model in the propagator and check for it here
-        print("model ", _model.optimality_proven, _model.cost)
-        for s in _model.symbols(shown=True):
-            if s.match("multimap_value", 3):
-                print(s)
+
         if not self.__quantifier.outcome().is_certain() and _model.optimality_proven:
             self.__quantifier.consume(self.__assertion.holds_for(_model))
 
