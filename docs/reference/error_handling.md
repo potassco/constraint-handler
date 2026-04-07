@@ -21,7 +21,7 @@ Here, we outline the various warning types that can be reported by the constrain
 | [`statement(notImplemented)`](#not-implemented_1) | A [Statement] uses a feature that is not (yet) implemented. |
 | [`statement(pythonError)`](#python-error_1) | An error occurred in Python during the evaluation of a [Statement]. |
 | **Variables** | |
-| [`variable(badValue)`](#bad-value) | A [Variable] has a `bad` [Value], meaning it was not possible to compute any [Value] for it. |
+| [`variable(badValue)`](#bad-value) | A [Variable] has a `bad` [Value], meaning it was not possible to compute any proper [Value] for it. |
 | [`variable(emptyDomain)`](#empty-domain) | A [Variable] has an empty [Domain], meaning it has no possible [Values]. |
 | [`variable(undeclared)`](#undeclared) | A [Variable] has a defined [Domain] but has not been declared. |
 | [`variable(multipleDeclarations)`](#multiple-declarations) | A [Variable] has multiple declarations with different [Domains]. |
@@ -292,6 +292,30 @@ warning(statement(pythonError), (Label,()), ("error running", Message))
 
 ### Variable Warnings
 This section covers warnings related to [Variable] declarations and definitions.
+
+#### Bad Value
+This warning occurs when no proper [Value] could be computed for some [Variable].
+
+```prolog
+warning(variable(badValue), _,Variable)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `variable(badValue)` |
+| `Details` | The name of the variable that has no proper value. |
+
+!!! Example
+    Variable defined from an expression that does not evaluate to any proper value.
+
+    ```prolog
+    variable_define(a,operation(int_div,(val(int,3),(val(int,0),())))).
+    ```
+
+    Raises the warning:
+    ```prolog
+    warning(variable(badValue),(),a)
+    ```
 
 #### Empty Domain
 This warning occurs when a [Variable] does not have any possible values in its [Domain].
