@@ -158,6 +158,22 @@ class VariableValue:
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
 
+        if (
+            self.value == expression.Bad.bad
+            or (isinstance(self.value, frozenset) and expression.Bad.bad in self.value)
+            or (
+                isinstance(self.value, dict)
+                and (expression.Bad.bad in self.value.values() or expression.Bad.bad in self.value.keys())
+            )
+        ):
+            self.errors.append(
+                warning.Warning(
+                    warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
+                    (self.expr,),
+                    f"Bad value for expression {self.expr}",
+                )
+            )
+
         myprint(f"{self.expr} evaluated to {self.value}")
 
         self.decision_level = ctl.assignment.decision_level
@@ -274,6 +290,23 @@ class EvaluateVariable:
         self.value = value
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
+
+        if (
+            self.value == expression.Bad.bad
+            or (isinstance(self.value, frozenset) and expression.Bad.bad in self.value)
+            or (
+                isinstance(self.value, dict)
+                and (expression.Bad.bad in self.value.values() or expression.Bad.bad in self.value.keys())
+            )
+        ):
+            self.errors.append(
+                warning.Warning(
+                    warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
+                    (self.op, tuple(self.args)),
+                    f"Bad value for operation {self.op} with arguments {self.args}",
+                )
+            )
+
         return True
 
     def get_value(self) -> Any:
@@ -1327,6 +1360,7 @@ class OptimizationSum:
             int | float: The sum of all assigned values.
         """
         vals = set()
+        # TODO: check if we need to also need to excluce Bad.bad from the sums
         for var, expr in self.expressions:
             myprint(f"Summing {expr} with value {expr.value}")
             if (
