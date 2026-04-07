@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- Introduce warning `variable(badValue)` that is emitted when the value of some
+  variable is bad
 - Introduce set_baseDomain/2 to allow non-deterministic set definitions.
 - remove `recoverable`
 - introduce `_operator_recoverable/1` and use it for every currently
