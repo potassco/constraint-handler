@@ -64,3 +64,5 @@ warning(variable(confusingName),(),((SCOPE,X),REASON)) :- _variable_exists(SCOPE
 warning(variable(confusingName),(),((SCOPE,X),number)) :- _variable_exists(SCOPE,X), (number,_,_,_)=@pythonReify(X).
 
 % TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
+
+_warning(variable(badValue),(),X) :- _se_value(variable(X),bad).

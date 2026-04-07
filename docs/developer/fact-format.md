@@ -168,6 +168,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "failed_operation"
 
 <variable-warning> ::=
+    | "badValue"
     | "emptyDomain"
     | "multipleDeclarations"
     | "multipleDefinitions"
