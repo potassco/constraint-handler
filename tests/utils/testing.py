@@ -63,19 +63,16 @@ def build_expectations_with_args(name) -> list[tuple[clintest.test.Test, list[st
         test_cautious = (test_cautious, ["--enum-mode=cautious"])
         tests.append(test_cautious)
 
-    __tests_opt = []
     expected_opt_all = atoms_from_file(name + ".expected.optall")
     if expected_opt_all:
         test_opt_all = clintest.test.And(*(AssertOptimal(All(), contains(atom)) for atom in expected_opt_all))
-        __tests_opt.append(test_opt_all)
+        tests.append((test_opt_all, ["--opt-mode=optN"]))
 
     expected_opt_any = atoms_from_file(name + ".expected.optany")
     if expected_opt_any:
         test_opt_any = clintest.test.And(*(AssertOptimal(Any(), contains(atom)) for atom in expected_opt_any))
-        __tests_opt.append(test_opt_any)
-    if __tests_opt:
-        test_opt = clintest.test.And(*__tests_opt)
-        tests.append((test_opt, ["--opt-mode=optN"]))
+        tests.append((test_opt_any, ["--opt-mode=optN"]))
+
     return tests
 
 
@@ -114,10 +111,10 @@ class AssertOptimal(clintest.test.Test):
     def on_model(self, _model: clingo.solving.Model) -> bool:
         # TODO: only works for compile and ground engine, needs to be adapted for propagator
         # Add some atom indicating optimality to the model in the propagator and check for it here
-        # print("model ", _model.optimality_proven)
-        # for s in _model.symbols(shown=True):
-        #     if s.match("multimap_value", 3):
-        #         print(s)
+        print("model ", _model.optimality_proven, _model.cost)
+        for s in _model.symbols(shown=True):
+            if s.match("multimap_value", 3):
+                print(s)
         if not self.__quantifier.outcome().is_certain() and _model.optimality_proven:
             self.__quantifier.consume(self.__assertion.holds_for(_model))
 
