@@ -40,5 +40,5 @@ value(X,V) :- _se_value(variable(X),V).
 
 representation((bool;int;str;float;symbol;none),extensional).
 
-:- warning(KIND,INFO,MSG), forbid_warning(NAME,KIND).
+:- _warning(KIND,INFO,MSG), forbid_warning(NAME,KIND), not ignore_warning(KIND).
 warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not ignore_warning(KIND).
