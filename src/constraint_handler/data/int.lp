@@ -28,7 +28,7 @@ _computedIdx(E,bad)             :- _computeIdx(E,pow), _computeIdx(E,0,_), _comp
 operator_declare(int_div,((int;float),((int;float),())),int).
 _computedIdx(E,val(int,V0/V1)) :- _computeIdx(E,int_div), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)), V1 != 0.
 _computedIdx(E,bad) :- _computeIdx(E,(int_div;float_div)), _computeIdx(E,1,val(int,0)).
-warning(expression(zeroDivisionError),(),(OP,E)) :- _computeIdx(E,OP), OP = (int_div;float_div), _computeIdx(E,1,val(int,0)).
+_warning(expression(zeroDivisionError),(),(OP,E)) :- _computeIdx(E,OP), OP = (int_div;float_div), _computeIdx(E,1,val(int,0)).
 
 
 %%%%%%%%%%%%%%%%% abs minus

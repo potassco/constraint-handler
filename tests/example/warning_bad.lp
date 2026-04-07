@@ -3,9 +3,6 @@ variable_domain(a,val(int,0..1)).
 variable_define(b,operation(int_div,(val(int,6),(variable(a),())))).
 variable_define(p,operation(add,(variable(a),(variable(f),())))).
 
-%#show value/2.
-%#show warning/3.
-%#show _warning/3.
 forbid_warning(variable(badValue)) :- doit.
 { doit }.
 variable_define(f,val(int,10)) :- doit.
