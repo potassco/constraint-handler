@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- `evaluate` declarations now also generate expression-related warnings.
 - Introduce warning `variable(badValue)` that is emitted when the value of some
   variable is bad
 - Introduce set_baseDomain/2 to allow non-deterministic set definitions.
