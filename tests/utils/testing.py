@@ -13,6 +13,7 @@ from clintest.quantifier import All, Any, Finished, First, Last, Quantifier
 import constraint_handler
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
+from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM
 
 
 def atoms_from_file(file_name):
@@ -115,10 +116,11 @@ class AssertOptimal(clintest.test.Test):
         )
 
     def on_model(self, _model: clingo.solving.Model) -> bool:
-        # TODO: only works for compile and ground engine, needs to be adapted for propagator
-        # Add some atom indicating optimality to the model in the propagator and check for it here
+        propagator_optimality_atom = clingo.Function(OPTIMIZATION_STAGE_ATOM, [clingo.Number(2)])
 
-        if not self.__quantifier.outcome().is_certain() and _model.optimality_proven:
+        if not self.__quantifier.outcome().is_certain() and (
+            _model.optimality_proven or propagator_optimality_atom in _model.symbols(atoms=True)
+        ):
             self.__quantifier.consume(self.__assertion.holds_for(_model))
 
         return not self.__quantifier.outcome().is_certain()
