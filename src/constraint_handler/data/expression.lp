@@ -7,6 +7,7 @@ _expression_query((),E) :- variable_domain(X,E).
 _expression_query((),E) :- variable_declare(_,X,fromList(L)), E=@pythonListElements(L).
 
 _expression_query((),E) :- set_assign(_,X,E).
+_expression_query((),E) :- set_baseDomain(_,X,E).
 _expression_query((),K) :- multimap_assign(_,X,K,B).
 _expression_query((),B) :- multimap_assign(_,X,K,B).
 
