@@ -20,11 +20,4 @@ variable_define(e3, operation(ite,(variable(unk),(variable(s),(variable(y),())))
 type_query(operation(ite,(variable(i),(variable(i),(variable(i),()))))).
 type_query(operation(ite,(variable(b),(variable(i),(variable(i),()))))).
 
-%defaultEngine(none).
-%type_query(variable(y)).
-
-#show type_expression/3.
-#show type_variable/3.
-%#show type_query_variable/2.
-#show warning/3.
-%#show _variable_exists/2.
+evaluate(eq,(val(bool,true),(val(float,float(14)),()))).
