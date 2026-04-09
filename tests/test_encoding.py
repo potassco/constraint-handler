@@ -63,6 +63,7 @@ base_tests = [
     "set_manipulations",
     "set_selfref",
     "strings",
+    "sum_aggregates",
     "type_checking",
     "variable_parallel_declaration",
     "variables",
@@ -78,7 +79,6 @@ base_tests = [
 
 compile_extra = [
     "preferences",
-    "sum_aggregates",
 ]
 ground_extra = []
 propagator_extra = []
@@ -96,7 +96,6 @@ def test_engine_compile(name: str):
         "optimize_floats",
         "optimize_ints",
         "optimize_priority",
-        "sum_aggregates",
     ]
     if name not in unsupported:
         run_test(name, "compile")
@@ -126,6 +125,7 @@ def test_engine_ground(name: str):
         "engine_request_set_ref",
         "set_iterations",
         "set_selfref",
+        "sum_aggregates",
         "type_checking",
     ]
     if name not in unsupported:
