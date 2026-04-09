@@ -1,9 +1,4 @@
-#defined execution_declare/4.
-#defined execution_run/1.
 #defined _statement_query/2.
-
-execution_declare(_label_anonymous,NAME,STMT,INS,OUTS) :- execution_declare(NAME,STMT,INS,OUTS).
-execution_run(_label_anonymous,NAME) :- execution_run(NAME).
 
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execution_declare(CNAME,NAME,STMT,INS,OUTS).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execution_run(CNAME,NAME).

@@ -1,12 +1,3 @@
-#defined set_declare/1.
-#defined set_assign/2.
-#defined set_baseDomain/2.
-
-
-set_declare(_label_anonymous,X) :- set_declare(X).
-set_assign(_label_anonymous,X,E) :- set_assign(X,E).
-set_baseDomain(_label_anonymous,X,V) :- set_baseDomain(X,V).
-
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_declare(CNAME,X).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_assign(CNAME,X,EXPR).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_baseDomain(CNAME,X,EXPR).

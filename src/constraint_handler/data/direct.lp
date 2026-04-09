@@ -1,12 +1,3 @@
-#defined assign/2.
-#defined define/3.
-#defined ensure/1.
-#defined evaluate/2.
-
-ensure(_label_anonymous,E) :- ensure(E).
-assign(_label_anonymous,X,E) :- assign(X,E).
-define(_label_anonymous,X,VARS,EXPR) :- define(X,VARS,EXPR).
-
 %%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
 _se_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 _se_assign(CNAME,variable(X),E) :- assign(CNAME,X,E), engine(CNAME,compile).

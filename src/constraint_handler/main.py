@@ -9,6 +9,7 @@ import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
 
 modules = [
+    "atom",
     "bool",
     "conditionals",
     "direct",
