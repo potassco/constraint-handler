@@ -17,6 +17,8 @@ from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
     ENSURE_VAR_NAME,
     EXECUTION_OUTPUT,
+    OPTIMIZATION_HELPER_PROGRAM,
+    OPTIMIZATION_STAGE_ATOM,
     OTHER_ENGINE_VAR_NAME,
     REASONING_MODE_PROGRAM,
     REASONING_STAGE_ATOM,
@@ -100,9 +102,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # for the first model, the set is assigned the first model
         # This is will hold the model which is then used to update the result
         self.python_model: set[atom.ResultAtom] | None = None
+        # variable lits is used for brave/cautious reasoning to create nogoods that force changes in the model between stages
+        # There is one literal per variable. When it is true, it means that the variable has a different value than previous solutions
+        # TODO: Check that the above explanation is true!
         self.variable_lits: dict[VariableType, int] = {}
-        self.nogood_queue: list[Iterable[int]] = []
         self.previously_stage_2: bool = False
+
+        self.optimization_stage_lits: dict[Literal[1, 2], int] = {1: -1, 2: -1}
+        self.nogood_queue: list[Iterable[int]] = []
 
         self.forbidden_warnings: dict[warning.Kind, int] = {}
 
@@ -129,6 +136,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add("base", [], REASONING_MODE_PROGRAM)
 
         myprint(f"Propagator reasoning mode set to {self.reasoning_mode}")
+
+        ctl.configuration.solver.heuristic = "Domain"  # ty:ignore[invalid-assignment]
+        ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
 
     def init(self, init: clingo.PropagateInit) -> None:
         """
@@ -160,6 +170,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.get_evaluate(init)
 
         self.add_reasoning_mode_helper_atoms(init)
+        self.add_optimization_helper_atoms(init)
 
         self.get_forbidden_warnings(init)
 
@@ -182,23 +193,39 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS):
             myprint("Adding reasoning mode helper atoms")
             for a in ctl.symbolic_atoms.by_signature(REASONING_STAGE_ATOM, 1):
-                if a.symbol.arguments[0].number == 1:
-                    self.reasoning_mode_stage_lits[1] = ctl.solver_literal(a.literal)
-
-                elif a.symbol.arguments[0].number == 2:
-                    self.reasoning_mode_stage_lits[2] = ctl.solver_literal(a.literal)
-
-                elif a.symbol.arguments[0].number == 3:
-                    self.reasoning_mode_stage_lits[3] = ctl.solver_literal(a.literal)
-
-                else:
-                    assert False, f"Unknown reasoning stage atom: {a.symbol}"
+                assert a.symbol.arguments[0].number in (1, 2, 3), f"Unknown reasoning stage atom: {a.symbol}"
+                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(
+                    a.literal
+                )  # ty:ignore[invalid-assignment]
 
             for var in self.symbol2var.values():
                 if isinstance(var, EnsureVariable):
                     continue
                 lit = ctl.add_literal(freeze=True)
                 self.variable_lits[var] = lit
+
+    def add_optimization_helper_atoms(self, ctl: clingo.PropagateInit) -> None:
+        """
+        Register helper literals for optimization pruning.
+
+        If optimization is used, the encoding provides an atom that is true when
+        we are still finding the optimal value and adds nogoods to prune worse solution than the current one.
+        Then, we disable this atom and look for solutions with the SAME value so we find all optimal solutions
+        Args:
+            ctl: Clingo PropagateInit object.
+        """
+
+        if self.using_optimization:
+            myprint("Adding optimization helper atoms")
+            for a in ctl.symbolic_atoms.by_signature(OPTIMIZATION_STAGE_ATOM, 1):
+                lit = ctl.solver_literal(a.literal)
+                stage = a.symbol.arguments[0].number
+
+                assert stage in (1, 2), f"Unknown optimization stage atom: {a.symbol}"
+                self.optimization_stage_lits[stage] = lit  # ty:ignore[invalid-assignment]
+
+                if stage == 2:
+                    ctl.add_watch(lit)
 
     def set_optimization_check_strength(self, strength: Literal["lt", "le"]) -> None:
         """
@@ -217,8 +244,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         if strength == "lt":
             self.optimization_check_func = operator.lt
+            self.optimization_strength = OptimizationStrength.STRICT
         elif strength == "le":
             self.optimization_check_func = operator.le
+            self.optimization_strength = OptimizationStrength.LENIENT
         else:
             raise ValueError(f"Unknown optimization check strength: {strength}")
 
@@ -459,6 +488,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             lit = abs(rlit)
             if lit in self.literal2var:
                 to_evaluate.update(self.literal2var[lit])
+            elif lit == self.optimization_stage_lits[2]:
+                # if we are now in the second stage of optimization,
+                # we can now look for equal valued solutions
+                self.set_optimization_check_strength("le")
+                print("Now in optimization stage 2, looking for equal or better solutions")
 
         backtrack = self.evaluated_solver_assignment(control, to_evaluate)
         if backtrack:
@@ -503,28 +537,41 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 # if this is the last value, all priorities were the same.
                 if i == len(self.best_value) - 1 and self.optimization_strength == OptimizationStrength.STRICT:
                     # last priority and strict mode, add nogood to exclude this solution
-                    self.add_nogood_for_variable(ctl, self.optimization_sum)
+                    # here, we dont know if this solution is also optimal or not, so we include the optimization stage literal
+                    self.add_nogood_for_variable(
+                        ctl, self.optimization_sum, extra_literals=[self.optimization_stage_lits[1]]
+                    )
                     return True
                 else:
                     # not last priority or lenient mode, keep looking at next priority
                     continue
             elif _sum < self.best_value[i] and not self.optimization_sum.has_unassigned(i):
                 # if the value is worse and fully assigned, we can already add a nogood to exclude this solution
+                # we dont add the stage literal since it is worse than the current best,
+                # so it does not matter if we are looking for better or equal solutions to the optimal
                 self.add_nogood_for_variable(ctl, self.optimization_sum)
                 return True
 
         return False
 
-    def add_nogood_for_variable(self, ctl: clingo.PropagateControl, var: VariableType | OptimizationHandler) -> None:
+    def add_nogood_for_variable(
+        self,
+        ctl: clingo.PropagateControl,
+        var: VariableType | OptimizationHandler,
+        extra_literals: list[int] | None = None,
+    ) -> None:
         """
         Add a nogood blocking the current assignment for a variable.
 
         The nogood is constructed from the literals that explain the variable's
         current value.
 
+        It is also possible to include extra literals that should be added to the nogood (e.g. to block only for the current optimization stage).
+
         Args:
             ctl: Clingo PropagateControl object.
             var: Variable (or optimization handler) to block.
+            extra_literals: Additional literals to include in the nogood.
         """
         ng: set[int] = set()
         for symbol_var in var.vars():
@@ -532,6 +579,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 continue
             v = self.symbol2var[symbol_var]
             ng = ng.union(self.get_reasons(v))
+        if extra_literals:
+            ng = ng.union(extra_literals)
         myprint(f"Adding nogood {list(ng)} for variable {var}")
         if ctl.add_nogood(ng, tag=True):
             assert False, f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"

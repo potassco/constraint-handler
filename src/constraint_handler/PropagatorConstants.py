@@ -51,6 +51,15 @@ REASONING_MODE_PROGRAM = f"""
 %#show {REASONING_STAGE_ATOM}/1.
 """
 
+OPTIMIZATION_STAGE_ATOM: Literal["__opt_stage__"] = "__opt_stage__"
+OPTIMIZATION_HELPER_PROGRAM = f"""
+% Optimization helper atoms
+1{{{OPTIMIZATION_STAGE_ATOM}(1;2)}} 1 :- propagator_optimize_maximizeSum(_,_,_,_).
+#heuristic {OPTIMIZATION_STAGE_ATOM}(1). [990,true]
+
+% #show {OPTIMIZATION_STAGE_ATOM}/3.
+"""
+
 
 class NoValueSet(Exception):
     pass
