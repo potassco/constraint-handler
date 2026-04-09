@@ -134,13 +134,11 @@ class Local(typing.NamedTuple):
     name: typing.Any
     var: expression.Variable
 
-def pythonTupleElements(clExpr):
-    pT = myClorm.cltopy(clExpr)
-
-    if not isinstance(pT, tuple):
+def pythonTupleElements(clT):
+    if clT.type == clingo.SymbolType.Function and clT.name == "":
+        return clT.arguments
+    else:
         return []
-
-    return [myClorm.pytocl(e) for e in pT]
 
 def pythonDebug(clExpr):
     #print("debug: ",clExpr)

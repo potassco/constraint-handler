@@ -1,5 +1,3 @@
-
-
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), optimize_maximizeSum(CNAME,E,X,P).
 
 % 4-parameter version with explicit priority
