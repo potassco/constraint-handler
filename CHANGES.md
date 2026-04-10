@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- turn `variable_declare`'s non-determinism to be between values rather than
+  expressions
 - introduce optional label argument to `variable_domain` and
   `variable_declareOptional`, if unspecified, it defaults to the label of the
   corresponding `variable_declare` atom.
