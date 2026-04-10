@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%% _expression_query from evaluate
-_expression_query((),operation(OP,ARGS)) :- evaluate(OP,ARGS).
+_expression_query((),operation(OP,ARGS)) :- evaluate(_,OP,ARGS).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
 _expression_query((),E) :- variable_define(_,X,E).

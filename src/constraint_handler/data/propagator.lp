@@ -1,5 +1,6 @@
 propagator_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,propagator).
 propagator_assign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,propagator).
+propagator_evaluate(F,E) :- evaluate(CNAME,F,E), engine(CNAME,propagator).
 
 propagator_variable_declare(CNAME,X,E) :- variable_declare(CNAME,X,E), engine(CNAME,propagator).
 propagator_variable_declareOptional(X) :- variable_declareOptional(X), variable_declare(CNAME,X,E), engine(CNAME,propagator).
@@ -20,7 +21,5 @@ propagator_execution_declare(CNAME,F,STMT,IN,OUT) :-
 
 propagator_execution_run(CNAME,F) :-
     execution_run(CNAME,F), engine(CNAME,propagator).
-
-propagator_evaluate(F,E) :- evaluate(F,E), defaultEngine(propagator).
 
 propagator_forbid_warning(CNAME,W) :- forbid_warning(CNAME,W), defaultEngine(propagator).
