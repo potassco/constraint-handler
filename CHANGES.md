@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- introduce optional label argument to `evaluate`
 - raise warning `expression(syntax)` when an expression is malformed
 - `evaluate` declarations now also generate expression-related warnings
 - Introduce warning `variable(badValue)` that is emitted when the value of some

@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
 _se_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
 _se_assign(CNAME,variable(X),E) :- assign(CNAME,X,E), engine(CNAME,compile).
-_se_evaluate(_se_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(compile).
+_se_evaluate(CNAME,OP,ARGS) :- evaluate(CNAME,OP,ARGS), engine(CNAME,compile).
 
 evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(operation(OP,ARGS),V).
 

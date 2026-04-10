@@ -7,6 +7,7 @@
 ensure(_label_anonymous,E) :- ensure(E).
 assign(_label_anonymous,X,E) :- assign(X,E).
 define(_label_anonymous,X,VARS,EXPR) :- define(X,VARS,EXPR).
+evaluate(_label_anonymous,OP,ARGS) :- evaluate(OP,ARGS).
 
 %%%%%% variable atoms
 #defined variable_declare/2.
@@ -65,6 +66,40 @@ preference_variableValue(_label_anonymous,X,E,1) :- preference_variableValue(X,E
 #defined ignore_warning/1.
 
 forbid_warning(_label_anonymous,KIND) :- forbid_warning(KIND).
+
+
+%%%%%%%%%%%%%%%%% collect labels
+_label(LABEL) :- ensure(LABEL,_).
+_label(LABEL) :- assign(LABEL,_,_).
+_label(LABEL) :- define(LABEL,_,_,_).
+_label(LABEL) :- evaluate(LABEL,_,_).
+
+%%%%%% variable atoms
+_label(LABEL) :- variable_define(LABEL,_,_).
+_label(LABEL) :- variable_declare(LABEL,_,_).
+
+%%%%%% multimap atoms
+_label(LABEL) :- multimap_declare(LABEL,_).
+_label(LABEL) :- multimap_assign(LABEL,_,_,_).
+
+%%%%% set atoms
+_label(LABEL) :- set_declare(LABEL,_).
+_label(LABEL) :- set_assign(LABEL,_,_).
+_label(LABEL) :- set_baseDomain(LABEL,_,_).
+
+%%%%%% statement atoms
+_label(LABEL) :- execution_declare(LABEL,_,_,_,_).
+_label(LABEL) :- execution_run(LABEL,_).
+
+%%%%%% optimization atoms
+_label(LABEL) :- optimize_maximizeSum(LABEL,_,_,_).
+
+%%%%%% preference atoms
+_label(LABEL) :- preference_holds(LABEL,_,_).
+_label(LABEL) :- preference_variableValue(LABEL,_,_,_).
+
+%%%%%% warning atoms
+_label(LABEL) :- forbid_warning(LABEL,_).
 
 
 

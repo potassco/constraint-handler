@@ -2,9 +2,10 @@
 _ge_ensure(CNAME,E) :- engine(CNAME,ground), ensure(CNAME,E).
 _ge_assign(CNAME,X,E) :- engine(CNAME,ground), assign(CNAME,X,E).
 _ge_set_assign(CNAME,X,E) :- engine(CNAME,ground), set_assign(CNAME,X,E).
+%%% TODO: handle set_baseDomain here?
 _ge_set_declare(CNAME,X) :- engine(CNAME,ground), set_declare(CNAME,X).
 %%% TODO: make sure set assign doesn't get broken down across different engines
-_ge_evaluate(_ge_all,OP,ARGS) :- evaluate(OP,ARGS), _main_defaultEngine(ground).
+_ge_evaluate(CNAME,OP,ARGS) :- engine(CNAME,ground), evaluate(CNAME,OP,ARGS).
 
 :- _ge_ensure(CNAME,EXPR), not ge_result(EXPR,val(bool,true)), not ge_result(EXPR,bad).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
@@ -15,7 +16,6 @@ _set_declare(_internal,variable(X)) :- ge_value(X,set(S)).
 _set_assign(_internal,variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
 evaluated(OP,ARGS,V) :- _ge_evaluate(CNAME,OP,ARGS), ge_result(operation(OP,ARGS),V).
 
-%ge_expressionQuery(operation(OP,ARGS)) :- _main_defaultEngine(ground), evaluate(OP,ARGS).
 ge_expressionQuery(operation(OP,ARGS)) :- _ge_evaluate(CNAME,OP,ARGS).
 ge_expressionQuery(EXPR) :- _ge_ensure(CNAME,EXPR).
 ge_expressionQuery(EXPR) :- _ge_assign(CNAME,X,EXPR).

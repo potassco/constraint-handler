@@ -21,16 +21,7 @@ _main_defaultEngine(compile) :- not defaultEngine(_).
 
 requestedEngine(CNAME) :- requestEngine(CNAME,ENG).
 engine(CNAME,ENG) :- requestEngine(CNAME,ENG).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), ensure(CNAME,EXPR).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), assign(CNAME,X,EXPR).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), variable_declare(CNAME,X,EXPR).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), variable_define(CNAME,X,EXPR).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_assign(CNAME,X,EXPR).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_declare(CNAME,X).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multimap_assign(CNAME,X,EKEY,EVAL).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), multimap_declare(CNAME,X).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execution_declare(CNAME,FNAME,STMT,IN,OUT).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), execution_run(CNAME,FNAME).
+engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), _label(CNAME).
 
 value(X,V) :- _se_value(variable(X),V).
 

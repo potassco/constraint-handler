@@ -1,6 +1,3 @@
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_declare(CNAME,X).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_assign(CNAME,X,EXPR).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), set_baseDomain(CNAME,X,EXPR).
 _set_assign(CNAME,variable(X),E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
 _set_declare(CNAME,variable(X)) :- engine(CNAME,compile), set_declare(CNAME,X).
 
