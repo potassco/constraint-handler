@@ -111,28 +111,38 @@ def pythonExec(clStmt,clEnv,clId):
         return myClorm.pytocl(warning.Error(exec_error,repr(exn)))
 
 
-def pythonReversed(clExpr):
-    pL = myClorm.cltopy(clExpr,list)
-    pRL = list(reversed(pL))
-    return myClorm.pytocl(pRL)
+def pythonListElements(clL):
+    try:
+        return [myClorm.pytocl(e) for e in myClorm.cltopy(clL,list)]
+    except myClorm.FailedInstantiationExn:
+        return []
 
-def pythonListElements(clExpr):
-    pL = myClorm.cltopy(clExpr,list)
-    return [myClorm.pytocl(e) for e in pL]
+def pythonReversedList(clL):
+    pL = pythonListElements(clL)
+    return myClorm.pytocl(list(reversed(pL)))
 
-
-def pythonEnumerateElements(clExpr):
-    pL = myClorm.cltopy(clExpr,list)
+def pythonEnumerateElements(clL):
+    pL = pythonListElements(clL)
     return [myClorm.pytocl(e) for e in enumerate(pL)]
 
-def pythonListLength(clExpr):
-    pL = myClorm.cltopy(clExpr,list)
+def pythonListLength(clL):
+    pL = pythonListElements(clL)
     return myClorm.pytocl(len(pL))
 
 
 class Local(typing.NamedTuple):
     name: typing.Any
     var: expression.Variable
+
+def pythonIsList(clL):
+    try:
+        myClorm.cltopy(clL,list)
+        return myClorm.pytocl(True)
+    except myClorm.FailedInstantiationExn:
+        return myClorm.pytocl(False)
+
+def pythonIsTuple(clT):
+    return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "")
 
 def pythonTupleElements(clT):
     if clT.type == clingo.SymbolType.Function and clT.name == "":

@@ -70,6 +70,7 @@ base_tests = [
     "warning_bad",
     "warning_fake_forbid",
     "warning_python",
+    "warning_syntax",
     "warning_type",
     "warning_variables",
     "warning_variable_confusingName",
@@ -96,6 +97,7 @@ def test_engine_compile(name: str):
         "optimize_floats",
         "optimize_ints",
         "optimize_priority",
+        "warning_syntax",
     ]
     if name not in unsupported:
         run_test(name, "compile")
@@ -127,6 +129,7 @@ def test_engine_ground(name: str):
         "set_selfref",
         "sum_aggregates",
         "type_checking",
+        "warning_syntax",
     ]
     if name not in unsupported:
         run_test(name, "ground")

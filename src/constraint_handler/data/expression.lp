@@ -21,3 +21,15 @@ _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,assert(EXPR)).
 _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,assign(X,EXPR)).
 _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
 _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,while(MAX,EXPR,BODY)).
+
+%%%%%%%%%%%%%%%%% _expression_wellformed
+_expression_wellformed(val(T,V)) :- _expression_query(SCOPE,val(T,V)).
+_expression_wellformed(variable(X)) :- _expression_query(SCOPE,variable(X)).
+_expression_wellformed(()) :- _expression_query(SCOPE,()).
+_expression_poorlyformed(operation(O,L)) :- _expression_query(SCOPE,operation(O,L)), D=@pythonListElements(L), not _expression_wellformed(D).
+_expression_poorlyformed(T) :- _expression_query(SCOPE,T), D=@pythonTupleElements(T), _expression_poorlyformed(D).
+
+_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsTuple(EXPR), not _expression_poorlyformed(EXPR).
+_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), EXPR=operation(_,L), true=@pythonIsList(L), not _expression_poorlyformed(EXPR).
+
+_warning(expression(syntax),SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), not _expression_wellformed(EXPR).

@@ -1,0 +1,7 @@
+warning(expression(syntax),(),operation(minus,val(int,3)))
+warning(expression(syntax),(),operrration(minus,(val(int,3),())))
+warning(expression(syntax),(),operation(minus,val(int,3),()))
+warning(expression(syntax),(),varrriable(oc))
+warning(expression(syntax),(),vaaal(int,3))
+warning(expression(syntax),(),operation(minus,(vaaal(int,3),())))
+warning(expression(syntax),(),operation(add,(val(int,3),(varrriable(oc),()))))
