@@ -89,14 +89,11 @@ base_tests = [
 
 compile_extra = [
     "preferences",
-<<<<<<< HEAD
-=======
     "sum_aggregates",
     "optimize_floats_precision",
 ]
 ground_extra = [
     # "optimize_floats_precision",
->>>>>>> 16e90bd (Split optimize float test)
 ]
 propagator_extra = []
 
@@ -110,6 +107,7 @@ def test_engine_compile(name: str):
         "engine_request",
         "engine_request_mult",
         "sum_aggregates",
+        "warning_syntax",
     ]
     if name not in unsupported:
         run_test(name, "compile")
