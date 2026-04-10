@@ -40,11 +40,13 @@ class Variable_define(NamedTuple):
 
 
 class Variable_domain(NamedTuple):
+    # label: expression.constant
     name: expression.constant
     value: expression.Expr
 
 
 class Variable_declareOptional(NamedTuple):
+    # label: expression.constant
     name: expression.constant
 
 
@@ -172,6 +174,7 @@ class Value(NamedTuple):
 
 
 class Evaluate(NamedTuple):
+    # label: expression.constant
     operator: expression.Operator | expression.Variable
     args: list[expression.Expr]
 
