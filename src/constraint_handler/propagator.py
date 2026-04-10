@@ -831,7 +831,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.literal2var.setdefault(__literal, []).append(define_variable)
             # here we dont add a nogood since its the same literal
 
-        for (symbol_var, domain_expr), __literal in var_domains.items():
+        for (name, symbol_var, domain_expr), __literal in var_domains.items():
             # These values are assgiend the "from_facts" domain literal for the given variable
             if symbol_var not in self.symbol2var:
                 self.errors.append(
@@ -853,7 +853,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.literal2var[literal] = [domain_variable]
 
-        for (optional,), __literal in var_optionals.items():
+        for (name, optional), __literal in var_optionals.items():
             if optional not in self.symbol2var:
                 # If the optinal variable is not declared we add a warning, since this is probably not intended
                 self.errors.append(
@@ -940,7 +940,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateInit object.
         """
 
-        for (op, args), literal in myClorm.findInPropagateInit(ctl, atom.Propagator_evaluate).items():
+        for (_, op, args), literal in myClorm.findInPropagateInit(ctl, atom.Propagator_evaluate).items():
             var = EvaluateVariable(op, args, literal)
             if literal != 1:
                 self.errors.append(
