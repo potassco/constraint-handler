@@ -89,8 +89,15 @@ base_tests = [
 
 compile_extra = [
     "preferences",
+<<<<<<< HEAD
+=======
+    "sum_aggregates",
+    "optimize_floats_precision",
 ]
-ground_extra = []
+ground_extra = [
+    # "optimize_floats_precision",
+>>>>>>> 16e90bd (Split optimize float test)
+]
 propagator_extra = []
 
 
@@ -151,7 +158,6 @@ def test_engine_propagator(name, check_mode):
         "engine_request_mult",
         "lambda_recursive",
         "multimaps",
-        "optimize_floats",
         "set_fold_bools",
         "set_iterations",
         "set_selfref",
