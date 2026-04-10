@@ -18,7 +18,9 @@ _variable_domain(X,V) :- _variable_declare(CNAME,X,fromFacts), variable_domain(_
 _variable_domain(X,val(none,none)) :- variable_declareOptional(_,X), _variable_declare(CNAME,X,_).
 
 _variable_hasDomain(X) :- _variable_domain(X,V).
-1 { assign(CNAME,X,V) : _variable_domain(X,V) } 1 :-
+
+direct_query(E) :- _variable_domain(X,E).
+1 { assign(CNAME,X,V) : _variable_domain(X,E), _se_value(E,V) } 1 :-
    _variable_declare(CNAME,X,_), _variable_hasDomain(X).
 
 _warning(variable(emptyDomain),(CNAME,()),X) :- _variable_declare(CNAME,X,_), not _variable_hasDomain(X).
