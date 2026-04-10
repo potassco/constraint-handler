@@ -991,15 +991,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_set_declare)
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
-            if literal != 1:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Propagator(),
-                        (variable,),
-                        f"Set variable {name} declaration is not a fact! It has literal {literal}.",
-                    )
-                )
-
             self.symbol2var[symbol_var] = variable
             self.literal2var.setdefault(literal, []).append(variable)
 
@@ -1035,16 +1026,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_declare)
         for (name, symbol_var), literal in declares.items():
             variable = DictVariable(name, symbol_var, literal)
-
-            if literal != 1:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Propagator(),
-                        (variable,),
-                        f"Dict variable {symbol_var} declaration is not a fact! It has literal {literal}.",
-                    )
-                )
-
             self.symbol2var[symbol_var] = variable
             self.literal2var.setdefault(literal, []).append(variable)
 

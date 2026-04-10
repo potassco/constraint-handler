@@ -994,11 +994,6 @@ class SetVariable:
             # Assignment is false, so value is set to false assignment
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            self.errors.append(
-                warning.Warning(
-                    warning.ExpressionWarning.syntaxError, (self.var,), "Set declaration is False"
-                )  # ty:ignore[unresolved-attribute]
-            )
             return EvaluationResult.CHANGED
 
         changed = self.expressions.evaluate(evaluations, ctl, env)
@@ -1236,9 +1231,6 @@ class DictVariable:
         elif ctl.assignment.is_false(self.literal):
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            self.errors.append(
-                warning.Warning(warning.ExpressionWarning.syntaxError, (self.var,), "Dict declaration is False")  # type: ignore[unresolved-attribute]
-            )
             return EvaluationResult.CHANGED
 
         changed = False
