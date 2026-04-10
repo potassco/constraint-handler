@@ -1,11 +1,11 @@
 %%%%%%%%%%%%%%%%% add mult
 operator_declare_variadic((add;mult),int,int,1).
-%_int_add(operation(add,ARGS),LEN,val(int,0)) :- _computeIdx(operation(add,ARGS),add), _length(ARGS,LEN).
-%_int_add(E,IDX,val(int,VO+V)) :- _computeIdx(E,add), _computeIdx(E,IDX,val(int,V)), _int_add(E,IDX+1,val(int,VO)).
-%_computedIdx(E,V)  :- _computeIdx(E,add), _int_add(E,0,V).
+_int_add(operation(add,ARGS),LEN,val(int,0)) :- _computeIdx(operation(add,ARGS),add), _length(ARGS,LEN), LEN <= 2.
+_int_add(E,IDX,val(int,VO+V)) :- _computeIdx(E,add), _computeIdx(E,IDX,val(int,V)), _int_add(E,IDX+1,val(int,VO)).
+_computedIdx(E,V)  :- _computeIdx(E,add), _int_add(E,0,V).
 _computedIdx(operation(add,ARGS),val(int,N)) :-
     _computeIdx(operation(add,ARGS),add),
-    _length(ARGS,LEN),
+    _length(ARGS,LEN), LEN > 2,
     LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val(int,_)) }, %%% TODO: remove
     N = #sum { V,IDX : _computeIdx(operation(add,ARGS),IDX,val(int,V)) }.
 
