@@ -1,0 +1,11 @@
+execution_declare(dummy,
+  snippet,
+  seq2(assign(t2,operation(add,(variable(w1),(variable(w2),())))),
+  seq2(assign(t3,operation(add,(variable(t2),(val(int,25),())))),
+  seq2(assign(t4,operation(add,(variable(t3),(val(int,1),())))),
+       assign(t5,operation(add,(variable(t4),(val(int,0),()))))
+))),
+  (w1,(w2,())),(t5,())).
+execution_run(dummy,snippet).
+variable_define(execution_input(snippet,w1),val(int,2)).
+variable_define(execution_input(snippet,w2),val(int,1)).
