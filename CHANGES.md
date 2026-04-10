@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+- introduce optional label argument to `variable_domain` and
+  `variable_declareOptional`, if unspecified, it defaults to the label of the
+  corresponding `variable_declare` atom.
 - introduce optional label argument to `evaluate`
 - raise warning `expression(syntax)` when an expression is malformed
 - `evaluate` declarations now also generate expression-related warnings

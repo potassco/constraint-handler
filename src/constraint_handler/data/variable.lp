@@ -14,8 +14,8 @@ assign(CNAME,X,E) :- _variable_define(CNAME,X,E).
 
 _variable_domain(X,val(bool,(false;true))) :- _variable_declare(CNAME,X,boolDomain).
 _variable_domain(X,V) :- _variable_declare(CNAME,X,fromList(L)), V=@pythonListElements(L).
-_variable_domain(X,V) :- _variable_declare(CNAME,X,fromFacts), variable_domain(X,V).
-_variable_domain(X,val(none,none)) :- variable_declareOptional(X), _variable_declare(CNAME,X,_).
+_variable_domain(X,V) :- _variable_declare(CNAME,X,fromFacts), variable_domain(_,X,V).
+_variable_domain(X,val(none,none)) :- variable_declareOptional(_,X), _variable_declare(CNAME,X,_).
 
 _variable_hasDomain(X) :- _variable_domain(X,V).
 1 { assign(CNAME,X,V) : _variable_domain(X,V) } 1 :-

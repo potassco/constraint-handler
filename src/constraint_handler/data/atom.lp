@@ -15,8 +15,12 @@ evaluate(_label_anonymous,OP,ARGS) :- evaluate(OP,ARGS).
 #defined variable_define/2.
 #defined variable_domain/2.
 
-variable_define(_label_anonymous,X,E) :- variable_define(X,E).
 variable_declare(_label_anonymous,X,E) :- variable_declare(X,E).
+variable_declareOptional(LABEL,X) :- variable_declareOptional(X), variable_declare(LABEL,X,_).
+variable_declareOptional(_label_anonymous,X) :- variable_declareOptional(X), not variable_declare(_,X,_).
+variable_define(_label_anonymous,X,E) :- variable_define(X,E).
+variable_domain(LABEL,X,E) :- variable_domain(X,E), variable_declare(LABEL,X,_).
+variable_domain(_label_anonymous,X,E) :- variable_domain(X,E), not variable_declare(_,X,_).
 
 %%%%%% multimap atoms
 #defined multimap_declare/1.
@@ -77,6 +81,7 @@ _label(LABEL) :- evaluate(LABEL,_,_).
 %%%%%% variable atoms
 _label(LABEL) :- variable_define(LABEL,_,_).
 _label(LABEL) :- variable_declare(LABEL,_,_).
+_label(LABEL) :- variable_domain(LABEL,_,_).
 
 %%%%%% multimap atoms
 _label(LABEL) :- multimap_declare(LABEL,_).
