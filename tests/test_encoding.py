@@ -64,6 +64,7 @@ base_tests = [
     "set_selfref",
     "strings",
     "sum_aggregates",
+    "sum_chain_performance",
     "type_checking",
     "variable_parallel_declaration",
     "variables",
