@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- improve performance for integer addition
 - turn `variable_declare`'s non-determinism to be between values rather than
   expressions
 - introduce optional label argument to `variable_domain` and
