@@ -17,6 +17,7 @@
 - `isin` for sets is now `set_isin`
 - `notin` for sets is now `set_notin`
 - `isin` for multimaps is now `multimap_isin`
+- improve performance for integer addition
 
 ## v0.0.2.dev4
 
