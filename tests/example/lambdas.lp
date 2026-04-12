@@ -72,3 +72,4 @@ variable_define(nb_squares2,E) :-
 
 #show value/2.
 #show _ge_eval_exec/3.
+#show warning/3.

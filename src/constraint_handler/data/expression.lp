@@ -1,4 +1,5 @@
-%%%%%%%%%%%%%%%%% _expression_query from evaluate
+%%%%%%%%%%%%%%%%% _expression_query from ensure evaluate
+_expression_query((),E) :- ensure(_,E).
 _expression_query((),operation(OP,ARGS)) :- evaluate(_,OP,ARGS).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
@@ -32,3 +33,6 @@ _expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsTup
 _expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), EXPR=operation(_,L), true=@pythonIsList(L), not _expression_poorlyformed(EXPR).
 
 _warning(expression(syntaxError),SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), not _expression_wellformed(EXPR).
+
+_expression_wellformed(lambda(ARGS,E)) :- _expression_query(SCOPE,lambda(ARGS,E)).
+_warning(expression(syntaxError),SCOPE,"lambda checks unsupported") :- _expression_query(SCOPE,lambda(ARGS,E)). % TODO

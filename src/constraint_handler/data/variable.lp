@@ -16,7 +16,7 @@ _warning(variable(multipleDefinitions),(CNAME1,(CNAME2,())),(X,E1,E2)) :-
 %%% rules for compile and ground engines
 
 _variable_declare(CNAME,X,D) :- _passed(sugar,variable_declare(CNAME,X,D)), engine(CNAME,(compile;ground)).
-_variable_define(CNAME,X,E) :- variable_define(CNAME,X,E), engine(CNAME,(compile;ground)).
+_variable_define(CNAME,X,E) :- _passed(sugar,variable_define(CNAME,X,E)), engine(CNAME,(compile;ground)).
 assign(CNAME,X,E) :- _variable_define(CNAME,X,E).
 
 _variable_domain(X,V) :- _passed(sugar,variable_domain(_,X,V)).
@@ -38,7 +38,8 @@ _variable_query((),execution_input(NAME,X)) :- _statement_query(SCOPE,STMT), exe
 _variable_query((NAME,()),X) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
 _variable_exists((),X) :- _passed(sugar,variable_declare(_,X,_)).
-_variable_exists((),X) :- variable_define(_,X,_).
+%_variable_exists((),X) :- _passed(sugar,variable_domain(_,X,_)).
+_variable_exists((),X) :- _passed(sugar,variable_define(_,X,_)).
 _variable_exists((),X) :- set_declare(_,X).
 _variable_exists((),X) :- multimap_declare(_,X).
 _variable_exists((),X) :- multimap_declare(_,X).

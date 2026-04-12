@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
-_se_ensure(CNAME,E) :- ensure(CNAME,E), engine(CNAME,compile).
+_se_ensure(CNAME,E) :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,compile).
 _se_assign(CNAME,variable(X),E) :- assign(CNAME,X,E), engine(CNAME,compile).
-_se_evaluate(CNAME,OP,ARGS) :- evaluate(CNAME,OP,ARGS), engine(CNAME,compile).
+_se_evaluate(CNAME,OP,ARGS) :- _passed(sugar,evaluate(CNAME,OP,ARGS)), engine(CNAME,compile).
 
 evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(operation(OP,ARGS),V).
 
@@ -72,8 +72,6 @@ _direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), representation
 _direct_imploded(variable(X),V) :- _direct_implode(variable(X)), _se_value(variable(X),V).
 
 engine(_internal,compile).
-%:- engine(NAME,E), not ensure(NAME,_), not assign(NAME,_,_).
-%:- not engine(NAME,_), ensure(NAME,E).
 #external usc_relax(NAME) : engine(NAME,E).
 { usc_active(NAME) } :- engine(NAME,E).
 usc_active(NAME) :- engine(NAME,E), not usc_relax(NAME).

@@ -109,3 +109,9 @@ _label(LABEL) :- forbid_warning(LABEL,_).
 
 
 %%%%%%%%%%%%%%%%% check if well-formed
+_passed(sugar,ensure(LABEL,E)) :- ensure(LABEL,E), _expression_wellformed(E).
+_passed(sugar,evaluate(LABEL,OP,ARGS)) :- evaluate(LABEL,OP,ARGS), _expression_wellformed(operation(OP,ARGS)).
+
+%%%%%% variable atoms
+_passed(sugar,variable_define(LABEL,X,E)) :- variable_define(LABEL,X,E), _expression_wellformed(E).
+
