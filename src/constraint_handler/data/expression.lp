@@ -3,8 +3,7 @@ _expression_query((),operation(OP,ARGS)) :- evaluate(_,OP,ARGS).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
 _expression_query((),E) :- variable_define(_,X,E).
-_expression_query((),E) :- variable_domain(X,E).
-_expression_query((),E) :- variable_declare(_,X,fromList(L)), E=@pythonListElements(L).
+_expression_query((),E) :- _passed(sugar,variable_domain(_,X,E)).
 
 _expression_query((),E) :- set_assign(_,X,E).
 _expression_query((),E) :- set_baseDomain(_,X,E).

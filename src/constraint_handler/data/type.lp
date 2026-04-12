@@ -5,10 +5,7 @@ _type(int;float;bool;string;symbol;none;set;multimap).
 
 %%%%%%%%%%%%%%%%% type_variable
 type_variable((),X,T) :- variable_define(_,X,D), type_expression((),D,T).
-type_variable((),X,none) :- variable_declareOptional(X).
-type_variable((),X,bool) :- variable_declare(_,X,boolDomain).
-type_variable((),X,T) :- variable_declare(_,X,fromFacts), variable_domain(X,D), type_expression((),D,T).
-type_variable((),X,T) :- variable_declare(_,X,fromList(L)), D=@pythonListElements(L), type_expression((),D,T).
+type_variable((),X,T) :- _passed(sugar,variable_declare(_,X,_)), _passed(sugar,variable_domain(_,X,D)), type_expression((),D,T).
 type_variable((), X, set) :- set_declare(_, X).
 type_variable((), X, multimap) :- multimap_declare(_, X).
 
