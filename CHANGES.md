@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- Support non-fact `variable_domain` declarations in the propagator engine.
+
 ## v0.0.2.dev5
 
 - improve performance for integer addition
