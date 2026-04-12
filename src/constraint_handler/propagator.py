@@ -850,6 +850,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(-literal)
 
             ctl.add_clause([-literal, domain_literal])
+            # literal defining the domain should also be included, not just the variable declaration literal!
+            ctl.add_clause([-literal, __literal])
 
             self.literal2var[literal] = [domain_variable]
 
