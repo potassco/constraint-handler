@@ -67,6 +67,7 @@ base_tests = [
     "sum_chain_performance",
     "type_checking",
     "variable_parallel_declaration",
+    "variable_flexible_domain",
     "variables",
     "warning_bad",
     "warning_fake_forbid",
