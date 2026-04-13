@@ -63,7 +63,7 @@ Lists are represented as recursive tuples. More precisely, a list is either the 
 - If you **omit** the label, the system will use an anonymous label internally.
 - If you **provide** a label, it can be used for engine selection via [requestEngine] and can identify the source of warnings that refer to declaration labels (see [warning]).
 
-In other words: if you do not use `requestEngine/2` and you do not rely on label provenance in warnings, you can omit labels everywhere for shorter encodings.
+In other words: if you do not use `requestEngine/2` and you do not rely on label provenance in warnings, you can omit labels on declarations that support them for shorter encodings.
 
 !!! Example
     A variable definition without a label:
