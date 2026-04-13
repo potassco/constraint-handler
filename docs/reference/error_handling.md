@@ -97,7 +97,7 @@ ignore_warning(WarningType)
 ---
 
 ## Forbid Warning
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 Users can also choose to forbid specific warnings using the `forbid_warning/1` predicate. This means that if a forbidden warning is encountered, it will be treated as a failed constraint.
 

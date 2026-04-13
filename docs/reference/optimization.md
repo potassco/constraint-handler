@@ -4,9 +4,9 @@ This page documents the native optimization capabilities of the constraint handl
 
 ## Maximize Sum
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/3` predicate.
+The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum` predicate, which is available in multiple forms.
 
 The predicate is available in the following forms:
 
@@ -33,7 +33,7 @@ If you need to address a specific optimization declaration via [requestEngine] o
 
 ### Single Value
 
-When wanting to optimize over a single value, the result could be captured in a [Variable] which is then optimized using the `optimize_maximizeSum/3` predicate directly. Here, single value doesn't mean the result has to be based on a single variable, just that the result can be captured in a single [Expression].
+When wanting to optimize over a single value, the result could be captured in a [Variable] which is then optimized using the `optimize_maximizeSum/2` or `optimize_maximizeSum/3` predicate directly. Here, single value doesn't mean the result has to be based on a single variable, just that the result can be captured in a single [Expression].
 
 !!! Example "Example 1: Optimization Over a Single Variable"
     Consider a program that defines the variables `x` with a single value between `1` and `10`.

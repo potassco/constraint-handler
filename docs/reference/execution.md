@@ -215,7 +215,7 @@ while(Limit, Condition, Body)
 
 ## Declare
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 In order to execute some statement, first an execution has to be declared. For this, the `execution_declare/4` predicate is used.
 
@@ -244,7 +244,7 @@ execution_declare(Name, Statement, Input, Output)
 
 ## Run
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 To execute a previously declared execution, the `execution_run/1` predicate is used.
 

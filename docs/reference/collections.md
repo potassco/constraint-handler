@@ -71,7 +71,7 @@ To declare a new set, use the `set_declare/1` predicate:
 
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 set_declare(Name).
@@ -96,7 +96,7 @@ value(set_name, val(set, ref(variable(set_name))))
 To add elements to a set, use the `set_assign/2` predicate:
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 set_assign(Name, Value).
@@ -128,7 +128,7 @@ To declare a set and specify a base domain of candidate values from which elemen
 
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 set_declare(Name).
@@ -266,7 +266,7 @@ To declare a new multimap manually, use the `multimap_declare/1` predicate.
 
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 multimap_declare(Name).
@@ -290,7 +290,7 @@ value(Name, val(multimap, Name)).
 To add key-value pairs to a multimap, use the `multimap_assign/3` predicate:
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 multimap_assign(Name, Key, Value).

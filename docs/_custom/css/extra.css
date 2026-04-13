@@ -7,6 +7,8 @@
     --doc-symbol-expression-bg-color: oklch(70% 0.182 276 / 0.15);
     --doc-symbol-declaration-fg-color: oklch(70% 0.154 211);
     --doc-symbol-declaration-bg-color: oklch(70% 0.154 211 / 0.15);
+    --doc-symbol-label-fg-color: oklch(62% 0.12 250);
+    --doc-symbol-label-bg-color: oklch(62% 0.12 250 / 0.15);
     --doc-symbol-result-fg-color: oklch(70% 0.209 151);
     --doc-symbol-result-bg-color: oklch(70% 0.209 151 / 0.15);
     --doc-symbol-statement-fg-color: oklch(70% 0.165 50);
@@ -97,6 +99,12 @@ a.badge,
     background-color: var(--doc-symbol-declaration-bg-color);
     color: var(--doc-symbol-declaration-fg-color);
     border: 1px solid var(--doc-symbol-declaration-fg-color);
+}
+
+.label-support {
+    background-color: var(--doc-symbol-label-bg-color);
+    color: var(--doc-symbol-label-fg-color);
+    border: 1px solid var(--doc-symbol-label-fg-color);
 }
 
 .result {
