@@ -154,6 +154,11 @@
 \alt `preference_variableValue' `(' <term> `,' <expression> `,' <int> `)'
 \alt `preference_variableValue' `(' <term> `,' <term> `,' <expression> `,' <int> `)'
 
+<warning-control-atom> ::=
+~\alt `ignore_warning' `(' <term> `)'
+\alt `forbid_warning' `(' <term> `)'
+\alt `forbid_warning' `(' <term> `,' <term> `)'
+
 <atom> ::=
 ~\alt `assign' `(' <term> `,' <expression> `)'
 \alt `assign' `(' <term> `,' <term> `,' <expression> `)'
@@ -167,6 +172,7 @@
 \alt <execution-atom>
 \alt <optimize-atom>
 \alt <preference-atom>
+\alt <warning-control-atom>
 \end{grammar}
 
 \subsection{Result fact format}

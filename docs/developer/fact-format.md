@@ -150,6 +150,11 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "preference_variableValue" "(" <term> "," <expression> "," <int> ")"
     | "preference_variableValue" "(" <term> "," <term> "," <expression> "," <int> ")"
 
+<warning-control-atom> ::=
+    | "ignore_warning" "(" <term> ")"
+    | "forbid_warning" "(" <term> ")"
+    | "forbid_warning" "(" <term> "," <term> ")"
+
 <atom> ::=
     | "assign" "(" <term> "," <expression> ")"
     | "assign" "(" <term> "," <term> "," <expression> ")"
@@ -163,6 +168,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | <execution-atom>
     | <optimize-atom>
     | <preference-atom>
+    | <warning-control-atom>
 ```
 ## Result Facts
 ```ebnf
