@@ -232,7 +232,7 @@ fromList(Values)
 
 ##### From Facts
 
-**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
+**[Declaration]**{.badge .declaration }
 
 Another way to define a domain is to use the `fromFacts/0` function symbol. However, this additionally requires the use of the `variable_domain/2` predicate to extract the possible values from existing facts.
 
@@ -266,7 +266,7 @@ variable_domain(Name, Domain).
 
 #### Optional
 
-**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
+**[Declaration]**{.badge .declaration }
 
 Variables that are declared using a domain can also be marked as optional. This means that the variable may also not be assigned any value at all.
 
