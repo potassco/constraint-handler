@@ -111,22 +111,31 @@
 <domain> ::= `boolDomain' | `fromFacts' | `fromList' `(' <expression-list> `)'
 
 <variable-atom> ::=
-~\alt `variable_declare' `(' <term> `,' <term> `,' <domain> `)'
+~\alt `variable_declare' `(' <term> `,' <domain> `)'
+\alt `variable_declare' `(' <term> `,' <term> `,' <domain> `)'
 \alt `variable_declareOptional' `(' <term> `)'
+\alt `variable_define' `(' <term> `,' <expression> `)'
 \alt `variable_define' `(' <term> `,' <term> `,' <expression> `)'
 \alt `variable_domain' `(' <term> `,' <expression> `)'
 
 <multimap-atom> ::=
-~\alt `multimap_declare' `(' <term> `,' <term> `)'
+~\alt `multimap_declare' `(' <term> `)'
+\alt `multimap_declare' `(' <term> `,' <term> `)'
+\alt `multimap_assign' `(' <term> `,' <expression> `,' <expression> `)'
 \alt `multimap_assign' `(' <term> `,' <term> `,' <expression> `,' <expression> `)'
 
 <set-atom> ::=
-~\alt `set_declare' `(' <term> `,' <term> `)'
+~\alt `set_declare' `(' <term> `)'
+\alt `set_declare' `(' <term> `,' <term> `)'
+\alt `set_assign' `(' <term> `,' <expression> `)'
 \alt `set_assign' `(' <term> `,' <term> `,' <expression> `)'
+\alt `set_baseDomain' `(' <term> `,' <expression> `)'
 \alt `set_baseDomain' `(' <term> `,' <term> `,' <expression> `)'
 
 <execution-atom> ::=
-~\alt `execution_declare' `(' <term> `,' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
+~\alt `execution_declare' `(' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
+\alt `execution_declare' `(' <term> `,' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
+\alt `execution_run' `(' <term> `)'
 \alt `execution_run' `(' <term> `,' <term> `)'
 
 <optimize-atom> ::=
@@ -144,9 +153,12 @@
 \alt `preference_variableValue' `(' <term> `,' <term> `,' <expression> `,' <int> `)'
 
 <atom> ::=
-~\alt`assign' `(' <term> `,' <term> `,' <expression> `)'
+~\alt `assign' `(' <term> `,' <expression> `)'
+\alt `assign' `(' <term> `,' <term> `,' <expression> `)'
+\alt `ensure' `(' <expression> `)'
 \alt `ensure' `(' <term> `,' <expression> `)'
 \alt `evaluate' `(' <operator> `,' <expression-list> `)'
+\alt `evaluate' `(' <term> `,' <operator> `,' <expression-list> `)'
 \alt <variable-atom>
 \alt <multimap-atom>
 \alt <set-atom>

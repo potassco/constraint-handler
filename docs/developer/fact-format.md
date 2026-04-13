@@ -107,22 +107,31 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 <domain> ::= "boolDomain" | "fromFacts" | "fromList" "(" <expression-list> ")"
 
 <variable-atom> ::=
+    | "variable_declare" "(" <term> "," <domain> ")"
     | "variable_declare" "(" <term> "," <term> "," <domain> ")"
     | "variable_declareOptional" "(" <term> ")"
+    | "variable_define" "(" <term> "," <expression> ")"
     | "variable_define" "(" <term> "," <term> "," <expression> ")"
     | "variable_domain" "(" <term> "," <expression> ")"
 
 <multimap-atom> ::=
+    | "multimap_declare" "(" <term> ")"
     | "multimap_declare" "(" <term> "," <term> ")"
+    | "multimap_assign" "(" <term> "," <expression> "," <expression> ")"
     | "multimap_assign" "(" <term> "," <term> "," <expression> "," <expression> ")"
 
 <set-atom> ::=
+    | "set_declare" "(" <term> ")"
     | "set_declare" "(" <term> "," <term> ")"
+    | "set_assign" "(" <term> "," <expression> ")"
     | "set_assign" "(" <term> "," <term> "," <expression> ")"
+    | "set_baseDomain" "(" <term> "," <expression> ")"
     | "set_baseDomain" "(" <term> "," <term> "," <expression> ")"
 
 <execution-atom> ::=
+    | "execution_declare" "(" <term> "," <statement> "," <term-list> "," <term-list> ")"
     | "execution_declare" "(" <term> "," <term> "," <statement> "," <term-list> "," <term-list> ")"
+    | "execution_run" "(" <term> ")"
     | "execution_run" "(" <term> "," <term> ")"
 
 <optimize-atom> ::=
@@ -140,9 +149,12 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "preference_variableValue" "(" <term> "," <term> "," <expression> "," <int> ")"
 
 <atom> ::=
+    | "assign" "(" <term> "," <expression> ")"
     | "assign" "(" <term> "," <term> "," <expression> ")"
+    | "ensure" "(" <expression> ")"
     | "ensure" "(" <term> "," <expression> ")"
     | "evaluate" "(" <operator> "," <expression-list> ")"
+    | "evaluate" "(" <term> "," <operator> "," <expression-list> ")"
     | <variable-atom>
     | <multimap-atom>
     | <set-atom>
