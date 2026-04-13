@@ -6,7 +6,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 ```ebnf
 <type> ::=
-    | "bool" | "float" | "int" | "none" | "string" | "symbol"
+    | "bool" | "float" | "int" | "none" | "str" | "symbol"
     | "function" | "set" | "multimap"
 
 <bool> ::= "true" | "false"
@@ -64,13 +64,13 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "int_div" | "float_div" | "pow" | "abs" | "minus" | "max" | "min"
 
 <multimap-operator> ::=
-    | <eq-operator> | "find" | "multimap_fold" | "isin" | "multimap_make"
+    | <eq-operator> | "find" | "multimap_fold" | "multimap_isin" | "multimap_make"
     | "countKeys" | "countEntries" | "sumIntEntries"
     | "maxEntries" | "minEntries"
 
 <set-operator> ::=
     | <eq-operator> | "union" | "inter" | "diff" | "subset" | "set_make"
-    | "isin" | "notin" | "length" | "set_fold"
+    | "set_isin" | "set_notin" | "length" | "set_fold"
 
 <string-operator> ::= <eq-operator> | "concat" | "length"
 

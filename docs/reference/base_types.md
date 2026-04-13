@@ -88,7 +88,7 @@ value(name, val(none, none))
 | `eq` | Equality | ([none] \| T, [none] \| T) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
 | `neq` | Inequality | ([none] \| T, [none] \| T) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 | **Logical** | | | |
-| `limp` | Implication | ([none] \| [bool], [none] \| [bool]) $\to$ [none] | If either of the values is `none`, the result will be `none`. Otherwise, this follows the standard implication rules from [bool]. |
+| `limp` | Implication | ([none] \| [bool], [none] \| [bool]) $\to$ [bool] \| [none] | Returns the usual boolean implication result when both inputs are boolean. If a required operand is `none`, the result is `none`. |
 | **Negation** | | | |
 | `lnot` | Classical Negation | ([none]) $\to$ [none] | The negation of `none` is still `none`. |
 
@@ -112,16 +112,16 @@ value(name, val(bool, false))
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| **Comparison** | | | | |
+| **Comparison** | | | |
 | `eq` | Equality | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
 | `neq` | Inequality | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
-| **Logical** | | | | |
+| **Logical** | | | |
 | `conj` | Conjunction | ([bool]\*) $\to$ [bool] | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
 | `disj` | Disjunction | ([bool]\*) $\to$ [bool] | `true` if *at least one* argument in the list is true. |
-| `limp` | Implication | ([bool], [bool]) $\to$ [bool] | `false` only if the first argument is `true` and the second is `false`. Otherwise `true`. | [bool] \| [none] |
+| `limp` | Implication | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] \| [none] | `false` only if the first argument is `true` and the second is `false`. It returns `true` for the other boolean cases and `none` for partial-value cases. |
 | `lxor` | Exclusive OR | ([bool]\*) $\to$ [bool]  | `true` if an **odd** number of arguments are `true`. |
 | `leqv` | Equivalence | ([bool]\*) $\to$ [bool]  | `true` if an **even** number of arguments are `true`. |
-| **Negation** | | | | |
+| **Negation** | | | |
 | `lnot` | Logical | ([bool]) $\to$ [bool] | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). |
 | `snot` | Strong | ([bool]) $\to$ [bool] | Treats undefined/missing values as `false`. |
 | `wnot` | Weak | ([bool]) $\to$ [bool] | Treats undefined/missing values as `true`. |
@@ -224,8 +224,7 @@ value(name, val(float, float("-0.001")))
 | `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
 | `mult` | Multiplication | (\[[int] \| [float]\]\*) $\to$ [float] | Multiplies all provided numbers together. |
 | `float_div` | Float Division | ([int] \| [float], [int] \| [float]) $\to$ [float] | Performs explicit floating point division. |
-| `ceil` | Ceiling | ([float]) $\to$ [float] | Rounds the float up to the nearest integer value. |
-| `floor` | Floor | ([float]) $\to$ [float] | Rounds the float down to the nearest integer value. |
+| `floor` | Floor | ([float]) $\to$ [int] | Rounds the float down to the nearest integer value. |
 | `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
 | `abs` | Absolute Value | ([float]) $\to$ [float] | Returns the absolute value. |
 | `minus` | Unary Minus | ([float]) $\to$ [float] | Negates the value. |
@@ -259,11 +258,8 @@ value(name, val(float, float("-0.001")))
 
 ---
 
-## String
+## Str
 Strings are used to represent text-based data. They support concatenation and comparison operations.
-
-!!! Warning
-    Currently strings are called `str` and not `string`. In the future, this section will completely move into either direction.
 
 ### Definition
 ```prolog
@@ -280,11 +276,11 @@ value(name, val(str, "Constraint Handling"))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Manipulation** | | | |
-| `concat` | Concatenation | ([string], [string]) $\to$ [string] | Joins two strings together. |
-| `length` | Length | ([string]) $\to$ [int] | Returns the number of characters in the string. |
+| `concat` | Concatenation | ([str], [str]) $\to$ [str] | Joins two strings together. |
+| `length` | Length | ([str]) $\to$ [int] | Returns the number of characters in the string. |
 | **Comparison** | | | |
-| `eq` | Equality | ([string] \| [none], [string] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([string] \| [none], [string] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
+| `eq` | Equality | ([str] \| [none], [str] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([str] \| [none], [str] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 
 !!! Example
     Concatenating a prefix to a name.

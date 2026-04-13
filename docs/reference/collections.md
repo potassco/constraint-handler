@@ -88,7 +88,7 @@ set_declare(Name).
 
 This, just like in the case of [Variables], adds an atom of `value/2` to the model. Here, the value is a reference to the set.
 ```prolog
-value(set_name, val(set, ref(variable(set_name))))
+value(set_name, ref(set, variable(set_name)))
 ```
 
 ### Assign
@@ -149,7 +149,7 @@ Each `set_baseDomain/2` fact introduces one candidate value. The solver may incl
     set_declare(my_set).
     set_baseDomain(my_set,val(int,1..2)).
     set_assign(my_set,val(int,3)).
-    ensure(e1,operation(isin,(val(int,1),(variable(my_set),())))).
+    ensure(e1,operation(set_isin,(val(int,1),(variable(my_set),())))).
     ```
 
     This always produces (among other atoms):
@@ -175,7 +175,7 @@ The constraint handler provides a `set_make` operator to create sets directly wi
     This results in the following output atoms:
 
     ```prolog
-    value(my_set, val(set, ref(set_make((val(int,1),(val(int,3),(val(int,5),())))))))
+    value(my_set, ref(set, operation(set_make,(val(int,1),(val(int,3),(val(int,5),()))))))
     set_value(my_set, val(int, 1))
     set_value(my_set, val(int, 3))
     set_value(my_set, val(int, 5))
@@ -194,8 +194,8 @@ Once a set is created (either via declaration or returned from another operation
 | `diff` | Difference | ([set], [set]) $\to$ [set] | Returns a new set containing elements of the first set that are not in the second set. |
 | `subset` | Subset | ([set], [set]) $\to$ [bool] | `true` if first set is a subset of the second. |
 | **Membership** | | | |
-| `isin` | Is In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is contained in the set. |
-| `notin` | Not In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is NOT contained in the set. |
+| `set_isin` | Is In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is contained in the set. |
+| `set_notin` | Not In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is NOT contained in the set. |
 | **Analysis** | | | |
 | `length` | Cardinality | ([set]) $\to$ [int] | Returns the number of elements in the set. |
 | `set_fold` | Fold | ((A,B) $\to$ B, [set]\([A]\), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
@@ -282,7 +282,7 @@ multimap_declare(Name).
 
 This, just like in the case of [Variables], adds an atom of `value/2` to the model. Here, the value is the identifier of the multimap.
 ```prolog
-value(Name, val(multimap, Name)).
+value(Name, val(multimap, variable(Name))).
 ```
 
 ### Assign
@@ -334,7 +334,7 @@ multimap_value(Name, Key, Value)
     This results in the following output atoms:
 
     ```prolog
-    value(my_map,val(multimap,my_map))
+    value(my_map,val(multimap,variable(my_map)))
     multimap_value(my_map, val(int,1), val(str,"one"))
     multimap_value(my_map, val(int,1), val(str,"uno"))
     multimap_value(my_map, val(int,2), val(str,"two"))
@@ -376,7 +376,7 @@ can be used in expressions.
 | **Operations** | | | |
 | `find` | Find | (K, [multimap]\[K, V\]) $\to$ [set]\[V\] | Retrieves the set of value(s) associated with a specific key. |
 | `multimap_isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
-| `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all entries in the multimap, applies a function to each value and accumulates the result. |
+| `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all values in the multimap, applies a function to each value and accumulates the result. |
 | **Comparison** | | | |
 | `eq` | Equality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
 | `neq` | Inequality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
