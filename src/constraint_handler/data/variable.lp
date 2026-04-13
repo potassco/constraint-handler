@@ -1,9 +1,18 @@
 %%%%%% syntactic sugar
-_passed(sugar,variable_domain(LABEL,X,val(bool,(false;true)))) :- variable_declare(LABEL,X,boolDomain).
-_passed(sugar,variable_domain(LABEL,X,val(none,none))) :- variable_declareOptional(LABEL,X).
-_passed(sugar,variable_domain(LABEL,X,E)) :- variable_declare(LABEL,X,fromList(L)), E=@pythonListElements(L).
-_passed(sugar,variable_declare(LABEL,E,fromFacts)) :- variable_declare(LABEL,E,D), D=(fromFacts;boolDomain;fromList(_)).
-_passed(sugar,variable_domain(LABEL,X,E)) :- variable_domain(LABEL,X,E).
+_passed(sugar,variable_declare(LABEL,X,fromFacts)) :- variable_declare(LABEL,X,D), D=(fromFacts;boolDomain;fromList(_)).
+_variable_tentativeDomain(LABEL,X,E) :- variable_domain(LABEL,X,E).
+variable_domain(LABEL,X,E) :- variable_declare(LABEL,X,fromList(L)), E=@pythonListElements(L).
+variable_domain(LABEL,X,val(bool,(false;true))) :- variable_declare(LABEL,X,boolDomain).
+variable_domain(LABEL,X,val(none,none)) :- variable_declareOptional(LABEL,X).
+_passed(sugar,variable_domain(LABEL,X,E)) :- variable_domain(LABEL,X,E), _expression_wellformed(E).
+%_passed(sugar,variable_domain(LABEL,X,bad)) :- variable_domain(LABEL,X,E), not _expression_wellformed(E). % TODO
+
+_passed(sugar,variable_declare(LABEL,X,fromFacts)) :- variable_domain(LABEL,X,E), not variable_declare(_,X,_).
+_warning(variable(undeclared),(),((),X)) :- variable_domain(LABEL,X,E), not variable_declare(_,X,_).
+
+_passed(sugar,variable_define(LABEL,X,E)) :- variable_define(LABEL,X,E), _expression_wellformed(E).
+%_passed(sugar,variable_define(LABEL,X,bad)) :- variable_define(LABEL,X,E), not _expression_wellformed(E). % TODO
+
 
 _warning(variable(multipleDeclarations),(CNAME1,(CNAME2,())),(X,D1,D2)) :-
   variable_declare(CNAME1,X,D1), variable_declare(CNAME2,X,D2), (CNAME1,D1) < (CNAME2,D2),
@@ -38,7 +47,6 @@ _variable_query((),execution_input(NAME,X)) :- _statement_query(SCOPE,STMT), exe
 _variable_query((NAME,()),X) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
 _variable_exists((),X) :- _passed(sugar,variable_declare(_,X,_)).
-%_variable_exists((),X) :- _passed(sugar,variable_domain(_,X,_)).
 _variable_exists((),X) :- _passed(sugar,variable_define(_,X,_)).
 _variable_exists((),X) :- set_declare(_,X).
 _variable_exists((),X) :- multimap_declare(_,X).
