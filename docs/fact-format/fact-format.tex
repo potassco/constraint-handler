@@ -130,8 +130,11 @@
 \alt `execution_run' `(' <term> `,' <term> `)'
 
 <optimize-atom> ::=
-~\alt `optimize_maximizeSum' `(' <term> `,' <expression> `,' <term> `)'
+~\alt `optimize_maximizeSum' `(' <expression> `,' <term> `)'
+\alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `)'
+\alt `optimize_maximizeSum' `(' <term> `,' <expression> `,' <term> `,' <expression> `)'
 \alt `optimize_precision' `(' <expression>  `)'
+\alt `optimize_precision' `(' <expression> `,' <expression> `)'
 
 <preference-atom> ::=
 ~\alt `preference_maximizeScore'
