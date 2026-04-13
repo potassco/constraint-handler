@@ -138,6 +138,16 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
         WGHT = val(int,-W),  % Negate weight to minimize it
         EXPR = operation(if,(COND,(WGHT,()))).
 
+    variable_define(carried,EXPR) :-
+        EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),
+        MAP  = variable(taken),
+        ACCU = variable(accu),
+        STAR = val(int,0),
+        VARS = (w,(accu,())),
+        WEIG = variable(w),
+        PLUS = operation(add,(WEIG,(ACCU,()))),
+        LAMB = lambda(VARS,PLUS).
+
     ensure(operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
     ```
 
