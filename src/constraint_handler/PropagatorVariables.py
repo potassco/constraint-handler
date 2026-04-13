@@ -634,6 +634,8 @@ class Variable:
                 # some values are unassigned
                 # so we cannot determine the value yet
                 val = [ValueStatus.NOT_SET]
+                self.decision_level = ctl.assignment.decision_level
+                return EvaluationResult.NOT_CHANGED
 
             # if at least one domain lit is true, then a value MUST be chosen
             elif any(ctl.assignment.is_true(domain_lit) for domain_lit in self.domain_literals):
