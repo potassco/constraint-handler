@@ -69,8 +69,8 @@ _execution_fails(NAME,assert(EXPR)) :- _execution_run(NAME,assert(EXPR)), _execu
 %%%%%%%%%%%%%%%%% statement_python
 _direct_implode(V) :- _execution_run(NAME,statement_python(CODE)), _execution_in(NAME,X,V).
 _execution_mapAux(NAME,#inf,()) :- _execution_run(NAME,statement_python(STR)).
-_execution_mapAux(NAME,Y,((Y,W),M)) :- _execution_mapAux(NAME,X,M), _execution_in(NAME,Y,V), X < Y, _direct_imploded(V,W), #false : _execution_in(NAME,Z,_), X < Z, Z < Y.
-_execution_mapped(NAME,M) :- _execution_mapAux(NAME,X,M), #false : _execution_in(NAME,Y,_), X < Y.
+_execution_mapAux(NAME,Y,((Y,W),M)) :- _execution_mapAux(NAME,X,M), _execution_in(NAME,Y,V), X < Y, _direct_imploded(V,W), #false : _execution_in(NAME,Z,VZ), X < Z, Z < Y.
+_execution_mapped(NAME,M) :- _execution_mapAux(NAME,X,M), #false : _execution_in(NAME,Y,VY), X < Y.
 
 _execution_exec(NAME,R) :- _execution_run(NAME,statement_python(STR)), _execution_mapped(NAME,M), R=@pythonExec(statement_python(STR),M,ID), _main_solverIdentifier(ID).
 :- _execution_exec(NAME,failIntegrity).

@@ -1,15 +1,15 @@
 %%%%%%%%%%%%%%%%% _expression_query from ensure evaluate
-_expression_query((),E) :- ensure(_,E).
-_expression_query((),operation(OP,ARGS)) :- evaluate(_,OP,ARGS).
+_expression_query((),E) :- ensure(LBL,E).
+_expression_query((),operation(OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
-_expression_query((),E) :- variable_define(_,X,E).
-_expression_query((),E) :- _passed(sugar,variable_domain(_,X,E)).
+_expression_query((),E) :- variable_define(LBL,X,E).
+_expression_query((),E) :- _passed(sugar,variable_domain(LBL,X,E)).
 
-_expression_query((),E) :- set_assign(_,X,E).
-_expression_query((),E) :- set_baseDomain(_,X,E).
-_expression_query((),K) :- multimap_assign(_,X,K,B).
-_expression_query((),B) :- multimap_assign(_,X,K,B).
+_expression_query((),E) :- set_assign(LBL,X,E).
+_expression_query((),E) :- set_baseDomain(LBL,X,E).
+_expression_query((),K) :- multimap_assign(LBL,X,K,B).
+_expression_query((),B) :- multimap_assign(LBL,X,K,B).
 
 %%%%%%%%%%%%%%%%% _expression_query from expressions
 % TODO lambda?.
@@ -30,7 +30,7 @@ _expression_poorlyformed(operation(O,L)) :- _expression_query(SCOPE,operation(O,
 _expression_poorlyformed(T) :- _expression_query(SCOPE,T), D=@pythonTupleElements(T), _expression_poorlyformed(D).
 
 _expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsTuple(EXPR), not _expression_poorlyformed(EXPR).
-_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), EXPR=operation(_,L), true=@pythonIsList(L), not _expression_poorlyformed(EXPR).
+_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), EXPR=operation(O,L), true=@pythonIsList(L), not _expression_poorlyformed(EXPR).
 
 _warning(expression(syntaxError),SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), not _expression_wellformed(EXPR).
 

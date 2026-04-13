@@ -12,8 +12,8 @@ direct_query(X)  :- _se_assign(NAME,X,E).
 direct_query(operation(OP,ARGS))  :- _se_evaluate(CNAME,OP,ARGS).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 
-_se_value(E,E) :- direct_query(E), E=val(_,_).
-_se_value(E,E) :- direct_query(E), E=ref(_,_).
+_se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
+_se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
@@ -31,8 +31,8 @@ _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 
 
 %%%%%%%%%%%%%%%%% lambda application
-_direct_needs_args_list(E) :- _direct_queryArgsValues(E,lambda(_,_),_).
-_length(ARGS,LEN) :- _direct_queryArgsValues(E,_,ARGS), LEN=@pythonListLength(ARGS).
+_direct_needs_args_list(E) :- _direct_queryArgsValues(E,lambda(LARGS,SUB),ARGS).
+_length(ARGS,LEN) :- _direct_queryArgsValues(E,OP,ARGS), LEN=@pythonListLength(ARGS).
 _direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E), _length(ARGS,IDX).
 _direct_args_list_aux(E,IDX,(V,VS)) :- _direct_needs_args_list(E), _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
 _direct_args_list(E,VS) :- _direct_needs_args_list(E), _direct_args_list_aux(E,0,VS).
@@ -45,8 +45,8 @@ direct_query(RED) :- _lambda_aux(E,RED).
 _computedIdx(E,VO) :- _lambda_aux(E,RED), _se_value(RED,VO).
 
 %%%%%%%%%%%%%%%%% python operator
-_direct_implode(V) :- _computeIdx(E,python(_)), _computeIdx(E,_,V).
-_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(_),ARGS), _length(ARGS,IDX).
+_direct_implode(V) :- _computeIdx(E,python(STR)), _computeIdx(E,IDX,V).
+_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(STR),ARGS), _length(ARGS,IDX).
 _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L), _computeIdx(E,IDX,V),
     _direct_imploded(V,IMP).
 _expression_pythonEval(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _direct_imploded_args_aux(E,0,L).

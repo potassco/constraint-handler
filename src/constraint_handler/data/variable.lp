@@ -1,5 +1,5 @@
 %%%%%% syntactic sugar
-_passed(sugar,variable_declare(LABEL,X,fromFacts)) :- variable_declare(LABEL,X,D), D=(fromFacts;boolDomain;fromList(_)).
+_passed(sugar,variable_declare(LABEL,X,fromFacts)) :- variable_declare(LABEL,X,D), D=(fromFacts;boolDomain;fromList(L)).
 _variable_tentativeDomain(LABEL,X,E) :- variable_domain(LABEL,X,E).
 variable_domain(LABEL,X,E) :- variable_declare(LABEL,X,fromList(L)), E=@pythonListElements(L).
 variable_domain(LABEL,X,val(bool,(false;true))) :- variable_declare(LABEL,X,boolDomain).
@@ -34,9 +34,9 @@ _variable_hasDomain(X) :- _variable_domain(X,V).
 
 direct_query(E) :- _variable_domain(X,E).
 1 { assign(CNAME,X,V) : _variable_domain(X,E), _se_value(E,V) } 1 :-
-   _variable_declare(CNAME,X,_), _variable_hasDomain(X).
+   _variable_declare(CNAME,X,D), _variable_hasDomain(X).
 
-_warning(variable(emptyDomain),(CNAME,()),X) :- _variable_declare(CNAME,X,_), not _variable_hasDomain(X).
+_warning(variable(emptyDomain),(CNAME,()),X) :- _variable_declare(CNAME,X,D), not _variable_hasDomain(X).
 
 %%%%%%%%%%%%%%%%% _variable_query
 _variable_query((),X) :- _passed(sugar,variable_domain(LABEL,X,V)).
@@ -46,14 +46,14 @@ _variable_query(SCOPE,X) :- _expression_query(SCOPE,variable(X)).
 _variable_query((),execution_input(NAME,X)) :- _statement_query(SCOPE,STMT), execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
 _variable_query((NAME,()),X) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
-_variable_exists((),X) :- _passed(sugar,variable_declare(_,X,_)).
-_variable_exists((),X) :- _passed(sugar,variable_define(_,X,_)).
-_variable_exists((),X) :- set_declare(_,X).
-_variable_exists((),X) :- multimap_declare(_,X).
-_variable_exists((),X) :- multimap_declare(_,X).
+_variable_exists((),X) :- _passed(sugar,variable_declare(LBL,X,D)).
+_variable_exists((),X) :- _passed(sugar,variable_define(LBL,X,E)).
+_variable_exists((),X) :- set_declare(LBL,X).
+_variable_exists((),X) :- multimap_declare(LBL,X).
+_variable_exists((),X) :- multimap_declare(LBL,X).
 _variable_exists(SCOPE,X) :- _statement_query(SCOPE,assign(X,EXPR)).
-_variable_exists((NAME,()),X) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
-_variable_exists((),execution_output(NAME,X)) :- execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
+_variable_exists((NAME,()),X) :- execution_declare(LBL,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
+_variable_exists((),execution_output(NAME,X)) :- execution_declare(LBL,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
 _variable_search_scope(SCOPE,X) :- _variable_query(SCOPE,X).
 _variable_search_scope(OUTER,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), not _variable_exists(SCOPE,X).

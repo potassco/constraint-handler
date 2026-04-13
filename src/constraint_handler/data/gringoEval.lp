@@ -22,7 +22,7 @@ ge_expressionQuery(EXPR) :- _ge_assign(CNAME,X,EXPR).
 
 _ge_vQuery(X) :- ge_expressionQuery(EXPR), X=@pythonExpressionVariable(EXPR).
 
-_direct_implode(variable(X)) :- _ge_vQuery(X), _se_value(variable(X),_).
+_direct_implode(variable(X)) :- _ge_vQuery(X), _se_value(variable(X),V).
 ge_value(X,VAL) :- _ge_vQuery(X), _se_value(variable(X),val(T,V)), _direct_imploded(variable(X),VAL).
 
 
@@ -41,5 +41,5 @@ _ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(
 _ge_mapped(EXPR,M) :- _ge_mapAux(EXPR,0,M).
 
 _ge_eval_exec(EXPR,M,RES) :- _ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifier(ID).
-ge_result(EXPR,V) :- _ge_eval_exec(EXPR,M,V), #false: V=error(_,_).
+ge_result(EXPR,V) :- _ge_eval_exec(EXPR,M,V), #false: V=error(KIND,MSG).
 _warning(KIND,(),(EXPR,M,MSG)) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).

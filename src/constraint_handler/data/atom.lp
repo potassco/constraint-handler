@@ -73,15 +73,49 @@ forbid_warning(_label_anonymous,KIND) :- forbid_warning(KIND).
 
 
 %%%%%%%%%%%%%%%%% collect labels
-_label(LABEL) :- ensure(LABEL,_).
-_label(LABEL) :- assign(LABEL,_,_).
+_label(LABEL) :- ensure(LABEL,E).
+_label(LABEL) :- assign(LABEL,X,E).
 _label(LABEL) :- define(LABEL,_,_,_).
-_label(LABEL) :- evaluate(LABEL,_,_).
+_label(LABEL) :- evaluate(LABEL,O,ARGS).
 
 %%%%%% variable atoms
-_label(LABEL) :- variable_define(LABEL,_,_).
-_label(LABEL) :- variable_declare(LABEL,_,_).
-_label(LABEL) :- variable_domain(LABEL,_,_).
+_label(LABEL) :- variable_define(LABEL,X,E).
+_label(LABEL) :- variable_declare(LABEL,X,D).
+_label(LABEL) :- variable_domain(LABEL,X,E).
+
+%%%%%% multimap atoms
+_label(LABEL) :- multimap_declare(LABEL,X).
+_label(LABEL) :- multimap_assign(LABEL,X,K,B).
+
+%%%%% set atoms
+_label(LABEL) :- set_declare(LABEL,X).
+_label(LABEL) :- set_assign(LABEL,X,E).
+_label(LABEL) :- set_baseDomain(LABEL,X,E).
+
+%%%%%% statement atoms
+_label(LABEL) :- execution_declare(LABEL,NAME,STMT,INS,OUTS).
+_label(LABEL) :- execution_run(LABEL,NAME).
+
+%%%%%% optimization atoms
+_label(LABEL) :- optimize_maximizeSum(LABEL,_,_,_).
+
+%%%%%% preference atoms
+_label(LABEL) :- preference_holds(LABEL,_,_).
+_label(LABEL) :- preference_variableValue(LABEL,_,_,_).
+
+%%%%%% warning atoms
+_label(LABEL) :- forbid_warning(LABEL,KIND).
+
+
+
+%%%%%%%%%%%%%%%%% check if well-formed
+_passed(sugar,ensure(LABEL,E)) :- ensure(LABEL,E), _expression_wellformed(E).
+_passed(sugar,evaluate(LABEL,OP,ARGS)) :- evaluate(LABEL,OP,ARGS), _expression_wellformed(operation(OP,ARGS)).
+
+
+_label(LABEL) :- define(LABEL,_,_,_).
+%_passed(sugar,assign(LABEL,X,E)) :- assign(LABEL,X,E), _expression_wellformed(E).
+
 
 %%%%%% multimap atoms
 _label(LABEL) :- multimap_declare(LABEL,_).
@@ -105,11 +139,3 @@ _label(LABEL) :- preference_variableValue(LABEL,_,_,_).
 
 %%%%%% warning atoms
 _label(LABEL) :- forbid_warning(LABEL,_).
-
-
-
-%%%%%%%%%%%%%%%%% check if well-formed
-_passed(sugar,ensure(LABEL,E)) :- ensure(LABEL,E), _expression_wellformed(E).
-_passed(sugar,evaluate(LABEL,OP,ARGS)) :- evaluate(LABEL,OP,ARGS), _expression_wellformed(operation(OP,ARGS)).
-
-
