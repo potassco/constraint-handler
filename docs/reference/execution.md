@@ -21,10 +21,10 @@ execution_input(ExecutionName, Name)
     Defining an input variable with some value for a specific execution:
 
     ```prolog
-    variable_define(execution_input(my_execution, a), val(int, 5)).
+    variable_define(execution_input(my_exec, a), val(int, 5)).
     ```
 
-    This creates a variable `a` with the integer value `5` for the execution `my_execution`.
+    This creates a variable `a` with the integer value `5` for the execution `my_exec`.
 
 ---
 
@@ -238,7 +238,7 @@ execution_declare(Name, Statement, Input, Output)
         S = assign(a, val(int, 3)).
     ```
 
-    This declares an execution named `my_execution` that assigns the integer value `3` to the variable `a`, taking `a` as input and producing `a` as output.
+    This declares an execution named `my_exec` that assigns the integer value `3` to the variable `a`, taking `a` as input and producing `a` as output.
 
 ---
 
@@ -263,4 +263,4 @@ execution_run(Name)
     execution_run(my_exec).
     ```
 
-    This runs the execution named `my_execution` that was declared earlier.
+    This runs the execution named `my_exec` that was declared earlier.
