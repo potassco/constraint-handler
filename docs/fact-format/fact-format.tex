@@ -147,9 +147,11 @@
 
 <preference-atom> ::=
 ~\alt `preference_maximizeScore'
-\alt `preference_holds' `(' <term> `,' <expression> `)'
+\alt `preference_holds' `(' <expression> `)'
+\alt `preference_holds' `(' <expression> `,' <int> `)'
 \alt `preference_holds' `(' <term> `,' <expression> `,' <int> `)'
-\alt `preference_variableValue' `(' <term> `,' <term> `,' <expression> `)'
+\alt `preference_variableValue' `(' <term> `,' <expression> `)'
+\alt `preference_variableValue' `(' <term> `,' <expression> `,' <int> `)'
 \alt `preference_variableValue' `(' <term> `,' <term> `,' <expression> `,' <int> `)'
 
 <atom> ::=

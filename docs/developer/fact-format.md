@@ -143,9 +143,11 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <preference-atom> ::=
     | "preference_maximizeScore"
-    | "preference_holds" "(" <term> "," <expression> ")"
+    | "preference_holds" "(" <expression> ")"
+    | "preference_holds" "(" <expression> "," <int> ")"
     | "preference_holds" "(" <term> "," <expression> "," <int> ")"
-    | "preference_variableValue" "(" <term> "," <term> "," <expression> ")"
+    | "preference_variableValue" "(" <term> "," <expression> ")"
+    | "preference_variableValue" "(" <term> "," <expression> "," <int> ")"
     | "preference_variableValue" "(" <term> "," <term> "," <expression> "," <int> ")"
 
 <atom> ::=
