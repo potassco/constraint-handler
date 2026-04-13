@@ -103,7 +103,7 @@ weight(ID, VALUE).
 
 First, we have to define the base case for our recursion, which is when no items are considered (ID = 0):
 ```prolog
-weight(0, val(float, 0.0)).
+weight(0, val(float, float("0.0"))).
 ```
 
 Next, we define the recursive case.
@@ -141,7 +141,7 @@ Again, just a single line is sufficient to enforce the capacity constraint in ou
 ### Optimization
 Finally, we need to define our optimization objective, which is to maximize the total value of the selected items.
 
-For this, we will use the [`optimize_maximizeSum/3`][optimize_maximizeSum] predicate as follows:
+For this, we will use `optimize_maximizeSum` with an explicit priority of `0` as follows:
 
 ```prolog
 optimize_maximizeSum(EXPR, ID, 0) :-
