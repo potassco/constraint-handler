@@ -1145,7 +1145,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         the clingo model and by brave/cautious reasoning to accumulate results.
         """
         self.python_model = set()
-
+        model_errors: propagator_warning_t = []
         for var in self.symbol2var.values():
             self.handle_on_model_warning(var.get_errors())
             if isinstance(var, EnsureVariable):
@@ -1157,7 +1157,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # myprint(var.var, final_value, type(final_value))
             if final_value is ValueStatus.NOT_SET:
                 # print(f"Variable {var} has no value set in on_model!")
-                self.errors.append(
+                model_errors.append(
                     warning.Warning(warning.Propagator(), (str(var),), "Variable has no value set in on_model!")
                 )
                 continue
@@ -1193,7 +1193,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.handle_on_model_warning(self.optimization_sum.get_errors())
             myprint(f"Optimization value: {self.optimization_sum.get_value()}")
 
-        self.handle_on_model_warning(self.errors)
+        self.handle_on_model_warning(model_errors + self.errors)
 
     def on_model(self, model: clingo.Model):
         """
