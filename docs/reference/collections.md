@@ -374,8 +374,8 @@ can be used in expressions.
 | `maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ V | Returns the maximum value stored in the map (by value, not key). |
 | `minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ V | Returns the minimum value stored in the map. |
 | **Operations** | | | |
-| `find` | Find | (K, [multimap]\[K, V\]) $\to$ [list]\[V\] | Retrieves the list of value(s) associated with a specific key. |
-| `isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
+| `find` | Find | (K, [multimap]\[K, V\]) $\to$ [set]\[V\] | Retrieves the set of value(s) associated with a specific key. |
+| `multimap_isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
 | `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all entries in the multimap, applies a function to each value and accumulates the result. |
 | **Comparison** | | | |
 | `eq` | Equality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
@@ -386,11 +386,11 @@ can be used in expressions.
 
     The operator requires three arguments:
 
-    1. A function with signature `(A,B) -> B` that takes an entry of the multimap and an accumulator of type `B`, and returns a new accumulator of type `B`.
-    2. A multimap of entries of type `(K,V)` to iterate over.
+    1. A function with signature `(V,B) -> B` that takes a value from the multimap and an accumulator of type `B`, and returns a new accumulator of type `B`.
+    2. A multimap with values of type `V` to iterate over.
     3. An initial value for the accumulator of type `B`.
 
-    The fold operator will then iterate over each entry in the multimap, applying the function to the current entry and the accumulator, updating the accumulator with the result. After all entries have been processed, the final value of the accumulator is returned.
+    The fold operator will then iterate over each value stored in the multimap, applying the function to the current value and the accumulator, updating the accumulator with the result. After all values have been processed, the final value of the accumulator is returned.
 
     Because all values in a multimap are stored in sets, the `multimap_fold` operator can be seen as a combination of `find` and `set_fold`. First, `find` retrieves all values associated with each key, and then `set_fold` is applied to these values.
 

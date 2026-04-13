@@ -99,7 +99,7 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     ```prolog
     optimize_maximizeSum(EXPR,X,0) :- item(X,V),
         ITEM = val(symbol,X),
-        COND = operation(isin,(ITEM,(variable(taken),()))),
+        COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
         VALU = val(int,V),
         EXPR = operation(if,(COND,(VALU,()))).
     ```
@@ -107,8 +107,8 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     The result will be the model where items `a` and `b` are taken, maximizing the sum to `6`.
 
     ```prolog
-    multimap_value(taken,symbol,a,int,2)
-    multimap_value(taken,symbol,b,int,4)
+    multimap_value(taken,val(symbol,a),val(int,2))
+    multimap_value(taken,val(symbol,b),val(int,4))
     ```
 
 !!! Example "Example 4: Optimization with Priorities"
@@ -127,14 +127,14 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     % Maximize value with priority 1 (higher priority)
     optimize_maximizeSum(EXPR,X,1) :- item(X,W,V),
         ITEM = val(symbol,X),
-        COND = operation(isin,(ITEM,(variable(taken),()))),
+        COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
         VALU = val(int,V),
         EXPR = operation(if,(COND,(VALU,()))).
 
     % Minimize weight with priority 0 (lower priority) by maximizing negative weight
     optimize_maximizeSum(EXPR,X,0) :- item(X,W,V),
         ITEM = val(symbol,X),
-        COND = operation(isin,(ITEM,(variable(taken),()))),
+        COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
         WGHT = val(int,-W),  % Negate weight to minimize it
         EXPR = operation(if,(COND,(WGHT,()))).
 
@@ -145,8 +145,8 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     This corresponds to the model where items `a` and `c` are taken.
 
     ```prolog
-    multimap_value(taken,symbol,a,int,6)
-    multimap_value(taken,symbol,c,int,4)
+    multimap_value(taken,val(symbol,a),val(int,6))
+    multimap_value(taken,val(symbol,c),val(int,4))
     ```
 ---
 
