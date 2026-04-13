@@ -834,13 +834,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for (name, symbol_var, domain_expr), __literal in var_domains.items():
             # These values are assgiend the "from_facts" domain literal for the given variable
             if symbol_var not in self.symbol2var:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.undeclared),  # ty:ignore[unresolved-attribute]
-                        (symbol_var,),
-                        f"Variable '{symbol_var}' domain set but variable not declared!",
-                    )
-                )
                 continue
             domain_variable: Variable = cast(Variable, self.symbol2var[symbol_var])
             literal = ctl.add_literal(freeze=True)
@@ -857,14 +850,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for (name, optional), __literal in var_optionals.items():
             if optional not in self.symbol2var:
-                # If the optinal variable is not declared we add a warning, since this is probably not intended
-                self.errors.append(
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.undeclared),  # ty:ignore[unresolved-attribute]
-                        (optional,),
-                        f"Variable '{optional}' declared optional but variable not declared!",
-                    )
-                )
                 continue
 
             optional_variable: Variable = cast(Variable, self.symbol2var[optional])
@@ -879,17 +864,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.literal2var.setdefault(__literal, []).append(optional_variable)
             self.literal2var[literal] = [optional_variable]
-
-        # check that all variables have a domain
-        for var in self.symbol2var.values():
-            if not var.has_domain():
-                self.errors.append(
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.emptyDomain),  # ty:ignore[unresolved-attribute]
-                        (var,),
-                        f"Variable '{var}' has no domain defined!",
-                    )
-                )
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
