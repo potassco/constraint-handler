@@ -1357,11 +1357,7 @@ class OptimizationSum:
         # TODO: check if we need to also need to excluce Bad.bad from the sums
         for var, expr in self.expressions:
             myprint(f"Summing {expr} with value {expr.value}")
-            if (
-                expr.value != ValueStatus.NOT_SET
-                and expr.value != ValueStatus.ASSIGNMENT_IS_FALSE
-                and expr.value is not None
-            ):
+            if expr.value not in [ValueStatus.NOT_SET, ValueStatus.ASSIGNMENT_IS_FALSE, None, expression.Bad.bad]:
                 vals.add((var, expr.value))
 
         return sum(value for var, value in vals)
