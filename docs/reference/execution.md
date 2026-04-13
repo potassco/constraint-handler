@@ -186,7 +186,7 @@ assert(Condition)
 
 **[Statement]**{.badge .statement }
 
-The `while/2` function symbol allows for repeated execution of a statement as long as a given condition holds true.
+The `while/3` function symbol allows for repeated execution of a statement as long as a given condition holds true.
 
 ```prolog
 while(Limit, Condition, Body)

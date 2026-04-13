@@ -116,10 +116,10 @@ forbid_warning(WarningType)
     To forbid warnings about variables with empty domains, you can use:
 
     ```prolog
-    forbid_warning(variable(confusingName)).
+    forbid_warning(variable(emptyDomain)).
     ```
 
-    This will cause any warning of the type `variable(confusingName)` to be treated as an error, and it will prevent the model from being generated if such a warning is encountered.
+    This will cause any warning of the type `variable(emptyDomain)` to be treated as an error, and it will prevent the model from being generated if such a warning is encountered.
 
 ---
 

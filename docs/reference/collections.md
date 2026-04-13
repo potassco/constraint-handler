@@ -258,7 +258,7 @@ Once a set is created (either via declaration or returned from another operation
 ---
 
 ## Multimap
-Multimaps are collections that associate keys with values. Unlike standard maps or dictionaries, where a single key is associated with a single value, multimaps associate a each key to a set of values.
+Multimaps are collections that associate keys with values. Unlike standard maps or dictionaries, where a single key is associated with a single value, multimaps associate each key to a set of values.
 
 ### Declare
 
@@ -309,7 +309,7 @@ multimap_assign(Name, Key, Value).
 
 **[Result]**{.badge .result }
 
-Assigning a key-value pair to a multimap adds an atom of `multimap_value/5` to the model.
+Assigning a key-value pair to a multimap adds an atom of `multimap_value/3` to the model.
 
 ```prolog
 multimap_value(Name, Key, Value)

@@ -75,7 +75,7 @@ When wanting to optimize over a single value, the result could be captured in a 
     ```
 ### Multiple Values
 
-Sometimes, the exact number of [Variables] is unknown or represents the optimization taget itself. In these cases, the optimization can be expressed using multimaps to capture all [Values] that should be optimized over.
+Sometimes, the exact number of [Variables] is unknown or represents the optimization target itself. In these cases, the optimization can be expressed using multimaps to capture all [Values] that should be optimized over.
 
 !!! Example "Example 3: Optimization Over Multiple Values"
     Consider a program that defines some items as follows:

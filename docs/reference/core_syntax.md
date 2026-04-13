@@ -297,7 +297,7 @@ variable_declareOptional(Name).
 
 While it is technically possible to use the `value/2` [Result] to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their [Expressions].
 
-This function symbol retreives the value stored in the specified variable.
+This function symbol retrieves the value stored in the specified variable.
 
 ```prolog
 variable(Name)
@@ -321,7 +321,7 @@ variable(Name)
 
 **[Expression]**{.badge .expression }
 
-Operations are the key aspect of the constraint handler that allow expressing arbitrary computations. To achieve this, the constraint handler uses the `operation/2` predicate together with a collection of operators.
+Operations are the key aspect of the constraint handler that allow expressing arbitrary computations. To achieve this, the constraint handler uses the `operation/2` function symbol together with a collection of operators.
 
 ```prolog
 operation(Operator, Terms).
