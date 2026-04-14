@@ -1,29 +1,23 @@
-name: full CI matrix
+name: PR quick checks
 
 on:
-  push:
+  pull_request:
     branches: [master]
-  workflow_call:
 
 env:
   FORCE_COLOR: "3"
 
 jobs:
-  build:
-    name: full test on ${{ matrix.os }} / py${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.12', '3.13', '3.14']
+  quick:
+    name: quick test on ubuntu-latest / py3.14
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
       with:
-        python-version: ${{ matrix.python-version }}
-  
+        python-version: '3.14'
+
     - name: install requirements
       run: python -m pip install nox pre-commit
 
@@ -33,7 +27,6 @@ jobs:
         python -m clingo --enable-python .github/ci/enable_python_smoke.lp
 
     - name: run pre-commit
-      if: ${{ matrix.os == 'ubuntu-latest' }}
       run: pre-commit run --all --show-diff-on-failure
 
     - name: run tests
