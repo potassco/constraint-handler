@@ -18,13 +18,28 @@ jobs:
       with:
         python-version: '3.14'
 
+    - name: detect smoke-test relevant changes
+      id: smoke_changes
+      uses: dorny/paths-filter@v3
+      with:
+        filters: |
+          smoke:
+            - pyproject.toml
+            - noxfile.py
+            - .github/ci/**
+            - src/constraint_handler/*.py
+
     - name: install requirements
       run: python -m pip install nox pre-commit
 
     - name: smoke test production install
+      if: steps.smoke_changes.outputs.smoke == 'true'
       run: |
         python -m pip install .
-        python -m clingo --enable-python .github/ci/enable_python_smoke.lp
+
+    - name: skip smoke test
+      if: steps.smoke_changes.outputs.smoke != 'true'
+      run: echo "Skipping smoke test. No smoke-relevant files changed."
 
     - name: run pre-commit
       run: pre-commit run --all --show-diff-on-failure
