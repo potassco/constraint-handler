@@ -1,0 +1,30 @@
+name: PR quick checks
+
+on:
+  pull_request:
+    branches: [master]
+
+env:
+  FORCE_COLOR: "3"
+
+jobs:
+  quick:
+    name: quick test on ubuntu-latest / py3.14
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.14'
+        cache: 'pip'
+        cache-dependency-path: pyproject.toml
+
+    - name: install requirements
+      run: python -m pip install nox pre-commit
+
+    - name: run pre-commit
+      run: pre-commit run --all --show-diff-on-failure
+
+    - name: run tests
+      run: nox -s test

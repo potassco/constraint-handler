@@ -7,9 +7,7 @@ nox.options.sessions = ("test",)
 # nox.options.sessions = "lint_pylint", "typecheck", "test"
 
 EDITABLE_TESTS = True
-PYTHON_VERSIONS = None
 if "GITHUB_ACTIONS" in os.environ:
-    PYTHON_VERSIONS = ["3.12"]
     EDITABLE_TESTS = False
 
 
@@ -66,7 +64,7 @@ def typecheck(session):
     session.run("mypy", "--strict", "-p", "constraint_handler", "-p", "tests")
 
 
-@nox.session(python=PYTHON_VERSIONS)
+@nox.session
 def test(session):
     """
     Run pytest.
