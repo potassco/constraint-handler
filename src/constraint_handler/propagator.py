@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import operator
 import sys
-from lib2to3.pgen2.token import OP
 from typing import Any, Iterable, Literal, Sequence, cast
 
 import clingo
