@@ -30,6 +30,7 @@ jobs:
     - name: smoke test production install
       run: |
         python -m pip install .
+        python -m clingo --enable-python .github/ci/enable_python_smoke.lp
 
     - name: run pre-commit
       if: ${{ matrix.os == 'ubuntu-latest' }}
