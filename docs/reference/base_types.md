@@ -88,7 +88,7 @@ value(name, val(none, none))
 | `eq` | Equality | ([none] \| T, [none] \| T) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
 | `neq` | Inequality | ([none] \| T, [none] \| T) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 | **Logical** | | | |
-| `limp` | Implication | ([none] \| [bool], [none] \| [bool]) $\to$ [bool] \| [none] | Returns the usual boolean implication result when both inputs are boolean. If a required operand is `none`, the result is `none`. |
+| `limp` | Implication | ([none] \| [bool], [none] \| [bool]) $\to$ [bool] \| [none] | `true` if the first argument is `false` or the second is `true`. Evaluates to `false` if `true` implies `false`, and `none` otherwise. |
 | **Negation** | | | |
 | `lnot` | Classical Negation | ([none]) $\to$ [none] | The negation of `none` is still `none`. |
 
@@ -118,7 +118,7 @@ value(name, val(bool, false))
 | **Logical** | | | |
 | `conj` | Conjunction | ([bool]\*) $\to$ [bool] | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
 | `disj` | Disjunction | ([bool]\*) $\to$ [bool] | `true` if *at least one* argument in the list is true. |
-| `limp` | Implication | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] \| [none] | `false` only if the first argument is `true` and the second is `false`. It returns `true` for the other boolean cases and `none` for partial-value cases. |
+| `limp` | Implication | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] \| [none] | `true` if the first argument is `false` or the second is `true`. Evaluates to `false` if `true` implies `false`, and `none` otherwise. |
 | `lxor` | Exclusive OR | ([bool]\*) $\to$ [bool]  | `true` if an **odd** number of arguments are `true`. |
 | `leqv` | Equivalence | ([bool]\*) $\to$ [bool]  | `true` if an **even** number of arguments are `true`. |
 | **Negation** | | | |
