@@ -4,7 +4,7 @@ _expression_query((),operation(OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
 _expression_query((),E) :- variable_define(LBL,X,E).
-_expression_query((),E) :- _passed(sugar,variable_domain(LBL,X,E)).
+_expression_query((),E) :- variable_domain(LBL,X,E).
 
 _expression_query((),E) :- set_assign(LBL,X,E).
 _expression_query((),E) :- set_baseDomain(LBL,X,E).
