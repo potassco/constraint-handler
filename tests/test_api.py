@@ -49,28 +49,28 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
 def test_prop():
     constraint_expr = """
     variable_define(assign_bike_frame_size, bike_frame_size, val(int,26)).
-    variable_define(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(str,"Mountain"), (val(str,"Road"), ()))))).
+    variable_define(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(string,"Mountain"), (val(string,"Road"), ()))))).
     #show value/2.
     """
 
     for solution in get_solutions(constraint_expr, True):
         assert solution == {
             "value(bike_frame_size,val(int,26))",
-            'value(bike_frame_type,val(str,"Mountain"))',
+            'value(bike_frame_type,val(string,"Mountain"))',
         }
 
 
 def test_noprop():
     constraint_expr = """
     variable_define(assign_bike_frame_size, bike_frame_size, val(int,26)).
-    variable_define(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(str,"Mountain"), (val(str,"Road"), ()))))).
+    variable_define(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(string,"Mountain"), (val(string,"Road"), ()))))).
     #show value/2.
     """
 
     for solution in get_solutions(constraint_expr):
         assert solution == {
             "value(bike_frame_size,val(int,26))",
-            'value(bike_frame_type,val(str,"Mountain"))',
+            'value(bike_frame_type,val(string,"Mountain"))',
         }
 
 

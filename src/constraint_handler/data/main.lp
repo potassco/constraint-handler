@@ -25,7 +25,7 @@ engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), _labe
 
 value(X,V) :- _se_value(variable(X),V).
 
-representation((bool;int;str;float;symbol;none),extensional).
+representation((bool;int;string;float;symbol;none),extensional).
 
 :- _warning(KIND,INFO,MSG), forbid_warning(NAME,KIND), not ignore_warning(KIND).
 warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not ignore_warning(KIND).

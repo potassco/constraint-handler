@@ -63,7 +63,7 @@ LINKS = {
     "Int": "reference/base_types.md#int",
     "Bool": "reference/base_types.md#bool",
     "Float": "reference/base_types.md#float",
-    "Str": "reference/base_types.md#str",
+    "String": "reference/base_types.md#string",
     "Symbol": "reference/base_types.md#symbol",
     # Collections
     "Collection": "reference/collections.md",

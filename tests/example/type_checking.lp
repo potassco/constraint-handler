@@ -9,8 +9,8 @@ variable_declare(v(int), fromFacts).
 variable_domain(v(int), val(int,3)).
 variable_declare(v(float), fromFacts).
 variable_domain(v(float), val(float,float("3.14"))).
-variable_declare(v(str), fromFacts).
-variable_domain(v(str), val(str, "some_string")).
+variable_declare(v(string), fromFacts).
+variable_domain(v(string), val(string, "some_string")).
 variable_declare(v(bool), boolDomain).
 variable_declare(v(symbol), fromFacts).
 variable_domain(v(symbol), val(symbol, some_symbol)).
@@ -99,13 +99,13 @@ variable_define(check(OP, float), EXPR) :-
     EXPR = operation(OP, (variable(v(float)),())),
     OP = (abs;minus;floor).
 
-%%%%%%%%%%%%%%%%% str
-variable_define(check(OP, str), EXPR) :-
-    EXPR = operation(OP, (variable(v(str)),(variable(v(str)),()))),
+%%%%%%%%%%%%%%%%% string
+variable_define(check(OP, string), EXPR) :-
+    EXPR = operation(OP, (variable(v(string)),(variable(v(string)),()))),
     OP = (eq;neq;concat).
 
-variable_define(check(OP, str), EXPR) :-
-    EXPR = operation(OP, (variable(v(str)),())),
+variable_define(check(OP, string), EXPR) :-
+    EXPR = operation(OP, (variable(v(string)),())),
     OP = length.
 
 %%%%%%%%%%%%%%%%% symbol
@@ -148,7 +148,7 @@ variable_define(check(OP, multimap), EXPR) :-
 variable_define(check(multimap_make_empty), operation(multimap_make, ())).
 variable_define(check(multimap_make), MAP) :-
     MAP = operation(multimap_make, (ITEM1,(ITEM2,(ITEM3,())))),
-    KEY = variable(v(str)),
+    KEY = variable(v(string)),
     ITEM1 = (KEY, variable(v(int))),
     ITEM2 = (KEY, variable(v(float))),
     KEY2 = variable(v(symbol)),
@@ -165,7 +165,7 @@ variable_define(check(OP, T), EXPR) :-
 variable_define(check(length_find_multimap_make), operation(length, (SET,()))) :-
     SET = operation(find,(KEY,(MAP,()))),
     MAP = operation(multimap_make, (ITEM1,(ITEM2,(ITEM3,())))),
-    KEY = variable(v(str)),
+    KEY = variable(v(string)),
     ITEM1 = (KEY, variable(v(int))),
     ITEM2 = (KEY, variable(v(float))),
     KEY2 = variable(v(symbol)),
@@ -179,12 +179,12 @@ variable_define(check(length_find_multimap_make), operation(length, (SET,()))) :
 variable_define(check(OP, non_numeric), EXPR) :-
     EXPR = operation(OP, (ARG1,(ARG2,()))),
     OP = (add;mult),
-    ARG1 = variable(v(str)),
+    ARG1 = variable(v(string)),
     ARG2 = variable(v(bool)).
 
 % Implication for non none / bool
 variable_define(check(OP, non_none_bool), EXPR) :-
     EXPR = operation(OP, (ARG1,(ARG2,()))),
     OP = limp,
-    ARG1 = variable(v(str)),
+    ARG1 = variable(v(string)),
     ARG2 = variable(v(int)).

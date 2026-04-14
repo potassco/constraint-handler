@@ -1309,7 +1309,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol | Bad
     ):
         """
-        Add atoms for a variable (bool/int/float/str/symbol) to the python model.
+        Add atoms for a variable (bool/int/float/string/symbol) to the python model.
 
         Args:
             var: Variable symbol.

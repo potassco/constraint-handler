@@ -1,6 +1,6 @@
 %%% raises warning(variable(undeclared),(),a) etc.
-multimap_assign(a,val(str,"hello"),val(int,0)).
-set_assign(b,val(str,"good bye")).
+multimap_assign(a,val(string,"hello"),val(int,0)).
+set_assign(b,val(string,"good bye")).
 variable_domain(c,val(symbol,(red;green;blue))).
 variable_domain(d,val(int,0..5)).
 

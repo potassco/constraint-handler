@@ -3,12 +3,12 @@ preference_maximizeScore.
 label(a;b).
 word("over";"take").
 variable_declare(X,fromFacts) :- label(X).
-variable_domain(X,val(str,W)) :- label(X), word(W).
+variable_domain(X,val(string,W)) :- label(X), word(W).
 variable_define(compound,STR) :- STR = operation(concat,(variable(a),(variable(b),()))).
 
 preference_holds(operation(neq,(variable(a),(variable(b),())))).
 
-evaluate(disj,(operation(eq,(variable(compound),(val(str,"takeover"),()))),(operation(eq,(variable(compound),(val(str,"overtake"),()))),()))).
+evaluate(disj,(operation(eq,(variable(compound),(val(string,"takeover"),()))),(operation(eq,(variable(compound),(val(string,"overtake"),()))),()))).
 
 variable_declare(X,fromFacts) :- vertex(X).
 variable_domain(X,val(symbol,C)) :- vertex(X), color(C).

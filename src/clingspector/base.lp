@@ -64,7 +64,7 @@ cs__depend(X,Y) :- cs__depend(X,Z), cs__depend(Z,Y).
 %
 % Types
 %
-cs__base_type(int; float; str; symbol; bool).
+cs__base_type(int; float; string; symbol; bool).
 cs__type(T) :- cs__base_type(T).
 
 %
@@ -102,10 +102,10 @@ cs__valid_operation(O, (float, ()), float) :- cs__unary_operator(O).
 cs__valid_operation(O, (float, (float, ())), float) :- cs__binary_operator(O).
 cs__valid_operation(O, (float, (float, ())), bool) :- cs__comparison_operator(O).
 
-% Valid operations for str
-cs__valid_operation((eq;neq), (str, ()), bool).
-cs__valid_operation(length, (str, ()), int).
-cs__valid_operation(concat, (str, (str, ())), str).
+% Valid operations for string
+cs__valid_operation((eq;neq), (string, ()), bool).
+cs__valid_operation(length, (string, ()), int).
+cs__valid_operation(concat, (string, (string, ())), string).
 
 % Valid operations for set
 cs__valid_operation(set_make, (T, ()), set) :- cs__type(T).

@@ -1,6 +1,6 @@
 value(b,val(bool,true))
 value(i,val(int,42))
 value(y,val(int,85))
-value(s,val(str,"foo"))
-value(x,val(str,"foo"))
+value(s,val(string,"foo"))
+value(x,val(string,"foo"))
 value(f,val(float,float("47.1")))

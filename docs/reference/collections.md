@@ -24,7 +24,7 @@ where `A` is a type variable representing the type of elements contained in the 
 
     ```prolog
     set[int]
-    set[str]
+    set[string]
     ```
 
     represent sets containing only integers and strings, respectively.
@@ -326,18 +326,18 @@ multimap_value(Name, Key, Value)
 
     ```prolog
     multimap_declare(my_map).
-    multimap_assign(my_map, val(int, 1), val(str, "one")).
-    multimap_assign(my_map, val(int, 2), val(str, "two")).
-    multimap_assign(my_map, val(int, 1), val(str, "uno")).
+    multimap_assign(my_map, val(int, 1), val(string, "one")).
+    multimap_assign(my_map, val(int, 2), val(string, "two")).
+    multimap_assign(my_map, val(int, 1), val(string, "uno")).
     ```
 
     This results in the following output atoms:
 
     ```prolog
     value(my_map,val(multimap,variable(my_map)))
-    multimap_value(my_map, val(int,1), val(str,"one"))
-    multimap_value(my_map, val(int,1), val(str,"uno"))
-    multimap_value(my_map, val(int,2), val(str,"two"))
+    multimap_value(my_map, val(int,1), val(string,"one"))
+    multimap_value(my_map, val(int,1), val(string,"uno"))
+    multimap_value(my_map, val(int,2), val(string,"two"))
     ```
 
 ### Make
@@ -347,16 +347,16 @@ Just like for sets, the constraint handler provides a `multimap_make` operator t
     To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimap_make`, you would use the following code:
 
     ```prolog
-    variable_define(my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
+    variable_define(my_map, operation(multimap_make, ((val(int, 1), val(string, "one")), ((val(int, 2), val(string, "two")), ((val(int, 1), val(string, "uno")), ()))))).
     ```
 
     This results in the following output atoms:
 
     ```prolog
-    value(my_map, val(multimap, ref(operation(multimap_make,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),())))))))
-    multimap_value(my_map,val(int,1),val(str,"one"))
-    multimap_value(my_map,val(int,1),val(str,"uno"))
-    multimap_value(my_map,val(int,2),val(str,"two"))
+    value(my_map, val(multimap, ref(operation(multimap_make,((val(int,1),val(string,"one")),((val(int,2),val(string,"two")),((val(int,1),val(string,"uno")),())))))))
+    multimap_value(my_map,val(int,1),val(string,"one"))
+    multimap_value(my_map,val(int,1),val(string,"uno"))
+    multimap_value(my_map,val(int,2),val(string,"two"))
     ```
 
 ### Supported Operators

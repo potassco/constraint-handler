@@ -51,7 +51,7 @@ _warning(variable(undeclared),(),(SCOPE,X)) :- _variable_query(SCOPE,X), not _va
 _variable_confusingName((assert;assign;if;noop;statement_python;seq2;while),keyword). % statement
 _variable_confusingName((lambda;operation;python;val;variable),keyword). % expression
 _variable_confusingName((boolDomain;fromFacts;fromList),keyword). % domain
-_variable_confusingName((none;bool;int;float;str;symbol;set;multimap),type).
+_variable_confusingName((none;bool;int;float;string;symbol;set;multimap),type).
 _variable_confusingName(O,operator) :- operator_declare(O,INS,OUT).
 
 _warning(variable(confusingName),(),((SCOPE,X),REASON)) :- _variable_exists(SCOPE,X), _variable_confusingName(BAD,REASON), (function,BAD,N,ARGS)=@pythonReify(X).

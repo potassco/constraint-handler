@@ -13,7 +13,9 @@ import constraint_handler.myClorm as myClorm
 import constraint_handler.set as myset
 import constraint_handler.utils.common as common
 
-BaseType = common.PPEnum("BaseType", ["int", "float", "str", "symbol", "bool", "none", "function", "multimap", "set"])
+BaseType = common.PPEnum(
+    "BaseType", ["int", "float", "string", "symbol", "bool", "none", "function", "multimap", "set"]
+)
 
 EqOperator = common.PPEnum("EqOperator", ["eq", "neq"])
 StringOperator = common.PPEnum("StringOperator", ["concat", "length"])

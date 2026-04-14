@@ -258,35 +258,35 @@ value(name, val(float, float("-0.001")))
 
 ---
 
-## Str
+## String
 Strings are used to represent text-based data. They support concatenation and comparison operations.
 
 ### Definition
 ```prolog
-val(str, "Hello, World!")
-val(str, "Constraint Handling")
+val(string, "Hello, World!")
+val(string, "Constraint Handling")
 ```
 
 ### Output
 ```prolog
-value(name, val(str, "Hello, World!"))
-value(name, val(str, "Constraint Handling"))
+value(name, val(string, "Hello, World!"))
+value(name, val(string, "Constraint Handling"))
 ```
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Manipulation** | | | |
-| `concat` | Concatenation | ([str], [str]) $\to$ [str] | Joins two strings together. |
-| `length` | Length | ([str]) $\to$ [int] | Returns the number of characters in the string. |
+| `concat` | Concatenation | ([string], [string]) $\to$ [string] | Joins two strings together. |
+| `length` | Length | ([string]) $\to$ [int] | Returns the number of characters in the string. |
 | **Comparison** | | | |
-| `eq` | Equality | ([str] \| [none], [str] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([str] \| [none], [str] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
+| `eq` | Equality | ([string] \| [none], [string] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([string] \| [none], [string] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 
 !!! Example
     Concatenating a prefix to a name.
     ```prolog
-    variable_define(prefix, val(str, "var_")).
-    variable_define(suffix, val(str, "x")).
+    variable_define(prefix, val(string, "var_")).
+    variable_define(suffix, val(string, "x")).
     variable_define(full_name, operation(concat, (variable(prefix), (variable(suffix), ())))).
     ```
 

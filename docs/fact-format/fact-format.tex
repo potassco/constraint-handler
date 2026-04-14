@@ -4,18 +4,18 @@
 \begin{grammar}
 
 <type> ::=
-~\alt `bool' | `float' | `int' | `none' | `str' | `symbol'
+~\alt `bool' | `float' | `int' | `none' | `string' | `symbol'
 \alt `function' | `set' | `multimap'
 
 <bool> ::= `true' | `false'
 
 <int> ::= any integer literal
 
-<str> ::= any string literal (enclosed in quotes)
+<string> ::= any string literal (enclosed in quotes)
 
 <name> ::= any suitable string
 
-<term> ::= <int> | <str> | <symbol>
+<term> ::= <int> | <string> | <symbol>
 
 <terms> ::= <term> | <term> `,' <terms>
 
@@ -23,7 +23,7 @@
 
 <term-list> ::= `(' `)' | `(' <term> `,' <term-list> `)'
 
-%<constant> ::= `bool' `(' <bool> `)' \alt `int' `(' <int> `)' \alt `float' `(' <str> `)' \alt `str `(' <str> `)' \alt `symbol `(' <term> `)'
+%<constant> ::= `bool' `(' <bool> `)' \alt `int' `(' <int> `)' \alt `float' `(' <string> `)' \alt `string `(' <string> `)' \alt `symbol `(' <term> `)'
 
 \end{grammar}
 
@@ -33,7 +33,7 @@
 <val> ::= `bad' | `val' `(' <type> `,' <term> `)'
 
 <operator> ::=
-~\alt `python' `(' <str> `)'
+~\alt `python' `(' <string> `)'
 \alt <lambda-expr>
 \alt <variable>
 \alt <bool-operator>
@@ -100,7 +100,7 @@
 \alt `assign' `(' <term> `,' <expression> `)'
 \alt `if' `(' <expression> `,' <statement> `,' <statement> `)'
 \alt `noop'
-\alt `statement_python' `(' <str> `)'
+\alt `statement_python' `(' <string> `)'
 \alt `seq2' `(' <statement> `,' <statement> `)'
 \alt `while' `(' <int> `,' <expression> `,' <statement> `)'
 \end{grammar}

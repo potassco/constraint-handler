@@ -6,18 +6,18 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 ```ebnf
 <type> ::=
-    | "bool" | "float" | "int" | "none" | "str" | "symbol"
+    | "bool" | "float" | "int" | "none" | "string" | "symbol"
     | "function" | "set" | "multimap"
 
 <bool> ::= "true" | "false"
 
 <int> ::= any integer literal
 
-<str> ::= any string literal (enclosed in quotes)
+<string> ::= any string literal (enclosed in quotes)
 
 <name> ::= any suitable string
 
-<term> ::= <int> | <str> | <symbol>
+<term> ::= <int> | <string> | <symbol>
 
 <terms> ::= <term> | <term> "," <terms>
 
@@ -32,7 +32,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 <val> ::= "bad" | "val" "(" <type> "," <term> ")"
 
 <operator> ::=
-    | "python" "(" <str> ")"
+    | "python" "(" <string> ")"
     | <lambda-expr>
     | <variable>
     | <bool-operator>
@@ -97,7 +97,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "assign" "(" <term> "," <expression> ")"
     | "if" "(" <expression> "," <statement> "," <statement> ")"
     | "noop"
-    | "statement_python" "(" <str> ")"
+    | "statement_python" "(" <string> ")"
     | "seq2" "(" <statement> "," <statement> ")"
     | "while" "(" <int> "," <expression> "," <statement> ")"
 ```
