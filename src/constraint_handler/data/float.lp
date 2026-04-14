@@ -1,5 +1,5 @@
 intToFloatOperator(sqrt;cos;sin;tan;acos;asin;atan).
-floatUnOperator(abs;sqrt;cos;sin;tan;acos;asin;atan;minus;floor).
+floatUnOperator(abs;sqrt;cos;sin;tan;acos;asin;atan;minus;ceil;floor).
 floatFloatFloatOperator(add;sub;mult;float_div;pow;max;min).
 floatBinOperator(OP) :- floatFloatFloatOperator(OP).
 floatBinOperator(int_div;leq;lt;geq;gt).
@@ -7,6 +7,7 @@ floatBinOperator(int_div;leq;lt;geq;gt).
 operator_declare_variadic((add;mult),float,float,2).
 operator_declare(OP,((int;float),()),float) :- intToFloatOperator(OP).
 operator_declare((abs;minus),(float,()),float).
+operator_declare(ceil,(float,()),int).
 operator_declare(floor,(float,()),int).
 operator_declare(OP,(T1,(T2,())),float) :- T1 = (int;float),T2 = (int;float), (T1,T2) != (int,int), floatFloatFloatOperator(OP).
 operator_declare(float_div,(int,(int,())),float).
