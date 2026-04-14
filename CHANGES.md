@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- Support `ceil` operator in compile engine and add corresponding test.
 - Support non-fact `variable_domain` declarations in the propagator engine.
 
 ## v0.0.2.dev5
