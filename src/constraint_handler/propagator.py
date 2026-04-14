@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import operator
 import sys
+from lib2to3.pgen2.token import OP
 from typing import Any, Iterable, Literal, Sequence, cast
 
 import clingo
@@ -109,6 +110,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.previously_stage_2: bool = False
 
         self.optimization_stage_lits: dict[Literal[1, 2], int] = {1: -1, 2: -1}
+        self.optimal_models_wanted: int = 0
+        self.optimal_models_found: int = 0
         self.nogood_queue: list[Iterable[int]] = []
 
         self.forbidden_warnings: dict[warning.Kind, int] = {}
@@ -137,8 +140,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         myprint(f"Propagator reasoning mode set to {self.reasoning_mode}")
 
-        ctl.configuration.solver.heuristic = "Domain"  # ty:ignore[invalid-assignment]
-        ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
+        if ctl.configuration.solve.opt_mode == "optN":
+            self.optimal_models_wanted: int = int(ctl.configuration.solve.models)  # ty:ignore[unresolved-attribute]
+            ctl.configuration.solve.models = 0  # ty:ignore[invalid-assignment]
+            ctl.configuration.solver.heuristic = "Domain"  # ty:ignore[invalid-assignment]
+            ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
 
     def init(self, init: clingo.PropagateInit) -> None:
         """
@@ -1238,6 +1244,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"= {clAtom}")
             if not model.contains(clAtom):
                 model.extend([clAtom])
+
+        if self.using_optimization:
+            if clingo.Function(OPTIMIZATION_STAGE_ATOM, [clingo.Number(2)]) in model.symbols(atoms=True):
+                self.optimal_models_found += 1
+            if self.optimal_models_wanted > 0 and self.optimal_models_found >= self.optimal_models_wanted:
+                # Stop search once the desired number of optimal models is found by adding an empty clause to make the program unsat
+                model.context.add_clause([])
 
     def handle_on_model_value(self, var: clingo.Symbol, final_value: Any):
         """
