@@ -53,7 +53,7 @@ def get_baseType(v):
     if isinstance(v, float):
         return BaseType.float
     elif isinstance(v, str):
-        return BaseType.str
+        return BaseType.string
     elif isinstance(v, bool):
         return BaseType.bool
     elif isinstance(v, int):
@@ -74,7 +74,7 @@ def reducedExpr(v):
     if isinstance(v, float):
         return expression.Val(BaseType.float, v)
     elif isinstance(v, str):
-        return expression.Val(BaseType.str, v)
+        return expression.Val(BaseType.string, v)
     elif isinstance(v, bool):
         return expression.Val(BaseType.bool, v)
     elif isinstance(v, int):

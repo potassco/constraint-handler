@@ -24,7 +24,7 @@ where `A` is a type variable representing the type of elements contained in the 
 
     ```prolog
     set[int]
-    set[str]
+    set[string]
     ```
 
     represent sets containing only integers and strings, respectively.
@@ -71,7 +71,7 @@ To declare a new set, use the `set_declare/1` predicate:
 
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 set_declare(Name).
@@ -88,7 +88,7 @@ set_declare(Name).
 
 This, just like in the case of [Variables], adds an atom of `value/2` to the model. Here, the value is a reference to the set.
 ```prolog
-value(set_name, val(set, ref(variable(set_name))))
+value(set_name, ref(set, variable(set_name)))
 ```
 
 ### Assign
@@ -96,7 +96,7 @@ value(set_name, val(set, ref(variable(set_name))))
 To add elements to a set, use the `set_assign/2` predicate:
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 set_assign(Name, Value).
@@ -128,7 +128,7 @@ To declare a set and specify a base domain of candidate values from which elemen
 
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 set_declare(Name).
@@ -149,7 +149,7 @@ Each `set_baseDomain/2` fact introduces one candidate value. The solver may incl
     set_declare(my_set).
     set_baseDomain(my_set,val(int,1..2)).
     set_assign(my_set,val(int,3)).
-    ensure(e1,operation(isin,(val(int,1),(variable(my_set),())))).
+    ensure(e1,operation(set_isin,(val(int,1),(variable(my_set),())))).
     ```
 
     This always produces (among other atoms):
@@ -175,7 +175,7 @@ The constraint handler provides a `set_make` operator to create sets directly wi
     This results in the following output atoms:
 
     ```prolog
-    value(my_set, val(set, ref(set_make((val(int,1),(val(int,3),(val(int,5),())))))))
+    value(my_set, ref(set, operation(set_make,(val(int,1),(val(int,3),(val(int,5),()))))))
     set_value(my_set, val(int, 1))
     set_value(my_set, val(int, 3))
     set_value(my_set, val(int, 5))
@@ -194,8 +194,8 @@ Once a set is created (either via declaration or returned from another operation
 | `diff` | Difference | ([set], [set]) $\to$ [set] | Returns a new set containing elements of the first set that are not in the second set. |
 | `subset` | Subset | ([set], [set]) $\to$ [bool] | `true` if first set is a subset of the second. |
 | **Membership** | | | |
-| `isin` | Is In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is contained in the set. |
-| `notin` | Not In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is NOT contained in the set. |
+| `set_isin` | Is In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is contained in the set. |
+| `set_notin` | Not In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is NOT contained in the set. |
 | **Analysis** | | | |
 | `length` | Cardinality | ([set]) $\to$ [int] | Returns the number of elements in the set. |
 | `set_fold` | Fold | ((A,B) $\to$ B, [set]\([A]\), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
@@ -258,7 +258,7 @@ Once a set is created (either via declaration or returned from another operation
 ---
 
 ## Multimap
-Multimaps are collections that associate keys with values. Unlike standard maps or dictionaries, where a single key is associated with a single value, multimaps associate a each key to a set of values.
+Multimaps are collections that associate keys with values. Unlike standard maps or dictionaries, where a single key is associated with a single value, multimaps associate each key to a set of values.
 
 ### Declare
 
@@ -266,7 +266,7 @@ To declare a new multimap manually, use the `multimap_declare/1` predicate.
 
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 multimap_declare(Name).
@@ -282,7 +282,7 @@ multimap_declare(Name).
 
 This, just like in the case of [Variables], adds an atom of `value/2` to the model. Here, the value is the identifier of the multimap.
 ```prolog
-value(Name, val(multimap, Name)).
+value(Name, val(multimap, variable(Name))).
 ```
 
 ### Assign
@@ -290,7 +290,7 @@ value(Name, val(multimap, Name)).
 To add key-value pairs to a multimap, use the `multimap_assign/3` predicate:
 #### Input
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 multimap_assign(Name, Key, Value).
@@ -309,7 +309,7 @@ multimap_assign(Name, Key, Value).
 
 **[Result]**{.badge .result }
 
-Assigning a key-value pair to a multimap adds an atom of `multimap_value/5` to the model.
+Assigning a key-value pair to a multimap adds an atom of `multimap_value/3` to the model.
 
 ```prolog
 multimap_value(Name, Key, Value)
@@ -326,18 +326,18 @@ multimap_value(Name, Key, Value)
 
     ```prolog
     multimap_declare(my_map).
-    multimap_assign(my_map, val(int, 1), val(str, "one")).
-    multimap_assign(my_map, val(int, 2), val(str, "two")).
-    multimap_assign(my_map, val(int, 1), val(str, "uno")).
+    multimap_assign(my_map, val(int, 1), val(string, "one")).
+    multimap_assign(my_map, val(int, 2), val(string, "two")).
+    multimap_assign(my_map, val(int, 1), val(string, "uno")).
     ```
 
     This results in the following output atoms:
 
     ```prolog
-    value(my_map,val(multimap,my_map))
-    multimap_value(my_map, val(int,1), val(str,"one"))
-    multimap_value(my_map, val(int,1), val(str,"uno"))
-    multimap_value(my_map, val(int,2), val(str,"two"))
+    value(my_map,val(multimap,variable(my_map)))
+    multimap_value(my_map, val(int,1), val(string,"one"))
+    multimap_value(my_map, val(int,1), val(string,"uno"))
+    multimap_value(my_map, val(int,2), val(string,"two"))
     ```
 
 ### Make
@@ -347,16 +347,16 @@ Just like for sets, the constraint handler provides a `multimap_make` operator t
     To create the same multimap `my_map` and add the key-value pairs `(1, "one")`, `(2, "two")` and `(1, "uno")` to it using `multimap_make`, you would use the following code:
 
     ```prolog
-    variable_define(my_map, operation(multimap_make, ((val(int, 1), val(str, "one")), ((val(int, 2), val(str, "two")), ((val(int, 1), val(str, "uno")), ()))))).
+    variable_define(my_map, operation(multimap_make, ((val(int, 1), val(string, "one")), ((val(int, 2), val(string, "two")), ((val(int, 1), val(string, "uno")), ()))))).
     ```
 
     This results in the following output atoms:
 
     ```prolog
-    value(my_map, val(multimap, ref(operation(multimap_make,((val(int,1),val(str,"one")),((val(int,2),val(str,"two")),((val(int,1),val(str,"uno")),())))))))
-    multimap_value(my_map,val(int,1),val(str,"one"))
-    multimap_value(my_map,val(int,1),val(str,"uno"))
-    multimap_value(my_map,val(int,2),val(str,"two"))
+    value(my_map, val(multimap, ref(operation(multimap_make,((val(int,1),val(string,"one")),((val(int,2),val(string,"two")),((val(int,1),val(string,"uno")),())))))))
+    multimap_value(my_map,val(int,1),val(string,"one"))
+    multimap_value(my_map,val(int,1),val(string,"uno"))
+    multimap_value(my_map,val(int,2),val(string,"two"))
     ```
 
 ### Supported Operators
@@ -374,9 +374,9 @@ can be used in expressions.
 | `maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ V | Returns the maximum value stored in the map (by value, not key). |
 | `minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ V | Returns the minimum value stored in the map. |
 | **Operations** | | | |
-| `find` | Find | (K, [multimap]\[K, V\]) $\to$ [list]\[V\] | Retrieves the list of value(s) associated with a specific key. |
-| `isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
-| `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all entries in the multimap, applies a function to each value and accumulates the result. |
+| `find` | Find | (K, [multimap]\[K, V\]) $\to$ [set]\[V\] | Retrieves the set of value(s) associated with a specific key. |
+| `multimap_isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
+| `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all values in the multimap, applies a function to each value and accumulates the result. |
 | **Comparison** | | | |
 | `eq` | Equality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
 | `neq` | Inequality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
@@ -386,11 +386,11 @@ can be used in expressions.
 
     The operator requires three arguments:
 
-    1. A function with signature `(A,B) -> B` that takes an entry of the multimap and an accumulator of type `B`, and returns a new accumulator of type `B`.
-    2. A multimap of entries of type `(K,V)` to iterate over.
+    1. A function with signature `(V,B) -> B` that takes a value from the multimap and an accumulator of type `B`, and returns a new accumulator of type `B`.
+    2. A multimap with values of type `V` to iterate over.
     3. An initial value for the accumulator of type `B`.
 
-    The fold operator will then iterate over each entry in the multimap, applying the function to the current entry and the accumulator, updating the accumulator with the result. After all entries have been processed, the final value of the accumulator is returned.
+    The fold operator will then iterate over each value stored in the multimap, applying the function to the current value and the accumulator, updating the accumulator with the result. After all values have been processed, the final value of the accumulator is returned.
 
     Because all values in a multimap are stored in sets, the `multimap_fold` operator can be seen as a combination of `find` and `set_fold`. First, `find` retrieves all values associated with each key, and then `set_fold` is applied to these values.
 

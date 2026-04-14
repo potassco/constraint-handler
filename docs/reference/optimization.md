@@ -4,24 +4,36 @@ This page documents the native optimization capabilities of the constraint handl
 
 ## Maximize Sum
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum/3` predicate.
+The optimization module supports maximizing the sum of a set of [Expressions]. This is done using the `optimize_maximizeSum` predicate, which is available in multiple forms.
+
+The predicate is available in the following forms:
 
 ```prolog
-optimize_maximizeSum(Expression, Key, Priority)
+optimize_maximizeSum(Expression, Id).
+optimize_maximizeSum(Expression, Id, Priority).
+optimize_maximizeSum(Label, Expression, Id, Priority).
+```
+
+The shorter forms are shorthands. The `optimize_maximizeSum/2` form uses priority `0`, and the `optimize_maximizeSum/3` form uses an anonymous [Label].
+
+```prolog
+optimize_maximizeSum(Expression, Id, Priority)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Expression` | The expression whose value is used in the maximization. |
-| `Key` | The key under which the value of the expression is used in the maximization. |
+| `Id` | Identifier for one optimization contribution. For a single aggregate value, a fixed identifier like `total` is sufficient. For multiple contributions, this is typically the item or variable identifier. |
 | `Priority` | The priority level for this optimization criterion. Higher priorities are optimized first. |
+
+If you need to address a specific optimization declaration via [requestEngine] or want it to appear with an explicit label in warnings, use the `optimize_maximizeSum/4` form with a leading [Label].
 
 
 ### Single Value
 
-When wanting to optimize over a single value, the result could be captured in a [Variable] which is then optimized using the `optimize_maximizeSum/3` predicate directly. Here, single value doesn't mean the result has to be based on a single variable, just that the result can be captured in a single [Expression].
+When wanting to optimize over a single value, the result could be captured in a [Variable] which is then optimized using the `optimize_maximizeSum/2` or `optimize_maximizeSum/3` predicate directly. Here, single value doesn't mean the result has to be based on a single variable, just that the result can be captured in a single [Expression].
 
 !!! Example "Example 1: Optimization Over a Single Variable"
     Consider a program that defines the variables `x` with a single value between `1` and `10`.
@@ -63,7 +75,7 @@ When wanting to optimize over a single value, the result could be captured in a 
     ```
 ### Multiple Values
 
-Sometimes, the exact number of [Variables] is unknown or represents the optimization taget itself. In these cases, the optimization can be expressed using multimaps to capture all [Values] that should be optimized over.
+Sometimes, the exact number of [Variables] is unknown or represents the optimization target itself. In these cases, the optimization can be expressed using multimaps to capture all [Values] that should be optimized over.
 
 !!! Example "Example 3: Optimization Over Multiple Values"
     Consider a program that defines some items as follows:
@@ -87,7 +99,7 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     ```prolog
     optimize_maximizeSum(EXPR,X,0) :- item(X,V),
         ITEM = val(symbol,X),
-        COND = operation(isin,(ITEM,(variable(taken),()))),
+        COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
         VALU = val(int,V),
         EXPR = operation(if,(COND,(VALU,()))).
     ```
@@ -95,8 +107,8 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     The result will be the model where items `a` and `b` are taken, maximizing the sum to `6`.
 
     ```prolog
-    multimap_value(taken,symbol,a,int,2)
-    multimap_value(taken,symbol,b,int,4)
+    multimap_value(taken,val(symbol,a),val(int,2))
+    multimap_value(taken,val(symbol,b),val(int,4))
     ```
 
 !!! Example "Example 4: Optimization with Priorities"
@@ -115,16 +127,26 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     % Maximize value with priority 1 (higher priority)
     optimize_maximizeSum(EXPR,X,1) :- item(X,W,V),
         ITEM = val(symbol,X),
-        COND = operation(isin,(ITEM,(variable(taken),()))),
+        COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
         VALU = val(int,V),
         EXPR = operation(if,(COND,(VALU,()))).
 
     % Minimize weight with priority 0 (lower priority) by maximizing negative weight
     optimize_maximizeSum(EXPR,X,0) :- item(X,W,V),
         ITEM = val(symbol,X),
-        COND = operation(isin,(ITEM,(variable(taken),()))),
+        COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
         WGHT = val(int,-W),  % Negate weight to minimize it
         EXPR = operation(if,(COND,(WGHT,()))).
+
+    variable_define(carried,EXPR) :-
+        EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),
+        MAP  = variable(taken),
+        ACCU = variable(accu),
+        STAR = val(int,0),
+        VARS = (w,(accu,())),
+        WEIG = variable(w),
+        PLUS = operation(add,(WEIG,(ACCU,()))),
+        LAMB = lambda(VARS,PLUS).
 
     ensure(operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
     ```
@@ -133,8 +155,8 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     This corresponds to the model where items `a` and `c` are taken.
 
     ```prolog
-    multimap_value(taken,symbol,a,int,6)
-    multimap_value(taken,symbol,c,int,4)
+    multimap_value(taken,val(symbol,a),val(int,6))
+    multimap_value(taken,val(symbol,c),val(int,4))
     ```
 ---
 

@@ -58,12 +58,12 @@ Lists are represented as recursive tuples. More precisely, a list is either the 
     ```
 
 ### Labels
-Many [Declarations] in the constraint handler support an optional leading argument called a **Label**.
+[Declarations] marked with the banner **[Label Support]**{.badge .label-support } support an optional leading argument called a **Label**.
 
 - If you **omit** the label, the system will use an anonymous label internally.
 - If you **provide** a label, it can be used for engine selection via [requestEngine] and can identify the source of warnings that refer to declaration labels (see [warning]).
 
-In other words: if you do not use `requestEngine/2` and you do not rely on label provenance in warnings, you can omit labels everywhere for shorter encodings.
+In other words: if you do not use `requestEngine/2` and you do not rely on label provenance in warnings, you can omit labels on declarations that support them for shorter encodings.
 
 !!! Example
     A variable definition without a label:
@@ -138,9 +138,9 @@ value(Name, Value)
 
 ### Define
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-The simplest way to create variables is to use the `variable_define/3` predicate to define them with a specific value.
+The simplest way to create variables is to use the `variable_define/2` predicate to define them with a specific value.
 
 ```prolog
 variable_define(Name, Expression).
@@ -157,9 +157,9 @@ The result is a single `value/2` atom in the model.
 
 ### Declare
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-A more advanced technique is to declare variables using the `variable_declare/3` predicate. Instead of creating a single variable with a specific value, this declares possible values from a given set of possible values (domain).
+A more advanced technique is to declare variables using the `variable_declare/2` predicate. Instead of creating a single variable with a specific value, this declares possible values from a given set of possible values (domain).
 
 !!! Note
     While [Define](#define) creates a single `value/2` atom in all models. The [Declare](#declare) approach creates multiple models with different `value/2` atoms based on the domain.
@@ -297,7 +297,7 @@ variable_declareOptional(Name).
 
 While it is technically possible to use the `value/2` [Result] to work with the value of a variable, it is **not recommended** for defining logic. Instead, users are advised to use the `variable/1` function symbol within their [Expressions].
 
-This function symbol retreives the value stored in the specified variable.
+This function symbol retrieves the value stored in the specified variable.
 
 ```prolog
 variable(Name)
@@ -321,7 +321,7 @@ variable(Name)
 
 **[Expression]**{.badge .expression }
 
-Operations are the key aspect of the constraint handler that allow expressing arbitrary computations. To achieve this, the constraint handler uses the `operation/2` predicate together with a collection of operators.
+Operations are the key aspect of the constraint handler that allow expressing arbitrary computations. To achieve this, the constraint handler uses the `operation/2` function symbol together with a collection of operators.
 
 ```prolog
 operation(Operator, Terms).
@@ -390,9 +390,9 @@ In this case, one or more elements of the argument list will be entire `operatio
 
 ## Ensure
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-Ensures allow users to specify conditions that must hold true in the model. For this, the constraint handler provides the `ensure/2` predicate.
+Ensures allow users to specify conditions that must hold true in the model. For this, the constraint handler provides the `ensure/1` predicate.
 
 ```prolog
 ensure(Condition).

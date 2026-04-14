@@ -97,7 +97,7 @@ ignore_warning(WarningType)
 ---
 
 ## Forbid Warning
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 Users can also choose to forbid specific warnings using the `forbid_warning/1` predicate. This means that if a forbidden warning is encountered, it will be treated as a failed constraint.
 
@@ -116,10 +116,10 @@ forbid_warning(WarningType)
     To forbid warnings about variables with empty domains, you can use:
 
     ```prolog
-    forbid_warning(variable(confusingName)).
+    forbid_warning(variable(emptyDomain)).
     ```
 
-    This will cause any warning of the type `variable(confusingName)` to be treated as an error, and it will prevent the model from being generated if such a warning is encountered.
+    This will cause any warning of the type `variable(emptyDomain)` to be treated as an error, and it will prevent the model from being generated if such a warning is encountered.
 
 ---
 
@@ -135,7 +135,7 @@ The operations and executions that receive `bad` as an input can then choose how
     variable_define(y, val(int, 2)).
     variable_define(a, operation(add, (variable(y),(variable(y),(variable(y),()))))).
     variable_define(s, operation(sub, (variable(x),(variable(a),())))).
-    variable_define(d, operation(div, (variable(x),(variable(s),())))).
+    variable_define(d, operation(int_div, (variable(x),(variable(s),())))).
     variable_define(m, operation(mult, (variable(d),(variable(y),())))).
     ```
 
@@ -151,7 +151,7 @@ The operations and executions that receive `bad` as an input can then choose how
     value(s,val(int,0))
     value(d,bad)
     value(m,bad)
-    warning(expression(zeroDivisionError),(),(div,(val(int,6),(val(int,0),()))))
+    warning(expression(zeroDivisionError),(),(int_div,(val(int,6),(val(int,0),()))))
     ```
     It provides the values for `x`, `y`, `a`, and `s`, while indicating that `d` and `m` are `bad` due to the division by zero error, which is also reported as a warning.
 
@@ -178,25 +178,22 @@ warning(expression(pythonError), _, (Operator, Arguments, Message))
 This warning occurs when there is a syntax error in an [Expression].
 
 ```prolog
-warning(expression(syntaxError), _, Message)
+warning(expression(syntaxError), _, Expression)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Type` | `expression(syntaxError)` |
-| `Details` | A message describing the syntax error. |
+| `Details` | The malformed expression term. |
 
 !!! Example
     ```prolog
-    variable_define(a, val(str, "a")).
-    variable_define(b, val(str, "b")).
-    variable_define(c, val(str, "c")).
-    variable_define(x, operation(eq, (variable(a),(variable(b),(variable(c),()))))).
+    variable_define(x, operation(minus, val(int,3))).
     ```
 
     Raises the warning:
     ```prolog
-    warning(expression(syntaxError),(),"eq takes two arguments, not ['a', 'b', 'c']")
+    warning(expression(syntaxError),(),operation(minus,val(int,3)))
     ```
 
 #### Not Implemented
@@ -215,13 +212,13 @@ warning(expression(notImplemented), _, Message)
 This warning occurs when an [Expression] attempts to divide by zero.
 
 ```prolog
-warning(expression(zeroDivisionError), _, Message)
+warning(expression(zeroDivisionError), _, (Operator, Arguments))
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Type` | `expression(zeroDivisionError)` |
-| `Details` | A message describing the division by zero error. |
+| `Details` | The operator and argument list that caused the division by zero. |
 
 !!! Example
     ```prolog
@@ -345,13 +342,13 @@ warning(variable(emptyDomain), _,Variable)
 This error occurs when a [Variable] has a defined [Domain] but has not been [declared][variable_declare].
 
 ```prolog
-warning(variable(undeclared), (), Variable)
+warning(variable(undeclared), (), (Scope, Variable))
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Type` | `variable(undeclared)` |
-| `Details` | The name of the variable that was not declared. |
+| `Details` | The scope in which the variable was queried together with the undeclared variable name. |
 
 !!! Example
     Variable defined with a domain but not declared.
@@ -362,7 +359,7 @@ warning(variable(undeclared), (), Variable)
 
     Raises the warning:
     ```prolog
-    warning(variable(undeclared),(),c)
+    warning(variable(undeclared),(),((),c))
     ```
 
 #### Multiple Declarations

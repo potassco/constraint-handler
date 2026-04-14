@@ -88,7 +88,7 @@ value(name, val(none, none))
 | `eq` | Equality | ([none] \| T, [none] \| T) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
 | `neq` | Inequality | ([none] \| T, [none] \| T) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
 | **Logical** | | | |
-| `limp` | Implication | ([none] \| [bool], [none] \| [bool]) $\to$ [none] | If either of the values is `none`, the result will be `none`. Otherwise, this follows the standard implication rules from [bool]. |
+| `limp` | Implication | ([none] \| [bool], [none] \| [bool]) $\to$ [bool] \| [none] | `true` if the first argument is `false` or the second is `true`. Evaluates to `false` if `true` implies `false`, and `none` otherwise. |
 | **Negation** | | | |
 | `lnot` | Classical Negation | ([none]) $\to$ [none] | The negation of `none` is still `none`. |
 
@@ -112,16 +112,16 @@ value(name, val(bool, false))
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| **Comparison** | | | | |
+| **Comparison** | | | |
 | `eq` | Equality | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
 | `neq` | Inequality | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
-| **Logical** | | | | |
+| **Logical** | | | |
 | `conj` | Conjunction | ([bool]\*) $\to$ [bool] | `true` only if *all* arguments in the list are true. Short-circuits if `false` is found. |
 | `disj` | Disjunction | ([bool]\*) $\to$ [bool] | `true` if *at least one* argument in the list is true. |
-| `limp` | Implication | ([bool], [bool]) $\to$ [bool] | `false` only if the first argument is `true` and the second is `false`. Otherwise `true`. | [bool] \| [none] |
+| `limp` | Implication | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] \| [none] | `true` if the first argument is `false` or the second is `true`. Evaluates to `false` if `true` implies `false`, and `none` otherwise. |
 | `lxor` | Exclusive OR | ([bool]\*) $\to$ [bool]  | `true` if an **odd** number of arguments are `true`. |
 | `leqv` | Equivalence | ([bool]\*) $\to$ [bool]  | `true` if an **even** number of arguments are `true`. |
-| **Negation** | | | | |
+| **Negation** | | | |
 | `lnot` | Logical | ([bool]) $\to$ [bool] | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). |
 | `snot` | Strong | ([bool]) $\to$ [bool] | Treats undefined/missing values as `false`. |
 | `wnot` | Weak | ([bool]) $\to$ [bool] | Treats undefined/missing values as `true`. |
@@ -224,8 +224,8 @@ value(name, val(float, float("-0.001")))
 | `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
 | `mult` | Multiplication | (\[[int] \| [float]\]\*) $\to$ [float] | Multiplies all provided numbers together. |
 | `float_div` | Float Division | ([int] \| [float], [int] \| [float]) $\to$ [float] | Performs explicit floating point division. |
-| `ceil` | Ceiling | ([float]) $\to$ [float] | Rounds the float up to the nearest integer value. |
-| `floor` | Floor | ([float]) $\to$ [float] | Rounds the float down to the nearest integer value. |
+| `floor` | Floor | ([float]) $\to$ [int] | Rounds the float down to the nearest integer value. |
+| `ceil` | Ceiling | ([float]) $\to$ [int] | Rounds the float up to the nearest integer value. |
 | `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
 | `abs` | Absolute Value | ([float]) $\to$ [float] | Returns the absolute value. |
 | `minus` | Unary Minus | ([float]) $\to$ [float] | Negates the value. |
@@ -262,19 +262,16 @@ value(name, val(float, float("-0.001")))
 ## String
 Strings are used to represent text-based data. They support concatenation and comparison operations.
 
-!!! Warning
-    Currently strings are called `str` and not `string`. In the future, this section will completely move into either direction.
-
 ### Definition
 ```prolog
-val(str, "Hello, World!")
-val(str, "Constraint Handling")
+val(string, "Hello, World!")
+val(string, "Constraint Handling")
 ```
 
 ### Output
 ```prolog
-value(name, val(str, "Hello, World!"))
-value(name, val(str, "Constraint Handling"))
+value(name, val(string, "Hello, World!"))
+value(name, val(string, "Constraint Handling"))
 ```
 
 | Operator | Name | Signature | Description |
@@ -289,8 +286,8 @@ value(name, val(str, "Constraint Handling"))
 !!! Example
     Concatenating a prefix to a name.
     ```prolog
-    variable_define(prefix, val(str, "var_")).
-    variable_define(suffix, val(str, "x")).
+    variable_define(prefix, val(string, "var_")).
+    variable_define(suffix, val(string, "x")).
     variable_define(full_name, operation(concat, (variable(prefix), (variable(suffix), ())))).
     ```
 

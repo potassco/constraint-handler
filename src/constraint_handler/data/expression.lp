@@ -32,4 +32,4 @@ _expression_poorlyformed(T) :- _expression_query(SCOPE,T), D=@pythonTupleElement
 _expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsTuple(EXPR), not _expression_poorlyformed(EXPR).
 _expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), EXPR=operation(_,L), true=@pythonIsList(L), not _expression_poorlyformed(EXPR).
 
-_warning(expression(syntax),SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), not _expression_wellformed(EXPR).
+_warning(expression(syntaxError),SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), not _expression_wellformed(EXPR).

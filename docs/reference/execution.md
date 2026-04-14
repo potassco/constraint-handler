@@ -21,10 +21,10 @@ execution_input(ExecutionName, Name)
     Defining an input variable with some value for a specific execution:
 
     ```prolog
-    variable_define(execution_input(my_execution, a), val(int, 5)).
+    variable_define(execution_input(my_exec, a), val(int, 5)).
     ```
 
-    This creates a variable `a` with the integer value `5` for the execution `my_execution`.
+    This creates a variable `a` with the integer value `5` for the execution `my_exec`.
 
 ---
 
@@ -186,7 +186,7 @@ assert(Condition)
 
 **[Statement]**{.badge .statement }
 
-The `while/2` function symbol allows for repeated execution of a statement as long as a given condition holds true.
+The `while/3` function symbol allows for repeated execution of a statement as long as a given condition holds true.
 
 ```prolog
 while(Limit, Condition, Body)
@@ -215,7 +215,7 @@ while(Limit, Condition, Body)
 
 ## Declare
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 In order to execute some statement, first an execution has to be declared. For this, the `execution_declare/4` predicate is used.
 
@@ -238,13 +238,13 @@ execution_declare(Name, Statement, Input, Output)
         S = assign(a, val(int, 3)).
     ```
 
-    This declares an execution named `my_execution` that assigns the integer value `3` to the variable `a`, taking `a` as input and producing `a` as output.
+    This declares an execution named `my_exec` that assigns the integer value `3` to the variable `a`, taking `a` as input and producing `a` as output.
 
 ---
 
 ## Run
 
-**[Declaration]**{.badge .declaration }
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 To execute a previously declared execution, the `execution_run/1` predicate is used.
 
@@ -263,4 +263,4 @@ execution_run(Name)
     execution_run(my_exec).
     ```
 
-    This runs the execution named `my_execution` that was declared earlier.
+    This runs the execution named `my_exec` that was declared earlier.

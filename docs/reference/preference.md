@@ -11,6 +11,8 @@ However, sometimes we may not want only the best solution but also the second or
 The constraint handler provides multiple ways of specifying preferences. Here, we will cover the different ways of declaring preferences using preference values and how to combine them to express more complex preferences.
 
 ### Variable Value
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
+
 One way to provide a preference is to assign a preference value to a variable having a specific value. For this, we can use the `preference_variableValue/3` predicate.
 
 ```prolog
@@ -46,6 +48,8 @@ The preference value is a numeric value that indicates how much we prefer that v
     This leads to an ordering of solutions based on our specified preferences for the variable `color` with the highest values appearing first.
 
 ### Holds
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
+
 In addition to assigning preference values to variable-value pairs, we can also express preferences based on certain conditions using the `preference_holds/2` predicate.
 
 ```prolog

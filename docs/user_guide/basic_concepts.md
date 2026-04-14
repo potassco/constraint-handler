@@ -34,7 +34,7 @@ Because the handler supports many types, it needs a way to distinguish between t
 !!! Example
     ```prolog
     val(int, 42)
-    val(str, "Hello World")
+    val(string, "Hello World")
     val(float, float("3.14"))
     ```
 

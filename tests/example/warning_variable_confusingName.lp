@@ -5,7 +5,7 @@ variable_define(int,val(bool,true)).
 variable_define(float,val(bool,true)).
 variable_define(bool,val(bool,true)).
 variable_define(none,val(bool,true)).
-variable_define(str,val(bool,true)).
+variable_define(string,val(bool,true)).
 variable_define(symbol,val(bool,true)).
 variable_define(set,val(bool,true)).
 variable_define(multimap,val(bool,true)).

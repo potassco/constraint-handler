@@ -4,6 +4,8 @@
 
 - Support `ceil` operator in compile engine and add corresponding test.
 - Support non-fact `variable_domain` declarations in the propagator engine.
+- Rename the string type from `str` to `string` and update examples, tests, and
+  documentation accordingly.
 
 ## v0.0.2.dev5
 

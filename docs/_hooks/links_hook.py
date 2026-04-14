@@ -43,6 +43,7 @@ LINKS = {
     # Core Syntax
     "Core Syntax": "reference/core_syntax.md",
     "Label": "reference/core_syntax.md#labels",
+    "Label Support": "reference/core_syntax.md#labels",
     "List": "reference/core_syntax.md#list",
     "Value": "reference/core_syntax.md#value",
     "Val": "reference/core_syntax.md#value",

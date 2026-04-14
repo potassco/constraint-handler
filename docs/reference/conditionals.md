@@ -65,7 +65,7 @@ The `ite` operator expands on the `if` operator by allowing to specify an altern
     However:
 
     ```prolog
-    variable_define(z, operation(ite, (val(bool, true),(val(int,2),(val(int,5),()))))).
+    variable_define(z, operation(ite, (val(bool, false),(val(int,2),(val(int,5),()))))).
     ```
 
     This time, when the condition is `false`, `z` will be assigned the value `5`.

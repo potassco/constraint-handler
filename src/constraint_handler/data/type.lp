@@ -1,7 +1,7 @@
 #defined type_query/1.
 
 %%%%%%%%%%%%%%%%% type
-_type(int;float;bool;str;symbol;none;set;multimap).
+_type(int;float;bool;string;symbol;none;set;multimap).
 
 %%%%%%%%%%%%%%%%% type_variable
 type_variable((),X,T) :- variable_define(_,X,D), type_expression((),D,T).

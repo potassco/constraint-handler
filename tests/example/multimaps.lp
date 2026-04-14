@@ -45,18 +45,18 @@
 %%%   = (((((((),1),2),1),1),2),3)
 
 variable_define(capitals, operation(multimap_make,
-                                ((val(str,"germany"), val(str,"berlin")),
-                                ((val(str,"france"), val(str,"paris")),
-                                ((val(str,"belarus"), val(str,"minsk")),()))))).
+                                ((val(string,"germany"), val(string,"berlin")),
+                                ((val(string,"france"), val(string,"paris")),
+                                ((val(string,"belarus"), val(string,"minsk")),()))))).
 
 multimap_declare(cities).
-multimap_assign(cities,val(str,"germany"),val(str,"berlin")).
-multimap_assign(cities,val(str,"germany"),val(str,"potsdam")).
-multimap_assign(cities,val(str,"germany"),val(str,"brest")).
-multimap_assign(cities,val(str,"france"),val(str,"paris")).
-multimap_assign(cities,val(str,"france"),val(str,"brest")).
-multimap_assign(cities,val(str,"usa"),val(str,"paris")).
-multimap_assign(cities,val(str,"belarus"),val(str,"brest")).
+multimap_assign(cities,val(string,"germany"),val(string,"berlin")).
+multimap_assign(cities,val(string,"germany"),val(string,"potsdam")).
+multimap_assign(cities,val(string,"germany"),val(string,"brest")).
+multimap_assign(cities,val(string,"france"),val(string,"paris")).
+multimap_assign(cities,val(string,"france"),val(string,"brest")).
+multimap_assign(cities,val(string,"usa"),val(string,"paris")).
+multimap_assign(cities,val(string,"belarus"),val(string,"brest")).
 
 multimap_declare(properDivisors).
 multimap_assign(properDivisors,val(int,4),operation(set_make,(val(int,1),(val(int,2), ())))).
