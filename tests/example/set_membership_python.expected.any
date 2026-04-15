@@ -1,4 +1,4 @@
-value(execution_input(py_membership,"x"),val(str,"X")) value(execution_input(py_membership,"x"),val(none,none))
+value(execution_input(py_membership,"x"),val(string,"X")) value(execution_input(py_membership,"x"),val(none,none))
 value(execution_output(py_membership,"py_in"),val(bool,true)) value(execution_output(py_membership,"py_in"),val(bool,false))
 value(execution_output(py_membership,"py_not"),val(bool,true)) value(execution_output(py_membership,"py_not"),val(bool,false))
 evaluated(set_isin,(variable(x),(variable(pool),())),val(bool,true))
