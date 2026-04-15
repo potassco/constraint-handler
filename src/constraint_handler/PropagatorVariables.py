@@ -232,7 +232,7 @@ class VariableValue:
         return self.expr == other.expr
 
     def __hash__(self) -> int:
-        return hash(str(self.expr))
+        return hash((str(self.expr), self.literal))
 
     def __str__(self) -> str:
         return f"VariableValue({self.expr}, {self.value})"
