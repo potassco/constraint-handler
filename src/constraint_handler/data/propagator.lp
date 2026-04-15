@@ -10,8 +10,8 @@ propagator_set_assign(CNAME,X,E) :- _passed(sugar,set_assign(CNAME,X,E)), engine
 propagator_set_baseDomain(CNAME,X,E) :- _passed(sugar,set_baseDomain(CNAME,X,E)), engine(CNAME,propagator).
 propagator_set_declare(CNAME,X) :- _passed(sugar,set_declare(CNAME,X)), engine(CNAME,propagator).
 
-propagator_multimap_assign(CNAME,X,K,V) :- multimap_assign(CNAME,X,K,V), engine(CNAME,propagator).
-propagator_multimap_declare(CNAME,X) :- multimap_declare(CNAME,X), engine(CNAME,propagator).
+propagator_multimap_assign(LBL,X,K,V) :- _passed(sugar,multimap_assign(LBL,X,K,V)), engine(LBL,propagator).
+propagator_multimap_declare(LBL,X) :- _passed(sugar,multimap_declare(LBL,X)), engine(LBL,propagator).
 
 propagator_optimize_maximizeSum(CNAME,E,X,P) :- _optimize_maximizeSum(CNAME,E,X,P), engine(CNAME,propagator).
 

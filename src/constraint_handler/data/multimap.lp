@@ -1,5 +1,5 @@
-_multimap_declare(CNAME,X) :- engine(CNAME,compile), multimap_declare(CNAME,X).
-_multimap_assign(CNAME,variable(X),EK,EV) :- engine(CNAME,compile), multimap_assign(CNAME,X,EK,EV).
+_multimap_declare(LBL,X) :- _passed(sugar,multimap_declare(LBL,X)), engine(LBL,compile).
+_multimap_assign(LBL,variable(X),EK,EV) :- _passed(sugar,multimap_assign(LBL,X,EK,EV)), engine(LBL,compile).
 
 direct_query(EK;EV) :- _multimap_assign(CNAME,EX,EK,EV).
 

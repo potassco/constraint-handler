@@ -109,8 +109,8 @@ _label(LABEL) :- forbid_warning(LABEL,KIND).
 
 
 %%%%%%%%%%%%%%%%% check if well-formed
-_passed(sugar,ensure(LABEL,E)) :- ensure(LABEL,E), _expression_wellformed(E).
-_passed(sugar,evaluate(LABEL,OP,ARGS)) :- evaluate(LABEL,OP,ARGS), _expression_wellformed(operation(OP,ARGS)).
+_passed(sugar,ensure(LBL,E)) :- ensure(LBL,E), _expression_wellformed(E).
+_passed(sugar,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS), _expression_wellformed(operation(OP,ARGS)).
 
 
 _label(LABEL) :- define(LABEL,_,_,_).
@@ -118,13 +118,13 @@ _label(LABEL) :- define(LABEL,_,_,_).
 
 
 %%%%%% multimap atoms
-_label(LABEL) :- multimap_declare(LABEL,_).
-_label(LABEL) :- multimap_assign(LABEL,_,_,_).
+_passed(sugar,multimap_declare(LBL,X)) :- multimap_declare(LBL,X).
+_passed(sugar,multimap_assign(LBL,X,K,B)) :- multimap_assign(LBL,X,K,B), _expression_wellformed(K), _expression_wellformed(B).
 
 %%%%% set atoms
-_passed(sugar,set_declare(LABEL,X)) :- set_declare(LABEL,X).
-_passed(sugar,set_assign(LABEL,X,E)) :- set_assign(LABEL,X,E), _expression_wellformed(E).
-_passed(sugar,set_baseDomain(LABEL,X,E)) :- set_baseDomain(LABEL,X,E), _expression_wellformed(E).
+_passed(sugar,set_declare(LBL,X)) :- set_declare(LBL,X).
+_passed(sugar,set_assign(LBL,X,E)) :- set_assign(LBL,X,E), _expression_wellformed(E).
+_passed(sugar,set_baseDomain(LBL,X,E)) :- set_baseDomain(LBL,X,E), _expression_wellformed(E).
 
 %%%%%% statement atoms
 _label(LABEL) :- execution_declare(LABEL,_,_,_,_).
