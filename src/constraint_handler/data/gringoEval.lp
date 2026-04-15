@@ -1,11 +1,11 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
-_ge_ensure(CNAME,E) :- engine(CNAME,ground), ensure(CNAME,E).
-_ge_assign(CNAME,X,E) :- engine(CNAME,ground), assign(CNAME,X,E).
-_ge_set_assign(CNAME,X,E) :- engine(CNAME,ground), set_assign(CNAME,X,E).
+_ge_ensure(CNAME,E) :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,ground).
+_ge_assign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,ground).
+_ge_set_assign(CNAME,X,E) :- _passed(sugar,set_assign(CNAME,X,E)), engine(CNAME,ground).
 %%% TODO: handle set_baseDomain here?
-_ge_set_declare(CNAME,X) :- engine(CNAME,ground), set_declare(CNAME,X).
+_ge_set_declare(CNAME,X) :- _passed(sugar,set_declare(CNAME,X)), engine(CNAME,ground).
 %%% TODO: make sure set assign doesn't get broken down across different engines
-_ge_evaluate(CNAME,OP,ARGS) :- engine(CNAME,ground), evaluate(CNAME,OP,ARGS).
+_ge_evaluate(CNAME,OP,ARGS) :- _passed(sugar,evaluate(CNAME,OP,ARGS)), engine(CNAME,ground).
 
 :- _ge_ensure(CNAME,EXPR), not ge_result(EXPR,val(bool,true)), not ge_result(EXPR,bad).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
@@ -22,7 +22,7 @@ ge_expressionQuery(EXPR) :- _ge_assign(CNAME,X,EXPR).
 
 _ge_vQuery(X) :- ge_expressionQuery(EXPR), X=@pythonExpressionVariable(EXPR).
 
-_direct_implode(variable(X)) :- _ge_vQuery(X), _se_value(variable(X),_).
+_direct_implode(variable(X)) :- _ge_vQuery(X), _se_value(variable(X),V).
 ge_value(X,VAL) :- _ge_vQuery(X), _se_value(variable(X),val(T,V)), _direct_imploded(variable(X),VAL).
 
 
@@ -41,5 +41,5 @@ _ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(
 _ge_mapped(EXPR,M) :- _ge_mapAux(EXPR,0,M).
 
 _ge_eval_exec(EXPR,M,RES) :- _ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifier(ID).
-ge_result(EXPR,V) :- _ge_eval_exec(EXPR,M,V), #false: V=error(_,_).
+ge_result(EXPR,V) :- _ge_eval_exec(EXPR,M,V), #false: V=error(KIND,MSG).
 _warning(KIND,(),(EXPR,M,MSG)) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).

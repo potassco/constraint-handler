@@ -6,7 +6,7 @@ _computedIdx(E,V)  :- _computeIdx(E,add), _int_add(E,0,V).
 _computedIdx(operation(add,ARGS),val(int,N)) :-
     _computeIdx(operation(add,ARGS),add),
     _length(ARGS,LEN), LEN > 2,
-    LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val(int,_)) }, %%% TODO: remove
+    LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val(int,V)) }, %%% TODO: remove
     N = #sum { V,IDX : _computeIdx(operation(add,ARGS),IDX,val(int,V)) }.
 
 % short circuit if there is a 0
@@ -20,9 +20,9 @@ operator_declare((sub;pow),(int,(int,())),int).
 _operator_recoverable(pow).
 _computedIdx(E,val(int,V0-V1))  :- _computeIdx(E,sub), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)).
 _computedIdx(E,val(int,V0**V1)) :- _computeIdx(E,pow), _computeIdx(E,0,val(int,V0)), _computeIdx(E,1,val(int,V1)).
-_computedIdx(E,val(int,1))      :- _computeIdx(E,pow), _computeIdx(E,0,_), _computeIdx(E,1,val(int,0)).
+_computedIdx(E,val(int,1))      :- _computeIdx(E,pow), _computeIdx(E,0,V0), _computeIdx(E,1,val(int,0)).
 _computedIdx(E,bad)             :- _computeIdx(E,pow), _computeIdx(E,0,bad), _computeIdx(E,1,val(int,V1)), V1 != 0.
-_computedIdx(E,bad)             :- _computeIdx(E,pow), _computeIdx(E,0,_), _computeIdx(E,1,bad).
+_computedIdx(E,bad)             :- _computeIdx(E,pow), _computeIdx(E,0,V0), _computeIdx(E,1,bad).
 
 %%%%%%%%%%%%%%%%% int_div
 operator_declare(int_div,((int;float),((int;float),())),int).

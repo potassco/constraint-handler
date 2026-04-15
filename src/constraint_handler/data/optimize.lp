@@ -1,12 +1,13 @@
 % 4-parameter version with explicit priority
-_optimize_maximizeSum(CNAME,E,X,P) :- optimize_maximizeSum(CNAME,E,X,P).
+_optimize_maximizeSum(LBL,E,X,P) :- _passed(sugar,optimize_maximizeSum(LBL,E,X,P)).
+_optimize_precision(PREC,PRIO) :- _passed(sugar,optimize_precision(PREC,PRIO)).
 
-% Default precision for all priorities if not specified
-_optimize_precision(PREC,P) :- optimize_precision(PREC), not optimize_precision(_,P), _optimize_maximizeSum(_,_,_,P).
 % Precision for specific priority (priority is last argument)
-_optimize_precision(PREC,P) :- optimize_precision(PREC,P).
+_passed(defaultArgs,optimize_precision(PREC,PRIO)) :- optimize_precision(PREC,PRIO).
+% Default precision for all priorities if not specified
+_passed(defaultArgs,optimize_precision(PREC,PRIO)) :- optimize_precision(PREC), not optimize_precision(_,PRIO), _optimize_maximizeSum(LBL,E,X,PRIO).
 % Default precision value of 1 if no precision is specified at all
-_optimize_precision(val(int,1),P) :- _optimize_maximizeSum(_,_,_,P), not optimize_precision(_), not optimize_precision(_,P).
+_passed(defaultArgs,optimize_precision(val(int,1),PRIO)) :- _optimize_maximizeSum(LBL,E,X,PRIO), not optimize_precision(_), not optimize_precision(_,PRIO).
 
 _optimize_se_maximizeSum(CNAME,E,X,P) :- _optimize_maximizeSum(CNAME,E,X,P), engine(CNAME,compile).
 

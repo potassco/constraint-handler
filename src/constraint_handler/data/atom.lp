@@ -55,57 +55,108 @@ optimize_maximizeSum(_label_anonymous,E,X,P) :- optimize_maximizeSum(E,X,P).
 optimize_maximizeSum(_label_anonymous,E,X,0) :- optimize_maximizeSum(E,X).
 
 %%%%%% preference atoms
+#defined preference_holds/3.
 #defined preference_holds/2.
 #defined preference_holds/1.
+#defined preference_variableValue/4.
 #defined preference_variableValue/3.
 #defined preference_variableValue/2.
-preference_holds(_label_anonymous,E,K) :- preference_holds(E,K).
-preference_variableValue(_label_anonymous,X,E,K) :- preference_variableValue(X,E,K).
-%%% convenience
-preference_holds(_label_anonymous,E,1) :- preference_holds(E).
-preference_variableValue(_label_anonymous,X,E,1) :- preference_variableValue(X,E).
+_passed(defaultArgs,preference_holds(LBL,E,K)) :- preference_holds(LBL,E,K).
+_passed(defaultArgs,preference_holds(_label_anonymous,E,K)) :- preference_holds(E,K).
+_passed(defaultArgs,preference_holds(_label_anonymous,E,1)) :- preference_holds(E).
+_passed(defaultArgs,preference_variableValue(_label_anonymous,X,E,K)) :- preference_variableValue(X,E,K).
+_passed(defaultArgs,preference_variableValue(LBL,X,E,K)) :- preference_variableValue(LBL,X,E,K).
+_passed(defaultArgs,preference_variableValue(_label_anonymous,X,E,1)) :- preference_variableValue(X,E).
 
 %%%%%% warning atoms
-#defined forbid_warning/1.
-#defined ignore_warning/1.
+#defined warning_forbid/1.
+#defined warning_ignore/1.
 
-forbid_warning(_label_anonymous,KIND) :- forbid_warning(KIND).
-
+warning_forbid(_label_anonymous,KIND) :- warning_forbid(KIND).
+warning_ignore(_label_anonymous,KIND) :- warning_ignore(KIND).
 
 %%%%%%%%%%%%%%%%% collect labels
-_label(LABEL) :- ensure(LABEL,_).
-_label(LABEL) :- assign(LABEL,_,_).
+_label(LABEL) :- ensure(LABEL,E).
+_label(LABEL) :- assign(LABEL,X,E).
 _label(LABEL) :- define(LABEL,_,_,_).
-_label(LABEL) :- evaluate(LABEL,_,_).
+_label(LABEL) :- evaluate(LABEL,O,ARGS).
 
 %%%%%% variable atoms
-_label(LABEL) :- variable_define(LABEL,_,_).
-_label(LABEL) :- variable_declare(LABEL,_,_).
-_label(LABEL) :- variable_domain(LABEL,_,_).
+_label(LABEL) :- variable_define(LABEL,X,E).
+_label(LABEL) :- variable_declare(LABEL,X,D).
+_label(LABEL) :- variable_domain(LABEL,X,E).
 
 %%%%%% multimap atoms
-_label(LABEL) :- multimap_declare(LABEL,_).
-_label(LABEL) :- multimap_assign(LABEL,_,_,_).
+_label(LABEL) :- multimap_declare(LABEL,X).
+_label(LABEL) :- multimap_assign(LABEL,X,K,B).
 
 %%%%% set atoms
-_label(LABEL) :- set_declare(LABEL,_).
-_label(LABEL) :- set_assign(LABEL,_,_).
-_label(LABEL) :- set_baseDomain(LABEL,_,_).
+_label(LABEL) :- set_declare(LABEL,X).
+_label(LABEL) :- set_assign(LABEL,X,E).
+_label(LABEL) :- set_baseDomain(LABEL,X,E).
 
 %%%%%% statement atoms
-_label(LABEL) :- execution_declare(LABEL,_,_,_,_).
-_label(LABEL) :- execution_run(LABEL,_).
+_label(LABEL) :- execution_declare(LABEL,NAME,STMT,INS,OUTS).
+_label(LABEL) :- execution_run(LABEL,NAME).
 
 %%%%%% optimization atoms
 _label(LABEL) :- optimize_maximizeSum(LABEL,_,_,_).
 
 %%%%%% preference atoms
-_label(LABEL) :- preference_holds(LABEL,_,_).
-_label(LABEL) :- preference_variableValue(LABEL,_,_,_).
+_label(LABEL) :- _passed(defaultArgs,preference_holds(LABEL,E,K)).
+_label(LABEL) :- _passed(defaultArgs,preference_variableValue(LABEL,X,E,K)).
 
 %%%%%% warning atoms
-_label(LABEL) :- forbid_warning(LABEL,_).
+_label(LABEL) :- warning_forbid(LABEL,KIND).
+_label(LABEL) :- warning_ignore(LABEL,KIND).
 
 
 
 %%%%%%%%%%%%%%%%% check if well-formed
+_passed(sugar,ensure(LBL,E)) :- ensure(LBL,E), _expression_wellformed(E).
+_passed(sugar,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS), _expression_wellformed(operation(OP,ARGS)).
+
+
+_label(LABEL) :- define(LABEL,_,_,_).
+%_passed(sugar,assign(LABEL,X,E)) :- assign(LABEL,X,E), _expression_wellformed(E).
+
+
+%%%%%% multimap atoms
+_passed(sugar,multimap_declare(LBL,X)) :- multimap_declare(LBL,X).
+_passed(sugar,multimap_assign(LBL,X,K,B)) :- multimap_assign(LBL,X,K,B), _expression_wellformed(K), _expression_wellformed(B).
+
+%%%%% set atoms
+_passed(sugar,set_declare(LBL,X)) :- set_declare(LBL,X).
+_passed(sugar,set_assign(LBL,X,E)) :- set_assign(LBL,X,E), _expression_wellformed(E).
+_passed(sugar,set_baseDomain(LBL,X,E)) :- set_baseDomain(LBL,X,E), _expression_wellformed(E).
+
+%%%%%% statement atoms
+_passed(sugar,execution_declare(LBL,PRG,STMT,INS,OUTS)) :- execution_declare(LBL,PRG,STMT,INS,OUTS),
+    _statement_wellformed(STMT),
+	true=@pythonIsList(INS),
+	true=@pythonIsList(OUTS).
+_passed(sugar,execution_run(LBL,PRG)) :- execution_run(LBL,PRG).
+_warning(atom(syntaxError),(PRG,()),execution_declare(PRG)) :- execution_declare(LBL,PRG,STMT,INS,OUTS),
+    #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS).
+
+%%%%%% optimization atoms
+_passed(sugar,optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL,E,X,P),
+    _expression_wellformed(E),
+    (number,_,_,_)=@pythonReify(P).
+_passed(sugar,optimize_precision(PREC,PRIO)) :- _passed(defaultArgs,optimize_precision(PREC,PRIO)),
+    _expression_wellformed(PREC),
+    (number,_,_,_)=@pythonReify(PRIO).
+_warning(atom(syntaxError),(),optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL,E,X,P),
+    not _passed(sugar,optimize_maximizeSum(LBL,E,X,P)).
+_warning(atom(syntaxError),(),optimize_precision(PREC,PRIO)) :- optimize_precision(PREC,PRIO),
+    not _passed(sugar,optimize_precision(PREC,PRIO)).
+
+%%%%%% preference atoms
+_passed(sugar,preference_holds(LABEL,E,K)) :- _passed(defaultArgs,preference_holds(LABEL,E,K)), _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).
+_passed(sugar,preference_variableValue(LABEL,X,E,K)) :- _passed(defaultArgs,preference_variableValue(LABEL,X,E,K)), _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).
+_passed(sugar,preference_expressionScore(LBL,operation(eq,(variable(X),(E,()))),K)) :- _passed(sugar,preference_variableValue(LBL,X,E,K)), K > 0.
+_passed(sugar,preference_expressionScore(LBL,operation(neq,(variable(X),(E,()))),-K)) :- _passed(sugar,preference_variableValue(LBL,X,E,K)), K < 0.
+_passed(sugar,preference_expressionScore(LBL,E,K)) :- _passed(sugar,preference_holds(LBL,E,K)), K > 0.
+_passed(sugar,preference_expressionScore(LBL,operation(wnot,(E,())),-K)) :- _passed(sugar,preference_holds(LBL,E,K)), K < 0.
+
+%%%%%% warning atoms

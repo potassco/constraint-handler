@@ -1101,13 +1101,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_forbidden_warnings(self, ctl: clingo.PropagateInit) -> None:
         """
-        Load `forbid_warning` atoms.
+        Load `warning_forbid` atoms.
 
         Args:
             ctl: Clingo propagation initializer.
         """
 
-        forbidden_warnings = myClorm.findInPropagateInit(ctl, warning.Forbid_warning)
+        forbidden_warnings = myClorm.findInPropagateInit(ctl, warning.Warning_forbid)
         for (name, error), literal in forbidden_warnings.items():
             self.forbidden_warnings[error] = literal
 

@@ -151,9 +151,10 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "preference_variableValue" "(" <term> "," <term> "," <expression> "," <int> ")"
 
 <warning-control-atom> ::=
-    | "ignore_warning" "(" <term> ")"
-    | "forbid_warning" "(" <term> ")"
-    | "forbid_warning" "(" <term> "," <term> ")"
+    | "warning_forbid" "(" <term> ")"
+    | "warning_forbid" "(" <term> "," <term> ")"
+    | "warning_ignore" "(" <term> ")"
+    | "warning_ignore" "(" <term> "," <term> ")"
 
 <atom> ::=
     | "assign" "(" <term> "," <expression> ")"

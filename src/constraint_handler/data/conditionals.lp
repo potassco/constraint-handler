@@ -6,22 +6,22 @@ conditional_hasNoValue(E) :- direct_query(E), _se_value(E,val(none,none)).
 %%%%%%%%%%%%%%%%% eq neq
 operator_declare((eq;neq),(T1,(T2,())),bool) :- _type(T1), _type(T2), (T1;T2)=none.
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq),
-	_computeIdx(E,0,val(none,_)),
-	_computeIdx(E,1,val(none,_)).
+	_computeIdx(E,0,val(none,none)),
+	_computeIdx(E,1,val(none,none)).
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq),
-	_computeIdx(E,0,val(T1,_)),
-	_computeIdx(E,1,val(T2,_)),
-	(T1;T2)=none, (T1;T2)!=none.
+	_computeIdx(E,0,val(T0,V0)),
+	_computeIdx(E,1,val(T1,V1)),
+	(T0;T1)=none, (T0;T1)!=none.
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,neq),
-	_computeIdx(E,0,val(none,_)),
-	_computeIdx(E,1,val(none,_)).
+	_computeIdx(E,0,val(none,none)),
+	_computeIdx(E,1,val(none,none)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,neq),
-	_computeIdx(E,0,val(T1,_)),
-	_computeIdx(E,1,val(T2,_)),
-	(T1;T2)=none, (T1;T2)!=none.
+	_computeIdx(E,0,val(T0,V0)),
+	_computeIdx(E,1,val(T1,V1)),
+	(T0;T1)=none, (T0;T1)!=none.
 
 %%%%%%%%%%%%%%%%% ite
 operator_declare(ite,(bool,(T,(T,()))),T) :- _type(T).

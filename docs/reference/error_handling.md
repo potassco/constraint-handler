@@ -75,10 +75,10 @@ warning(Type, Labels, Details)
 ## Ignore Warning
 **[Declaration]**{.badge .declaration }
 
-Users have the option to ignore specific warnings by using the `ignore_warning/1` predicate. This allows users to suppress warnings that they are aware of and do not wish to be notified about.
+Users have the option to ignore specific warnings by using the `warning_ignore/1` predicate. This allows users to suppress warnings that they are aware of and do not wish to be notified about.
 
 ```prolog
-ignore_warning(WarningType)
+warning_ignore(WarningType)
 ```
 
 | Name | Description |
@@ -89,7 +89,7 @@ ignore_warning(WarningType)
     To ignore warnings about variables with confusing names, you can use:
 
     ```prolog
-    ignore_warning(variable(confusingName)).
+    warning_ignore(variable(confusingName)).
     ```
 
     This will suppress any warnings of the type `variable(confusingName)` from being reported in the future.
@@ -99,13 +99,13 @@ ignore_warning(WarningType)
 ## Forbid Warning
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-Users can also choose to forbid specific warnings using the `forbid_warning/1` predicate. This means that if a forbidden warning is encountered, it will be treated as a failed constraint.
+Users can also choose to forbid specific warnings using the `warning_forbid/1` predicate. This means that if a forbidden warning is encountered, it will be treated as a failed constraint.
 
 !!! Info
     Ignored warnings cannot be forbidden, and vice versa. If a warning type is both ignored and forbidden, it will be treated as ignored.
 
 ```prolog
-forbid_warning(WarningType)
+warning_forbid(WarningType)
 ```
 
 | Name | Description |
@@ -116,7 +116,7 @@ forbid_warning(WarningType)
     To forbid warnings about variables with empty domains, you can use:
 
     ```prolog
-    forbid_warning(variable(emptyDomain)).
+    warning_forbid(variable(emptyDomain)).
     ```
 
     This will cause any warning of the type `variable(emptyDomain)` to be treated as an error, and it will prevent the model from being generated if such a warning is encountered.

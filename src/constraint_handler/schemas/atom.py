@@ -242,6 +242,10 @@ class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
     pass
 
 
+class Propagator_optimize_precision(Optimize_precision):
+    pass
+
+
 class Propagator_execution_declare(Execution_declare):
     pass
 
@@ -254,5 +258,9 @@ class Propagator_evaluate(Evaluate):
     pass
 
 
-class Propagator_forbid_warning(warning.Forbid_warning):
+class Propagator_warning_forbid(warning.Warning_forbid):
+    pass
+
+
+class Propagator_warning_ignore(warning.Warning_ignore):
     pass

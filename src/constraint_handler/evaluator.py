@@ -44,6 +44,8 @@ def collectVars(expr) -> frozenset[clingo.Symbol]:
             return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
         case set(args) | frozenset(args):
             return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
+        case expression.Bad.bad:
+            return frozenset()
         case _:
             print("collectVars", expr)
             assert False
@@ -267,6 +269,8 @@ class Evaluator:
                 return args
             case None:
                 return None
+            case expression.Bad.bad:
+                return expr
             case _:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.notImplemented), NotImplementedError(f"expr {expr}"))

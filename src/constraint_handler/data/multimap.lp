@@ -1,5 +1,5 @@
-_multimap_declare(CNAME,X) :- engine(CNAME,compile), multimap_declare(CNAME,X).
-_multimap_assign(CNAME,variable(X),EK,EV) :- engine(CNAME,compile), multimap_assign(CNAME,X,EK,EV).
+_multimap_declare(LBL,X) :- _passed(sugar,multimap_declare(LBL,X)), engine(LBL,compile).
+_multimap_assign(LBL,variable(X),EK,EV) :- _passed(sugar,multimap_assign(LBL,X,EK,EV)), engine(LBL,compile).
 
 direct_query(EK;EV) :- _multimap_assign(CNAME,EX,EK,EV).
 
@@ -82,16 +82,16 @@ direct_query(operation(eq,(X,(Y,())))) :- _computeIdx(E,eq), _computeIdx(E,0,val
     _multimap_entry(M2,K2,V2),
     (X,Y)=((K1,K2);(V1,V2)).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,_)), _computeIdx(E,1,val(multimap,_)),
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)),
     not _computedIdx(E,val(bool,false)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M1)), _computeIdx(E,1,val(multimap,M2)),
-    _multimap_entry(M1,K1,V1),
-    #false : _multimap_entry(M2,K2,V2), _se_value(operation(eq,(K1,(K2,()))),val(bool,true)), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)),
+    _multimap_entry(M0,K0,V0),
+    #false : _multimap_entry(M1,K1,V1), _se_value(operation(eq,(K0,(K1,()))),val(bool,true)), _se_value(operation(eq,(V0,(V1,()))),val(bool,true)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M1)), _computeIdx(E,1,val(multimap,M2)),
-    _multimap_entry(M2,K2,V2),
-    #false : _multimap_entry(M1,K1,V1), _se_value(operation(eq,(K1,(K2,()))),val(bool,true)), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)),
+    _multimap_entry(M1,K1,V1),
+    #false : _multimap_entry(M0,K0,V0), _se_value(operation(eq,(K0,(K1,()))),val(bool,true)), _se_value(operation(eq,(V0,(V1,()))),val(bool,true)).
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
@@ -99,9 +99,9 @@ _multimap_makeIndex(VM) :- _computeIdx(E,multimap_fold), _computeIdx(E,1,val(mul
 _multimap_foldStep(E,0,ACC) :- _computeIdx(E,multimap_fold), _computeIdx(E,2,ACC).
 
 direct_query(operation(VO,(VI,(VB,())))) :- _computeIdx(E,multimap_fold), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,val(multimap,VM)),
-    _multimap_index(VM,I,_,VI), _multimap_foldStep(E,I,VB).
+    _multimap_index(VM,I,KI,VI), _multimap_foldStep(E,I,VB).
 _multimap_foldStep(E,I+1,NEXT) :- _computeIdx(E,multimap_fold), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,val(multimap,VM)),
-    _multimap_foldStep(E,I,VB), _multimap_index(VM,I,_,VI),
+    _multimap_foldStep(E,I,VB), _multimap_index(VM,I,KI,VI),
     _se_value(operation(VO,(VI,(VB,()))),NEXT).
 
 _computedIdx(E,VB) :- _computeIdx(E, multimap_fold), _computeIdx(E,1,val(multimap,VM)),
@@ -125,6 +125,6 @@ _multimap_lastIndex(EM,0) :- _multimap_makeIndex(EM),
 %%%%%%%%%%%%%%%%%% multimap_isin
 operator_declare(multimap_isin,(T1,(multimap,())),bool) :- _type(T1).
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,multimap_isin), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
-    _multimap_entry(EM,K,_).
+    _multimap_entry(EM,K,V).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,multimap_isin), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
-    #false : _multimap_entry(EM,K,_).
+    #false : _multimap_entry(EM,K,V).

@@ -1,11 +1,11 @@
 #defined _statement_query/2.
 
 %%%%%%%%%%%%%%%%% interface: execution_run/1 execution_assign/3 execution_output/4 execution_declare/3
-_execution_declare(NAME,STMT,INS,OUTS) :- execution_declare(CNAME,NAME,STMT,INS,OUTS), engine(CNAME,compile).
+_execution_declare(NAME,STMT,INS,OUTS) :- _passed(sugar,execution_declare(LBL,NAME,STMT,INS,OUTS)), engine(LBL,compile).
 _execution_input_var(NAME,X) :- _execution_declare(NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
 _execution_output_var(NAME,X) :- _execution_declare(NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
-_execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), execution_run(CNAME,NAME), engine(CNAME,compile).
-%_warning(("undeclared run",NAME)) :- execution_run(NAME), not execution_declare(_,NAME,_).
+_execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), _passed(sugar,execution_run(LBL,NAME)), engine(LBL,compile).
+%_warning(("undeclared run",NAME)) :- _passed(sugar,execution_run(NAME)), not _passed(sugar,execution_declare(_,NAME,_)).
 
 _execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), _se_value(variable(execution_input(NAME,X)),V).
 
@@ -69,8 +69,8 @@ _execution_fails(NAME,assert(EXPR)) :- _execution_run(NAME,assert(EXPR)), _execu
 %%%%%%%%%%%%%%%%% statement_python
 _direct_implode(V) :- _execution_run(NAME,statement_python(CODE)), _execution_in(NAME,X,V).
 _execution_mapAux(NAME,#inf,()) :- _execution_run(NAME,statement_python(STR)).
-_execution_mapAux(NAME,Y,((Y,W),M)) :- _execution_mapAux(NAME,X,M), _execution_in(NAME,Y,V), X < Y, _direct_imploded(V,W), #false : _execution_in(NAME,Z,_), X < Z, Z < Y.
-_execution_mapped(NAME,M) :- _execution_mapAux(NAME,X,M), #false : _execution_in(NAME,Y,_), X < Y.
+_execution_mapAux(NAME,Y,((Y,W),M)) :- _execution_mapAux(NAME,X,M), _execution_in(NAME,Y,V), X < Y, _direct_imploded(V,W), #false : _execution_in(NAME,Z,VZ), X < Z, Z < Y.
+_execution_mapped(NAME,M) :- _execution_mapAux(NAME,X,M), #false : _execution_in(NAME,Y,VY), X < Y.
 
 _execution_exec(NAME,R) :- _execution_run(NAME,statement_python(STR)), _execution_mapped(NAME,M), R=@pythonExec(statement_python(STR),M,ID), _main_solverIdentifier(ID).
 :- _execution_exec(NAME,failIntegrity).

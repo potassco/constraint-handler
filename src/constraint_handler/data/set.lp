@@ -1,5 +1,5 @@
-_set_assign(CNAME,variable(X),E) :- engine(CNAME,compile), set_assign(CNAME,X,E).
-_set_declare(CNAME,variable(X)) :- engine(CNAME,compile), set_declare(CNAME,X).
+_set_assign(CNAME,variable(X),E) :- _passed(sugar,set_assign(CNAME,X,E)), engine(CNAME,compile).
+_set_declare(CNAME,variable(X)) :- _passed(sugar,set_declare(CNAME,X)), engine(CNAME,compile).
 
 direct_query(E) :- _set_assign(NAME,X,E).
 
@@ -26,8 +26,8 @@ _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V).
 
 %%%%%%%%%%%%%%%%% set_baseDomain
-{ set_assign(CNAME,X,E) } :-
-    set_baseDomain(CNAME,X,E), engine(CNAME,(compile;ground)).
+{ set_assign(CNAME,X,E) } :- % TODO?
+    _passed(sugar,set_baseDomain(CNAME,X,E)), engine(CNAME,(compile;ground)).
 
 %%%%%%%%%%%%%%%%% set_isin set_notin
 operator_declare((set_isin;set_notin),(T1,(set,())),bool) :- _type(T1).
@@ -97,8 +97,8 @@ _computedIdx(E,val(bool,NEQ)) :- _computeIdx(E,neq), _computeIdx(E,0,ARG0), _com
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
     not _computedIdx(E,val(bool,false)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,_)), _computeIdx(E,1,val(T2,_)), T2!=set.
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T1,_)), _computeIdx(E,1,ref(set,_)), T1!=set.
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,R)), _computeIdx(E,1,val(T1,V1)), T1!=set.
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T0,V0)), _computeIdx(E,1,ref(set,V1)), T0!=set.
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
     _set_contains(S1,V1),
@@ -129,15 +129,15 @@ operator_declare(subset,(set,(set,())),bool).
 direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
     _set_contains(S1,V1), _set_contains(S2,V2).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
-    _set_contains(S1,V1),
-    #false : _set_contains(S2,V2), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S0)), _computeIdx(E,1,ref(set,S1)),
+    _set_contains(S0,V0),
+    #false : _set_contains(S1,V1), _se_value(operation(eq,(V0,(V1,()))),val(bool,true)).
 
-_computedIdx(E,val(bool,true)) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,_)), _computeIdx(E,1,ref(set,_)),
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S0)), _computeIdx(E,1,ref(set,S1)),
     not _computedIdx(E,val(bool,false)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,subset), _computeIdx(E,0,val(T1,_)), _computeIdx(E,1,val(T2,_)),
-    (T1;T2) != set, (T1;T2) = set.
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,subset), _computeIdx(E,0,val(T0,V0)), _computeIdx(E,1,val(T1,V1)),
+    (T0;T1) != set, (T0;T1) = set.
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% set_fold: a -> b -> b
@@ -150,7 +150,7 @@ direct_query(operation(VO,(VI,(VB,())))) :- _computeIdx(E,set_fold), _computeIdx
 
 _set_foldStep(E,I+1,NEXT) :- _computeIdx(E,set_fold), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,ref(set,VM)),
     _set_foldStep(E,I,VB), _set_index(VM,I,VI),
-    _se_value(operation(VO,(VI,(VB,()))), NEXT).
+    _se_value(operation(VO,(VI,(VB,()))),NEXT).
 
 _computedIdx(E,VB) :- _computeIdx(E,set_fold), _computeIdx(E,1,ref(set,VM)),
     _set_foldStep(E,I,VB), _set_lastIndex(VM,I).
