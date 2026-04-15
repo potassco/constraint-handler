@@ -108,8 +108,6 @@ class Evaluator:
         self.set = myset.Evaluator(Evaluator, self.errors)
 
     def string_operator(self, o, args):
-        if None in args:
-            return None
         match o:
             case StringOperator.length:
                 if len(args) != 1:

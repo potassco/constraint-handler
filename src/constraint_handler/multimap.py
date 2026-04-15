@@ -79,8 +79,6 @@ class Evaluator:
         self.errors = errors
 
     def operator(self, o, args):
-        if None in args:
-            return None
         match o:
             case Operator.multimap_isin:
                 assert len(args) == 2
@@ -139,4 +137,4 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.NotImplementedError), f"multimap.operator {o}")
                 )
-                return None
+                return common.Bad.bad
