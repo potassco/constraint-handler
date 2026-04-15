@@ -1,9 +1,9 @@
 % Regression: set_isin/set_notin should agree with python fallback membership via statement_python.
 
-variable_define(pool,operation(set_make,(val(str,"X"),(val(str,"Y"),())))).
-variable_define(pool2,operation(set_make,(val(none,none),(val(str,"Y"),())))).
+variable_define(pool,operation(set_make,(val(string,"X"),(val(string,"Y"),())))).
+variable_define(pool2,operation(set_make,(val(none,none),(val(string,"Y"),())))).
 variable_declare(x,fromFacts).
-variable_domain(x,val(str,"X")).
+variable_domain(x,val(string,"X")).
 variable_domain(x,val(none,none)).
 
 execution_declare(py_membership,

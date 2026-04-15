@@ -1,4 +1,4 @@
-value(x,val(str,"X")) value(x,val(none,none))
+value(x,val(string,"X")) value(x,val(none,none))
 value(set_in,val(bool,true)) value(set_in,val(bool,false))
 value(set_not,val(bool,true)) value(set_not,val(bool,false))
 evaluated(set_isin,(variable(x),(variable(pool),())),val(bool,true))
