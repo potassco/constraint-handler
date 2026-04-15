@@ -74,6 +74,7 @@ base_tests = [
     "warning_bad",
     "warning_fake_forbid",
     "warning_python",
+    "warning_statement_malformed",
     "warning_syntax",
     "warning_type",
     "warning_variables",

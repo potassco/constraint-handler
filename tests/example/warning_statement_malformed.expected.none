@@ -1,0 +1,4 @@
+warning(execution(syntaxError),(control_lists_ok,()),execution_declare(control_lists_ok,noop,(inp,()),(out,())))
+warning(statement(syntaxError),(control_nested_ok,()),assign(out,operation(add,(val(int,1),(val(int,2),())))))
+warning(statement(syntaxError),(control_nested_ok,()),statement_python("z=1"))
+warning(statement(syntaxError),(control_nested_ok,()),if(operation(eq,(val(int,1),(val(int,1),()))),while(2,operation(lt,(val(int,0),(val(int,1),()))),seq2(assert(operation(eq,(val(int,3),(val(int,3),())))),statement_python("z=1"))),noop))

@@ -127,8 +127,13 @@ _passed(sugar,set_assign(LBL,X,E)) :- set_assign(LBL,X,E), _expression_wellforme
 _passed(sugar,set_baseDomain(LBL,X,E)) :- set_baseDomain(LBL,X,E), _expression_wellformed(E).
 
 %%%%%% statement atoms
-_passed(sugar,execution_declare(LBL,PRG,STMT,INS,OUTS)) :- execution_declare(LBL,PRG,STMT,INS,OUTS).
+_passed(sugar,execution_declare(LBL,PRG,STMT,INS,OUTS)) :- execution_declare(LBL,PRG,STMT,INS,OUTS),
+    _statement_wellformed(STMT),
+	true=@pythonIsList(INS),
+	true=@pythonIsList(OUTS).
 _passed(sugar,execution_run(LBL,PRG)) :- execution_run(LBL,PRG).
+_warning(atom(syntaxError),(PRG,()),execution_declare(PRG)) :- execution_declare(LBL,PRG,STMT,INS,OUTS),
+    #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS).
 
 %%%%%% optimization atoms
 _label(LABEL) :- optimize_maximizeSum(LABEL,_,_,_).
