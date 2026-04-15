@@ -41,8 +41,6 @@ class Evaluator:
         self.errors = errors
 
     def operator(self, o, args):
-        if None in args:
-            return None
         foldable = {Operator.add: sum, Operator.mult: math.prod}
         if o in foldable:
             return foldable[o](args)

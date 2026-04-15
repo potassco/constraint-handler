@@ -53,6 +53,8 @@ base_tests = [
     "optimize_floats",
     "optimize_ints",
     "optimize_priority",
+    "set_membership_decomposed",
+    "set_membership_python",
     "python_multi_args",
     "reasoning_modes",
     "set_comparisons",
