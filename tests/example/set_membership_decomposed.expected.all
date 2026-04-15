@@ -1,2 +1,4 @@
 evaluated(eq,(variable(set_in),(operation(lnot,(variable(set_not),())),())),val(bool,true))
 evaluated(eq,(variable(set_not),(operation(lnot,(variable(set_in),())),())),val(bool,true))
+evaluated(eq,(variable(set_in),(variable(set_in2),())),val(bool,false))
+evaluated(eq,(variable(set_not),(variable(set_not2),())),val(bool,false))

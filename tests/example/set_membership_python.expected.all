@@ -1,2 +1,4 @@
-evaluated(eq,(operation(set_isin,(variable(execution_input(py_membership,"x")),(variable(pool),()))),(variable(execution_output(py_membership,"py_in")),())),val(bool,true))
-evaluated(eq,(operation(set_notin,(variable(execution_input(py_membership,"x")),(variable(pool),()))),(variable(execution_output(py_membership,"py_not")),())),val(bool,true))
+evaluated(eq,(operation(set_isin,(variable(x),(variable(pool),()))),(variable(py_in),())),val(bool,true))
+evaluated(eq,(operation(set_notin,(variable(x),(variable(pool),()))),(variable(py_not),())),val(bool,true))
+evaluated(eq,(variable(py_in),(variable(py_in2),())),val(bool,false))
+evaluated(eq,(variable(py_not),(variable(py_not2),())),val(bool,false))
