@@ -122,9 +122,9 @@ _label(LABEL) :- multimap_declare(LABEL,_).
 _label(LABEL) :- multimap_assign(LABEL,_,_,_).
 
 %%%%% set atoms
-_label(LABEL) :- set_declare(LABEL,_).
-_label(LABEL) :- set_assign(LABEL,_,_).
-_label(LABEL) :- set_baseDomain(LABEL,_,_).
+_passed(sugar,set_declare(LABEL,X)) :- set_declare(LABEL,X).
+_passed(sugar,set_assign(LABEL,X,E)) :- set_assign(LABEL,X,E), _expression_wellformed(E).
+_passed(sugar,set_baseDomain(LABEL,X,E)) :- set_baseDomain(LABEL,X,E), _expression_wellformed(E).
 
 %%%%%% statement atoms
 _label(LABEL) :- execution_declare(LABEL,_,_,_,_).

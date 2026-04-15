@@ -6,9 +6,9 @@ propagator_variable_declare(CNAME,X,E) :- _passed(sugar,variable_declare(CNAME,X
 propagator_variable_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), engine(CNAME,propagator).
 propagator_variable_define(CNAME,X,E) :- _passed(sugar,variable_define(CNAME,X,E)), engine(CNAME,propagator).
 
-propagator_set_assign(CNAME,X,E) :- set_assign(CNAME,X,E), engine(CNAME,propagator).
-propagator_set_baseDomain(CNAME,X,E) :- set_baseDomain(CNAME,X,E), engine(CNAME,propagator).
-propagator_set_declare(CNAME,X) :- set_declare(CNAME,X), engine(CNAME,propagator).
+propagator_set_assign(CNAME,X,E) :- _passed(sugar,set_assign(CNAME,X,E)), engine(CNAME,propagator).
+propagator_set_baseDomain(CNAME,X,E) :- _passed(sugar,set_baseDomain(CNAME,X,E)), engine(CNAME,propagator).
+propagator_set_declare(CNAME,X) :- _passed(sugar,set_declare(CNAME,X)), engine(CNAME,propagator).
 
 propagator_multimap_assign(CNAME,X,K,V) :- multimap_assign(CNAME,X,K,V), engine(CNAME,propagator).
 propagator_multimap_declare(CNAME,X) :- multimap_declare(CNAME,X), engine(CNAME,propagator).

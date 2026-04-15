@@ -1,11 +1,11 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
-_ge_ensure(CNAME,E) :- engine(CNAME,ground), _passed(sugar,ensure(CNAME,E)).
-_ge_assign(CNAME,X,E) :- engine(CNAME,ground), assign(CNAME,X,E).
-_ge_set_assign(CNAME,X,E) :- engine(CNAME,ground), set_assign(CNAME,X,E).
+_ge_ensure(CNAME,E) :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,ground).
+_ge_assign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,ground).
+_ge_set_assign(CNAME,X,E) :- _passed(sugar,set_assign(CNAME,X,E)), engine(CNAME,ground).
 %%% TODO: handle set_baseDomain here?
-_ge_set_declare(CNAME,X) :- engine(CNAME,ground), set_declare(CNAME,X).
+_ge_set_declare(CNAME,X) :- _passed(sugar,set_declare(CNAME,X)), engine(CNAME,ground).
 %%% TODO: make sure set assign doesn't get broken down across different engines
-_ge_evaluate(CNAME,OP,ARGS) :- engine(CNAME,ground), _passed(sugar,evaluate(CNAME,OP,ARGS)).
+_ge_evaluate(CNAME,OP,ARGS) :- _passed(sugar,evaluate(CNAME,OP,ARGS)), engine(CNAME,ground).
 
 :- _ge_ensure(CNAME,EXPR), not ge_result(EXPR,val(bool,true)), not ge_result(EXPR,bad).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
