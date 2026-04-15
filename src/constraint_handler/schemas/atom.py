@@ -242,6 +242,10 @@ class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
     pass
 
 
+class Propagator_optimize_precision(Optimize_precision):
+    pass
+
+
 class Propagator_execution_declare(Execution_declare):
     pass
 

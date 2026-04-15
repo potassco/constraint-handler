@@ -11,6 +11,10 @@ _expression_query((),E) :- set_baseDomain(LBL,X,E).
 _expression_query((),K) :- multimap_assign(LBL,X,K,B).
 _expression_query((),B) :- multimap_assign(LBL,X,K,B).
 
+%%%%%%%%%%%%%%%%% _expression_query from other declarations
+_expression_query((),E) :- optimize_maximizeSum(LBL,E,X,P).
+_expression_query((),E) :- _passed(defaultArgs,optimize_precision(E,PRIO)).
+
 %%%%%%%%%%%%%%%%% _expression_query from expressions
 % TODO lambda?.
 _expression_query(SCOPE,D) :- _expression_query(SCOPE,operation(O,L)), D=@pythonListElements(L).

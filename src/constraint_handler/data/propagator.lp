@@ -13,7 +13,8 @@ propagator_set_declare(CNAME,X) :- _passed(sugar,set_declare(CNAME,X)), engine(C
 propagator_multimap_assign(LBL,X,K,V) :- _passed(sugar,multimap_assign(LBL,X,K,V)), engine(LBL,propagator).
 propagator_multimap_declare(LBL,X) :- _passed(sugar,multimap_declare(LBL,X)), engine(LBL,propagator).
 
-propagator_optimize_maximizeSum(CNAME,E,X,P) :- _optimize_maximizeSum(CNAME,E,X,P), engine(CNAME,propagator).
+propagator_optimize_maximizeSum(LBL,E,X,P) :- _passed(sugar,optimize_maximizeSum(LBL,E,X,P)), engine(LBL,propagator).
+propagator_optimize_precision(PREC,PRIO) :- _passed(sugar,optimize_precision(PREC,PRIO)), engine(LBL,propagator).
 
 propagator_execution_declare(LBL,F,STMT,IN,OUT) :-
     _passed(sugar,execution_declare(LBL,F,STMT,IN,OUT)), engine(LBL,propagator).
@@ -21,5 +22,5 @@ propagator_execution_declare(LBL,F,STMT,IN,OUT) :-
 propagator_execution_run(LBL,F) :-
     _passed(sugar,execution_run(LBL,F)), engine(LBL,propagator).
 
-propagator_warning_forbid(CNAME,W) :- warning_forbid(CNAME,W), defaultEngine(propagator).
-propagator_warning_ignore(CNAME,W) :- warning_ignore(CNAME,W), defaultEngine(propagator).
+propagator_warning_forbid(LBL,W) :- warning_forbid(LBL,W), defaultEngine(propagator).
+propagator_warning_ignore(LBL,W) :- warning_ignore(LBL,W), defaultEngine(propagator).

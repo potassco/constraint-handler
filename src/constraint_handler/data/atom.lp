@@ -70,7 +70,6 @@ preference_variableValue(_label_anonymous,X,E,1) :- preference_variableValue(X,E
 #defined warning_ignore/1.
 
 warning_forbid(_label_anonymous,KIND) :- warning_forbid(KIND).
-
 warning_ignore(_label_anonymous,KIND) :- warning_ignore(KIND).
 
 %%%%%%%%%%%%%%%%% collect labels
@@ -138,7 +137,16 @@ _warning(atom(syntaxError),(PRG,()),execution_declare(PRG)) :- execution_declare
     #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS).
 
 %%%%%% optimization atoms
-_label(LABEL) :- optimize_maximizeSum(LABEL,_,_,_).
+_passed(sugar,optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL,E,X,P),
+    _expression_wellformed(E),
+    (number,_,_,_)=@pythonReify(P).
+_passed(sugar,optimize_precision(PREC,PRIO)) :- _passed(defaultArgs,optimize_precision(PREC,PRIO)),
+    _expression_wellformed(PREC),
+    (number,_,_,_)=@pythonReify(PRIO).
+_warning(atom(syntaxError),(),optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL,E,X,P),
+    not _passed(sugar,optimize_maximizeSum(LBL,E,X,P)).
+_warning(atom(syntaxError),(),optimize_precision(PREC,PRIO)) :- optimize_precision(PREC,PRIO),
+    not _passed(sugar,optimize_precision(PREC,PRIO)).
 
 %%%%%% preference atoms
 _label(LABEL) :- preference_holds(LABEL,_,_).
