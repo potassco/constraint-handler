@@ -25,54 +25,52 @@ class Evaluator:
     def operator(self, o, args):
         match o:
             case Operator.set_make:
-                if None in args:
-                    return None
                 return frozenset(args)
             case Operator.set_isin:
                 if len(args) != 2:
                     self.errors.append(errors.incorrect_arity_error(o, 2, len(args)))
-                    return None
-                if args[1] is None:
-                    return None
+                    return common.Bad.bad
+                if args[1] == common.Bad.bad:
+                    return common.Bad.bad
                 return args[0] in args[1]
             case Operator.set_notin:
                 if len(args) != 2:
                     self.errors.append(errors.incorrect_arity_error(o, 2, len(args)))
-                    return None
-                if args[1] is None:
-                    return None
+                    return common.Bad.bad
+                if args[1] == common.Bad.bad:
+                    return common.Bad.bad
                 return args[0] not in args[1]
             case Operator.union:
-                if None in args:
-                    return None
+                if common.Bad.bad in args:
+                    return common.Bad.bad
                 return frozenset().union(*args)
             case Operator.inter:
                 if len(args) < 1:
                     self.errors.append(errors.incorrect_arity_error(o, "at least 1", len(args)))
-                    return None
-                if None in args:
-                    return None
+                    return common.Bad.bad
+                if common.Bad.bad in args:
+                    return common.Bad.bad
                 return frozenset(args[0].intersection(*args[1:]))
             case Operator.diff:
                 if len(args) != 2:
                     self.errors.append(errors.incorrect_arity_error(o, 2, len(args)))
-                    return None
-                if None in args:
-                    return None
+                    return common.Bad.bad
+                if common.Bad.bad in args:
+                    return common.Bad.bad
                 return frozenset(args[0].difference(args[1]))
             case Operator.subset:
                 if len(args) != 2:
                     self.errors.append(errors.incorrect_arity_error(o, 2, len(args)))
-                    return None
-                if None in args:
-                    return None
+                    return common.Bad.bad
+                if common.Bad.bad in args:
+                    return common.Bad.bad
                 return args[0].issubset(args[1])
             case Operator.set_fold:
                 if len(args) != 3:
                     self.errors.append(errors.incorrect_arity_error(o, 3, len(args)))
-                    return None
-                if None in args:
-                    return None
+                    return common.Bad.bad
+                if args[1] == common.Bad.bad or args[2] == common.Bad.bad:
+                    return common.Bad.bad
                 evaluator = self.expr_evaluator()
                 o = lambda *aaa: evaluator.operator(args[0], aaa)
                 # TODO: log errors from evaluator
@@ -81,4 +79,4 @@ class Evaluator:
                 self.errors.append(
                     (warning.Expression(warning.ExpressionWarning.NotImplementedError), f"set.operator {o}")
                 )
-                return None
+                return common.Bad.bad

@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- Use `bad` instead of `none` for set operator python evaluation
 - Update CI to run fewer smoke tests and to test only one configuration on
   routine commits. Enable caching for routine commit tests.
 - Support `ceil` operator in compile engine and add corresponding test.
