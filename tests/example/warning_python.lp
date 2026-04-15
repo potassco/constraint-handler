@@ -8,7 +8,7 @@ execution_declare(div0,statement_python("z = x/y\nassert 1.5 < z"),("x",("y",())
 execution_run(div0).
 
 { activate }.
-forbid_warning(statement(pythonError)) :- activate.
+warning_forbid(statement(pythonError)) :- activate.
 variable_define(active,val(bool,true)) :- activate.
 variable_define(active,val(bool,false)) :- not activate.
 

@@ -254,5 +254,9 @@ class Propagator_evaluate(Evaluate):
     pass
 
 
-class Propagator_forbid_warning(warning.Forbid_warning):
+class Propagator_warning_forbid(warning.Warning_forbid):
+    pass
+
+
+class Propagator_warning_ignore(warning.Warning_ignore):
     pass

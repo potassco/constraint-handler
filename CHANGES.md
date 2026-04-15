@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- rename `forbid_warning` and `ignore_warning` to `warning_forbid` and
+  `warning_ignore`; allow an optional label argument for `warning_ignore`
 - raise warning `statement(syntaxError)` when a statement is malformed
 - Use `bad` instead of `none` for set operator python evaluation
 - Update CI to run fewer smoke tests and to test only one configuration on

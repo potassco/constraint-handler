@@ -66,11 +66,12 @@ preference_holds(_label_anonymous,E,1) :- preference_holds(E).
 preference_variableValue(_label_anonymous,X,E,1) :- preference_variableValue(X,E).
 
 %%%%%% warning atoms
-#defined forbid_warning/1.
-#defined ignore_warning/1.
+#defined warning_forbid/1.
+#defined warning_ignore/1.
 
-forbid_warning(_label_anonymous,KIND) :- forbid_warning(KIND).
+warning_forbid(_label_anonymous,KIND) :- warning_forbid(KIND).
 
+warning_ignore(_label_anonymous,KIND) :- warning_ignore(KIND).
 
 %%%%%%%%%%%%%%%%% collect labels
 _label(LABEL) :- ensure(LABEL,E).
@@ -104,7 +105,8 @@ _label(LABEL) :- preference_holds(LABEL,_,_).
 _label(LABEL) :- preference_variableValue(LABEL,_,_,_).
 
 %%%%%% warning atoms
-_label(LABEL) :- forbid_warning(LABEL,KIND).
+_label(LABEL) :- warning_forbid(LABEL,KIND).
+_label(LABEL) :- warning_ignore(LABEL,KIND).
 
 
 
@@ -143,4 +145,3 @@ _label(LABEL) :- preference_holds(LABEL,_,_).
 _label(LABEL) :- preference_variableValue(LABEL,_,_,_).
 
 %%%%%% warning atoms
-_label(LABEL) :- forbid_warning(LABEL,_).

@@ -21,4 +21,5 @@ propagator_execution_declare(LBL,F,STMT,IN,OUT) :-
 propagator_execution_run(LBL,F) :-
     _passed(sugar,execution_run(LBL,F)), engine(LBL,propagator).
 
-propagator_forbid_warning(CNAME,W) :- forbid_warning(CNAME,W), defaultEngine(propagator).
+propagator_warning_forbid(CNAME,W) :- warning_forbid(CNAME,W), defaultEngine(propagator).
+propagator_warning_ignore(CNAME,W) :- warning_ignore(CNAME,W), defaultEngine(propagator).
