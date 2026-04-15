@@ -65,6 +65,7 @@ base_tests = [
     "set_manipulations",
     "set_selfref",
     "strings",
+    "statement_python_declared_output",
     "sum_aggregates",
     "sum_chain_performance",
     "type_checking",
