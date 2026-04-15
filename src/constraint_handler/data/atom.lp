@@ -55,15 +55,18 @@ optimize_maximizeSum(_label_anonymous,E,X,P) :- optimize_maximizeSum(E,X,P).
 optimize_maximizeSum(_label_anonymous,E,X,0) :- optimize_maximizeSum(E,X).
 
 %%%%%% preference atoms
+#defined preference_holds/3.
 #defined preference_holds/2.
 #defined preference_holds/1.
+#defined preference_variableValue/4.
 #defined preference_variableValue/3.
 #defined preference_variableValue/2.
-preference_holds(_label_anonymous,E,K) :- preference_holds(E,K).
-preference_variableValue(_label_anonymous,X,E,K) :- preference_variableValue(X,E,K).
-%%% convenience
-preference_holds(_label_anonymous,E,1) :- preference_holds(E).
-preference_variableValue(_label_anonymous,X,E,1) :- preference_variableValue(X,E).
+_passed(defaultArgs,preference_holds(LBL,E,K)) :- preference_holds(LBL,E,K).
+_passed(defaultArgs,preference_holds(_label_anonymous,E,K)) :- preference_holds(E,K).
+_passed(defaultArgs,preference_holds(_label_anonymous,E,1)) :- preference_holds(E).
+_passed(defaultArgs,preference_variableValue(_label_anonymous,X,E,K)) :- preference_variableValue(X,E,K).
+_passed(defaultArgs,preference_variableValue(LBL,X,E,K)) :- preference_variableValue(LBL,X,E,K).
+_passed(defaultArgs,preference_variableValue(_label_anonymous,X,E,1)) :- preference_variableValue(X,E).
 
 %%%%%% warning atoms
 #defined warning_forbid/1.
@@ -100,8 +103,8 @@ _label(LABEL) :- execution_run(LABEL,NAME).
 _label(LABEL) :- optimize_maximizeSum(LABEL,_,_,_).
 
 %%%%%% preference atoms
-_label(LABEL) :- preference_holds(LABEL,_,_).
-_label(LABEL) :- preference_variableValue(LABEL,_,_,_).
+_label(LABEL) :- _passed(defaultArgs,preference_holds(LABEL,E,K)).
+_label(LABEL) :- _passed(defaultArgs,preference_variableValue(LABEL,X,E,K)).
 
 %%%%%% warning atoms
 _label(LABEL) :- warning_forbid(LABEL,KIND).
@@ -149,7 +152,11 @@ _warning(atom(syntaxError),(),optimize_precision(PREC,PRIO)) :- optimize_precisi
     not _passed(sugar,optimize_precision(PREC,PRIO)).
 
 %%%%%% preference atoms
-_label(LABEL) :- preference_holds(LABEL,_,_).
-_label(LABEL) :- preference_variableValue(LABEL,_,_,_).
+_passed(sugar,preference_holds(LABEL,E,K)) :- _passed(defaultArgs,preference_holds(LABEL,E,K)), _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).
+_passed(sugar,preference_variableValue(LABEL,X,E,K)) :- _passed(defaultArgs,preference_variableValue(LABEL,X,E,K)), _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).
+_passed(sugar,preference_expressionScore(LBL,operation(eq,(variable(X),(E,()))),K)) :- _passed(sugar,preference_variableValue(LBL,X,E,K)), K > 0.
+_passed(sugar,preference_expressionScore(LBL,operation(neq,(variable(X),(E,()))),-K)) :- _passed(sugar,preference_variableValue(LBL,X,E,K)), K < 0.
+_passed(sugar,preference_expressionScore(LBL,E,K)) :- _passed(sugar,preference_holds(LBL,E,K)), K > 0.
+_passed(sugar,preference_expressionScore(LBL,operation(wnot,(E,())),-K)) :- _passed(sugar,preference_holds(LBL,E,K)), K < 0.
 
 %%%%%% warning atoms

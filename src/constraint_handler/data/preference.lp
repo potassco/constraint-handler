@@ -3,11 +3,7 @@
 _warning(preference(unsupported),(),("multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
 
 
-_preference_expressionScore(operation(eq,(variable(X),(E,()))), K) :- preference_variableValue(CNAME,X,E,K), K > 0.
-_preference_expressionScore(operation(wnot,(operation(eq,(variable(X),(E,()))),())),-K) :- preference_variableValue(CNAME,X,E,K), K < 0.
-
-_preference_expressionScore(E, K) :- preference_holds(CNAME,E,K), K > 0.
-_preference_expressionScore(operation(wnot,(E,())),-K) :- preference_holds(CNAME,E,K), K < 0.
+_preference_expressionScore(E,K) :- _passed(sugar,preference_expressionScore(LBL,E,K)), engine(LBL,compile).
 
 _preference_expression(E) :- _preference_expressionScore(E,K).
 direct_query(E) :- _preference_expression(E).

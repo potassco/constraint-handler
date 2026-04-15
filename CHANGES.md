@@ -2,8 +2,8 @@
 
 ## Ongoing
 
-- raise warning `atom(syntaxError)` when an execution, optimize atom is
-  malformed
+- raise warning `atom(syntaxError)` when an execution, optimize, or preference
+  atom is malformed
 - rename `forbid_warning` and `ignore_warning` to `warning_forbid` and
   `warning_ignore`; allow an optional label argument for `warning_ignore`
 - raise warning `statement(syntaxError)` when a statement is malformed
