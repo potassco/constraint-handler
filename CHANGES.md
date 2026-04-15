@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- raise warning `statement(syntaxError)` when a statement is malformed
 - Use `bad` instead of `none` for set operator python evaluation
 - Update CI to run fewer smoke tests and to test only one configuration on
   routine commits. Enable caching for routine commit tests.
@@ -19,7 +20,7 @@
   `variable_declareOptional`, if unspecified, it defaults to the label of the
   corresponding `variable_declare` atom.
 - introduce optional label argument to `evaluate`
-- raise warning `expression(syntax)` when an expression is malformed
+- raise warning `expression(syntaxError)` when an expression is malformed
 - `evaluate` declarations now also generate expression-related warnings
 - Introduce warning `variable(badValue)` that is emitted when the value of some
   variable is bad

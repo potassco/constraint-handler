@@ -1,11 +1,11 @@
 #defined _statement_query/2.
 
 %%%%%%%%%%%%%%%%% interface: execution_run/1 execution_assign/3 execution_output/4 execution_declare/3
-_execution_declare(NAME,STMT,INS,OUTS) :- execution_declare(CNAME,NAME,STMT,INS,OUTS), engine(CNAME,compile).
+_execution_declare(NAME,STMT,INS,OUTS) :- _passed(sugar,execution_declare(LBL,NAME,STMT,INS,OUTS)), engine(LBL,compile).
 _execution_input_var(NAME,X) :- _execution_declare(NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
 _execution_output_var(NAME,X) :- _execution_declare(NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
-_execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), execution_run(CNAME,NAME), engine(CNAME,compile).
-%_warning(("undeclared run",NAME)) :- execution_run(NAME), not execution_declare(_,NAME,_).
+_execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), _passed(sugar,execution_run(LBL,NAME)), engine(LBL,compile).
+%_warning(("undeclared run",NAME)) :- _passed(sugar,execution_run(NAME)), not _passed(sugar,execution_declare(_,NAME,_)).
 
 _execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), _se_value(variable(execution_input(NAME,X)),V).
 

@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%% interface: execution_run/1 execution_assign/3 execution_output/4 execution_declare/3
-_gex_declare(NAME,STMT,INS,OUTS) :- execution_declare(CNAME,NAME,STMT,INS,OUTS), engine(CNAME,ground).
-_gex_run(NAME,STMT,INS,OUTS) :- _gex_declare(NAME,STMT,INS,OUTS), execution_run(CNAME,NAME), engine(CNAME,ground).
+_gex_declare(NAME,STMT,INS,OUTS) :- _passed(sugar,execution_declare(LBL,NAME,STMT,INS,OUTS)), engine(LBL,ground).
+_gex_run(NAME,STMT,INS,OUTS) :- _gex_declare(NAME,STMT,INS,OUTS), _passed(sugar,execution_run(LBL,NAME)), engine(LBL,ground).
 
 _gex_inputVar(NAME,I,X,execution_input(NAME,X)) :- _gex_declare(NAME,STMT,INS,OUTS), (I,X)=@pythonEnumerateElements(INS).
 _gex_outputVar(NAME,X,execution_output(NAME,X)) :- _gex_declare(NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).

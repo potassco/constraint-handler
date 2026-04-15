@@ -15,10 +15,10 @@ propagator_multimap_declare(LBL,X) :- _passed(sugar,multimap_declare(LBL,X)), en
 
 propagator_optimize_maximizeSum(CNAME,E,X,P) :- _optimize_maximizeSum(CNAME,E,X,P), engine(CNAME,propagator).
 
-propagator_execution_declare(CNAME,F,STMT,IN,OUT) :-
-    execution_declare(CNAME,F,STMT,IN,OUT), engine(CNAME,propagator).
+propagator_execution_declare(LBL,F,STMT,IN,OUT) :-
+    _passed(sugar,execution_declare(LBL,F,STMT,IN,OUT)), engine(LBL,propagator).
 
-propagator_execution_run(CNAME,F) :-
-    execution_run(CNAME,F), engine(CNAME,propagator).
+propagator_execution_run(LBL,F) :-
+    _passed(sugar,execution_run(LBL,F)), engine(LBL,propagator).
 
 propagator_forbid_warning(CNAME,W) :- forbid_warning(CNAME,W), defaultEngine(propagator).

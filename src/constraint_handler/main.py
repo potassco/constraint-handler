@@ -27,6 +27,7 @@ modules = [
     "propagator",
     "pythonHelper",
     "set",
+    "statement",
     "string",
     "symbol",
     "type",
