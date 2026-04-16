@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+## v0.0.2.dev6
+
 - remove `define` from the supported declarations
 - add `ceil` and `floor` operator to int in compile engine, they behave like
   identity
