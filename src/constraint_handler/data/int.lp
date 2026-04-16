@@ -31,9 +31,10 @@ _computedIdx(E,bad) :- _computeIdx(E,(int_div;float_div)), _computeIdx(E,1,val(i
 _warning(expression(zeroDivisionError),(),(OP,E)) :- _computeIdx(E,OP), OP = (int_div;float_div), _computeIdx(E,1,val(int,0)).
 
 
-%%%%%%%%%%%%%%%%% abs minus
-operator_declare((abs;minus),(int,()),int).
+%%%%%%%%%%%%%%%%% abs ceil floor minus
+operator_declare((abs;ceil;floor;minus),(int,()),int).
 _computedIdx(E,val(int,|V|)) :- _computeIdx(E,abs), _computeIdx(E,0,val(int,V)).
+_computedIdx(E,val(int,V)) :- _computeIdx(E,(ceil;floor)), _computeIdx(E,0,val(int,V)).
 _computedIdx(E,val(int,-V))  :- _computeIdx(E,minus), _computeIdx(E,0,val(int,V)).
 
 %%%%%%%%%%%%%%%%% eq neq

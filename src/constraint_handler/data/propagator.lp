@@ -14,7 +14,7 @@ propagator_multimap_assign(LBL,X,K,V) :- _passed(sugar,multimap_assign(LBL,X,K,V
 propagator_multimap_declare(LBL,X) :- _passed(sugar,multimap_declare(LBL,X)), engine(LBL,propagator).
 
 propagator_optimize_maximizeSum(LBL,E,X,P) :- _passed(sugar,optimize_maximizeSum(LBL,E,X,P)), engine(LBL,propagator).
-propagator_optimize_precision(PREC,PRIO) :- _passed(sugar,optimize_precision(PREC,PRIO)), engine(LBL,propagator).
+propagator_optimize_precision(PREC,PRIO) :- _passed(sugar,optimize_precision(PREC,PRIO)).
 
 propagator_execution_declare(LBL,F,STMT,IN,OUT) :-
     _passed(sugar,execution_declare(LBL,F,STMT,IN,OUT)), engine(LBL,propagator).

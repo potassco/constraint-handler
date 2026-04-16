@@ -31,11 +31,11 @@ _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 
 
 %%%%%%%%%%%%%%%%% lambda application
-_direct_needs_args_list(E) :- _direct_queryArgsValues(E,lambda(LARGS,SUB),ARGS).
+_direct_needs_args_list(E,ARGS) :- _direct_queryArgsValues(E,lambda(LARGS,SUB),ARGS).
 _length(ARGS,LEN) :- _direct_queryArgsValues(E,OP,ARGS), LEN=@pythonListLength(ARGS).
-_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E), _length(ARGS,IDX).
-_direct_args_list_aux(E,IDX,(V,VS)) :- _direct_needs_args_list(E), _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
-_direct_args_list(E,VS) :- _direct_needs_args_list(E), _direct_args_list_aux(E,0,VS).
+_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E,ARGS), _length(ARGS,IDX).
+_direct_args_list_aux(E,IDX,(V,VS)) :- _direct_needs_args_list(E,ARGS), _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
+_direct_args_list(E,VS) :- _direct_needs_args_list(E,ARGS), _direct_args_list_aux(E,0,VS).
 
 _lambda_aux(E,RED) :- _computeIdx(E,lambda(VARS,ERES)),
     _direct_args_list(E,ARGS),

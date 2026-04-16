@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- add `ceil` and `floor` operator to int in compile engine, they behave like
+  identity
 - raise warning `atom(syntaxError)` when an execution, optimize, or preference
   atom is malformed
 - rename `forbid_warning` and `ignore_warning` to `warning_forbid` and
