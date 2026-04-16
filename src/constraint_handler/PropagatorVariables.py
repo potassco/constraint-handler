@@ -2016,6 +2016,14 @@ class Evaluations:
         self.existing_vars: list[clingo.Symbol] = []
 
     def init(self, variables: Iterable[VariableType]):
+        """
+        Initialize the existing variables list based on the provided variables.
+        This method should be called before any evaluations are updated
+        to ensure that the existing variables are correctly tracked.
+
+        Args:
+            variables: Iterable of variables to initialize from.
+        """
         for var in variables:
             if isinstance(var, Execution):
                 self.existing_vars.extend(var.converted_out_vars)

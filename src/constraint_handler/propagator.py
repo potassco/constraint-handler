@@ -829,12 +829,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 define_variable = Variable(name, symbol_var)
                 self.symbol2var[symbol_var] = define_variable
 
-            # temporary workaround for testing
-            # expr_vars = evaluator.collectVars(expr)
-            # if symbol_var in expr_vars:
-            #     print("var referencing itself! skipping ", expr)
-            #     continue
-
             define_variable.add_value(expr, _literal, _literal)
             ctl.add_watch(_literal)
             ctl.add_watch(-_literal)
@@ -843,7 +837,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # here we dont add a nogood since its the same literal
 
         for (name, symbol_var, domain_expr), _literal in var_domains.items():
-            # These values are assgiend the "from_facts" domain literal for the given variable
+            # These values are assigned the "from_facts" domain literal for the given variable
             if symbol_var not in self.symbol2var:
                 continue
             domain_variable: Variable = cast(Variable, self.symbol2var[symbol_var])
@@ -875,18 +869,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.literal2var.setdefault(_literal, []).append(optional_variable)
             self.literal2var[literal] = [optional_variable]
-
-        # temporary workaround for testing
-        # to_delete = []
-        # for symbol_var, var in self.symbol2var.items():
-        #     if not var.has_domain():
-        #         to_delete.append(symbol_var)
-
-        #     # if symbol_var.name == "execution_output":
-        #     #     to_delete.append(symbol_var)
-
-        # for symbol_var in to_delete:
-        #     del self.symbol2var[symbol_var]
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
@@ -986,16 +968,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_set_declare)
-        # temporary workaround for testing (the skip stuff)
-        # skip = []
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
-            # if symbol_var in self.symbol2var:
-            #     print(
-            #         "Warning: variable ", symbol_var, " declared both as set and non-set! skipping set variable stuff"
-            #     )
-            #     skip.append(symbol_var)
-            #     continue
             self.symbol2var[symbol_var] = variable
             self.literal2var.setdefault(literal, []).append(variable)
 
@@ -1004,8 +978,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_set_assign)
         for (name, symbol_var, expr), literal in assigns.items():
-            # if symbol_var in skip:
-            #     continue
             setvar: SetVariable = cast(SetVariable, self.symbol2var[symbol_var])
             setvar.add_value(expr, literal)
             self.literal2var.setdefault(literal, []).append(setvar)
@@ -1015,8 +987,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         domains = myClorm.findInPropagateInit(ctl, atom.Propagator_set_baseDomain)
         for (name, symbol_var, domain_expr), _ in domains.items():
-            # if symbol_var in skip:
-            #     continue
             setvar: SetVariable = cast(SetVariable, self.symbol2var[symbol_var])
             literal = ctl.add_literal(freeze=True)
             setvar.add_value(domain_expr, literal)
@@ -1185,7 +1155,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(eval_var, eval_var.get_value())
             self.handle_on_model_warning(eval_var.get_errors())
             final_value = eval_var.get_value()
-            if final_value == Bad.bad:
+            if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
                 pyVal = final_value
             else:
                 pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
@@ -1294,7 +1264,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.python_model.add(mm_pyAtom)
 
     def handle_on_model_normal_type(
-        self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol | Bad
+        self,
+        var: clingo.Symbol,
+        final_value: bool | int | float | str | clingo.Symbol | expression.Bad.bad,  # ty:ignore[unresolved-attribute]
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.
@@ -1304,7 +1276,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             final_value: Scalar value.
         """
         assert self.python_model is not None
-        if final_value == Bad.bad:
+        if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
             pyVal = final_value
         else:
             pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
