@@ -158,7 +158,6 @@ def test_engine_propagator(name, check_mode):
         "set_fold_bools",
         "set_iterations",
         "set_selfref",
-        "warning_bad",
         "warning_variables",
         "warning_variable_undeclared",
         "type_checking",
