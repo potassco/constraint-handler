@@ -1,5 +1,4 @@
 #defined assign/2.
-#defined define/3.
 #defined ensure/1.
 #defined ensure/2.
 #defined evaluate/2.
@@ -9,7 +8,6 @@
 _passed(defaultArgs,ensure(_label_anonymous,E)) :- ensure(E).
 _passed(defaultArgs,ensure(LBL,E)) :- ensure(LBL,E).
 assign(_label_anonymous,X,E) :- assign(X,E).
-define(_label_anonymous,X,VARS,EXPR) :- define(X,VARS,EXPR).
 _passed(defaultArgs,evaluate(_label_anonymous,OP,ARGS)) :- evaluate(OP,ARGS).
 _passed(defaultArgs,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
@@ -96,7 +94,6 @@ warning_ignore(_label_anonymous,KIND) :- warning_ignore(KIND).
 %%%%%%%%%%%%%%%%% collect labels
 _label(LABEL) :- _passed(defaultArgs,ensure(LABEL,E)).
 _label(LABEL) :- assign(LABEL,X,E).
-_label(LABEL) :- define(LABEL,_,_,_).
 _label(LABEL) :- _passed(defaultArgs,evaluate(LABEL,O,ARGS)).
 
 %%%%%% variable atoms
@@ -135,7 +132,6 @@ _passed(sugar,ensure(LBL,E)) :- _passed(defaultArgs,ensure(LBL,E)), _expression_
 _passed(sugar,evaluate(LBL,OP,ARGS)) :- _passed(defaultArgs,evaluate(LBL,OP,ARGS)), _expression_wellformed(operation(OP,ARGS)).
 
 
-_label(LABEL) :- define(LABEL,_,_,_).
 %_passed(sugar,assign(LABEL,X,E)) :- assign(LABEL,X,E), _expression_wellformed(E).
 
 

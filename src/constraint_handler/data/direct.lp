@@ -56,11 +56,6 @@ _computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,val(TYPE,V)).
 _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
-%%%%%%%%%%%%%%%%% function definitions
-assign(CNAME,X,lambda(VARS,EXPR)) :- define(CNAME,X,VARS,EXPR).
-%direct_query(ER) :- direct_query(E), beta_reduction(E,ER).
-%_se_value(E,T,V) :- direct_query(E), beta_reduction(E,ER), _se_value(ER,T,V).
-
 %%%%%%%%%%%%%%%%% bad
 _se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _operator_recoverable(OP).
 _se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(OP,bad).

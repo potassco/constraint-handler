@@ -42,7 +42,7 @@ variable_define(nb_squares,E) :-
   PLUS = operation(add,(MONE,(ACCU,()))),
   LAMB = lambda(VARS,PLUS).
 
-define(isSquare,(shape,()),ISSQ) :-
+variable_define(isSquare,lambda((shape,()),ISSQ)) :-
   SHAP = variable(shape),
   KIND = operation(find,(val(symbol,kind),(SHAP,()))),
   WIDT = operation(find,(val(symbol,width),(SHAP,()))),
