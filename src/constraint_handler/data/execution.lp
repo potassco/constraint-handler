@@ -17,7 +17,7 @@ _se_assign(_internal,variable(execution_output(NAME,X)),bad) :- _execution_outpu
 _execution_ou_proj(NAME,X) :- _execution_ou(NAME,X,V).
 
 %%%%%%%%%%%%%%%%% _statement_query,
-_statement_query((NAME,()),STMT) :- execution_declare(CNAME,NAME,STMT,INS,OUTS).
+_statement_query((NAME,()),STMT) :- _passed(defaultArgs,execution_declare(CNAME,NAME,STMT,INS,OUTS)).
 _statement_query(SCOPE,STM1) :- _statement_query(SCOPE,seq2(STM1,STM2)).
 _statement_query(SCOPE,STM2) :- _statement_query(SCOPE,seq2(STM1,STM2)).
 _statement_query(SCOPE,THEN) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).

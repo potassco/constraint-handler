@@ -141,8 +141,8 @@ variable_define(check(OP, multimap), EXPR) :-
     check_types(T),
     OP = (multimap_isin; find).
 
-variable_define(check(OP, multimap), EXPR) :-
-    EXPR = operation(OP, (variable(v(multimap)),())),
+variable_define(check(OP,multimap), EXPR) :-
+    EXPR = operation(OP,(variable(v(multimap)),())),
     OP = (countKeys;countEntries;sumIntEntries;maxEntries;minEntries).
 
 variable_define(check(multimap_make_empty), operation(multimap_make, ())).

@@ -6,8 +6,8 @@ _type(int;float;bool;string;symbol;none;set;multimap).
 %%%%%%%%%%%%%%%%% type_variable
 type_variable((),X,T) :- _passed(sugar,variable_define(LBL,X,E)), type_expression((),E,T).
 type_variable((),X,T) :- _passed(sugar,variable_domain(LBL,X,E)), type_expression((),E,T).
-type_variable((),X,set) :- set_declare(LBL,X).
-type_variable((),X,multimap) :- multimap_declare(LBL,X).
+type_variable((),X,set) :- _passed(sugar,set_declare(LBL,X)).
+type_variable((),X,multimap) :- _passed(sugar,multimap_declare(LBL,X)).
 
 %%%%%%%%%%%%%%%%% type_expression
 _expression_query((),E) :- type_query(E).

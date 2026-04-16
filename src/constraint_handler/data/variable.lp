@@ -1,17 +1,17 @@
 %%%%%% syntactic sugar
 _passed(sugar,variable_declare(LABEL,X,fromFacts)) :- variable_declare(LABEL,X,D), D=(fromFacts;boolDomain;fromList(L)).
 _variable_tentativeDomain(LABEL,X,E) :- variable_domain(LABEL,X,E).
-variable_domain(LABEL,X,E) :- variable_declare(LABEL,X,fromList(L)), E=@pythonListElements(L).
-variable_domain(LABEL,X,val(bool,(false;true))) :- variable_declare(LABEL,X,boolDomain).
-variable_domain(LABEL,X,val(none,none)) :- variable_declareOptional(LABEL,X).
-_passed(sugar,variable_domain(LABEL,X,E)) :- variable_domain(LABEL,X,E), _expression_wellformed(E).
-%_passed(sugar,variable_domain(LABEL,X,bad)) :- variable_domain(LABEL,X,E), not _expression_wellformed(E). % TODO
+variable_domain(LBL,X,E) :- variable_declare(LBL,X,fromList(L)), E=@pythonListElements(L).
+variable_domain(LBL,X,val(bool,(false;true))) :- variable_declare(LBL,X,boolDomain).
+variable_domain(LBL,X,val(none,none)) :- variable_declareOptional(LBL,X).
+_passed(sugar,variable_domain(LBL,X,E)) :- variable_domain(LBL,X,E), _expression_wellformed(E).
+%_passed(sugar,variable_domain(LBL,X,bad)) :- variable_domain(LBL,X,E), not _expression_wellformed(E). % TODO
 
-_passed(sugar,variable_declare(LABEL,X,fromFacts)) :- variable_domain(LABEL,X,E), not variable_declare(_,X,_).
-_warning(variable(undeclared),(),((),X)) :- variable_domain(LABEL,X,E), not variable_declare(_,X,_).
+_passed(sugar,variable_declare(LBL,X,fromFacts)) :- variable_domain(LBL,X,E), not variable_declare(_,X,_).
+_warning(variable(undeclared),(),((),X)) :- variable_domain(LBL,X,E), not variable_declare(_,X,_).
 
-_passed(sugar,variable_define(LABEL,X,E)) :- variable_define(LABEL,X,E), _expression_wellformed(E).
-%_passed(sugar,variable_define(LABEL,X,bad)) :- variable_define(LABEL,X,E), not _expression_wellformed(E). % TODO
+_passed(sugar,variable_define(LBL,X,E)) :- variable_define(LBL,X,E), _expression_wellformed(E).
+%_passed(sugar,variable_define(LBL,X,bad)) :- variable_define(LBL,X,E), not _expression_wellformed(E). % TODO
 
 
 _warning(variable(multipleDeclarations),(CNAME1,(CNAME2,())),(X,D1,D2)) :-
@@ -40,11 +40,12 @@ _warning(variable(emptyDomain),(CNAME,()),X) :- _variable_declare(CNAME,X,D), no
 
 %%%%%%%%%%%%%%%%% _variable_query
 _variable_query((),X) :- _passed(sugar,variable_domain(LABEL,X,V)).
-_variable_query((),X) :- set_assign(NAME,X,E).
-_variable_query((),X) :- multimap_assign(NAME,X,K,B).
+_variable_query((),X) :- _passed(defaultArgs,set_assign(NAME,X,E)).
+_variable_query((),X) :- _passed(defaultArgs,set_baseDomain(NAME,X,E)).
+_variable_query((),X) :- _passed(sugar,multimap_assign(NAME,X,K,B)).
 _variable_query(SCOPE,X) :- _expression_query(SCOPE,variable(X)).
-_variable_query((),execution_input(NAME,X)) :- _statement_query(SCOPE,STMT), execution_declare(_,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
-_variable_query((NAME,()),X) :- _passed(sugar,execution_declare(_,NAME,STMT,INS,OUTS)), X=@pythonListElements(OUTS).
+_variable_query((),execution_input(NAME,X)) :- _statement_query(SCOPE,STMT), _passed(sugar,execution_declare(LBL,NAME,STMT,INS,OUTS)), X=@pythonListElements(INS).
+_variable_query((NAME,()),X) :- _passed(sugar,execution_declare(LBL,NAME,STMT,INS,OUTS)), X=@pythonListElements(OUTS).
 
 _variable_exists((),X) :- _passed(sugar,variable_declare(LBL,X,D)).
 _variable_exists((),X) :- _passed(sugar,variable_define(LBL,X,E)).
