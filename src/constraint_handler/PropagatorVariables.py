@@ -1788,6 +1788,14 @@ class Execution:
                 self.values.append((c_out_var, None))
             else:
                 self.values.append((c_out_var, final_evals[out_var]))
+                if final_evals[out_var] == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
+                    self.errors.append(
+                        warning.Warning(
+                            warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
+                            (self.func_name, out_var),
+                            f"Output variable {out_var} in execution {self.func_name} has a bad value!",
+                        )
+                    )
 
         return EvaluationResult.CHANGED
 
@@ -1859,7 +1867,7 @@ class Execution:
 
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
             for out_var in self.converted_out_vars:
-                e.false_assignments.append(out_var)  # type: ignore
+                e.false_assignments.append(out_var)
         else:
             for out_var, val in value:
                 e.evaluations[out_var] = val
