@@ -17,6 +17,7 @@ from constraint_handler.PropagatorConstants import (
     DEFAULT_DECISION_LEVEL,
     EXECUTION_INPUT,
     EXECUTION_OUTPUT,
+    EXISTING_VARS,
     FALSE_ASSIGNMENTS,
     EvaluationResult,
     ValueStatus,
@@ -147,7 +148,12 @@ class VariableValue:
             return True
 
         for var in self.vars():
-            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
+            # If a variable that exists is not yet assigned(A value or False assignment), then we cannot evaluate yet
+            if (
+                var in evaluations[EXISTING_VARS]
+                and var not in evaluations
+                and var not in evaluations[FALSE_ASSIGNMENTS]
+            ):
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.value == ValueStatus.NOT_SET
@@ -2022,8 +2028,9 @@ def make_dict_from_variables(
     Returns:
         dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]: Dictionary of variable values.
     """
-    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {FALSE_ASSIGNMENTS: []}  # type: ignore
+    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {FALSE_ASSIGNMENTS: [], EXISTING_VARS: []}  # type: ignore
     for var in variables:
         var.add_self_to_dict(result)
+        result[EXISTING_VARS].append(var)
 
     return result

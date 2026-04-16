@@ -8,6 +8,7 @@ DEBUG_PRINT = False
 DEFAULT_DECISION_LEVEL: Literal[-1] = -1
 
 FALSE_ASSIGNMENTS: Literal["__FALSE_ASSIGNMENTS__"] = "__FALSE_ASSIGNMENTS__"
+EXISTING_VARS: Literal["__EXISTING_VARS__"] = "__EXISTING_VARS__"
 
 ENSURE_VAR_NAME: Literal["__ensure__"] = "__ensure__"
 EXECUTION_INPUT: Literal["execution_input"] = "execution_input"

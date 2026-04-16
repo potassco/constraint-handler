@@ -526,6 +526,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         ng: set[int] = set()
         for symbol_var in var.vars():
+            if symbol_var not in self.symbol2var:
+                continue
             v = self.symbol2var[symbol_var]
             ng = ng.union(self.get_reasons(v))
         myprint(f"Adding nogood {list(ng)} for variable {var}")
@@ -622,6 +624,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             seen = set()
         reasons = var.literals
         for dvar in var.vars():
+            if dvar not in self.symbol2var:
+                continue
             if dvar.name == EXECUTION_OUTPUT:
                 dvar = dvar.arguments[0]
             if self.symbol2var[dvar] not in seen:
@@ -757,17 +761,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         var_domains = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_domain)
         var_optionals = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declareOptional)
 
-        from_facts_literals: dict[symbol_var, int] = {}
-        for (name, symbol_var, domain), __literal in var_declares.items():
+        from_facts_literals: dict[clingo.Symbol, int] = {}
+        for (name, symbol_var, domain), _literal in var_declares.items():
             if symbol_var not in self.symbol2var:
                 self.symbol2var[symbol_var] = Variable(name, symbol_var)
 
             variable: Variable = cast(Variable, self.symbol2var[symbol_var])
 
-            ctl.add_watch(__literal)
-            ctl.add_watch(-__literal)
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
 
-            self.literal2var.setdefault(__literal, []).append(variable)
+            self.literal2var.setdefault(_literal, []).append(variable)
 
             if isinstance(domain, atom.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
@@ -775,12 +779,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 variable.add_value(
                     expression.Val(expression.BaseType.bool, True),  # ty:ignore[unresolved-attribute]
                     literal_true,
-                    __literal,
+                    _literal,
                 )
                 variable.add_value(
                     expression.Val(expression.BaseType.bool, False),  # ty:ignore[unresolved-attribute]
                     literal_false,
-                    __literal,
+                    _literal,
                 )
                 ctl.add_watch(literal_true)
                 ctl.add_watch(-literal_true)
@@ -788,8 +792,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 ctl.add_watch(-literal_false)
 
                 # if the declaration is False, then the value it can give can not be true
-                ctl.add_clause([-literal_true, __literal])
-                ctl.add_clause([-literal_false, __literal])
+                ctl.add_clause([-literal_true, _literal])
+                ctl.add_clause([-literal_false, _literal])
 
                 self.literal2var[literal_true] = [variable]
                 self.literal2var[literal_false] = [variable]
@@ -797,17 +801,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             elif isinstance(domain, atom.FromList):
                 for expr in domain.elements:
                     literal = ctl.add_literal(freeze=True)
-                    variable.add_value(expr, literal, __literal)
+                    variable.add_value(expr, literal, _literal)
                     ctl.add_watch(literal)
                     ctl.add_watch(-literal)
 
-                    ctl.add_clause([-literal, __literal])
+                    ctl.add_clause([-literal, _literal])
 
                     self.literal2var[literal] = [variable]
 
             elif isinstance(domain, atom.FromFacts):
                 # values will be added from facts, nothing to do here
-                from_facts_literals[symbol_var] = __literal
+                from_facts_literals[symbol_var] = _literal
             else:
                 self.errors.append(
                     warning.Warning(
@@ -817,21 +821,27 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     )
                 )
 
-        for (name, symbol_var, expr), __literal in var_defines.items():
+        for (name, symbol_var, expr), _literal in var_defines.items():
             if symbol_var in self.symbol2var:
                 define_variable: Variable = cast(Variable, self.symbol2var[symbol_var])
             else:
                 define_variable = Variable(name, symbol_var)
                 self.symbol2var[symbol_var] = define_variable
 
-            define_variable.add_value(expr, __literal, __literal)
-            ctl.add_watch(__literal)
-            ctl.add_watch(-__literal)
+            # temporary workaround for testing
+            # expr_vars = evaluator.collectVars(expr)
+            # if symbol_var in expr_vars:
+            #     print("var referencing itself! skipping ", expr)
+            #     continue
 
-            self.literal2var.setdefault(__literal, []).append(define_variable)
+            define_variable.add_value(expr, _literal, _literal)
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
+
+            self.literal2var.setdefault(_literal, []).append(define_variable)
             # here we dont add a nogood since its the same literal
 
-        for (name, symbol_var, domain_expr), __literal in var_domains.items():
+        for (name, symbol_var, domain_expr), _literal in var_domains.items():
             # These values are assgiend the "from_facts" domain literal for the given variable
             if symbol_var not in self.symbol2var:
                 continue
@@ -844,26 +854,38 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             ctl.add_clause([-literal, domain_literal])
             # literal defining the domain should also be included, not just the variable declaration literal!
-            ctl.add_clause([-literal, __literal])
+            ctl.add_clause([-literal, _literal])
 
             self.literal2var[literal] = [domain_variable]
 
-        for (name, optional), __literal in var_optionals.items():
+        for (name, optional), _literal in var_optionals.items():
             if optional not in self.symbol2var:
                 continue
 
             optional_variable: Variable = cast(Variable, self.symbol2var[optional])
             literal = ctl.add_literal(freeze=True)
             optional_variable.add_value(
-                expression.Val(expression.BaseType.none, None), literal, __literal
+                expression.Val(expression.BaseType.none, None), literal, _literal
             )  # ty:ignore[unresolved-attribute]
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-            ctl.add_clause([-literal, __literal])
+            ctl.add_clause([-literal, _literal])
 
-            self.literal2var.setdefault(__literal, []).append(optional_variable)
+            self.literal2var.setdefault(_literal, []).append(optional_variable)
             self.literal2var[literal] = [optional_variable]
+
+        # temporary workaround for testing
+        # to_delete = []
+        # for symbol_var, var in self.symbol2var.items():
+        #     if not var.has_domain():
+        #         to_delete.append(symbol_var)
+
+        #     # if symbol_var.name == "execution_output":
+        #     #     to_delete.append(symbol_var)
+
+        # for symbol_var in to_delete:
+        #     del self.symbol2var[symbol_var]
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
@@ -963,8 +985,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_set_declare)
+        # temporary workaround for testing (the skip stuff)
+        # skip = []
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
+            # if symbol_var in self.symbol2var:
+            #     print(
+            #         "Warning: variable ", symbol_var, " declared both as set and non-set! skipping set variable stuff"
+            #     )
+            #     skip.append(symbol_var)
+            #     continue
             self.symbol2var[symbol_var] = variable
             self.literal2var.setdefault(literal, []).append(variable)
 
@@ -973,6 +1003,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_set_assign)
         for (name, symbol_var, expr), literal in assigns.items():
+            # if symbol_var in skip:
+            #     continue
             setvar: SetVariable = cast(SetVariable, self.symbol2var[symbol_var])
             setvar.add_value(expr, literal)
             self.literal2var.setdefault(literal, []).append(setvar)
@@ -982,6 +1014,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         domains = myClorm.findInPropagateInit(ctl, atom.Propagator_set_baseDomain)
         for (name, symbol_var, domain_expr), _ in domains.items():
+            # if symbol_var in skip:
+            #     continue
             setvar: SetVariable = cast(SetVariable, self.symbol2var[symbol_var])
             literal = ctl.add_literal(freeze=True)
             setvar.add_value(domain_expr, literal)
@@ -1096,10 +1130,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     # for self referencing variables
                     continue
                 if symbol_var not in self.symbol2var:
-                    myprint(self.symbol2var.keys())
-                    myprint(type(symbol_var), symbol_var)
                     continue
-                    assert False, f"Variable {symbol_var} not found in symbol2var"
+
                 self.symbol2var[symbol_var].parents.append(var)
 
         for var in self.symbol2var.values():
