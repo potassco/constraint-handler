@@ -28,8 +28,8 @@ evaluate(int_div,(variable(x),(val(int,2),()))).
 evaluate(int_div,(val(int,5),(variable(z),()))).
 evaluate(int_div,(val(int,5),(variable(y),()))).
 
-evaluate(max,(variable(x), (variable(y),()))).
-evaluate(min,(variable(x), (variable(y),()))).
+evaluate(max,(variable(x),(variable(y),()))).
+evaluate(min,(variable(x),(variable(y),()))).
 
 evaluate(python("int"),(variable(y),())).
 

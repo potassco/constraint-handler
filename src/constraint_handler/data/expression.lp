@@ -1,18 +1,17 @@
 %%%%%%%%%%%%%%%%% _expression_query from ensure evaluate
-_expression_query((),E) :- ensure(LBL,E).
-_expression_query((),operation(OP,ARGS)) :- evaluate(LBL,OP,ARGS).
+_expression_query((),E) :- _passed(defaultArgs,ensure(LBL,E)).
+_expression_query((),operation(OP,ARGS)) :- _passed(defaultArgs,evaluate(LBL,OP,ARGS)).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
 _expression_query((),E) :- variable_define(LBL,X,E).
 _expression_query((),E) :- variable_domain(LBL,X,E).
 
-_expression_query((),E) :- set_assign(LBL,X,E).
-_expression_query((),E) :- set_baseDomain(LBL,X,E).
-_expression_query((),K) :- multimap_assign(LBL,X,K,B).
-_expression_query((),B) :- multimap_assign(LBL,X,K,B).
+_expression_query((),E) :- _passed(defaultArgs,set_assign(LBL,X,E)).
+_expression_query((),E) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)).
+_expression_query((),(K;B)) :- _passed(defaultArgs,multimap_assign(LBL,X,K,B)).
 
 %%%%%%%%%%%%%%%%% _expression_query from other declarations
-_expression_query((),E) :- optimize_maximizeSum(LBL,E,X,P).
+_expression_query((),E) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)).
 _expression_query((),E) :- _passed(defaultArgs,optimize_precision(E,PRIO)).
 
 %%%%%%%%%%%%%%%%% _expression_query from expressions

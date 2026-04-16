@@ -1,4 +1,4 @@
-define(myfactorial,(n,()),EXP) :-
+variable_define(myfactorial,lambda((n,()),EXP)) :-
   VAR = variable(n),
   ONE = val(int,1),
   MIN = operation(sub,(VAR,(ONE,()))),

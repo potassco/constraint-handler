@@ -1,13 +1,15 @@
 #defined assign/2.
-#defined define/3.
 #defined ensure/1.
+#defined ensure/2.
 #defined evaluate/2.
+#defined evaluate/3.
 
 %%%%%%%%%%%%%%%%% labels are optional
-ensure(_label_anonymous,E) :- ensure(E).
+_passed(defaultArgs,ensure(_label_anonymous,E)) :- ensure(E).
+_passed(defaultArgs,ensure(LBL,E)) :- ensure(LBL,E).
 assign(_label_anonymous,X,E) :- assign(X,E).
-define(_label_anonymous,X,VARS,EXPR) :- define(X,VARS,EXPR).
-evaluate(_label_anonymous,OP,ARGS) :- evaluate(OP,ARGS).
+_passed(defaultArgs,evaluate(_label_anonymous,OP,ARGS)) :- evaluate(OP,ARGS).
+_passed(defaultArgs,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
 %%%%%% variable atoms
 #defined variable_declare/2.
@@ -16,34 +18,48 @@ evaluate(_label_anonymous,OP,ARGS) :- evaluate(OP,ARGS).
 #defined variable_domain/2.
 
 variable_declare(_label_anonymous,X,E) :- variable_declare(X,E).
-variable_declareOptional(LABEL,X) :- variable_declareOptional(X), variable_declare(LABEL,X,_).
+variable_declareOptional(LBL,X) :- variable_declareOptional(X), variable_declare(LBL,X,_).
 variable_declareOptional(_label_anonymous,X) :- variable_declareOptional(X), not variable_declare(_,X,_).
 variable_define(_label_anonymous,X,E) :- variable_define(X,E).
-variable_domain(LABEL,X,E) :- variable_domain(X,E), variable_declare(LABEL,X,_).
+variable_domain(LBL,X,E) :- variable_domain(X,E), variable_declare(LBL,X,DECL).
 variable_domain(_label_anonymous,X,E) :- variable_domain(X,E), not variable_declare(_,X,_).
 
 %%%%%% multimap atoms
 #defined multimap_declare/1.
+#defined multimap_declare/2.
 #defined multimap_assign/3.
+#defined multimap_assign/4.
 
-multimap_declare(_label_anonymous,X) :- multimap_declare(X).
-multimap_assign(_label_anonymous,X,EKEY,EVAL) :- multimap_assign(X,EKEY,EVAL).
+_passed(defaultArgs,multimap_declare(_label_anonymous,X)) :- multimap_declare(X).
+_passed(defaultArgs,multimap_declare(LBL,X)) :- multimap_declare(LBL,X).
+_passed(defaultArgs,multimap_assign(_label_anonymous,X,EKEY,EVAL)) :- multimap_assign(X,EKEY,EVAL).
+_passed(defaultArgs,multimap_assign(LBL,X,EKEY,EVAL)) :- multimap_assign(LBL,X,EKEY,EVAL).
 
 %%%%% set atoms
 #defined set_declare/1.
+#defined set_declare/2.
 #defined set_assign/2.
+#defined set_assign/3.
 #defined set_baseDomain/2.
+#defined set_baseDomain/3.
 
-set_declare(_label_anonymous,X) :- set_declare(X).
-set_assign(_label_anonymous,X,E) :- set_assign(X,E).
-set_baseDomain(_label_anonymous,X,V) :- set_baseDomain(X,V).
+_passed(defaultArgs,set_declare(_label_anonymous,X)) :- set_declare(X).
+_passed(defaultArgs,set_declare(LBL,X)) :- set_declare(LBL,X).
+_passed(defaultArgs,set_assign(_label_anonymous,X,E)) :- set_assign(X,E).
+_passed(defaultArgs,set_assign(LBL,X,E)) :- set_assign(LBL,X,E).
+_passed(defaultArgs,set_baseDomain(_label_anonymous,X,V)) :- set_baseDomain(X,V).
+_passed(defaultArgs,set_baseDomain(LBL,X,V)) :- set_baseDomain(LBL,X,V).
 
 %%%%%% statement atoms
+#defined execution_declare/3.
 #defined execution_declare/4.
 #defined execution_run/1.
+#defined execution_run/2.
 
-execution_declare(_label_anonymous,NAME,STMT,INS,OUTS) :- execution_declare(NAME,STMT,INS,OUTS).
-execution_run(_label_anonymous,NAME) :- execution_run(NAME).
+_passed(defaultArgs,execution_declare(_label_anonymous,NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS).
+_passed(defaultArgs,execution_declare(LBL,NAME,STMT,INS,OUTS)) :- execution_declare(LBL,NAME,STMT,INS,OUTS).
+_passed(defaultArgs,execution_run(_label_anonymous,NAME)) :- execution_run(NAME).
+_passed(defaultArgs,execution_run(LBL,NAME)) :- execution_run(LBL,NAME).
 
 %%%%%% optimization atoms
 #defined optimize_precision/1.
@@ -51,8 +67,8 @@ execution_run(_label_anonymous,NAME) :- execution_run(NAME).
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 
-optimize_maximizeSum(_label_anonymous,E,X,P) :- optimize_maximizeSum(E,X,P).
-optimize_maximizeSum(_label_anonymous,E,X,0) :- optimize_maximizeSum(E,X).
+_passed(defaultArgs,optimize_maximizeSum(_label_anonymous,E,X,P)) :- optimize_maximizeSum(E,X,P).
+_passed(defaultArgs,optimize_maximizeSum(_label_anonymous,E,X,0)) :- optimize_maximizeSum(E,X).
 
 %%%%%% preference atoms
 #defined preference_holds/3.
@@ -76,10 +92,9 @@ warning_forbid(_label_anonymous,KIND) :- warning_forbid(KIND).
 warning_ignore(_label_anonymous,KIND) :- warning_ignore(KIND).
 
 %%%%%%%%%%%%%%%%% collect labels
-_label(LABEL) :- ensure(LABEL,E).
+_label(LABEL) :- _passed(defaultArgs,ensure(LABEL,E)).
 _label(LABEL) :- assign(LABEL,X,E).
-_label(LABEL) :- define(LABEL,_,_,_).
-_label(LABEL) :- evaluate(LABEL,O,ARGS).
+_label(LABEL) :- _passed(defaultArgs,evaluate(LABEL,O,ARGS)).
 
 %%%%%% variable atoms
 _label(LABEL) :- variable_define(LABEL,X,E).
@@ -87,20 +102,20 @@ _label(LABEL) :- variable_declare(LABEL,X,D).
 _label(LABEL) :- variable_domain(LABEL,X,E).
 
 %%%%%% multimap atoms
-_label(LABEL) :- multimap_declare(LABEL,X).
-_label(LABEL) :- multimap_assign(LABEL,X,K,B).
+_label(LBL) :- _passed(defaultArgs,multimap_declare(LBL,X)).
+_label(LBL) :- _passed(defaultArgs,multimap_assign(LBL,X,K,B)).
 
 %%%%% set atoms
-_label(LABEL) :- set_declare(LABEL,X).
-_label(LABEL) :- set_assign(LABEL,X,E).
-_label(LABEL) :- set_baseDomain(LABEL,X,E).
+_label(LBL) :- _passed(defaultArgs,set_declare(LBL,X)).
+_label(LBL) :- _passed(defaultArgs,set_assign(LBL,X,E)).
+_label(LBL) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)).
 
 %%%%%% statement atoms
-_label(LABEL) :- execution_declare(LABEL,NAME,STMT,INS,OUTS).
-_label(LABEL) :- execution_run(LABEL,NAME).
+_label(LBL) :- _passed(defaultArgs,execution_declare(LBL,NAME,STMT,INS,OUTS)).
+_label(LBL) :- _passed(defaultArgs,execution_run(LBL,NAME)).
 
 %%%%%% optimization atoms
-_label(LABEL) :- optimize_maximizeSum(LABEL,_,_,_).
+_label(LBL) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,PRIO)).
 
 %%%%%% preference atoms
 _label(LABEL) :- _passed(defaultArgs,preference_holds(LABEL,E,K)).
@@ -113,42 +128,41 @@ _label(LABEL) :- warning_ignore(LABEL,KIND).
 
 
 %%%%%%%%%%%%%%%%% check if well-formed
-_passed(sugar,ensure(LBL,E)) :- ensure(LBL,E), _expression_wellformed(E).
-_passed(sugar,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS), _expression_wellformed(operation(OP,ARGS)).
+_passed(sugar,ensure(LBL,E)) :- _passed(defaultArgs,ensure(LBL,E)), _expression_wellformed(E).
+_passed(sugar,evaluate(LBL,OP,ARGS)) :- _passed(defaultArgs,evaluate(LBL,OP,ARGS)), _expression_wellformed(operation(OP,ARGS)).
 
 
-_label(LABEL) :- define(LABEL,_,_,_).
 %_passed(sugar,assign(LABEL,X,E)) :- assign(LABEL,X,E), _expression_wellformed(E).
 
 
 %%%%%% multimap atoms
-_passed(sugar,multimap_declare(LBL,X)) :- multimap_declare(LBL,X).
-_passed(sugar,multimap_assign(LBL,X,K,B)) :- multimap_assign(LBL,X,K,B), _expression_wellformed(K), _expression_wellformed(B).
+_passed(sugar,multimap_declare(LBL,X)) :- _passed(defaultArgs,multimap_declare(LBL,X)).
+_passed(sugar,multimap_assign(LBL,X,K,B)) :- _passed(defaultArgs,multimap_assign(LBL,X,K,B)), _expression_wellformed(K), _expression_wellformed(B).
 
 %%%%% set atoms
-_passed(sugar,set_declare(LBL,X)) :- set_declare(LBL,X).
-_passed(sugar,set_assign(LBL,X,E)) :- set_assign(LBL,X,E), _expression_wellformed(E).
-_passed(sugar,set_baseDomain(LBL,X,E)) :- set_baseDomain(LBL,X,E), _expression_wellformed(E).
+_passed(sugar,set_declare(LBL,X)) :- _passed(defaultArgs,set_declare(LBL,X)).
+_passed(sugar,set_assign(LBL,X,E)) :- _passed(defaultArgs,set_assign(LBL,X,E)), _expression_wellformed(E).
+_passed(sugar,set_baseDomain(LBL,X,E)) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)), _expression_wellformed(E).
 
 %%%%%% statement atoms
-_passed(sugar,execution_declare(LBL,PRG,STMT,INS,OUTS)) :- execution_declare(LBL,PRG,STMT,INS,OUTS),
+_passed(sugar,execution_declare(LBL,PRG,STMT,INS,OUTS)) :- _passed(defaultArgs,execution_declare(LBL,PRG,STMT,INS,OUTS)),
     _statement_wellformed(STMT),
 	true=@pythonIsList(INS),
 	true=@pythonIsList(OUTS).
-_passed(sugar,execution_run(LBL,PRG)) :- execution_run(LBL,PRG).
-_warning(atom(syntaxError),(PRG,()),execution_declare(PRG)) :- execution_declare(LBL,PRG,STMT,INS,OUTS),
+_passed(sugar,execution_run(LBL,PRG)) :- _passed(defaultArgs,execution_run(LBL,PRG)).
+_warning(atom(syntaxError),(PRG,()),execution_declare(PRG)) :- _passed(defaultArgs,execution_declare(LBL,PRG,STMT,INS,OUTS)),
     #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS).
 
 %%%%%% optimization atoms
-_passed(sugar,optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL,E,X,P),
+_passed(sugar,optimize_maximizeSum(LBL,E,X,P)) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)),
     _expression_wellformed(E),
     (number,_,_,_)=@pythonReify(P).
 _passed(sugar,optimize_precision(PREC,PRIO)) :- _passed(defaultArgs,optimize_precision(PREC,PRIO)),
     _expression_wellformed(PREC),
     (number,_,_,_)=@pythonReify(PRIO).
-_warning(atom(syntaxError),(),optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL,E,X,P),
+_warning(atom(syntaxError),(),optimize_maximizeSum(LBL,E,X,P)) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)),
     not _passed(sugar,optimize_maximizeSum(LBL,E,X,P)).
-_warning(atom(syntaxError),(),optimize_precision(PREC,PRIO)) :- optimize_precision(PREC,PRIO),
+_warning(atom(syntaxError),(),optimize_precision(PREC,PRIO)) :- _passed(defaultArgs,optimize_precision(PREC,PRIO)),
     not _passed(sugar,optimize_precision(PREC,PRIO)).
 
 %%%%%% preference atoms
