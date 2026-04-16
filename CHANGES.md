@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- fix `optimize_maximizeSum` regression introduced in v0.0.2.dev6
+
 ## v0.0.2.dev6
 
 - remove `define` from the supported declarations

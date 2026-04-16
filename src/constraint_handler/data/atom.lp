@@ -51,8 +51,8 @@ _passed(defaultArgs,set_baseDomain(_label_anonymous,X,V)) :- set_baseDomain(X,V)
 _passed(defaultArgs,set_baseDomain(LBL,X,V)) :- set_baseDomain(LBL,X,V).
 
 %%%%%% statement atoms
-#defined execution_declare/3.
 #defined execution_declare/4.
+#defined execution_declare/5.
 #defined execution_run/1.
 #defined execution_run/2.
 
@@ -67,8 +67,9 @@ _passed(defaultArgs,execution_run(LBL,NAME)) :- execution_run(LBL,NAME).
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 
-_passed(defaultArgs,optimize_maximizeSum(_label_anonymous,E,X,P)) :- optimize_maximizeSum(E,X,P).
 _passed(defaultArgs,optimize_maximizeSum(_label_anonymous,E,X,0)) :- optimize_maximizeSum(E,X).
+_passed(defaultArgs,optimize_maximizeSum(_label_anonymous,E,X,P)) :- optimize_maximizeSum(E,X,P).
+_passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL,E,X,P).
 
 %%%%%% preference atoms
 #defined preference_holds/3.
@@ -77,12 +78,12 @@ _passed(defaultArgs,optimize_maximizeSum(_label_anonymous,E,X,0)) :- optimize_ma
 #defined preference_variableValue/4.
 #defined preference_variableValue/3.
 #defined preference_variableValue/2.
-_passed(defaultArgs,preference_holds(LBL,E,K)) :- preference_holds(LBL,E,K).
-_passed(defaultArgs,preference_holds(_label_anonymous,E,K)) :- preference_holds(E,K).
 _passed(defaultArgs,preference_holds(_label_anonymous,E,1)) :- preference_holds(E).
+_passed(defaultArgs,preference_holds(_label_anonymous,E,K)) :- preference_holds(E,K).
+_passed(defaultArgs,preference_holds(LBL,E,K)) :- preference_holds(LBL,E,K).
+_passed(defaultArgs,preference_variableValue(_label_anonymous,X,E,1)) :- preference_variableValue(X,E).
 _passed(defaultArgs,preference_variableValue(_label_anonymous,X,E,K)) :- preference_variableValue(X,E,K).
 _passed(defaultArgs,preference_variableValue(LBL,X,E,K)) :- preference_variableValue(LBL,X,E,K).
-_passed(defaultArgs,preference_variableValue(_label_anonymous,X,E,1)) :- preference_variableValue(X,E).
 
 %%%%%% warning atoms
 #defined warning_forbid/1.
