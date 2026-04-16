@@ -30,12 +30,12 @@ from constraint_handler.PropagatorVariables import (
     DictVariable,
     EnsureVariable,
     EvaluateVariable,
+    Evaluations,
     Execution,
     OptimizationHandler,
     SetVariable,
     Variable,
     VariableType,
-    make_dict_from_variables,
 )
 from constraint_handler.utils.common import Bad
 
@@ -78,6 +78,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         self.symbol2var: dict[clingo.Symbol, VariableType] = {}
         self.literal2var: dict[int, list[VariableType]] = {}
+        self.evaluations: Evaluations = Evaluations()
 
         self.evaluatevars: list[EvaluateVariable] = []
 
@@ -161,6 +162,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.add_reasoning_mode_helper_atoms(init)
 
         self.get_forbidden_warnings(init)
+
+        self.evaluations.init(list(self.symbol2var.values()))
 
         myprint("INIT DONE")
         myprint("#" * 50)
@@ -250,7 +253,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"backtracking {backtrack} due to conflicts in evaluation of variables")
             return
 
-        myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
+        myprint(f"Evaluated assignments: {self.evaluations.update_evaluations(self.symbol2var.values())}")
 
         # If not backtracking, check optimization sums
         backtrack = self.evaluate_optimization_sum(control)
@@ -427,9 +430,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateControl object.
         """
         myprint("Checking evaluate atoms")
-        myprint(f"Evaluated assignments before evaluate: {make_dict_from_variables(self.symbol2var.values())}")
+        myprint(
+            f"Evaluated assignments before evaluate: {self.evaluations.update_evaluations(self.symbol2var.values())}"
+        )
+        self.evaluations.update_evaluations(self.symbol2var.values())
         for var in self.evaluatevars:
-            var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
+            var.evaluate(self.evaluations, ctl, self.environment)
 
     def propagate(self, control: clingo.PropagateControl, changes: Sequence[int]) -> None:
         """
@@ -459,8 +465,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"PROPAGATION DONE, backtracking {backtrack} due to conflicts in evaluation of variables")
             return
 
-        myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
-
         # If not backtracking, check optimization sums
         self.evaluate_optimization_sum(control)
         myprint(f"Optimization sum evaluated to {self.optimization_sum.get_value()}")
@@ -481,10 +485,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         if not self.using_optimization:
             return False
-
-        changed = self.optimization_sum.evaluate(
-            make_dict_from_variables(self.symbol2var.values()), ctl, self.environment
-        )
+        self.evaluations.update_evaluations(self.symbol2var.values())
+        changed = self.optimization_sum.evaluate(self.evaluations, ctl, self.environment)
         if not changed:
             return False
 
@@ -577,9 +579,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 - False if it did not change.
                 - None if evaluation detected a conflict (nogood added).
         """
-        eval_result: EvaluationResult = var.evaluate(
-            make_dict_from_variables(self.symbol2var.values()), ctl, self.environment
-        )
+        self.evaluations.update_evaluations(self.symbol2var.values())
+        eval_result: EvaluationResult = var.evaluate(self.evaluations, ctl, self.environment)
         myprint(f"Variable {var} evaluation result: {eval_result}")
 
         if eval_result == EvaluationResult.CONFLICT:
