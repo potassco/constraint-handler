@@ -1,4 +1,3 @@
-import collections
 import enum
 import itertools
 import types
@@ -36,26 +35,6 @@ def unnest(symb, cons="", nil=""):
         else:
             raise FailedInstantiationExn(f"{symb} is not a list")
 
-
-# def Tuple(subtype):
-def Function(name, args=None):  # ,key=0):
-    args = [] if args is None else args
-    field_names = ["" for i in args]
-    return collections.namedtuple(name, field_names, defaults=args, rename=True)
-
-
-def Tuple(name="", args=None, default=None):
-    # fields = args if args is not None
-    class Wrapper(tuple):  # collections.namedtuple(name,field_names,defaults=dargs,rename=True)):
-        __name__ = name
-        _default = default
-
-        def __new__(cls, *dargs):
-            return super().__new__(cls, dargs)
-
-    return Wrapper
-
-
 class HashableList(list):
     def __hash__(self):
         return hash(tuple(self))
@@ -69,15 +48,8 @@ containers = {"set": set, "list": list}
 def pytocl(v, dtarget=None):
     if dtarget is None:
         dtarget = type(v)
-    # print(f"hello ptc disj trying '{v}' with rows '{dtarget}'")
-    # print(f"the type is {type(v)}")
-    # if dtarget != typing.Any and not isinstance(v,dtarget):
-    #    print(f"hello ptc disj failed '{v}' with rows '{dtarget}'")
-    #    raise TypeError(f"'{v}' is not of type '{dtarget}'")
     rows = typing.get_args(dtarget) if dtarget != typing.Any and isinstance(dtarget, types.UnionType) else [dtarget]
-    # print(f"ptc disj trying '{v}' with rows '{rows}'")
     for target in rows:
-        # print(f"ptc {type(target)}")
         if target == typing.Any:
             return v
         elif not isinstance(v, target):
@@ -115,13 +87,10 @@ def pytocl(v, dtarget=None):
         elif issubclass(target, tuple):
             return clingo.Function("", [pytocl(e) for e in v])
         else:
-            # print("myclorm pytocl", v, target)
             name = getattr(target, "name", target.__name__)
             name = predicatedefn_default_predicate_name(name)
             args = typing.get_type_hints(target)
-            # print(name,args)
             return clingo.Function(name, [pytocl(getattr(v, name), field) for name, field in args.items()])
-    # print(f"ptc disj failed all {v,dtarget}")
     raise FailedInstantiationExn(f"'{v}' is not of type {dtarget}")
 
 
@@ -163,9 +132,7 @@ def cltopy(func, dtarget=typing.Any, halt=True):
     if isinstance(dtarget, typing.TypeAliasType):
         return cltopy(func, dtarget.__value__, halt)
     rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
-    # print(f"ctp disj trying '{func}' with rows '{rows}'")
     for target in rows:
-        # print(f"ctp {target} {type(target)}")
         utarget = typing.get_origin(target) or target  # unsubscripted_target
         try:
             if target == typing.Any:
@@ -176,7 +143,6 @@ def cltopy(func, dtarget=typing.Any, halt=True):
             elif getattr(target, "cltopy", None):
                 return target.cltopy(func, halt=halt)
             elif getattr(target, "_fields", None) is not None:
-                # print(f"myclorm fields {func},{target}")
                 if func.type == clingo.SymbolType.Function:  # NamedTuple
                     assert getattr(target, "__name__", None) is not None
                     name = predicatedefn_default_predicate_name(target.__name__)
@@ -186,19 +152,16 @@ def cltopy(func, dtarget=typing.Any, halt=True):
                         targets.update(target._field_defaults)
                     else:
                         targets = target.asdict()
-                    # print("hel",func,targets)
                     if name == func.name and len(target._fields) == len(func.arguments):
                         args = (
                             cltopy(symb, targets.get(field), halt)
                             for symb, field in zip(func.arguments, target._fields)
                         )
-                        # print("returns",func,targets,args,[(symb,targets.get(field)) for symb,field in zip(func.arguments,fields)])
                         return target(*args)
             elif any(isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]):
                 if cltopy(func, halt=halt) == target:
                     return target
             elif isinstance(utarget, type):
-                # print(f"myclorm type {func},{target},{typing.get_origin(target)}")
                 if issubclass(utarget, clingo.Symbol):
                     return func
                 elif issubclass(utarget, enum.Enum):
@@ -231,8 +194,6 @@ def cltopy(func, dtarget=typing.Any, halt=True):
                         return None
                 elif issubclass(utarget, list):
                     subtarget = typing.get_args(target)
-                    # print("subt",target,subtarget)
-                    # return [cltopy(e,subtarget[0]) for e in unnest(func)] if subtarget else [cltopyNoTarget(e) for e in unnest(func)]
                     un = unnest(func)
                     result = (
                         [cltopy(e, subtarget[0], halt) for e in un]
@@ -281,7 +242,6 @@ def cltopy(func, dtarget=typing.Any, halt=True):
         except FailedInstantiationExn:
             # print(f"disj failed once {func,target} {exn}")
             pass
-    # print(f"ctp disj failed all {func,dtarget}")
     raise FailedInstantiationExn(f"'{func}' is not of type {dtarget}")
 
 
