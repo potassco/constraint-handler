@@ -80,12 +80,10 @@ def test_cltopy_namedtuple_failure_raises_failed_instantiation():
         myClorm.cltopy(symbol, SampleRecord)
 
 
-@pytest.mark.xfail(reason="pytocl does not currently handle typing.Union targets", strict=True)
 def test_pytocl_typing_union_target_is_supported():
     assert myClorm.pytocl(5, typing.Union[int, str]) == clingo.Number(5)
 
 
-@pytest.mark.xfail(reason="enum serialization is not symmetric for name/value mismatches", strict=True)
 def test_enum_round_trip_uses_enum_value_not_member_name():
     symbol = myClorm.pytocl(ConditionalOperator.IF)
 
@@ -93,16 +91,13 @@ def test_enum_round_trip_uses_enum_value_not_member_name():
     assert myClorm.cltopy(symbol, ConditionalOperator) is ConditionalOperator.IF
 
 
-@pytest.mark.xfail(reason="pytocl does not currently handle GenericAlias targets like list[int]", strict=True)
 def test_pytocl_generic_alias_target_is_supported():
     assert myClorm.pytocl([1, 2], list[int]) == myClorm.pytocl([1, 2])
 
 
-@pytest.mark.xfail(reason="pytocl fails on typing.Optional because it only unwraps PEP 604 unions", strict=True)
 def test_pytocl_typing_optional_target_is_supported():
     assert myClorm.pytocl(None, typing.Optional[int]) == clingo.Function("none", [])
 
 
-@pytest.mark.xfail(reason="pytocl cannot currently encode tuple GenericAlias targets", strict=True)
 def test_pytocl_tuple_generic_alias_target_is_supported():
     assert myClorm.pytocl((1, "x"), tuple[int, str]) == clingo.Function("", [clingo.Number(1), clingo.String("x")])

@@ -35,6 +35,7 @@ def unnest(symb, cons="", nil=""):
         else:
             raise FailedInstantiationExn(f"{symb} is not a list")
 
+
 class HashableList(list):
     def __hash__(self):
         return hash(tuple(self))
@@ -45,51 +46,69 @@ baseTypes = {"bool": bool, "int": int, "float": float, "string": str, "none": ty
 containers = {"set": set, "list": list}
 
 
+def _resolve_type_alias(target):
+    while isinstance(target, typing.TypeAliasType):
+        target = target.__value__
+    return target
+
+
+def _union_rows(target):
+    target = _resolve_type_alias(target)
+    origin = typing.get_origin(target)
+    if origin in (typing.Union, types.UnionType):
+        return typing.get_args(target)
+    return [target]
+
+
 def pytocl(v, dtarget=None):
     if dtarget is None:
         dtarget = type(v)
-    rows = typing.get_args(dtarget) if dtarget != typing.Any and isinstance(dtarget, types.UnionType) else [dtarget]
+    rows = _union_rows(dtarget)
     for target in rows:
-        if target == typing.Any:
+        target = _resolve_type_alias(target)
+        runtime_target = typing.get_origin(target) or target
+        if runtime_target == typing.Any:
             return v
-        elif not isinstance(v, target):
+        elif not isinstance(runtime_target, type):
             pass
-        elif getattr(target, "pytocl", None):
-            return target.pytocl(v)
-        elif issubclass(target, clingo.Symbol):
+        elif not isinstance(v, runtime_target):
+            pass
+        elif getattr(runtime_target, "pytocl", None):
+            return runtime_target.pytocl(v)
+        elif issubclass(runtime_target, clingo.Symbol):
             return v
-        elif issubclass(target, enum.Enum):
-            if isinstance(v, target):
-                return clingo.Function(predicatedefn_default_predicate_name(v.name), [])
-        elif target == types.NoneType:
+        elif issubclass(runtime_target, enum.Enum):
+            symbol_name = v.value if isinstance(v.value, str) else predicatedefn_default_predicate_name(v.name)
+            return clingo.Function(symbol_name, [])
+        elif runtime_target == types.NoneType:
             return clingo.Function("none", [])
-        elif issubclass(target, bool):
+        elif issubclass(runtime_target, bool):
             return clingo.Function("true" if v else "false", [])
-        elif issubclass(target, int):
+        elif issubclass(runtime_target, int):
             return clingo.Number(v)
-        elif issubclass(target, str):
+        elif issubclass(runtime_target, str):
             return clingo.String(v)
-        elif issubclass(target, float):
+        elif issubclass(runtime_target, float):
             return clingo.Function("float", [clingo.String(str(v))])
-        elif issubclass(target, list):
+        elif issubclass(runtime_target, list):
             return nest([pytocl(e) for e in v])
-        elif issubclass(target, set) or issubclass(target, frozenset):
+        elif issubclass(runtime_target, set) or issubclass(runtime_target, frozenset):
             return clingo.Function("set", [nest([pytocl(e) for e in v])])
-        elif any(issubclass(target, cls) for cls in containers.values()):
+        elif any(issubclass(runtime_target, cls) for cls in containers.values()):
             assert False
-            n = next(name for name, cls in containers.items() if issubclass(target, cls))
+            n = next(name for name, cls in containers.items() if issubclass(runtime_target, cls))
             return clingo.Function(n, [nest([pytocl(e) for e in v])])
-        elif getattr(target, "_fields", None) is not None:
-            assert getattr(target, "__name__", None) is not None
-            name = predicatedefn_default_predicate_name(target.__name__)
-            args = [pytocl(getattr(v, field)) for field in target._fields]
+        elif getattr(runtime_target, "_fields", None) is not None:
+            assert getattr(runtime_target, "__name__", None) is not None
+            name = predicatedefn_default_predicate_name(runtime_target.__name__)
+            args = [pytocl(getattr(v, field)) for field in runtime_target._fields]
             return clingo.Function(name, args)
-        elif issubclass(target, tuple):
+        elif issubclass(runtime_target, tuple):
             return clingo.Function("", [pytocl(e) for e in v])
         else:
-            name = getattr(target, "name", target.__name__)
+            name = getattr(runtime_target, "name", runtime_target.__name__)
             name = predicatedefn_default_predicate_name(name)
-            args = typing.get_type_hints(target)
+            args = typing.get_type_hints(runtime_target)
             return clingo.Function(name, [pytocl(getattr(v, name), field) for name, field in args.items()])
     raise FailedInstantiationExn(f"'{v}' is not of type {dtarget}")
 
@@ -129,10 +148,10 @@ def cltopyNoTarget(func):
 
 
 def cltopy(func, dtarget=typing.Any, halt=True):
-    if isinstance(dtarget, typing.TypeAliasType):
-        return cltopy(func, dtarget.__value__, halt)
-    rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
+    dtarget = _resolve_type_alias(dtarget)
+    rows = _union_rows(dtarget)
     for target in rows:
+        target = _resolve_type_alias(target)
         utarget = typing.get_origin(target) or target  # unsubscripted_target
         try:
             if target == typing.Any:
@@ -165,8 +184,14 @@ def cltopy(func, dtarget=typing.Any, halt=True):
                 if issubclass(utarget, clingo.Symbol):
                     return func
                 elif issubclass(utarget, enum.Enum):
-                    if func.type == clingo.SymbolType.Function and len(func.arguments) == 0 and func.name in target:
-                        return target(func.name)
+                    if func.type == clingo.SymbolType.Function and len(func.arguments) == 0:
+                        for member in utarget:
+                            if member.name == func.name or predicatedefn_default_predicate_name(
+                                member.name
+                            ) == func.name:
+                                return member
+                            if isinstance(member.value, str) and member.value == func.name:
+                                return member
                 elif issubclass(utarget, bool):
                     if (
                         func.type == clingo.SymbolType.Function
