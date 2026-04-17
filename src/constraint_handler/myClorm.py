@@ -159,9 +159,9 @@ def cltopyNoTarget(func):
         return func
 
 
-def cltopy(func, dtarget=typing.Any):
+def cltopy(func, dtarget=typing.Any, halt=True):
     if isinstance(dtarget, typing.TypeAliasType):
-        return cltopy(func, dtarget.__value__)
+        return cltopy(func, dtarget.__value__, halt)
     rows = typing.get_args(dtarget) if typing.get_origin(dtarget) in (typing.Union, types.UnionType) else [dtarget]
     # print(f"ctp disj trying '{func}' with rows '{rows}'")
     for target in rows:
@@ -169,9 +169,12 @@ def cltopy(func, dtarget=typing.Any):
         utarget = typing.get_origin(target) or target  # unsubscripted_target
         try:
             if target == typing.Any:
-                return cltopyNoTarget(func)
+                if halt:
+                    return func
+                else:
+                    return cltopyNoTarget(func)
             elif getattr(target, "cltopy", None):
-                return target.cltopy(func)
+                return target.cltopy(func, halt=halt)
             elif getattr(target, "_fields", None) is not None:
                 # print(f"myclorm fields {func},{target}")
                 if func.type == clingo.SymbolType.Function:  # NamedTuple
@@ -185,11 +188,14 @@ def cltopy(func, dtarget=typing.Any):
                         targets = target.asdict()
                     # print("hel",func,targets)
                     if name == func.name and len(target._fields) == len(func.arguments):
-                        args = (cltopy(symb, targets.get(field)) for symb, field in zip(func.arguments, target._fields))
+                        args = (
+                            cltopy(symb, targets.get(field), halt)
+                            for symb, field in zip(func.arguments, target._fields)
+                        )
                         # print("returns",func,targets,args,[(symb,targets.get(field)) for symb,field in zip(func.arguments,fields)])
                         return target(*args)
             elif any(isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]):
-                if cltopy(func) == target:
+                if cltopy(func, halt=halt) == target:
                     return target
             elif isinstance(utarget, type):
                 # print(f"myclorm type {func},{target},{typing.get_origin(target)}")
@@ -228,16 +234,20 @@ def cltopy(func, dtarget=typing.Any):
                     # print("subt",target,subtarget)
                     # return [cltopy(e,subtarget[0]) for e in unnest(func)] if subtarget else [cltopyNoTarget(e) for e in unnest(func)]
                     un = unnest(func)
-                    result = [cltopy(e, subtarget[0]) for e in un] if subtarget else [cltopyNoTarget(e) for e in un]
+                    result = (
+                        [cltopy(e, subtarget[0], halt) for e in un]
+                        if subtarget
+                        else [cltopyNoTarget(e) for e in un] if not halt else un
+                    )
                     return HashableList(result)
                 elif issubclass(utarget, set) or issubclass(utarget, frozenset):
                     subtarget = typing.get_args(target)
                     if func.type == clingo.SymbolType.Function and func.name == "set" and len(func.arguments) == 1:
                         un = unnest(func.arguments[0])
                         result = (
-                            frozenset(cltopy(e, subtarget[0]) for e in un)
+                            frozenset(cltopy(e, subtarget[0], halt) for e in un)
                             if subtarget
-                            else frozenset(cltopyNoTarget(e) for e in un)
+                            else frozenset(cltopyNoTarget(e) for e in un) if not halt else frozenset(un)
                         )
                         return result
                 elif issubclass(utarget, tuple):
@@ -250,7 +260,7 @@ def cltopy(func, dtarget=typing.Any):
                         and len(subtargets) <= len(func.arguments)
                     ):
                         zipped = list(itertools.zip_longest(func.arguments, subtargets))
-                        result = tuple(cltopy(symb, subt) for (symb, subt) in zipped)
+                        result = tuple(cltopy(symb, subt, halt) for (symb, subt) in zipped)
                         return result
             ### Missing is instance of NamedTuple
             ######

@@ -26,16 +26,21 @@ _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
 _expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,while(MAX,EXPR,BODY)).
 
 %%%%%%%%%%%%%%%%% _expression_wellformed
-_expression_wellformed(val(T,V)) :- _expression_query(SCOPE,val(T,V)).
-_expression_wellformed(variable(X)) :- _expression_query(SCOPE,variable(X)).
-_expression_wellformed(()) :- _expression_query(SCOPE,()).
-_expression_poorlyformed(operation(O,L)) :- _expression_query(SCOPE,operation(O,L)), D=@pythonListElements(L), not _expression_wellformed(D).
-_expression_poorlyformed(T) :- _expression_query(SCOPE,T), D=@pythonTupleElements(T), _expression_poorlyformed(D).
-_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsTuple(EXPR), not _expression_poorlyformed(EXPR).
-_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), EXPR=operation(O,L), true=@pythonIsList(L), not _expression_poorlyformed(EXPR).
-_expression_wellformed(lambda(ARGS,E)) :- _expression_query(SCOPE,lambda(ARGS,E)).
-_warning(expression(syntaxError),SCOPE,"lambda checks unsupported") :- _expression_query(SCOPE,lambda(ARGS,E)). % TODO
+_expression_wellformed(val(T,V)) :- _expression_query(SCOPE,val(T,V)), __version(wellformed,asp).
+_expression_wellformed(variable(X)) :- _expression_query(SCOPE,variable(X)), __version(wellformed,asp).
+_expression_wellformed(()) :- _expression_query(SCOPE,()), __version(wellformed,asp).
+_expression_poorlyformed(operation(O,L)) :- _expression_query(SCOPE,operation(O,L)), D=@pythonListElements(L), not _expression_wellformed(D), __version(wellformed,asp).
+_expression_poorlyformed(T) :- _expression_query(SCOPE,T), D=@pythonTupleElements(T), _expression_poorlyformed(D), __version(wellformed,asp).
+_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsTuple(EXPR), not _expression_poorlyformed(EXPR), __version(wellformed,asp).
+_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), EXPR=operation(O,L), true=@pythonIsList(L), not _expression_poorlyformed(EXPR), __version(wellformed,asp).
+_expression_wellformed(lambda(ARGS,E)) :- _expression_query(SCOPE,lambda(ARGS,E)), __version(wellformed,asp).
+_warning(expression(syntaxError),SCOPE,"lambda checks unsupported") :- _expression_query(SCOPE,lambda(ARGS,E)), __version(wellformed,asp). % TODO
 
-%_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR).
+_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), __version(wellformed,skip).
+_expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsExpr(EXPR), __version(wellformed,python).
+
+__version(wellformed,asp).
+%__version(wellformed,python).
+%__version(wellformed,skip).
 
 _warning(expression(syntaxError),SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), not _expression_wellformed(EXPR).
