@@ -13,11 +13,13 @@ _passed(defaultArgs,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
 %%%%%% variable atoms
 #defined variable_declare/2.
+#defined variable_declare/3.
 #defined variable_declareOptional/1.
 #defined variable_define/2.
 #defined variable_domain/2.
 
 variable_declare(_label_anonymous,X,E) :- variable_declare(X,E).
+variable_declare(LBL,X,D) :- variable_declare(LBL,X,D).
 variable_declareOptional(LBL,X) :- variable_declareOptional(X), variable_declare(LBL,X,_).
 variable_declareOptional(_label_anonymous,X) :- variable_declareOptional(X), not variable_declare(_,X,_).
 variable_define(_label_anonymous,X,E) :- variable_define(X,E).
@@ -66,6 +68,7 @@ _passed(defaultArgs,execution_run(LBL,NAME)) :- execution_run(LBL,NAME).
 #defined optimize_precision/2.
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
+#defined optimize_maximizeSum/4.
 
 _passed(defaultArgs,optimize_maximizeSum(_label_anonymous,E,X,0)) :- optimize_maximizeSum(E,X).
 _passed(defaultArgs,optimize_maximizeSum(_label_anonymous,E,X,P)) :- optimize_maximizeSum(E,X,P).

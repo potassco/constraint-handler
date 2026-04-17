@@ -51,7 +51,7 @@ def pythonEvalExpr(clExpr,clArgs,clId):
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
-        pId   = myClorm.cltopy(clId)
+        pId   = myClorm.cltopy(clId,int | None)
         globals = evaluator.get_environment(pId)
         results = []
         locals = dict()
@@ -80,7 +80,7 @@ def pythonExec(clStmt,clEnv,clId):
     try:
         pStmt = myClorm.cltopy(clStmt,statement.Stmt)
         pEnv  = myClorm.cltopy(clEnv,list[tuple[expression.constant,expression.ReducedExpr]])
-        pId   = myClorm.cltopy(clId)
+        pId   = myClorm.cltopy(clId,int | None)
         globals = evaluator.get_environment(pId)
         results = []
         locals = dict()
@@ -130,10 +130,6 @@ def pythonListLength(clL):
     return myClorm.pytocl(len(pL))
 
 
-class Local(typing.NamedTuple):
-    name: typing.Any
-    var: expression.Variable
-
 def pythonIsList(clL):
     try:
         myClorm.cltopy(clL,list)
@@ -160,6 +156,11 @@ def pythonStop(clExpr):
     if pExpr < -5:
         assert False
     return clExpr
+
+
+class Local(typing.NamedTuple):
+    name: typing.Any
+    var: expression.Variable
 
 def pythonTagVars(clExpr,clName):
     # print("pythonTagVars",clName,clExpr)
