@@ -31,7 +31,7 @@ def pythonEnumerateVariables(clExpr):
 
  # TODO: dead?
 def pythonBetaReduction(clExpr,clVars,clArgs):
-    pVars = myClorm.cltopy(clVars)
+    pVars = myClorm.cltopy(clVars,list)
     pArgs = myClorm.cltopy(clArgs,list[expression.Val])
     pExpr = myClorm.cltopy(clExpr,expression.Expr)
     if len(pVars) != len(pArgs):
@@ -113,7 +113,7 @@ def pythonExec(clStmt,clEnv,clId):
 
 def pythonListElements(clL):
     try:
-        return [myClorm.pytocl(e) for e in myClorm.cltopy(clL,list)]
+        return myClorm.cltopy(clL,list[clingo.Symbol])
     except myClorm.FailedInstantiationExn:
         return []
 
@@ -140,11 +140,27 @@ def pythonIsList(clL):
 def pythonIsTuple(clT):
     return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "")
 
+def pythonIsExpr(clE):
+    try:
+        myClorm.cltopy(clE,expression.Expr)
+        return myClorm.pytocl(True)
+    except myClorm.FailedInstantiationExn:
+        return myClorm.pytocl(False)
+
 def pythonTupleElements(clT):
     if clT.type == clingo.SymbolType.Function and clT.name == "":
         return clT.arguments
     else:
         return []
+
+def pythonStringLength(clStr):
+    pStr = myClorm.cltopy(clStr,str)
+    return myClorm.pytocl(len(pStr))
+
+def pythonStringAdd(clStr1,clStr2):
+    pStr1 = myClorm.cltopy(clStr1,str)
+    pStr2 = myClorm.cltopy(clStr2,str)
+    return myClorm.pytocl(pStr1+pStr2)
 
 def pythonDebug(clExpr):
     #print("debug: ",clExpr)
@@ -152,7 +168,7 @@ def pythonDebug(clExpr):
 
 def pythonStop(clExpr):
     #print("stop: ",clExpr)
-    pExpr = myClorm.cltopy(clExpr)
+    pExpr = myClorm.cltopy(clExpr,int)
     if pExpr < -5:
         assert False
     return clExpr
