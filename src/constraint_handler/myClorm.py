@@ -186,9 +186,10 @@ def cltopy(func, dtarget=typing.Any, halt=True):
                 elif issubclass(utarget, enum.Enum):
                     if func.type == clingo.SymbolType.Function and len(func.arguments) == 0:
                         for member in utarget:
-                            if member.name == func.name or predicatedefn_default_predicate_name(
-                                member.name
-                            ) == func.name:
+                            if (
+                                member.name == func.name
+                                or predicatedefn_default_predicate_name(member.name) == func.name
+                            ):
                                 return member
                             if isinstance(member.value, str) and member.value == func.name:
                                 return member
