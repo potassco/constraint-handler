@@ -30,12 +30,12 @@ from constraint_handler.PropagatorVariables import (
     DictVariable,
     EnsureVariable,
     EvaluateVariable,
+    Evaluations,
     Execution,
     OptimizationHandler,
     SetVariable,
     Variable,
     VariableType,
-    make_dict_from_variables,
 )
 from constraint_handler.utils.common import Bad
 
@@ -78,6 +78,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         self.symbol2var: dict[clingo.Symbol, VariableType] = {}
         self.literal2var: dict[int, list[VariableType]] = {}
+        self.evaluations: Evaluations = Evaluations()
 
         self.evaluatevars: list[EvaluateVariable] = []
 
@@ -161,6 +162,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.add_reasoning_mode_helper_atoms(init)
 
         self.get_forbidden_warnings(init)
+
+        self.evaluations.init(list(self.symbol2var.values()))
 
         myprint("INIT DONE")
         myprint("#" * 50)
@@ -250,7 +253,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"backtracking {backtrack} due to conflicts in evaluation of variables")
             return
 
-        myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
+        myprint(f"Evaluated assignments: {self.evaluations.update_evaluations(self.symbol2var.values())}")
 
         # If not backtracking, check optimization sums
         backtrack = self.evaluate_optimization_sum(control)
@@ -427,9 +430,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateControl object.
         """
         myprint("Checking evaluate atoms")
-        myprint(f"Evaluated assignments before evaluate: {make_dict_from_variables(self.symbol2var.values())}")
+        myprint(
+            f"Evaluated assignments before evaluate: {self.evaluations.update_evaluations(self.symbol2var.values())}"
+        )
+        self.evaluations.update_evaluations(self.symbol2var.values())
         for var in self.evaluatevars:
-            var.evaluate(make_dict_from_variables(self.symbol2var.values()), ctl, self.environment)
+            var.evaluate(self.evaluations, ctl, self.environment)
 
     def propagate(self, control: clingo.PropagateControl, changes: Sequence[int]) -> None:
         """
@@ -459,8 +465,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(f"PROPAGATION DONE, backtracking {backtrack} due to conflicts in evaluation of variables")
             return
 
-        myprint(f"Evaluated assignments: {make_dict_from_variables(self.symbol2var.values())}")
-
         # If not backtracking, check optimization sums
         self.evaluate_optimization_sum(control)
         myprint(f"Optimization sum evaluated to {self.optimization_sum.get_value()}")
@@ -481,10 +485,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         if not self.using_optimization:
             return False
-
-        changed = self.optimization_sum.evaluate(
-            make_dict_from_variables(self.symbol2var.values()), ctl, self.environment
-        )
+        self.evaluations.update_evaluations(self.symbol2var.values())
+        changed = self.optimization_sum.evaluate(self.evaluations, ctl, self.environment)
         if not changed:
             return False
 
@@ -526,6 +528,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         ng: set[int] = set()
         for symbol_var in var.vars():
+            if symbol_var not in self.symbol2var:
+                continue
             v = self.symbol2var[symbol_var]
             ng = ng.union(self.get_reasons(v))
         myprint(f"Adding nogood {list(ng)} for variable {var}")
@@ -575,9 +579,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 - False if it did not change.
                 - None if evaluation detected a conflict (nogood added).
         """
-        eval_result: EvaluationResult = var.evaluate(
-            make_dict_from_variables(self.symbol2var.values()), ctl, self.environment
-        )
+        self.evaluations.update_evaluations(self.symbol2var.values())
+        eval_result: EvaluationResult = var.evaluate(self.evaluations, ctl, self.environment)
         myprint(f"Variable {var} evaluation result: {eval_result}")
 
         if eval_result == EvaluationResult.CONFLICT:
@@ -622,6 +625,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             seen = set()
         reasons = var.literals
         for dvar in var.vars():
+            if dvar not in self.symbol2var:
+                continue
             if dvar.name == EXECUTION_OUTPUT:
                 dvar = dvar.arguments[0]
             if self.symbol2var[dvar] not in seen:
@@ -757,17 +762,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         var_domains = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_domain)
         var_optionals = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declareOptional)
 
-        from_facts_literals: dict[symbol_var, int] = {}
-        for (name, symbol_var, domain), __literal in var_declares.items():
+        from_facts_literals: dict[clingo.Symbol, int] = {}
+        for (name, symbol_var, domain), _literal in var_declares.items():
             if symbol_var not in self.symbol2var:
                 self.symbol2var[symbol_var] = Variable(name, symbol_var)
 
             variable: Variable = cast(Variable, self.symbol2var[symbol_var])
 
-            ctl.add_watch(__literal)
-            ctl.add_watch(-__literal)
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
 
-            self.literal2var.setdefault(__literal, []).append(variable)
+            self.literal2var.setdefault(_literal, []).append(variable)
 
             if isinstance(domain, atom.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
@@ -775,12 +780,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 variable.add_value(
                     expression.Val(expression.BaseType.bool, True),  # ty:ignore[unresolved-attribute]
                     literal_true,
-                    __literal,
+                    _literal,
                 )
                 variable.add_value(
                     expression.Val(expression.BaseType.bool, False),  # ty:ignore[unresolved-attribute]
                     literal_false,
-                    __literal,
+                    _literal,
                 )
                 ctl.add_watch(literal_true)
                 ctl.add_watch(-literal_true)
@@ -788,8 +793,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 ctl.add_watch(-literal_false)
 
                 # if the declaration is False, then the value it can give can not be true
-                ctl.add_clause([-literal_true, __literal])
-                ctl.add_clause([-literal_false, __literal])
+                ctl.add_clause([-literal_true, _literal])
+                ctl.add_clause([-literal_false, _literal])
 
                 self.literal2var[literal_true] = [variable]
                 self.literal2var[literal_false] = [variable]
@@ -797,17 +802,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             elif isinstance(domain, atom.FromList):
                 for expr in domain.elements:
                     literal = ctl.add_literal(freeze=True)
-                    variable.add_value(expr, literal, __literal)
+                    variable.add_value(expr, literal, _literal)
                     ctl.add_watch(literal)
                     ctl.add_watch(-literal)
 
-                    ctl.add_clause([-literal, __literal])
+                    ctl.add_clause([-literal, _literal])
 
                     self.literal2var[literal] = [variable]
 
             elif isinstance(domain, atom.FromFacts):
                 # values will be added from facts, nothing to do here
-                from_facts_literals[symbol_var] = __literal
+                from_facts_literals[symbol_var] = _literal
             else:
                 self.errors.append(
                     warning.Warning(
@@ -817,30 +822,23 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     )
                 )
 
-        for (name, symbol_var, expr), __literal in var_defines.items():
+        for (name, symbol_var, expr), _literal in var_defines.items():
             if symbol_var in self.symbol2var:
                 define_variable: Variable = cast(Variable, self.symbol2var[symbol_var])
             else:
                 define_variable = Variable(name, symbol_var)
                 self.symbol2var[symbol_var] = define_variable
 
-            define_variable.add_value(expr, __literal, __literal)
-            ctl.add_watch(__literal)
-            ctl.add_watch(-__literal)
+            define_variable.add_value(expr, _literal, _literal)
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
 
-            self.literal2var.setdefault(__literal, []).append(define_variable)
+            self.literal2var.setdefault(_literal, []).append(define_variable)
             # here we dont add a nogood since its the same literal
 
-        for (name, symbol_var, domain_expr), __literal in var_domains.items():
-            # These values are assgiend the "from_facts" domain literal for the given variable
+        for (name, symbol_var, domain_expr), _literal in var_domains.items():
+            # These values are assigned the "from_facts" domain literal for the given variable
             if symbol_var not in self.symbol2var:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.undeclared),  # ty:ignore[unresolved-attribute]
-                        (symbol_var,),
-                        f"Variable '{symbol_var}' domain set but variable not declared!",
-                    )
-                )
                 continue
             domain_variable: Variable = cast(Variable, self.symbol2var[symbol_var])
             literal = ctl.add_literal(freeze=True)
@@ -851,45 +849,26 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             ctl.add_clause([-literal, domain_literal])
             # literal defining the domain should also be included, not just the variable declaration literal!
-            ctl.add_clause([-literal, __literal])
+            ctl.add_clause([-literal, _literal])
 
             self.literal2var[literal] = [domain_variable]
 
-        for (name, optional), __literal in var_optionals.items():
+        for (name, optional), _literal in var_optionals.items():
             if optional not in self.symbol2var:
-                # If the optinal variable is not declared we add a warning, since this is probably not intended
-                self.errors.append(
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.undeclared),  # ty:ignore[unresolved-attribute]
-                        (optional,),
-                        f"Variable '{optional}' declared optional but variable not declared!",
-                    )
-                )
                 continue
 
             optional_variable: Variable = cast(Variable, self.symbol2var[optional])
             literal = ctl.add_literal(freeze=True)
             optional_variable.add_value(
-                expression.Val(expression.BaseType.none, None), literal, __literal
+                expression.Val(expression.BaseType.none, None), literal, _literal
             )  # ty:ignore[unresolved-attribute]
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-            ctl.add_clause([-literal, __literal])
+            ctl.add_clause([-literal, _literal])
 
-            self.literal2var.setdefault(__literal, []).append(optional_variable)
+            self.literal2var.setdefault(_literal, []).append(optional_variable)
             self.literal2var[literal] = [optional_variable]
-
-        # check that all variables have a domain
-        for var in self.symbol2var.values():
-            if not var.has_domain():
-                self.errors.append(
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.emptyDomain),  # ty:ignore[unresolved-attribute]
-                        (var,),
-                        f"Variable '{var}' has no domain defined!",
-                    )
-                )
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
@@ -991,15 +970,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_set_declare)
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(name, symbol_var, literal)
-            if literal != 1:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Propagator(),
-                        (variable,),
-                        f"Set variable {name} declaration is not a fact! It has literal {literal}.",
-                    )
-                )
-
             self.symbol2var[symbol_var] = variable
             self.literal2var.setdefault(literal, []).append(variable)
 
@@ -1035,16 +1005,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_declare)
         for (name, symbol_var), literal in declares.items():
             variable = DictVariable(name, symbol_var, literal)
-
-            if literal != 1:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Propagator(),
-                        (variable,),
-                        f"Dict variable {symbol_var} declaration is not a fact! It has literal {literal}.",
-                    )
-                )
-
             self.symbol2var[symbol_var] = variable
             self.literal2var.setdefault(literal, []).append(variable)
 
@@ -1141,10 +1101,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     # for self referencing variables
                     continue
                 if symbol_var not in self.symbol2var:
-                    myprint(self.symbol2var.keys())
-                    myprint(type(symbol_var), symbol_var)
                     continue
-                    assert False, f"Variable {symbol_var} not found in symbol2var"
+
                 self.symbol2var[symbol_var].parents.append(var)
 
         for var in self.symbol2var.values():
@@ -1164,7 +1122,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         the clingo model and by brave/cautious reasoning to accumulate results.
         """
         self.python_model = set()
-
+        model_errors: propagator_warning_t = []
         for var in self.symbol2var.values():
             self.handle_on_model_warning(var.get_errors())
             if isinstance(var, EnsureVariable):
@@ -1176,7 +1134,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # myprint(var.var, final_value, type(final_value))
             if final_value is ValueStatus.NOT_SET:
                 # print(f"Variable {var} has no value set in on_model!")
-                self.errors.append(
+                model_errors.append(
                     warning.Warning(warning.Propagator(), (str(var),), "Variable has no value set in on_model!")
                 )
                 continue
@@ -1197,7 +1155,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(eval_var, eval_var.get_value())
             self.handle_on_model_warning(eval_var.get_errors())
             final_value = eval_var.get_value()
-            if final_value == Bad.bad:
+            if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
                 pyVal = final_value
             else:
                 pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
@@ -1212,7 +1170,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.handle_on_model_warning(self.optimization_sum.get_errors())
             myprint(f"Optimization value: {self.optimization_sum.get_value()}")
 
-        self.handle_on_model_warning(self.errors)
+        self.handle_on_model_warning(model_errors + self.errors)
 
     def on_model(self, model: clingo.Model):
         """
@@ -1306,7 +1264,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.python_model.add(mm_pyAtom)
 
     def handle_on_model_normal_type(
-        self, var: clingo.Symbol, final_value: bool | int | float | str | clingo.Symbol | Bad
+        self,
+        var: clingo.Symbol,
+        final_value: bool | int | float | str | clingo.Symbol | expression.Bad.bad,  # ty:ignore[unresolved-attribute]
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.
@@ -1316,7 +1276,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             final_value: Scalar value.
         """
         assert self.python_model is not None
-        if final_value == Bad.bad:
+        if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
             pyVal = final_value
         else:
             pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)

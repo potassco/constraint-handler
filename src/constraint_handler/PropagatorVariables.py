@@ -17,9 +17,9 @@ from constraint_handler.PropagatorConstants import (
     DEFAULT_DECISION_LEVEL,
     EXECUTION_INPUT,
     EXECUTION_OUTPUT,
-    FALSE_ASSIGNMENTS,
     EvaluationResult,
     ValueStatus,
+    evaluations_type,
     propagator_warning_t,
 )
 
@@ -79,11 +79,11 @@ class VariableType(Protocol):
 
     @abstractmethod
     def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
+        self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]
     ) -> EvaluationResult: ...
 
     @abstractmethod
-    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None: ...
+    def add_self_to_evaluations(self, e: Evaluations) -> None: ...
 
 
 class VariableValue:
@@ -116,9 +116,7 @@ class VariableValue:
 
         self.errors: propagator_warning_t = []
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> bool:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
         """
         Evaluate the expression
 
@@ -147,23 +145,28 @@ class VariableValue:
             return True
 
         for var in self.vars():
-            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
+            # If a variable that exists is not yet assigned(A value or False assignment), then we cannot evaluate yet
+            if not evaluations.var_usable(var):
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.value == ValueStatus.NOT_SET
                 return False
 
-        self.value, errors = evaluator.evaluate_expr(self.expr, env, evaluations)
+        self.value, errors = evaluator.evaluate_expr(self.expr, env, evaluations.evaluations)
 
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
 
         if (
-            self.value == expression.Bad.bad
-            or (isinstance(self.value, frozenset) and expression.Bad.bad in self.value)
+            self.value == expression.Bad.bad  # ty:ignore[unresolved-attribute]
+            or (
+                isinstance(self.value, frozenset) and expression.Bad.bad in self.value
+            )  # ty:ignore[unresolved-attribute]
             or (
                 isinstance(self.value, dict)
-                and (expression.Bad.bad in self.value.values() or expression.Bad.bad in self.value.keys())
+                and (
+                    expression.Bad.bad in self.value.values() or expression.Bad.bad in self.value.keys()
+                )  # ty:ignore[unresolved-attribute]
             )
         ):
             self.errors.append(
@@ -232,7 +235,7 @@ class VariableValue:
         return self.expr == other.expr
 
     def __hash__(self) -> int:
-        return hash(str(self.expr))
+        return hash((str(self.expr), self.literal))
 
     def __str__(self) -> str:
         return f"VariableValue({self.expr}, {self.value})"
@@ -269,9 +272,7 @@ class EvaluateVariable:
 
         self.errors: propagator_warning_t = []
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> bool:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
         """
         Evaluate the expression
 
@@ -286,17 +287,21 @@ class EvaluateVariable:
         if not ctl.assignment.is_true(self.literal):
             return False
         myprint(f"Evaluating {self.op}({self.args})")
-        value, errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations)
+        value, errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations.evaluations)
         self.value = value
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
 
         if (
-            self.value == expression.Bad.bad
-            or (isinstance(self.value, frozenset) and expression.Bad.bad in self.value)
+            self.value == expression.Bad.bad  # ty:ignore[unresolved-attribute]
+            or (
+                isinstance(self.value, frozenset) and expression.Bad.bad in self.value
+            )  # ty:ignore[unresolved-attribute]
             or (
                 isinstance(self.value, dict)
-                and (expression.Bad.bad in self.value.values() or expression.Bad.bad in self.value.keys())
+                and (
+                    expression.Bad.bad in self.value.values() or expression.Bad.bad in self.value.keys()
+                )  # ty:ignore[unresolved-attribute]
             )
         ):
             self.errors.append(
@@ -396,9 +401,7 @@ class EnsureVariable:
         """
         return True
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> EvaluationResult:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -485,13 +488,13 @@ class EnsureVariable:
             self.value = ValueStatus.NOT_SET
             self.decision_level = DEFAULT_DECISION_LEVEL
 
-    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+    def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
         Does nothing, as ensure variables are not added to the evaluation dictionary.
         This is here for compatibility with the VariableType protocol.
 
         Args:
-            d: Dictionary to update.
+            e: Evaluations object to update.
         """
         return
 
@@ -607,9 +610,7 @@ class Variable:
         """
         return len(self.expressions) > 0
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> EvaluationResult:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
         """
@@ -634,6 +635,8 @@ class Variable:
                 # some values are unassigned
                 # so we cannot determine the value yet
                 val = [ValueStatus.NOT_SET]
+                self.decision_level = ctl.assignment.decision_level
+                return EvaluationResult.NOT_CHANGED
 
             # if at least one domain lit is true, then a value MUST be chosen
             elif any(ctl.assignment.is_true(domain_lit) for domain_lit in self.domain_literals):
@@ -706,21 +709,21 @@ class Variable:
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
-    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+    def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
         Add this variable's value to the evaluation dictionary.
 
         Args:
-            d: Dictionary to update.
+            e: Evaluations object to update.
         """
         value = self.get_value()
         if value == ValueStatus.NOT_SET:
             return
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+            e.false_assignments.append(self.var)  # type: ignore
             return
 
-        d[self.var] = value
+        e.evaluations[self.var] = value
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Variable):
@@ -824,9 +827,7 @@ class SetVariableValue:
             vars.update(arg.vars())
         return vars
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> bool:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         changed = False
         for arg in self.values:
@@ -975,9 +976,7 @@ class SetVariable:
         """
         return self.expressions.vars()
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> EvaluationResult:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
         """
@@ -994,11 +993,6 @@ class SetVariable:
             # Assignment is false, so value is set to false assignment
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            self.errors.append(
-                warning.Warning(
-                    warning.ExpressionWarning.syntaxError, (self.var,), "Set declaration is False"
-                )  # ty:ignore[unresolved-attribute]
-            )
             return EvaluationResult.CHANGED
 
         changed = self.expressions.evaluate(evaluations, ctl, env)
@@ -1026,21 +1020,21 @@ class SetVariable:
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
-    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+    def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
         Add this variable's value into an output dictionary.
 
         Args:
-            d: Dictionary to update.
+            e: Evaluations object to update.
         """
         value = self.get_value()
         if value == ValueStatus.NOT_SET:
             return
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+            e.false_assignments.append(self.var)  # type: ignore
             return
 
-        d[self.var] = value
+        e.evaluations[self.var] = value
 
     def __eq__(self, value) -> bool:
         if not isinstance(value, SetVariable):
@@ -1216,9 +1210,7 @@ class DictVariable:
             vars.update(key.vars())
         return vars
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> EvaluationResult:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
@@ -1236,9 +1228,6 @@ class DictVariable:
         elif ctl.assignment.is_false(self.literal):
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
-            self.errors.append(
-                warning.Warning(warning.ExpressionWarning.syntaxError, (self.var,), "Dict declaration is False")  # type: ignore[unresolved-attribute]
-            )
             return EvaluationResult.CHANGED
 
         changed = False
@@ -1272,21 +1261,21 @@ class DictVariable:
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
-    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+    def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
-        Add this variable's value into the given dictionary.
+        Add this variable's value into the given Evaluations object.
 
         Args:
-            d: Dictionary to update.
+            e: Evaluations object to update.
         """
         value = self.get_value()
         if value == ValueStatus.NOT_SET:
             return
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            d[FALSE_ASSIGNMENTS].append(self.var)  # type: ignore
+            e.false_assignments.append(self.var)  # type: ignore
             return
 
-        d[self.var] = value
+        e.evaluations[self.var] = value
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, DictVariable):
@@ -1363,11 +1352,7 @@ class OptimizationSum:
         # TODO: check if we need to also need to excluce Bad.bad from the sums
         for var, expr in self.expressions:
             myprint(f"Summing {expr} with value {expr.value}")
-            if (
-                expr.value != ValueStatus.NOT_SET
-                and expr.value != ValueStatus.ASSIGNMENT_IS_FALSE
-                and expr.value is not None
-            ):
+            if expr.value not in [ValueStatus.NOT_SET, ValueStatus.ASSIGNMENT_IS_FALSE, None, expression.Bad.bad]:
                 vals.add((var, expr.value))
 
         return sum(value for var, value in vals)
@@ -1393,9 +1378,7 @@ class OptimizationSum:
             errors.extend(expr.get_errors())
         return errors
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> bool:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
         """
         Evaluate the optimization sum and return True if the value has changed.
 
@@ -1505,9 +1488,7 @@ class OptimizationHandler:
         """
         return len(self.sums)
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> bool:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
         """
         Evaluate all optimization sums and return True if any value has changed.
 
@@ -1736,9 +1717,7 @@ class Execution:
         v = clingo.Function(exec_name, [self.func_name, var_func])
         return v
 
-    def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
-    ) -> EvaluationResult:
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
         """
         Evaluate the execution and return an EvaluationResult.
 
@@ -1767,7 +1746,7 @@ class Execution:
             return EvaluationResult.CHANGED
 
         for var in self.converted_in_vars:
-            if var not in evaluations and var not in evaluations[FALSE_ASSIGNMENTS]:
+            if not evaluations.var_usable(var):
                 # can't evaluate yet
                 # value should not be set yet
                 assert self.values == ValueStatus.NOT_SET
@@ -1777,7 +1756,7 @@ class Execution:
         # There is a lot of copying of the evaluations dictionary!
         evals = {}
         for c_var, var in zip(self.converted_in_vars, self.in_vars):
-            evals[var] = evaluations[c_var]
+            evals[var] = evaluations.evaluations[c_var]
 
         final_evals = dict()
         for stmt in self.statements:
@@ -1809,6 +1788,14 @@ class Execution:
                 self.values.append((c_out_var, None))
             else:
                 self.values.append((c_out_var, final_evals[out_var]))
+                if final_evals[out_var] == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
+                    self.errors.append(
+                        warning.Warning(
+                            warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
+                            (self.func_name, out_var),
+                            f"Output variable {out_var} in execution {self.func_name} has a bad value!",
+                        )
+                    )
 
         return EvaluationResult.CHANGED
 
@@ -1866,12 +1853,12 @@ class Execution:
             self.errors = []
             self.values = ValueStatus.NOT_SET
 
-    def add_self_to_dict(self, d: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]) -> None:
+    def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
-        Add the execution's output values to the provided dictionary.
+        Add the execution's output values to the provided Evaluations object.
 
         Args:
-            d: Dictionary to update.
+            e: Evaluations object to update.
         """
         value = self.get_value()
 
@@ -1880,10 +1867,10 @@ class Execution:
 
         elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
             for out_var in self.converted_out_vars:
-                d[FALSE_ASSIGNMENTS].append(out_var)  # type: ignore
+                e.false_assignments.append(out_var)
         else:
             for out_var, val in value:
-                d[out_var] = val
+                e.evaluations[out_var] = val
 
     def __hash__(self) -> int:
         return hash((self.func_name, tuple(self.statements), tuple(self.in_vars), tuple(self.out_vars)))
@@ -1977,7 +1964,7 @@ class ExecutionStatement:
             self.assigned = None
 
     def evaluate(
-        self, evaluations: dict[clingo.Symbol, Any], ctl: clingo.PropagateControl, env: dict[Any, Any]
+        self, evaluations: evaluations_type, ctl: clingo.PropagateControl, env: dict[Any, Any]
     ) -> EvaluationResult:
         """
         Evaluate the execution statements and return an EvaluationResult.
@@ -2018,22 +2005,68 @@ class ExecutionStatement:
         return EvaluationResult.CHANGED
 
 
-def make_dict_from_variables(
-    variables: Iterable[VariableType],
-) -> dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]:
-    """Build a plain Python dictionary from a collection of variables.
-
-    The resulting dictionary maps each variable symbol to its evaluated value.
-    Variables that are assigned false are listed under the `FALSE_ASSIGNMENTS` key.
-
-    Args:
-        variables: Iterable of variables to export. Variables must implement the `add_self_to_dict` method!
-
-    Returns:
-        dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]]: Dictionary of variable values.
+class Evaluations:
     """
-    result: dict[clingo.Symbol, Any | set[Any] | dict[Any, Any]] = {FALSE_ASSIGNMENTS: []}  # type: ignore
-    for var in variables:
-        var.add_self_to_dict(result)
+    Manages the current evaluations of variables.
 
-    return result
+    Attributes:
+        evaluations: Dictionary mapping variable symbols to their evaluated values.
+        false_assignments: List of variables that are assigned false.
+        existing_vars: List of variables that exist in the current evaluation.
+    """
+
+    def __init__(self):
+        """
+        Initialize Evaluations with an empty dictionary.
+        """
+        self.evaluations: evaluations_type = {}
+        self.false_assignments: list[clingo.Symbol] = []
+        self.existing_vars: list[clingo.Symbol] = []
+
+    def init(self, variables: Iterable[VariableType]):
+        """
+        Initialize the existing variables list based on the provided variables.
+        This method should be called before any evaluations are updated
+        to ensure that the existing variables are correctly tracked.
+
+        Args:
+            variables: Iterable of variables to initialize from.
+        """
+        for var in variables:
+            if isinstance(var, Execution):
+                self.existing_vars.extend(var.converted_out_vars)
+            else:
+                self.existing_vars.append(var.var)
+
+    def update_evaluations(
+        self,
+        variables: Iterable[VariableType],
+    ) -> None:
+        """Build a plain Python dictionary from a collection of variables.
+
+        The resulting dictionary maps each variable symbol to its evaluated value.
+        Variables that are assigned false are listed under the `FALSE_ASSIGNMENTS` key.
+
+        Args:
+            variables: Iterable of variables to export. Variables must implement the `add_self_to_evaluations` method!
+
+        """
+        self.evaluations.clear()
+        self.false_assignments.clear()
+        for var in variables:
+            var.add_self_to_evaluations(self)
+
+    def var_usable(self, var: clingo.Symbol) -> bool:
+        """
+        Check if a variable is usable in the current evaluation.
+
+        A variable is considered usable if it has an assigned value, is listed as a false assignment or does not exist.
+
+        Args:
+            var: Variable symbol to check.
+
+        Returns:
+            bool: True if the variable is usable, False otherwise.
+
+        """
+        return var in self.evaluations or var in self.false_assignments or var not in self.existing_vars
