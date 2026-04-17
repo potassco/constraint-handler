@@ -53,6 +53,16 @@ class Variable_declareOptional(NamedTuple):
 type VariableAtom = Variable_declare | Variable_define | Variable_domain | Variable_declareOptional
 
 
+class Bool_evaluate(NamedTuple):
+    label: expression.constant
+    expr: expression.Expr
+
+
+class Bool_evaluated(NamedTuple):
+    expr: expression.Expr
+    value: expression.Val
+
+
 class Set_declare(NamedTuple):
     label: expression.constant
     name: expression.constant
@@ -215,6 +225,10 @@ class Propagator_assign(Assign):
 
 
 class Propagator_ensure(Ensure):
+    pass
+
+
+class Propagator_bool_evaluate(Bool_evaluate):
     pass
 
 

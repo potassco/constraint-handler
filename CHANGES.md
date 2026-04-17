@@ -2,7 +2,9 @@
 
 ## Ongoing
 
-- fix `optimize_maximizeSum` regression introduced in v0.0.2.dev6
+- introduce `bool_evaluate`
+- fix `optimize_maximizeSum` and `declare_variable` regressions introduced in
+  v0.0.2.dev6
 
 ## v0.0.2.dev6
 

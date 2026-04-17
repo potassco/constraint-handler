@@ -2,6 +2,8 @@ propagator_ensure(CNAME,E) :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,propa
 propagator_assign(CNAME,X,E) :- assign(CNAME,X,E), engine(CNAME,propagator).
 propagator_evaluate(CNAME,F,E) :- _passed(sugar,evaluate(CNAME,F,E)), engine(CNAME,propagator).
 
+propagator_bool_evaluate(LBL,E) :- _passed(sugar,bool_evaluate(LBL,E)), engine(LBL,propagator).
+
 propagator_variable_declare(CNAME,X,E) :- _passed(sugar,variable_declare(CNAME,X,E)), engine(CNAME,propagator).
 propagator_variable_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), engine(CNAME,propagator).
 propagator_variable_define(CNAME,X,E) :- _passed(sugar,variable_define(CNAME,X,E)), engine(CNAME,propagator).
