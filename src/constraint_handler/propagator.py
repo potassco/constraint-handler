@@ -1223,9 +1223,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         assert self.python_model is not None
 
-        pyVal = expression.Val(
-            evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
-        )
+        pyVal = expression.Ref(evaluator.get_baseType(final_value), clingo.Function("variable", [var]))
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
