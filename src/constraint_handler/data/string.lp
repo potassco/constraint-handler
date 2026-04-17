@@ -13,13 +13,13 @@ import constraint_handler.myClorm
 import constraint_handler.evaluator
 
 def pythonStringLength(clStr):
-    pStr = myClorm.cltopy(clStr)
+    pStr = myClorm.cltopy(clStr,str)
     return myClorm.pytocl(len(pStr))
 
 
 def pythonStringAdd(clStr1,clStr2):
-    pStr1 = myClorm.cltopy(clStr1)
-    pStr2 = myClorm.cltopy(clStr2)
+    pStr1 = myClorm.cltopy(clStr1,str)
+    pStr2 = myClorm.cltopy(clStr2,str)
     return myClorm.pytocl(pStr1+pStr2)
 
 #end.

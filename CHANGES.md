@@ -2,6 +2,10 @@
 
 ## Ongoing
 
+- introduce `bool_evaluate`
+- fix `optimize_maximizeSum` and `declare_variable` regressions introduced in
+  v0.0.2.dev6
+
 ## v0.0.2.dev6
 
 - remove `define` from the supported declarations

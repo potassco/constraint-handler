@@ -24,6 +24,7 @@ def run_test(name: str, engine: Literal["compile", "ground", "propagator"], chec
 base_tests = [
     "basic_assignments",
     "booleans",
+    "bool_evaluate",
     "conditional_assign",
     "custom_globals",
     "empty_variadics",
@@ -147,6 +148,7 @@ def test_engine_ground(name: str):
 )
 def test_engine_propagator(name, check_mode):
     unsupported: list[str] = [
+        "bool_evaluate",
         "engine_request",
         "engine_request_mult",
         "lambda_recursive",
