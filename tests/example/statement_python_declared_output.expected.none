@@ -1,0 +1,1 @@
+warning(variable(undeclared),(),((test,()),"y"))
