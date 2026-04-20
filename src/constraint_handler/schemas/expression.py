@@ -69,7 +69,7 @@ class Ref(typing.NamedTuple):
     value: constant
 
     def __repr__(self):
-        return f"Val({str(self.type_)},{str(self.value)})"
+        return f"Ref({str(self.type_)},{str(self.value)})"
 
 
 class Operation(typing.NamedTuple):

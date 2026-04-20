@@ -32,7 +32,7 @@ def pythonEnumerateVariables(clExpr):
  # TODO: dead?
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars,list)
-    pArgs = myClorm.cltopy(clArgs,list[expression.Val])
+    pArgs = myClorm.cltopy(clArgs,list[expression.ReducedExpr])
     pExpr = myClorm.cltopy(clExpr,expression.Expr)
     if len(pVars) != len(pArgs):
         print(f"pythonBetaReduction: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")

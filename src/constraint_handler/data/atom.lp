@@ -18,13 +18,16 @@ _passed(defaultArgs,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 #defined variable_define/2.
 #defined variable_domain/2.
 
-variable_declare(_label_anonymous,X,E) :- variable_declare(X,E).
-variable_declare(LBL,X,D) :- variable_declare(LBL,X,D).
-variable_declareOptional(LBL,X) :- variable_declareOptional(X), variable_declare(LBL,X,_).
-variable_declareOptional(_label_anonymous,X) :- variable_declareOptional(X), not variable_declare(_,X,_).
-variable_define(_label_anonymous,X,E) :- variable_define(X,E).
-variable_domain(LBL,X,E) :- variable_domain(X,E), variable_declare(LBL,X,DECL).
-variable_domain(_label_anonymous,X,E) :- variable_domain(X,E), not variable_declare(_,X,_).
+_passed(defaultArgs,variable_declare(_label_anonymous,X,E)) :- variable_declare(X,E).
+_passed(defaultArgs,variable_declare(LBL,X,D)) :- variable_declare(LBL,X,D).
+_passed(defaultArgs,variable_declareOptional(_label_anonymous,X)) :- variable_declareOptional(X), not _passed(defaultArgs,variable_declare(_,X,_)).
+_passed(defaultArgs,variable_declareOptional(LBL,X)) :- variable_declareOptional(X), _passed(defaultArgs,variable_declare(LBL,X,D)).
+_passed(defaultArgs,variable_declareOptional(LBL,X)) :- variable_declareOptional(LBL,X).
+_passed(defaultArgs,variable_define(_label_anonymous,X,E)) :- variable_define(X,E).
+_passed(defaultArgs,variable_define(LBL,X,E)) :- variable_define(LBL,X,E).
+_passed(defaultArgs,variable_domain(_label_anonymous,X,E)) :- variable_domain(X,E), not _passed(defaultArgs,variable_declare(_,X,_)).
+_passed(defaultArgs,variable_domain(LBL,X,E)) :- variable_domain(X,E), _passed(defaultArgs,variable_declare(LBL,X,D)).
+_passed(defaultArgs,variable_domain(LBL,X,E)) :- variable_domain(LBL,X,E).
 
 %%%%%% multimap atoms
 #defined multimap_declare/1.
@@ -101,9 +104,9 @@ _label(LABEL) :- assign(LABEL,X,E).
 _label(LABEL) :- _passed(defaultArgs,evaluate(LABEL,O,ARGS)).
 
 %%%%%% variable atoms
-_label(LABEL) :- variable_define(LABEL,X,E).
-_label(LABEL) :- variable_declare(LABEL,X,D).
-_label(LABEL) :- variable_domain(LABEL,X,E).
+_label(LBL) :- _passed(defaultArgs,variable_define(LBL,X,E)).
+_label(LBL) :- _passed(defaultArgs,variable_declare(LBL,X,D)).
+_label(LBL) :- _passed(defaultArgs,variable_domain(LBL,X,E)).
 
 %%%%%% multimap atoms
 _label(LBL) :- _passed(defaultArgs,multimap_declare(LBL,X)).
@@ -142,11 +145,17 @@ _passed(sugar,evaluate(LBL,OP,ARGS)) :- _passed(defaultArgs,evaluate(LBL,OP,ARGS
 %%%%%% multimap atoms
 _passed(sugar,multimap_declare(LBL,X)) :- _passed(defaultArgs,multimap_declare(LBL,X)).
 _passed(sugar,multimap_assign(LBL,X,K,B)) :- _passed(defaultArgs,multimap_assign(LBL,X,K,B)), _expression_wellformed(K), _expression_wellformed(B).
+_warning(atom(syntaxError),(),multimap_assign(LBL,X,K,B)) :- _passed(defaultArgs,multimap_assign(LBL,X,K,B)),
+    not _passed(sugar,multimap_assign(LBL,X,K,B)).
 
 %%%%% set atoms
 _passed(sugar,set_declare(LBL,X)) :- _passed(defaultArgs,set_declare(LBL,X)).
 _passed(sugar,set_assign(LBL,X,E)) :- _passed(defaultArgs,set_assign(LBL,X,E)), _expression_wellformed(E).
+_passed(sugar,set_assign(LBL,X,bad)) :- _passed(defaultArgs,set_assign(LBL,X,E)), not _expression_wellformed(E).
+_warning(atom(syntaxError),(),set_assign(LBL,X,E)) :- _passed(defaultArgs,set_assign(LBL,X,E)), not _expression_wellformed(E).
 _passed(sugar,set_baseDomain(LBL,X,E)) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)), _expression_wellformed(E).
+_passed(sugar,set_baseDomain(LBL,X,bad)) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)), not _expression_wellformed(E).
+_warning(atom(syntaxError),(),set_baseDomain(LBL,X,E)) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)), not _expression_wellformed(E).
 
 %%%%%% statement atoms
 _passed(sugar,execution_declare(LBL,PRG,STMT,INS,OUTS)) :- _passed(defaultArgs,execution_declare(LBL,PRG,STMT,INS,OUTS)),

@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- raise warning `atom(syntaxError)` when a set, variable, or multimap atom is
+  malformed
 - introduce `bool_evaluate`
 - fix `optimize_maximizeSum` and `declare_variable` regressions introduced in
   v0.0.2.dev6

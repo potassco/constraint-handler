@@ -360,6 +360,8 @@ def beta_reduction(symbols, expr):
         case tuple(eargs):
             args = tuple(beta_reduction(symbols, e) for e in eargs)
             return args
+        case expression.Bad.bad:
+            return expr
         case _:
             print("beta_reduction", expr, symbols, type(expr))
             assert False
