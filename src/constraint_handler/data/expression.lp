@@ -3,8 +3,8 @@ _expression_query((),E) :- _passed(defaultArgs,ensure(LBL,E)).
 _expression_query((),operation(OP,ARGS)) :- _passed(defaultArgs,evaluate(LBL,OP,ARGS)).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
-_expression_query((),E) :- variable_define(LBL,X,E).
-_expression_query((),E) :- variable_domain(LBL,X,E).
+_expression_query((),E) :- _passed(defaultArgs,variable_define(LBL,X,E)).
+_expression_query((),E) :- _variable_tentativeDomain(LBL,X,E).
 
 _expression_query((),E) :- _passed(defaultArgs,set_assign(LBL,X,E)).
 _expression_query((),E) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)).

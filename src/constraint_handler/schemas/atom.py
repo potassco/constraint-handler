@@ -60,7 +60,7 @@ class Bool_evaluate(NamedTuple):
 
 class Bool_evaluated(NamedTuple):
     expr: expression.Expr
-    value: expression.Val
+    value: expression.ReducedExpr
 
 
 class Set_declare(NamedTuple):
@@ -82,7 +82,7 @@ class Set_baseDomain(NamedTuple):
 
 class Set_value(NamedTuple):
     name: expression.constant
-    elt: expression.Val
+    elt: expression.ReducedExpr
 
 
 type SetAtom = Set_declare | Set_assign | Set_baseDomain
@@ -102,8 +102,8 @@ class Multimap_assign(NamedTuple):
 
 class Multimap_value(NamedTuple):
     name: expression.constant
-    key: expression.Val
-    cst: expression.Val
+    key: expression.ReducedExpr
+    cst: expression.ReducedExpr
 
 
 type MultimapAtom = Multimap_declare | Multimap_assign
@@ -177,7 +177,7 @@ class Ensure(NamedTuple):
 
 class Value(NamedTuple):
     name: expression.constant
-    val: expression.Val | expression.Bad
+    val: expression.ReducedExpr
 
     def __repr__(self):
         return f"Value({str(self.name)},{str(self.val)})"
@@ -192,7 +192,7 @@ class Evaluate(NamedTuple):
 class Evaluated(NamedTuple):
     name: expression.Operator
     expr: list[expression.Expr]
-    value: expression.Val | expression.Bad
+    value: expression.ReducedExpr
 
 
 type MainAtom = Assign | Ensure | Evaluate
