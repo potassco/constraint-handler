@@ -1,6 +1,6 @@
 %*! bool_evaluate(Label, Expression)
 
-Initiate an evaluation of a boolean expression. 
+Initiate an evaluation of a boolean expression.
 
 This is similar to [evaluate/2] but only evaluates boolean expressions.
 

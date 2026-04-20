@@ -28,13 +28,13 @@ Args:
 
 %*! _operator_recoverable(Operator)
 
-Declares an operator as recoverable. 
+Declares an operator as recoverable.
 
-This means that if the operator is used with `bad` arguments, it may still be possible to 
+This means that if the operator is used with `bad` arguments, it may still be possible to
 recover a non-`bad` value instead of `bad`, depending on the operator and the other arguments.
 
-!!! Example 
-    if there are `bad` arguments in a multiplication, but there is also a `0`, 
+!!! Example
+    if there are `bad` arguments in a multiplication, but there is also a `0`,
     the result can be recovered as `0` instead of `bad`.
 
 Args:
@@ -45,7 +45,7 @@ Args:
 
 Requires an expression to evaluate to `true`.
 
-If the expression evaluates to `false`, the current model is rejected. If it evaluates to `bad`, 
+If the expression evaluates to `false`, the current model is rejected. If it evaluates to `bad`,
 the failure is handled through the usual warning and recovery mechanisms.
 
 Args:

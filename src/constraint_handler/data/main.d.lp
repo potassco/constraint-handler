@@ -112,8 +112,8 @@ Args:
 The computed value of a sub-expression.
 
 This is the central value relation used throughout the compile engine. It maps
-a Sub-[Expression] to its current value after recursive evaluation. 
-Result predicates such as [value/2], [set_value/2], or [multimap_value/3] are 
+a Sub-[Expression] to its current value after recursive evaluation.
+Result predicates such as [value/2], [set_value/2], or [multimap_value/3] are
 ultimately derived from `_se_value/2`.
 
 Args:
@@ -129,7 +129,7 @@ Args:
 
 A warning emitted during grounding or solving.
 
-If a warning kind is forbidden using `warning_forbid/1`, the warning 
+If a warning kind is forbidden using `warning_forbid/1`, the warning
 behaves like a failed integrity constraint.
 
 Args:

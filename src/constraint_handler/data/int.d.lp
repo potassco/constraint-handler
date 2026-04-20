@@ -2,8 +2,8 @@
 
 Computation helper for addition.
 
-This predicate recursively computes the sum of a variadic number of arguments for the `add` operator. 
-It uses the index to keep track of how many arguments have been summed so far, and the value to 
+This predicate recursively computes the sum of a variadic number of arguments for the `add` operator.
+It uses the index to keep track of how many arguments have been summed so far, and the value to
 keep track of the current sum.
 
 Args:

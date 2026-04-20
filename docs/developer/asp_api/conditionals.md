@@ -1,8 +1,4 @@
-::: src/constraint_handler/data/conditionals.d.lp
-    handler: asp
-    options:
-        glossary: false
-        predicate_table: true
+# Conditionals
 
 ::: src/constraint_handler/data/conditionals.lp
     handler: asp
