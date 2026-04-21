@@ -35,6 +35,37 @@ python -m pipx install pre-commit
 pre-commit install
 ```
 
+## Performance Benchmarks
+
+The encoding performance checks live in
+[tests/test_encoding.py](tests/test_encoding.py), and their input programs live
+under [tests/example/performance](tests/example/performance). The `performance`
+nox session runs the threshold-based regression checks and the
+`pytest-benchmark` capture tests together. Each run automatically stores a
+saved benchmark file directly under `.benchmarks/` using a branch-and-timestamp
+name.
+
+```bash
+# threshold checks plus automatic benchmark capture
+nox -s performance
+
+# run only one compile benchmark (-k parameter is for pytest)
+nox -s performance -- -k compile-sum_aggregates
+
+# run all propagator benchmark
+nox -s performance -- -k propagator
+
+# compare saved benchmark runs with a concise mean-only table
+nox -s benchmark_compare -- .benchmarks/0008_master-20260420-203125.json .benchmarks/0009_feature-20260420-203125.json
+```
+
+The benchmark ids follow the pattern `compile-...`, `ground-...`,
+`propagator-check-...`, and `propagator-solve-...`, so `pytest -k` can target
+individual cases directly.
+
+The default `nox -s test` session excludes `performance` tests so the normal
+test matrix stays practical.
+
 [editable]: https://setuptools.pypa.io/en/latest/userguide/development_mode.html
 [nox]: https://nox.thea.codes/en/stable/index.html
 [pipx]: https://pypa.github.io/pipx/

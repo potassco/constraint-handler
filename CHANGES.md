@@ -5,6 +5,8 @@
 - introduce `bool_evaluate`
 - fix `optimize_maximizeSum` and `declare_variable` regressions introduced in
   v0.0.2.dev6
+- add engine-specific performance benchmark sessions and pytest-benchmark
+  compare workflow for saved benchmark runs
 
 ## v0.0.2.dev6
 
