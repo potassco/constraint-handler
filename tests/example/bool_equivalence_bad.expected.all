@@ -1,0 +1,2 @@
+evaluated(leqv,(bad,(operation(eq,(variable(x),(val(bool,false),()))),())),bad)
+evaluated(limp,(operation(eq,(variable(x),(val(bool,false),()))),(operation(eq,(variable(y),(val(int,5),()))),())),val(bool,true))
