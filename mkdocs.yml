@@ -121,7 +121,8 @@ plugins:
               include_undocumented: true
               include_unused: false
             predicate_table: true
-            glossary: true
+            glossary:
+              include_references: false
             encodings: false
             extra_includes:
               - "src/constraint_handler/data/main.d.lp"
