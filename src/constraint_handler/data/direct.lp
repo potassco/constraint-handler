@@ -22,7 +22,7 @@ _se_value(variable(X),V) :- direct_query(variable(X)), _se_assign(NAME,variable(
 
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
-_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)). % decl operator
+_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _direct_bad_operation(OP,ARGS).
 _direct_queryArgsValues(operation(EOP,ARGS),OP,ARGS) :- direct_query(operation(EOP,ARGS)), _se_value(EOP,val(function,OP)).
 _computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
@@ -57,8 +57,9 @@ _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
 %%%%%%%%%%%%%%%%% bad
-_se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _operator_recoverable(OP).
-_se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(OP,bad).
+_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _operator_recoverable(OP).
+_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(OP,bad).
+_se_value(operation(OP,ARGS),bad) :- _direct_bad_operation(OP,ARGS).
 _se_value(bad,bad) :- direct_query(bad).
 
 %%%%%%%%%%%%%%%%% implode
