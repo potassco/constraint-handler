@@ -24,6 +24,7 @@ def run_test(name: str, engine: Literal["compile", "ground", "propagator"], chec
 base_tests = [
     "basic_assignments",
     "booleans",
+    "bool_equivalence_bad",
     "bool_evaluate",
     "conditional_assign",
     "custom_globals",
@@ -98,6 +99,7 @@ def test_engine_compile(name: str):
     unsupported: list[str] = [
         "engine_request",
         "engine_request_mult",
+        "bool_equivalence_bad",
         "expression_bad_equality",
         "optimize_bools",
         "optimize_floats",
