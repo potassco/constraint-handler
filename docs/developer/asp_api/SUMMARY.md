@@ -1,4 +1,3 @@
-* [ALL](all.md)
 * [Bool](bool.md)
 * [Conditionals](conditionals.md)
 * [Direct](direct.md)
