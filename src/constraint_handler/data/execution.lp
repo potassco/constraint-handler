@@ -9,6 +9,7 @@ _execution_run(NAME,STMT) :- _execution_declare(NAME,STMT,INS,OUTS), _passed(sug
 
 _execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), _se_value(variable(execution_input(NAME,X)),V).
 
+_se_assign(_internal,variable(execution_output(NAME,X)),val(none,none)) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), not _execution_run(NAME,STMT).
 _se_assign(_internal,variable(execution_output(NAME,X)),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_ou(NAME,X,V).
 _se_assign(_internal,variable(execution_output(NAME,X)),V) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_in(NAME,X,V), not _execution_ou_proj(NAME,X).
 _se_assign(_internal,variable(execution_output(NAME,X)),val(none,none)) :- _execution_output_var(NAME,X), _execution_declare(NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), not _execution_input_var(NAME,X), not _execution_ou_proj(NAME,X).
