@@ -18,6 +18,7 @@
     * [Python Integration](reference/python_integration.md)
     * [Error Handling](reference/error_handling.md)
 * Developer Reference
+    * [Compile Engine](developer/compile_engine.md)
     * [Testing](developer/testing.md)
     * [Type Checking](developer/type_checking.md)
     * [Fact Format](developer/fact-format.md)
