@@ -46,7 +46,6 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
 
 
 def pythonEvalExpr(clExpr,clArgs,clId):
-    # print("pythonEvalExpr",clExpr,clArgs)
     eval_error = warning.Expression(warning.ExpressionWarning.pythonError)
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
@@ -68,10 +67,10 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         results.append(evaluator.reducedExpr(pRes))
         return map(myClorm.pytocl,results)
     except myClorm.FailedInstantiationExn as exn:
-        print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {repr(exn)}.")
+        # print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {repr(exn)}.")
         return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
     except Exception as exn:
-        print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
+        # print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
         return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
 
 
@@ -99,7 +98,7 @@ def pythonExec(clStmt,clEnv,clId):
             try:
                 results.append((x,evaluator.reducedExpr(val)))
             except NotImplementedError:
-                pass
+                results.append((x,expression.Python(repr(val))))
         return map(myClorm.pytocl,results)
     except solver_environment.FailIntegrityExn:
         return myClorm.pytocl(atom.FailIntegrity())

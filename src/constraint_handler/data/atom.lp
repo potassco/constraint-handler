@@ -15,8 +15,11 @@ _passed(defaultArgs,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 #defined variable_declare/2.
 #defined variable_declare/3.
 #defined variable_declareOptional/1.
+#defined variable_declareOptional/2.
 #defined variable_define/2.
+#defined variable_define/3.
 #defined variable_domain/2.
+#defined variable_domain/3.
 
 _passed(defaultArgs,variable_declare(_label_anonymous,X,E)) :- variable_declare(X,E).
 _passed(defaultArgs,variable_declare(LBL,X,D)) :- variable_declare(LBL,X,D).

@@ -15,7 +15,7 @@ direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@py
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
 _se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
 _expression_pythonEval(python(S),python(S)) :- direct_query(python(S)).
-_se_value(Q,RES) :- direct_query(Q), _expression_eval_exec(Q,RES).
+_se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 

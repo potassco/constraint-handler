@@ -1,0 +1,4 @@
+set_value(c,val(int,0))
+set_value(c,val(int,1))
+set_value(c,val(int,2))
+value(b,bad)

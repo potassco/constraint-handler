@@ -228,7 +228,7 @@ class Evaluator:
                 if callable(o):
                     return o(*args)
                 else:
-                    print(o,type(o))
+                    print(o, type(o))
                     self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented), f"operator {o}"))
                     return expression.Bad.bad
 
