@@ -11,7 +11,7 @@ The `compile` engine resembles strategy that uses the default ASP behaviour in o
 !!! Info
     Because each sub-expression is evaluated independently, the `compile` engine is usually a good default for declarations whose sub-expressions do not have large cross-expression correlations.
 
-### 1. Declaration Routing And Engine Assignment
+### Declaration Routing And Engine Assignment
 
 The first step is to decide which declarations are handled by the `compile` engine at all.
 
@@ -25,13 +25,13 @@ Once this resolution has happened, compile-specific helper predicates are popula
 
 This routing step is important because the same high-level declaration form may have distinct implementations in other engines. The `compile` engine therefore does not inspect all declarations globally; it operates only on the subset that was explicitly or implicitly assigned to it.
 
-### 2. Queries
+### Queries
 
 After routing, the engine prepares all the sub-expressions that must actually be evaluated via [direct_query/1] by seeding them from the compile-specific entry predicates.
 
 For example, [_se_assign/3] seeds both the assigned variable and the assigned expression into [direct_query/1]. [_se_evaluate/3] seeds the full requested operation into [direct_query/1].
 
-### 3. Sub-Expression Values
+### Sub-Expression Values
 
 Once an expression belongs to [direct_query/1], its value is derived through [_se_value/2]. This predicate is the semantic center of the compile engine.
 
@@ -45,7 +45,7 @@ Variable lookup is also expressed through [_se_value/2]. If [direct_query/1] con
 
 However, not all queries correspond to these base cases and have to be handled by invoking more helper predicates.
 
-### 4. Computation of Operations
+### Computation of Operations
 
 Operations that cannot be transformed into a [_se_value/2] directly, are prepared for operator-specific evaluation through [_direct_queryArgsValues/3]. This then directly ties into the `computeIdx` interface. This interface is a contract between the global strategy and the operator-specific semantics. It is implemented through three predicates:
 
@@ -57,18 +57,32 @@ The compile engine prepares the computation by filling [_computeIdx/2] and [_com
 
 This separation of concerns allows the global strategy to remain agnostic about operator-specific semantics. The compile engine can evaluate any operation as long as it can query the operator and argument values through [_computeIdx/2] and [_computeIdx/3]. The details of how those values are derived are left to the operator modules.
 
-### 5. Specialized Evaluation Paths
+### Specialized Evaluation Paths
 
 Two specialized paths are worth calling out because they explain why the compile engine is more than a simple bottom-up evaluator.
 
-#### Lambda Application and Beta Reduction
+#### Lambda Application
 
 If the operator position evaluates to a lambda value, the compile engine handles the application by first collecting the
 list of arguments and then applying beta-reduction through a Python helper. The result is then fed back into the normal evaluation pipeline via [_computedIdx/2].
 
 For this, several helper predicates are involved:
+
 - [_direct_needs_args_list/2] identifies which expression requires the full list of arguments
 - [_length/2] computes the length of the argument list using a Python helper.
 - [_direct_args_list_aux/3] constructs the argument list by reversely traversing the arguments provided by [_computeIdx/3].
 - [_direct_args_list/2] the final argument list.
 - [_lambda_aux/2] performs the beta reduction by invoking the Python helper with the lambda body and the argument list.
+
+#### Python Expressions
+
+When the `compile` engine encounters a `python(STR)` operator, it offloads the evaluation to the host environment. This is used for operations that are either too complex for pure ASP or require external libraries. The process involves a full transformation of the argument space before invoking the Python interpreter. After the Python evaluation, the result is fed back into the normal evaluation pipeline.
+
+- [_expression_pythonEval/2] forms the bridge between the ASP operation and the external evaluator.
+- [_expression_eval_exec/2] contains the result of the Python evaluation.
+
+Because Python operates on concrete values rather than ASP symbolic terms, the engine must "implode" arguments. This process recursively resolves references and variables into their actual values, ensuring that the Python code receives the correct data structure for evaluation.
+
+- [_direct_implode/1] identifies values that need to be prepared for Python integration.
+- [_direct_imploded/2] is the result of the implosion process.
+- [_direct_imploded_args_aux/3] just like in the lambda application, this collects the arguments into a list using [_computeIdx/3], but this time the result is the imploded version of the arguments.
