@@ -41,6 +41,7 @@ _expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsExp
 
 
 
+_expression_wellformed(bad) :- _expression_query(SCOPE,bad), __version(wellformed,positive).
 _expression_wellformed(val(T,V)) :- _expression_query(SCOPE,val(T,V)), __version(wellformed,positive).
 _expression_wellformed(variable(X)) :- _expression_query(SCOPE,variable(X)), __version(wellformed,positive).
 _expression_wellformed(()) :- _expression_query(SCOPE,()), __version(wellformed,positive).

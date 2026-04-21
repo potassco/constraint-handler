@@ -35,6 +35,7 @@ base_tests = [
     "eq_compound_int",
     "error_recovery",
     "error_recovery_ensure",
+    "expression_bad_equality",
     "executions",
     "execution_assert",
     "execution_conditional",
@@ -99,6 +100,7 @@ def test_engine_compile(name: str):
     unsupported: list[str] = [
         "engine_request",
         "engine_request_mult",
+        "expression_bad_equality",
         "optimize_bools",
         "optimize_floats",
         "optimize_ints",
