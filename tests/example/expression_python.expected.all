@@ -1,0 +1,3 @@
+value(x,val(int,2))
+value(y,val(int,-1))
+value(z,val(int,1))

@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- allow python expression as expression and not only as operators
 - ensure that `execution_declare` defines its output variables regardless of
   `execution_run`. If there is no corresponding `execution_run` the variables
   take the value `none`.

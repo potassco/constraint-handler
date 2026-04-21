@@ -97,4 +97,4 @@ class Lambda(typing.NamedTuple):
 
 
 type ReducedExpr = Bad | Val | Ref | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
-type Expr = Bad | Variable | Operation | Val | Ref | Lambda | frozenset[Expr] | tuple[Expr, ...]
+type Expr = Bad | Variable | Operation | Python | Val | Ref | Lambda | frozenset[Expr] | tuple[Expr, ...]

@@ -137,6 +137,9 @@ def pythonIsList(clL):
     except myClorm.FailedInstantiationExn:
         return myClorm.pytocl(False)
 
+def pythonIsString(clS):
+    return myClorm.pytocl(clS.type == clingo.SymbolType.String)
+
 def pythonIsTuple(clT):
     return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "")
 

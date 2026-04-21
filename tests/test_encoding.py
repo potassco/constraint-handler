@@ -37,6 +37,7 @@ base_tests = [
     "error_recovery",
     "error_recovery_ensure",
     "expression_bad_equality",
+    "expression_python",
     "executions",
     "execution_assert",
     "execution_conditional",

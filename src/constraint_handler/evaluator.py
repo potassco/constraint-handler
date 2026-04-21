@@ -40,6 +40,8 @@ def collectVars(expr) -> frozenset[clingo.Symbol]:
             return frozenset()
         case expression.Lambda(vars, body):
             return collectVars(body) - frozenset(vars)
+        case expression.Python(code):
+            return frozenset()
         case tuple(args):
             return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
         case set(args) | frozenset(args):
@@ -175,6 +177,8 @@ class Evaluator:
 
     def operator(self, o, args):
         match o:
+            case expression.Bad.bad:
+                return o
             case expression.Python(fn):
                 return self.python_operator(fn, args)
             case expression.Lambda(vars, expr):
@@ -221,8 +225,12 @@ class Evaluator:
                 assert len(args)
                 return min(args)
             case _:
-                self.errors.append((warning.Expression(warning.ExpressionWarning.NotImplementedError), f"operator {o}"))
-                return expression.Bad.bad
+                if callable(o):
+                    return o(*args)
+                else:
+                    print(o,type(o))
+                    self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented), f"operator {o}"))
+                    return expression.Bad.bad
 
     def expr(self, expr):
         match expr:
@@ -248,6 +256,14 @@ class Evaluator:
                     return self.locals[a]  # TODO : and globals?
                 else:
                     self.errors.append((warning.Variable(warning.VariableWarning.undeclared), f"{a}"))
+                    return expression.Bad.bad
+            case expression.Python(code):
+                try:
+                    result = eval(code, self.globals, self.locals)
+                    return result
+                except Exception as exn:
+                    kind = warning.Expression(warning.ExpressionWarning.pythonError)
+                    self.errors.append((kind, exn))
                     return expression.Bad.bad
             case expression.Val(type_, val):
                 return val
@@ -323,7 +339,7 @@ def evaluate_expr(expr, globals=None, locals=None):
     try:
         result = env.expr(expr)
     except Exception as exn:
-        env.errors.append((warning.Statement(warning.StatementWarning.evaluatorError), repr(exn)))
+        env.errors.append((warning.Expression(warning.ExpressionWarning.evaluatorError), repr(exn)))
         return expression.Bad.bad, env.errors
     return result, env.errors
 
