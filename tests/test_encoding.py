@@ -41,6 +41,7 @@ base_tests = [
     "execution_assert",
     "execution_conditional",
     "execution_loop",
+    "execution_optional_run",
     "floats",
     "ints",
     "integrity",

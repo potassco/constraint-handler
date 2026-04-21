@@ -16,6 +16,7 @@ _gex_exec(NAME,R) :- _gex_run(NAME,STMT,INS,OUTS), _gex_mapped(NAME,M), R=@pytho
 _warning(KIND,(NAME,()),("error running",MSG)) :- _gex_exec(NAME,error(KIND,MSG)).
 :- _gex_exec(NAME,failIntegrity).
 
+_ge_assign(NAME,EX,val(none,none)) :- _gex_outputVar(NAME,X,EX), _gex_declare(NAME,STMT,INS,OUTS), not _gex_run(NAME,STMT,INS,OUTS).
 _ge_assign(NAME,EX,VAL) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), _gex_exec(NAME,(X,VAL)).
 _ge_assign(NAME,EX,val(none,none)) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,true), not _gex_exec(NAME,(X,_)).
 _se_value(EX,bad) :- _gex_outputVar(NAME,X,EX), _gex_exec(NAME,error(KIND,MSG)). %% TODO: revisit this to use _ge_assign maybe.
