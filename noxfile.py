@@ -166,7 +166,7 @@ def compare_saved_benchmarks(session, baseline_path: Path, contender_path: Path)
 
 def run_performance_session(session):
     pytest_args = list(session.posargs) if session.posargs else []
-    pytest_args.insert(0, os.fspath(Path("tests/test_encoding.py")))
+    pytest_args.insert(0, os.fspath(Path("tests/test_performance.py")))
 
     try:
         session.run(
@@ -178,6 +178,8 @@ def run_performance_session(session):
             "-m",
             "performance",
             "-vvv",
+            interrupt_timeout=0.5,
+            terminate_timeout=0.5,
         )
     finally:
         flatten_benchmark_results()
