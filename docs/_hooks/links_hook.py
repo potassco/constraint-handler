@@ -29,6 +29,12 @@ import re
 
 from mkdocs import utils
 
+GLOSSARY_PATH = "developer/asp_glossary.md"
+""" The relative path to the ASP Glossary.
+
+This is used for automatically generating links for ASP signatures found in the Markdown content.
+"""
+
 LINKS = {
     # User Guide
     "installation": "user_guide/installation.md",
@@ -138,6 +144,7 @@ def on_page_markdown(markdown, page, config, files):
 
     current_dir = os.path.dirname(page.file.src_uri)
 
+    # Add links for hand-written sections
     for label, target in LINKS.items():
         if "#" in target:
             path, anchor = target.split("#", 1)
@@ -152,6 +159,18 @@ def on_page_markdown(markdown, page, config, files):
         definitions.append(f"[{label}]: {final_link}")
         if not label.endswith("s"):
             definitions.append(f"[{label}s]: {final_link}")
+
+    # Add links for the ASP Glossary
+    sig_pattern = r"\[([a-zA-Z0-9_]+/\d+)\]"
+    found_signatures = re.findall(sig_pattern, markdown)
+
+    if found_signatures:
+        rel_glossary = os.path.relpath(GLOSSARY_PATH, current_dir).replace(os.sep, "/")
+        
+        for sig in set(found_signatures):
+            if sig not in LINKS:
+                anchor = "#" + sig.replace("/", "-")
+                definitions.append(f"[{sig}]: {rel_glossary}{anchor}")
 
     return markdown + "\n".join(definitions)
 
