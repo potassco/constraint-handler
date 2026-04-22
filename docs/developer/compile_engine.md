@@ -31,6 +31,20 @@ After routing, the engine prepares all the sub-expressions that must actually be
 
 For example, [_se_assign/3] seeds both the assigned variable and the assigned expression into [direct_query/1]. [_se_evaluate/3] seeds the full requested operation into [direct_query/1].
 
+#### Lazy
+
+The default [direct_query/1] rule for operations is eager. If an operation is queried directly, all of its arguments are queried as well. This is the right behavior for arithmetic and most structural operators, because the value of the operation depends on all argument values.
+
+Some operators, however, require control over the order in which their arguments are explored. Those operators are registered through [_direct_lazy/1]. The canonical example is `ite`.
+
+For `ite`, the engine does not query both branches eagerly. Instead it follows a staged rule set defined in the respective operator module `conditionals.lp`:
+
+1. Query the condition.
+2. If the condition becomes `val(bool,true)`, query only the then-branch.
+3. If the condition becomes `val(bool,false)`, query only the else-branch.
+
+This matters because it gives `ite` proper short-circuit behavior and prevents unnecessary evaluation work.
+
 ### Sub-Expression Values
 
 Once an expression belongs to [direct_query/1], its value is derived through [_se_value/2]. This predicate is the semantic center of the compile engine.
@@ -86,3 +100,23 @@ Because Python operates on concrete values rather than ASP symbolic terms, the e
 - [_direct_implode/1] identifies values that need to be prepared for Python integration.
 - [_direct_imploded/2] is the result of the implosion process.
 - [_direct_imploded_args_aux/3] just like in the lambda application, this collects the arguments into a list using [_computeIdx/3], but this time the result is the imploded version of the arguments.
+
+### Error Propagation and Recovery
+
+The `compile` engine uses a strict error propagation model to handle partial functions or evaluation failures. The symbol `bad` is used to represent an invalid state (e.g., division by zero or a failed Python execution).
+
+By default, an operation is `bad` if any of its arguments are `bad`. This is checked by expanding the argument list via `@pythonListElements`. This `bad` is then propagated through the expression graph until it reaches the top-level declarations. However, this rule would be too coarse for several operators. For example, some boolean or conditional operators can still determine a unique result even when one argument is `bad`.
+
+Such operators are declared as "recoverable" through [_operator_recoverable/1]. This suppresses the automatic evaluation to `bad` when an argument is `bad`. Instead the respective operator module can then define more precise behavior through [_computedIdx/2].
+
+This is how operators such as `limp`, `conj`, and `pow` retain informative semantics in cases where the default behaviour would collapse the entire expression to `bad`.
+
+Evaluation failures are never silent. When a `bad` value is encountered, the engine emits a [Warning] via [_warning/3], capturing the specific expression context and error kind to ensure traceability.
+
+### Result Projection
+
+The last stage is projection from internal facts to public result predicates.
+
+[value/2] is derived from variable values already established through [_se_value/2]. [evaluated/3] is derived from [_se_evaluate/3] together with the value of the requested operation. Collection and preference outputs follow the same pattern: internal helper predicates build the structure, and then public result predicates expose only the externally relevant view.
+
+Warnings behave similarly. Operator modules and helper layers emit [_warning/3]. That internal warning stream is then filtered by [warning_ignore/1], [warning_ignore/2], [warning_forbid/1], and [warning_forbid/2] before becoming visible through [warning/3] or, in the forbidden case, rejecting the model.
