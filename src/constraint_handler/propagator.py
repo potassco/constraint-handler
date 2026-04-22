@@ -526,12 +526,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateControl object.
             var: Variable (or optimization handler) to block.
         """
-        ng: set[int] = set()
-        for symbol_var in var.vars():
-            if symbol_var not in self.symbol2var:
-                continue
-            v = self.symbol2var[symbol_var]
-            ng = ng.union(self.get_reasons(v))
+        ng: set[int] = self.get_reasons(var)
         myprint(f"Adding nogood {list(ng)} for variable {var}")
         if ctl.add_nogood(ng, tag=True):
             assert False, f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"
@@ -585,12 +580,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         if eval_result == EvaluationResult.CONFLICT:
             myprint(f"Var {var} is in conflict at decision level {var.decision_level}")
-            ng = self.get_reasons(var)
-            myprint(f"Adding nogood {ng}")
-            if ctl.add_nogood(ng):
-                assert False, (
-                    f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}",
-                )
+            self.add_nogood_for_variable(ctl, var)
             return None
 
         # check if any errors are forbidden
@@ -599,17 +589,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 literal = self.forbidden_warnings[__warning.id]
                 if ctl.assignment.is_true(literal):
                     myprint(f"Forbidden warning {(__warning, literal)} exists, making program unsat!")
-                    ng = self.get_reasons(var)
-                    myprint(f"Adding nogood {ng}")
-                    if ctl.add_nogood(ng):
-                        assert False, (
-                            f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}",
-                        )
+                    self.add_nogood_for_variable(ctl, var)
                     return None
 
         return eval_result == EvaluationResult.CHANGED
 
-    def get_reasons(self, var: VariableType, seen: set[VariableType] | None = None) -> set[int]:
+    def get_reasons(self, var: VariableType | OptimizationHandler, seen: set[VariableType] | None = None) -> set[int]:
         """Compute the set of literals explaining a variable's current value.
 
         This is used when constructing nogoods for conflicts, forbidden warnings,
@@ -625,10 +610,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             seen = set()
         reasons = var.literals
         for dvar in var.vars():
-            if dvar not in self.symbol2var:
-                continue
             if dvar.name == EXECUTION_OUTPUT:
                 dvar = dvar.arguments[0]
+            if dvar not in self.symbol2var:
+                continue
             if self.symbol2var[dvar] not in seen:
                 seen.add(self.symbol2var[dvar])
                 reasons = reasons.union(self.get_reasons(self.symbol2var[dvar], seen))
