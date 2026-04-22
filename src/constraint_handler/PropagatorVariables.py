@@ -1560,6 +1560,16 @@ class OptimizationHandler:
         """
         return self.sums[position].has_unassigned()
 
+    @property
+    def literals(self) -> set[int]:
+        """
+        returns the empty set since the optimization sums do not have literals directly associated with them.
+
+        Returns:
+            empty set: set()
+        """
+        return set()
+
 
 class Execution:
     """

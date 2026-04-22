@@ -200,9 +200,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint("Adding reasoning mode helper atoms")
             for a in ctl.symbolic_atoms.by_signature(REASONING_STAGE_ATOM, 1):
                 assert a.symbol.arguments[0].number in (1, 2, 3), f"Unknown reasoning stage atom: {a.symbol}"
-                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(
-                    a.literal
-                )  # ty:ignore[invalid-assignment]
+                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(a.literal)  # ty:ignore[invalid-assignment]
 
             for var in self.symbol2var.values():
                 if isinstance(var, EnsureVariable):
@@ -579,12 +577,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             var: Variable (or optimization handler) to block.
             extra_literals: Additional literals to include in the nogood.
         """
-        ng: set[int] = set()
-        for symbol_var in var.vars():
-            if symbol_var not in self.symbol2var:
-                continue
-            v = self.symbol2var[symbol_var]
-            ng = ng.union(self.get_reasons(v))
+        ng: set[int] = self.get_reasons(var)
         if extra_literals:
             ng = ng.union(extra_literals)
         myprint(f"Adding nogood {list(ng)} for variable {var}")
@@ -640,12 +633,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         if eval_result == EvaluationResult.CONFLICT:
             myprint(f"Var {var} is in conflict at decision level {var.decision_level}")
-            ng = self.get_reasons(var)
-            myprint(f"Adding nogood {ng}")
-            if ctl.add_nogood(ng):
-                assert False, (
-                    f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}",
-                )
+            self.add_nogood_for_variable(ctl, var)
             return None
 
         # check if any errors are forbidden
@@ -654,17 +642,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 literal = self.forbidden_warnings[__warning.id]
                 if ctl.assignment.is_true(literal):
                     myprint(f"Forbidden warning {(__warning, literal)} exists, making program unsat!")
-                    ng = self.get_reasons(var)
-                    myprint(f"Adding nogood {ng}")
-                    if ctl.add_nogood(ng):
-                        assert False, (
-                            f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}",
-                        )
+                    self.add_nogood_for_variable(ctl, var)
                     return None
 
         return eval_result == EvaluationResult.CHANGED
 
-    def get_reasons(self, var: VariableType, seen: set[VariableType] | None = None) -> set[int]:
+    def get_reasons(self, var: VariableType | OptimizationHandler, seen: set[VariableType] | None = None) -> set[int]:
         """Compute the set of literals explaining a variable's current value.
 
         This is used when constructing nogoods for conflicts, forbidden warnings,
@@ -680,10 +663,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             seen = set()
         reasons = var.literals
         for dvar in var.vars():
-            if dvar not in self.symbol2var:
-                continue
             if dvar.name == EXECUTION_OUTPUT:
                 dvar = dvar.arguments[0]
+            if dvar not in self.symbol2var:
+                continue
             if self.symbol2var[dvar] not in seen:
                 seen.add(self.symbol2var[dvar])
                 reasons = reasons.union(self.get_reasons(self.symbol2var[dvar], seen))
@@ -914,9 +897,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             optional_variable: Variable = cast(Variable, self.symbol2var[optional])
             literal = ctl.add_literal(freeze=True)
-            optional_variable.add_value(
-                expression.Val(expression.BaseType.none, None), literal, _literal
-            )  # ty:ignore[unresolved-attribute]
+            optional_variable.add_value(expression.Val(expression.BaseType.none, None), literal, _literal)  # ty:ignore[unresolved-attribute]
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
@@ -1332,9 +1313,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def handle_on_model_normal_type(
         self,
         var: clingo.Symbol,
-        final_value: (
-            bool | int | float | str | clingo.Symbol | tuple[Any, ...] | expression.Bad.bad
-        ),  # ty:ignore[unresolved-attribute]
+        final_value: (bool | int | float | str | clingo.Symbol | tuple[Any, ...] | expression.Bad.bad),  # ty:ignore[unresolved-attribute]
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.
