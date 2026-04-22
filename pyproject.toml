@@ -36,7 +36,8 @@ typecheck = [
 ]
 test = [
     "pytest==9.0.1",
-    "clintest>=0.4"
+    "clintest>=0.4",
+    "pytest-benchmark>=5.1,<6"
 ]
 doc = [
     "mkdocs",
@@ -67,6 +68,11 @@ line_length = 120
 
 [tool.black]
 line-length = 120
+
+[tool.pytest.ini_options]
+markers = [
+    "performance: engine performance tests that both persist pytest-benchmark results and enforce runtime thresholds",
+]
 
 [tool.pylint.format]
 max-line-length = 120

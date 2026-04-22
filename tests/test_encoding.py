@@ -66,8 +66,6 @@ base_tests = [
     "set_manipulations",
     "set_selfref",
     "strings",
-    "sum_aggregates",
-    "sum_chain_performance",
     "type_checking",
     "variable_parallel_declaration",
     "variable_flexible_domain",
@@ -133,7 +131,6 @@ def test_engine_ground(name: str):
         "engine_request_set_ref",
         "set_iterations",
         "set_selfref",
-        "sum_aggregates",
         "type_checking",
         "warning_syntax",
     ]
