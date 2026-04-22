@@ -1,13 +1,16 @@
 #defined assign/2.
+#defined assign/3.
 #defined ensure/1.
 #defined ensure/2.
 #defined evaluate/2.
 #defined evaluate/3.
 
+variable_define(X,E) :- assign(X,E).
+variable_define(LBL,X,E) :- assign(LBL,X,E).
+
 %%%%%%%%%%%%%%%%% labels are optional
 _passed(defaultArgs,ensure(_label_anonymous,E)) :- ensure(E).
 _passed(defaultArgs,ensure(LBL,E)) :- ensure(LBL,E).
-assign(_label_anonymous,X,E) :- assign(X,E).
 _passed(defaultArgs,evaluate(_label_anonymous,OP,ARGS)) :- evaluate(OP,ARGS).
 _passed(defaultArgs,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
@@ -103,7 +106,6 @@ warning_ignore(_label_anonymous,KIND) :- warning_ignore(KIND).
 
 %%%%%%%%%%%%%%%%% collect labels
 _label(LABEL) :- _passed(defaultArgs,ensure(LABEL,E)).
-_label(LABEL) :- assign(LABEL,X,E).
 _label(LABEL) :- _passed(defaultArgs,evaluate(LABEL,O,ARGS)).
 
 %%%%%% variable atoms
@@ -140,9 +142,6 @@ _label(LABEL) :- warning_ignore(LABEL,KIND).
 %%%%%%%%%%%%%%%%% check if well-formed
 _passed(sugar,ensure(LBL,E)) :- _passed(defaultArgs,ensure(LBL,E)), _expression_wellformed(E).
 _passed(sugar,evaluate(LBL,OP,ARGS)) :- _passed(defaultArgs,evaluate(LBL,OP,ARGS)), _expression_wellformed(operation(OP,ARGS)).
-
-
-%_passed(sugar,assign(LABEL,X,E)) :- assign(LABEL,X,E), _expression_wellformed(E).
 
 
 %%%%%% multimap atoms

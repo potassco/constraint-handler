@@ -1,6 +1,6 @@
-%%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
+%%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
 _se_ensure(CNAME,E) :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,compile).
-_se_assign(CNAME,variable(X),E) :- assign(CNAME,X,E), engine(CNAME,compile).
+_se_assign(LBL,variable(X),E) :- _passed(sugar,variable_define(LBL,X,E)), engine(LBL,compile).
 _se_evaluate(CNAME,OP,ARGS) :- _passed(sugar,evaluate(CNAME,OP,ARGS)), engine(CNAME,compile).
 
 evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(operation(OP,ARGS),V).

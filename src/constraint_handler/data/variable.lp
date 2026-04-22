@@ -30,17 +30,13 @@ _warning(variable(multipleDefinitions),(CNAME1,(CNAME2,())),(X,E1,E2)) :-
 %%% rules for compile and ground engines
 
 _variable_declare(LBL,X) :- _passed(sugar,variable_declare(LBL,X,D)), engine(LBL,(compile;ground)).
-_variable_define(LBL,X,E) :- _passed(sugar,variable_define(LBL,X,E)), engine(LBL,(compile;ground)).
 _variable_domain(X,E) :- _passed(sugar,variable_domain(LBL,X,E)), engine(LBL,(compile;ground)).
 
-assign(LBL,X,E) :- _variable_define(LBL,X,E).
 _variable_hasDomain(X) :- _variable_domain(X,V).
 
 direct_query(E) :- _variable_domain(X,E).
-1 { _se_assign(LBL,variable(X),V) : _variable_domain(X,E), _se_value(E,V) } 1 :-
-   _variable_declare(LBL,X), _variable_hasDomain(X), engine(LBL,compile).
-1 { _ge_assign(LBL,X,V) : _variable_domain(X,E), _se_value(E,V) } 1 :-
-   _variable_declare(LBL,X), _variable_hasDomain(X), engine(LBL,ground).
+1 { _passed(sugar,variable_define(LBL,X,V)) : _variable_domain(X,E), _se_value(E,V) } 1 :-
+   _variable_declare(LBL,X), _variable_hasDomain(X).
 
 _warning(variable(emptyDomain),(LBL,()),X) :- _variable_declare(LBL,X), not _variable_hasDomain(X).
 
