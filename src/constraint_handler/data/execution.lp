@@ -10,11 +10,11 @@ _execution_run(NAME,STMT) :- _execution_declare(LBL1,NAME,STMT,INS,OUTS), _passe
 
 _execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), _se_value(variable(execution_input(NAME,X)),V).
 
-_se_assign(_internal,variable(EX),val(none,none)) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), not _execution_isRunning(NAME).
-_se_assign(_internal,variable(EX),V) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_ou(NAME,X,V).
-_se_assign(_internal,variable(EX),V) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_in(NAME,X,V), not _execution_ou_proj(NAME,X).
-_se_assign(_internal,variable(EX),val(none,none)) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), not _execution_input_var(NAME,X), not _execution_ou_proj(NAME,X).
-_se_assign(_internal,variable(EX),bad) :- _execution_output_var(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), _execution_fails(NAME,STMT).
+_se_assign(LBL,variable(EX),val(none,none)) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), not _execution_isRunning(NAME).
+_se_assign(LBL,variable(EX),V) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_ou(NAME,X,V).
+_se_assign(LBL,variable(EX),V) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), _execution_in(NAME,X,V), not _execution_ou_proj(NAME,X).
+_se_assign(LBL,variable(EX),val(none,none)) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), _execution_succeeds(NAME,STMT), not _execution_input_var(NAME,X), not _execution_ou_proj(NAME,X).
+_se_assign(LBL,variable(EX),bad) :- _execution_outputVar(NAME,X,EX), _execution_declare(LBL,NAME,STMT,INS,OUTS), _execution_fails(NAME,STMT).
 
 _execution_ou_proj(NAME,X) :- _execution_ou(NAME,X,V).
 
