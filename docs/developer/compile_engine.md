@@ -111,6 +111,16 @@ Such operators are declared as "recoverable" through [_operator_recoverable/1]. 
 
 This is how operators such as `limp`, `conj`, and `pow` retain informative semantics in cases where the default behaviour would collapse the entire expression to `bad`.
 
+!!! Example
+    Suppose you have:
+
+    ```prolog
+    variable_define(really_bad,bad).
+    evaluate(conj, (val(bool,false), (variable(really_bad),()))).
+    ```
+
+    Even though one argument is `bad`, the result in `evaluated/3` will be `val(bool,false)` (not `bad`), because once an argument of a conjunction is `val(bool,false)`, the entire conjunction is `val(bool,false)` regardless of the other argument.
+
 Evaluation failures are never silent. When a `bad` value is encountered, the engine emits a [Warning] via [_warning/3], capturing the specific expression context and error kind to ensure traceability.
 
 ### Result Projection
