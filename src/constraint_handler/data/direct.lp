@@ -1,15 +1,15 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
-_se_ensure(CNAME,E) :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,compile).
+_expression_valueQuery(LBL,E) :- _passed(sugar,ensure(LBL,E)), engine(LBL,(compile;ground)).
+_expression_valueQuery(LBL,operation(OP,ARGS)) :- _passed(sugar,evaluate(LBL,OP,ARGS)), engine(LBL,(compile;ground)).
 _se_assign(LBL,variable(X),E) :- _passed(sugar,variable_define(LBL,X,E)), engine(LBL,compile).
-_se_evaluate(CNAME,OP,ARGS) :- _passed(sugar,evaluate(CNAME,OP,ARGS)), engine(CNAME,compile).
 
-evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(operation(OP,ARGS),V).
+:- _passed(sugar,ensure(CNAME,E)), engine(CNAME,(compile;ground)), not _se_value(E,val(bool,true)), not _se_value(E,bad), usc_active(NAME).
+evaluated(OP,ARGS,V) :- _passed(sugar,evaluate(LBL,OP,ARGS)), _se_value(operation(OP,ARGS),V).
 
 
-direct_query(E)  :- _se_ensure(NAME,E).
+direct_query(E)  :- _expression_valueQuery(LBL,E), engine(LBL,compile).
 direct_query(E)  :- _se_assign(NAME,X,E).
 direct_query(X)  :- _se_assign(NAME,X,E).
-direct_query(operation(OP,ARGS))  :- _se_evaluate(CNAME,OP,ARGS).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
@@ -73,4 +73,3 @@ engine(_internal,compile).
 #external usc_relax(NAME) : engine(NAME,E).
 { usc_active(NAME) } :- engine(NAME,E).
 usc_active(NAME) :- engine(NAME,E), not usc_relax(NAME).
-:- _se_ensure(NAME,E), not _se_value(E,val(bool,true)), not _se_value(E,bad), usc_active(NAME).

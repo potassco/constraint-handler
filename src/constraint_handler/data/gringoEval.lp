@@ -1,24 +1,20 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
-_ge_ensure(CNAME,E) :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,ground).
 _ge_assign(LBL,X,E) :- _passed(sugar,variable_define(LBL,X,E)), engine(LBL,ground).
 _ge_set_assign(CNAME,X,E) :- _passed(sugar,set_assign(CNAME,X,E)), engine(CNAME,ground).
 %%% TODO: handle set_baseDomain here?
 _ge_set_declare(CNAME,X) :- _passed(sugar,set_declare(CNAME,X)), engine(CNAME,ground).
 %%% TODO: make sure set assign doesn't get broken down across different engines
-_ge_evaluate(CNAME,OP,ARGS) :- _passed(sugar,evaluate(CNAME,OP,ARGS)), engine(CNAME,ground).
 
-:- _ge_ensure(CNAME,EXPR), not ge_result(EXPR,val(bool,true)), not ge_result(EXPR,bad).
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).
+
+ge_expressionQuery(E)  :- _expression_valueQuery(LBL,E), engine(LBL,ground).
+ge_expressionQuery(EXPR) :- _ge_assign(CNAME,X,EXPR).
 
 _se_assign(_internal,variable(X),val(T,V)) :- ge_value(X,val(T,V)), representation(T,extensional).
 _se_assign(_internal,variable(X),bad) :- ge_value(X,bad).
 _set_declare(_internal,variable(X)) :- ge_value(X,set(S)).
 _set_assign(_internal,variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
-evaluated(OP,ARGS,V) :- _ge_evaluate(CNAME,OP,ARGS), ge_result(operation(OP,ARGS),V).
-
-ge_expressionQuery(operation(OP,ARGS)) :- _ge_evaluate(CNAME,OP,ARGS).
-ge_expressionQuery(EXPR) :- _ge_ensure(CNAME,EXPR).
-ge_expressionQuery(EXPR) :- _ge_assign(CNAME,X,EXPR).
+_se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).
 
 _ge_vQuery(X) :- ge_expressionQuery(EXPR), X=@pythonExpressionVariable(EXPR).
 
