@@ -139,14 +139,14 @@ The following example is intentionally small, but it illustrates the fundamental
 variable_define(one,val(int,1)).
 variable_define(bad_div,
     operation(
-        int_div, 
+        int_div,
         (variable(one),
         (val(int,0),
     ())))
 ).
 
-evaluate(ite, 
-    (val(bool,false), 
+evaluate(ite,
+    (val(bool,false),
     (variable(bad_div),
     (variable(one),
 ())))
@@ -193,7 +193,7 @@ This then propagates through and yields that the value of the operation is bad, 
 Additionally, we can also find a rule in the `int` module that derives a [_warning/3] of type `expression(zeroDivisionError)` for any division by zero.
 
 ### Step 5. Lazy Evaluation and Recovery
-Meanwhile, the `ite` operation is evaluated based on the rules in the `conditionals` module. In contrast to the `int_div` evaluation, the `ite` evaluation does not use `computeIdx`. Instead, it provides special rules that produce `direct_query/1` facts for the respective branch based on the condition value. 
+Meanwhile, the `ite` operation is evaluated based on the rules in the `conditionals` module. In contrast to the `int_div` evaluation, the `ite` evaluation does not use `computeIdx`. Instead, it provides special rules that produce `direct_query/1` facts for the respective branch based on the condition value.
 
 We already know that the if-branch would yield `bad` because it contains `variable(bad_div)`, which we just established is `bad` due to the division by zero.
 
@@ -204,11 +204,13 @@ We effectively recovered from the division by zero error, because it wasn't rele
 ### Step 6. Result Projection
 
 Now that the engine knows all relevant values, it can derive the public result predicates. In particular, we will have:
+
 - `value(one,val(int,1))` from the variable definition with a fixed value
 - `value(bad_div,bad)` from the variable definition with an operation that evaluates to `bad`
 - `evaluated(ite,(val(bool,false),(variable(bad_div),(variable(one),()))),val(int,1))` from the evaluation of the `ite` operation.
 
 Additionally, we will have the warnings for the `bad` evaluations:
+
 - `warning(expression(zeroDivisionError),(),(int_div,operation(int_div,(variable(one),(val(int,0),())))))`
 - `warning(expression(badValue),(),(variable(bad_div)))`
 

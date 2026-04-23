@@ -166,7 +166,7 @@ def on_page_markdown(markdown, page, config, files):
 
     if found_signatures:
         rel_glossary = os.path.relpath(GLOSSARY_PATH, current_dir).replace(os.sep, "/")
-        
+
         for sig in set(found_signatures):
             if sig not in LINKS:
                 anchor = "#" + sig.replace("/", "-")
@@ -195,20 +195,20 @@ def on_page_content(html, page, config, files):
                 return f'<a href="{rel_url}">{found_text}</a>'
 
             html = re.sub(pattern, replace_with_link, html)
-    
+
     glossary_file = files.get_file_from_path(GLOSSARY_PATH)
     if glossary_file:
         glossary_url = glossary_file.url
         base_rel_url = utils.get_relative_url(glossary_url, page.url)
-        
+
         sig_regex = r"\[([a-zA-Z0-9_]+/\d+)(s?)\](?!\()"
-        
+
         def replace_signature(match):
             sig = match.group(1)
             plural = match.group(2)
             anchor = sig.replace("/", "-")
             return f'<a href="{base_rel_url}#{anchor}">{sig}{plural}</a>'
-            
+
         html = re.sub(sig_regex, replace_signature, html)
 
     return html
