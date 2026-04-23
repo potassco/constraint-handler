@@ -68,15 +68,15 @@ compile_benchmarks = [
         PerformanceBenchmark(
             "sum_aggregates",
             "compile",
-            1.5,
+            0.5,
         )
     ),
-    benchmark_param(PerformanceBenchmark("sum_chain_performance", "compile", 1.0)),
+    benchmark_param(PerformanceBenchmark("sum_chain_performance", "compile", 0.5)),
     benchmark_param(
         PerformanceBenchmark(
             "repeated_constraints_performance",
             "compile",
-            60.0,
+            20.0,
             constants={"pair_count": 1000},
         )
     ),
@@ -84,7 +84,7 @@ compile_benchmarks = [
         PerformanceBenchmark(
             "large_int_domain_performance",
             "compile",
-            60.0,
+            6.0,
             constants={"int_domain_size": 8000},  # uses an excessive amount of memory
         )
     ),
@@ -92,7 +92,7 @@ compile_benchmarks = [
         PerformanceBenchmark(
             "assignment_chain_performance",
             "compile",
-            15.0,
+            3.0,
             constants={"chain_length": 200},
         )
     ),
