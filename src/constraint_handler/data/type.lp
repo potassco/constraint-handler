@@ -18,10 +18,13 @@ type_expression(SCOPE,operation(O,ARGS),T) :- _expression_query(SCOPE,operation(
 type_expression(SCOPE,(H,T),(TH,TT)) :- _expression_query(SCOPE,(H,T)), type_expression(SCOPE,H,TH), type_expression(SCOPE,T,TT).
 
 _length(ARGS,N) :- _expression_query(SCOPE,operation(O,ARGS)), N=@pythonListLength(ARGS).
-_type_listArg(SCOPE,ARGS,IDX,ARG) :- _expression_query(SCOPE,operation(O,ARGS)), (IDX,ARG)=@pythonEnumerateElements(ARGS).
-_type_listAux(SCOPE,ARGS,N,()) :- _expression_query(SCOPE,operation(O,ARGS)), _length(ARGS,N).
-_type_listAux(SCOPE,ARGS,N-1,(T,TS)) :- _type_listAux(SCOPE,ARGS,N,TS), _type_listArg(SCOPE,ARGS,N-1,ARG), type_expression(SCOPE,ARG,T).
 
+_list_element(ARGS,IDX,ARG) :- _expression_query(SCOPE,operation(O,ARGS)), (IDX,ARG)=@pythonEnumerateElements(ARGS).
+_type_listArgT(SCOPE,ARGS,IDX,T) :- _list_element(ARGS,IDX,ARG), type_expression(SCOPE,ARG,T).
+_type_listAux(SCOPE,ARGS,N,()) :- _expression_query(SCOPE,operation(O,ARGS)), _length(ARGS,N).
+_type_listAux(SCOPE,ARGS,N-1,(T,TS)) :- _type_listAux(SCOPE,ARGS,N,TS), _type_listArgT(SCOPE,ARGS,N-1,T).
+%_list_element(ARGS,IDX,ARG) :- _expression_query(SCOPE,operation(O,ARGS)), (IDX,ARG)=@pythonEnumerateElements(ARGS).
+%_type_listAux(SCOPE,ARGS,N-1,(T,TS)) :- _type_listAux(SCOPE,ARGS,N,TS), _list_element(ARGS,N-1,ARG), type_expression(SCOPE,ARG,T).
 _type_list(SCOPE,ARGS,TS) :- _type_listAux(SCOPE,ARGS,0,TS).
 
 % TODO lambdas
@@ -42,8 +45,17 @@ _type_operator((),O,function(TS,T)) :- operator_declare(O,TS,T).
 % - If the number of elements with a rank is equal to the number of arguments,
 %   then all arguments were valid.
 % - If all elements were valid, the result with the highest rank will be picked as the return type
+
+_list_element(TS,IDX,T) :- _type_list(SCOPE,ARGS,TS), (IDX,T)=@pythonEnumerateElements(TS).
+
+operator_variadic(OP,RT) :- operator_declare_variadic(OP,T,RT,1).
+_type_variadicListAux(OP,TS,N,NT,1) :- _expression_query(SCOPE,operation(OP,ARGS)), _type_list(SCOPE,ARGS,TS), _length(ARGS,N), operator_variadic(OP,NT).
+_type_variadicListAux(OP,TS,N-1,IT,IR) :- _type_variadicListAux(OP,TS,N,NT,NR), _list_element(TS,N-1,T), operator_declare_variadic(OP,T,IT,IR), IR > NR.
+_type_variadicListAux(OP,TS,N-1,NT,NR) :- _type_variadicListAux(OP,TS,N,NT,NR), _list_element(TS,N-1,T), operator_declare_variadic(OP,T,IT,IR), IR <= NR.
+_type_operator((),O,function(TS,T)) :- _type_variadicListAux(O,TS,0,T,R).
+%*
 _arg_rank(SCOPE,OP,ARGS,IDX,RANK) :-
-    _type_listArg(SCOPE,ARGS,IDX,ARG),
+    _list_element(ARGS,IDX,ARG),
     type_expression(SCOPE,ARG,T),
     operator_declare_variadic(OP,T,TRESULT,RANK).
 
@@ -64,3 +76,4 @@ _type_operator(SCOPE,OP,function(TS,T_RESULT)) :-
     _valid_args_count(SCOPE,OP,ARGS,N),
     _max_rank(SCOPE,OP,ARGS,MAXR),
     operator_declare_variadic(OP,T,T_RESULT,MAXR).
+*%
