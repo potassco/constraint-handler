@@ -37,7 +37,6 @@ from constraint_handler.PropagatorVariables import (
     Variable,
     VariableType,
 )
-from constraint_handler.utils.common import Bad
 
 
 def myprint(*args, **kwargs):
@@ -528,7 +527,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         ng: set[int] = self.get_reasons(var)
         myprint(f"Adding nogood {list(ng)} for variable {var}")
-        if ctl.add_nogood(ng, tag=True):
+        if not ctl.add_nogood(ng, tag=True):
             assert False, f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"
 
     def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]) -> bool:
@@ -584,11 +583,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return None
 
         # check if any errors are forbidden
-        for __warning in var.get_errors():
-            if __warning.id in self.forbidden_warnings:
-                literal = self.forbidden_warnings[__warning.id]
+        for _warning in var.get_errors():
+            if _warning.id in self.forbidden_warnings:
+                literal = self.forbidden_warnings[_warning.id]
                 if ctl.assignment.is_true(literal):
-                    myprint(f"Forbidden warning {(__warning, literal)} exists, making program unsat!")
+                    myprint(f"Forbidden warning {(_warning, literal)} exists, making program unsat!")
                     self.add_nogood_for_variable(ctl, var)
                     return None
 
@@ -1186,7 +1185,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if final_value is ValueStatus.NOT_SET:
             assert False, f"Variable {var} has no value set in on_model!"
 
-        if isinstance(final_value, expression.constant | Bad):
+        if isinstance(final_value, expression.constant | expression.Bad):
             self.handle_on_model_normal_type(var, final_value)
 
         elif isinstance(final_value, (set, frozenset)):
