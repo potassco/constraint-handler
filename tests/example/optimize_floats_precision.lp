@@ -1,17 +1,20 @@
 capacity(6).
-item(a,4,5).
-item(b,2,1).
-item(c,2,1).
-item(d,3,3).
+item(a,4,float("5")).
+item(b,3,float("3.12")).
+item(c,3,float("3.11")).
+item(d,3,float("3.1")).
+item(e,3,float("3")).
+
+optimize_precision(val(int,10)).
+
 multimap_declare(taken).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
 optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
   COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
-  VALU = val(int,V),
+  VALU = val(float,V),
   EXPR = operation(if,(COND,(VALU,()))).
-
 
 variable_define(carried,EXPR) :-
   EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),
@@ -24,3 +27,9 @@ variable_define(carried,EXPR) :-
   LAMB = lambda(VARS,PLUS).
 
 ensure(operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
+
+evaluate(multimap_isin,(val(symbol,a),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,b),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,c),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,d),(variable(taken),()))).
+evaluate(multimap_isin,(val(symbol,e),(variable(taken),()))).
