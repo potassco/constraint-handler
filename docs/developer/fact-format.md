@@ -83,6 +83,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "variable" "(" <term> ")"
     | "operation" "(" <operator> "," <expression-list> ")"
     | <lambda-expr>
+    | "python" "(" <string> ")"
     | <tuple-expr>
 
 <expression-list> ::= "(" ")" | "(" <expression> "," <expression-list> ")"

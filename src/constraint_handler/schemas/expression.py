@@ -64,6 +64,14 @@ class Val(typing.NamedTuple):
         return f"Val({str(self.type_)},{str(self.value)})"
 
 
+class Ref(typing.NamedTuple):
+    type_: BaseType | clingo.Symbol
+    value: constant
+
+    def __repr__(self):
+        return f"Ref({str(self.type_)},{str(self.value)})"
+
+
 class Operation(typing.NamedTuple):
     op: Operator | Variable | Lambda
     args: myClorm.HashableList[Expr]
@@ -88,5 +96,5 @@ class Lambda(typing.NamedTuple):
         return f"Lambda({[str(x) for x in self.vars]},{str(self.expr)})"
 
 
-type ReducedExpr = Bad | Val | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
-type Expr = Bad | Variable | Operation | Val | Lambda | frozenset[Expr] | tuple[Expr, ...]
+type ReducedExpr = Bad | Val | Ref | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
+type Expr = Bad | Variable | Operation | Python | Val | Ref | Lambda | frozenset[Expr] | tuple[Expr, ...]

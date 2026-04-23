@@ -1223,9 +1223,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         assert self.python_model is not None
 
-        pyVal = expression.Val(
-            evaluator.get_baseType(final_value), clingo.Function("ref", [clingo.Function("variable", [var])])
-        )
+        pyVal = expression.Ref(evaluator.get_baseType(final_value), clingo.Function("variable", [var]))
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
@@ -1233,7 +1231,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if value is ValueStatus.NOT_SET:
                 assert False, f"Set variable {var} has no value set in on_model!"
 
-            set_pyVal = expression.Val(evaluator.get_baseType(value), value)
+            if value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
+                set_pyVal = value
+            else:
+                set_pyVal = expression.Val(evaluator.get_baseType(value), value)
             set_pyAtom = atom.Set_value(var, set_pyVal)
             # myprint(f"adding set atom {pyAtom}", end=" ")
             self.python_model.add(set_pyAtom)
@@ -1248,7 +1249,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         assert self.python_model is not None
 
-        pyVal = expression.Val(evaluator.get_baseType(final_value), var)
+        if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
+            pyVal = final_value
+        else:
+            pyVal = expression.Val(evaluator.get_baseType(final_value), var)
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 

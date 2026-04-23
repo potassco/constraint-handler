@@ -12,7 +12,7 @@ class Error(typing.NamedTuple):
 
 
 ExpressionWarning = common.PPEnum(
-    "ExpressionWarning", ["notImplemented", "pythonError", "syntaxError", "zeroDivisionError"]
+    "ExpressionWarning", ["notImplemented", "evaluatorError", "pythonError", "syntaxError", "zeroDivisionError"]
 )
 
 

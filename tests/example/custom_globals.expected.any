@@ -1,4 +1,4 @@
 value(execution_output(flooring,"y"),val(int,10))
 value(yep,val(int,3))
-value(nope,val(int,5))
+value(nope,bad)
 value(execution_output(empty,"y"),val(string,"5"))

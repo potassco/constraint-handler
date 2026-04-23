@@ -31,8 +31,8 @@ def pythonEnumerateVariables(clExpr):
 
  # TODO: dead?
 def pythonBetaReduction(clExpr,clVars,clArgs):
-    pVars = myClorm.cltopy(clVars)
-    pArgs = myClorm.cltopy(clArgs,list[expression.Val])
+    pVars = myClorm.cltopy(clVars,list)
+    pArgs = myClorm.cltopy(clArgs,list[expression.ReducedExpr])
     pExpr = myClorm.cltopy(clExpr,expression.Expr)
     if len(pVars) != len(pArgs):
         print(f"pythonBetaReduction: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
@@ -46,7 +46,6 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
 
 
 def pythonEvalExpr(clExpr,clArgs,clId):
-    # print("pythonEvalExpr",clExpr,clArgs)
     eval_error = warning.Expression(warning.ExpressionWarning.pythonError)
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
@@ -68,10 +67,10 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         results.append(evaluator.reducedExpr(pRes))
         return map(myClorm.pytocl,results)
     except myClorm.FailedInstantiationExn as exn:
-        print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {repr(exn)}.")
+        # print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {repr(exn)}.")
         return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
     except Exception as exn:
-        print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
+        # print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
         return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
 
 
@@ -99,7 +98,7 @@ def pythonExec(clStmt,clEnv,clId):
             try:
                 results.append((x,evaluator.reducedExpr(val)))
             except NotImplementedError:
-                pass
+                results.append((x,expression.Python(repr(val))))
         return map(myClorm.pytocl,results)
     except solver_environment.FailIntegrityExn:
         return myClorm.pytocl(atom.FailIntegrity())
@@ -113,7 +112,7 @@ def pythonExec(clStmt,clEnv,clId):
 
 def pythonListElements(clL):
     try:
-        return [myClorm.pytocl(e) for e in myClorm.cltopy(clL,list)]
+        return myClorm.cltopy(clL,list[clingo.Symbol])
     except myClorm.FailedInstantiationExn:
         return []
 
@@ -137,8 +136,18 @@ def pythonIsList(clL):
     except myClorm.FailedInstantiationExn:
         return myClorm.pytocl(False)
 
+def pythonIsString(clS):
+    return myClorm.pytocl(clS.type == clingo.SymbolType.String)
+
 def pythonIsTuple(clT):
     return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "")
+
+def pythonIsExpr(clE):
+    try:
+        myClorm.cltopy(clE,expression.Expr)
+        return myClorm.pytocl(True)
+    except myClorm.FailedInstantiationExn:
+        return myClorm.pytocl(False)
 
 def pythonTupleElements(clT):
     if clT.type == clingo.SymbolType.Function and clT.name == "":
@@ -146,13 +155,22 @@ def pythonTupleElements(clT):
     else:
         return []
 
+def pythonStringLength(clStr):
+    pStr = myClorm.cltopy(clStr,str)
+    return myClorm.pytocl(len(pStr))
+
+def pythonStringAdd(clStr1,clStr2):
+    pStr1 = myClorm.cltopy(clStr1,str)
+    pStr2 = myClorm.cltopy(clStr2,str)
+    return myClorm.pytocl(pStr1+pStr2)
+
 def pythonDebug(clExpr):
     #print("debug: ",clExpr)
     return clExpr
 
 def pythonStop(clExpr):
     #print("stop: ",clExpr)
-    pExpr = myClorm.cltopy(clExpr)
+    pExpr = myClorm.cltopy(clExpr,int)
     if pExpr < -5:
         assert False
     return clExpr

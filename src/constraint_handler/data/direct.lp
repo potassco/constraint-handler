@@ -1,28 +1,30 @@
-%%%%%%%%%%%%%%%%% interface ensure/2 assign/3 evaluate/2
-_se_ensure(CNAME,E) :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,compile).
-_se_assign(CNAME,variable(X),E) :- assign(CNAME,X,E), engine(CNAME,compile).
-_se_evaluate(CNAME,OP,ARGS) :- _passed(sugar,evaluate(CNAME,OP,ARGS)), engine(CNAME,compile).
+%%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
+_expression_valueQuery(LBL,E) :- _passed(sugar,ensure(LBL,E)), engine(LBL,(compile;ground)).
+_expression_valueQuery(LBL,operation(OP,ARGS)) :- _passed(sugar,evaluate(LBL,OP,ARGS)), engine(LBL,(compile;ground)).
+_se_assign(LBL,variable(X),E) :- _passed(sugar,variable_define(LBL,X,E)), engine(LBL,compile).
 
-evaluated(OP,ARGS,V) :- _se_evaluate(CNAME,OP,ARGS), _se_value(operation(OP,ARGS),V).
+:- _passed(sugar,ensure(CNAME,E)), engine(CNAME,(compile;ground)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
+evaluated(OP,ARGS,V) :- _passed(sugar,evaluate(LBL,OP,ARGS)), _se_value(operation(OP,ARGS),V).
 
 
-direct_query(E)  :- _se_ensure(NAME,E).
+direct_query(E)  :- _expression_valueQuery(LBL,E), engine(LBL,compile).
 direct_query(E)  :- _se_assign(NAME,X,E).
 direct_query(X)  :- _se_assign(NAME,X,E).
-direct_query(operation(OP,ARGS))  :- _se_evaluate(CNAME,OP,ARGS).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
 _se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
+_expression_pythonEval(python(S),python(S)) :- direct_query(python(S)).
+_se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
-_se_value(variable(X),V) :- direct_query(variable(X)), _se_assign(NAME,variable(X),E2), _se_value(E2,V), usc_active(NAME).
+_se_value(variable(X),V) :- direct_query(variable(X)), _se_assign(NAME,variable(X),E2), _se_value(E2,V).
 
 
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
-_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)). % decl operator
+_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _direct_bad_operation(OP,ARGS).
 _direct_queryArgsValues(operation(EOP,ARGS),OP,ARGS) :- direct_query(operation(EOP,ARGS)), _se_value(EOP,val(function,OP)).
 _computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
@@ -57,8 +59,9 @@ _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
 %%%%%%%%%%%%%%%%% bad
-_se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _operator_recoverable(OP).
-_se_value(operation(OP,ARGS),bad) :- direct_query(operation(OP,ARGS)), _se_value(OP,bad).
+_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _operator_recoverable(OP).
+_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(OP,bad).
+_se_value(operation(OP,ARGS),bad) :- _direct_bad_operation(OP,ARGS).
 _se_value(bad,bad) :- direct_query(bad).
 
 %%%%%%%%%%%%%%%%% implode
@@ -67,7 +70,3 @@ _direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), representation
 _direct_imploded(variable(X),V) :- _direct_implode(variable(X)), _se_value(variable(X),V).
 
 engine(_internal,compile).
-#external usc_relax(NAME) : engine(NAME,E).
-{ usc_active(NAME) } :- engine(NAME,E).
-usc_active(NAME) :- engine(NAME,E), not usc_relax(NAME).
-:- _se_ensure(NAME,E), not _se_value(E,val(bool,true)), not _se_value(E,bad), usc_active(NAME).
