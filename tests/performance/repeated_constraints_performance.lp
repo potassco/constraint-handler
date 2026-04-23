@@ -1,7 +1,7 @@
 % Compile benchmark: many identical singleton constraints generated via
 % first-order variables so the encoding shape is repeated many times.
 
-#const pair_count = 10.
+#const pair_count = 1000.
 
 pair(1..pair_count).
 
