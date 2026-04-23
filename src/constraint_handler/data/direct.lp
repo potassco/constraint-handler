@@ -3,7 +3,7 @@ _expression_valueQuery(LBL,E) :- _passed(sugar,ensure(LBL,E)), engine(LBL,(compi
 _expression_valueQuery(LBL,operation(OP,ARGS)) :- _passed(sugar,evaluate(LBL,OP,ARGS)), engine(LBL,(compile;ground)).
 _se_assign(LBL,variable(X),E) :- _passed(sugar,variable_define(LBL,X,E)), engine(LBL,compile).
 
-:- _passed(sugar,ensure(CNAME,E)), engine(CNAME,(compile;ground)), not _se_value(E,val(bool,true)), not _se_value(E,bad), usc_active(NAME).
+:- _passed(sugar,ensure(CNAME,E)), engine(CNAME,(compile;ground)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
 evaluated(OP,ARGS,V) :- _passed(sugar,evaluate(LBL,OP,ARGS)), _se_value(operation(OP,ARGS),V).
 
 
@@ -19,7 +19,7 @@ _se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
-_se_value(variable(X),V) :- direct_query(variable(X)), _se_assign(NAME,variable(X),E2), _se_value(E2,V), usc_active(NAME).
+_se_value(variable(X),V) :- direct_query(variable(X)), _se_assign(NAME,variable(X),E2), _se_value(E2,V).
 
 
 
@@ -70,6 +70,3 @@ _direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), representation
 _direct_imploded(variable(X),V) :- _direct_implode(variable(X)), _se_value(variable(X),V).
 
 engine(_internal,compile).
-#external usc_relax(NAME) : engine(NAME,E).
-{ usc_active(NAME) } :- engine(NAME,E).
-usc_active(NAME) :- engine(NAME,E), not usc_relax(NAME).
