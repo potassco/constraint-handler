@@ -579,9 +579,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         ng: set[int] = self.get_reasons(var)
         if extra_literals:
             ng = ng.union(extra_literals)
-        myprint(f"Adding nogood {list(ng)} for variable {var}")
-        if not ctl.add_nogood(ng, tag=True):
-            assert False, f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng}"
+        if ctl.add_nogood(ng, tag=True):
+            assert False, (
+                f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
+            )
 
     def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]) -> bool:
         """
@@ -738,6 +739,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.symbol2var[_name] = Variable(OTHER_ENGINE_VAR_NAME, _name)
 
             variable = cast(Variable, self.symbol2var[_name])
+            assert isinstance(variable, Variable), f"Expected variable for {_name} but got {type(variable)}"
             expr: expression.Expr = val.expr if isinstance(val, post_processor.Ref) else val
 
             variable.add_value(expr, _literal, _literal)
