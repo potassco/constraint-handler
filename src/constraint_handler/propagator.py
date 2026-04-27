@@ -973,12 +973,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(-literal)
 
         domains = myClorm.findInPropagateInit(ctl, atom.Propagator_set_baseDomain)
-        for (name, symbol_var, domain_expr), _ in domains.items():
+        for (name, symbol_var, domain_expr), _literal in domains.items():
             setvar: SetVariable = cast(SetVariable, self.symbol2var[symbol_var])
             literal = ctl.add_literal(freeze=True)
             setvar.add_value(domain_expr, literal)
             self.literal2var.setdefault(literal, []).append(setvar)
 
+            ctl.add_clause([-literal, _literal])
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
