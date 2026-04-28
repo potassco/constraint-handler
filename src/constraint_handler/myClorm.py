@@ -322,6 +322,8 @@ def findInPropagateInit(ctl, dtarget):
             arity = len(target._fields)
             for atom in ctl.symbolic_atoms.by_signature(name, arity):
                 try:
+                    if ctl.solver_literal(atom.literal) == -1:
+                        continue
                     result[cltopy(atom.symbol, target)] = ctl.solver_literal(atom.literal)
                 except FailedInstantiationExn:
                     pass
