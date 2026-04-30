@@ -391,7 +391,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             if self.reasoning_mode == ReasoningMode.BRAVE or first_call:
                 # The first time we add nogoods, it is the same for brave and cautious
-                for var in self.symbol2var[result_var.name].items():
+                for var in self.symbol2var[result_var.name].values():
                     var = cast(VariableType, var)
                     ng = self.get_reasons(var).union({self.variable_lits[var]})
                     ng.add(self.reasoning_mode_stage_lits[2])
@@ -399,7 +399,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             elif self.reasoning_mode == ReasoningMode.CAUTIOUS and not first_call:
                 # Second time for cautious we only add nogoods that disable the changes for the variable
-                for var in self.symbol2var[result_var.name].items():
+                for var in self.symbol2var[result_var.name].values():
                     var = cast(VariableType, var)
                     ng = {self.variable_lits[var]}
                     ng.add(self.reasoning_mode_stage_lits[2])
