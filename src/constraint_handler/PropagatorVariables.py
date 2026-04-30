@@ -86,6 +86,104 @@ class VariableType(Protocol):
     def add_self_to_evaluations(self, e: Evaluations) -> None: ...
 
 
+class VariableManager:
+    """
+    Manages variables in the propagator. This includes storing variables, retrieving them by name and type,
+    and resetting them based on decision levels.
+
+    Attributes:
+        variables: Dictionary mapping variable names to VariableType instances.
+    """
+
+    def __init__(self):
+        self.variables: dict[clingo.Symbol, dict[VariableTypeNames, VariableType]] = {}
+
+    def add_variable(self, name: clingo.Symbol, variable: VariableType) -> None:
+        """
+        Add a variable to the manager.
+        We assume that this is called only once for a given VariableType
+
+        Args:
+            variable: The VariableType instance to add.
+        """
+        if name not in self.variables:
+            self.variables[name] = {}
+        self.variables[name][variable.__class__.__name__] = variable
+
+    def get_variables(self) -> Iterable[VariableType]:
+        """
+        Get all variables managed by this VariableManager.
+        Returns:
+            Iterable[VariableType]: An iterable of all VariableType instances.
+        """
+
+        for var_dict in self.variables.values():
+            for var in var_dict.values():
+                yield var
+
+    def get_variable(self, name: clingo.Symbol, var_type: VariableTypeNames) -> VariableType:
+        """
+        Get a variable by name and type.
+
+        Args:
+            name: The name of the variable to retrieve.
+            var_type: The type of the variable to retrieve.
+        Returns:
+            The VariableType instance if found.
+        Raises:
+            KeyError: If the variable with the specified name and type does not exist.
+        """
+
+        if name not in self.variables or var_type not in self.variables[name]:
+            raise KeyError(f"Variable with name {name} and type {var_type} does not exist.")
+        return self.variables[name][var_type]
+
+    def has_var_type(self, name: clingo.Symbol, var_type: VariableTypeNames) -> bool:
+        """
+        Check if a variable of a specific type exists for a given name.
+
+        Args:
+            name: The name of the variable to check.
+            var_type: The type of the variable to check.
+        Returns:
+            bool: True if the variable of the specified type exists, False otherwise.
+        """
+        return name in self.variables and var_type in self.variables[name]
+
+    def delete_variable(self, name: clingo.Symbol) -> None:
+        """
+        Delete a variable by name.
+
+        Args:
+            name: The name of the variable to delete.
+        Raises:
+            KeyError: If the variable with the specified name does not exist.
+        """
+        if name not in self.variables:
+            raise KeyError(f"Variable with name {name} does not exist. Can not delete")
+        del self.variables[name]
+
+    def reset(self, dl: int) -> None:
+        """
+        Reset variables based on the decision level.
+
+        Args:
+            dl: Decision level threshold for resetting variables.
+        """
+
+        for var in self.get_variables():
+            var.reset(dl)
+
+    def __getitem__(self, name: clingo.Symbol) -> dict[VariableTypeNames, VariableType]:
+        return self.variables[name]
+
+    def __contains__(self, name: clingo.Symbol) -> bool:
+        return name in self.variables
+
+    def __len__(self) -> int:
+        return len(self.variables)
+
+
 class VariableValue:
     """
     Represents a single expression appearing in an assignment atom.
@@ -2021,7 +2119,9 @@ class Evaluations:
         """
         self.evaluations: evaluations_type = {}
         self.false_assignments: list[clingo.Symbol] = []
-        self.existing_vars: list[clingo.Symbol] = []
+        # for each variable, it also counts how many different types it can have.
+        # this is needed for the check to see if the variable is usable in the current evaluation.
+        self.existing_vars: dict[clingo.Symbol, int] = {}
 
     def init(self, variables: Iterable[VariableType]):
         """
@@ -2034,9 +2134,10 @@ class Evaluations:
         """
         for var in variables:
             if isinstance(var, Execution):
-                self.existing_vars.extend(var.converted_out_vars)
+                for v in var.converted_out_vars:
+                    self.existing_vars[v] = self.existing_vars.get(v, 0) + 1
             else:
-                self.existing_vars.append(var.var)
+                self.existing_vars[var.var] = self.existing_vars.get(var.var, 0) + 1
 
     def update_evaluations(
         self,
@@ -2069,4 +2170,24 @@ class Evaluations:
             bool: True if the variable is usable, False otherwise.
 
         """
-        return var in self.evaluations or var in self.false_assignments or var not in self.existing_vars
+        # return var in self.evaluations or var in self.false_assignments or var not in self.existing_vars
+        if var not in self.existing_vars:
+            return True
+
+        appearances = 0
+        if var in self.evaluations:
+            appearances += 1
+        if var in self.false_assignments:
+            appearances += 1
+        if appearances == self.existing_vars[var]:
+            return True
+        return False
+
+
+type VariableTypeNames = (
+    Literal[getattr(Variable, "__name__")]
+    | Literal[getattr(EnsureVariable, "__name__")]
+    | Literal[getattr(SetVariable, "__name__")]
+    | Literal[getattr(DictVariable, "__name__")]
+    | Literal[getattr(Execution, "__name__")]
+)
