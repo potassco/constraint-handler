@@ -29,5 +29,5 @@ variable_domain(execution_input(myprog(P),"x"),val(int,2)) :- active_version(P).
 variable_domain(execution_input(myprog(P),"y"),val(int,0..2)) :- active_version(P).
 execution_run(myprog(P)) :- active_version(P).
 
-ignore_warning(type(failed_operation)).
-ignore_warning(variable(undeclared)).
+warning_ignore(type(failed_operation)).
+warning_ignore(variable(undeclared)).
