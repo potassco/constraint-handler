@@ -7,10 +7,10 @@ from constraint_handler.utils.python_statement_analysis import (
     ListOf,
     ScalarType,
     SetOf,
-    TypeInfo,
     TupleOf,
-    analyze_python_statement_types,
+    TypeInfo,
     UnknownType,
+    analyze_python_statement_types,
 )
 
 

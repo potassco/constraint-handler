@@ -101,3 +101,57 @@ def test_pytocl_typing_optional_target_is_supported():
 
 def test_pytocl_tuple_generic_alias_target_is_supported():
     assert myClorm.pytocl((1, "x"), tuple[int, str]) == clingo.Function("", [clingo.Number(1), clingo.String("x")])
+
+
+def test_pytocl_nested_tuple_is_supported():
+    assert myClorm.pytocl((1, ("x", 2))) == clingo.Function(
+        "",
+        [
+            clingo.Number(1),
+            clingo.Function("", [clingo.String("x"), clingo.Number(2)]),
+        ],
+    )
+
+
+def test_cltopy_without_target_decodes_nested_tuple():
+    symbol = clingo.Function(
+        "",
+        [
+            clingo.Number(1),
+            clingo.Function("", [clingo.String("x"), clingo.Number(2)]),
+        ],
+    )
+
+    assert myClorm.cltopy(symbol, halt=False) == (1, ("x", 2))
+
+
+def test_cltopy_variadic_tuple_target_is_supported():
+    symbol = clingo.Function("", [clingo.Number(1), clingo.Number(2), clingo.Number(3)])
+
+    assert myClorm.cltopy(symbol, tuple[int, ...]) == (1, 2, 3)
+
+
+def test_cltopy_nested_typed_tuple_is_supported():
+    symbol = clingo.Function(
+        "",
+        [
+            clingo.Number(1),
+            clingo.Function("", [clingo.String("x"), clingo.Number(2)]),
+        ],
+    )
+
+    assert myClorm.cltopy(symbol, tuple[int, tuple[str, int]]) == (1, ("x", 2))
+
+
+def test_pytocl_variadic_tuple_target_is_supported():
+    assert myClorm.pytocl((1, 2, 3), tuple[int, ...]) == clingo.Function(
+        "",
+        [clingo.Number(1), clingo.Number(2), clingo.Number(3)],
+    )
+
+
+def test_cltopy_fixed_length_tuple_arity_mismatch_raises_failed_instantiation():
+    symbol = clingo.Function("", [clingo.Number(1)])
+
+    with pytest.raises(myClorm.FailedInstantiationExn):
+        myClorm.cltopy(symbol, tuple[int, str])

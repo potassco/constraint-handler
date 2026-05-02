@@ -102,9 +102,7 @@ class _StatementAnalyzer(ast.NodeVisitor):
         merged = entry_env.copy()
         all_names = set().union(*(set(env) for env in branch_envs))
         for name in all_names:
-            merged[name] = frozenset(
-                set().union(*(set(env.get(name, _UNKNOWN_TYPES)) for env in branch_envs))
-            )
+            merged[name] = frozenset(set().union(*(set(env.get(name, _UNKNOWN_TYPES)) for env in branch_envs)))
         return merged
 
     def _union_inferred_types(self, expressions: list[ast.AST | None]) -> frozenset[TypeInfo]:
@@ -208,12 +206,14 @@ class _StatementAnalyzer(ast.NodeVisitor):
                 return frozenset({SetOf(self._union_inferred_types(elts))})
 
             case ast.Dict(keys=keys, values=values):
-                return frozenset({
-                    DictOf(
-                        self._union_inferred_types(keys),
-                        self._union_inferred_types(values),
-                    )
-                })
+                return frozenset(
+                    {
+                        DictOf(
+                            self._union_inferred_types(keys),
+                            self._union_inferred_types(values),
+                        )
+                    }
+                )
 
             case ast.Subscript(value=value, slice=slice_node):
                 return self._infer_subscript_type(value, slice_node)
@@ -270,9 +270,7 @@ class _StatementAnalyzer(ast.NodeVisitor):
             )
 
         if isinstance(op, (ast.In, ast.NotIn)):
-            return (right_t == _STR_SCALAR and left_t == _STR_SCALAR) or isinstance(
-                right_t, _CONTAINER_TYPE_CLASSES
-            )
+            return (right_t == _STR_SCALAR and left_t == _STR_SCALAR) or isinstance(right_t, _CONTAINER_TYPE_CLASSES)
 
         return False
 
@@ -297,9 +295,8 @@ class _StatementAnalyzer(ast.NodeVisitor):
                 for right_t in right_types
             )
 
-            link_result = (
-                (_BOOL_TYPES if link_has_known_valid else frozenset())
-                | (_UNKNOWN_TYPES if link_has_unknown else frozenset())
+            link_result = (_BOOL_TYPES if link_has_known_valid else frozenset()) | (
+                _UNKNOWN_TYPES if link_has_unknown else frozenset()
             )
             if not link_result:
                 return frozenset()
