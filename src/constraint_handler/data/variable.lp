@@ -35,8 +35,13 @@ _variable_domain(X,E) :- _passed(sugar,variable_domain(LBL,X,E)), engine(LBL,(co
 _variable_hasDomain(X) :- _variable_domain(X,V).
 
 direct_query(E) :- _variable_domain(X,E).
-1 { _passed(sugar,variable_define(LBL,X,V)) : _variable_domain(X,E), _se_value(E,V) } 1 :-
-   _variable_declare(LBL,X), _variable_hasDomain(X).
+direct_query(variable(X)) :- _variable_domain(X,E).
+1 { _se_value(variable(X),V) : _variable_domain(X,E), _se_value(E,V) } 1 :-
+   _variable_declare(LBL,X), _variable_hasDomain(X), engine(LBL,compile).
+1 { _ge_assign(LBL,X,V) : _variable_domain(X,E), _se_value(E,V) } 1 :-
+   _variable_declare(LBL,X), _variable_hasDomain(X), engine(LBL,ground).
+%1 { _passed(sugar,variable_define(LBL,X,V)) : _variable_domain(X,E), _se_value(E,V) } 1 :-
+%   _variable_declare(LBL,X), _variable_hasDomain(X).
 
 _warning(variable(emptyDomain),(LBL,()),X) :- _variable_declare(LBL,X), not _variable_hasDomain(X).
 

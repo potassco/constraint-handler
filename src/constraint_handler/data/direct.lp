@@ -1,6 +1,8 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
 _expression_valueQuery(LBL,E) :- _passed(sugar,ensure(LBL,E)), engine(LBL,(compile;ground)).
 _expression_valueQuery(LBL,operation(OP,ARGS)) :- _passed(sugar,evaluate(LBL,OP,ARGS)), engine(LBL,(compile;ground)).
+_expression_valueQuery(LBL,E) :- _passed(sugar,variable_define(LBL,X,E)), engine(LBL,(compile;ground)).
+_expression_valueQuery(LBL,E) :- _passed(sugar,variable_domain(LBL,X,E)), engine(LBL,(compile;ground)).
 _se_assign(LBL,variable(X),E) :- _passed(sugar,variable_define(LBL,X,E)), engine(LBL,compile).
 
 :- _passed(sugar,ensure(CNAME,E)), engine(CNAME,(compile;ground)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
@@ -30,7 +32,10 @@ _direct_tupleValuesAux(E,ARGS,IDX,(V,VS)) :- _direct_tupleValuesAux(E,ARGS,IDX+1
 _se_value(E,TUPLE) :- _direct_tupleValuesAux(E,ARGS,0,VS), TUPLE=@pythonReflect(function,(),VS).
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
-_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _direct_bad_operation(OP,ARGS).
+_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), _expression_safe((),operation(OP,ARGS)).
+_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), _operator_recoverable(OP).
+_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _expression_safe((),operation(OP,ARGS)), not _operator_recoverable(OP), not _direct_bad_operation(OP,ARGS).
+%_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _direct_bad_operation(OP,ARGS).
 _direct_queryArgsValues(operation(EOP,ARGS),OP,ARGS) :- direct_query(operation(EOP,ARGS)), _se_value(EOP,val(function,OP)).
 _computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
 _direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
@@ -65,7 +70,8 @@ _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
 %%%%%%%%%%%%%%%%% bad
-_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _operator_recoverable(OP).
+_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _expression_safe((),operation(OP,ARGS)), not _operator_recoverable(OP).
+%_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _operator_recoverable(OP).
 _direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(OP,bad).
 _se_value(operation(OP,ARGS),bad) :- _direct_bad_operation(OP,ARGS).
 _se_value(bad,bad) :- direct_query(bad).

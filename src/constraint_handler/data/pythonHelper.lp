@@ -4,6 +4,8 @@ import itertools
 import operator
 import typing
 
+from collections import defaultdict
+
 import clingo
 
 import constraint_handler.myClorm as myClorm
@@ -13,6 +15,7 @@ import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 import constraint_handler.solver_environment as solver_environment
+import constraint_handler.utils.python_statement_analysis as python_analysis
 
 
 def pythonExpressionVariable(clExpr):
@@ -176,6 +179,18 @@ def pythonStop(clExpr):
     return clExpr
 
 
+def pythonScopeToString(clS,clVar):
+    try:
+        l = myClorm.cltopy(clS,list)
+        prg = str(l[-1])
+        var = str(clVar)
+        uid = "".join(str(a) for a in reversed(l[:-1]))
+        name = f"{prg}_{var}_{uid}"
+        return myClorm.pytocl(name)
+    except myClorm.FailedInstantiationExn:
+        return clS
+        #return myClorm.pytocl(False)
+
 class Local(typing.NamedTuple):
     name: typing.Any
     var: expression.Variable
@@ -218,4 +233,38 @@ def pythonReflect(kind,term,args):
         print("pythonHelper.pythonReflect",(kind,term,args),"is not a valid term")
         return []
 
+def pythonStatementVariables(clCode,clInTypes,clId):
+    exec_error = warning.Statement(warning.StatementWarning.pythonError)
+    try:
+        pCode = myClorm.cltopy(clCode,str)
+        pInT  = myClorm.cltopy(clInTypes,list[tuple[expression.constant,python_analysis.TypeInfo]])
+        pId   = myClorm.cltopy(clId,int | None)
+        globals = evaluator.get_environment(pId)
+        tEnv  = defaultdict(set)
+        for (var,t) in pInT:
+            if isinstance(var,str):
+                tEnv[var].add(t)
+        results = []
+        locals = dict()
+        analysis = python_analysis.analyze_python_statement_types(pCode) #, locals)
+        # print(analysis)
+        return map(myClorm.pytocl,analysis.name_types.items())
+        #names = [myClorm.pytocl((var,types)) for var,types in analysis.name_types.items()]
+        # return names
+        # if not results:
+        #     results.append(True)
+        # for (x,val) in locals.items():
+        #     try:
+        #         results.append((x,evaluator.reducedExpr(val)))
+        #     except NotImplementedError:
+        #         results.append((x,expression.Python(repr(val))))
+        # return map(myClorm.pytocl,results)
+    # except solver_environment.FailIntegrityExn:
+    #     return myClorm.pytocl(atom.FailIntegrity())
+    except myClorm.FailedInstantiationExn as exn:
+        print(f"pythonExec: error when converting {(clCode,clInTypes,clId)}: {repr(exn)}.")
+        return myClorm.pytocl(warning.Error(exec_error,str(exn)))
+    except Exception as exn:
+        print(f"pythonExec: uncaught exception {repr(exn)} in context {(clCode,clInTypes,clId)}")
+        return myClorm.pytocl(warning.Error(exec_error,repr(exn)))
 #end.
