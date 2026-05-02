@@ -51,6 +51,7 @@ _expression_wellformed(EXPR) :- _expression_query(SCOPE,EXPR), true=@pythonIsTup
 _expression_wellformed(lambda(ARGS,E)) :- _expression_query(SCOPE,lambda(ARGS,E)), __version(wellformed,positive).
 _warning(expression(syntaxError),SCOPE,"lambda checks unsupported") :- _expression_query(SCOPE,lambda(ARGS,E)), __version(wellformed,positive). %TODO
 
+% TODO: for operations, check that the operator is well-formed
 
 %__version(wellformed,asp).
 %__version(wellformed,python).
@@ -58,3 +59,11 @@ _warning(expression(syntaxError),SCOPE,"lambda checks unsupported") :- _expressi
 __version(wellformed,positive).
 
 _warning(expression(syntaxError),SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), not _expression_wellformed(EXPR).
+
+
+
+%%%%%%%%%%%%%%%%% _expression_index _expression_isTuple
+_expression_index(ARGS,IDX,X) :- _expression_query(SCOPE,E), E=operation(O,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
+_expression_isTuple(E,N,ARGS) :- _expression_query(SCOPE,E), (function,(),N,ARGS)=@pythonReify(E).
+_length(ARGS,N) :- _expression_isTuple(E,N,ARGS).
+_expression_index(ARGS,IDX,X) :- _expression_isTuple(E,N,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).

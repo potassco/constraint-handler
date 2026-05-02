@@ -140,7 +140,7 @@ def pythonIsString(clS):
     return myClorm.pytocl(clS.type == clingo.SymbolType.String)
 
 def pythonIsTuple(clT):
-    return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "")
+    return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "" and (len(clT.arguments) != 2 or clT.arguments[1] != clingo.Function("")))
 
 def pythonIsExpr(clE):
     try:
@@ -204,5 +204,18 @@ def pythonReify(term):
         return myClorm.pytocl((clingo.symbol.Function("number"),term,0,()))
     else:
         return myClorm.pytocl((clingo.symbol.Function("string"),term,0,()))
+
+def pythonReflect(kind,term,n,args):
+    if kind == clingo.symbol.Function("function") and term.type == clingo.SymbolType.Function:
+        name = term.name
+        arguments = myClorm.cltopy(args,list)
+        return clingo.Function(name,arguments)
+    elif kind == clingo.symbol.Function("number"):
+        return term
+    elif kind == clingo.symbol.Function("string"):
+        return term
+    else:
+        print("pythonHelper.pythonReflect",(kind,term,n,args),"is not a valid term")
+        return []
 
 #end.
