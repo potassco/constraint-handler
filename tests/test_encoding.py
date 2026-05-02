@@ -74,6 +74,7 @@ base_tests = [
     "variable_parallel_declaration",
     "variable_flexible_domain",
     "variables",
+    "variables_multi_type",
     "warning_bad",
     "warning_fake_forbid",
     "warning_python",
