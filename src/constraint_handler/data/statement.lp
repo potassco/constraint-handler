@@ -1,3 +1,11 @@
+%%%%%%%%%%%%%%%%% _statement_query,
+_statement_query((NAME,()),STMT) :- _passed(defaultArgs,execution_declare(CNAME,NAME,STMT,INS,OUTS)).
+_statement_query(SCOPE,STM1) :- _statement_query(SCOPE,seq2(STM1,STM2)).
+_statement_query(SCOPE,STM2) :- _statement_query(SCOPE,seq2(STM1,STM2)).
+_statement_query(SCOPE,THEN) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
+_statement_query(SCOPE,ELSE) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
+_statement_query(SCOPE,BODY) :- _statement_query(SCOPE,while(MAX,EXPR,BODY)).
+
 %%%%%%%%%%%%%%%%% _statement_wellformed
 _statement_wellformed(seq2(STM1,STM2)) :- _statement_query(SCOPE,seq2(STM1,STM2)), _statement_wellformed(STM1), _statement_wellformed(STM2).
 _statement_wellformed(noop) :- _statement_query(SCOPE,noop).

@@ -18,13 +18,6 @@ _se_assign(LBL,variable(EX),bad) :- _execution_outputVar(NAME,X,EX), _execution_
 
 _execution_ou_proj(NAME,X) :- _execution_ou(NAME,X,V).
 
-%%%%%%%%%%%%%%%%% _statement_query,
-_statement_query((NAME,()),STMT) :- _passed(defaultArgs,execution_declare(CNAME,NAME,STMT,INS,OUTS)).
-_statement_query(SCOPE,STM1) :- _statement_query(SCOPE,seq2(STM1,STM2)).
-_statement_query(SCOPE,STM2) :- _statement_query(SCOPE,seq2(STM1,STM2)).
-_statement_query(SCOPE,THEN) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
-_statement_query(SCOPE,ELSE) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
-_statement_query(SCOPE,BODY) :- _statement_query(SCOPE,while(MAX,EXPR,BODY)).
 
 %%%%%%%%%%%%%%%%% noop
 _execution_succeeds(NAME,noop) :- _execution_run(NAME,noop).
