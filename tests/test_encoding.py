@@ -104,7 +104,6 @@ def test_engine_compile(name: str):
     unsupported: list[str] = [
         "engine/request",
         "engine/request_mult",
-        "expression/tuple",
         "optimization/bools",
         "optimization/floats",
         "optimization/ints",
@@ -125,7 +124,6 @@ def test_engine_ground(name: str):
         "core/type_checking",
         "engine/request",
         "engine/request_mult",
-        "expression/tuple",
         "expression/lambdas",
         "expression/lambda_recursive",
         "expression/lambda_zero_args",
@@ -159,7 +157,6 @@ def test_engine_propagator(name, check_mode):
         "engine/request",
         "engine/request_mult",
         "execution/python_integrity",
-        "expression/tuple",
         "expression/lambda_recursive",
         "multimap/main",
         "optimization/bools",

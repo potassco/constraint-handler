@@ -205,7 +205,7 @@ def pythonReify(term):
     else:
         return myClorm.pytocl((clingo.symbol.Function("string"),term,0,()))
 
-def pythonReflect(kind,term,n,args):
+def pythonReflect(kind,term,args):
     if kind == clingo.symbol.Function("function") and term.type == clingo.SymbolType.Function:
         name = term.name
         arguments = myClorm.cltopy(args,list)
@@ -215,7 +215,7 @@ def pythonReflect(kind,term,n,args):
     elif kind == clingo.symbol.Function("string"):
         return term
     else:
-        print("pythonHelper.pythonReflect",(kind,term,n,args),"is not a valid term")
+        print("pythonHelper.pythonReflect",(kind,term,args),"is not a valid term")
         return []
 
 #end.

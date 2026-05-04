@@ -1,5 +1,4 @@
 % Tuple expressions should be accepted as first-class expressions.
-% This is not enabled in the engines yet, so the fixture is registered but skipped.
 
 variable_define(pair,(val(int,1),val(string,"x"))).
 variable_define(computed,(operation(add,(val(int,1),(val(int,2),()))),operation(concat,(val(string,"a"),(val(string,"b"),()))))).
