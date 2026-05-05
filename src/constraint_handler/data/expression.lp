@@ -82,10 +82,7 @@ _expression_safe(SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), _expression_wellf
 
 % TODO: for operations, check that the operator is safe?
 
-_operator_declared(O) :- operator_declare(O,_,_).
-_operator_declared(O) :- operator_declare_variadic(O,_,_,_).
 _operator_unsafe(int_div;float_div).
-_operator_safe(O) :- _operator_declared(O), not _operator_unsafe(O).
 
 %_variable_unsafe((),X) :- _passed(sugar,variable_define(LBL,X,E)), not _expression_safe((),E).
 %_variable_unsafe((),X) :- _passed(sugar,variable_domain(LBL,X,E)), not _expression_safe((),E).
