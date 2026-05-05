@@ -17,8 +17,6 @@ type_expression(SCOPE,python(S),top) :- _expression_query(SCOPE,python(S)).
 type_expression(SCOPE,operation(O,ARGS),T) :- _expression_query(SCOPE,operation(O,ARGS)), _type_operator(SCOPE,O,function(TS,T)), _type_list(SCOPE,ARGS,TS).
 type_expression(SCOPE,(H,T),(TH,TT)) :- _expression_query(SCOPE,(H,T)), type_expression(SCOPE,H,TH), type_expression(SCOPE,T,TT).
 
-_length(ARGS,N) :- _expression_query(SCOPE,operation(O,ARGS)), N=@pythonListLength(ARGS).
-
 _list_element(ARGS,IDX,ARG) :- _expression_query(SCOPE,operation(O,ARGS)), (IDX,ARG)=@pythonEnumerateElements(ARGS).
 _type_listArgT(SCOPE,ARGS,IDX,T) :- _list_element(ARGS,IDX,ARG), type_expression(SCOPE,ARG,T).
 _type_listAux(SCOPE,ARGS,N,()) :- _expression_query(SCOPE,operation(O,ARGS)), _length(ARGS,N).

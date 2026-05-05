@@ -63,6 +63,7 @@ _warning(expression(syntaxError),SCOPE,EXPR) :- _expression_query(SCOPE,EXPR), n
 
 
 %%%%%%%%%%%%%%%%% _expression_index _expression_isTuple
+_length(ARGS,N) :- _expression_query(SCOPE,operation(O,ARGS)), N=@pythonListLength(ARGS).
 _expression_index(ARGS,IDX,X) :- _expression_query(SCOPE,E), E=operation(O,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
 _expression_isTuple(E,N,ARGS) :- _expression_query(SCOPE,E), (function,(),N,ARGS)=@pythonReify(E).
 _length(ARGS,N) :- _expression_isTuple(E,N,ARGS).

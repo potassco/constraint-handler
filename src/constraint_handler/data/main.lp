@@ -22,6 +22,7 @@ _main_defaultEngine(compile) :- not defaultEngine(_).
 requestedEngine(CNAME) :- requestEngine(CNAME,ENG).
 engine(CNAME,ENG) :- requestEngine(CNAME,ENG).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), _label(CNAME).
+engine(_internal,compile).
 
 % needed for brave reasoning?
 value(X,V) :- _se_value(variable(X),V).
