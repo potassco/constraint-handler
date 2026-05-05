@@ -23,6 +23,8 @@ requestedEngine(CNAME) :- requestEngine(CNAME,ENG).
 engine(CNAME,ENG) :- requestEngine(CNAME,ENG).
 engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), _label(CNAME).
 
+engine(_internal,compile).
+
 value(X,V) :- _se_value(variable(X),V).
 
 representation((bool;int;string;float;symbol;none),extensional).
