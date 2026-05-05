@@ -72,7 +72,7 @@ _variable_confusingName((assert;assign;if;noop;statement_python;seq2;while),keyw
 _variable_confusingName((lambda;operation;python;val;variable),keyword). % expression
 _variable_confusingName((boolDomain;fromFacts;fromList),keyword). % domain
 _variable_confusingName((none;bool;int;float;string;symbol;set;multimap),type).
-_variable_confusingName(O,operator) :- operator_declare(O,INS,OUT).
+_variable_confusingName(O,operator) :- _operator_declared(O).
 
 _warning(variable(confusingName),(),((SCOPE,X),REASON)) :- _variable_exists(SCOPE,X), _variable_confusingName(BAD,REASON), (function,BAD,N,ARGS)=@pythonReify(X).
 _warning(variable(confusingName),(),((SCOPE,X),number)) :- _variable_exists(SCOPE,X), (number,_,_,_)=@pythonReify(X).

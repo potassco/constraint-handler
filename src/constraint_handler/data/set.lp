@@ -19,7 +19,7 @@ direct_query(operation(eq,(V1,(V2,())))) :-
     _set_assign(N2,EX,E2), _se_value(E2,V2), V1 < V2.
 _set_contains(EX,V1) :-
     _set_assign(NAME,EX,E1), _se_value(E1,V1), %_se_value(EX,ref(set,ER)),
-    #false : _set_assign(N2,EX,E2), _se_value(E2,V2), _computedIdx(operation(eq,(V2,(V1,()))),val(bool,true)), V2 < V1.
+    #false : _set_assign(N2,EX,E2), _se_value(E2,V2), _se_value(operation(eq,(V2,(V1,()))),val(bool,true)), V2 < V1.
 
 _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 
@@ -76,13 +76,13 @@ direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;i
 _set_assign(_internal,operation(inter,(S1,(S2,()))),VSMALL) :- direct_query(operation(inter,(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
-    _set_contains(R2,V2), _computedIdx(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
+    _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 _set_assign(_internal,operation(diff,(S1,(S2,()))),V1) :- direct_query(operation(diff,(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
-    #false : _set_contains(R2,V2), _computedIdx(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
+    #false : _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 %%%%%%%%%%%%%%%%% Equality
@@ -95,30 +95,31 @@ _computedIdx(E,val(bool,NEQ)) :- _computeIdx(E,neq), _computeIdx(E,0,ARG0), _com
     (EQ,NEQ)=((true,false);(false,true)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
-    not _computedIdx(E,val(bool,false)).
+    not _set_eqMissingEntry(E).
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,R)), _computeIdx(E,1,val(T1,V1)), T1!=set.
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T0,V0)), _computeIdx(E,1,ref(set,V1)), T0!=set.
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
+_set_eqMissingEntry(E) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
     _set_contains(S1,V1),
     #false : _set_contains(S2,V2), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
+_set_eqMissingEntry(E) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
     _set_contains(S2,V2),
     #false : _set_contains(S1,V1), _se_value(operation(eq,(V1,(V2,()))),val(bool,true)).
+_computedIdx(E,val(bool,false)) :- _set_eqMissingEntry(E).
 
 direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E,eq), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
     _set_contains(S1,V1), _set_contains(S2,V2).
 
 %%%%%%%%%%%%%%%%% Equality axioms
 
-:- _computedIdx(operation(eq,(ref(set,X),(ref(set,X),()))),val(bool,false)). %%% reflexivity
-:- _computedIdx(operation(eq,(ref(set,X),(ref(set,Y),()))),val(bool,true)),
-   _computedIdx(operation(eq,(ref(set,Y),(ref(set,X),()))),val(bool,false)). %%% symmetry
-:- _computedIdx(operation(eq,(ref(set,L1),(ref(set,R1),()))),val(bool,true)),
-   _computedIdx(operation(eq,(ref(set,L2),(ref(set,R2),()))),val(bool,true)),
-   _computedIdx(operation(eq,(ref(set,L3),(ref(set,R3),()))),val(bool,false)),
+:- _se_value(operation(eq,(ref(set,X),(ref(set,X),()))),val(bool,false)). %%% reflexivity
+:- _se_value(operation(eq,(ref(set,X),(ref(set,Y),()))),val(bool,true)),
+   _se_value(operation(eq,(ref(set,Y),(ref(set,X),()))),val(bool,false)). %%% symmetry
+:- _se_value(operation(eq,(ref(set,L1),(ref(set,R1),()))),val(bool,true)),
+   _se_value(operation(eq,(ref(set,L2),(ref(set,R2),()))),val(bool,true)),
+   _se_value(operation(eq,(ref(set,L3),(ref(set,R3),()))),val(bool,false)),
     X=(L1;R1), Y=(L1;R1),
     Y=(L2;R2), Z=(L2;R2),
     X=(L3;R3), Z=(L3;R3),
@@ -129,12 +130,14 @@ operator_declare(subset,(set,(set,())),bool).
 direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S1)), _computeIdx(E,1,ref(set,S2)),
     _set_contains(S1,V1), _set_contains(S2,V2).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S0)), _computeIdx(E,1,ref(set,S1)),
+_computedIdx(E,val(bool,false)) :- _set_subsetMissingEntry(E).
+_set_subsetMissingEntry(E) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S0)), _computeIdx(E,1,ref(set,S1)),
+%_computedIdx(E,val(bool,false)) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S0)), _computeIdx(E,1,ref(set,S1)),
     _set_contains(S0,V0),
     #false : _set_contains(S1,V1), _se_value(operation(eq,(V0,(V1,()))),val(bool,true)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set,S0)), _computeIdx(E,1,ref(set,S1)),
-    not _computedIdx(E,val(bool,false)).
+    not _set_subsetMissingEntry(E).
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,subset), _computeIdx(E,0,val(T0,V0)), _computeIdx(E,1,val(T1,V1)),
     (T0;T1) != set, (T0;T1) = set.

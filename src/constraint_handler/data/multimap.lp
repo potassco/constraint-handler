@@ -43,7 +43,7 @@ operator_declare(find,(T1,(multimap,())),set) :- _type(T1).
 %%% TODO: this is fragile, maybe buggy.
 _computedIdx(E,ref(set,find((K,(val(multimap,EM),()))))) :- _computeIdx(E,find), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)).
 
-_set_contains(ER,V) :- _computedIdx(E,ref(set,ER)), _computeIdx(E,find), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
+_set_contains(find((K,(val(multimap,EM),()))),V) :- _computeIdx(E,find), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
     _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% count keys and entries
@@ -83,15 +83,17 @@ direct_query(operation(eq,(X,(Y,())))) :- _computeIdx(E,eq), _computeIdx(E,0,val
     (X,Y)=((K1,K2);(V1,V2)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)),
-    not _computedIdx(E,val(bool,false)).
+    not _multimap_eqMissingEntry(E).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)),
+_multimap_eqMissingEntry(E) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)),
     _multimap_entry(M0,K0,V0),
     #false : _multimap_entry(M1,K1,V1), _se_value(operation(eq,(K0,(K1,()))),val(bool,true)), _se_value(operation(eq,(V0,(V1,()))),val(bool,true)).
 
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)),
+_multimap_eqMissingEntry(E) :- _computeIdx(E,eq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)),
     _multimap_entry(M1,K1,V1),
     #false : _multimap_entry(M0,K0,V0), _se_value(operation(eq,(K0,(K1,()))),val(bool,true)), _se_value(operation(eq,(V0,(V1,()))),val(bool,true)).
+
+_computedIdx(E,val(bool,false)) :- _multimap_eqMissingEntry(E).
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
