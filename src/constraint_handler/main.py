@@ -22,6 +22,7 @@ modules = [
     "int",
     "main",
     "multimap",
+    "operator",
     "optimize",
     "preference",
     "propagator",
