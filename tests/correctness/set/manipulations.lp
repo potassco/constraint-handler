@@ -131,14 +131,14 @@ variable_define(nqx4,operation(neq,(variable(x),(X,())))) :-
     EIGHTYNINE=val(float,float("89.1")).
 
 
-variable_define(tsubu, operation(subset,(variable(t),(variable(u),())))).
-variable_define(tsubv, operation(subset,(variable(t),(variable(v),())))).
-variable_define(tsubw, operation(subset,(variable(t),(variable(w),())))).
-variable_define(usubw, operation(subset,(variable(u),(variable(w),())))).
-variable_define(vsubw, operation(subset,(variable(v),(variable(w),())))).
-variable_define(usubx, operation(subset,(variable(u),(variable(x),())))).
-variable_define(vsubx, operation(subset,(variable(v),(variable(x),())))).
+variable_define(tsubu,operation(subset,(variable(t),(variable(u),())))).
+variable_define(tsubv,operation(subset,(variable(t),(variable(v),())))).
+variable_define(tsubw,operation(subset,(variable(t),(variable(w),())))).
+variable_define(usubw,operation(subset,(variable(u),(variable(w),())))).
+variable_define(vsubw,operation(subset,(variable(v),(variable(w),())))).
+variable_define(usubx,operation(subset,(variable(u),(variable(x),())))).
+variable_define(vsubx,operation(subset,(variable(v),(variable(x),())))).
 
-variable_define(vp, operation(inter,
-                                  (operation(set_make,(val(int,5),(val(int,6),(val(int,7),())))),
-                                  (operation(set_make,(val(int,7),(val(int,8),(val(int,9),())))),())))).
+variable_define(vp,operation(inter,
+                            (operation(set_make,(val(int,5),(val(int,6),(val(int,7),())))),
+                            (operation(set_make,(val(int,7),(val(int,8),(val(int,9),())))),())))).
