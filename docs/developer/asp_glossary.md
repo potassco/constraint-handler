@@ -26,6 +26,7 @@
         - "src/constraint_handler/data/propagator.lp"
         - "src/constraint_handler/data/pythonHelper.lp"
         - "src/constraint_handler/data/set.lp"
+        - "src/constraint_handler/data/statement.lp"
         - "src/constraint_handler/data/string.lp"
         - "src/constraint_handler/data/symbol.lp"
         - "src/constraint_handler/data/type.lp"
