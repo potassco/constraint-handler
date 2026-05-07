@@ -2,30 +2,14 @@ from __future__ import annotations
 
 import graphlib
 from collections import defaultdict
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 import clingo
 
-import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
-import constraint_handler.myClorm as myClorm
-import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 
-
-def print_results(res):
-    s = ""
-    for a, v in res.items():
-        s += f"{(str(a),str(v))}\n"
-    return s
-
-
 # type ReducedExpr = expression.Val | frozenset[ReducedExpr] | refe | tuple[ReducedExpr, ...]
-
-
-class Value(NamedTuple):
-    var: expression.constant
-    val: Any
 
 
 class Ref(NamedTuple):
@@ -43,114 +27,208 @@ class _se_value(NamedTuple):
     val: expression.Val | Ref
 
 
-type Result = _se_value | _set_contains
+class PostProcessingPropagator(clingo.Propagator):
+    def __init__(self) -> None:
+        self._value_symbols: tuple[clingo.Symbol, ...] = ()
+        self._set_contains_symbols: tuple[clingo.Symbol, ...] = ()
+        self._optimize_symbols: tuple[clingo.Symbol, ...] = ()
+
+    def init(self, init: clingo.PropagateInit) -> None:
+        ### This can be sped up by sorting the symbols by variable
+        ### and stopping after 1 value was found to be true per variable
+        ### but therefore a cleaner encoding is needed,
+        ### as sets and references etc... are mixed up
+
+        self._value_symbols = tuple(
+            symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_se_value", 2)
+        )
+        self._set_contains_symbols = tuple(
+            symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_set_contains", 2)
+        )
+        self._optimize_symbols = tuple(
+            symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_optimize_maximizeSum", 4)
+        )
+
+    def get_results(self, model) -> tuple[list[clingo.Symbol], list[clingo.Symbol], list[clingo.Symbol]]:
+        return (
+            [symbol for symbol in self._value_symbols if model.contains(symbol)],
+            [symbol for symbol in self._set_contains_symbols if model.contains(symbol)],
+            [symbol for symbol in self._optimize_symbols if model.contains(symbol)],
+        )
 
 
-def set_map(ctrl: clingo.Control):
-    res = myClorm.findInControl(ctrl, Result)
-    map = dict()
-    for atom, value in res.items():
-        map[atom.symbol] = value
-    setattr(ctrl, "constraint_handler_map", map)
+def _unnest_symbol_list(symbol: clingo.Symbol) -> list[clingo.Symbol]:
+    elements = []
+    current = symbol
+    while current.type == clingo.SymbolType.Function and current.name == "" and len(current.arguments) == 2:
+        elements.append(current.arguments[0])
+        current = current.arguments[1]
+    assert current.type == clingo.SymbolType.Function and current.name == "" and len(current.arguments) == 0
+    return elements
 
 
-def set_valuation(ctrl, model) -> dict[Any, Any]:
-    ts = graphlib.TopologicalSorter()
+def _symbol_set_members(symbol: clingo.Symbol) -> set[clingo.Symbol]:
+    assert symbol.match("set", 1)
+    return set(_unnest_symbol_list(symbol.arguments[0]))
+
+
+def _set_symbol(symbols: set[clingo.Symbol]) -> clingo.Symbol:
+    nested = clingo.Function("", [])
+    for symbol in reversed(list(frozenset(symbols))):
+        nested = clingo.Function("", [symbol, nested])
+    return clingo.Function("set", [nested])
+
+
+def _numeric_value_symbol(total: int | float, uses_float: bool) -> clingo.Symbol:
+    """returns a clingo Symbol or either an int or float"""
+    if uses_float:
+        return clingo.Function(
+            "val",
+            [
+                clingo.Function("float"),
+                clingo.Function("float", [clingo.String(str(total))]),
+            ],
+        )
+    return clingo.Function("val", [clingo.Function("int"), clingo.Number(int(total))])
+
+
+def _set_valuation_from_results(
+    model,
+    value_results: list[clingo.Symbol],
+    set_contains_results: list[clingo.Symbol],
+    optimize_results: list[clingo.Symbol] | None = None,
+) -> None:
+    """Derives a valuation for the variables in the model from the results of the post-processing propagator.
+
+    Collecting the values for single valued variables
+    And the members of sets and multimaps in a way that respects dependencies between them.
+
+    Assumptions could be simplified once all set variables have an _se_value(V,ref(...))
+    and not _se_value(V,set(...)) is produced any longer by the ground engine.
+    This would remove _symbol_set_members and simplify if not avoid the cycle check (removing self references)
+    """
     vals = dict()
     mems = defaultdict(set)
-    map = ctrl.constraint_handler_map
-    results2 = []
-    # print("feb 3: vals",list(model.symbols(atoms=True,theory=True)))
-    for s in model.symbols(atoms=True, theory=True):
-        if s in map:
-            results2.append(map[s])
-    # results = myClorm.findInModel(model,Result)
-    # for r in results.values():
-    #    if r not in results2:
-    #        print("missing from 2",r)
-    # for r in results2:
-    #    if r not in results.values():
-    #        print("missing from 1",r)
-    # assert False
-    for a in results2:
-        # print(a,type(a))
-        # for a in results.values():
-        if isinstance(a, _se_value):
-            if isinstance(a.val, Ref):
-                if a.val.type_ == expression.BaseType.set:
-                    vals[a.expr] = set()
-                elif a.val.type_ == expression.BaseType.multimap:
-                    vals[a.expr] = dict()
+    deps = defaultdict(set)
+
+    # fill vals with explicit values or an empty set/dict
+    for symbol in value_results:
+        expr = symbol.arguments[0]
+        value = symbol.arguments[1]
+        assert value.type == clingo.SymbolType.Function
+        match value.name:
+            case "val":
+                assert len(value.arguments) == 2
+                vals[expr] = value
+                vals[value] = value
+            case "ref":
+                assert len(value.arguments) == 2
+                if value.arguments[0].match("set", 0):
+                    vals[expr] = set()
+                elif value.arguments[0].match("multimap", 0):
+                    vals[expr] = dict()
                 else:
-                    print("feb 1", "unsupported", a)
-                    assert False
-            elif isinstance(a.val, expression.Val):
-                vals[a.expr] = a.val.value
-                vals[a.val] = a.val.value
-                # if a.val.type_ == expression.BaseType.set:
-                #    print("feb 1", "unsupported", a)
-                #    assert False
-                # else:
-                #    vals[a.expr] = a.val.value
-            elif isinstance(a.val, expression.Bad):
-                vals[a.expr] = expression.Bad
-            else:
-                print("feb 1", "unsupported", a)
-                assert False
-        elif isinstance(a, _set_contains):
-            if isinstance(a.val, Ref):
-                if a.val.type_ == expression.BaseType.set:
-                    # print("feb 3", "adding a.val.expr", a)
-                    mems[a.val.expr].add(a.expr)
-                    ts.add(a.expr, a.val.expr)
-                # elif a.val.type_ == expression.BaseType.multimap:
-                #    mems[a.val.expr].add(a.expr)
-                #    ts.add(a.expr,a.val.expr)
-                else:
-                    print("feb 1", "unsupported", a)
-                    assert False
-            elif isinstance(a.val, expression.Val):
-                # print("feb 16", "adding a.val", a.val, a)
-                mems[a.val].add(a.expr)
-                # vals[a.expr] = a.val.value
-                vals[a.expr] = {a.val.value} | (vals[a.expr] if a.expr in vals else set())
-                ts.add(a.expr, a.val)
-            else:
-                print("feb 1", "unsupported", a)
-                assert False
-        #            ts.add(a.expr,[get_ref(a.val)])
-        # elif isinstance(a, _multimap_entry):
-        else:
-            print("feb1", "unsupported", a)
-    acyclic = False
+                    raise NotImplementedError(f"unsupported _se_value reference: {symbol}")
+            case "set":
+                assert len(value.arguments) == 1
+                vals[expr] = value
+            case "bad":
+                assert len(value.arguments) == 0
+                vals[expr] = value
+            case "":
+                vals[expr] = clingo.Function("", list(value.arguments))
+            case _:
+                raise NotImplementedError(f"unsupported _se_value payload: {symbol}")
+
+    # fill sets and dicts with their members and track references
+    for symbol in set_contains_results:
+        expr = symbol.arguments[0]
+        value = symbol.arguments[1]
+        assert value.type == clingo.SymbolType.Function
+        assert len(value.arguments) == 2
+        match value.name:
+            case "ref":
+                assert value.arguments[0].match("set", 0)
+                ref_expr = value.arguments[1]
+                vals.setdefault(expr, set())
+                vals.setdefault(ref_expr, set())
+                mems[ref_expr].add(expr)
+                deps[expr].add(ref_expr)
+            case "val":
+                if expr not in vals:
+                    vals[expr] = set()
+                elif isinstance(vals[expr], clingo.Symbol) and vals[expr].match("set", 1):
+                    vals[expr] = _symbol_set_members(vals[expr])
+                vals[expr].add(value)
+            case _:
+                raise NotImplementedError(f"unsupported _set_contains payload: {symbol}")
+
+    # resolve dependencies and convert sets and dicts to their final form
+    graph = {expr: deps.get(expr, set()) for expr, value in vals.items() if isinstance(value, (set, dict))}
+    ts = graphlib.TopologicalSorter(graph)
     try:
         ts.prepare()
-        acyclic = True  # fmt: skip
-    except graphlib.CycleError as exn:
-        print("cycle:", exn)
-    # step = 0
-    # while step < 20 and ts.is_active():
-    #    step += 1
-    # print()
-    # print("feb 3: vals",vals)
-    # assert acyclic
-    # while acyclic and ts.is_active():
+    except graphlib.CycleError:
+        pass
     while ts.is_active():
-        ready = ts.get_ready()
-        # print(ready)
-        for x in ready:
-            assert x in vals, f"{x},\n\n{print_results(results)},\n\n{vals}"
+        for x in ts.get_ready():
+            assert x in vals, f"{x},\n\n{vals}"
             if isinstance(vals[x], set):
-                vals[x] = frozenset(vals[x])
+                vals[x] = _set_symbol(vals[x])
             elif isinstance(vals[x], dict):
                 vals[x] = multimap.HashableDict(vals[x])
             if x in mems:
                 for s in mems[x]:
                     vals[s].add(vals[x])
             ts.done(x)
-    pyVals = {x.arg: v for (x, v) in vals.items() if isinstance(x, expression.Variable)}
-    setattr(model, "constraint_handler_valuation", pyVals)
-    # clVals = [ myClorm.pytocl(atom.Value(x,str(v))) for x,v in pyVals.items() ]
-    clVals = [myClorm.pytocl(atom.Value(x, evaluator.reducedExpr(v))) for x, v in pyVals.items()]
+    for x in list(vals):
+        if isinstance(vals[x], set):
+            vals[x] = _set_symbol(vals[x])
+        elif isinstance(vals[x], dict):
+            vals[x] = multimap.HashableDict(vals[x])
+    clVals = []
+    for expr, value in vals.items():
+        if expr.type != clingo.SymbolType.Function or expr.name != "variable":
+            continue
+        assert len(expr.arguments) == 1
+        variable = expr.arguments[0]
+        clVals.append(clingo.Function("value", [variable, value]))
     model.extend(clVals)
-    # print("extended:",pyVals)
+
+    none_value = clingo.Function("val", [clingo.Function("none"), clingo.Function("none")])
+    totals: dict[tuple[clingo.Symbol, clingo.Symbol], int | float] = {}
+    float_totals: set[tuple[clingo.Symbol, clingo.Symbol]] = set()
+    for symbol in [] if optimize_results is None else optimize_results:
+        label, expr, _, priority = symbol.arguments
+        key = (label, priority)
+        value = vals.get(expr, none_value)
+
+        value_type = value.arguments[0]
+        payload = value.arguments[1]
+        if value_type.match("none", 0):
+            amount = 0
+        elif value_type.match("int", 0):
+            amount = payload.number
+        elif value_type.match("float", 0):
+            assert payload.type == clingo.SymbolType.Function and payload.match("float", 1)
+            amount = float(payload.arguments[0].string)
+            float_totals.add(key)
+        else:
+            raise NotImplementedError(f"unsupported optimize value type: {value}")
+
+        totals[key] = totals.get(key, 0) + amount
+
+    model.extend(
+        [
+            clingo.Function("value", [label, _numeric_value_symbol(total, key in float_totals)])
+            for key, total in totals.items()
+            for label, priority in [key]
+        ]
+    )
+
+
+def set_valuation(ctrl, model) -> None:
+    value_results, set_contains_results, optimize_results = (
+        ctrl.constraint_handler_post_processing_propagator.get_results(model)
+    )
+    _set_valuation_from_results(model, value_results, set_contains_results, optimize_results)

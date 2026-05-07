@@ -35,8 +35,6 @@ modules = [
 ]
 
 python_enabled = False
-ground_patched = False
-model_patched = False
 
 
 def add_to_control(
@@ -59,41 +57,21 @@ def add_to_control(
             evaluator._solver_environment[idx] = environment
             _environment_ids[eid] = idx
         ctrl.add(f"main_solverIdentifier({idx}).")
-    # patch_clingo(ctrl)
     setup_propagator(ctrl, propagator_check_only)
-
-
-def patch_clingo(ctrl):
-    global ground_patched
-    if not ground_patched:
-        old_control_ground = clingo.Control.ground
-
-        def new_control_ground(self, *k, **kw):
-            old_control_ground(self, *k, **kw)
-            post_processor.set_map(self)
-
-        setattr(clingo.Control, "ground", new_control_ground)
-        ground_patched = True
-    global model_patched
-    if not model_patched or True:
-        old_model_init = clingo.Model.__init__
-
-        def new_model_init(self, *k, **kw):
-            old_model_init(self, *k, **kw)
-            post_processor.set_valuation(ctrl, self)
-
-        setattr(clingo.Model, "__init__", new_model_init)
-        model_patched = True
 
 
 def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
     prop = propagator.ConstraintHandlerPropagator(check_only)
+    post_prop = post_processor.PostProcessingPropagator()
     ctrl.register_propagator(prop)
+    ctrl.register_propagator(post_prop)
     prop.get_configuration(ctrl)
+    setattr(ctrl, "constraint_handler_post_processing_propagator", post_prop)
     original_solve = ctrl.solve
 
     def combine_on_model(on_model: typing.Callable[[clingo.Model], bool | None] | None = None):
         def om(model):
+            post_processor.set_valuation(ctrl, model)
             if prop.on_model(model) == False:
                 return False
             if on_model is not None:

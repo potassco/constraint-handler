@@ -30,6 +30,29 @@ optimize_maximizeSum(Expression, Id, Priority)
 
 If you need to address a specific optimization declaration via [requestEngine] or want it to appear with an explicit label in warnings, use the `optimize_maximizeSum/4` form with a leading [Label].
 
+### Output
+
+**[Result]**{.badge .result }
+
+Optimization declarations also extend the final model with additional `value/2` atoms.
+All `optimize_maximizeSum` contributions that share the same `Label` and `Priority` are summed, and the aggregated total is emitted as:
+
+```prolog
+value(Label, Total)
+```
+
+Here, `Total` is a regular `val/2` term using the resulting numeric type, for example `val(int,23)` or `val(float,float("8.5"))`.
+
+This means that optimization labels are not just annotations for declarations. They also become observable result symbols in the final model.
+
+!!! Note
+    The shorthand forms `optimize_maximizeSum/2` and `optimize_maximizeSum/3` use the anonymous label `_label_anonymous`. As a consequence, they also produce a result atom of the form `value(_label_anonymous, Total)`.
+    If you want a stable and meaningful output atom, use the explicit `optimize_maximizeSum/4` form with your own label.
+
+!!! Note
+    Aggregation is done per `(Label, Priority)` pair. If the same label is reused for different priorities, the final model may contain multiple `value/2` atoms with the same first argument.
+    Use distinct labels when you want one unambiguous output atom per optimization criterion.
+
 
 ### Single Value
 
@@ -105,10 +128,12 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
     ```
 
     The result will be the model where items `a` and `b` are taken, maximizing the sum to `6`.
+    Because this example uses the anonymous label, the optimization summary also appears as `value(_label_anonymous,val(int,6))`.
 
     ```prolog
     multimap_value(taken,val(symbol,a),val(int,2))
     multimap_value(taken,val(symbol,b),val(int,4))
+    value(_label_anonymous,val(int,6))
     ```
 
 !!! Example "Example 4: Optimization with Priorities"
@@ -153,10 +178,13 @@ Sometimes, the exact number of [Variables] is unknown or represents the optimiza
 
     The solver will first maximize value (priority 1), and among solutions with equal value, it will minimize weight (priority 0).
     This corresponds to the model where items `a` and `c` are taken.
+    Since both declarations use the anonymous label, the model also contains aggregated optimization totals for each priority under `_label_anonymous`.
 
     ```prolog
     multimap_value(taken,val(symbol,a),val(int,6))
     multimap_value(taken,val(symbol,c),val(int,4))
+    value(_label_anonymous,val(int,23))
+    value(_label_anonymous,val(int,-10))
     ```
 ---
 

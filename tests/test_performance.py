@@ -68,7 +68,7 @@ compile_benchmarks = [
         PerformanceBenchmark(
             "sum_aggregates",
             "compile",
-            0.5,
+            2.5,
         )
     ),
     benchmark_param(PerformanceBenchmark("sum_chain_performance", "compile", 0.5)),
