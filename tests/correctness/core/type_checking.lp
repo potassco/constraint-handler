@@ -15,9 +15,9 @@ variable_declare(v(bool),boolDomain).
 variable_declare(v(symbol),fromFacts).
 variable_domain(v(symbol),val(symbol,some_symbol)).
 variable_define(v(none),val(none,none)).
-variable_define(none_bool((1;2)),fromFacts).
-variable_domain(none_bool,val(none,none)).
-variable_domain(none_bool,variable(v(bool))).
+variable_define(none_bool(1;2),fromFacts).
+variable_domain(none_bool(1;2),val(none,none)).
+variable_domain(none_bool(1;2),variable(v(bool))).
 set_declare(v(set)).
 set_assign(v(set),variable(v(int))).
 multimap_declare(v(multimap)).
