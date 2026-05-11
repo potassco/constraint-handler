@@ -11,6 +11,7 @@ import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.type_ as type_
 
 
 def print_results(res):
@@ -29,7 +30,7 @@ class Value(NamedTuple):
 
 
 class Ref(NamedTuple):
-    type_: expression.BaseType | clingo.Symbol
+    type_: type_.BaseType | clingo.Symbol
     expr: expression.Expr
 
 

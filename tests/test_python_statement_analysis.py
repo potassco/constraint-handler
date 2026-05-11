@@ -1,16 +1,23 @@
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from constraint_handler.utils.python_statement_analysis import (
+    _annotation_to_types,
+    analyze_python_statement_types,
+)
+from constraint_handler.utils.python_type_model import (
     DictOf,
+    FunctionType,
     ListOf,
+    RepeatedTupleOf,
     ScalarType,
     SetOf,
     TupleOf,
     TypeInfo,
     UnknownType,
-    analyze_python_statement_types,
 )
 
 
@@ -104,6 +111,15 @@ def test_analyze_python_statement_types_basic_inference() -> None:
     assert result.name_types["w"] == _fs(_s(int), _s(str))
 
 
+def test_analyze_python_statement_types_reassignment_reports_exit_types_only() -> None:
+    snippet = "w = 5\nw = 3.2 if x else 'food'"
+
+    result = analyze_python_statement_types(snippet)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["w"] == _fs(_s(float), _s(str))
+
+
 def test_analyze_python_statement_types_division_result_is_float() -> None:
     snippet = "x = 1 / 2"
 
@@ -111,6 +127,24 @@ def test_analyze_python_statement_types_division_result_is_float() -> None:
 
     assert result.has_unsupported_features is False
     assert result.name_types["x"] == _fs(_s(float))
+
+
+@pytest.mark.parametrize(
+    ("snippet", "expected_types"),
+    [
+        ("x = 5 // 2", _fs(_s(int))),
+        ("x = 5.0 // 2", _fs(_s(float))),
+        ("x = 5 // 2.0", _fs(_s(float))),
+    ],
+)
+def test_analyze_python_statement_types_floordiv_result_type(
+    snippet: str,
+    expected_types: frozenset[TypeInfo],
+) -> None:
+    result = analyze_python_statement_types(snippet)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["x"] == expected_types
 
 
 def test_analyze_python_statement_types_numeric_matmul_is_unknown() -> None:
@@ -301,3 +335,102 @@ def test_analyze_python_statement_types_tuple_and_dict_subscript_inference() -> 
 
     assert result.name_types["x"] == _fs(_s(str))
     assert result.name_types["y"] == _fs(_s(int))
+
+
+def test_analyze_python_statement_types_repeated_tuple_annotation_preserves_repeat_information() -> None:
+    def pick(values: tuple[int, ...]) -> int:
+        return values[0]
+
+    result = analyze_python_statement_types("f = pick", {"pick": pick}, None)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["f"] == _fs(FunctionType((_fs(RepeatedTupleOf((_fs(_s(int)),))),), _fs(_s(int))))
+
+
+def test_analyze_python_statement_types_repeated_tuple_pattern_annotation_preserves_pattern_information() -> None:
+    repeated_pattern_annotation = tuple[str, int, float, ...]
+
+    inferred = _annotation_to_types(repeated_pattern_annotation)
+
+    assert inferred == _fs(RepeatedTupleOf((_fs(_s(str)), _fs(_s(int)), _fs(_s(float)))))
+
+
+def test_analyze_python_statement_types_repeated_tuple_subscript_out_of_pattern_range_uses_last_pattern_type() -> None:
+    snippet = "x = values[4]"
+    local_types = {
+        "values": _fs(RepeatedTupleOf((_fs(_s(str)), _fs(_s(int)), _fs(_s(float))))),
+    }
+
+    result = analyze_python_statement_types(snippet, None, local_types)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["x"] == _fs(_s(float))
+
+
+def test_analyze_python_statement_types_global_math_function_call_infers_float() -> None:
+    snippet = "x = math.sqrt(9)"
+
+    result = analyze_python_statement_types(snippet, {"math": math}, None)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["x"] == _fs(_s(float))
+
+
+def test_analyze_python_statement_types_global_annotated_callable_infers_return_type() -> None:
+    def stringify(value: int) -> str:
+        return str(value)
+
+    snippet = "x = stringify(3)"
+
+    result = analyze_python_statement_types(snippet, {"stringify": stringify}, None)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["x"] == _fs(_s(str))
+
+
+def test_analyze_python_statement_types_global_callable_name_infers_function_type() -> None:
+    def stringify(value: int) -> str:
+        return str(value)
+
+    snippet = "f = stringify"
+
+    result = analyze_python_statement_types(snippet, {"stringify": stringify}, None)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["f"] == _fs(FunctionType((_fs(_s(int)),), _fs(_s(str))))
+
+
+def test_analyze_python_statement_types_global_math_callable_name_infers_function_type() -> None:
+    snippet = "f = math.sqrt"
+
+    result = analyze_python_statement_types(snippet, {"math": math}, None)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["f"] == _fs(FunctionType((_fs(_s(int), _s(float)),), _fs(_s(float))))
+
+
+@pytest.mark.parametrize(
+    ("snippet", "expected_types"),
+    [
+        (
+            "f = math.atan2",
+            _fs(FunctionType((_fs(_s(int), _s(float)), _fs(_s(int), _s(float))), _fs(_s(float)))),
+        ),
+        (
+            "f = math.ldexp",
+            _fs(FunctionType((_fs(_s(int), _s(float)), _fs(_s(int))), _fs(_s(float)))),
+        ),
+        (
+            "f = math.factorial",
+            _fs(FunctionType((_fs(_s(int)),), _fs(_s(int)))),
+        ),
+    ],
+)
+def test_analyze_python_statement_types_precise_math_function_signatures(
+    snippet: str,
+    expected_types: frozenset[TypeInfo],
+) -> None:
+    result = analyze_python_statement_types(snippet, {"math": math}, None)
+
+    assert result.has_unsupported_features is False
+    assert result.name_types["f"] == expected_types

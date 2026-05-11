@@ -12,6 +12,7 @@ import constraint_handler.myClorm as myClorm
 import constraint_handler.post_processor as post_processor
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.type_ as type_
 import constraint_handler.schemas.warning as warning
 from constraint_handler.PropagatorConstants import (
     DEBUG_PRINT,
@@ -778,12 +779,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 literal_true = ctl.add_literal(freeze=True)
                 literal_false = ctl.add_literal(freeze=True)
                 variable.add_value(
-                    expression.Val(expression.BaseType.bool, True),  # ty:ignore[unresolved-attribute]
+                    expression.Val(type_.BaseType.bool, True),  # ty:ignore[unresolved-attribute]
                     literal_true,
                     _literal,
                 )
                 variable.add_value(
-                    expression.Val(expression.BaseType.bool, False),  # ty:ignore[unresolved-attribute]
+                    expression.Val(type_.BaseType.bool, False),  # ty:ignore[unresolved-attribute]
                     literal_false,
                     _literal,
                 )
@@ -860,7 +861,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             optional_variable: Variable = cast(Variable, self.symbol2var[optional])
             literal = ctl.add_literal(freeze=True)
             optional_variable.add_value(
-                expression.Val(expression.BaseType.none, None), literal, _literal
+                expression.Val(type_.BaseType.none, None), literal, _literal
             )  # ty:ignore[unresolved-attribute]
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
