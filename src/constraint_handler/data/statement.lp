@@ -47,8 +47,13 @@ _expression_querySSA(SCOPE,F) :- _expression_querySSA(SCOPE,E), E=operation(O,AR
 _expression_querySSA(SCOPE,F) :- _expression_querySSA(SCOPE,E), _expression_isTuple(E,N,ARGS), F=@pythonListElements(ARGS).
 % TODO: tuple, set
 
-_statement_pythonVarsResult(CODE,R) :- _statement_querySSA(SCOPE,STMT), STMT=statement_python(CODE), IN_TYPES=(), _main_solverIdentifier(ID), R=@pythonStatementVariables(CODE,IN_TYPES,ID).
+_statement_pythonInputTypesAux(SCOPE,#sup,(),()) :- _statement_querySSA(SCOPE,STMT), STMT=statement_python(CODE).
+_statement_pythonInputTypesAux(SCOPE,(Y,TY),((Y,TY),L),((Y,YS),VARS)) :- _statement_pythonInputTypesAux(SCOPE,X,L,VARS), _statement_context(SCOPE,Y,YS), type_expression(S,YS,TY), (Y,TY) < X, 0=#count { Z,TZ : _statement_context(SCOPE,Z,ZS), type_expression(SZ,ZS,TZ), (Y,TY) < (Z,TZ), (Z,TZ) < X }.
+_statement_pythonInputTypesAux(SCOPE,L,VARS) :- _statement_pythonInputTypesAux(SCOPE,X,L,VARS), 0=#count { Z,TZ : _statement_context(SCOPE,Z,ZS), type_expression(SZ,ZS,TZ), (Z,TZ) < X }.
+_statement_pythonInputTypes(SCOPE,L) :- _statement_pythonInputTypesAux(SCOPE,L,VARS).
+_statement_pythonInputVars(SCOPE,VARS) :- _statement_pythonInputTypesAux(SCOPE,L,VARS).
 
+_statement_pythonVarsResult(CODE,R) :- _statement_querySSA(SCOPE,STMT), STMT=statement_python(CODE), _statement_pythonInputTypes(SCOPE,IN_TYPES), _main_solverIdentifier(ID), R=@pythonStatementVariables(CODE,IN_TYPES,ID).
 
 
 _statement_changed(STMT,X) :- _statement_querySSA(SCOPE,STMT), STMT=assign(X,EX).
@@ -66,18 +71,24 @@ _statement_latest(SCOPE,X,XS) :- _statement_querySSA(SCOPE,STMT), STMT=noop, _st
 _statement_latest(SCOPE,X,XS) :- _statement_querySSA(SCOPE,STMT), STMT=seq2(STM1,STM2), _statement_latest((r,SCOPE),X,XS).
 _statement_latest(SCOPE,X,XE) :- _statement_querySSA(SCOPE,STMT), STMT=if(EXPR,THEN,ELSE), _statement_changed(STMT,X), XE=variable(loc(@pythonScopeToString(SCOPE,X))).
 _statement_latest(SCOPE,X,XE) :- _statement_querySSA(SCOPE,STMT), STMT=if(EXPR,THEN,ELSE), _statement_context(SCOPE,X,XE), not _statement_changed(STMT,X).
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(SCOPE,STMT), STMT=statement_python(CODE), _statement_pythonVarsResult(CODE,(X,TYPES)), XS=variable(loc(@pythonScopeToString(SCOPE,X))).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(SCOPE,STMT), STMT=statement_python(CODE), _statement_pythonVarsResult(CODE,(X,TYPE)), XS=variable(loc(@pythonScopeToString(SCOPE,X))).
 
 
 _statement_definedLatest(SCOPE,X) :- _statement_latest(SCOPE,X,XE).
-variable_define(dummy,loc(@pythonScopeToString(SCOPE,X)),XI) :- _statement_querySSA(SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), _statement_latest((e,SCOPE),X,XE),
+variable_define(dummy,XS,XI) :- _statement_querySSA(SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), _statement_latest((e,SCOPE),X,XE),_statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(XT,(XE,())))).
-variable_define(dummy,loc(@pythonScopeToString(SCOPE,X)),XI) :- _statement_querySSA(SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), not _statement_definedLatest((e,SCOPE),X),
-XI=operation(ite,(COND,(XT,(val(none,none),())))).
-variable_define(dummy,loc(@pythonScopeToString(SCOPE,X)),XI) :- _statement_querySSA(SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X),
+variable_define(dummy,XS,XI) :- _statement_querySSA(SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), not _statement_definedLatest((e,SCOPE),X),_statement_latest(SCOPE,X,variable(XS)), XI=operation(ite,(COND,(XT,(val(none,none),())))).
+variable_define(dummy,XS,XI) :- _statement_querySSA(SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(val(none,none),(XE,())))).
-variable_define(dummy,loc(@pythonScopeToString(SCOPE,X)),EX) :- _statement_querySSA(SCOPE,STMT), STMT=assign(X,E), _expression_contextualized(SCOPE,E,EX).
+variable_define(dummy,XS,EX) :- _statement_querySSA(SCOPE,STMT), STMT=assign(X,E), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
 ensure(daummy,EX) :- _statement_querySSA(SCOPE,STMT), STMT=assert(E), _expression_contextualized(SCOPE,E,EX).
+
+variable_define(dummy,XS,EX) :- _statement_querySSA(SCOPE,STMT), STMT=assign(X,E), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
+_passed(a,variable_define(dummy,XS,pythonExtract(CODE,VARS,X))) :- _statement_querySSA(SCOPE,STMT), STMT=statement_python(CODE),
+  _statement_pythonVarsResult(CODE,(X,TYPE)), _statement_querySSA(SCOPE,STMT), _statement_pythonInputVars(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
+_passed(a,ensure(dummy,pythonExtract(VARS,CODE,"__succeeds"))) :- _statement_querySSA(SCOPE,STMT), STMT=statement_python(CODE),
+  _statement_pythonVarsResult(CODE,(X,TYPE)), _statement_querySSA(SCOPE,STMT), _statement_pythonInputVars(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
+
 
 %%% TODO: add bad / error handling
 
@@ -121,12 +132,4 @@ _expression_contextualized(SCOPE,E,operation(O,L)) :- _expression_contextualized
 
 _expression_contextualizedListAux(SCOPE,E,ARGS,N,()) :- _expression_querySSA(SCOPE,E), _expression_isTuple(E,N,ARGS).
 _expression_contextualized(SCOPE,E,@pythonReflect(function,(),N,L)) :- _expression_contextualizedListAux(SCOPE,E,ARGS,0,L), _expression_isTuple(E,N,ARGS).
-
-
-
-
-
-
-%_statement_latest(SCOPE,X,XS) :- _statement_querySSA(SCOPE,STMT), STMT=statement_python(CODE), _statement_pythonVarsResult(CODE,(X,TYPES)), XS=variable(loc(@pythonScopeToString(SCOPE,X))).
-
 *%
