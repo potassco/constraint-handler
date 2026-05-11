@@ -40,32 +40,59 @@ Args:
 
 The final value assigned to a variable.
 
-This is the main result predicate for variables and also for collection
-references such as sets or multimaps. The second argument is normally a
-`val(Type,Term)` expression or a collection reference.
+This is the main result predicate for variables and collection-valued variables.
+The second argument is normally a `val(Type,Term)` expression. Declared sets
+evaluate to references such as `ref(set, variable(Name))`, whereas declared
+multimaps evaluate to `val(multimap, variable(Name))`.
 
 Args:
     - Name: The name of the variable whose value is reported.
     - Value: The computed value of the variable.
 *%
 
-%*! warning_forbid(Kind)
+%*! warning_forbid(Label, Kind)
 
 Escalates one warning kind to a hard failure.
+
+The current implementation matches warnings by kind only. The label argument is
+accepted for syntactic consistency with other labeled declarations, but it does
+not affect which warnings are matched here.
 
 If a warning of this kind is produced and it is not ignored, the current model
 is rejected in the same spirit as an integrity constraint violation.
 
 Args:
+    - Label: The accepted but currently ignored [Label].
     - Kind: The warning kind that should be treated as forbidden.
 *%
 
-%*! warning_ignore(Kind)
+%*! warning_forbid(Kind)
+
+Shorthand for [warning_forbid/2] using an anonymous label.
+
+Args:
+    - Kind: The warning kind that should be treated as forbidden.
+*%
+
+%*! warning_ignore(Label, Kind)
 
 Suppresses one warning kind from the public result.
 
 Ignored warnings are not shown through [warning/3] and also take precedence
-over `warning_forbid/1` when both are declared for the same kind.
+over `warning_forbid/2`.
+
+The current implementation matches warnings by kind only. The label argument is
+accepted for syntactic consistency with other labeled declarations, but it does
+not affect which warnings are matched here.
+
+Args:
+    - Label: The accepted but currently ignored [Label].
+    - Kind: The warning kind that should be ignored.
+*%
+
+%*! warning_ignore(Kind)
+
+Shorthand for [warning_ignore/2] using an anonymous label.
 
 Args:
     - Kind: The warning kind that should be ignored.

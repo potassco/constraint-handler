@@ -19,9 +19,9 @@ The first step is to decide which declarations are handled by the `compile` engi
 
 Once this resolution has happened, compile-specific helper predicates are populated only for declarations whose effective engine is `compile`. In particular:
 
-- [_se_ensure/2] is derived from [ensure/2]
-- [_se_assign/3] is derived from [assign/3]
-- [_se_evaluate/3] is derived from [evaluate/3]
+- [_expression_valueQuery/2] is derived from [ensure/2]
+- [_expression_valueQuery/2] is derived from [evaluate/2]
+- [_se_assign/3] is derived from normalized [variable_define/2] declarations
 
 This routing step is important because the same high-level declaration form may have distinct implementations in other engines. The `compile` engine therefore does not inspect all declarations globally; it operates only on the subset that was explicitly or implicitly assigned to it.
 
@@ -29,7 +29,7 @@ This routing step is important because the same high-level declaration form may 
 
 After routing, the engine prepares all the sub-expressions that must actually be evaluated via [direct_query/1] by seeding them from the compile-specific entry predicates.
 
-For example, [_se_assign/3] seeds both the assigned variable and the assigned expression into [direct_query/1]. [_se_evaluate/3] seeds the full requested operation into [direct_query/1].
+For example, [_se_assign/3] seeds both the assigned variable and the assigned expression into [direct_query/1]. [_expression_valueQuery/2] seeds expressions coming from [ensure/2] and the full requested operation coming from [evaluate/2].
 
 #### Lazy
 
@@ -119,7 +119,7 @@ This is how operators such as `limp`, `conj`, and `pow` retain informative seman
     evaluate(conj, (val(bool,false), (variable(really_bad),()))).
     ```
 
-    Even though one argument is `bad`, the result in `evaluated/3` will be `val(bool,false)` (not `bad`), because once an argument of a conjunction is `val(bool,false)`, the entire conjunction is `val(bool,false)` regardless of the other argument.
+    Even though one argument is `bad`, the result in [evaluated/3] will be `val(bool,false)` (not `bad`), because once an argument of a conjunction is `val(bool,false)`, the entire conjunction is `val(bool,false)` regardless of the other argument.
 
 Evaluation failures are never silent. When a `bad` value is encountered, the engine emits a [Warning] via [_warning/3], capturing the specific expression context and error kind to ensure traceability.
 
@@ -127,7 +127,7 @@ Evaluation failures are never silent. When a `bad` value is encountered, the eng
 
 The last stage is projection from internal facts to public result predicates.
 
-[value/2] is derived from variable values already established through [_se_value/2]. [evaluated/3] is derived from [_se_evaluate/3] together with the value of the requested operation. Collection and preference outputs follow the same pattern: internal helper predicates build the structure, and then public result predicates expose only the externally relevant view.
+[value/2] is derived from variable values already established through [_se_value/2]. [evaluated/3] is derived directly from [evaluate/2] together with the value of the requested operation. Collection and preference outputs follow the same pattern: internal helper predicates build the structure, and then public result predicates expose only the externally relevant view.
 
 Warnings behave similarly. Operator modules and helper layers emit [_warning/3]. That internal warning stream is then filtered by [warning_ignore/1], [warning_ignore/2], [warning_forbid/1], and [warning_forbid/2] before becoming visible through [warning/3] or, in the forbidden case, rejecting the model.
 
@@ -155,15 +155,15 @@ evaluate(ite,
 
 ### Step 1. Declaration Routing
 
-Because the example does not specify an engine, the default is `compile`. The `variable` module turns all `variable_define/2` declarations into [assign/3] declarations with the same variable and expression. Furthermore, because we did not specify any labels, the declarations will be assigned the default anonymous label `_label_anonymous`.
+Because the example does not specify an engine, the default is `compile`. Because we did not specify any labels, the declarations will be assigned the default anonymous label `_label_anonymous`.
 
 This provides the necessary entry points for our example. As stated in the previous [Section](#declaration-routing-and-engine-assignment), declarations meeting these criteria will be transformed into compile-specific entry predicates.
 
-More specifically, all `variable_define/2` declarations are transformed into [_se_assign/3] facts, and the `evaluate/2` declaration is transformed into a [_se_evaluate/3] fact.
+More specifically, all [variable_define/2] declarations are transformed into [_se_assign/3] facts, and the [evaluate/2] declaration contributes an [_expression_valueQuery/2] fact for the queried operation.
 
 ### Step 2. Queries
 
-The compile engine then derives [direct_query/1] facts for the relevant sub-expressions. In this case, all [_se_assign/3] facts seed both the variable and the assigned expression into [direct_query/1]. The [_se_evaluate/3] fact seeds the full requested operation into [direct_query/1].
+The compile engine then derives [direct_query/1] facts for the relevant sub-expressions. In this case, all [_se_assign/3] facts seed both the variable and the assigned expression into [direct_query/1]. The [_expression_valueQuery/2] fact seeds the full requested operation into [direct_query/1].
 
 After that, the engine applies the [direct_query/1] expansion rules to derive the full evaluation graph. Because the operation corresponding to `bad_div` is `int_div`, which is not declared as lazy, the engine eagerly queries both arguments of that operation. The first argument was already queried as part of the variable assignment, resulting in no additional queries. The second argument is a new value and is therefore added to [direct_query/1].
 
@@ -171,7 +171,7 @@ However, the same is not true for the `ite` operation. Because `ite` is declared
 
 ### Step 3. Initial Evaluation
 
-The engine then derives values for the queried expressions through [_se_value/2]. For all base cases, the value is derived directly. Namely, `val/2` evaluates to itself and `variable/1` that contain a direct value also evaluate to that value.
+The engine then derives values for the queried expressions through [_se_value/2]. For all base cases, the value is derived directly. Namely, [val/2] evaluates to itself and [variable/1] terms that contain a direct value also evaluate to that value.
 
 At this point we know:
 
@@ -186,14 +186,14 @@ However, we do not know about:
 ### Step 4. Computation of Operations
 Then, the engine prepares the `int_div` operation for operator-specific evaluation by filling [_computeIdx/2] and [_computeIdx/3] using [_direct_queryArgsValues/3] and [_direct_compArg/3]. Because all values for the operation are already known, we can proceed to the implementation in the operator module `int.lp`.
 
-The `int` module then applies the semantics of integer division through rules for [_computedIdx/2]. Among these rules, one explicitly derives `bad` for any division by zero. This rule triggers, since we already know that the second argument evaluates to `val(int,0)`, and creates a [computedIdx/2] fact that `int_div` with those arguments is `bad`.
+The `int` module then applies the semantics of integer division through rules for [_computedIdx/2]. Among these rules, one explicitly derives `bad` for any division by zero. This rule triggers, since we already know that the second argument evaluates to `val(int,0)`, and creates a [_computedIdx/2] fact that `int_div` with those arguments is `bad`.
 
 This then propagates through and yields that the value of the operation is bad, which in turn propagates to the value of `variable(bad_div)` being `bad`. The `variable` module then picks up on this and derives a [_warning/3] of type `badValue` for `variable(bad_div)`.
 
 Additionally, we can also find a rule in the `int` module that derives a [_warning/3] of type `expression(zeroDivisionError)` for any division by zero.
 
 ### Step 5. Lazy Evaluation and Recovery
-Meanwhile, the `ite` operation is evaluated based on the rules in the `conditionals` module. In contrast to the `int_div` evaluation, the `ite` evaluation does not use `computeIdx`. Instead, it provides special rules that produce `direct_query/1` facts for the respective branch based on the condition value.
+Meanwhile, the `ite` operation is evaluated based on the rules in the `conditionals` module. In contrast to the `int_div` evaluation, the `ite` evaluation does not use `computeIdx`. Instead, it provides special rules that produce [direct_query/1] facts for the respective branch based on the condition value.
 
 We already know that the if-branch would yield `bad` because it contains `variable(bad_div)`, which we just established is `bad` due to the division by zero.
 
@@ -212,7 +212,7 @@ Now that the engine knows all relevant values, it can derive the public result p
 Additionally, we will have the warnings for the `bad` evaluations:
 
 - `warning(expression(zeroDivisionError),(),(int_div,operation(int_div,(variable(one),(val(int,0),())))))`
-- `warning(expression(badValue),(),(variable(bad_div)))`
+- `warning(variable(badValue),(),bad_div)`
 
 ## Practical Reading Guide
 

@@ -11,6 +11,8 @@ Here, we outline the various warning types that can be reported by the constrain
 
 | Type | Description |
 | :--- | :--- |
+| **Atoms** | |
+| [`atom(syntaxError)`](#atom-syntax-error) | A declaration or fact failed structural validation before normal evaluation. |
 | **Expressions** | |
 | [`expression(pythonError)`](#python-error) | An error occurred in Python during the evaluation of an [Expression]. |
 | [`expression(syntaxError)`](#syntax-error) | A syntax error was encountered in an [Expression]. |
@@ -20,6 +22,7 @@ Here, we outline the various warning types that can be reported by the constrain
 | [`statement(evaluatorError)`](#evaluator-error) | An error occurred within the constraint handler's evaluator. |
 | [`statement(notImplemented)`](#not-implemented_1) | A [Statement] uses a feature that is not (yet) implemented. |
 | [`statement(pythonError)`](#python-error_1) | An error occurred in Python during the evaluation of a [Statement]. |
+| [`statement(syntaxError)`](#statement-syntax-error) | A [Statement] failed structural validation. |
 | **Variables** | |
 | [`variable(badValue)`](#bad-value) | A [Variable] has a `bad` [Value], meaning it was not possible to compute any proper [Value] for it. |
 | [`variable(emptyDomain)`](#empty-domain) | A [Variable] has an empty [Domain], meaning it has no possible [Values]. |
@@ -77,12 +80,16 @@ warning(Type, Labels, Details)
 
 Users have the option to ignore specific warnings by using the `warning_ignore/1` predicate. This allows users to suppress warnings that they are aware of and do not wish to be notified about.
 
+The labeled form `warning_ignore/2` is also accepted. In the current implementation, warnings are still matched by warning kind only, so the extra label does not scope which warnings are ignored here.
+
 ```prolog
 warning_ignore(WarningType)
+warning_ignore(Label, WarningType)
 ```
 
 | Name | Description |
 | :--- | :--- |
+| `Label` | Optional label accepted by the predicate, but currently ignored for warning matching. |
 | `WarningType` | The type of warning to ignore. This should match the `Type` field of the warnings you wish to suppress. |
 
 !!! Example
@@ -101,15 +108,19 @@ warning_ignore(WarningType)
 
 Users can also choose to forbid specific warnings using the `warning_forbid/1` predicate. This means that if a forbidden warning is encountered, it will be treated as a failed constraint.
 
+The labeled form `warning_forbid/2` is also accepted. In the current implementation, warnings are still matched by warning kind only, so the extra label does not scope which warnings are forbidden here.
+
 !!! Info
     Ignored warnings cannot be forbidden, and vice versa. If a warning type is both ignored and forbidden, it will be treated as ignored.
 
 ```prolog
 warning_forbid(WarningType)
+warning_forbid(Label, WarningType)
 ```
 
 | Name | Description |
 | :--- | :--- |
+| `Label` | Optional label accepted by the predicate, but currently ignored for warning matching. |
 | `WarningType` | The type of warning to forbid. This should match the `Type` field of the warnings you wish to treat as errors. |
 
 !!! Example
@@ -151,13 +162,38 @@ The operations and executions that receive `bad` as an input can then choose how
     value(s,val(int,0))
     value(d,bad)
     value(m,bad)
-    warning(expression(zeroDivisionError),(),(int_div,(val(int,6),(val(int,0),()))))
+    warning(expression(zeroDivisionError),(),(int_div,operation(int_div,(variable(x),(variable(s),())))))
     ```
     It provides the values for `x`, `y`, `a`, and `s`, while indicating that `d` and `m` are `bad` due to the division by zero error, which is also reported as a warning.
 
 ---
 ## Warning Types
 This section provides detailed descriptions of the various warning types that can be reported by the constraint handler.
+
+### Atom Warnings
+This section covers warnings raised while validating declaration-shaped input facts before expression or statement evaluation proceeds.
+
+#### Atom Syntax Error
+This warning occurs when a declaration has the right outer predicate name but malformed argument structure.
+
+```prolog
+warning(atom(syntaxError), _, Declaration)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `atom(syntaxError)` |
+| `Details` | The malformed declaration term. |
+
+!!! Example
+    ```prolog
+    variable_define(x, operation(minus, val(int,3))).
+    ```
+
+    Produces the warning:
+    ```prolog
+    warning(atom(syntaxError),(),variable_define(_label_anonymous,x,operation(minus,val(int,3))))
+    ```
 
 ### Expression Warnings
 This section covers warnings related to the evaluation of [Expressions].
@@ -191,10 +227,12 @@ warning(expression(syntaxError), _, Expression)
     variable_define(x, operation(minus, val(int,3))).
     ```
 
-    Raises the warning:
+    Produces the warning:
     ```prolog
     warning(expression(syntaxError),(),operation(minus,val(int,3)))
     ```
+
+    The same malformed declaration can also trigger [atom(syntaxError)](#atom-syntax-error) because the outer fact is validated separately from the expression it contains.
 
 #### Not Implemented
 This warning occurs when an [Expression] uses a feature that is not (yet) implemented.
@@ -218,16 +256,16 @@ warning(expression(zeroDivisionError), _, (Operator, Arguments))
 | Name | Description |
 | :--- | :--- |
 | `Type` | `expression(zeroDivisionError)` |
-| `Details` | The operator and argument list that caused the division by zero. |
+| `Details` | The operator together with the full operation term that caused the division by zero. |
 
 !!! Example
     ```prolog
     variable_define(x, operation(int_div, (val(int, 2),(val(int, 0),())))).
     ```
 
-    Raises the warning:
+    Produces the warning:
     ```prolog
-    warning(expression(zeroDivisionError),(),(int_div,(val(int,2),(val(int,0),()))))
+    warning(expression(zeroDivisionError),(),(int_div,operation(int_div,(val(int,2),(val(int,0),())))))
     ```
 ---
 
@@ -245,6 +283,18 @@ warning(statement(evaluatorError), _, Message)
 | :--- | :--- |
 | `Type` | `statement(evaluatorError)` |
 | `Details` | A message describing the error that occurred in the evaluator. |
+
+#### Statement Syntax Error
+This warning occurs when a [Statement] is structurally malformed.
+
+```prolog
+warning(statement(syntaxError), Scope, Statement)
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Type` | `statement(syntaxError)` |
+| `Details` | The malformed statement term together with the scope where it was encountered. |
 
 #### Not Implemented
 This warning occurs when a [Statement] uses a feature that is not (yet) implemented.

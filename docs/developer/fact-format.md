@@ -181,6 +181,9 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "syntaxError"
     | "zeroDivisionError"
 
+<atom-warning> ::=
+    | "syntaxError"
+
 <preference-warning> ::=
     | "unsupported"
 
@@ -188,6 +191,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "evaluatorError"
     | "notImplemented"
     | "pythonError"
+    | "syntaxError"
 
 <type-warning> ::=
     | "failed_operation"
@@ -201,6 +205,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "confusingName"
 
 <warning-symbol> ::=
+    | "atom" "(" <atom-warning> ")"
     | "expression" "(" <expression-warning> ")"
     | "otherError"
     | "preference" "(" <preference-warning> ")"

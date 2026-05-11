@@ -13,19 +13,19 @@ The constraint handler provides multiple ways of specifying preferences. Here, w
 ### Variable Value
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-One way to provide a preference is to assign a preference value to a variable having a specific value. For this, we can use the `preference_variableValue/3` predicate.
+One way to provide a preference is to assign a preference score to a variable having a specific value. For this, we can use the `preference_variableValue/3` predicate.
 
 ```prolog
-preference_variableValue(Name, Expression, Value)
+preference_variableValue(Name, Expression, Score)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Name` | The name of the variable for which we are specifying a preference. |
 | `Expression` | The expression representing the value of the variable we are assigning a preference to. |
-| `Value` | The preference value assigned to the variable having the specified value. |
+| `Score` | The preference score assigned to the variable having the specified value. |
 
-The preference value is a numeric value that indicates how much we prefer that variable to take that specific value. Higher preference values indicate stronger preferences.
+The preference score is a numeric value that indicates how much we prefer that variable to take that specific value. Higher scores indicate stronger preferences.
 
 !!! Example
     Consider a program that defines a variable `color` with possible values `red`, `green`, `blue`, and `yellow`.
@@ -50,16 +50,16 @@ The preference value is a numeric value that indicates how much we prefer that v
 ### Holds
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-In addition to assigning preference values to variable-value pairs, we can also express preferences based on certain conditions using the `preference_holds/2` predicate.
+In addition to assigning preference scores to variable-value pairs, we can also express preferences based on certain conditions using the `preference_holds/2` predicate.
 
 ```prolog
-preference_holds(Condition, Value)
+preference_holds(Condition, Score)
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Condition` | An [Expression] representing the condition we are assigning a preference to. |
-| `Value` | The preference value assigned when the condition holds true. |
+| `Score` | The preference score assigned when the condition holds true. |
 
 
 !!! Example

@@ -94,20 +94,6 @@ Args:
     - Value: The resulting value, possibly `bad` if evaluation failed.
 *%
 
-%*! _se_ensure(Label, Expression)
-
-Compile-engine-local representation of an [ensure/2] declaration.
-
-Only `ensure` declarations whose effective engine is `compile` are translated
-into this helper predicate. It acts as the entry point for seeding the checked
-expression into [direct_query/1] and for later enforcing the integrity
-constraint associated with the declaration.
-
-Args:
-    - Label: The [Label] of the `ensure` declaration.
-    - Expression: The boolean [Expression] that must hold.
-*%
-
 %*! _se_assign(Label, Variable, Expression)
 
 Compile-engine-local representation of an [assign/3] declaration.
@@ -121,20 +107,6 @@ Args:
     - Label: The [Label] of the assignment declaration.
     - Variable: The variable [Expression] being assigned.
     - Expression: The assigned [Expression].
-*%
-
-%*! _se_evaluate(Label, Operator, Arguments)
-
-Compile-engine-local representation of an [evaluate/3] declaration.
-
-Only evaluation requests routed to the `compile` engine appear through this
-predicate. It seeds the requested operator application into [direct_query/1]
-and later supports the derivation of the public result predicate [evaluated/3].
-
-Args:
-    - Label: The [Label] of the evaluation request.
-    - Operator: The [Operator] to evaluate.
-    - Arguments: The argument list passed to the operator.
 *%
 
 %*! _direct_queryArgsValues(Expression, Operator, Arguments)
