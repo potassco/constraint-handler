@@ -14,12 +14,12 @@ import constraint_handler.schemas.warning as warning
 import constraint_handler.set as myset
 import constraint_handler.solver_environment as solver_environment
 from constraint_handler.schemas.expression import (
-    BaseType,
     ConditionalOperator,
     EqOperator,
     OtherOperator,
     StringOperator,
 )
+from constraint_handler.schemas.type_ import BaseType
 
 _shared_environment = {
     "math": importlib.import_module("math"),
