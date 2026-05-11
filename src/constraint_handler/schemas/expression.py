@@ -12,10 +12,8 @@ import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.set as myset
 import constraint_handler.utils.common as common
+import constraint_handler.schemas.type_ as type_
 
-BaseType = common.PPEnum(
-    "BaseType", ["int", "float", "string", "symbol", "bool", "none", "function", "multimap", "set"]
-)
 
 EqOperator = common.PPEnum("EqOperator", ["eq", "neq"])
 StringOperator = common.PPEnum("StringOperator", ["concat", "length"])
@@ -57,7 +55,7 @@ constant = bool | float | int | str | types.NoneType | clingo.Symbol
 
 
 class Val(typing.NamedTuple):
-    type_: BaseType | clingo.Symbol
+    type_: type_.BaseType | clingo.Symbol
     value: constant
 
     def __repr__(self):
@@ -65,7 +63,7 @@ class Val(typing.NamedTuple):
 
 
 class Ref(typing.NamedTuple):
-    type_: BaseType | clingo.Symbol
+    type_: type_.BaseType | clingo.Symbol
     value: constant
 
     def __repr__(self):
