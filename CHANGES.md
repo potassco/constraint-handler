@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+## v0.0.2.dev7
+
 - add supoort for tuple-expressions
 - deprecate `assign/3`
 - allow python expression as expression and not only as operators
