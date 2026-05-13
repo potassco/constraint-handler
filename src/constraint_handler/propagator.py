@@ -1270,7 +1270,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def handle_on_model_normal_type(
         self,
         var: clingo.Symbol,
-        final_value: bool | int | float | str | clingo.Symbol | tuple[Any, ...] | expression.Bad.bad,  # ty:ignore[unresolved-attribute]
+        final_value: (
+            bool | int | float | str | clingo.Symbol | tuple[Any, ...] | expression.Bad.bad
+        ),  # ty:ignore[unresolved-attribute]
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.
