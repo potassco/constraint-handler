@@ -69,6 +69,8 @@ base_tests = [
     "expression/lambda_zero_args",
     "expression/python",
     "expression/python_multi_args",
+    "expression/python_extract",
+    "expression/python_extract_binding_leak",
     "expression/tuple",
     "multimap/basics",
     "multimap/equality",
