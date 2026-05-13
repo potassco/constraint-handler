@@ -35,7 +35,7 @@ class Propagator(typing.NamedTuple):
     pass
 
 
-StatementWarning = common.PPEnum("StatementWarning", ["notImplemented", "evaluatorError", "pythonError"])
+StatementWarning = common.PPEnum("StatementWarning", ["notImplemented", "evaluatorError", "pythonError", "syntaxError"])
 
 
 class Statement(typing.NamedTuple):

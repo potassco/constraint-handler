@@ -20,6 +20,8 @@ from constraint_handler.schemas.expression import (
     StringOperator,
 )
 from constraint_handler.schemas.type_ import BaseType
+import constraint_handler.utils.python_statement_analysis as python_analysis
+
 
 _shared_environment = {
     "math": importlib.import_module("math"),
@@ -42,6 +44,9 @@ def collectVars(expr) -> frozenset[clingo.Symbol]:
             return collectVars(body) - frozenset(vars)
         case expression.Python(code):
             return frozenset()
+        case expression.PythonExtract(stmt, eval_expr):
+            return frozenset()
+            # return frozenset.union(*(collectVars(e) for (_,e) in vars)) if vars else frozenset()
         case tuple(args):
             return frozenset.union(*(collectVars(e) for e in args)) if args else frozenset()
         case set(args) | frozenset(args):
@@ -50,6 +55,28 @@ def collectVars(expr) -> frozenset[clingo.Symbol]:
             return frozenset()
         case _:
             print("collectVars", expr)
+            assert False
+
+
+def collectStmtVars(stmt) -> frozenset[clingo.Symbol]:
+    match stmt:
+        case statement.Assert(_):
+            return frozenset()
+        case statement.Assign(a,_):
+            return frozenset({a})
+        case statement.If(_,t,e):
+            return collectStmtVars(t) | collectStmtVars(e)
+        case statement.Noop():
+            return frozenset()
+        case statement.Statement_python(code):
+            analysis = python_analysis.analyze_python_statement_types(code, {}, {})
+            return frozenset(analysis.name_types)
+        case statement.Seq2(l,r):
+            return collectStmtVars(l) | collectStmtVars(r)
+        case statement.While(_,_,body):
+            return collectStmtVars(body)
+        case _:
+            print("collectStmtVars", stmt)
             assert False
 
 
@@ -171,9 +198,36 @@ class Evaluator:
             result = call(*args)
         except Exception as exn:
             kind = warning.Expression(warning.ExpressionWarning.pythonError)
-            self.errors.append((kind, exn))
+            self.errors.append((kind, repr(exn)))
             return None
         return result
+
+    def pythonExtract_operator(self, stmt: str, expr_code: str, vars_mapping: list):
+        binding_error_count = len(self.errors)
+        #locals_env = { py_name: self.expr(expr) for py_name, expr in vars_mapping }
+        locals_env = { name: val for name, val in vars_mapping }
+        if len(self.errors) > binding_error_count or any(value == expression.Bad.bad for value in locals_env.values()):
+            return expression.Bad.bad
+
+        nested = Evaluator(self.globals, locals_env)
+        try:
+            nested.stmt_python(stmt)
+            __succeeds = True
+        except solver_environment.FailIntegrityExn:
+            __succeeds = False
+        # print(f"05-12 hello\nsucc {__succeeds}\n{stmt}\n{expr_code}\nerrors {nested.errors}")
+        self.errors.extend(nested.errors)
+        if nested.errors:
+            return expression.Bad.bad
+        elif expr_code == "__succeeds":
+            return __succeeds
+        else:
+            try:
+                return eval(expr_code, nested.globals, nested.locals)
+            except Exception as exn:
+                kind = warning.Expression(warning.ExpressionWarning.pythonError)
+                self.errors.append((kind, repr(exn)))
+                return expression.Bad.bad
 
     def operator(self, o, args):
         match o:
@@ -181,6 +235,8 @@ class Evaluator:
                 return o
             case expression.Python(fn):
                 return self.python_operator(fn, args)
+            case expression.PythonExtract(stmt, expr):
+                return self.pythonExtract_operator(stmt, expr, args)
             case expression.Lambda(vars, expr):
                 if len(vars) != len(args):
                     self.errors.append(
@@ -263,7 +319,7 @@ class Evaluator:
                     return result
                 except Exception as exn:
                     kind = warning.Expression(warning.ExpressionWarning.pythonError)
-                    self.errors.append((kind, exn))
+                    self.errors.append((kind, repr(exn)))
                     return expression.Bad.bad
             case expression.Val(type_, val):
                 return val
@@ -300,7 +356,7 @@ class Evaluator:
             raise
         except Exception as exn:
             kind = warning.Statement(warning.StatementWarning.pythonError)
-            self.errors.append((kind, exn))
+            self.errors.append((kind, repr(exn)))
 
     def stmt(self, stmt):
         match stmt:
@@ -338,6 +394,7 @@ def evaluate_expr(expr, globals=None, locals=None):
     env = Evaluator(globals, locals)
     try:
         result = env.expr(expr)
+        # print("05-12 goodbye",expr,env.errors)
     except Exception as exn:
         env.errors.append((warning.Expression(warning.ExpressionWarning.evaluatorError), repr(exn)))
         return expression.Bad.bad, env.errors
@@ -351,7 +408,8 @@ def evaluate_stmt(stmt, globals=None, locals=None):
     except solver_environment.FailIntegrityExn:
         raise solver_environment.FailIntegrityExn
     except Exception as exn:
-        env.errors.append((warning.Statement(warning.StatementWarning.evaluatorError), repr(exn)))
+        kind = warning.Statement(warning.StatementWarning.evaluatorError)
+        env.errors.append((kind, repr(exn)))
     return env.errors
 
 
@@ -371,6 +429,9 @@ def beta_reduction(symbols, expr):
         case expression.Lambda(vars, body):
             nsymbols = {x: v for x, v in symbols.items() if x not in vars}
             return expression.Lambda(vars, beta_reduction(nsymbols, body))
+#        case expression.PythonExtract(vars, stmt, eval_expr):
+#            nvars = [(a,beta_reduction(symbols, e)) for (a,e) in vars]
+#            return expression.PythonExtract(nvars, stmt, eval_expr)
         case o if isinstance(o, expression.Operator):
             return expr
         case tuple(eargs):

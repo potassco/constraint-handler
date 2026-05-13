@@ -38,6 +38,11 @@ class Python(typing.NamedTuple):
     fn: str
 
 
+class PythonExtract(typing.NamedTuple):
+    stmt: str
+    expr: str
+
+
 Operator = (
     arithmetic.Operator
     | EqOperator
@@ -48,6 +53,7 @@ Operator = (
     | OtherOperator
     | ConditionalOperator
     | Python
+    | PythonExtract
 )
 
 

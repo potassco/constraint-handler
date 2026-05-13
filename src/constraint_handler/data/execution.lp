@@ -1,12 +1,12 @@
 #defined _statement_query/2.
-
+%*
 %%%%%%%%%%%%%%%%% interface: execution_run/1 execution_assign/3 execution_output/4 execution_declare/3
-_execution_declare(LBL,NAME,STMT,INS,OUTS) :- _passed(sugar,execution_declare(LBL,NAME,STMT,INS,OUTS)), engine(LBL,(compile;ground)).
+_execution_declare(LBL,NAME,STMT,INS,OUTS) :- _passed(wf_check,execution_declare(LBL,NAME,STMT,INS,OUTS)), engine(LBL,(compile;ground)).
 _execution_input_var(NAME,X) :- _execution_declare(LBL,NAME,STMT,INS,OUTS), X=@pythonListElements(INS).
 _execution_outputVar(NAME,X,execution_output(NAME,X)) :- _execution_declare(LBL,NAME,STMT,INS,OUTS), X=@pythonListElements(OUTS).
-_execution_isRunning(NAME) :- _execution_declare(LBL1,NAME,STMT,INS,OUTS), _passed(sugar,execution_run(LBL,NAME)), engine(LBL,(compile;ground)).
-_execution_run(NAME,STMT) :- _execution_declare(LBL1,NAME,STMT,INS,OUTS), _passed(sugar,execution_run(LBL,NAME)), engine(LBL,compile).
-%_warning(("undeclared run",NAME)) :- _passed(sugar,execution_run(NAME)), not _passed(sugar,execution_declare(_,NAME,_)).
+_execution_isRunning(NAME) :- _execution_declare(LBL1,NAME,STMT,INS,OUTS), _passed(wf_check,execution_run(LBL,NAME)), engine(LBL,(compile;ground)).
+_execution_run(NAME,STMT) :- _execution_declare(LBL1,NAME,STMT,INS,OUTS), _passed(wf_check,execution_run(LBL,NAME)), engine(LBL,compile).
+%_warning(("undeclared run",NAME)) :- _passed(wf_check,execution_run(NAME)), not _passed(wf_check,execution_declare(_,NAME,_)).
 
 _execution_in(NAME,X,V) :- _execution_run(NAME,STMT), _execution_input_var(NAME,X), _se_value(variable(execution_input(NAME,X)),V).
 
@@ -102,3 +102,4 @@ _execution_in(BNAME,X,V) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _executio
 _execution_ou(NAME,X,V) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_ou(BNAME,X,V), _execution_succeeds(BNAME,BSTMT).
 _execution_succeeds(NAME,while(MAX,EXPR,BODY)) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_succeeds(BNAME,BSTMT).
 _execution_fails(NAME,while(MAX,EXPR,BODY)) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_fails(BNAME,BSTMT).
+*%

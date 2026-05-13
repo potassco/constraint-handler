@@ -1,0 +1,3 @@
+value(z,val(int,16))
+value(t,val(bool,true))
+value(u,val(bool,false))
