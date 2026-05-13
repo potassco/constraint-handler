@@ -16,6 +16,8 @@ _set_declare(_internal,variable(X)) :- ge_value(X,set(S)).
 _set_assign(_internal,variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
 _se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).
 
+_se_assign(_internal,variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T).
+
 _ge_vQuery(X) :- ge_expressionQuery(EXPR), X=@pythonExpressionVariable(EXPR).
 
 _direct_implode(variable(X)) :- _ge_vQuery(X), _se_value(variable(X),V).

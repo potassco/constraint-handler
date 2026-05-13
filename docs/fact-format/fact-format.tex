@@ -298,6 +298,7 @@ Let $\atoms$ and $\variables$ be disjoint sets of ground terms called \emph{atom
 Let $\discourse$ be a set of \emph{values} called \emph{universe of discourse}.
 We will assume that the universe of discourse contains two distinguished \emph{boolean} values, $\True$ and $\False$. % values are in the universe of discourse.
 A \emph{valuation} $\vec{v}$ or ``assignment'' or ``interpretation'' is a (partial) mapping from terms in $\atoms \cup \variables$ to values in $\discourse$, i.e., $\vec{v}: \atoms \cup\variables \partialto \discourse$.
+For any $x \in \atoms \cup \variables$, writing $\vec{v}(x)$ implicitly implies that $\vec{v}$ is defined on $x$.
 We call \emph{theory part} of $\vec{v}$ the mapping $\theoryPart{\vec{v}}: \variables \partialto \discourse$.
 With a small abuse of notation, we call \emph{model part} of $\vec{v}$ the set of atoms $\modelPart{\vec{v}} = \{ x \suchthat x \in \atoms, \vec{v}(x) = \True \}$.
 
@@ -315,36 +316,48 @@ Furthermore, $\vec{u}$ is strictly smaller than $\vec{v}$ is $\vec{u}$ is smalle
 
 \inference[constants]{}{\vec{v}\entails\redto{\texttt{val(t,c)}}{c}}
 
-\inference[variable]{}{\vec{v}\entails\redto{\texttt{variable($x$)}}{v_i}}when $\vec{v}(x_i) = v_i$
+\bigskip
+\inference[variable]{}{\vec{v}\entails\redto{\texttt{variable($x$)}}{\vec{v}(x)}}
 
+\bigskip
 \inference[tuple]{\vec{v}\entails\redto{e_1}{a_1}&\vec{v}\entails\redto{e_2}{a_2}&\dots&\vec{v}\entails\redto{e_k}{a_k}&}{\vec{v}\entails\redto{(e_1,\dots,e_k)}{(a_1,\dots,a_k)}}
 
-\inference[application]{\vec{v}\entails\redto{e_o}{f}&\vec{v}\entails\redto{e_1}{a_1}&\vec{v}\entails\redto{e_2}{a_2}&\dots&\vec{v}\entails\redto{e_k}{a_k}&}{\vec{v}\entails\redto{\texttt{operator($e_o$,[$e_1$,$\dots$,$e_k$])}}{r}} when $f(a_1,\dots,a_k) = r$
+\bigskip
+\inference[application]{\vec{v}\entails\redto{e_o}{f}&\vec{v}\entails\redto{e_1}{a_1}&\vec{v}\entails\redto{e_2}{a_2}&\dots&\vec{v}\entails\redto{e_k}{a_k}&}{\vec{v}\entails\redto{\texttt{operation($e_o$,[$e_1$,$\dots$,$e_k$])}}{f(a_1,\dots,a_k)}}
 
 \subsection{Evaluation of statements}
 
 \inference[assert]{\vec{v}\entails\redto{e}{\True}}{\vec{v}\entails\redto{\texttt{assert($e$)}}{\vec{v}}}
+\bigskip
 
 \inference[assign]{\vec{v}\entails\redto{e}{a}}{\vec{v}\entails\redto{\texttt{assign($x$,$e$)}}{\vec{w}}}
-where $\vec{w} = \{ x \mapsto a \} \cup \{ z \mapsto b \suchthat z \mapsto b \in \vec{v} \text{ and } z \neq x\}$
+where $\vec{w} = \{ x \mapsto a \} \cup \{ z \mapsto \vec{v}(z) \suchthat z \in \variables \text{ and } z \neq x\}$
 
+\bigskip
 \inference[if then branch]{\vec{v}\entails\redto{e}{\True}&\vec{v}\entails\redto{s_1}{\vec{w}}}{\vec{v}\entails\redto{\texttt{if($e$,$s_1$,$s_2$)}}{\vec{w}}}
 
+\bigskip
 \inference[if else branch]{\vec{v}\entails\redto{e}{\False}&\vec{v}\entails\redto{s_2}{\vec{w}}}{\vec{v}\entails\redto{\texttt{if($e$,$s_1$,$s_2$)}}{\vec{w}}}
 
+\bigskip
 \inference[noop]{}{\vec{v}\entails\redto{\texttt{noop}}{\vec{v}}}
 
+\bigskip
 \inference[seq2]{\vec{v}\entails\redto{s_1}{\vec{u}}&\vec{u}\entails\redto{s_2}{\vec{w}}}{\vec{v}\entails\redto{\texttt{seq2($s_1$,$s_2$)}}{\vec{w}}}
 
+\bigskip
 \inference[while body]{\vec{v}\entails\redto{e}{\True}&\vec{v}\entails\redto{s}{\vec{u}}&\vec{u}\entails\redto{\texttt{while($e$,$s$)}}{\vec{w}}}{\vec{v}\entails\redto{\texttt{while($e$,$s$)}}{\vec{w}}}
 
+\bigskip
 \inference[while exit]{\vec{v}\entails\redto{e}{\False}}{\vec{v}\entails\redto{\texttt{while($e$,$s$)}}{\vec{v}}}
 
-
+\bigskip
 \inference[bounded while body]{\vec{v}\entails\redto{e}{\True}&\vec{v}\entails\redto{s}{\vec{u}}&\vec{u}\entails\redto{\texttt{while($n-1$,$e$,$s$)}}{\vec{w}}}{\vec{v}\entails\redto{\texttt{while($n$,$e$,$s$)}}{\vec{w}}}
 
+\bigskip
 \inference[bounded while exit 1]{}{\vec{v}\entails\redto{\texttt{while($0$,$e$,$s$)}}{\vec{v}}}
 
+\bigskip
 \inference[bounded while exit 2]{\vec{v}\entails\redto{e}{\False}}{\vec{v}\entails\redto{\texttt{while($n$,$e$,$s$)}}{\vec{v}}}
 
 TODO python
@@ -353,9 +366,9 @@ TODO python
 Let $\vec{v}$ be a valuation and $\modelPart{\vec{v}}$ be its model part.
 We say that $\vec{v}$ is \emph{consistent} if the following conditions hold.
 \begin{itemize}
-\item for every atom $\texttt{variable_define($y$,$e$)} \in \modelPart{\vec{v}}$, there exists a value $a \in \discourse$ such that we have $\vec{v}\entails\redto{e}{a}$ and such that $y \mapsto a \in \vec{v}$;
-\item for every atom $\texttt{variable_declare($y$,boolDomain)} \in \modelPart{\vec{v}}$, there exists a boolean value $a \in \mathbb{B}$ such that we have $\vec{v}\entails\redto{e}{a}$ and such that $y \mapsto a \in \vec{v}$;
-\item for every atom $\texttt{variable_declare($y$,fromFacts)} \in \modelPart{\vec{v}}$, there exists an expression $e$ and a value $a \in \discourse$ such that $\texttt{variable_domain($y$,$e$)} \in \modelPart{\vec{v}}$, $\vec{v}\entails\redto{e}{a}$, and $y \mapsto a \in \vec{v}$;
+\item for every atom $\texttt{variable_define($y$,$e$)} \in \modelPart{\vec{v}}$, $e$ reduces to some value and $y$ maps to it, that is $\vec{v}\entails\redto{e}{\vec{v}(a)}$;
+\item for every atom $\texttt{variable_declare($y$,boolDomain)} \in \modelPart{\vec{v}}$, $y$ is mapped to a boolean value, that is $\vec{v}(y) \in \mathbb{B}$;
+\item for every atom $\texttt{variable_declare($y$,fromFacts)} \in \modelPart{\vec{v}}$, there exists an expression $e$ such that $\texttt{variable_domain($y$,$e$)} \in \modelPart{\vec{v}}$ and $\vec{v}\entails\redto{e}{\vec{v}(y)}$;
 \item for every atom $\texttt{execution_declare($p$,$s$,$i$,$o$)} \in \modelPart{\vec{v}}$ such that $\texttt{execution_run($p$)} \in \modelPart{\vec{v}}$, the valuations $\vec{i} = \{ x \mapsto \vec{v}(\texttt{execution_input($s$,$x$)}) \suchthat x \in i \}$ and $\vec{o} = \{ x \mapsto \vec{v}(\texttt{execution_output($s$,$x$)}) \suchthat x \in o \}$ satisfy $\vec{i}\entails\redto{s}{\vec{o}}$; and
 \item for every atom $\texttt{ensure($e$)} \in \modelPart{\vec{v}}$, we have $\vec{v}\entails\redto{e}{\True}$.
 \end{itemize}

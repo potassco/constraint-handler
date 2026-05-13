@@ -1,0 +1,3 @@
+value(execution_input(myprog(1),"y"),val(int,2))
+value(execution_input(myprog(2),"y"),val(int,2))
+value(execution_input(myprog(3),"y"),val(int,2))

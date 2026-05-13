@@ -1155,10 +1155,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint(eval_var, eval_var.get_value())
             self.handle_on_model_warning(eval_var.get_errors())
             final_value = eval_var.get_value()
-            if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
-                pyVal = final_value
-            else:
-                pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
+            pyVal = evaluator.reducedExpr(final_value)
             pyAtom = atom.Evaluated(
                 eval_var.op,
                 eval_var.args,
@@ -1209,6 +1206,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         elif isinstance(final_value, (dict, multimap.HashableDict)):
             self.handle_on_model_dict(var, final_value)
+
+        elif isinstance(final_value, tuple):
+            self.handle_on_model_normal_type(var, final_value)
         else:
             # In here come Variable(Lambda) and others
             myprint(f"Unknown model type {type(final_value)} for variable {var} in on_model!")
@@ -1261,8 +1261,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
 
             for val in value:
-                mm_pyKey = expression.Val(evaluator.get_baseType(key), key)
-                mm_pyVal = expression.Val(evaluator.get_baseType(val), val)
+                mm_pyKey = evaluator.reducedExpr(key)
+                mm_pyVal = evaluator.reducedExpr(val)
                 mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
 
                 self.python_model.add(mm_pyAtom)
@@ -1270,7 +1270,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def handle_on_model_normal_type(
         self,
         var: clingo.Symbol,
-        final_value: bool | int | float | str | clingo.Symbol | expression.Bad.bad,  # ty:ignore[unresolved-attribute]
+        final_value: bool | int | float | str | clingo.Symbol | tuple[Any, ...] | expression.Bad.bad,  # ty:ignore[unresolved-attribute]
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.
@@ -1280,10 +1280,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             final_value: Scalar value.
         """
         assert self.python_model is not None
-        if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
-            pyVal = final_value
-        else:
-            pyVal = expression.Val(evaluator.get_baseType(final_value), final_value)
+        pyVal = evaluator.reducedExpr(final_value)
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 

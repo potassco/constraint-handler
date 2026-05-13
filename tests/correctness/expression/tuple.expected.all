@@ -1,0 +1,8 @@
+value(pair,(val(int,1),val(string,"x")))
+value(computed,(val(int,3),val(string,"ab")))
+value(copy,(val(int,1),val(string,"x")))
+value(nested,((val(int,1),val(string,"x")),(val(int,3),val(string,"ab"))))
+value(nested_copy,((val(int,1),val(string,"x")),(val(int,3),val(string,"ab"))))
+evaluated(eq,(variable(pair),(variable(copy),())),val(bool,true))
+evaluated(neq,(variable(pair),(variable(computed),())),val(bool,true))
+evaluated(eq,(variable(nested),(variable(nested_copy),())),val(bool,true))

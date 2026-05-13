@@ -11,6 +11,7 @@ direct_query(E)  :- _expression_valueQuery(LBL,E), engine(LBL,compile).
 direct_query(E)  :- _se_assign(NAME,X,E).
 direct_query(X)  :- _se_assign(NAME,X,E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
+direct_query(SE) :- direct_query(T), SE=@pythonTupleElements(T).
 
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
 _se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
@@ -22,6 +23,11 @@ _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lam
 _se_value(variable(X),V) :- direct_query(variable(X)), _se_assign(NAME,variable(X),E2), _se_value(E2,V).
 
 
+%%%%%%%%%%%%%%%%% tuples
+_direct_tupleValuesAux(E,ARGS,N,()) :- direct_query(E), _expression_isTuple(E,N,ARGS).
+_direct_tupleValuesAux(E,ARGS,IDX,(V,VS)) :- _direct_tupleValuesAux(E,ARGS,IDX+1,VS),
+    _expression_index(ARGS,IDX,ARG), _se_value(ARG,V).
+_se_value(E,TUPLE) :- _direct_tupleValuesAux(E,ARGS,0,VS), TUPLE=@pythonReflect(function,(),VS).
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
 _direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _direct_bad_operation(OP,ARGS).
