@@ -1,4 +1,4 @@
-typed(VAR) :- type_variable(_, VAR, _).
+typed(VAR) :- type_variable(VAR,_).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % EXPECTED TO PASS

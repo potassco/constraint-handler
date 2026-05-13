@@ -33,6 +33,14 @@ def pythonEnumerateVariables(clExpr):
     result.append(clingo.Function("length",[clingo.Number(len(pVars))]))
     return result
 
+def pythonEnumerateExecutionVariables(clStmt,clIns):
+    pStmt = myClorm.cltopy(clStmt,statement.Stmt)
+    pIns = myClorm.cltopy(clIns,halt=False)
+    pVars = list(evaluator.collectStmtVars(pStmt) | frozenset(pIns))
+    result = [myClorm.pytocl(e) for e in enumerate(pVars)]
+    result.append(clingo.Function("length",[clingo.Number(len(pVars))]))
+    return result
+
  # TODO: dead?
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars,list)
@@ -62,12 +70,13 @@ def pythonEvalExpr(clExpr,clArgs,clId):
             val,errors = evaluator.evaluate_expr(vexpr,globals)
             locals[var] = val
             for error in errors:
-                results.append(warning.Error(eval_error,repr(error)))
+                #results.append(warning.Error(eval_error,repr(error)))
+                results.append(warning.Error(error[0],error[1]))
         prettyD = { str(var) : val for (var,val) in locals.items() }
         pRes,errors = evaluator.evaluate_expr(pExpr, globals, locals)
         for error in errors:
-            results.append(warning.Error(eval_error,repr(error)))
-        # print(f"eval expr: {pExpr} = {pRes} assuming {prettyD}\nerrors: {results}")
+            #results.append(warning.Error(eval_error,repr(error)))
+            results.append(warning.Error(error[0],error[1]))
         results.append(evaluator.reducedExpr(pRes))
         return map(myClorm.pytocl,results)
     except myClorm.FailedInstantiationExn as exn:
@@ -235,6 +244,7 @@ def pythonReflect(kind,term,args):
         return []
 
 def pythonStatementVariables(clCode,clInTypes,clId):
+    print("05-13, pythonStatementVariables",clCode,clInTypes,clId)
     exec_error = warning.Statement(warning.StatementWarning.pythonError)
     try:
         pCode = myClorm.cltopy(clCode,str)
@@ -247,14 +257,16 @@ def pythonStatementVariables(clCode,clInTypes,clId):
                 tEnv[var].add(t)
         results = []
         locals = dict()
-        pyInputs = { x: frozenset((expression.py_type(t),)) for (x,t) in pInT }
+        pyInputs = { x: frozenset((type_.py_type(t),)) for (x,t) in pInT }
         analysis = python_analysis.analyze_python_statement_types(pCode, globals, pyInputs)
-        results = [(x,expression.ch_type(t)) for (x,ts) in analysis.name_types.items() for t in ts]
+        results = [(x,type_.ch_type(t)) for (x,ts) in analysis.name_types.items() for t in ts]
         return map(myClorm.pytocl,results)
     except myClorm.FailedInstantiationExn as exn:
-        print(f"pythonExec: error when converting {(clCode,clInTypes,clId)}: {repr(exn)}.")
-        return myClorm.pytocl(warning.Error(exec_error,str(exn)))
+        print(f"pythonStatementVariables: error when converting {(clCode,clInTypes,clId)}: {repr(exn)}.")
+        kind = warning.Statement(warning.StatementWarning.syntaxError)
+        return myClorm.pytocl(warning.Error(kind,str(exn)))
+        #return myClorm.pytocl(warning.Error(exec_error,str(exn)))
     except Exception as exn:
-        print(f"pythonExec: uncaught exception {repr(exn)} in context {(clCode,clInTypes,clId)}")
+        print(f"pythonStatementVariables: uncaught exception {repr(exn)} in context {(clCode,clInTypes,clId)}")
         return myClorm.pytocl(warning.Error(exec_error,repr(exn)))
 #end.

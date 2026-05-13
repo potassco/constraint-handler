@@ -8,32 +8,46 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
 
-modules = [
-    "atom",
+datatype_modules = [
     "bool",
     "conditionals",
-    "direct",
     "equality",
-    "execution",
-    "expression",
     "float",
-    "gringoEval",
-    "groundExec",
     "int",
-    "main",
     "multimap",
     "operator",
+    "set",
+    "string",
+    "symbol",
+]
+
+extra_modules = [
+    "domain",
+    "gringoEval",
+    "groundExec",
     "optimize",
     "preference",
     "propagator",
+]
+
+core_modules = [
+    "atom",
+    "defaultArguments",
+    "direct",
+    "execution",
+    "expression",
+    "main",
     "pythonHelper",
-    "set",
+    "solve",
     "statement",
-    "string",
-    "symbol",
+    "sugar",
     "type",
     "variable",
+    "wf_check",
 ]
+
+modules = datatype_modules + extra_modules + core_modules
+#modules = core_modules
 
 python_enabled = False
 ground_patched = False

@@ -1,5 +1,5 @@
-_set_assign(CNAME,variable(X),E) :- _passed(sugar,set_assign(CNAME,X,E)), engine(CNAME,compile).
-_set_declare(CNAME,variable(X)) :- _passed(sugar,set_declare(CNAME,X)), engine(CNAME,compile).
+_set_assign(CNAME,variable(X),E) :- _passed(wf_check,set_assign(CNAME,X,E)), engine(CNAME,compile).
+_set_declare(CNAME,variable(X)) :- _passed(wf_check,set_declare(CNAME,X)), engine(CNAME,compile).
 
 direct_query(E) :- _set_assign(NAME,X,E).
 
@@ -26,8 +26,8 @@ _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V).
 
 %%%%%%%%%%%%%%%%% set_baseDomain
-{ _passed(sugar,set_assign(CNAME,X,E)) } :-
-    _passed(sugar,set_baseDomain(CNAME,X,E)), engine(CNAME,(compile;ground)).
+{ _passed(wf_check,set_assign(CNAME,X,E)) } :-
+    _passed(wf_check,set_baseDomain(CNAME,X,E)), engine(CNAME,(compile;ground)).
 
 %%%%%%%%%%%%%%%%% set_isin set_notin
 operator_declare((set_isin;set_notin),(T1,(set,())),bool) :- _type(T1).
