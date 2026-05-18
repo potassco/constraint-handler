@@ -1,0 +1,2 @@
+evaluated(eq,(variable(execution_output(swap,x)),(variable(execution_input(swap,y)),())),val(bool,true))
+evaluated(eq,(variable(execution_output(swap,y)),(variable(execution_input(swap,x)),())),val(bool,true))
