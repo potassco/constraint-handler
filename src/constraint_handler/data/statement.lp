@@ -10,20 +10,16 @@ _statement_query(PRG,SCOPE,BODY) :- _statement_query(PRG,SCOPE,while(MAX,EXPR,BO
 _statement_wellformed(seq2(STM1,STM2)) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)), _statement_wellformed(STM1), _statement_wellformed(STM2).
 _statement_wellformed(noop) :- _statement_query(PRG,SCOPE,noop).
 _statement_wellformed(statement_python(STR)) :- _statement_query(PRG,SCOPE,statement_python(STR)), (string,_,_,_)=@pythonReify(STR).
-_statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_wellformed(THEN), _statement_wellformed(ELSE).
-_statement_wellformed(assign(X,EXPR)) :- _statement_query(PRG,SCOPE,assign(X,EXPR)).
-_statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)).
-_statement_wellformed(while(MAX,EXPR,BODY)) :- _statement_query(PRG,SCOPE,while(MAX,EXPR,BODY)), _statement_wellformed(BODY).
+_statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_wellformed(THEN), true=@pythonIsExpr(EXPR), _statement_wellformed(ELSE).
+_statement_wellformed(assign(X,EXPR)) :- _statement_query(PRG,SCOPE,assign(X,EXPR)), true=@pythonIsExpr(EXPR).
+_statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)), true=@pythonIsExpr(EXPR).
+_statement_wellformed(while(MAX,EXPR,BODY)) :- _statement_query(PRG,SCOPE,while(MAX,EXPR,BODY)), _statement_wellformed(BODY), true=@pythonIsExpr(EXPR).
 %_statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), _expression_wellformed(EXPR), _statement_wellformed(THEN), _statement_wellformed(ELSE).
 %_statement_wellformed(assign(X,EXPR)) :- _statement_query(PRG,SCOPE,assign(X,EXPR)), _expression_wellformed(EXPR).
 %_statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)), _expression_wellformed(EXPR).
 %_statement_wellformed(while(MAX,EXPR,BODY)) :- _statement_query(PRG,SCOPE,while(MAX,EXPR,BODY)), _expression_wellformed(EXPR), _statement_wellformed(BODY).
 
 
-_expression_query(sugar,PRG,EXPR) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)).
-_expression_query(sugar,PRG,EXPR) :- _statement_query(PRG,SCOPE,assign(X,EXPR)).
-_expression_query(sugar,PRG,EXPR) :- _statement_query(PRG,SCOPE,assert(EXPR)).
-_expression_query(sugar,PRG,EXPR) :- _statement_query(PRG,SCOPE,while(MAX,EXPR,BODY)).
 
 _warning(statement(syntaxError),PRG,STMT) :- _statement_query(PRG,SCOPE,STMT), not _statement_wellformed(STMT).
 %%% TODO: use a python check so that it takes place before SSA without reordering the phases
@@ -158,7 +154,7 @@ _statement_pythonInputMap(SCOPE,VARS) :- _statement_pythonInputMapAux(SCOPE,0,VA
 %%% SSA output
 _statement_definedLatest(SCOPE,X) :- _statement_latest(SCOPE,X,XE).
 _passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), _statement_latest((e,SCOPE),X,XE),_statement_latest(SCOPE,X,variable(XS)),
-XI=operation(ite,(COND,(XT,(XE,())))).
+XI=operation(ite,(COND,(XT,(XE,())))), _statement_changed(STMT,X).
 _passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), not _statement_definedLatest((e,SCOPE),X),_statement_latest(SCOPE,X,variable(XS)), XI=operation(ite,(COND,(XT,(val(none,none),())))).
 _passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(val(none,none),(XE,())))).
@@ -173,7 +169,7 @@ _passed(sugar,ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS))) :- _
   _statement_pythonInputMap(SCOPE,VARS),
   _execution_isRunning(PRG).
 
-_passed(sugar,variable_define(_internal,execution_local(PRG,X),variable(execution_input(PRG,X)))) :- _execution_input_var(PRG,X).
+_passed(sugar,variable_define(LBL,execution_local(PRG,X),variable(execution_input(PRG,X)))) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), _execution_input_var(PRG,X).
 
 %%% TODO: add bad / error handling
 _execution_ou_proj(PRG,X) :- _statement_latest((PRG,()),X,EX).
