@@ -33,19 +33,9 @@ _expression_query(PHASE,PRG,D) :- _expression_query(PHASE,PRG,T), D=@pythonTuple
 %_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
 
 %%%%%%%%%%%%%%%%% _expression_query from query
-_expression_query(sugar,(),EXPR) :- _expression_query(defaultArgs,EXPR).
-_expression_query(wf_check,EXPR) :- _expression_query(sugar,PRG,EXPR).
-_expression_query(solve,EXPR) :- _expression_query(wf_check,EXPR).
-
-
-_expression_sequenceHelper(sugar,ARGS) :- _expression_sequenceHelper(defaultArgs,ARGS).
-_expression_sequenceHelper(wf_check,ARGS) :- _expression_sequenceHelper(sugar,ARGS).
-_expression_sequenceHelper(type_check,ARGS) :- _expression_sequenceHelper(wf_check,ARGS).
 _expression_sequenceHelper(solve,ARGS) :- _expression_sequenceHelper(type_check,ARGS).
-%%%%%%%%%%%%%%%%% _expression_index _expression_isTuple
-_expression_sequenceHelper(defaultArgs,ARGS) :- _expression_query(defaultArgs,operation(O,ARGS)).
-_expression_sequenceHelper(defaultArgs,EXPR) :- _expression_query(defaultArgs,EXPR).
 
+%%%%%%%%%%%%%%%%% _expression_index _expression_isTuple
 _length(defaultArgs,ARGS,N) :- _expression_sequenceHelper(defaultArgs,ARGS), N=@pythonListLength(ARGS).
 _expression_index(defaultArgs,ARGS,IDX,X) :- _expression_sequenceHelper(defaultArgs,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
 _expression_isTuple(defaultArgs,E,N,ARGS) :- _expression_sequenceHelper(defaultArgs,E), true=@pythonIsTuple(E), (function,(),N,ARGS)=@pythonReify(E).
