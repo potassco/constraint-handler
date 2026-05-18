@@ -1,5 +1,4 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
-_expression_valueQuery(_internal,E) :- _expression_wellformed(E).
 _expression_valueQuery(LBL,E) :- _passed(wf_check,variable_define(LBL,X,E)), engine(LBL,(compile;ground)).
 _expression_valueQuery(LBL,E) :- _passed(wf_check,ensure(LBL,E)), engine(LBL,(compile;ground)).
 _expression_valueQuery(LBL,operation(OP,ARGS)) :- _passed(wf_check,evaluate(LBL,OP,ARGS)), engine(LBL,(compile;ground)).

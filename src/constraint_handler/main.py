@@ -47,6 +47,7 @@ core_modules = [
 ]
 
 modules = datatype_modules + extra_modules + core_modules
+#modules = extra_modules + core_modules
 #modules = core_modules
 
 python_enabled = False
