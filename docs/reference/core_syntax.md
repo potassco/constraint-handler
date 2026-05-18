@@ -115,6 +115,7 @@ Variables represent references to values that can be reused throughout the progr
 **[Result]**{.badge .result }
 
 When a variable is assigned a value, an atom of the `value/2` predicate is added to the model.
+The same predicate is also used by some higher-level features, such as labeled optimization declarations, to expose aggregated results in the final model.
 
 ```prolog
 value(Name, Value)

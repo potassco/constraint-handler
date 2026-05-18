@@ -37,12 +37,14 @@ def build_expectations(name):
     test_none = clintest.test.And(*(clintest.test.Assert(All(), absent(atom)) for atom in expected_none))
     expected_first = atoms_from_file(name + ".expected.first")
     test_first = clintest.test.And(*(clintest.test.Assert(First(), contains(atom)) for atom in expected_first))
+    expected_last = atoms_from_file(name + ".expected.last")
+    test_last = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_last))
     test_exists = (
         clintest.test.Assert(Any(), clintest.assertion.True_())
-        if (expected_all or expected_first) and not expected_any
+        if (expected_all or expected_first or expected_last) and not expected_any
         else clintest.test.True_()
     )
-    return clintest.test.And(test_exists, test_all, test_any, test_none, test_first)
+    return clintest.test.And(test_exists, test_all, test_any, test_none, test_first, test_last)
 
 
 def build_reasoning_mode_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:

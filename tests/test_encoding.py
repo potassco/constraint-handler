@@ -109,6 +109,7 @@ base_tests = [
 ]
 
 compile_extra = [
+    "optimization/labeled_values",
     "optimization/preferences",
 ]
 ground_extra = []
