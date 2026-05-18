@@ -1,10 +1,25 @@
 from typing import Literal
 
+import clingo
 import pytest
 
+import constraint_handler
 import tests.utils.testing as chut
 
 ctrl_options = ["0", "--heuristic=Domain"]
+
+
+def solve_with_clingo_statistics(name: str, engine: Literal["compile", "ground", "propagator"] = "compile") -> dict:
+    ctl = clingo.Control(["--stats=2"])
+    constraint_handler.add_to_control(ctl)
+    ctl.add(f"defaultEngine({engine}).")
+    ctl.load(f"tests/correctness/{name}.lp")
+    ctl.ground()
+
+    result = ctl.solve()
+    assert result.satisfiable
+
+    return ctl.statistics
 
 
 def run_test(name: str, engine: Literal["compile", "ground", "propagator"], check_mode: bool = False):
@@ -203,3 +218,119 @@ def test_engine_propagator(name: str):
     ]
     if name not in unsupported:
         run_test(name, "propagator", False)
+
+
+choice_statistics_tests = [
+    "core/basic_assignments",
+    "core/custom_globals",
+    "core/empty_variadics",
+    "engine/request",
+    "engine/request_interaction",
+    "engine/request_mult",
+    "engine/request_set_ref",
+    "datatype/int_eq_compound",
+    "error/recovery",
+    "example2",
+    "example3",
+    "expression/python",
+    "datatype/floats",
+    "datatype/ints",
+    "expression/lambda_recursive",
+    "expression/lambdas",
+    "expression/lambda_zero_args",
+    "multimap/basics",
+    "multimap/equality",
+    "multimap/executions",
+    "multimap/main",
+    "set/nested",
+    "expression/python_multi_args",
+    "set/comparisons",
+    "set/executions",
+    "set/fold_bools",
+    "set/iterations",
+    "set/manipulations",
+    "testAddition",
+    "warning/statement_malformed",
+    "warning/syntax",
+    "warning/variable_confusing_name",
+    "warning/variable_undeclared_statement",
+]
+
+
+@pytest.mark.parametrize("name", choice_statistics_tests)
+def test_compile_statistics_have_zero_choices(name: str):
+    statistics = solve_with_clingo_statistics(name)
+    assert statistics["solving"]["solvers"]["choices"] == 0.0
+
+
+tightness_statistics_tests = [
+    "core/basic_assignments",
+    pytest.param("datatype/booleans", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "datatype/bool_equivalence_bad",
+    "datatype/bool_evaluate",
+    pytest.param("core/conditional_assign", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "core/custom_globals",
+    "core/empty_variadics",
+    "engine/request",
+    "engine/request_interaction",
+    "engine/request_mult",
+    "engine/request_set_ref",
+    "datatype/int_eq_compound",
+    "error/recovery",
+    "error/recovery_ensure",
+    "expression/bad_equality",
+    "expression/python",
+    "execution/main",
+    "execution/assert",
+    pytest.param("execution/conditional", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "execution/loop",
+    pytest.param("execution/optional_run", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "datatype/floats",
+    "datatype/ints",
+    pytest.param("core/integrity", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "expression/lambdas",
+    "expression/lambda_recursive",
+    "expression/lambda_zero_args",
+    "multimap/basics",
+    "multimap/equality",
+    "multimap/executions",
+    "multimap/main",
+    "set/nested",
+    pytest.param("optimization/bools", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    pytest.param("optimization/floats", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    pytest.param("optimization/ints", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    pytest.param("optimization/priority", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "set/membership_decomposed",
+    "set/membership_python",
+    "expression/python_multi_args",
+    "core/reasoning_modes",
+    "set/comparisons",
+    "set/executions",
+    "set/fold_bools",
+    pytest.param("set/from_domain", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "set/iterations",
+    "set/manipulations",
+    pytest.param("set/selfref", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    pytest.param("datatype/strings", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    pytest.param("core/type_checking", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "variable/parallel_declaration",
+    pytest.param("variable/flexible_domain", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "variable/main",
+    "warning/bad",
+    "warning/fake_forbid",
+    pytest.param("warning/python", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    "warning/python_unsupported_type",
+    "warning/statement_malformed",
+    "warning/syntax",
+    "warning/type",
+    "warning/variables",
+    "warning/variable_confusing_name",
+    "warning/variable_undeclared",
+    "warning/variable_undeclared_statement",
+]
+
+
+@pytest.mark.parametrize("name", tightness_statistics_tests)
+def test_compile_statistics_are_tight(name: str):
+    statistics = solve_with_clingo_statistics(name)
+    assert statistics["problem"]["lp"]["sccs"] == 0.0
