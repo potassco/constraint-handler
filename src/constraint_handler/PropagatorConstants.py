@@ -10,8 +10,8 @@ DEBUG_PRINT = False
 DEFAULT_DECISION_LEVEL: Literal[-1] = -1
 
 ENSURE_VAR_NAME: Literal["__ensure__"] = "__ensure__"
-EXECUTION_INPUT: Literal["execution_input"] = "execution_input"
-EXECUTION_OUTPUT: Literal["execution_output"] = "execution_output"
+EXECUTION_INPUT: Literal["execution_input"] = "old_execution_input"
+EXECUTION_OUTPUT: Literal["execution_output"] = "old_execution_output"
 
 OTHER_ENGINE_VAR_NAME: Literal["__other_engine_var__"] = "__other_engine_var__"
 

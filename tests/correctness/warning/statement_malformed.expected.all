@@ -8,7 +8,6 @@ warning(statement(syntaxError),malformed_stmt_if_else,if(variable(cond),noop,bro
 warning(statement(syntaxError),malformed_stmt_if_else,broken_else)
 warning(statement(syntaxError),malformed_stmt_while_expr,while(5,varrriable(cond),noop))
 warning(statement(syntaxError),malformed_stmt_while_body,while(5,variable(cond),broken_body))
-warning(statement(syntaxError),malformed_stmt_while_body,broken_body)
 warning(statement(syntaxError),malformed_stmt_seq2,seq2(noop,broken_seq_part))
 warning(statement(syntaxError),malformed_stmt_seq2,broken_seq_part)
 warning(statement(syntaxError),malformed_stmt_substmt_is_expression,seq2(noop,operation(add,(val(int,1),(val(int,2),())))))

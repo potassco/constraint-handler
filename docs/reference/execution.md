@@ -182,37 +182,6 @@ assert(Condition)
 
     In this example, the execution will fail if the variable `a` is not greater than `0`.
 
-### While
-
-**[Statement]**{.badge .statement }
-
-The `while/3` function symbol allows for repeated execution of a statement as long as a given condition holds true.
-
-```prolog
-while(Limit, Condition, Body)
-```
-
-| Name | Description |
-| :--- | :--- |
-| `Limit` | A maximum number of iterations to prevent infinite loops. If the limit is reached, the output values will be set to [None].|
-| `Condition` | An [Expression] that evaluates to a boolean value, determining whether to continue looping. |
-| `Body` | The [Statement] to be executed repeatedly while the condition is true.
-
-!!! Example
-    A while loop that increments a variable until it reaches a certain value:
-
-    ```prolog
-    while(
-        10,
-        operation(lt, (variable(a), (val(int, 5),()))),
-        assign(a, operation(add, (variable(a), (val(int, 1),()))))
-    )
-    ```
-
-    In this example, the variable `a` is incremented by `1` repeatedly as long as it is less than `5`, with a maximum of `10` iterations to prevent infinite loops.
-
----
-
 ## Declare
 
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }

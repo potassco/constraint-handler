@@ -103,7 +103,6 @@ LINKS = {
     "seq2": "reference/execution.md#sequence",
     "noop": "reference/execution.md#no-operation",
     "assert": "reference/execution.md#assert",
-    "while": "reference/execution.md#while",
     # Python Integration
     "statement_python": "reference/python_integration.md#statements",
     # Error Handling
