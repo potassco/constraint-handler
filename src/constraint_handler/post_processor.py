@@ -6,11 +6,11 @@ from typing import Mapping, NamedTuple
 import clingo
 
 import constraint_handler.schemas.expression as expression
-import constraint_handler.schemas.type_ as type_
+import constraint_handler.schemas.type_ as type_m
 
 
 class Ref(NamedTuple):
-    type_: type_.BaseType | clingo.Symbol
+    type_: type_m.BaseType | clingo.Symbol
     expr: expression.Expr
 
 

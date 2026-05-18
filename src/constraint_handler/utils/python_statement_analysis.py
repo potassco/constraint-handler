@@ -12,6 +12,11 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 from constraint_handler.utils.python_type_model import (
+    _BOOL_SCALAR,
+    _FLOAT_SCALAR,
+    _INT_SCALAR,
+    _NONE_SCALAR,
+    _STR_SCALAR,
     DictOf,
     FunctionType,
     ListOf,
@@ -20,11 +25,6 @@ from constraint_handler.utils.python_type_model import (
     TupleOf,
     TypeInfo,
     UnknownType,
-    _BOOL_SCALAR,
-    _FLOAT_SCALAR,
-    _INT_SCALAR,
-    _NONE_SCALAR,
-    _STR_SCALAR,
 )
 from constraint_handler.utils.python_type_signatures import (
     BINARY_OPERATOR_OVERLOADS,
@@ -240,7 +240,9 @@ class _StatementAnalyzer(ast.NodeVisitor):
         self.unsupported_witness: str | None = None
         self.unsupported_reason: str | None = None
         self._global_values: dict[str, object] = {} if not global_value_env else dict(global_value_env)
-        self._global_env: dict[str, frozenset[TypeInfo]] = {} if not global_value_env else _globals_to_type_env(global_value_env)
+        self._global_env: dict[str, frozenset[TypeInfo]] = (
+            {} if not global_value_env else _globals_to_type_env(global_value_env)
+        )
         self._env: dict[str, frozenset[TypeInfo]] = {} if not local_type_env else dict(local_type_env)
 
     def _resolve_global_value(self, node: ast.AST) -> object:
@@ -437,7 +439,13 @@ class _StatementAnalyzer(ast.NodeVisitor):
                     out.add(ListOf(left_t.element_types | right_t.element_types))
                     continue
 
-                out.update(*(overload.return_types for overload in overloads if _matches_function_inputs(overload, (left_t, right_t))))
+                out.update(
+                    *(
+                        overload.return_types
+                        for overload in overloads
+                        if _matches_function_inputs(overload, (left_t, right_t))
+                    )
+                )
         return frozenset(out)
 
     def _infer_unaryop_type(self, op: ast.unaryop, operand_types: frozenset[TypeInfo]) -> frozenset[TypeInfo]:
@@ -447,7 +455,13 @@ class _StatementAnalyzer(ast.NodeVisitor):
             if operand_type is UnknownType:
                 out.add(UnknownType)
                 continue
-            out.update(*(overload.return_types for overload in overloads if _matches_function_inputs(overload, (operand_type,))))
+            out.update(
+                *(
+                    overload.return_types
+                    for overload in overloads
+                    if _matches_function_inputs(overload, (operand_type,))
+                )
+            )
         return frozenset(out)
 
     def _is_compare_pair_valid(self, op: ast.cmpop, left_t: TypeInfo, right_t: TypeInfo) -> bool:
@@ -611,10 +625,7 @@ def analyze_python_statement_types(
 
     analyzer = _StatementAnalyzer(snippet, global_env, local_types)
     analyzer.visit(tree)
-    exit_name_types = {
-        name: analyzer._env.get(name, _UNKNOWN_TYPES)
-        for name in analyzer.assigned_names
-    }
+    exit_name_types = {name: analyzer._env.get(name, _UNKNOWN_TYPES) for name in analyzer.assigned_names}
     return StatementAnalysisResult(
         name_types=exit_name_types,
         has_unsupported_features=analyzer.unsupported_witness is not None,

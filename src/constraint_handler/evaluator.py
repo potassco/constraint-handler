@@ -13,6 +13,7 @@ import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 import constraint_handler.set as myset
 import constraint_handler.solver_environment as solver_environment
+import constraint_handler.utils.python_statement_analysis as python_analysis
 from constraint_handler.schemas.expression import (
     ConditionalOperator,
     EqOperator,
@@ -20,8 +21,6 @@ from constraint_handler.schemas.expression import (
     StringOperator,
 )
 from constraint_handler.schemas.type_ import BaseType
-import constraint_handler.utils.python_statement_analysis as python_analysis
-
 
 _shared_environment = {
     "math": importlib.import_module("math"),
@@ -62,16 +61,16 @@ def collectStmtVars(stmt) -> frozenset[clingo.Symbol]:
     match stmt:
         case statement.Assert(_):
             return frozenset()
-        case statement.Assign(a,_):
+        case statement.Assign(a, _):
             return frozenset({a})
-        case statement.If(_,t,e):
+        case statement.If(_, t, e):
             return collectStmtVars(t) | collectStmtVars(e)
         case statement.Noop():
             return frozenset()
         case statement.Statement_python(code):
             analysis = python_analysis.analyze_python_statement_types(code, {}, {})
             return frozenset(analysis.name_types)
-        case statement.Seq2(l,r):
+        case statement.Seq2(l, r):
             return collectStmtVars(l) | collectStmtVars(r)
         case _:
             print("collectStmtVars", stmt)
@@ -202,8 +201,7 @@ class Evaluator:
 
     def pythonExtract_operator(self, stmt: str, expr_code: str, vars_mapping: list):
         binding_error_count = len(self.errors)
-        #locals_env = { py_name: self.expr(expr) for py_name, expr in vars_mapping }
-        locals_env = { name: val for name, val in vars_mapping }
+        locals_env = {name: val for name, val in vars_mapping}
         if len(self.errors) > binding_error_count or any(value == expression.Bad.bad for value in locals_env.values()):
             return expression.Bad.bad
 
@@ -422,9 +420,9 @@ def beta_reduction(symbols, expr):
         case expression.Lambda(vars, body):
             nsymbols = {x: v for x, v in symbols.items() if x not in vars}
             return expression.Lambda(vars, beta_reduction(nsymbols, body))
-#        case expression.PythonExtract(vars, stmt, eval_expr):
-#            nvars = [(a,beta_reduction(symbols, e)) for (a,e) in vars]
-#            return expression.PythonExtract(nvars, stmt, eval_expr)
+        # case expression.PythonExtract(vars, stmt, eval_expr):
+        #     nvars = [(a,beta_reduction(symbols, e)) for (a,e) in vars]
+        #     return expression.PythonExtract(nvars, stmt, eval_expr)
         case o if isinstance(o, expression.Operator):
             return expr
         case tuple(eargs):
