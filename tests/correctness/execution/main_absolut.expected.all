@@ -1,0 +1,2 @@
+evaluated(geq,(variable(execution_output(absolut,y)),(val(int,0),())),val(bool,true))
+evaluated(eq,(operation(mult,(variable(execution_output(absolut,y)),(variable(execution_output(absolut,y)),()))),(operation(mult,(variable(execution_input(absolut,x)),(variable(execution_input(absolut,x)),()))),())),val(bool,true))

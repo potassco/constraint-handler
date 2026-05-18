@@ -1,0 +1,3 @@
+value(execution_input(pyt,"x"),val(int,10))
+value(execution_output(pyt,"x"),val(int,11))
+value(execution_output(pyt,y),val(int,22))
