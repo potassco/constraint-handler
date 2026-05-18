@@ -60,7 +60,6 @@ base_tests = [
     "execution/main",
     "execution/assert",
     "execution/conditional",
-    "execution/loop",
     "execution/optional_run",
     "execution/python_integrity",
     "expression/bad_equality",
@@ -129,7 +128,6 @@ def test_engine_compile(name: str):
         "optimization/floats",
         "optimization/ints",
         "optimization/priority",
-        "warning/syntax",
     ]
     if name not in unsupported:
         run_test(name, "compile")
@@ -160,7 +158,6 @@ def test_engine_ground(name: str):
         "engine/request_set_ref",
         "set/iterations",
         "set/selfref",
-        "warning/syntax",
     ]
     if name not in unsupported:
         run_test(name, "ground")

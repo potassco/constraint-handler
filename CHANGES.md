@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+- drop supoort for while statements
+- rewrite the handling of executions to be entirely SSA-based
+
 ## v0.0.2.dev8
 
 - no changes, rerelease due to missing ci

@@ -4,7 +4,6 @@ _statement_query(PRG,SCOPE,STM1) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)).
 _statement_query(PRG,SCOPE,STM2) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)).
 _statement_query(PRG,SCOPE,THEN) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)).
 _statement_query(PRG,SCOPE,ELSE) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)).
-_statement_query(PRG,SCOPE,BODY) :- _statement_query(PRG,SCOPE,while(MAX,EXPR,BODY)).
 
 %%%%%%%%%%%%%%%%% _statement_wellformed
 _statement_wellformed(seq2(STM1,STM2)) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)), _statement_wellformed(STM1), _statement_wellformed(STM2).
@@ -13,11 +12,9 @@ _statement_wellformed(statement_python(STR)) :- _statement_query(PRG,SCOPE,state
 _statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_wellformed(THEN), true=@pythonIsExpr(EXPR), _statement_wellformed(ELSE).
 _statement_wellformed(assign(X,EXPR)) :- _statement_query(PRG,SCOPE,assign(X,EXPR)), true=@pythonIsExpr(EXPR).
 _statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)), true=@pythonIsExpr(EXPR).
-_statement_wellformed(while(MAX,EXPR,BODY)) :- _statement_query(PRG,SCOPE,while(MAX,EXPR,BODY)), _statement_wellformed(BODY), true=@pythonIsExpr(EXPR).
 %_statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), _expression_wellformed(EXPR), _statement_wellformed(THEN), _statement_wellformed(ELSE).
 %_statement_wellformed(assign(X,EXPR)) :- _statement_query(PRG,SCOPE,assign(X,EXPR)), _expression_wellformed(EXPR).
 %_statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)), _expression_wellformed(EXPR).
-%_statement_wellformed(while(MAX,EXPR,BODY)) :- _statement_query(PRG,SCOPE,while(MAX,EXPR,BODY)), _expression_wellformed(EXPR), _statement_wellformed(BODY).
 
 
 

@@ -1,25 +1,25 @@
 %%%%%%%%%%%%%%%%% _expression_query from ensure evaluate
-_expression_query(sugar,_global,E) :- _passed(sugar,ensure(LBL,E)).
-_expression_query(sugar,_global,operation(OP,ARGS)) :- _passed(sugar,evaluate(LBL,OP,ARGS)).
+_expression_query(sugar,(),E) :- _passed(sugar,ensure(LBL,E)).
+_expression_query(sugar,(),operation(OP,ARGS)) :- _passed(sugar,evaluate(LBL,OP,ARGS)).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
-_expression_query(sugar,_global,variable(X)) :- _passed(sugar,variable_define(LBL,X,E)).
-_expression_query(sugar,_global,variable(X)) :- _passed(sugar,variable_declare(LBL,X,D)).
-_expression_query(sugar,_global,variable(X)) :- _passed(sugar,variable_domain(LBL,X,E)).
-_expression_query(sugar,_global,variable(X)) :- _passed(sugar,set_declare(LBL,X)).
-_expression_query(sugar,_global,variable(X)) :- _passed(sugar,set_assign(LBL,X,E)).
-_expression_query(sugar,_global,variable(X)) :- _passed(sugar,set_baseDomain(LBL,X,E)).
-_expression_query(sugar,_global,variable(X)) :- _passed(sugar,multimap_declare(LBL,X)).
-_expression_query(sugar,_global,variable(X)) :- _passed(sugar,multimap_assign(LBL,X,K,B)).
-_expression_query(sugar,_global,E) :- _passed(sugar,variable_define(LBL,X,E)).
-_expression_query(sugar,_global,E) :- _passed(sugar,variable_domain(LBL,X,E)).
-_expression_query(sugar,_global,E) :- _passed(sugar,set_assign(LBL,X,E)).
-_expression_query(sugar,_global,E) :- _passed(sugar,set_baseDomain(LBL,X,E)).
-_expression_query(sugar,_global,(K;B)) :- _passed(sugar,multimap_assign(LBL,X,K,B)).
+_expression_query(sugar,(),variable(X)) :- _passed(sugar,variable_define(LBL,X,E)).
+_expression_query(sugar,(),variable(X)) :- _passed(sugar,variable_declare(LBL,X,D)).
+_expression_query(sugar,(),variable(X)) :- _passed(sugar,variable_domain(LBL,X,E)).
+_expression_query(sugar,(),variable(X)) :- _passed(sugar,set_declare(LBL,X)).
+_expression_query(sugar,(),variable(X)) :- _passed(sugar,set_assign(LBL,X,E)).
+_expression_query(sugar,(),variable(X)) :- _passed(sugar,set_baseDomain(LBL,X,E)).
+_expression_query(sugar,(),variable(X)) :- _passed(sugar,multimap_declare(LBL,X)).
+_expression_query(sugar,(),variable(X)) :- _passed(sugar,multimap_assign(LBL,X,K,B)).
+_expression_query(sugar,(),E) :- _passed(sugar,variable_define(LBL,X,E)).
+_expression_query(sugar,(),E) :- _passed(sugar,variable_domain(LBL,X,E)).
+_expression_query(sugar,(),E) :- _passed(sugar,set_assign(LBL,X,E)).
+_expression_query(sugar,(),E) :- _passed(sugar,set_baseDomain(LBL,X,E)).
+_expression_query(sugar,(),(K;B)) :- _passed(sugar,multimap_assign(LBL,X,K,B)).
 %%%%%%%%%%%%%%%%% _expression_query from other declarations
-_expression_query(sugar,_global,E) :- _passed(sugar,optimize_maximizeSum(LBL,E,X,P)).
-_expression_query(sugar,_global,E) :- _passed(sugar,optimize_precision(E,PRIO)).
-_expression_query(sugar,_global,E) :- _passed(sugar,preference_expressionScore(LBL,E,K)).
+_expression_query(sugar,(),E) :- _passed(sugar,optimize_maximizeSum(LBL,E,X,P)).
+_expression_query(sugar,(),E) :- _passed(sugar,optimize_precision(E,PRIO)).
+_expression_query(sugar,(),E) :- _passed(sugar,preference_expressionScore(LBL,E,K)).
 
 %%%%%%%%%%%%%%%%% _expression_query from expressions
 % TODO lambda?.
@@ -31,10 +31,9 @@ _expression_query(PHASE,PRG,D) :- _expression_query(PHASE,PRG,T), D=@pythonTuple
 %_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,assert(EXPR)).
 %_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,assign(X,EXPR)).
 %_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
-%_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,while(MAX,EXPR,BODY)).
 
 %%%%%%%%%%%%%%%%% _expression_query from query
-_expression_query(sugar,_global,EXPR) :- _expression_query(defaultArgs,EXPR).
+_expression_query(sugar,(),EXPR) :- _expression_query(defaultArgs,EXPR).
 _expression_query(wf_check,EXPR) :- _expression_query(sugar,PRG,EXPR).
 _expression_query(solve,EXPR) :- _expression_query(wf_check,EXPR).
 

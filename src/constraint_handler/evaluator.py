@@ -73,8 +73,6 @@ def collectStmtVars(stmt) -> frozenset[clingo.Symbol]:
             return frozenset(analysis.name_types)
         case statement.Seq2(l,r):
             return collectStmtVars(l) | collectStmtVars(r)
-        case statement.While(_,_,body):
-            return collectStmtVars(body)
         case _:
             print("collectStmtVars", stmt)
             assert False
@@ -381,11 +379,6 @@ class Evaluator:
             case statement.Seq2(stmt1, stmt2):
                 self.stmt(stmt1)
                 self.stmt(stmt2)
-            case statement.While(maxiter, cond, body):
-                iter = 0
-                while self.expr(cond) and iter < maxiter:
-                    iter += 1
-                    self.stmt(body)
             case _:
                 self.errors.append((warning.Statement(warning.StatementWarning.notImplemented), f"{stmt}"))
 
