@@ -244,7 +244,6 @@ def pythonReflect(kind,term,args):
         return []
 
 def pythonStatementVariables(clCode,clInTypes,clId):
-    print("05-13, pythonStatementVariables",clCode,clInTypes,clId)
     exec_error = warning.Statement(warning.StatementWarning.pythonError)
     try:
         pCode = myClorm.cltopy(clCode,str)
