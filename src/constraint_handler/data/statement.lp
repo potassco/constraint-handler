@@ -37,21 +37,25 @@ _execution_outputVar(PRG,X,execution_output(PRG,X)) :- _execution_declare(LBL,PR
 
 _statement_querySSA(LBL,PRG,(PRG,()),STMT) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_wellformed(STMT).
 
-_statement_querySSA(LBL,PRG,(t,SCOPE),THEN) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(E,THEN,ELSE).
-_statement_querySSA(LBL,PRG,(e,SCOPE),ELSE) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(E,THEN,ELSE).
-_statement_querySSA(LBL,PRG,(l,SCOPE),STM1) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=seq2(STM1,STM2).
-_statement_querySSA(LBL,PRG,(r,SCOPE),STM2) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=seq2(STM1,STM2).
+_statement_querySSA(LBL,PRG,(t,SCOPE),THEN) :- _statement_querySSA(LBL,PRG,SCOPE,if(E,THEN,ELSE)).
+_statement_querySSA(LBL,PRG,(e,SCOPE),ELSE) :- _statement_querySSA(LBL,PRG,SCOPE,if(E,THEN,ELSE)).
+_statement_querySSA(LBL,PRG,(l,SCOPE),STM1) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)).
+_statement_querySSA(LBL,PRG,(r,SCOPE),STM2) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)).
 
 _expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
-_expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assert(E).
-_expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assign(X,E).
-_expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(E,THEN,ELSE).
-_expression_querySSA(PRG,SCOPE,F) :- _expression_querySSA(PRG,SCOPE,E), E=operation(O,ARGS), F=@pythonListElements(ARGS).
-_expression_querySSA(PRG,SCOPE,F) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS), F=@pythonListElements(ARGS).
+_expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)).
+_expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)).
+_expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,if(E,THEN,ELSE)).
+%_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)), D=@pythonListElements(ARGS).
+%_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS), D=@pythonListElements(ARGS).
+_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)), _expression_index(defaultArgs,ARGS,IDX,D).
+_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS), _expression_index(defaultArgs,ARGS,IDX,D).
 % TODO: tuple, set
 
+_expression_sequenceHelper(defaultArgs,ARGS) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)).
+_expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
 
-_statement_pythonVarsResult(PRG,SCOPE,R) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=statement_python(CODE), _main_solverIdentifier(ID), R=@pythonStatementVariables(CODE,(),ID).
+_statement_pythonVarsResult(PRG,SCOPE,R) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _main_solverIdentifier(ID), R=@pythonStatementVariables(CODE,(),ID).
 _warning(KIND,PRG,MSG) :- _statement_pythonVarsResult(PRG,SCOPE,error(KIND,MSG)).
 
 
@@ -69,24 +73,17 @@ _statement_changed(STMT,X) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=stat
 _statement_context((PRG,()),X,variable(execution_input(PRG,X))) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(INS).
 
 
-_statement_context((l,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), _statement_context(SCOPE,X,XS), STMT=seq2(S1,S2).
-_statement_context((r,SCOPE),X,X2) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), _statement_context(SCOPE,X,XS), STMT=seq2(S1,S2), _statement_latest((l,SCOPE),X,X2).
-_statement_context((r,SCOPE),X,X2) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=seq2(S1,S2), _statement_latest((l,SCOPE),X,X2).
-_statement_context((t,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), _statement_context(SCOPE,X,XS), STMT=if(C,T,E).
-_statement_context((e,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), _statement_context(SCOPE,X,XS), STMT=if(C,T,E).
+_statement_context((l,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_context(SCOPE,X,XS).
+_statement_context((r,SCOPE),X,X2) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_context(SCOPE,X,XS), _statement_latest((l,SCOPE),X,X2).
+_statement_context((r,SCOPE),X,X2) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_latest((l,SCOPE),X,X2).
+_statement_context((t,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,T,E)), _statement_context(SCOPE,X,XS).
+_statement_context((e,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,T,E)), _statement_context(SCOPE,X,XS).
 %TODO statement_python
 
 
-_expression_sequenceHelper(defaultArgs,ARGS) :- _expression_querySSA(PRG,SCOPE,E), E=operation(O,ARGS).
-_expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
+_expression_context(SCOPE,E,X,XS) :- _expression_querySSA(PRG,SCOPE,E), _statement_context(SCOPE,X,XS).
+% TODO: handle lambda context
 
-% TODO: can be made faster by defining subexpression/2.?
-_expression_context(SCOPE,E,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), _statement_context(SCOPE,X,XS), STMT=assign(V,E).
-_expression_context(SCOPE,E,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), _statement_context(SCOPE,X,XS), STMT=assert(E).
-_expression_context(SCOPE,C,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), _statement_context(SCOPE,X,XS), STMT=if(C,T,E).
-_expression_context(SCOPE,D,X,XS) :- _expression_context(SCOPE,E,X,XS), E=operation(O,L), D=@pythonListElements(L).
-_expression_context(SCOPE,D,X,XS) :- _expression_context(SCOPE,E,X,XS), D=@pythonTupleElements(E).
-_expression_context(SCOPE,D,X,XS) :- _expression_context(SCOPE,E,X,XS), E=lambda(ARGS,D), #false: X=@pythonListElements(ARGS).
 
 _expression_contextualized(SCOPE,E,E) :- _expression_querySSA(PRG,SCOPE,E), E=val(T,V).
 _expression_contextualized(SCOPE,E,E) :- _expression_querySSA(PRG,SCOPE,E), E=bad.
@@ -106,38 +103,37 @@ _expression_contextualized(SCOPE,E,@pythonReflect(function,(),L)) :- _expression
 
 
 %%%%% statement_latest
+_statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)).
+_statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed(if(EXPR,THEN,ELSE),X).
+_statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
+  _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
 
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assign(X,EX), XS=variable(loc(@pythonScopeToString(SCOPE,X))).
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assign(V,EX), _statement_context(SCOPE,X,XS), V!=X.
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assert(E), _statement_context(SCOPE,X,XS).
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=noop, _statement_context(SCOPE,X,XS).
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=seq2(STM1,STM2), _statement_latest((r,SCOPE),X,XS).
-%_statement_context((r,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=seq2(STM1,STM2), _statement_latest((r,SCOPE),X,XS).
-_statement_latest(SCOPE,X,XE) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(EXPR,THEN,ELSE), _statement_changed(STMT,X), XE=variable(loc(@pythonScopeToString(SCOPE,X))).
-_statement_latest(SCOPE,X,XE) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(EXPR,THEN,ELSE), _statement_context(SCOPE,X,XE), not _statement_changed(STMT,X).
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=statement_python(CODE), _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)), XS=variable(loc(@pythonScopeToString(SCOPE,X))).
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=statement_python(CODE), _statement_context(SCOPE,X,XS), #false : _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
+%_statement_scoped(SCOPE,X,variable(loc(SCOPE,X))) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)).
+%_statement_scoped(SCOPE,X,variable(loc(SCOPE,X))) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed(if(EXPR,THEN,ELSE),X).
+%_statement_scoped(SCOPE,X,variable(loc(SCOPE,X))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
+%  _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
 
 
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)), _statement_scoped(SCOPE,X,XS).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,assign(V,EX)), _statement_context(SCOPE,X,XS), V!=X.
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)), _statement_context(SCOPE,X,XS).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,noop), _statement_context(SCOPE,X,XS).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)), _statement_latest((r,SCOPE),X,XS).
+%_statement_context((r,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)), _statement_latest((r,SCOPE),X,XS).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed(STMT,X), _statement_scoped(SCOPE,X,XS).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_context(SCOPE,X,XS), not _statement_changed(if(EXPR,THEN,ELSE),X).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)), _statement_scoped(SCOPE,X,XS).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_context(SCOPE,X,XS), #false : _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
 
 
 
 
-%_execution_varResult(PRG,R) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), R=@pythonEnumerateExecutionVariables(STMT,INS).
-%_execution_indexedVar(PRG,IDX,X) :- _execution_varResult(PRG,(IDX,X)).
-%_execution_countVars(PRG,N) :- _execution_varResult(PRG,length(N)).
-%_statement_indexedVarAux(SCOPE,0,0) :- _statement_querySSA(LBL,PRG,SCOPE,STMT).
-%_statement_indexedVarAux(SCOPE,PX+1,SX+1) :- _statement_indexedVarAux(SCOPE,PX,SX), _execution_indexedVar(PRG,PX,X), _statement_context(SCOPE,X,XS), true=@pythonIsString(X).
-%_statement_hasContext(SCOPE,X) :- _statement_context(SCOPE,X,XS).
-%_statement_indexedVarAux(SCOPE,PX+1,SX) :- _statement_indexedVarAux(SCOPE,PX,SX), _execution_indexedVar(PRG,PX,X), #false: _statement_context(SCOPE,X,XS), true=@pythonIsString(X).
 
-%_statement_indexedVar(SCOPE,SX,X) :- _statement_indexedVarAux(SCOPE,PX,SX), _execution_indexedVar(PRG,PX,X), _statement_context(SCOPE,X,XS), true=@pythonIsString(X).
-%_statement_countVars(SCOPE,SX) :- _statement_indexedVarAux(SCOPE,N,SX), _execution_countVars(PRG,N).
 
 _statement_indexedVar(SCOPE,IDX,X) :- _statement_context(SCOPE,X,XS), true=@pythonIsString(X), IDX=#count { Y: _statement_context(SCOPE,Y,YS), true=@pythonIsString(Y), Y<X }.
 _statement_countVars(SCOPE,N) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), N=#count { X: _statement_context(SCOPE,X,XS), true=@pythonIsString(X) }.
 
-_statement_pythonInputMapAux(SCOPE,N,()) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=statement_python(CODE), _statement_countVars(SCOPE,N).
+_statement_pythonInputMapAux(SCOPE,N,()) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_countVars(SCOPE,N).
 _statement_pythonInputMapAux(SCOPE,IDX,((val(string,Y),YS),VARS)) :- _statement_pythonInputMapAux(SCOPE,IDX+1,VARS), _statement_indexedVar(SCOPE,IDX,Y), _statement_context(SCOPE,Y,YS).
 _statement_pythonInputMap(SCOPE,VARS) :- _statement_pythonInputMapAux(SCOPE,0,VARS).
 
@@ -150,19 +146,19 @@ _statement_pythonInputMap(SCOPE,VARS) :- _statement_pythonInputMapAux(SCOPE,0,VA
 
 %%% SSA output
 _statement_definedLatest(SCOPE,X) :- _statement_latest(SCOPE,X,XE).
-_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), _statement_latest((e,SCOPE),X,XE),_statement_latest(SCOPE,X,variable(XS)),
+_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), _statement_latest((e,SCOPE),X,XE), _statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(XT,(XE,())))), _statement_changed(STMT,X).
-_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), not _statement_definedLatest((e,SCOPE),X),_statement_latest(SCOPE,X,variable(XS)), XI=operation(ite,(COND,(XT,(val(none,none),())))).
-_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)),
+_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,ELSE)), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), not _statement_definedLatest((e,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)), XI=operation(ite,(COND,(XT,(val(none,none),())))).
+_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,ELSE)), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(val(none,none),(XE,())))).
-_passed(sugar,variable_define(LBL,XS,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assign(X,E), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
-_passed(sugar,ensure(LBL,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assert(E), _expression_contextualized(SCOPE,E,EX),
+_passed(sugar,variable_define(LBL,XS,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX), _statement_latest(SCOPE,X,variable(XS)).
+_passed(sugar,ensure(LBL,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)), _expression_contextualized(SCOPE,E,EX),
   _execution_isRunning(PRG).
 
-_passed(sugar,variable_define(LBL,XS,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assign(X,E), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
-_passed(sugar,variable_define(LBL,XS,operation(pythonExtract(CODE,X),VARS))) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=statement_python(CODE),
+_passed(sugar,variable_define(LBL,XS,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
+_passed(sugar,variable_define(LBL,XS,operation(pythonExtract(CODE,X),VARS))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)), _statement_pythonInputMap(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
-_passed(sugar,ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS))) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=statement_python(CODE),
+_passed(sugar,ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonInputMap(SCOPE,VARS),
   _execution_isRunning(PRG).
 

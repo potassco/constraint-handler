@@ -25,22 +25,13 @@ _variable_query(solve,X) :- _passed(wf_check,variable_domain(LABEL,X,V)).
 _variable_query(solve,X) :- _passed(wf_check,set_assign(NAME,X,E)).
 _variable_query(solve,X) :- _passed(wf_check,set_baseDomain(NAME,X,E)).
 _variable_query(solve,X) :- _passed(wf_check,multimap_assign(NAME,X,K,B)).
-_variable_query(solve,X) :- _expression_query(solve,variable(X)).
-%_variable_query((),execution_input(NAME,X)) :- _statement_query(SCOPE,STMT), _passed(wf_check,execution_declare(LBL,NAME,STMT,INS,OUTS)), X=@pythonListElements(INS).
-%_variable_query((NAME,()),X) :- _passed(wf_check,execution_declare(LBL,NAME,STMT,INS,OUTS)), X=@pythonListElements(OUTS).
+%_variable_query(solve,X) :- _expression_query(solve,variable(X)).
 
 _variable_exists(solve,X) :- _passed(wf_check,variable_declare(LBL,X,D)).
 _variable_exists(solve,X) :- _passed(wf_check,variable_define(LBL,X,E)).
 _variable_exists(solve,X) :- _passed(wf_check,set_declare(LBL,X)).
 _variable_exists(solve,X) :- _passed(wf_check,multimap_declare(LBL,X)).
-%_variable_exists(SCOPE,X) :- _statement_query(SCOPE,assign(X,EXPR)).
-%_variable_exists((NAME,()),X) :- _passed(wf_check,execution_declare(LBL,NAME,STMT,INS,OUTS)), X=@pythonListElements(INS).
-%_variable_exists((),execution_output(NAME,X)) :- _passed(wf_check,execution_declare(LBL,NAME,STMT,INS,OUTS)), X=@pythonListElements(OUTS).
 
-%_variable_search_scope(SCOPE,X) :- _variable_query(SCOPE,X).
-%_variable_search_scope(OUTER,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), not _variable_exists(SCOPE,X).
-%_variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), _variable_exists(SCOPE,X).
-%_variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), _variable_found(OUTER,X).
 _warning(variable(undeclared),(),X) :- _variable_query(SCOPE,X), not _variable_exists(SCOPE,X).
 
 _variable_confusingName((assert;assign;if;noop;statement_python;seq2),keyword). % statement
