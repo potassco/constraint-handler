@@ -96,13 +96,9 @@ execution_declare(control_nested_ok,
 		assign(out,operation(add,(val(int,1),(val(int,2),())))),
 		if(
 			operation(eq,(val(int,1),(val(int,1),()))),
-			while(
-				2,
-				operation(lt,(val(int,0),(val(int,1),()))),
-				seq2(
-					assert(operation(eq,(val(int,3),(val(int,3),())))),
-					statement_python("z=1")
-				)
+			seq2(
+				assert(operation(eq,(val(int,3),(val(int,3),())))),
+				statement_python("z=1")
 			),
 			noop
 		)

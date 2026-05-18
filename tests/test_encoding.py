@@ -60,7 +60,6 @@ base_tests = [
     "execution/main",
     "execution/assert",
     "execution/conditional",
-    "execution/loop",
     "execution/optional_run",
     "execution/python_integrity",
     "expression/bad_equality",
@@ -89,8 +88,8 @@ base_tests = [
     "set/from_domain",
     "set/iterations",
     "set/manipulations",
-    "set/selfref",
     "set/same_val_multi_expr",
+    "set/selfref",
     "variable/parallel_declaration",
     "variable/flexible_domain",
     "variable/main",
@@ -132,7 +131,6 @@ def test_engine_compile(name: str):
         "engine/request",
         "engine/request_mult",
         "set/same_val_multi_expr",
-        "warning/syntax",
     ]
     if name not in unsupported:
         run_test(name, "compile")
@@ -162,24 +160,20 @@ def test_engine_ground(name: str):
         "set/fold_bools",
         "engine/request_set_ref",
         "set/iterations",
-        "set/selfref",
         "set/same_val_multi_expr",
-        "warning/syntax",
+        "set/selfref",
     ]
     if name not in unsupported:
         run_test(name, "ground")
 
 
 @pytest.mark.parametrize(
-    ["name", "check_mode"],
-    [(n, c) for c in [True, False] for n in base_tests + propagator_extra],
-    #    list(zip(base_tests + propagator_extra, [True] * len(base_tests + propagator_extra)))
-    #    + list(zip(base_tests + propagator_extra, [False] * len(base_tests + propagator_extra))),
+    "name",
+    base_tests + propagator_extra,
 )
 def test_engine_propagator(name: str, check_mode):
     unsupported: list[str] = [
         "core/type_checking",
-        # "datatype/bool_evaluate",
         "engine/request",
         "engine/request_mult",
         "execution/python_integrity",
@@ -190,9 +184,7 @@ def test_engine_propagator(name: str, check_mode):
         "set/selfref",
         "warning/python_unsupported_type",
         "warning/variables",
-        # "warning/variable_undeclared",
     ]
-    print(name, check_mode)
     if name not in unsupported:
         run_test(name, "propagator", check_mode)
 

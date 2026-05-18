@@ -43,7 +43,7 @@ _variable_exists(solve,X) :- _passed(wf_check,multimap_declare(LBL,X)).
 %_variable_found(SCOPE,X) :- _variable_search_scope(SCOPE,X), SCOPE=(_,OUTER), _variable_found(OUTER,X).
 _warning(variable(undeclared),(),X) :- _variable_query(SCOPE,X), not _variable_exists(SCOPE,X).
 
-_variable_confusingName((assert;assign;if;noop;statement_python;seq2;while),keyword). % statement
+_variable_confusingName((assert;assign;if;noop;statement_python;seq2),keyword). % statement
 _variable_confusingName((lambda;operation;python;val;variable),keyword). % expression
 _variable_confusingName((boolDomain;fromFacts;fromList),keyword). % domain
 _variable_confusingName((none;bool;int;float;string;symbol;set;multimap),type).

@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- drop supoort for while statements
+- rewrite the handling of executions to be entirely SSA-based
 - add optimization result atoms `optimize_value/3`
 
 ## v0.0.2.dev8

@@ -90,16 +90,4 @@ _execution_succeeds(NAME,if(EXPR,THEN,ELSE)) :- _execution_run(NAME,if(EXPR,THEN
 _execution_fails(NAME,if(EXPR,THEN,ELSE)) :- _execution_run(NAME,if(EXPR,THEN,ELSE)), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_fails(BNAME,BSTMT).
 
 
-%%%%%%%%%%%%%%%%% while
-%_execution_equery(NAME,STMT,EXPR) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY).
-%_execution_branch(NAME,skip(NAME),noop) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY), _execution_evaled(NAME,STMT,EXPR,val(bool,false)).
-%_execution_branch(NAME,step(NAME),seq2(BODY,STMT1)) :- _execution_run(NAME,STMT), STMT = while(MAX,EXPR,BODY),
-%    STMT1=while(MAX-1,EXPR,BODY), _execution_evaled(NAME,STMT,EXPR,val(bool,true)), MAX > 0.
-
-_execution_branch((step,NAME),if(EXPR,seq2(BODY,while(MAX-1,EXPR,BODY)),noop)) :- _execution_run(NAME,while(MAX,EXPR,BODY)), MAX > 0.
-_execution_run(BNAME,BSTMT) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME).
-_execution_in(BNAME,X,V) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _execution_in(NAME,X,V), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME).
-_execution_ou(NAME,X,V) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_ou(BNAME,X,V), _execution_succeeds(BNAME,BSTMT).
-_execution_succeeds(NAME,while(MAX,EXPR,BODY)) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_succeeds(BNAME,BSTMT).
-_execution_fails(NAME,while(MAX,EXPR,BODY)) :- _execution_run(NAME,while(MAX,EXPR,BODY)), _execution_branch(BNAME,BSTMT), BNAME=(_,NAME), _execution_fails(BNAME,BSTMT).
 *%

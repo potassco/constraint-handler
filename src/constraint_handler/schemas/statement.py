@@ -33,10 +33,4 @@ class Seq2(typing.NamedTuple):
     snd: Stmt
 
 
-class While(typing.NamedTuple):
-    max_iterations: int
-    cond: expression.Expr
-    body: Stmt
-
-
-type Stmt = Assert | Assign | If | Noop | Statement_python | Seq2 | While
+type Stmt = Assert | Assign | If | Noop | Statement_python | Seq2
