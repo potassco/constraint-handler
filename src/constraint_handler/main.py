@@ -24,7 +24,6 @@ datatype_modules = [
 extra_modules = [
     "domain",
     "gringoEval",
-    "groundExec",
     "optimize",
     "preference",
     "propagator",
@@ -34,7 +33,6 @@ core_modules = [
     "atom",
     "defaultArguments",
     "direct",
-    "execution",
     "expression",
     "main",
     "pythonHelper",
