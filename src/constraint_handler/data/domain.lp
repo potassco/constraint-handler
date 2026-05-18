@@ -3,10 +3,10 @@
 % bad, val(_,_), variable(_), operation(_,_), (,...), python(_), %%% lambda(_,_), %%% ref
 %
 % _passed(wf_check,variable_define(LBL,X,E))
-% _expression_isTuple(EXPR,N,ARGS), _expression_index(ARGS,IDX,E), 
+% _expression_isTuple(EXPR,N,ARGS), _expression_index(ARGS,IDX,E),
 
 %%% output:
-%_expression_domain(E,V) for some expression E and a value V that is the domain of E, 
+%_expression_domain(E,V) for some expression E and a value V that is the domain of E,
 %_expression_setdomain(E,V) for some expression E and a domain value V of a set expression E,
 %_expression_tupledomain(EXPR,IDX,X) for some expression EXPR that is a tuple, an index IDX, and a value X that is the domain of the element at index IDX of EXPR.
 

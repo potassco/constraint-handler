@@ -1,10 +1,12 @@
 import builtins
+
 import constraint_handler.utils.common as common
 import constraint_handler.utils.python_type_model as analysis
 
 BaseType = common.PPEnum(
     "BaseType", ["int", "float", "string", "symbol", "bool", "none", "function", "multimap", "set"]
 )
+
 
 def ch_type(t: analysis.TypeInfo):
     match t:
@@ -31,16 +33,17 @@ def ch_type(t: analysis.TypeInfo):
         case _:
             raise NotImplementedError("ch_type", t)
 
-def py_type(t : analysis.TypeInfo):
+
+def py_type(t: analysis.TypeInfo):
     match t:
         case BaseType.set:
             return analysis.SetOf(analysis.ScalarType(analysis.UnknownType))
         case BaseType.multimap:
-            return analysis.DictOf(analysis.ScalarType(analysis.UnknownType),analysis.ScalarType(analysis.UnknownType))
+            return analysis.DictOf(analysis.ScalarType(analysis.UnknownType), analysis.ScalarType(analysis.UnknownType))
         case BaseType.bool:
             return analysis.ScalarType(bool)
         case BaseType.int:
-            print("returning",analysis.ScalarType(int))
+            print("returning", analysis.ScalarType(int))
             return analysis.ScalarType(int)
         case BaseType.float:
             return analysis.ScalarType(float)
@@ -53,4 +56,4 @@ def py_type(t : analysis.TypeInfo):
         case BaseType.function:
             return analysis.FunctionType(None, frozenset((analysis.UnknownType,)))
         case _:
-            raise NotImplementedError("py_type",t)
+            raise NotImplementedError("py_type", t)

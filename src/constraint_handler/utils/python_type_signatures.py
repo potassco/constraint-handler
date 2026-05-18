@@ -5,12 +5,12 @@ from __future__ import annotations
 import ast
 
 from constraint_handler.utils.python_type_model import (
-    FunctionType,
-    TupleOf,
     _BOOL_SCALAR,
     _FLOAT_SCALAR,
     _INT_SCALAR,
     _STR_SCALAR,
+    FunctionType,
+    TupleOf,
 )
 
 _BOOL_TYPES = frozenset({_BOOL_SCALAR})
@@ -27,9 +27,7 @@ _NUMERIC_BINARY_OVERLOADS = (
     FunctionType((_FLOAT_TYPES, _INT_TYPES), _FLOAT_TYPES),
     FunctionType((_FLOAT_TYPES, _FLOAT_TYPES), _FLOAT_TYPES),
 )
-_DIV_BINARY_OVERLOADS = (
-    FunctionType((_NUMERIC_SCALAR_TYPES, _NUMERIC_SCALAR_TYPES), _FLOAT_TYPES),
-)
+_DIV_BINARY_OVERLOADS = (FunctionType((_NUMERIC_SCALAR_TYPES, _NUMERIC_SCALAR_TYPES), _FLOAT_TYPES),)
 _FLOORDIV_BINARY_OVERLOADS = _NUMERIC_BINARY_OVERLOADS
 _INT_BINARY_OVERLOADS = (FunctionType((_INT_TYPES, _INT_TYPES), _INT_TYPES),)
 
