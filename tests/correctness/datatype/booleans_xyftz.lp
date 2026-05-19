@@ -1,8 +1,5 @@
 %% x = true or false
 %% y = true or false
-%% a = false or nothing
-%% b = true or nothing
-
 
 %% f = (x | y) & (-x | -y) & (-x | y)
 %% t = x xor y
@@ -11,8 +8,6 @@
 %%% any:
 %%% x     not x     y     not y     f     not f     t     not t     z     not z
 %%% f->-y     -(f->-y)
-%%% snot a == true   snot a == false
-%%% wnot b == true   wnot b == false
 
 %%% all:
 %%% f->-x
@@ -20,16 +15,9 @@
 %%% z==(x<->y)
 %%% z!=t
 %%% not (f->-y)&f)
-%%% snot b == false
-%%% not (snot b) == true
-%%% wnot a == true
 
 variable_declare(x,boolDomain).
 variable_declare(y,boolDomain).
-variable_declare(a,fromFacts).
-variable_domain(a,(val(bool,false); val(none,none))).
-variable_declare(b,fromFacts).
-variable_domain(b,(val(bool,true); val(none,none))).
 
 variable_define(f,
     operation(conj,
@@ -52,8 +40,3 @@ evaluate(eq,(variable(z),(operation(leqv,(variable(x),(variable(y),()))),()))).
 evaluate(neq,(variable(z),(variable(t),()))).
 evaluate(limp,(variable(f),(operation(lnot,(variable(y),())),()))).
 evaluate(conj,(operation(limp,(variable(f),(operation(lnot,(variable(y),())),()))),(variable(f),()))).
-evaluate(snot,(variable(a),())).
-evaluate(snot,(variable(b),())).
-evaluate(lnot,(operation(snot,(variable(b),())),())).
-evaluate(wnot,(variable(a),())).
-evaluate(wnot,(variable(b),())).

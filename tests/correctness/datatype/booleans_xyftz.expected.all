@@ -5,6 +5,3 @@ evaluated(leqv,(val(bool,true),(val(bool,true),(val(bool,false),()))),val(bool,f
 evaluated(eq,(variable(z),(operation(leqv,(variable(x),(variable(y),()))),())),val(bool,true))
 evaluated(neq,(variable(z),(variable(t),())),val(bool,true))
 evaluated(conj,(operation(limp,(variable(f),(operation(lnot,(variable(y),())),()))),(variable(f),())),val(bool,false))
-evaluated(snot,(variable(b),()),val(bool,false))
-evaluated(lnot,(operation(snot,(variable(b),())),()),val(bool,true))
-evaluated(wnot,(variable(a),()),val(bool,true))
