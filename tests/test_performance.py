@@ -8,7 +8,7 @@ import pytest
 
 import constraint_handler
 
-ctrl_options = ["0", "--heuristic=Domain"]
+ctrl_options = ["1000", "--heuristic=Domain"]
 Engine = Literal["compile", "ground", "propagator"]
 performance_examples_dir = Path("tests/performance")
 
@@ -74,6 +74,14 @@ compile_benchmarks = [
     benchmark_param(PerformanceBenchmark("sum_chain_performance", "compile", 0.5)),
     benchmark_param(
         PerformanceBenchmark(
+            "bad_scaling_ground",
+            "compile",
+            2.0,
+            constants={"max_depth": 8},
+        )
+    ),
+    benchmark_param(
+        PerformanceBenchmark(
             "repeated_constraints_performance",
             "compile",
             20.0,
@@ -103,10 +111,18 @@ ground_benchmarks = [
         PerformanceBenchmark(
             "sum_aggregates",
             "ground",
-            250.0,
+            200.0,
         )
     ),
     benchmark_param(PerformanceBenchmark("sum_chain_performance", "ground", 1.0)),
+    benchmark_param(
+        PerformanceBenchmark(
+            "bad_scaling_compile",
+            "ground",
+            1.0,
+            constants={"max_depth": 9},
+        )
+    ),
     benchmark_param(
         PerformanceBenchmark(
             "repeated_constraints_performance",
@@ -138,7 +154,7 @@ propagator_benchmarks = [
         PerformanceBenchmark(
             "sum_aggregates",
             "propagator",
-            150.0,
+            15.0,
             check_mode=True,
         )
     ),
@@ -156,7 +172,7 @@ propagator_benchmarks = [
         PerformanceBenchmark(
             "repeated_constraints_performance",
             "propagator",
-            200.0,
+            170.0,
             check_mode=True,
             constants={"pair_count": 130},
         )
@@ -165,7 +181,7 @@ propagator_benchmarks = [
         PerformanceBenchmark(
             "repeated_constraints_performance",
             "propagator",
-            120.0,
+            100.0,
             check_mode=False,
             constants={"pair_count": 1000},
         )
