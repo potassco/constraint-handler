@@ -63,6 +63,7 @@ base_tests = [
     "execution/main_swap",
     "execution/assert",
     "execution/conditional",
+    "execution/conditional_assert",
     "execution/optional_run",
     "execution/python_integrity",
     "expression/bad_equality",
