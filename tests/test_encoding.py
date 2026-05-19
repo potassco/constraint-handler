@@ -95,10 +95,10 @@ base_tests = [
     "warning/fake_forbid",
     "warning/python",
     "warning/python_unsupported_type",
-#    pytest.param(
-#        "warning/statement_python_declared_output",
-#        marks=pytest.mark.xfail(reason="known failing regression for statement_python declared outputs"),
-#    ),
+    #    pytest.param(
+    #        "warning/statement_python_declared_output",
+    #        marks=pytest.mark.xfail(reason="known failing regression for statement_python declared outputs"),
+    #    ),
     "warning/statement_malformed",
     "warning/syntax",
     "warning/type",
@@ -163,9 +163,9 @@ def test_engine_ground(name: str):
 
 @pytest.mark.parametrize(
     ["name", "check_mode"],
-    [(n,c) for c in [True,False] for n in base_tests + propagator_extra]
-#    list(zip(base_tests + propagator_extra, [True] * len(base_tests + propagator_extra)))
-#    + list(zip(base_tests + propagator_extra, [False] * len(base_tests + propagator_extra))),
+    [(n, c) for c in [True, False] for n in base_tests + propagator_extra],
+    #    list(zip(base_tests + propagator_extra, [True] * len(base_tests + propagator_extra)))
+    #    + list(zip(base_tests + propagator_extra, [False] * len(base_tests + propagator_extra))),
 )
 def test_engine_propagator(name: str, check_mode):
     unsupported: list[str] = [
@@ -183,7 +183,7 @@ def test_engine_propagator(name: str, check_mode):
         "warning/variables",
         "warning/variable_undeclared",
     ]
-    print(name,check_mode)
+    print(name, check_mode)
     if name not in unsupported:
         run_test(name, "propagator", check_mode)
 
