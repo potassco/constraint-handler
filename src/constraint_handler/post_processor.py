@@ -209,6 +209,8 @@ def _set_valuation_from_results(
             amount = 0
         elif value_type.match("int", 0):
             amount = payload.number
+        elif value_type.match("bool", 0):
+            amount = int(payload.match("true", 0))
         elif value_type.match("float", 0):
             assert payload.type == clingo.SymbolType.Function and payload.match("float", 1)
             amount = float(payload.arguments[0].string)
@@ -220,7 +222,7 @@ def _set_valuation_from_results(
 
     model.extend(
         [
-            clingo.Function("value", [label, _numeric_value_symbol(total, key in float_totals)])
+            clingo.Function("optimize_value", [label, priority, _numeric_value_symbol(total, key in float_totals)])
             for key, total in totals.items()
             for label, priority in [key]
         ]
