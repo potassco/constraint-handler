@@ -1,0 +1,4 @@
+multimap_value(taken,val(symbol,a),val(int,6))
+multimap_value(taken,val(symbol,c),val(int,4))
+optimize_value(profit,1,val(float,float("8.5")))
+optimize_value(bonus,1,val(float,float("0.75")))
