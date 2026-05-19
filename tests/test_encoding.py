@@ -44,9 +44,10 @@ base_tests = [
     "core/integrity",
     "core/reasoning_modes",
     "core/type_checking",
-    "datatype/booleans",
+    "datatype/booleans_xyftz",
     "datatype/bool_equivalence_bad",
     "datatype/bool_evaluate",
+    "datatype/bool_negation",
     "datatype/int_eq_compound",
     "datatype/ints",
     "datatype/floats",
@@ -236,9 +237,10 @@ def test_compile_statistics_have_zero_choices(name: str):
 
 tightness_statistics_tests = [
     "core/basic_assignments",
-    pytest.param("datatype/booleans", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
+    pytest.param("datatype/booleans_xyftz", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
     "datatype/bool_equivalence_bad",
     "datatype/bool_evaluate",
+    "datatype/bool_negation",
     pytest.param("core/conditional_assign", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
     "core/custom_globals",
     "core/empty_variadics",
