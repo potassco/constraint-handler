@@ -172,8 +172,8 @@ def test_engine_ground(name: str):
 
 
 @pytest.mark.parametrize(
-    "name",
-    base_tests + propagator_extra,
+    ["name", "check_mode"],
+    [(n, c) for c in [True, False] for n in base_tests + propagator_extra],
 )
 def test_engine_propagator(name: str, check_mode):
     unsupported: list[str] = [
