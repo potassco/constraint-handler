@@ -30,7 +30,7 @@ def run_test(name: str, engine: Literal["compile", "ground", "propagator"], chec
     solver.solve(test)
     test.assert_()
 
-    for test, extra_args in chut.build_reasoning_mode_expectations(name):
+    for test, extra_args in chut.build_expectations_with_args(name):
         solver = chut.Solver(ctrl_options + extra_args, engine_prg, files=[name + ".lp"])
         solver.solve(test)
         test.assert_()
@@ -95,10 +95,10 @@ base_tests = [
     "warning/fake_forbid",
     "warning/python",
     "warning/python_unsupported_type",
-    pytest.param(
-        "warning/statement_python_declared_output",
-        marks=pytest.mark.xfail(reason="known failing regression for statement_python declared outputs"),
-    ),
+    #    pytest.param(
+    #        "warning/statement_python_declared_output",
+    #        marks=pytest.mark.xfail(reason="known failing regression for statement_python declared outputs"),
+    #    ),
     "warning/statement_malformed",
     "warning/syntax",
     "warning/type",
@@ -110,6 +110,7 @@ base_tests = [
 
 compile_extra = [
     "optimization/preferences",
+    "optimization/floats_precision",
 ]
 ground_extra = []
 propagator_extra = []
@@ -123,10 +124,6 @@ def test_engine_compile(name: str):
     unsupported: list[str] = [
         "engine/request",
         "engine/request_mult",
-        "optimization/bools",
-        "optimization/floats",
-        "optimization/ints",
-        "optimization/priority",
         "warning/syntax",
     ]
     if name not in unsupported:
@@ -165,10 +162,12 @@ def test_engine_ground(name: str):
 
 
 @pytest.mark.parametrize(
-    "name",
-    base_tests + propagator_extra,
+    ["name", "check_mode"],
+    [(n, c) for c in [True, False] for n in base_tests + propagator_extra],
+    #    list(zip(base_tests + propagator_extra, [True] * len(base_tests + propagator_extra)))
+    #    + list(zip(base_tests + propagator_extra, [False] * len(base_tests + propagator_extra))),
 )
-def test_engine_propagator_check(name: str):
+def test_engine_propagator(name: str, check_mode):
     unsupported: list[str] = [
         "core/type_checking",
         "datatype/bool_evaluate",
@@ -177,10 +176,6 @@ def test_engine_propagator_check(name: str):
         "execution/python_integrity",
         "expression/lambda_recursive",
         "multimap/main",
-        "optimization/bools",
-        "optimization/floats",
-        "optimization/ints",
-        "optimization/priority",
         "set/fold_bools",
         "set/iterations",
         "set/selfref",
@@ -188,36 +183,9 @@ def test_engine_propagator_check(name: str):
         "warning/variables",
         "warning/variable_undeclared",
     ]
+    print(name, check_mode)
     if name not in unsupported:
-        run_test(name, "propagator", True)
-
-
-@pytest.mark.parametrize(
-    "name",
-    base_tests + propagator_extra,
-)
-def test_engine_propagator(name: str):
-    unsupported: list[str] = [
-        "core/type_checking",
-        "datatype/bool_evaluate",
-        "engine/request",
-        "engine/request_mult",
-        "execution/python_integrity",
-        "expression/lambda_recursive",
-        "multimap/main",
-        "optimization/bools",
-        "optimization/floats",
-        "optimization/ints",
-        "optimization/priority",
-        "set/fold_bools",
-        "set/iterations",
-        "set/selfref",
-        "warning/python_unsupported_type",
-        "warning/variables",
-        "warning/variable_undeclared",
-    ]
-    if name not in unsupported:
-        run_test(name, "propagator", False)
+        run_test(name, "propagator", check_mode)
 
 
 choice_statistics_tests = [
