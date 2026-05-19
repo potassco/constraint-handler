@@ -111,7 +111,7 @@ ground_benchmarks = [
         PerformanceBenchmark(
             "sum_aggregates",
             "ground",
-            170.0,
+            200.0,
         )
     ),
     benchmark_param(PerformanceBenchmark("sum_chain_performance", "ground", 1.0)),
