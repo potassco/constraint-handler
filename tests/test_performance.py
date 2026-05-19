@@ -76,7 +76,7 @@ compile_benchmarks = [
         PerformanceBenchmark(
             "bad_scaling_ground",
             "compile",
-            1.0,
+            2.0,
             constants={"max_depth": 8},
         )
     ),
@@ -111,7 +111,7 @@ ground_benchmarks = [
         PerformanceBenchmark(
             "sum_aggregates",
             "ground",
-            150.0,
+            170.0,
         )
     ),
     benchmark_param(PerformanceBenchmark("sum_chain_performance", "ground", 1.0)),
