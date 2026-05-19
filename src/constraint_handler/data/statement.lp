@@ -74,11 +74,10 @@ _statement_context((PRG,()),X,variable(execution_input(PRG,X))) :- _execution_de
 
 
 _statement_context((l,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_context(SCOPE,X,XS).
-_statement_context((r,SCOPE),X,X2) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_context(SCOPE,X,XS), _statement_latest((l,SCOPE),X,X2).
+_statement_context((r,SCOPE),X,X2) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_context(SCOPE,X,XS), _statement_latest((l,SCOPE),X,X2). % TODO: strange, double-check
 _statement_context((r,SCOPE),X,X2) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_latest((l,SCOPE),X,X2).
 _statement_context((t,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,T,E)), _statement_context(SCOPE,X,XS).
 _statement_context((e,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,T,E)), _statement_context(SCOPE,X,XS).
-%TODO statement_python
 
 
 _expression_context(SCOPE,E,X,XS) :- _expression_querySSA(PRG,SCOPE,E), _statement_context(SCOPE,X,XS).
@@ -100,6 +99,14 @@ _expression_contextualized(SCOPE,E,operation(O,L)) :- _expression_contextualized
 
 _expression_contextualizedListAux(SCOPE,E,ARGS,N,()) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS).
 _expression_contextualized(SCOPE,E,@pythonReflect(function,(),L)) :- _expression_contextualizedListAux(SCOPE,E,ARGS,0,L), _expression_isTuple(defaultArgs,E,N,ARGS).
+
+
+%%%%% statement_condition
+_statement_condition((PRG,()),()) :- _execution_declare(LBL,PRG,STMT,INS,OUTS).
+_statement_condition((l,SCOPE),ES) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_condition(SCOPE,ES).
+_statement_condition((r,SCOPE),ES) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_condition(SCOPE,ES).
+_statement_condition((t,SCOPE),(E,ES)) :- _statement_querySSA(LBL,PRG,SCOPE,if(COND,THEN,ELSE)), _expression_contextualized(SCOPE,COND,E), _statement_condition(SCOPE,ES).
+_statement_condition((e,SCOPE),(NE,ES)) :- _statement_querySSA(LBL,PRG,SCOPE,if(COND,THEN,ELSE)), _expression_contextualized(SCOPE,COND,E), _statement_condition(SCOPE,ES), NE=operation(lnot,(E,())).
 
 
 %%%%% statement_latest
@@ -152,8 +159,13 @@ _passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,i
 _passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,ELSE)), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(val(none,none),(XE,())))).
 _passed(sugar,variable_define(LBL,XS,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX), _statement_latest(SCOPE,X,variable(XS)).
-_passed(sugar,ensure(LBL,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)), _expression_contextualized(SCOPE,E,EX),
+_passed(sugar,ensure(LBL,ASSR)) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
+  _expression_contextualized(SCOPE,E,EX),
+  _statement_condition(SCOPE,ES),
+  CONJ=operation(conj,ES),
+  ASSR=operation(limp,(CONJ,(EX,()))),
   _execution_isRunning(PRG).
+
 
 _passed(sugar,variable_define(LBL,XS,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
 _passed(sugar,variable_define(LBL,XS,operation(pythonExtract(CODE,X),VARS))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
