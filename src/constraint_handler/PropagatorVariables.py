@@ -507,6 +507,8 @@ class EnsureVariable:
         """
         if self.expression.assigned is not None and not self.expression.assigned:
             # Ensure is false, so no conflict
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+            self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.NOT_CHANGED
 
         if self.value != ValueStatus.NOT_SET:
