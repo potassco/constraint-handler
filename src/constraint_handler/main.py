@@ -66,12 +66,11 @@ def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
     ctrl.register_propagator(prop)
     ctrl.register_propagator(post_prop)
     prop.get_configuration(ctrl)
-    setattr(ctrl, "constraint_handler_post_processing_propagator", post_prop)
     original_solve = ctrl.solve
 
     def combine_on_model(on_model: typing.Callable[[clingo.Model], bool | None] | None = None):
         def om(model):
-            post_processor.set_valuation(ctrl, model)
+            post_processor.set_valuation(post_prop, model)
             if prop.on_model(model) == False:
                 return False
             if on_model is not None:

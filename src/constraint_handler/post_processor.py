@@ -229,8 +229,6 @@ def _set_valuation_from_results(
     )
 
 
-def set_valuation(ctrl, model) -> None:
-    value_results, set_contains_results, optimize_results = (
-        ctrl.constraint_handler_post_processing_propagator.get_results(model)
-    )
+def set_valuation(propagator: PostProcessingPropagator, model) -> None:
+    value_results, set_contains_results, optimize_results = propagator.get_results(model)
     _set_valuation_from_results(model, value_results, set_contains_results, optimize_results)

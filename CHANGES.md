@@ -2,8 +2,7 @@
 
 ## Ongoing
 
-- rename post-processed optimization result atoms from `value/2` to
-  `optimize_value/3` and document the new output shape
+- add optimization result atoms `optimize_value/3`
 
 ## v0.0.2.dev8
 
