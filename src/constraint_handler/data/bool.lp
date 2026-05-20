@@ -23,11 +23,11 @@ _se_value(operation(wnot,(E1,())),val(bool,true))  :- direct_query(operation(wno
 operator_declare_variadic((conj;disj),bool,bool,1).
 _operator_recoverable((conj;disj)).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,conj), _computeIdx(E,IDX,val(bool,false)).
-_computedIdx(E,val(bool,true))  :- _computeIdx(E,conj), _computeIdx(E,IDX,val(bool,true)) : _computeIdx(E,IDX,V).
+_computedIdx(E,val(bool,true))  :- _computeIdx(E,conj), #false : _computeIdx(E,IDX,V), V!=val(bool,true).
 _computedIdx(E,bad) :- _computeIdx(E,conj), _computeIdx(E,IDX,bad), #false : _computeIdx(E,JDX,val(bool,false)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,disj), _computeIdx(E,IDX,val(bool,true)).
-_computedIdx(E,val(bool,false)) :- _computeIdx(E,disj), _computeIdx(E,IDX,val(bool,false)) : _computeIdx(E,IDX,V).
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,disj), #false : _computeIdx(E,IDX,(val(bool,true);bad)).
 _computedIdx(E,bad) :- _computeIdx(E,disj), _computeIdx(E,IDX,bad), #false : _computeIdx(E,JDX,val(bool,true)).
 
 _operator_recoverable(limp).
