@@ -110,6 +110,7 @@ base_tests = [
 
 compile_extra = [
     "optimization/labeled_values",
+    "optimization/none_as_zero",
     "optimization/preferences",
     "optimization/floats_precision",
 ]
