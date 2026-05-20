@@ -5,7 +5,11 @@ propagator_evaluate(CNAME,F,E) :- _passed(sugar,evaluate(CNAME,F,E)), engine(CNA
 propagator_bool_evaluate(LBL,E) :- _passed(sugar,bool_evaluate(LBL,E)), engine(LBL,propagator).
 
 propagator_variable_declare(CNAME,X,E) :- _passed(sugar,variable_declare(CNAME,X,E)), engine(CNAME,propagator).
-propagator_variable_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), engine(CNAME,propagator).
+% propagator_variable_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), engine(CNAME,propagator).
+
+0 {propagator_variable_domain(CNAME,X, D) : _passed(sugar,variable_domain(CNAME,X,D))} 1 :- _passed(sugar,variable_declare(CNAME,X,_)), engine(CNAME,propagator).
+ensure(operation(neq,(variable(V),(E1,())))) :- propagator_variable_domain(CNAME,V,E2), _passed(sugar,variable_domain(CNAME,V,E1)),E1 < E2.
+
 propagator_variable_define(CNAME,X,E) :- _passed(sugar,variable_define(CNAME,X,E)), engine(CNAME,propagator).
 
 propagator_set_assign(CNAME,X,E) :- _passed(sugar,set_assign(CNAME,X,E)), engine(CNAME,propagator).

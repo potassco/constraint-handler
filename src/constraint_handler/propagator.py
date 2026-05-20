@@ -182,9 +182,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.evaluations.init(list(self.symbol2var.get_variables()))
 
-        myprint("INIT DONE")
-        myprint("#" * 50)
-
     def add_reasoning_mode_helper_atoms(self, ctl: clingo.PropagateInit) -> None:
         """
         Register helper literals for brave/cautious reasoning.
@@ -883,17 +880,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             domain_variable: Variable = cast(
                 Variable, self.symbol2var.get_variable(symbol_var, getattr(Variable, "__name__"))
             )
-            literal = ctl.add_literal(freeze=True)
+            # literal = ctl.add_literal(freeze=True)
             domain_literal = from_facts_literals[symbol_var]
-            domain_variable.add_value(domain_expr, literal, domain_literal)
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
+            domain_variable.add_value(domain_expr, _literal, domain_literal)
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
 
-            ctl.add_clause([-literal, domain_literal])
+            ctl.add_clause([-_literal, domain_literal])
             # literal defining the domain should also be included, not just the variable declaration literal!
-            ctl.add_clause([-literal, _literal])
+            # ctl.add_clause([-literal, _literal])
 
-            self.literal2var[literal] = [domain_variable]
+            self.literal2var.setdefault(_literal, []).append(domain_variable)
 
         for (name, optional), _literal in var_optionals.items():
             if not self.symbol2var.has_var_type(optional, getattr(Variable, "__name__")):
@@ -1229,6 +1226,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # add to the clingo output the final result based on reasoning mode
         # For brave and cautious, we output the accumulated result (similar to clingo)
         # For standard, we output the current model
+
         assert self.python_model is not None
         for pyAtom in self.python_model:
             clAtom = myClorm.pytocl(pyAtom)
