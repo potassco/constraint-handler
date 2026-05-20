@@ -197,7 +197,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             myprint("Adding reasoning mode helper atoms")
             for a in ctl.symbolic_atoms.by_signature(REASONING_STAGE_ATOM, 1):
                 assert a.symbol.arguments[0].number in (1, 2, 3), f"Unknown reasoning stage atom: {a.symbol}"
-                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(a.literal)  # ty:ignore[invalid-assignment]
+                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(
+                    a.literal
+                )  # ty:ignore[invalid-assignment]
 
             # TODO: check if it works with the new variable manager stuff
             for var in self.symbol2var.get_variables():
@@ -579,9 +581,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if extra_literals:
             ng = ng.union(extra_literals)
         if ctl.add_nogood(ng, tag=True):
-            assert False, (
-                f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
-            )
+            assert (
+                False
+            ), f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
 
     def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]) -> bool:
         """
@@ -900,7 +902,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 Variable, self.symbol2var.get_variable(optional, getattr(Variable, "__name__"))
             )
             literal = ctl.add_literal(freeze=True)
-            optional_variable.add_value(expression.Val(expression.BaseType.none, None), literal, _literal)  # ty:ignore[unresolved-attribute]
+            optional_variable.add_value(
+                expression.Val(expression.BaseType.none, None), literal, _literal
+            )  # ty:ignore[unresolved-attribute]
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
@@ -1026,7 +1030,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(-literal)
 
         domains = myClorm.findInPropagateInit(ctl, atom.Propagator_set_baseDomain)
-        for (name, symbol_var, domain_expr), _ in domains.items():
+        for (name, symbol_var, domain_expr), _literal in domains.items():
             setvar: SetVariable = cast(
                 SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
             )
@@ -1325,7 +1329,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def handle_on_model_normal_type(
         self,
         var: clingo.Symbol,
-        final_value: (bool | int | float | str | clingo.Symbol | tuple[Any, ...] | expression.Bad.bad),  # ty:ignore[unresolved-attribute]
+        final_value: (
+            bool | int | float | str | clingo.Symbol | tuple[Any, ...] | expression.Bad.bad
+        ),  # ty:ignore[unresolved-attribute]
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.
