@@ -1012,7 +1012,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateInit object.
         """
 
-        for id, _ in myClorm.findInPropagateInit(ctl, atom.Main_solverIdentifier).items():
+        for id, _ in myClorm.findInPropagateInit(ctl, atom.Main_solverIdentifiers).items():
             self.environment = evaluator.get_environment(id.id)
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):

@@ -55,7 +55,7 @@ _expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _express
 _expression_sequenceHelper(defaultArgs,ARGS) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)).
 _expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
 
-_statement_pythonVarsResult(PRG,SCOPE,R) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _main_solverIdentifier(ID), R=@pythonStatementVariables(CODE,(),ID).
+_statement_pythonVarsResult(PRG,SCOPE,R) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _main_solverIdentifiers(ID), R=@pythonStatementVariables(CODE,(),ID).
 _warning(KIND,PRG,MSG) :- _statement_pythonVarsResult(PRG,SCOPE,error(KIND,MSG)).
 
 

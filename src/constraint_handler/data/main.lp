@@ -13,11 +13,14 @@
 %%% propagator
 %%% none
 
-_main_solverIdentifier(X) :- main_solverIdentifier(X).
-_main_solverIdentifier(none) :- not main_solverIdentifier(_).
+_main_solverIdentifierAux(#inf,()).
+_main_solverIdentifierAux(Y,(Y,L)) :- _main_solverIdentifierAux(X,L), main_solverIdentifier(Y), X < Y, 0 = #count { Z : main_solverIdentifier(Z), X < Z, Z < Y }.
+_main_solverIdentifiers(L) :- _main_solverIdentifierAux(X,L), 0 = #count { Z : main_solverIdentifier(Z), X < Z }.
+
 
 _main_defaultEngine(ENG) :- defaultEngine(ENG).
-_main_defaultEngine(compile) :- not defaultEngine(_).
+_main_defaultEngineProvided :- defaultEngine(ENG).
+_main_defaultEngine(compile) :- not _main_defaultEngineProvided.
 
 requestedEngine(CNAME) :- requestEngine(CNAME,ENG).
 engine(CNAME,ENG) :- requestEngine(CNAME,ENG).

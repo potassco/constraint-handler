@@ -435,11 +435,11 @@ def beta_reduction(symbols, expr):
             assert False
 
 
-def get_environment(identifier):
+def get_environment(identifiers):
     global _shared_environment
     global _solver_environment
     globs = dict(_shared_environment)
-    if identifier is not None:
+    for identifier in identifiers:
         if identifier in _solver_environment:
             globs.update(_solver_environment[identifier])
         else:
