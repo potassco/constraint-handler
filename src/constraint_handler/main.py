@@ -62,7 +62,8 @@ def add_to_control(
 
 def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
     prop = propagator.ConstraintHandlerPropagator(check_only)
-    post_prop = post_processor.PostProcessingPropagator()
+    post_prop = post_processor.OptimizePostProcessingPropagator()
+
     ctrl.register_propagator(prop)
     ctrl.register_propagator(post_prop)
     prop.get_configuration(ctrl)
@@ -70,7 +71,7 @@ def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
 
     def combine_on_model(on_model: typing.Callable[[clingo.Model], bool | None] | None = None):
         def om(model):
-            post_processor.set_valuation(post_prop, model)
+            post_processor.set_optimize_valuation(post_prop, model)
             if prop.on_model(model) == False:
                 return False
             if on_model is not None:
@@ -79,6 +80,7 @@ def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
         return om
 
     def new_solve(*args, **kwargs):
+        post_prop.reset_optimize_value_symbols()
         if len(args) > 1:
             args = (args[0], combine_on_model(args[1])) + args[2:]
         elif "on_model" in kwargs:

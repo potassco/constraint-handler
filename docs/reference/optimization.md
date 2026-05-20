@@ -45,6 +45,8 @@ Here, `Total` is a regular `val/2` term using the resulting numeric type, for ex
 
 This means that optimization labels are not just annotations for declarations. They also become observable result symbols in the final model.
 
+When clingo continues enumerating optimal models in combination with brave or cautious reasoning, the constraint handler freezes these `optimize_value/3` atoms at the first model whose `optimality_proven` flag is true and reuses that same valuation for later models in the same solve call. This is intentional, to give you access to partial information about the optimality criteria. These are not the consequences!
+
 !!! Note
     The shorthand forms `optimize_maximizeSum/2` and `optimize_maximizeSum/3` use the anonymous label `_label_anonymous`. As a consequence, they also produce a result atom of the form `optimize_value(_label_anonymous, Priority, Total)`.
     If you want a stable and meaningful output atom, use the explicit `optimize_maximizeSum/4` form with your own label.
