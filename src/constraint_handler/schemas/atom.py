@@ -200,8 +200,8 @@ type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceA
 type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_score | warning.Warning
 
 
-Main_solverIdentifier = namedtuple("_main_solverIdentifier", ["id"])
-Main_solverIdentifier.__annotations__ = {"id": expression.constant}
+Main_solverIdentifiers = namedtuple("_main_solverIdentifiers", ["id"])
+Main_solverIdentifiers.__annotations__ = {"id": list[expression.constant]}
 
 
 class Propagator_variable_declare(Variable_declare):

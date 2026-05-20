@@ -38,7 +38,7 @@ _ge_mapAux(EXPR,N,()) :- _ge_enumeratedVariables(EXPR,length(N)).
 _ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), ge_value(X,V).
 _ge_mapped(EXPR,M) :- _ge_mapAux(EXPR,0,M).
 
-_ge_eval_exec(EXPR,M,RES) :- _ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifier(ID).
+_ge_eval_exec(EXPR,M,RES) :- _ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifiers(ID).
 ge_result(EXPR,V) :- _ge_eval_exec(EXPR,M,V), #false: V=error(KIND,MSG).
 ge_result(EXPR,bad) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).
 _warning(KIND,(),(EXPR,M,MSG)) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).

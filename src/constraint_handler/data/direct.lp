@@ -80,8 +80,8 @@ _expression_pythonEval(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _d
 %    #false : _expression_pythonEvalVar(E,Z), X < Z, Z < Y.
 %_expression_pythonEvalMap(E,M) :- _expression_pythonEvalMapAux(E,X,M), #false : _expression_pythonEvalVar(E,Y), X < Y.
 
-%_expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), _expression_pythonEvalMap(E,M), RES=@pythonEvalExpr(E,M,ID), _main_solverIdentifier(ID).
-_expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), RES=@pythonEvalExpr(E,(),ID), _main_solverIdentifier(ID).
+%_expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), _expression_pythonEvalMap(E,M), RES=@pythonEvalExpr(E,M,ID), _main_solverIdentifiers(ID).
+_expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), RES=@pythonEvalExpr(E,(),ID), _main_solverIdentifiers(ID).
 _computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,val(TYPE,V)).
 _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).

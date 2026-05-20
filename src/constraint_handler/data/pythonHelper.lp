@@ -62,7 +62,7 @@ def pythonEvalExpr(clExpr,clArgs,clId):
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
-        pId   = myClorm.cltopy(clId,int | None)
+        pId   = myClorm.cltopy(clId,list[expression.constant])
         globals = evaluator.get_environment(pId)
         results = []
         locals = dict()
@@ -85,42 +85,6 @@ def pythonEvalExpr(clExpr,clArgs,clId):
     except Exception as exn:
         # print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
         return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
-
-
-def pythonExec(clStmt,clEnv,clId):
-    exec_error = warning.Statement(warning.StatementWarning.pythonError)
-    try:
-        pStmt = myClorm.cltopy(clStmt,statement.Stmt)
-        pEnv  = myClorm.cltopy(clEnv,list[tuple[expression.constant,expression.ReducedExpr]])
-        pId   = myClorm.cltopy(clId,int | None)
-        globals = evaluator.get_environment(pId)
-        results = []
-        locals = dict()
-        for (var,vexpr) in pEnv:
-            val,errors = evaluator.evaluate_expr(vexpr,globals)
-            locals[var] = val
-            for error in errors:
-                results.append(warning.Error(exec_error,repr(error)))
-        # print((pStmt, globals, locals))
-        errors = evaluator.evaluate_stmt(pStmt, globals, locals)
-        for error in errors:
-            results.append(warning.Error(exec_error,repr(error)))
-        if not results:
-            results.append(True)
-        for (x,val) in locals.items():
-            try:
-                results.append((x,evaluator.reducedExpr(val)))
-            except NotImplementedError:
-                results.append((x,expression.Python(repr(val))))
-        return map(myClorm.pytocl,results)
-    except solver_environment.FailIntegrityExn:
-        return myClorm.pytocl(atom.FailIntegrity())
-    except myClorm.FailedInstantiationExn as exn:
-        print(f"pythonExec: error when converting {(clStmt,clEnv,clId)}: {repr(exn)}.")
-        return myClorm.pytocl(warning.Error(exec_error,str(exn)))
-    except Exception as exn:
-        print(f"pythonExec: uncaught exception {repr(exn)} in context {(clStmt,clEnv,clId)}")
-        return myClorm.pytocl(warning.Error(exec_error,repr(exn)))
 
 
 def pythonListElements(clL):
@@ -248,7 +212,7 @@ def pythonStatementVariables(clCode,clInTypes,clId):
     try:
         pCode = myClorm.cltopy(clCode,str)
         pInT  = myClorm.cltopy(clInTypes,list[tuple[expression.constant,type_.BaseType]])
-        pId   = myClorm.cltopy(clId,int | None)
+        pId   = myClorm.cltopy(clId,list[expression.constant])
         globals = evaluator.get_environment(pId)
         tEnv  = defaultdict(set)
         for (var,t) in pInT:
