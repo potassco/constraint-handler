@@ -20,12 +20,6 @@
 %%% lsu = |su| = 3
 %%% lsi = |si| = 1
 %%% lse = |se| = 2
-%%% in4e = s4 \in se = false
-%%% in3e = s3 \in se = true
-%%% in2e = s2 \in se = true
-%%% set_notin4 = s4 \set_notin se = true
-%%% set_notin3 = s3 \set_notin se = false
-%%% set_notin2 = s2 \set_notin se = false
 
 variable_define(v1, operation(add,(val(int,1),(val(int,1),())))).
 variable_define(v2, val(int,2)).
@@ -80,9 +74,3 @@ variable_define(lsa, operation(length,(variable(sa),()))).
 variable_define(lsu, operation(length,(variable(su),()))).
 variable_define(lsi, operation(length,(variable(si),()))).
 variable_define(lse, operation(length,(variable(se),()))).
-variable_define(in4e, operation(set_isin, (variable(s4),(variable(se),())))).
-variable_define(in3e, operation(set_isin, (variable(s3),(variable(se),())))).
-variable_define(in2e, operation(set_isin, (variable(s2),(variable(se),())))).
-variable_define(set_notin4e, operation(set_notin, (variable(s4),(variable(se),())))).
-variable_define(set_notin3e, operation(set_notin, (variable(s3),(variable(se),())))).
-variable_define(set_notin2e, operation(set_notin, (variable(s2),(variable(se),())))).
