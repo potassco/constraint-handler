@@ -1,0 +1,6 @@
+value(in2e,val(bool,true))
+value(in3e,val(bool,true))
+value(in4e,val(bool,false))
+value(set_notin2e,val(bool,false))
+value(set_notin3e,val(bool,false))
+value(set_notin4e,val(bool,true))

@@ -84,6 +84,7 @@ base_tests = [
     "optimization/ints",
     "optimization/priority",
     "set/membership_decomposed",
+    "set/membership_nested",
     "set/membership_python",
     "set/nested",
     "set/comparisons",
