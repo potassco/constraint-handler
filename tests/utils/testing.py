@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 import clingo
 import clintest.assertion
@@ -8,7 +8,7 @@ import clintest.test
 from clingo import SolveResult
 from clintest.assertion import Assertion
 from clintest.outcome import Outcome
-from clintest.quantifier import All, Any, Finished, First, Last, Quantifier
+from clintest.quantifier import All, Any, Exact, Finished, First, Last, Quantifier
 
 import constraint_handler
 import constraint_handler.evaluator as evaluator
@@ -44,12 +44,18 @@ def build_expectations(name):
     test_first = clintest.test.And(*(clintest.test.Assert(First(), contains(atom)) for atom in expected_first))
     expected_last = atoms_from_file(name + ".expected.last")
     test_last = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_last))
+    expected_models: List = atoms_from_file(name + ".expected.models")
+    if expected_models:
+        expected_models = expected_models[0].number
+        test_models = clintest.test.And(clintest.test.Assert(Exact(expected_models), clintest.assertion.True_()))
+    else:
+        test_models = clintest.test.True_()
     test_exists = (
         clintest.test.Assert(Any(), clintest.assertion.True_())
         if (expected_all or expected_first or expected_last) and not expected_any
         else clintest.test.True_()
     )
-    return clintest.test.And(test_exists, test_all, test_any, test_none, test_first, test_last)
+    return clintest.test.And(test_exists, test_all, test_any, test_none, test_first, test_last, test_models)
 
 
 def build_expectations_with_args(name) -> list[tuple[clintest.test.Test, list[str]]]:
