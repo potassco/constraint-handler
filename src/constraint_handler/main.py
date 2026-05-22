@@ -36,6 +36,7 @@ core_modules = [
     "expression",
     "main",
     "pythonHelper",
+    "pythonInterface",
     "solve",
     "statement",
     "sugar",
