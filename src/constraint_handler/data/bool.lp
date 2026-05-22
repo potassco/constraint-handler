@@ -12,10 +12,10 @@ _computedIdx(E,val(none,none)) :- _computeIdx(E,lnot), _computeIdx(E,0,val(none,
 
 %% strong negation / strict negation
 operator_declare((snot;wnot),(bool,()),none).
-_se_value(operation(snot,(E1,())),val(bool,false)) :- direct_query(operation(snot,(E1,()))), conditional_hasNoValue(E1).
+_se_value(operation(snot,(E1,())),val(bool,false)) :- direct_query(operation(snot,(E1,()))), _se_value(E1,val(none,none)).
 
 %% weak negation / negation as weak failure
-_se_value(operation(wnot,(E1,())),val(bool,true))  :- direct_query(operation(wnot,(E1,()))), conditional_hasNoValue(E1).
+_se_value(operation(wnot,(E1,())),val(bool,true))  :- direct_query(operation(wnot,(E1,()))), _se_value(E1,val(none,none)).
 
 %%%%%%%%%%%%%%%%% conj disj limp
 %% The _compute/_computed interface is given below the eValue interface
