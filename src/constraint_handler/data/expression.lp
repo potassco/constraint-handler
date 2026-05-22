@@ -11,7 +11,7 @@ _expression_query(sugar,(K;B)) :- _passed(sugar,multimap_assign(LBL,X,K,B)).
 %%%%%%%%%%%%%%%%% _expression_query from other declarations
 _expression_query(sugar,E) :- _passed(sugar,optimize_maximizeSum(LBL,E,X,P)).
 _expression_query(sugar,E) :- _passed(sugar,optimize_precision(E,PRIO)).
-_expression_query(sugar,E) :- _passed(sugar,preference_expressionScore(LBL,E,K)).
+_expression_query(sugar,E) :- _passed(sugar,preference_holds(LBL,E,K)).
 
 %%%%%%%%%%%%%%%%% _expression_query from expressions
 % TODO lambda?.

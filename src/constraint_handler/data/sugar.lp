@@ -42,7 +42,7 @@ _passed(sugar,optimize_precision(PREC,PRIO)) :- _passed(defaultArgs,optimize_pre
 _passed(sugar,optimize_maximizeSum(LBL,E,X,P)) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)).
 
 %%%%%% preference atoms
-_passed(sugar,preference_expressionScore(LBL,operation(eq,(variable(X),(E,()))),K)) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K > 0.
-_passed(sugar,preference_expressionScore(LBL,operation(neq,(variable(X),(E,()))),-K)) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K < 0.
-_passed(sugar,preference_expressionScore(LBL,E,K)) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K > 0.
-_passed(sugar,preference_expressionScore(LBL,operation(wnot,(E,())),-K)) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K < 0.
+_passed(sugar,preference_holds(LBL,operation(eq,(variable(X),(E,()))),K)) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K > 0.
+_passed(sugar,preference_holds(LBL,operation(neq,(variable(X),(E,()))),-K)) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K < 0.
+_passed(sugar,preference_holds(LBL,E,K)) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K > 0.
+_passed(sugar,preference_holds(LBL,operation(wnot,(E,())),-K)) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K < 0.
