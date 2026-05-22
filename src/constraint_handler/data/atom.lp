@@ -50,7 +50,7 @@ _warning(atom(syntaxError),(),optimize_precision(PREC,PRIO)) :- _passed(sugar,op
     not _passed(wf_check,optimize_precision(PREC,PRIO)).
 
 %%%%%% preference atoms
-_passed(wf_check,preference_expressionScore(LBL,E,K)) :- _passed(sugar,preference_expressionScore(LBL,E,K)), _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).
+_passed(wf_check,preference_holds(LBL,E,K)) :- _passed(sugar,preference_holds(LBL,E,K)), _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).
 
 
 %%%%%% warning atoms
