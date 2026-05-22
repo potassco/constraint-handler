@@ -1,7 +1,6 @@
 %%%%%%%%%%%%%%%%% conditional_hasValue/1 conditional_hasNoValue/1
 conditional_hasValue(E) :- _se_value(E,V), V != val(none,none), V !=bad.
 conditional_hasNoValue(E) :- direct_query(E), _se_value(E,val(none,none)).
-%1 { conditional_hasNoValue(E); conditional_hasValue(E) } 1 :- _se_value(E,bad).
 
 %%%%%%%%%%%%%%%%% eq neq
 operator_declare((eq;neq),(T1,(T2,())),bool) :- _type(T1), _type(T2), (T1;T2)=none.

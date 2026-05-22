@@ -1,8 +1,8 @@
 %%%%%%%%%%%%%%%%% add mult
 operator_declare_variadic((add;mult),int,int,1).
 _int_add(operation(add,ARGS),LEN,val(int,0)) :- _computeIdx(operation(add,ARGS),add), _length(ARGS,LEN), LEN <= 2.
-_int_add(E,IDX,val(int,VO+V)) :- _computeIdx(E,add), _computeIdx(E,IDX,val(int,V)), _int_add(E,IDX+1,val(int,VO)).
-_computedIdx(E,V)  :- _computeIdx(E,add), _int_add(E,0,V).
+_int_add(E,IDX,val(int,VO+V)) :- _computeIdx(E,IDX,val(int,V)), _int_add(E,IDX+1,val(int,VO)).
+_computedIdx(E,V)  :- _int_add(E,0,V).
 _computedIdx(operation(add,ARGS),val(int,N)) :-
     _computeIdx(operation(add,ARGS),add),
     _length(ARGS,LEN), LEN > 2,
@@ -12,8 +12,8 @@ _computedIdx(operation(add,ARGS),val(int,N)) :-
 % short circuit if there is a 0
 _computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,0)).
 _int_mult(operation(mult,ARGS),LEN,val(int,1)) :- _computeIdx(operation(mult,ARGS),mult), _length(ARGS,LEN).
-_int_mult(E,IDX,val(int,VO*V)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,V)), _int_mult(E,IDX+1,val(int,VO)).
-_computedIdx(E,V)  :- _computeIdx(E,mult), _int_mult(E,0,V).
+_int_mult(E,IDX,val(int,VO*V)) :- _computeIdx(E,IDX,val(int,V)), _int_mult(E,IDX+1,val(int,VO)).
+_computedIdx(E,V)  :- _int_mult(E,0,V).
 
 %%%%%%%%%%%%%%%%% sub pow
 operator_declare((sub;pow),(int,(int,())),int).
