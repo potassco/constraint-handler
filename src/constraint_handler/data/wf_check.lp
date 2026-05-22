@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%% _expression_wellformed
-_expression_query(wf_check,EXPR) :- _expression_query(sugar,PRG,EXPR).
+_expression_query(wf_check,EXPR) :- _expression_query(sugar,EXPR).
 
-_expression_wfQuery(EXPR) :- _expression_query(sugar,PRG,EXPR).
+_expression_wfQuery(EXPR) :- _expression_query(sugar,EXPR).
 _expression_wellformed(bad) :- _expression_wfQuery(bad).
 _expression_wellformed(python(CODE)) :- _expression_wfQuery(python(CODE)), true=@pythonIsString(CODE).
 _expression_wellformed(EXPR) :- _expression_wfQuery(EXPR), EXPR=pythonExtract(PSTMT,PEXPR),true=@pythonIsString(PSTMT),true=@pythonIsString(PEXPR).
@@ -16,7 +16,7 @@ _warning(expression(syntaxError),(),"lambda checks unsupported") :- _expression_
 % TODO: for operations, check that the operator is well-formed
 
 
-_warning(expression(syntaxError),PRG,EXPR) :- _expression_query(sugar,PRG,EXPR), not _expression_wellformed(EXPR).
+_warning(expression(syntaxError),(),EXPR) :- _expression_query(sugar,EXPR), not _expression_wellformed(EXPR).
 
 
 %%%%%%%%%%%%%%%%% _expression_safe
