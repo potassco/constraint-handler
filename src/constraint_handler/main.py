@@ -37,6 +37,7 @@ core_modules = [
     "main",
     "pythonHelper",
     "pythonInterface",
+    "safe",
     "solve",
     "statement",
     "sugar",
