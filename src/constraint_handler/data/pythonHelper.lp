@@ -19,74 +19,6 @@ import constraint_handler.solver_environment as solver_environment
 import constraint_handler.utils.python_statement_analysis as python_analysis
 
 
-def pythonExpressionVariable(clExpr):
-    # print("pythonExpressionVariable",clExpr)
-    pExpr = myClorm.cltopy(clExpr,expression.Expr)
-    pVars = list(evaluator.collectVars(pExpr))
-    clVars = [myClorm.pytocl(var) for var in pVars]
-    return clVars
-
-def pythonEnumerateVariables(clExpr):
-    pExpr = myClorm.cltopy(clExpr,expression.Expr)
-    pVars = list(evaluator.collectVars(pExpr))
-    result = [myClorm.pytocl(e) for e in enumerate(pVars)]
-    result.append(clingo.Function("length",[clingo.Number(len(pVars))]))
-    return result
-
-def pythonEnumerateExecutionVariables(clStmt,clIns):
-    pStmt = myClorm.cltopy(clStmt,statement.Stmt)
-    pIns = myClorm.cltopy(clIns,halt=False)
-    pVars = list(evaluator.collectStmtVars(pStmt) | frozenset(pIns))
-    result = [myClorm.pytocl(e) for e in enumerate(pVars)]
-    result.append(clingo.Function("length",[clingo.Number(len(pVars))]))
-    return result
-
- # TODO: dead?
-def pythonBetaReduction(clExpr,clVars,clArgs):
-    pVars = myClorm.cltopy(clVars,list)
-    pArgs = myClorm.cltopy(clArgs,list[expression.ReducedExpr])
-    pExpr = myClorm.cltopy(clExpr,expression.Expr)
-    if len(pVars) != len(pArgs):
-        print(f"pythonBetaReduction: inconsistent argument lengths for {pExpr}: {pVars} = {pArgs}")
-        return []
-    d = { var : val for (var,val) in zip(pVars,pArgs) }
-    #print(d)
-    prettyArgs = ", ".join(f"{str(var)}={val}" for (var,val) in d.items())
-    pRes = evaluator.beta_reduction(d,pExpr)
-    #print(f"pythonEvalExprFromPairs2: {pExpr}({prettyArgs}) = {pRes}")
-    return myClorm.pytocl(pRes)
-
-
-def pythonEvalExpr(clExpr,clArgs,clId):
-    eval_error = warning.Expression(warning.ExpressionWarning.pythonError)
-    try:
-        pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
-        pExpr = myClorm.cltopy(clExpr,expression.Expr)
-        pId   = myClorm.cltopy(clId,list[expression.constant])
-        globals = evaluator.get_environment(pId)
-        results = []
-        locals = dict()
-        for (var,vexpr) in pArgs:
-            val,errors = evaluator.evaluate_expr(vexpr,globals)
-            locals[var] = val
-            for error in errors:
-                #results.append(warning.Error(eval_error,repr(error)))
-                results.append(warning.Error(error[0],error[1]))
-        prettyD = { str(var) : val for (var,val) in locals.items() }
-        pRes,errors = evaluator.evaluate_expr(pExpr, globals, locals)
-        for error in errors:
-            #results.append(warning.Error(eval_error,repr(error)))
-            results.append(warning.Error(error[0],error[1]))
-        results.append(evaluator.reducedExpr(pRes))
-        return map(myClorm.pytocl,results)
-    except myClorm.FailedInstantiationExn as exn:
-        # print(f"pythonEvalExpr: error when converting {(clArgs,clExpr)}: {repr(exn)}.")
-        return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
-    except Exception as exn:
-        # print(f"pythonEvalExpr: uncaught exception {repr(exn)} in context {(clExpr,clArgs,clId)}")
-        return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
-
-
 def pythonListElements(clL):
     try:
         return myClorm.cltopy(clL,list[clingo.Symbol])
@@ -119,13 +51,6 @@ def pythonIsString(clS):
 def pythonIsTuple(clT):
     return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "" and (len(clT.arguments) != 2 or clT.arguments[1] != clingo.Function("")))
 
-def pythonIsExpr(clE):
-    try:
-        myClorm.cltopy(clE,expression.Expr)
-        return myClorm.pytocl(True)
-    except myClorm.FailedInstantiationExn:
-        return myClorm.pytocl(False)
-
 def pythonTupleElements(clT):
     if clT.type == clingo.SymbolType.Function and clT.name == "":
         return clT.arguments
@@ -141,17 +66,6 @@ def pythonStringAdd(clStr1,clStr2):
     pStr2 = myClorm.cltopy(clStr2,str)
     return myClorm.pytocl(pStr1+pStr2)
 
-def pythonDebug(clExpr):
-    #print("debug: ",clExpr)
-    return clExpr
-
-def pythonStop(clExpr):
-    #print("stop: ",clExpr)
-    pExpr = myClorm.cltopy(clExpr,int)
-    if pExpr < -5:
-        assert False
-    return clExpr
-
 
 def pythonScopeToString(clS,clVar):
     try:
@@ -164,25 +78,6 @@ def pythonScopeToString(clS,clVar):
     except myClorm.FailedInstantiationExn:
         return clS
         #return myClorm.pytocl(False)
-
-class Local(typing.NamedTuple):
-    name: typing.Any
-    var: expression.Variable
-
-def pythonTagVars(clExpr,clName):
-    # print("pythonTagVars",clName,clExpr)
-    pName = myClorm.cltopy(clName)
-    pExpr = myClorm.cltopy(clExpr,expression.Expr)
-    vars = evaluator.collectVars(pExpr)
-    map = { var : Local(pName,var) for var in vars }
-    pExp2 = evaluator.beta_reduction(map,pExpr)
-    return myClorm.pytocl(pExp2)
-
-
-def pythonInit(clX):
-    pX = myClorm.cltopy(clX)
-    print("init",pX)
-    return []
 
 def pythonReify(term):
     if term.type == clingo.SymbolType.Function:
@@ -204,32 +99,6 @@ def pythonReflect(kind,term,args):
     elif kind == clingo.symbol.Function("string"):
         return term
     else:
-        print("pythonHelper.pythonReflect",(kind,term,args),"is not a valid term")
         return []
 
-def pythonStatementVariables(clCode,clInTypes,clId):
-    exec_error = warning.Statement(warning.StatementWarning.pythonError)
-    try:
-        pCode = myClorm.cltopy(clCode,str)
-        pInT  = myClorm.cltopy(clInTypes,list[tuple[expression.constant,type_.BaseType]])
-        pId   = myClorm.cltopy(clId,list[expression.constant])
-        globals = evaluator.get_environment(pId)
-        tEnv  = defaultdict(set)
-        for (var,t) in pInT:
-            if isinstance(var,str):
-                tEnv[var].add(t)
-        results = []
-        locals = dict()
-        pyInputs = { x: frozenset((type_.py_type(t),)) for (x,t) in pInT }
-        analysis = python_analysis.analyze_python_statement_types(pCode, globals, pyInputs)
-        results = [(x,type_.ch_type(t)) for (x,ts) in analysis.name_types.items() for t in ts]
-        return map(myClorm.pytocl,results)
-    except myClorm.FailedInstantiationExn as exn:
-        print(f"pythonStatementVariables: error when converting {(clCode,clInTypes,clId)}: {repr(exn)}.")
-        kind = warning.Statement(warning.StatementWarning.syntaxError)
-        return myClorm.pytocl(warning.Error(kind,str(exn)))
-        #return myClorm.pytocl(warning.Error(exec_error,str(exn)))
-    except Exception as exn:
-        print(f"pythonStatementVariables: uncaught exception {repr(exn)} in context {(clCode,clInTypes,clId)}")
-        return myClorm.pytocl(warning.Error(exec_error,repr(exn)))
 #end.
