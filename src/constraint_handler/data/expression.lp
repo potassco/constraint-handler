@@ -3,14 +3,6 @@ _expression_query(sugar,E) :- _passed(sugar,ensure(LBL,E)).
 _expression_query(sugar,operation(OP,ARGS)) :- _passed(sugar,evaluate(LBL,OP,ARGS)).
 
 %%%%%%%%%%%%%%%%% _expression_query from variables
-%_expression_query(sugar,variable(X)) :- _passed(sugar,variable_define(LBL,X,E)).
-%_expression_query(sugar,variable(X)) :- _passed(sugar,variable_declare(LBL,X,D)).
-%_expression_query(sugar,variable(X)) :- _passed(sugar,variable_domain(LBL,X,E)).
-%_expression_query(sugar,variable(X)) :- _passed(sugar,set_declare(LBL,X)).
-%_expression_query(sugar,variable(X)) :- _passed(sugar,set_assign(LBL,X,E)).
-%_expression_query(sugar,variable(X)) :- _passed(sugar,set_baseDomain(LBL,X,E)).
-%_expression_query(sugar,variable(X)) :- _passed(sugar,multimap_declare(LBL,X)).
-%_expression_query(sugar,variable(X)) :- _passed(sugar,multimap_assign(LBL,X,K,B)).
 _expression_query(sugar,E) :- _passed(sugar,variable_define(LBL,X,E)).
 _expression_query(sugar,E) :- _passed(sugar,variable_domain(LBL,X,E)).
 _expression_query(sugar,E) :- _passed(sugar,set_assign(LBL,X,E)).
