@@ -61,7 +61,7 @@ _passed(defaultArgs,bool_evaluate(_label_anonymous,E)) :- bool_evaluate(E).
 _passed(defaultArgs,bool_evaluate(LBL,E)) :- bool_evaluate(LBL,E).
 _label(LBL) :- _passed(defaultArgs,bool_evaluate(LBL,E)).
 _passed(sugar,bool_evaluate(LBL,E)) :- _passed(defaultArgs,bool_evaluate(LBL,E)).
-_expression_query(sugar,(),E) :- _passed(sugar,bool_evaluate(LBL,E)).
+_expression_query(sugar,E) :- _passed(sugar,bool_evaluate(LBL,E)).
 _passed(wf_check,bool_evaluate(LBL,E)) :- _passed(sugar,bool_evaluate(LBL,E)), _expression_wellformed(E).
 1 { bool_evaluated(E,(bad;val(bool,(true;false)))) } 1 :- _passed(wf_check,bool_evaluate(LBL,E)), engine(LBL,propagator).
 
