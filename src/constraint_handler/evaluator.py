@@ -28,7 +28,9 @@ _shared_environment = {
 }
 _solver_environment = dict()
 
-
+#def collectAtomExpr(atom) -> frozenset[expression.Expr]:
+#    match atom:
+#        case atom.Operation(eo, eargs):
 def collectVars(expr) -> frozenset[clingo.Symbol]:
     match expr:
         case expression.Operation(eo, eargs):

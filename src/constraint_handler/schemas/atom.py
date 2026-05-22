@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import namedtuple
 from typing import NamedTuple
 
+import constraint_handler.schemas.domain as domain
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
@@ -12,25 +13,10 @@ class FailIntegrity(NamedTuple):
     pass
 
 
-class FromFacts(NamedTuple):
-    pass
-
-
-class BoolDomain(NamedTuple):
-    pass
-
-
-class FromList(NamedTuple):
-    elements: list[expression.Expr]
-
-
-type Domain = BoolDomain | FromFacts | FromList
-
-
 class Variable_declare(NamedTuple):
     label: expression.constant
     name: expression.constant
-    domain: Domain
+    domain: domain.Domain
 
 
 class Variable_define(NamedTuple):
@@ -202,79 +188,3 @@ type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_sc
 
 Main_solverIdentifiers = namedtuple("_main_solverIdentifiers", ["id"])
 Main_solverIdentifiers.__annotations__ = {"id": list[expression.constant]}
-
-
-class Propagator_variable_declare(Variable_declare):
-    pass
-
-
-class Propagator_variable_define(Variable_define):
-    pass
-
-
-class Propagator_variable_domain(Variable_domain):
-    pass
-
-
-class Propagator_variable_declareOptional(Variable_declareOptional):
-    pass
-
-
-class Propagator_assign(Assign):
-    pass
-
-
-class Propagator_ensure(Ensure):
-    pass
-
-
-class Propagator_bool_evaluate(Bool_evaluate):
-    pass
-
-
-class Propagator_set_declare(Set_declare):
-    pass
-
-
-class Propagator_set_assign(Set_assign):
-    pass
-
-
-class Propagator_set_baseDomain(Set_baseDomain):
-    pass
-
-
-class Propagator_multimap_declare(Multimap_declare):
-    pass
-
-
-class Propagator_multimap_assign(Multimap_assign):
-    pass
-
-
-class Propagator_optimize_maximizeSum(Optimize_maximizeSum):
-    pass
-
-
-class Propagator_optimize_precision(Optimize_precision):
-    pass
-
-
-class Propagator_execution_declare(Execution_declare):
-    pass
-
-
-class Propagator_execution_run(Execution_run):
-    pass
-
-
-class Propagator_evaluate(Evaluate):
-    pass
-
-
-class Propagator_warning_forbid(warning.Warning_forbid):
-    pass
-
-
-class Propagator_warning_ignore(warning.Warning_ignore):
-    pass
