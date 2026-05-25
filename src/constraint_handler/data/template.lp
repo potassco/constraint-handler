@@ -7,7 +7,7 @@ _expression(PHASE,E) :- _passed(PHASE,set_assign(LBL,X,E)).
 _expression(PHASE,E) :- _passed(PHASE,set_baseDomain(LBL,X,E)).
 _expression(PHASE,(K;B)) :- _passed(PHASE,multimap_assign(LBL,X,K,B)).
 _expression(PHASE,E) :- _passed(PHASE,optimize_maximizeSum(LBL,E,X,P)).
-_expression(PHASE,E) :- _passed(PHASE,optimize_precision(E,PRIO)).
+_expression(PHASE,E) :- _passed(PHASE,optimize_precision(LBL,E,PRIO)).
 _expression(PHASE,E) :- _passed(PHASE,preference_holds(LBL,E,K)).
 _expression(PHASE,D) :- _expression(PHASE,operation(O,L)), D=@pythonListElements(L).
 _expression(PHASE,D) :- _expression(PHASE,T), D=@pythonTupleElements(T).

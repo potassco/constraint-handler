@@ -84,13 +84,13 @@ _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL
 
 % 4-parameter version with explicit priority
 % Precision for specific priority (priority is last argument)
-_passed(defaultArgs,optimize_precision(PREC,PRIO)) :- optimize_precision(PREC,PRIO).
+_passed(defaultArgs,optimize_precision(_label_anonymous,PREC,PRIO)) :- optimize_precision(PREC,PRIO).
 % Default precision for all priorities if not specified
-_passed(defaultArgs,optimize_precision(PREC)) :- optimize_precision(PREC).
+_defaultArgs_optimize_precision(PREC) :- optimize_precision(PREC).
 % Default precision value of 1 if no precision is specified at all
-_passed(defaultArgs,optimize_precision(val(int,1))) :- not optimize_precision(_).
-_optimize_priority(PRIO) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,PRIO)).
-_passed(defaultArgs,optimize_precision(PREC,PRIO)) :- _passed(defaultArgs,optimize_precision(PREC)), _optimize_priority(PRIO), not optimize_precision(_,PRIO).
+_defaultArgs_optimize_precision(val(int,1)) :- not optimize_precision(_).
+_defaultArgs_optimize_priority(PRIO) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,PRIO)).
+_passed(defaultArgs,optimize_precision(_label_anonymous,PREC,PRIO)) :- _defaultArgs_optimize_precision(PREC), _defaultArgs_optimize_priority(PRIO), not optimize_precision(_,PRIO).
 
 %%%%%% preference atoms
 #defined preference_holds/3.
@@ -118,35 +118,35 @@ _passed(defaultArgs,warning_ignore(_label_anonymous,KIND)) :- warning_ignore(KIN
 _passed(defaultArgs,warning_ignore(LBL,KIND)) :- warning_ignore(LBL,KIND).
 
 %%%%%%%%%%%%%%%%% collect labels
-_label(LBL) :- _passed(defaultArgs,bool_evaluate(LBL,E)).
-_label(LBL) :- _passed(defaultArgs,ensure(LBL,E)).
-_label(LBL) :- _passed(defaultArgs,evaluate(LBL,O,ARGS)).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=bool_evaluate(LBL,E).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=ensure(LBL,E).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=evaluate(LBL,O,ARGS).
 
 %%%%%% variable atoms
-_label(LBL) :- _passed(defaultArgs,variable_define(LBL,X,E)).
-_label(LBL) :- _passed(defaultArgs,variable_declare(LBL,X,D)).
-_label(LBL) :- _passed(defaultArgs,variable_domain(LBL,X,E)).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=variable_define(LBL,X,E).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=variable_declare(LBL,X,D).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=variable_domain(LBL,X,E).
 
 %%%%%% multimap atoms
-_label(LBL) :- _passed(defaultArgs,multimap_declare(LBL,X)).
-_label(LBL) :- _passed(defaultArgs,multimap_assign(LBL,X,K,B)).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=multimap_declare(LBL,X).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=multimap_assign(LBL,X,K,B).
 
 %%%%% set atoms
-_label(LBL) :- _passed(defaultArgs,set_declare(LBL,X)).
-_label(LBL) :- _passed(defaultArgs,set_assign(LBL,X,E)).
-_label(LBL) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=set_declare(LBL,X).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=set_assign(LBL,X,E).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=set_baseDomain(LBL,X,E).
 
 %%%%%% statement atoms
-_label(LBL) :- _passed(defaultArgs,execution_declare(LBL,NAME,STMT,INS,OUTS)).
-_label(LBL) :- _passed(defaultArgs,execution_run(LBL,NAME)).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=execution_declare(LBL,NAME,STMT,INS,OUTS).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=execution_run(LBL,NAME).
 
 %%%%%% optimization atoms
-_label(LBL) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,PRIO)).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=optimize_maximizeSum(LBL,E,X,PRIO).
 
 %%%%%% preference atoms
-_label(LABEL) :- _passed(defaultArgs,preference_holds(LABEL,E,K)).
-_label(LABEL) :- _passed(defaultArgs,preference_variableValue(LABEL,X,E,K)).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=preference_holds(LBL,E,K).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=preference_variableValue(LBL,X,E,K).
 
 %%%%%% warning atoms
-_label(LABEL) :- _passed(defaultArgs,warning_forbid(LABEL,KIND)).
-_label(LABEL) :- _passed(defaultArgs,warning_ignore(LABEL,KIND)).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=warning_forbid(LBL,KIND).
+_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=warning_ignore(LBL,KIND).

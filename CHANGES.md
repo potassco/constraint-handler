@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- restrict engine interpreation to compile, ground, propagator, none
 - drop support for `assign/2` declarations
 - drop support for while statements
 - rewrite the handling of executions to be entirely SSA-based

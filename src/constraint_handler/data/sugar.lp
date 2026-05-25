@@ -38,7 +38,7 @@ _passed(sugar,set_baseDomain(LBL,X,E)) :- _passed(defaultArgs,set_baseDomain(LBL
 
 
 %%%%%% optimize atoms
-_passed(sugar,optimize_precision(PREC,PRIO)) :- _passed(defaultArgs,optimize_precision(PREC,PRIO)).
+_passed(sugar,optimize_precision(LBL,PREC,PRIO)) :- _passed(defaultArgs,optimize_precision(LBL,PREC,PRIO)).
 _passed(sugar,optimize_maximizeSum(LBL,E,X,P)) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)).
 
 %%%%%% preference atoms
