@@ -41,13 +41,13 @@ _warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _passed(defaultArgs,ex
 _passed(wf_check,optimize_maximizeSum(LBL,E,X,P)) :- _passed(sugar,optimize_maximizeSum(LBL,E,X,P)),
     _expression_wellformed(E),
     (number,_,_,_)=@pythonReify(P).
-_passed(wf_check,optimize_precision(PREC,PRIO)) :- _passed(sugar,optimize_precision(PREC,PRIO)),
+_passed(wf_check,optimize_precision(LBL,PREC,PRIO)) :- _passed(sugar,optimize_precision(LBL,PREC,PRIO)),
     _expression_wellformed(PREC),
     (number,_,_,_)=@pythonReify(PRIO).
 _warning(atom(syntaxError),(),optimize_maximizeSum(LBL,E,X,P)) :- _passed(sugar,optimize_maximizeSum(LBL,E,X,P)),
     not _passed(wf_check,optimize_maximizeSum(LBL,E,X,P)).
-_warning(atom(syntaxError),(),optimize_precision(PREC,PRIO)) :- _passed(sugar,optimize_precision(PREC,PRIO)),
-    not _passed(wf_check,optimize_precision(PREC,PRIO)).
+_warning(atom(syntaxError),(),optimize_precision(LBL,PREC,PRIO)) :- _passed(sugar,optimize_precision(LBL,PREC,PRIO)),
+    not _passed(wf_check,optimize_precision(LBL,PREC,PRIO)).
 
 %%%%%% preference atoms
 _passed(wf_check,preference_holds(LBL,E,K)) :- _passed(sugar,preference_holds(LBL,E,K)), _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).

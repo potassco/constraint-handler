@@ -7,25 +7,24 @@
 #defined defaultEngine/1.
 #defined main_solverIdentifier/1.
 
-%%%%%%%%%%%%%%%%% engines
-%%% compile
-%%% ground
-%%% propagator
-%%% none
-
 _main_solverIdentifierAux(#inf,()).
 _main_solverIdentifierAux(Y,(Y,L)) :- _main_solverIdentifierAux(X,L), main_solverIdentifier(Y), X < Y, 0 = #count { Z : main_solverIdentifier(Z), X < Z, Z < Y }.
 _main_solverIdentifiers(L) :- _main_solverIdentifierAux(X,L), 0 = #count { Z : main_solverIdentifier(Z), X < Z }.
 
 
-_main_defaultEngine(ENG) :- defaultEngine(ENG).
-_main_defaultEngineProvided :- defaultEngine(ENG).
+%%%%%%%%%%%%%%%%% engines
+_main_engine(compile;ground;propagator;none).
+
+_main_defaultEngine(ENG) :- defaultEngine(ENG), _main_engine(ENG).
+_main_defaultEngineProvided :- defaultEngine(ENG), _main_engine(ENG).
 _main_defaultEngine(compile) :- not _main_defaultEngineProvided.
 
-requestedEngine(CNAME) :- requestEngine(CNAME,ENG).
-engine(CNAME,ENG) :- requestEngine(CNAME,ENG).
-engine(CNAME,ENG) :- _main_defaultEngine(ENG), not requestedEngine(CNAME), _label(CNAME).
+_label(LBL) :- _label(LBL,DECL).
+_main_requestedEngine(LBL) :- requestEngine(LBL,ENG), _main_engine(ENG).
+engine(LBL,ENG) :- requestEngine(LBL,ENG), _main_engine(ENG).
+engine(LBL,ENG) :- _main_defaultEngine(ENG), not _main_requestedEngine(LBL), _label(LBL).
 engine(_internal,compile).
+_passed(propagator,DECL) :- _label(LBL,DECL), engine(LBL,propagator).
 
 % needed for brave reasoning?
 value(X,V) :- _se_value(variable(X),V).
