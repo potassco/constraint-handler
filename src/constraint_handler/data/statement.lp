@@ -42,7 +42,6 @@ _statement_querySSA(LBL,PRG,(e,SCOPE),ELSE) :- _statement_querySSA(LBL,PRG,SCOPE
 _statement_querySSA(LBL,PRG,(l,SCOPE),STM1) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)).
 _statement_querySSA(LBL,PRG,(r,SCOPE),STM2) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)).
 
-_expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)).
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)).
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,if(E,THEN,ELSE)).
@@ -50,7 +49,6 @@ _expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,operation(O,
 _expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS), D=@pythonListElements(ARGS).
 % TODO: tuple, set
 
-_expression_sequenceHelper(defaultArgs,ARGS) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)).
 _expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
 
 _statement_pythonVarsResult(PRG,SCOPE,R) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _main_solverIdentifiers(ID), R=@pythonStatementVariables(CODE,(),ID).
@@ -89,15 +87,13 @@ _expression_contextualized(SCOPE,E,XS) :- _expression_querySSA(PRG,SCOPE,E), E=v
 %TODO other vars!
 _statement_hasContext(SCOPE,X) :- _statement_context(SCOPE,X,XS).
 _expression_contextualized(SCOPE,E,XS) :- _expression_querySSA(PRG,SCOPE,E), E=variable(X), not _statement_hasContext(SCOPE,X), XS=variable(execution_local(PRG,X)).
-_expression_contextualizedListAux(SCOPE,E,ARGS,N,()) :- _expression_querySSA(PRG,SCOPE,E), E=operation(O,ARGS), _length(defaultArgs,ARGS,N).
-_expression_contextualizedListAux(SCOPE,E,ARGS,IDX,(DC,L)) :- _expression_contextualizedListAux(SCOPE,E,ARGS,IDX+1,L),
-   _expression_index(defaultArgs,ARGS,IDX,D), _expression_contextualized(SCOPE,D,DC).
-_expression_contextualized(SCOPE,E,operation(O,L)) :- _expression_contextualizedListAux(SCOPE,E,ARGS,0,L), E=operation(O,ARGS).
+_expression_contextualizedListAux(SCOPE,E,N,()) :- _expression_querySSA(PRG,SCOPE,E), _length(defaultArgs,E,N).
+_expression_contextualizedListAux(SCOPE,E,IDX,(DC,L)) :- _expression_querySSA(PRG,SCOPE,E), _expression_contextualizedListAux(SCOPE,E,IDX+1,L),
+   _expression_index(defaultArgs,E,IDX,D), _expression_contextualized(SCOPE,D,DC).
+_expression_contextualized(SCOPE,E,operation(O,L)) :- _expression_contextualizedListAux(SCOPE,E,0,L), E=operation(O,ARGS).
+_expression_contextualized(SCOPE,E,@pythonReflect(function,(),L)) :- _expression_contextualizedListAux(SCOPE,E,0,L), _expression_isTuple(defaultArgs,E,N,ARGS).
+
 % TODO: operators
-
-_expression_contextualizedListAux(SCOPE,E,ARGS,N,()) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS).
-_expression_contextualized(SCOPE,E,@pythonReflect(function,(),L)) :- _expression_contextualizedListAux(SCOPE,E,ARGS,0,L), _expression_isTuple(defaultArgs,E,N,ARGS).
-
 
 %%%%% statement_condition
 _statement_condition((PRG,()),()) :- _execution_declare(LBL,PRG,STMT,INS,OUTS).

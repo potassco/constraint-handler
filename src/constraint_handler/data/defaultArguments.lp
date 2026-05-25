@@ -108,7 +108,9 @@ _passed(defaultArgs,preference_variableValue(LBL,X,E,K)) :- preference_variableV
 
 %%%%%% warning atoms
 #defined warning_forbid/1.
+#defined warning_forbid/2.
 #defined warning_ignore/1.
+#defined warning_ignore/2.
 
 _passed(defaultArgs,warning_forbid(_label_anonymous,KIND)) :- warning_forbid(KIND).
 _passed(defaultArgs,warning_forbid(LBL,KIND)) :- warning_forbid(LBL,KIND).
