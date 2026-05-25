@@ -1,14 +1,13 @@
-#defined assign/2.
-#defined assign/3.
+#defined bool_evaluate/1.
+#defined bool_evaluate/2.
 #defined ensure/1.
 #defined ensure/2.
 #defined evaluate/2.
 #defined evaluate/3.
 
-variable_define(X,E) :- assign(X,E).
-variable_define(LBL,X,E) :- assign(LBL,X,E).
-
 %%%%%%%%%%%%%%%%% labels are optional
+_passed(defaultArgs,bool_evaluate(_label_anonymous,E)) :- bool_evaluate(E).
+_passed(defaultArgs,bool_evaluate(LBL,E)) :- bool_evaluate(LBL,E).
 _passed(defaultArgs,ensure(_label_anonymous,E)) :- ensure(E).
 _passed(defaultArgs,ensure(LBL,E)) :- ensure(LBL,E).
 _passed(defaultArgs,evaluate(_label_anonymous,OP,ARGS)) :- evaluate(OP,ARGS).
@@ -115,8 +114,9 @@ warning_forbid(_label_anonymous,KIND) :- warning_forbid(KIND).
 warning_ignore(_label_anonymous,KIND) :- warning_ignore(KIND).
 
 %%%%%%%%%%%%%%%%% collect labels
-_label(LABEL) :- _passed(defaultArgs,ensure(LABEL,E)).
-_label(LABEL) :- _passed(defaultArgs,evaluate(LABEL,O,ARGS)).
+_label(LBL) :- _passed(defaultArgs,bool_evaluate(LBL,E)).
+_label(LBL) :- _passed(defaultArgs,ensure(LBL,E)).
+_label(LBL) :- _passed(defaultArgs,evaluate(LBL,O,ARGS)).
 
 %%%%%% variable atoms
 _label(LBL) :- _passed(defaultArgs,variable_define(LBL,X,E)).

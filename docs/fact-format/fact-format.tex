@@ -162,9 +162,7 @@
 \alt `warning_ignore' `(' <term> `,' <term> `)'
 
 <atom> ::=
-~\alt `assign' `(' <term> `,' <expression> `)'
-\alt `assign' `(' <term> `,' <term> `,' <expression> `)'
-\alt `ensure' `(' <expression> `)'
+~\alt `ensure' `(' <expression> `)'
 \alt `ensure' `(' <term> `,' <expression> `)'
 \alt `evaluate' `(' <operator> `,' <expression-list> `)'
 \alt `evaluate' `(' <term> `,' <operator> `,' <expression-list> `)'
@@ -232,54 +230,45 @@ y &\eqdef (x+2) \times \pi \\
 & y / 3 \leq 15
 \end{align*}
 \begin{verbatim}
-assign(example1_pi,pi,val(float,float("3.14159"))).
-assign(example1_y,y,operation(mult,
-                            (operation(add,
-                                       (variable(x),
-                                       (val(int,2),()))),
-                             (variable(pi),())))).
-ensure(example_check1,operation(geq,
-                            (operation(float_div,
-                                         (variable(y),
-                                         (val(int,3),()))),
-                               (val(int,10),())))).
-ensure(example_check2,operation(leq,
-                            (operation(float_div,
-                                         (variable(y),
-                                         (val(int,3),()))),
-                               (val(int,15),())))).
+variable_define(pi,val(float,float("3.14159"))).
+variable_define(y,operation(mult,
+                           (operation(add,
+                                      (variable(x),
+                                      (val(int,2),()))),
+                            (variable(pi),())))).
+ensure(operation(geq,
+                (operation(float_div,
+                          (variable(y),
+                          (val(int,3),()))),
+                (val(int,10),())))).
+ensure(operation(leq,
+                (operation(float_div,
+                          (variable(y),
+                          (val(int,3),()))),
+                (val(int,15),())))).
 \end{verbatim}
 
 \paragraph{Other examples}
 
 \begin{verbatim}
-variable_define(define_named, py_named_function, operation(python("math.cos"),(val(float,float("0.1")),()))).
-variable_define(define_lambda, py_lambda, operation(python("lambda x,y: x+y*y"),
-         (val(float,float("2.0")),
-         (val(float,float("0.1")),())))).
+variable_define(py_named_function,operation(python("math.cos"),(val(float,float("0.1")),()))).
+variable_define(py_lambda,operation(python("lambda x,y: x+y*y"),
+                                   (val(float,float("2.0")),
+                                   (val(float,float("0.1")),())))).
 
-ensure(c1,operation(eq,
-                   (variable(v1),
-                   (variable(v2),
-                   ()))))
+ensure(operation(eq,
+                (variable(v1),
+                (variable(v2),
+                ()))))
 \end{verbatim}
 
 \paragraph{default function}
 
 \begin{verbatim}
-assign(assign_x0,x0,val(int,0)).
-assign(assign_x1,x1,operation(if,(variable(cond),(val(int,1),())))).
-assign(assign_y0,y0,operation(default,(variable(x0),(variable(x1),())))).
+variable_define(x0,val(int,0)).
+variable_define(x1,operation(if,(variable(cond),(val(int,1),())))).
+variable_define(y0,operation(default,(variable(x0),(variable(x1),())))).
 \end{verbatim}
-
-%% \subsection{Semantices}
-%% Work in progress.
-
-%% Let $V = \{ v \suchthat \lit{assign(CNAME,$v$,EXPR)} \}$ be the set of variables.
-%% The value of an expression $e$ is defined as
-%% \lit{assign(CNAME,VAR,EXPR)} means that a variable called \lit{VAR} is assigned the evaluation of \lit{EXPR}; \lit{CNAME} is the name of this assignment constraint.
-%% \lit{ensure(CNAME,EXPR)} means that the evaluation of \lit{EXPR} must be \lit{true} in any model; \lit{CNAME} is the name of this check constraint.
-
 
 
 \subsection{Notes}

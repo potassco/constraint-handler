@@ -2,7 +2,8 @@
 
 ## Ongoing
 
-- drop supoort for while statements
+- drop support for `assign/2` declarations
+- drop support for while statements
 - rewrite the handling of executions to be entirely SSA-based
 - add optimization result atoms `optimize_value/3`
 
