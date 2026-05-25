@@ -158,8 +158,6 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "warning_ignore" "(" <term> "," <term> ")"
 
 <atom> ::=
-    | "assign" "(" <term> "," <expression> ")"
-    | "assign" "(" <term> "," <term> "," <expression> ")"
     | "ensure" "(" <expression> ")"
     | "ensure" "(" <term> "," <expression> ")"
     | "evaluate" "(" <operator> "," <expression-list> ")"
