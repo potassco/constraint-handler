@@ -1,4 +1,5 @@
 %%%%%%%%%%%%%%%%% _expression_query from ensure evaluate
+_expression_query(sugar,E) :- _passed(sugar,bool_evaluate(LBL,E)).
 _expression_query(sugar,E) :- _passed(sugar,ensure(LBL,E)).
 _expression_query(sugar,operation(OP,ARGS)) :- _passed(sugar,evaluate(LBL,OP,ARGS)).
 

@@ -1,4 +1,5 @@
 %%%%%%%%%%%%%%%%% check if well-formed
+_passed(sugar,bool_evaluate(LBL,E)) :- _passed(defaultArgs,bool_evaluate(LBL,E)).
 _passed(sugar,ensure(LBL,E)) :- _passed(defaultArgs,ensure(LBL,E)).
 _passed(sugar,evaluate(LBL,OP,ARGS)) :- _passed(defaultArgs,evaluate(LBL,OP,ARGS)).
 
