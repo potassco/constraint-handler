@@ -54,3 +54,5 @@ _passed(wf_check,preference_holds(LBL,E,K)) :- _passed(sugar,preference_holds(LB
 
 
 %%%%%% warning atoms
+_passed((sugar;wf_check),warning_forbid(LBL,KIND)) :- _passed(defaultArgs,warning_forbid(LBL,KIND)).
+_passed((sugar;wf_check),warning_ignore(LBL,KIND)) :- _passed(defaultArgs,warning_ignore(LBL,KIND)).

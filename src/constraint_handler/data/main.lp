@@ -32,6 +32,7 @@ value(X,V) :- _se_value(variable(X),V).
 
 representation((bool;int;string;float;symbol;none),extensional).
 
-_warning_ignored(KIND) :- _passed(defaultArgs,warning_ignore(LBL,KIND)).
-:- _warning(KIND,INFO,MSG), _passed(defaultArgs,warning_forbid(LBL,KIND)), not _warning_ignored(KIND).
-warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not _warning_ignored(KIND).
+_warning_forbid(KIND) :- _passed(wf_check,warning_forbid(LBL,KIND)).
+_warning_ignore(KIND) :- _passed(wf_check,warning_ignore(LBL,KIND)).
+:- _warning(KIND,INFO,MSG), _warning_forbid(KIND), not _warning_ignore(KIND).
+warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not _warning_ignore(KIND).
