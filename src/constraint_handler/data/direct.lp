@@ -20,7 +20,6 @@ _se_value(val(T,V),val(T,V)) :- _expression_query(LBL,val(T,V)).
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
 _se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
 _expression_pythonEval(python(S),python(S)) :- direct_query(python(S)).
-_expression_pythonEval(pythonExtract(VARS,STMT,EXPR),pythonExtract(VARS,STMT,EXPR)) :- direct_query(pythonExtract(VARS,STMT,EXPR)).
 _se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
@@ -68,20 +67,6 @@ _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L)
 
 _expression_pythonEval(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _direct_imploded_args_aux(E,0,L).
 
-%%%%%%%%%%%%%%%%% pythonExtract
-%_se_pe_map(EXPR,IDX,X,D) :- direct_query(EXPR), EXPR=python(VARS,PSTMT,PEXPR).
-%_se_pe_map(EXPR,IDX,X,D) :- direct_query(EXPR), EXPR=python(VARS,PSTMT,PEXPR), (IDX,(X,D)) = @pythonEnumerateElemetnts(VARS).
-%direct_query(D) :- _se_pe_map(EXPR,IDX,X,D).
-%_direct_implode(V) :- _se_pe_map(EXPR,IDX,X,D), _se_value(D,V).
-
-%_direct_implode(variable(X)) :- _expression_pythonEvalVar(E,X).
-%_expression_pythonEvalVar(E,X) :- _expression_pythonEval(Q,E), X=@pythonExpressionVariable(E).
-%_expression_pythonEvalMapAux(E,#inf,()) :- _expression_pythonEval(Q,E).
-%_expression_pythonEvalMapAux(E,Y,((Y,W),M)) :- _expression_pythonEvalMapAux(E,X,M), _expression_pythonEvalVar(E,Y), _se_value(variable(Y),V), _direct_imploded(V,W), X < Y,
-%    #false : _expression_pythonEvalVar(E,Z), X < Z, Z < Y.
-%_expression_pythonEvalMap(E,M) :- _expression_pythonEvalMapAux(E,X,M), #false : _expression_pythonEvalVar(E,Y), X < Y.
-
-%_expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), _expression_pythonEvalMap(E,M), RES=@pythonEvalExpr(E,M,ID), _main_solverIdentifiers(ID).
 _expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), RES=@pythonEvalExpr(E,(),ID), _main_solverIdentifiers(ID).
 _computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,val(TYPE,V)).
 _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
