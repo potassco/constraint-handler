@@ -33,10 +33,6 @@ class Propagator_variable_declareOptional(atom.Variable_declareOptional):
     pass
 
 
-class Propagator_assign(atom.Assign):
-    pass
-
-
 class Propagator_ensure(atom.Ensure):
     pass
 
