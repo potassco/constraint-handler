@@ -39,5 +39,5 @@ propagator_optimize_precision(PREC,PRIO) :- _passed(wf_check,optimize_precision(
 %propagator_execution_run(LBL,F) :-
 %    _passed(wf_check,execution_run(LBL,F)), engine(LBL,propagator).
 
-propagator_warning_forbid(LBL,W) :- warning_forbid(LBL,W), defaultEngine(propagator).
-propagator_warning_ignore(LBL,W) :- warning_ignore(LBL,W), defaultEngine(propagator).
+propagator_warning_forbid(LBL,W) :- _passed(defaultArgs,warning_forbid(LBL,W)), defaultEngine(propagator).
+propagator_warning_ignore(LBL,W) :- _passed(defaultArgs,warning_ignore(LBL,W)), defaultEngine(propagator).
