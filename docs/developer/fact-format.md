@@ -160,6 +160,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 <atom> ::=
     | "ensure" "(" <expression> ")"
     | "ensure" "(" <term> "," <expression> ")"
+    | "bool_evaluate" "(" <expression> ")"
+    | "bool_evaluate" "(" <term> "," <expression> ")"
     | "evaluate" "(" <operator> "," <expression-list> ")"
     | "evaluate" "(" <term> "," <operator> "," <expression-list> ")"
     | <variable-atom>
