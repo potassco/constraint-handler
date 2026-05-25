@@ -110,8 +110,10 @@ _passed(defaultArgs,preference_variableValue(LBL,X,E,K)) :- preference_variableV
 #defined warning_forbid/1.
 #defined warning_ignore/1.
 
-warning_forbid(_label_anonymous,KIND) :- warning_forbid(KIND).
-warning_ignore(_label_anonymous,KIND) :- warning_ignore(KIND).
+_passed(defaultArgs,warning_forbid(_label_anonymous,KIND)) :- warning_forbid(KIND).
+_passed(defaultArgs,warning_forbid(LBL,KIND)) :- warning_forbid(LBL,KIND).
+_passed(defaultArgs,warning_ignore(_label_anonymous,KIND)) :- warning_ignore(KIND).
+_passed(defaultArgs,warning_ignore(LBL,KIND)) :- warning_ignore(LBL,KIND).
 
 %%%%%%%%%%%%%%%%% collect labels
 _label(LBL) :- _passed(defaultArgs,bool_evaluate(LBL,E)).
@@ -144,5 +146,5 @@ _label(LABEL) :- _passed(defaultArgs,preference_holds(LABEL,E,K)).
 _label(LABEL) :- _passed(defaultArgs,preference_variableValue(LABEL,X,E,K)).
 
 %%%%%% warning atoms
-_label(LABEL) :- warning_forbid(LABEL,KIND).
-_label(LABEL) :- warning_ignore(LABEL,KIND).
+_label(LABEL) :- _passed(defaultArgs,warning_forbid(LABEL,KIND)).
+_label(LABEL) :- _passed(defaultArgs,warning_ignore(LABEL,KIND)).
