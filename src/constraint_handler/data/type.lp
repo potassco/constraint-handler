@@ -12,21 +12,19 @@ type_variable(X,T) :- _type_variable(PHASE,X,T).
 
 %%%%%%%%%%%%%%%%% type_expression
 _expression_query(type_check,E) :- type_query(E).
-_expression_typeQuery(type_check,EXPR) :- _expression_query(wf_check,EXPR).
-_expression_typeQuery(type_check,EXPR) :- type_query(EXPR).
-type_expression(SCOPE,variable(X),T) :- _expression_typeQuery(SCOPE,variable(X)), _type_variable(SCOPE,X,T).
-type_expression(SCOPE,val(T,V),T) :- _expression_typeQuery(SCOPE,val(T,V)).
-type_expression(SCOPE,python(S),top) :- _expression_typeQuery(SCOPE,python(S)).
-type_expression(SCOPE,operation(O,ARGS),T) :- _expression_typeQuery(SCOPE,operation(O,ARGS)), _type_operator(SCOPE,O,function(TS,T)), _type_list(SCOPE,ARGS,TS).
-type_expression(SCOPE,(H,T),(TH,TT)) :- _expression_typeQuery(SCOPE,(H,T)), type_expression(SCOPE,H,TH), type_expression(SCOPE,T,TT).
+_expression_typeQuery(EXPR) :- _expression_query(wf_check,EXPR).
+_expression_typeQuery(EXPR) :- type_query(EXPR).
+type_expression(type_check,variable(X),T) :- _expression_typeQuery(variable(X)), _type_variable(SCOPE,X,T).
+type_expression(type_check,val(T,V),T) :- _expression_typeQuery(val(T,V)).
+type_expression(type_check,python(S),top) :- _expression_typeQuery(python(S)).
+type_expression(type_check,E,T) :- _expression_typeQuery(E), E=operation(O,ARGS), _type_operator(O,function(TS,T)), _type_list(E,TS).
+type_expression(type_check,(H,T),(TH,TT)) :- _expression_typeQuery((H,T)), type_expression(type_check,H,TH), type_expression(type_check,T,TT).
 
-_expression_sequenceHelper(PHASE,ARGS) :- _expression_typeQuery(PHASE,operation(O,ARGS)).
-_expression_sequenceHelper(PHASE,EXPR) :- _expression_typeQuery(PHASE,EXPR).
 
-_type_listArgT(SCOPE,ARGS,IDX,T) :- _expression_index(SCOPE,ARGS,IDX,ARG), type_expression(SCOPE,ARG,T).
-_type_listAux(SCOPE,ARGS,N,()) :- _expression_typeQuery(SCOPE,operation(O,ARGS)), _length(SCOPE,ARGS,N).
-_type_listAux(SCOPE,ARGS,IDX,(T,TS)) :- _type_listAux(SCOPE,ARGS,IDX+1,TS), _type_listArgT(SCOPE,ARGS,IDX,T).
-_type_list(SCOPE,ARGS,TS) :- _type_listAux(SCOPE,ARGS,0,TS).
+_type_listArgT(E,IDX,T) :- _expression_operationIndex(wf_check,E,IDX,ARG), type_expression(type_check,ARG,T).
+_type_listAux(E,N,()) :- _expression_typeQuery(E), E=operation(O,ARGS), _expression_operationLength(wf_check,E,N).
+_type_listAux(E,IDX,(T,TS)) :- _type_listAux(E,IDX+1,TS), _type_listArgT(E,IDX,T).
+_type_list(E,TS) :- _type_listAux(E,0,TS).
 
 % TODO lambdas
 
@@ -34,12 +32,12 @@ _type_list(SCOPE,ARGS,TS) :- _type_listAux(SCOPE,ARGS,0,TS).
 %%%%%%%%%%%%%%%%% type_statement
 % TODO statements.
 
-type_expressionTyped(SCOPE,operation(O,ARGS)) :- type_expression(SCOPE,operation(O,ARGS),T).
-_warning(type(failed_operation),(),(O,ARGS)) :- _expression_typeQuery(SCOPE,operation(O,ARGS)), not type_expressionTyped(SCOPE,operation(O,ARGS)).
+type_expressionTyped(type_check,operation(O,ARGS)) :- type_expression(type_check,operation(O,ARGS),T).
+_warning(type(failed_operation),(),(O,ARGS)) :- _expression_typeQuery(operation(O,ARGS)), not type_expressionTyped(type_check,operation(O,ARGS)).
 
 
 %%%%%%%%%%%%%%%%% type_operator
-_type_operator(type_check,O,function(TS,T)) :- operator_declare(O,TS,T).
+_type_operator(O,function(TS,T)) :- operator_declare(O,TS,T).
 
 % This is for variadic operators
 % - All valid elements get assigned their respective rank (from the declaration).
@@ -47,14 +45,13 @@ _type_operator(type_check,O,function(TS,T)) :- operator_declare(O,TS,T).
 %   then all arguments were valid.
 % - If all elements were valid, the result with the highest rank will be picked as the return type
 
-%_expression_sequenceHelper(PHASE,TS) :- _type_list(PHASE,ARGS,TS).
-_expression_sequenceHelper(type_check,TS) :- _type_list(type_check,ARGS,TS).
-
 operator_variadic(OP,RT) :- operator_declare_variadic(OP,T,RT,1).
-_type_variadicListAux(PHASE,OP,TS,N,NT,1) :- _expression_typeQuery(PHASE,operation(OP,ARGS)), _type_list(PHASE,ARGS,TS), _length(PHASE,ARGS,N), operator_variadic(OP,NT).
-_type_variadicListAux(PHASE,OP,TS,IDX,IT,IR) :- _type_variadicListAux(PHASE,OP,TS,IDX+1,NT,NR), _expression_index(PHASE,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR > NR.
-_type_variadicListAux(PHASE,OP,TS,IDX,NT,NR) :- _type_variadicListAux(PHASE,OP,TS,IDX+1,NT,NR), _expression_index(PHASE,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR <= NR.
-_type_operator(PHASE,O,function(TS,T)) :- _type_variadicListAux(PHASE,O,TS,0,T,R).
+_expression_sequence(type_check,TS) :- _type_list(E,TS).
+_type_variadicListAux(OP,TS,N,NT,1) :- _expression_typeQuery(E), E=operation(OP,ARGS), _type_list(E,TS), _expression_sequenceLength(type_check,TS,N), operator_variadic(OP,NT).
+_type_variadicListAux(OP,TS,IDX,IT,IR) :- _type_variadicListAux(OP,TS,IDX+1,NT,NR), _expression_sequenceIndex(type_check,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR > NR.
+_type_variadicListAux(OP,TS,IDX,NT,NR) :- _type_variadicListAux(OP,TS,IDX+1,NT,NR), _expression_sequenceIndex(type_check,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR <= NR.
+_type_operator(O,function(TS,T)) :- _type_variadicListAux(O,TS,0,T,R).
+
 %*
 _arg_rank(PHASE,OP,ARGS,IDX,RANK) :-
     _expression_index(PHASE,ARGS,IDX,ARG),
@@ -74,7 +71,7 @@ _max_rank(SCOPE,OP,ARGS,MAXR) :-
 
 _type_operator(SCOPE,OP,function(TS,T_RESULT)) :-
     _type_listAux(SCOPE,ARGS,N,()),
-    _type_list(SCOPE,ARGS,TS),
+    _type_list(ARGS,TS),
     _valid_args_count(SCOPE,OP,ARGS,N),
     _max_rank(SCOPE,OP,ARGS,MAXR),
     operator_declare_variadic(OP,T,T_RESULT,MAXR).
