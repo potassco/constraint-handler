@@ -1,5 +1,5 @@
 _set_assign(CNAME,variable(X),E) :- _passed(wf_check,set_assign(CNAME,X,E)), engine(CNAME,compile).
-_set_declare(CNAME,variable(X)) :- _passed(wf_check,set_declare(CNAME,X)), engine(CNAME,compile).
+_set_declare(CNAME,variable(X)) :- _passed(wf_check,variable_declare(CNAME,X,set)), engine(CNAME,compile).
 
 direct_query(E) :- _set_assign(NAME,X,E).
 

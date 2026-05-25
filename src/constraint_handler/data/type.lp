@@ -6,8 +6,8 @@ _type(int;float;bool;string;symbol;none;set;multimap).
 %%%%%%%%%%%%%%%%% type_variable
 _type_variable(type_check,X,T) :- _passed(wf_check,variable_define(LBL,X,E)), type_expression(PHASE,E,T).
 _type_variable(type_check,X,T) :- _passed(wf_check,variable_domain(LBL,X,E)), type_expression(PHASE,E,T).
-_type_variable(type_check,X,set) :- _passed(wf_check,set_declare(LBL,X)).
-_type_variable(type_check,X,multimap) :- _passed(wf_check,multimap_declare(LBL,X)).
+_type_variable(type_check,X,set) :- _passed(wf_check,variable_declare(LBL,X,set)).
+_type_variable(type_check,X,multimap) :- _passed(wf_check,variable_declare(LBL,X,multimap)).
 type_variable(X,T) :- _type_variable(PHASE,X,T).
 
 %%%%%%%%%%%%%%%%% type_expression

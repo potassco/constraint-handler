@@ -14,7 +14,7 @@ _passed(sugar,variable_domain(LBL,X,val(bool,(false;true)))) :- _passed(defaultA
 _passed(sugar,variable_domain(LBL,X,val(none,none))) :- _passed(defaultArgs,variable_declareOptional(LBL,X)).
 _passed(sugar,variable_domain(LBL,X,E)) :- _passed(defaultArgs,variable_domain(LBL,X,E)).
 
-_variable_declared(X) :- _passed(defaultArgs,variable_declare(LBL,X,D)).
+_variable_declared(X) :- _passed(defaultArgs,variable_declare(LBL,X,fromFacts)).
 _passed(sugar,variable_declare(LBL,X,fromFacts)) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
 _warning(variable(undeclared),(),X) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
 
@@ -26,14 +26,16 @@ _warning(variable(multipleDefinitions),(CNAME1,(CNAME2,())),(X,E1,E2)) :-
   _passed(defaultArgs,variable_define(CNAME1,X,E1)), _passed(defaultArgs,variable_define(CNAME2,X,E2)), (CNAME1,E1) < (CNAME2,E2),
   0 = #count { CNAME3,E3 : _passed(defaultArgs,variable_define(CNAME3,X,E3)), (CNAME3,E3) < (CNAME2,E2), (CNAME3,E3) != (CNAME1,E1) }.
 
+_passed(sugar,variable_declare(LBL,X,definition)) :- _passed(defaultArgs,variable_define(LBL,X,E)).
+
 
 %%%%%% multimap atoms
-_passed(sugar,multimap_declare(LBL,X)) :- _passed(defaultArgs,multimap_declare(LBL,X)).
+_passed(sugar,variable_declare(LBL,X,multimap)) :- _passed(defaultArgs,multimap_declare(LBL,X)).
 _passed(sugar,multimap_assign(LBL,X,EKEY,EVAL)) :- _passed(defaultArgs,multimap_assign(LBL,X,EKEY,EVAL)).
 
 
 %%%%%% set atoms
-_passed(sugar,set_declare(LBL,X)) :- _passed(defaultArgs,set_declare(LBL,X)).
+_passed(sugar,variable_declare(LBL,X,set)) :- _passed(defaultArgs,set_declare(LBL,X)).
 _passed(sugar,set_assign(LBL,X,E)) :- _passed(defaultArgs,set_assign(LBL,X,E)).
 _passed(sugar,set_baseDomain(LBL,X,E)) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)).
 

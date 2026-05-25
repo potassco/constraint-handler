@@ -2,7 +2,7 @@
 _ge_assign(LBL,X,E) :- _passed(wf_check,variable_define(LBL,X,E)), engine(LBL,ground).
 _ge_set_assign(CNAME,X,E) :- _passed(wf_check,set_assign(CNAME,X,E)), engine(CNAME,ground).
 %%% TODO: handle set_baseDomain here?
-_ge_set_declare(CNAME,X) :- _passed(wf_check,set_declare(CNAME,X)), engine(CNAME,ground).
+_ge_set_declare(CNAME,X) :- _passed(wf_check,variable_declare(CNAME,X,set)), engine(CNAME,ground).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 
 ge_value(X,V) :- _ge_assign(CNAME,X,EXPR), ge_result(EXPR,V).

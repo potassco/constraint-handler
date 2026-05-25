@@ -105,7 +105,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 ## Building Facts and Declarations
 ```ebnf
-<domain> ::= "boolDomain" | "fromFacts" | "fromList" "(" <expression-list> ")"
+<domain> ::= "definition" | "boolDomain" | "fromFacts" | "fromList" "(" <expression-list> ")" | "set" | "multimap"
 
 <variable-atom> ::=
     | "variable_declare" "(" <term> "," <domain> ")"

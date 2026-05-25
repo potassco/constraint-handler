@@ -9,6 +9,10 @@ import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 
 
+class Definition(NamedTuple):
+    pass
+
+
 class FromFacts(NamedTuple):
     pass
 
@@ -21,6 +25,14 @@ class FromList(NamedTuple):
     elements: list[expression.Expr]
 
 
-type Domain = BoolDomain | FromFacts | FromList
+class Set(NamedTuple):
+    pass
+
+
+class Multimap(NamedTuple):
+    pass
+
+
+type Domain = Definition | BoolDomain | FromFacts | FromList | Set | Multimap
 
 

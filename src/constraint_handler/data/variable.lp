@@ -1,6 +1,6 @@
 %%% rules for compile and ground engines
 
-_variable_declare(LBL,X) :- _passed(wf_check,variable_declare(LBL,X,D)), engine(LBL,(compile;ground)).
+_variable_declare(LBL,X) :- _passed(wf_check,variable_declare(LBL,X,fromFacts)), engine(LBL,(compile;ground)).
 _variable_domain(X,E) :- _passed(wf_check,variable_domain(LBL,X,E)), engine(LBL,(compile;ground)).
 
 %_variable_hasDomain(X) :- _variable_domain(X,E), _expression_domain(E,V).
@@ -27,9 +27,6 @@ _variable_query(sugar,X) :- _passed(sugar,set_baseDomain(NAME,X,E)).
 _variable_query(sugar,X) :- _passed(sugar,multimap_assign(NAME,X,K,B)).
 
 _variable_exists(sugar,X) :- _passed(sugar,variable_declare(LBL,X,D)).
-_variable_exists(sugar,X) :- _passed(sugar,variable_define(LBL,X,E)).
-_variable_exists(sugar,X) :- _passed(sugar,set_declare(LBL,X)).
-_variable_exists(sugar,X) :- _passed(sugar,multimap_declare(LBL,X)).
 
 _variable(sugar,X) :- _variable_query(sugar,X).
 _warning(variable(undeclared),(),X) :- _variable(sugar,X), not _variable_exists(sugar,X).
