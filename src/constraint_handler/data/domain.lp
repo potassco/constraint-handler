@@ -16,9 +16,9 @@ _expression_domain(EXPR,val(T,V)) :- _expression_wellformed(EXPR), EXPR=val(T,V)
 _expression_domain(EXPR,V) :- _expression_wellformed(EXPR), EXPR=variable(X), _passed(wf_check,variable_define(LBL,X,E2)), _expression_domain(E2,V).
 _expression_domain(EXPR,V) :- _expression_wellformed(EXPR), EXPR=variable(X), _passed(wf_check,variable_domain(LBL,X,E2)), _expression_domain(E2,V).
 
-_expression_tupleDomainAux(EXPR,ARGS,N,()) :- _expression_wellformed(EXPR), _expression_isTuple(wf_check,EXPR,N,ARGS), #false.
-_expression_tupleDomainAux(EXPR,ARGS,IDX,(V,L)) :- _expression_tupleDomainAux(EXPR,ARGS,IDX+1,L), _expression_index(wf_check,ARGS,IDX,E), _expression_domain(E,V).
-_expression_domain(EXPR,TUPLE) :- _expression_tupleDomainAux(EXPR,ARGS,0,L), TUPLE=@pythonReflect(function,(),L).
+_expression_tupleDomainAux(EXPR,N,()) :- _expression_wellformed(EXPR), _expression_tupleLength(wf_check,EXPR,N), #false.
+_expression_tupleDomainAux(EXPR,IDX,(V,L)) :- _expression_tupleDomainAux(EXPR,IDX+1,L), _expression_tupleIndex(wf_check,EXPR,IDX,E), _expression_domain(E,V).
+_expression_domain(EXPR,TUPLE) :- _expression_tupleDomainAux(EXPR,0,L), TUPLE=@pythonReflect(function,(),L).
 
 _expression_setDomainQuery(EXPR,X) :- _expression_wellformed(EXPR), EXPR=variable(X), _passed(wf_check,set_declare(LBL,X)), #false.
 _expression_setExpr(EXPR,X,assign,E) :- _expression_setDomainQuery(EXPR,X), _passed(wf_check,set_assign(LBL,X,E)).

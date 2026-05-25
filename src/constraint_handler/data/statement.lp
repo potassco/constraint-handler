@@ -46,10 +46,8 @@ _expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)).
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)).
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,if(E,THEN,ELSE)).
-%_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)), D=@pythonListElements(ARGS).
-%_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS), D=@pythonListElements(ARGS).
-_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)), _expression_index(defaultArgs,ARGS,IDX,D).
-_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS), _expression_index(defaultArgs,ARGS,IDX,D).
+_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)), D=@pythonListElements(ARGS).
+_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS), D=@pythonListElements(ARGS).
 % TODO: tuple, set
 
 _expression_sequenceHelper(defaultArgs,ARGS) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)).

@@ -28,10 +28,10 @@ _se_value(variable(X),V) :- _se_assign(NAME,variable(X),E2), _se_value(E2,V).
 
 
 %%%%%%%%%%%%%%%%% tuples
-_direct_tupleValuesAux(E,ARGS,N,()) :- direct_query(E), _expression_isTuple(solve,E,N,ARGS).
-_direct_tupleValuesAux(E,ARGS,IDX,(V,VS)) :- _direct_tupleValuesAux(E,ARGS,IDX+1,VS),
-    _expression_index(solve,ARGS,IDX,ARG), _se_value(ARG,V).
-_se_value(E,TUPLE) :- _direct_tupleValuesAux(E,ARGS,0,VS), TUPLE=@pythonReflect(function,(),VS).
+_direct_tupleValuesAux(E,N,()) :- direct_query(E), _expression_tupleLength(solve,E,N).
+_direct_tupleValuesAux(E,IDX,(V,VS)) :- _direct_tupleValuesAux(E,IDX+1,VS),
+    _expression_tupleIndex(solve,E,IDX,ARG), _se_value(ARG,V).
+_se_value(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
 _direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), _expression_safe(operation(OP,ARGS)).
@@ -110,10 +110,10 @@ _direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), representation
 
 _direct_imploded(variable(X),V) :- _direct_implode(variable(X)), _se_value(variable(X),V).
 
-_expression_sequenceHelper(solve,E) :- _direct_implode(E).
-_direct_implode(X) :- _direct_implode(E), _expression_isTuple(solve,E,N,ARGS), _expression_index(solve,ARGS,IDX,X).
-_direct_implodeTupleAux(E,ARGS,N,()) :- _direct_implode(E), _expression_isTuple(solve,E,N,ARGS), _expression_index(solve,ARGS,IDX,X).
-_direct_implodeTupleAux(E,ARGS,IDX,(V,L)) :- _direct_implodeTupleAux(E,ARGS,IDX+1,L), _expression_index(solve,ARGS,IDX,X), _direct_imploded(X,V).
-_direct_imploded(E,TUPLE) :- _direct_implodeTupleAux(E,ARGS,0,L), TUPLE=@pythonReflect(function,(),L).
+_expression(solve,E) :- _direct_implode(E).
+_direct_implode(X) :- _direct_implode(E), _expression_tupleIndex(solve,E,IDX,X).
+_direct_implodeTupleAux(E,N,()) :- _direct_implode(E), _expression_tupleLength(solve,E,N).
+_direct_implodeTupleAux(E,IDX,(V,L)) :- _direct_implodeTupleAux(E,IDX+1,L), _expression_tupleIndex(solve,E,IDX,X), _direct_imploded(X,V).
+_direct_imploded(E,TUPLE) :- _direct_implodeTupleAux(E,0,L), TUPLE=@pythonReflect(function,(),L).
 
 engine(_internal,compile).
