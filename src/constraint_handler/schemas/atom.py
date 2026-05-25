@@ -150,12 +150,6 @@ class Preference_score(NamedTuple):
     score: int
 
 
-class Assign(NamedTuple):
-    label: expression.constant
-    var: expression.constant
-    expr: expression.Expr
-
-
 class Ensure(NamedTuple):
     label: expression.constant
     expr: expression.Expr
@@ -181,7 +175,7 @@ class Evaluated(NamedTuple):
     value: expression.ReducedExpr
 
 
-type MainAtom = Assign | Ensure | Evaluate
+type MainAtom = Ensure | Evaluate
 type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
 type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_score | warning.Warning
 
