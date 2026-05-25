@@ -147,12 +147,12 @@ _statement_pythonInputMap(SCOPE,VARS) :- _statement_pythonInputMapAux(SCOPE,0,VA
 
 %%% SSA output
 _statement_definedLatest(SCOPE,X) :- _statement_latest(SCOPE,X,XE).
-_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), _statement_latest((e,SCOPE),X,XE), _statement_latest(SCOPE,X,variable(XS)),
+_statement_introduce(LBL,XS,XI) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(C,THEN,ELSE), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), _statement_latest((e,SCOPE),X,XE), _statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(XT,(XE,())))), _statement_changed(STMT,X).
-_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,ELSE)), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), not _statement_definedLatest((e,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)), XI=operation(ite,(COND,(XT,(val(none,none),())))).
-_passed(sugar,variable_define(LBL,XS,XI)) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,ELSE)), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)),
+_statement_introduce(LBL,XS,XI) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,ELSE)), _expression_contextualized(SCOPE,C,COND), _statement_latest((t,SCOPE),X,XT), not _statement_definedLatest((e,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)), XI=operation(ite,(COND,(XT,(val(none,none),())))).
+_statement_introduce(LBL,XS,XI) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,ELSE)), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(val(none,none),(XE,())))).
-_passed(sugar,variable_define(LBL,XS,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX), _statement_latest(SCOPE,X,variable(XS)).
+_statement_introduce(LBL,XS,EX) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX), _statement_latest(SCOPE,X,variable(XS)).
 _passed(sugar,ensure(LBL,ASSR)) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
   _expression_contextualized(SCOPE,E,EX),
   _statement_condition(SCOPE,ES),
@@ -161,19 +161,22 @@ _passed(sugar,ensure(LBL,ASSR)) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
   _execution_isRunning(PRG).
 
 
-_passed(sugar,variable_define(LBL,XS,EX)) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
-_passed(sugar,variable_define(LBL,XS,operation(pythonExtract(CODE,X),VARS))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
+_statement_introduce(LBL,XS,EX) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
+_statement_introduce(LBL,XS,operation(pythonExtract(CODE,X),VARS)) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)), _statement_pythonInputMap(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
 _passed(sugar,ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonInputMap(SCOPE,VARS),
   _execution_isRunning(PRG).
 
-_passed(sugar,variable_define(LBL,execution_local(PRG,X),variable(execution_input(PRG,X)))) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), _execution_input_var(PRG,X).
+_statement_introduce(LBL,execution_local(PRG,X),variable(execution_input(PRG,X))) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), _execution_input_var(PRG,X).
 
 %%% TODO: add bad / error handling
 _execution_ou_proj(PRG,X) :- _statement_latest((PRG,()),X,EX).
 
 _execution_isRunning(PRG) :- _execution_declare(LBL1,PRG,STMT,INS,OUTS), _passed(defaultArgs,execution_run(LBL,PRG)).
 
-_passed(sugar,variable_define(LBL,EX,V)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
-_passed(sugar,variable_define(LBL,EX,val(none,none))) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), #false : _execution_ou_proj(PRG,X), _execution_isRunning(PRG).
+_statement_introduce(LBL,EX,V) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
+_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), #false : _execution_ou_proj(PRG,X), _execution_isRunning(PRG).
+
+_passed(sugar,variable_define(LBL,X,E)) :- _statement_introduce(LBL,X,E).
+_passed(sugar,variable_declare(LBL,X,definition)) :- _statement_introduce(LBL,X,E).

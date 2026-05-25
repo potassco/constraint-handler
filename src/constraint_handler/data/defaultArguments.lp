@@ -28,11 +28,12 @@ _passed(defaultArgs,variable_declare(LBL,X,D)) :- variable_declare(LBL,X,D).
 _passed(defaultArgs,variable_declareOptional(_label_anonymous,X)) :- variable_declareOptional(X), not _passed(defaultArgs,variable_declare(_,X,_)).
 _passed(defaultArgs,variable_declareOptional(LBL,X)) :- variable_declareOptional(X), _passed(defaultArgs,variable_declare(LBL,X,D)).
 _passed(defaultArgs,variable_declareOptional(LBL,X)) :- variable_declareOptional(LBL,X).
-_passed(defaultArgs,variable_define(_label_anonymous,X,E)) :- variable_define(X,E).
-_passed(defaultArgs,variable_define(LBL,X,E)) :- variable_define(LBL,X,E).
 _passed(defaultArgs,variable_domain(_label_anonymous,X,E)) :- variable_domain(X,E), not _passed(defaultArgs,variable_declare(_,X,_)).
 _passed(defaultArgs,variable_domain(LBL,X,E)) :- variable_domain(X,E), _passed(defaultArgs,variable_declare(LBL,X,D)).
 _passed(defaultArgs,variable_domain(LBL,X,E)) :- variable_domain(LBL,X,E).
+
+_passed(defaultArgs,variable_define(_label_anonymous,X,E)) :- variable_define(X,E).
+_passed(defaultArgs,variable_define(LBL,X,E)) :- variable_define(LBL,X,E).
 
 %%%%%% multimap atoms
 #defined multimap_declare/1.
