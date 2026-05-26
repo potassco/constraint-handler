@@ -153,7 +153,7 @@ _statement_introduce(LBL,XS,XI) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,E
 _statement_introduce(LBL,XS,XI) :- _statement_querySSA(LBL,PRG,SCOPE,if(C,THEN,ELSE)), _expression_contextualized(SCOPE,C,COND), _statement_latest((e,SCOPE),X,XE), not _statement_definedLatest((t,SCOPE),X), _statement_latest(SCOPE,X,variable(XS)),
 XI=operation(ite,(COND,(val(none,none),(XE,())))).
 _statement_introduce(LBL,XS,EX) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX), _statement_latest(SCOPE,X,variable(XS)).
-_passed(sugar,ensure(LBL,ASSR)) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
+_statement_ensure(LBL,ASSR) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
   _expression_contextualized(SCOPE,E,EX),
   _statement_condition(SCOPE,ES),
   CONJ=operation(conj,ES),
@@ -164,7 +164,7 @@ _passed(sugar,ensure(LBL,ASSR)) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
 _statement_introduce(LBL,XS,EX) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
 _statement_introduce(LBL,XS,operation(pythonExtract(CODE,X),VARS)) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)), _statement_pythonInputMap(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
-_passed(sugar,ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
+_statement_ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS)) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonInputMap(SCOPE,VARS),
   _execution_isRunning(PRG).
 
@@ -180,3 +180,4 @@ _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _
 
 _passed(sugar,variable_define(LBL,X,E)) :- _statement_introduce(LBL,X,E).
 _passed(sugar,variable_declare(LBL,X,definition)) :- _statement_introduce(LBL,X,E).
+_passed(sugar,ensure(LBL,E)) :- _statement_ensure(LBL,E).
