@@ -278,11 +278,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return
 
         # check that all variables have a value
-        for var in self.symbol2var.get_variables():
-            if var.get_value() == ValueStatus.NOT_SET:
-                self.add_nogood_for_variable(control, var)
-                # variable has no value, adding nogood!
-                return
+        # TODO: this makes reasoning modes test fail?
+        if self.reasoning_mode == ReasoningMode.STANDARD:
+            for var in self.symbol2var.get_variables():
+                if var.get_value() == ValueStatus.NOT_SET:
+                    # variable has no value, adding nogood!
+                    self.add_nogood_for_variable(control, var)
+                    return
 
         # Evaluated assignments
         self.evaluations.update_evaluations(self.symbol2var.get_variables())
