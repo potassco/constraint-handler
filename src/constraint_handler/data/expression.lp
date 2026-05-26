@@ -24,23 +24,9 @@ _expression_query(sugar,D) :- _expression_query(sugar,T), D=@pythonTupleElements
 %_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,assign(X,EXPR)).
 %_expression_query(SCOPE,EXPR) :- _statement_query(SCOPE,if(EXPR,THEN,ELSE)).
 
-%%%%%%%%%%%%%%%%% _expression_query from query
-_expression_sequenceHelper(solve,ARGS) :- _expression_sequenceHelper(type_check,ARGS).
-
 %%%%%%%%%%%%%%%%% _expression_index _expression_isTuple
 _length(defaultArgs,E,N) :- _expression_sequenceHelper(defaultArgs,E), E=operation(O,ARGS), N=@pythonListLength(ARGS).
 _expression_index(defaultArgs,E,IDX,X) :- _expression_sequenceHelper(defaultArgs,E), E=operation(O,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
 _expression_isTuple(defaultArgs,E,N,ARGS) :- _expression_sequenceHelper(defaultArgs,E), true=@pythonIsTuple(E), (function,(),N,ARGS)=@pythonReify(E).
 _length(defaultArgs,E,N) :- _expression_sequenceHelper(defaultArgs,E), _expression_isTuple(defaultArgs,E,N,ARGS).
 _expression_index(defaultArgs,E,IDX,X) :- _expression_sequenceHelper(defaultArgs,E), _expression_isTuple(defaultArgs,E,N,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
-
-
-_length(wf_check,ARGS,N) :- _expression_sequenceHelper(wf_check,ARGS), N=@pythonListLength(ARGS).
-_expression_index(wf_check,ARGS,IDX,X) :- _expression_sequenceHelper(wf_check,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
-_expression_isTuple(wf_check,E,N,ARGS) :- _expression_sequenceHelper(wf_check,E), true=@pythonIsTuple(E), (function,(),N,ARGS)=@pythonReify(E).
-_length(wf_check,ARGS,N) :- _expression_isTuple(wf_check,E,N,ARGS).
-_expression_index(wf_check,ARGS,IDX,X) :- _expression_isTuple(wf_check,E,N,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
-
-
-_length(solve,ARGS,N) :- _expression_sequenceHelper(solve,ARGS), N=@pythonListLength(ARGS).
-_expression_index(solve,ARGS,IDX,X) :- _expression_sequenceHelper(solve,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).

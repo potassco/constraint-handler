@@ -129,17 +129,11 @@ _label(LBL,DECL) :- _passed(wf_check,DECL), DECL=variable_declare(LBL,X,D).
 _label(LBL,DECL) :- _passed(wf_check,DECL), DECL=variable_domain(LBL,X,E).
 
 %%%%%% multimap atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=multimap_declare(LBL,X).
 _label(LBL,DECL) :- _passed(wf_check,DECL), DECL=multimap_assign(LBL,X,K,B).
 
 %%%%% set atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=set_declare(LBL,X).
 _label(LBL,DECL) :- _passed(wf_check,DECL), DECL=set_assign(LBL,X,E).
 _label(LBL,DECL) :- _passed(wf_check,DECL), DECL=set_baseDomain(LBL,X,E).
-
-%%%%%% statement atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=execution_declare(LBL,NAME,STMT,INS,OUTS).
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=execution_run(LBL,NAME).
 
 %%%%%% optimization atoms
 _label(LBL,DECL) :- _passed(wf_check,DECL), DECL=optimize_maximizeSum(LBL,E,X,PRIO).

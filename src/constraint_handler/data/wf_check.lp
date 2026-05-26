@@ -2,7 +2,7 @@
 _expression_query(wf_check,EXPR) :- _expression_query(sugar,EXPR).
 
 _expression_wfQuery(EXPR) :- _expression_query(sugar,EXPR).
-_expression_wellformed(bad) :- _expression_wfQuery(bad).
+_expression_wellformed(bad).
 _expression_wellformed(python(CODE)) :- _expression_wfQuery(python(CODE)), true=@pythonIsString(CODE).
 _expression_wellformed(EXPR) :- _expression_wfQuery(EXPR), EXPR=pythonExtract(PSTMT,PEXPR),true=@pythonIsString(PSTMT),true=@pythonIsString(PEXPR).
 _expression_wellformed(val(T,V)) :- _expression_wfQuery(val(T,V)).

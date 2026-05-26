@@ -26,11 +26,16 @@ _variable_query(sugar,X) :- _passed(sugar,set_assign(NAME,X,E)).
 _variable_query(sugar,X) :- _passed(sugar,set_baseDomain(NAME,X,E)).
 _variable_query(sugar,X) :- _passed(sugar,multimap_assign(NAME,X,K,B)).
 
-_variable_exists(sugar,X) :- _passed(sugar,variable_declare(LBL,X,D)).
+_variable_exists(sugar,X) :- _passed(defaultArgs,variable_declare(LBL,X,D)).
+_variable_exists(sugar,X) :- _passed(defaultArgs,variable_define(LBL,X,D)).
+_variable_exists(sugar,X) :- _passed(defaultArgs,set_declare(LBL,X)).
+_variable_exists(sugar,X) :- _passed(defaultArgs,multimap_declare(LBL,X)).
+_variable_exists(sugar,X) :- _statement_introduce(LBL,X,E).
 
 _variable(sugar,X) :- _variable_query(sugar,X).
 _warning(variable(undeclared),(),X) :- _variable(sugar,X), not _variable_exists(sugar,X).
-_passed(wf_check,variable_define(_internal,X,bad)) :- _variable(sugar,X), not _variable_exists(sugar,X).
+_passed(sugar,variable_declare(_internal0,X,definition)) :- _variable(sugar,X), not _variable_exists(sugar,X).
+_passed(sugar,variable_define(_internal0,X,bad)) :- _variable(sugar,X), not _variable_exists(sugar,X).
 
 _variable_confusingName((assert;assign;if;noop;statement_python;seq2),keyword). % statement
 _variable_confusingName((lambda;operation;python;val;variable),keyword). % expression

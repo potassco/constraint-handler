@@ -20,7 +20,7 @@ _expression_tupleDomainAux(EXPR,N,()) :- _expression_wellformed(EXPR), _expressi
 _expression_tupleDomainAux(EXPR,IDX,(V,L)) :- _expression_tupleDomainAux(EXPR,IDX+1,L), _expression_tupleIndex(wf_check,EXPR,IDX,E), _expression_domain(E,V).
 _expression_domain(EXPR,TUPLE) :- _expression_tupleDomainAux(EXPR,0,L), TUPLE=@pythonReflect(function,(),L).
 
-_expression_setDomainQuery(EXPR,X) :- _expression_wellformed(EXPR), EXPR=variable(X), _passed(wf_check,set_declare(LBL,X)), #false.
+_expression_setDomainQuery(EXPR,X) :- _expression_wellformed(EXPR), EXPR=variable(X), _passed(wf_check,variable_declare(LBL,X,set)), #false.
 _expression_setExpr(EXPR,X,assign,E) :- _expression_setDomainQuery(EXPR,X), _passed(wf_check,set_assign(LBL,X,E)).
 _expression_setExpr(EXPR,X,baseDomain,E) :- _expression_setDomainQuery(EXPR,X), _passed(wf_check,set_baseDomain(LBL,X,E)), not _expression_setExpr(EXPR,X,assign,E).
 _expression_setExprIndex(EXPR,X,-1,assign,#inf) :- _expression_setDomainQuery(EXPR,X).

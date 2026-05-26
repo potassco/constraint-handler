@@ -15,13 +15,11 @@ _warning(atom(syntaxError),(),variable_define(LBL,X,E)) :- _passed(sugar,variabl
 
 
 %%%%%% multimap atoms
-_passed(wf_check,multimap_declare(LBL,X)) :- _passed(sugar,multimap_declare(LBL,X)).
 _passed(wf_check,multimap_assign(LBL,X,K,B)) :- _passed(sugar,multimap_assign(LBL,X,K,B)), _expression_wellformed(K), _expression_wellformed(B).
 _warning(atom(syntaxError),(),multimap_assign(LBL,X,K,B)) :- _passed(sugar,multimap_assign(LBL,X,K,B)),
     not _passed(wf_check,multimap_assign(LBL,X,K,B)).
 
 %%%%% set atoms
-_passed(wf_check,set_declare(LBL,X)) :- _passed(sugar,set_declare(LBL,X)).
 _passed(wf_check,set_assign(LBL,X,E)) :- _passed(sugar,set_assign(LBL,X,E)), _expression_wellformed(E).
 _passed(wf_check,set_assign(LBL,X,bad)) :- _passed(sugar,set_assign(LBL,X,E)), not _expression_wellformed(E).
 _warning(atom(syntaxError),(),set_assign(LBL,X,E)) :- _passed(sugar,set_assign(LBL,X,E)), not _expression_wellformed(E).
