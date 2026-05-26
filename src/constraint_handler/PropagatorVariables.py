@@ -13,7 +13,6 @@ import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 import constraint_handler.solver_environment as solver_environment
 from constraint_handler.PropagatorConstants import (
-    DEBUG_PRINT,
     DEFAULT_DECISION_LEVEL,
     EXECUTION_INPUT,
     EXECUTION_OUTPUT,
@@ -22,20 +21,6 @@ from constraint_handler.PropagatorConstants import (
     evaluations_type,
     propagator_warning_t,
 )
-
-
-def myprint(*args: tuple, **kwargs: dict[str, Any]):
-    """Print debug output when debugging is enabled.
-
-    This helper is a thin wrapper around ``print`` controlled by the
-    ``DEBUG_PRINT`` constant.
-
-    Args:
-        *args: Positional arguments passed to ``print``.
-        **kwargs: Keyword arguments passed to ``print``.
-    """
-    if DEBUG_PRINT:
-        print(*args, **kwargs)
 
 
 class VariableType(Protocol):
@@ -275,8 +260,6 @@ class VariableValue:
                 )
             )
 
-        myprint(f"{self.expr} evaluated to {self.value}")
-
         self.decision_level = ctl.assignment.decision_level
         return True
 
@@ -384,7 +367,6 @@ class EvaluateVariable:
         """
         if not ctl.assignment.is_true(self.literal):
             return False
-        myprint(f"Evaluating {self.op}({self.args})")
         value, errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations.evaluations)
         self.value = value
         for error, msg in errors:
@@ -727,7 +709,6 @@ class Variable:
         if len(val) > 1:
             # multiple values assigned to the same variable
             # this is True even if the same value is assigned multiple times
-            myprint(f"Variable vals: {val}")
             self.decision_level = ctl.assignment.decision_level
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             return EvaluationResult.CONFLICT
@@ -1452,7 +1433,6 @@ class OptimizationSum:
         vals = set()
         # TODO: check if we need to also need to excluce Bad.bad from the sums
         for var, expr in self.expressions:
-            myprint(f"Summing {expr} with value {expr.value}")
             if expr.value not in [ValueStatus.NOT_SET, ValueStatus.ASSIGNMENT_IS_FALSE, None, expression.Bad.bad]:
                 vals.add((var, expr.value))
 
