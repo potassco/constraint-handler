@@ -277,6 +277,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # backtracking due to conflicts in evaluation of variables
             return
 
+        # check that all variables have a value
+        for var in self.symbol2var.get_variables():
+            if var.get_value() == ValueStatus.NOT_SET:
+                self.add_nogood_for_variable(control, var)
+                # variable has no value, adding nogood!
+                return
+
         # Evaluated assignments
         self.evaluations.update_evaluations(self.symbol2var.get_variables())
 
@@ -562,7 +569,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         ng: set[int] = self.get_reasons(var)
         if extra_literals:
             ng = ng.union(extra_literals)
-        if ctl.add_nogood(ng, tag=True):
+        if ctl.add_nogood(ng):
             assert (
                 False
             ), f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
@@ -888,6 +895,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.literal2var.setdefault(_literal, []).append(optional_variable)
             self.literal2var[literal] = [optional_variable]
+
+        # loop over variables, if they have no domain, then we add an empty nogood
+        # Maybe we can make this more sophisticated by looking into the domains
+        # and seeing if the variables in those domains can actually take any value
+        # E.g. var_Declare(x, fromfacts). var_define(y, x)
+        # x cant have a value, so y cant have a value but this does not catch the y case
+        for var in self.symbol2var.get_variables_by_type(getattr(Variable, "__name__")):
+            var = cast(Variable, var)
+            if len(var.expressions) == 0:
+                ctl.add_clause([])
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """

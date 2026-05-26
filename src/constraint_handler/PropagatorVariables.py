@@ -106,6 +106,19 @@ class VariableManager:
             for var in var_dict.values():
                 yield var
 
+    def get_variables_by_type(self, var_type: VariableTypeNames) -> Iterable[VariableType]:
+        """
+        Get all variables of a specific type.
+
+        Args:
+            var_type: The type of variables to retrieve.
+        Returns:
+            Iterable[VariableType]: An iterable of VariableType instances of the specified type.
+        """
+        for var_dict in self.variables.values():
+            if var_type in var_dict:
+                yield var_dict[var_type]
+
     def get_variable(self, name: clingo.Symbol, var_type: VariableTypeNames) -> VariableType:
         """
         Get a variable by name and type.
