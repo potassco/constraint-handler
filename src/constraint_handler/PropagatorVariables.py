@@ -505,17 +505,18 @@ class EnsureVariable:
         changed is True if the value has changed.
         conflict is True if there is a conflict.
         """
-        if self.expression.assigned is not None and not self.expression.assigned:
-            # Ensure is false, so no conflict
-            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
-            self.decision_level = ctl.assignment.decision_level
-            return EvaluationResult.NOT_CHANGED
 
         if self.value != ValueStatus.NOT_SET:
             # already assigned
             return EvaluationResult.NOT_CHANGED
 
         changed = self.expression.evaluate(evaluations, ctl, env)
+
+        if self.expression.assigned is not None and not self.expression.assigned:
+            # Ensure is false, so no conflict
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+            self.decision_level = ctl.assignment.decision_level
+            return EvaluationResult.NOT_CHANGED
 
         if not changed:
             return EvaluationResult.NOT_CHANGED

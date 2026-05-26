@@ -1034,13 +1034,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             setvar: SetVariable = cast(
                 SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
             )
-            literal = ctl.add_literal(freeze=True)
-            setvar.add_value(domain_expr, literal)
-            self.literal2var.setdefault(literal, []).append(setvar)
+            setvar.add_value(domain_expr, _literal)
+            self.literal2var.setdefault(_literal, []).append(setvar)
 
-            ctl.add_clause([-literal, _literal])
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
+            ctl.add_watch(_literal)
+            ctl.add_watch(-_literal)
 
     def get_multimap_declarations(self, ctl: clingo.PropagateInit):
         """
