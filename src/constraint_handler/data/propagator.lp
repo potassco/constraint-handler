@@ -21,10 +21,10 @@ propagator_variable_define(CNAME,X,E) :- _passed(sugar,variable_define(CNAME,X,E
 propagator_set_declare(CNAME,X) :- _passed(sugar,set_declare(CNAME,X)), engine(CNAME,propagator).
 propagator_set_assign(CNAME,X,E) :- _passed(sugar,set_assign(CNAME,X,E)), engine(CNAME,propagator).
 
-{propagator_set_baseDomain(CNAME,X,E) : _passed(sugar,set_baseDomain(CNAME,X,E))} :- propagator_set_declare(CNAME,X).
+{propagator_set_baseDomain(CNAME1,X,E) : _passed(sugar,set_baseDomain(CNAME1,X,E)), engine(CNAME1,propagator)} :- propagator_set_declare(CNAME2,X).
 
 % ensure that value of expr is not in set if not chosen
-ensure(operation(set_notin,(E,(variable(X),())))) :- _passed(sugar,set_assign(CNAME,X,E)), not propagator_set_baseDomain(CNAME,X,E).
+ensure(operation(set_notin,(E,(variable(X),())))) :- _passed(sugar,set_baseDomain(CNAME,X,E)), not propagator_set_baseDomain(CNAME,X,E), engine(CNAME,propagator).
 
 
 propagator_multimap_assign(LBL,X,K,V) :- _passed(sugar,multimap_assign(LBL,X,K,V)), engine(LBL,propagator).
