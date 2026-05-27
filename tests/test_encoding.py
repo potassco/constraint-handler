@@ -57,6 +57,7 @@ base_tests = [
     "engine/request_mult",
     "engine/request_set_ref",
     "error/recovery",
+    "error/recovery_conditionals",
     "error/recovery_ensure",
     "execution/main_absolut",
     "execution/main_pyt",
