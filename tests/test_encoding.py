@@ -88,10 +88,11 @@ base_tests = [
     "set/iterations",
     "set/manipulations",
     "set/selfref",
+    "set/same_val_multi_expr",
     "variable/parallel_declaration",
     "variable/flexible_domain",
     "variable/main",
-    "variable/variables_same_val_multi_expr",
+    "variable/same_val_multi_expr",
     "warning/bad",
     "warning/fake_forbid",
     "warning/python",
@@ -127,6 +128,7 @@ def test_engine_compile(name: str):
     unsupported: list[str] = [
         "engine/request",
         "engine/request_mult",
+        "set/same_val_multi_expr",
         "warning/syntax",
     ]
     if name not in unsupported:
@@ -158,6 +160,7 @@ def test_engine_ground(name: str):
         "engine/request_set_ref",
         "set/iterations",
         "set/selfref",
+        "set/same_val_multi_expr",
         "warning/syntax",
     ]
     if name not in unsupported:
