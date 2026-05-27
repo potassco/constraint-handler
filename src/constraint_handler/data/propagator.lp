@@ -8,7 +8,7 @@ propagator_variable_declare(CNAME,X,E) :- _passed(sugar,variable_declare(CNAME,X
 
 {propagator_variable_domain(CNAME,X, D) : _passed(sugar,variable_domain(CNAME,X,D))} 1 :- _passed(sugar,variable_declare(CNAME,X,_)), engine(CNAME,propagator).
 
-order(CNAME,X,E,IDX) :- _passed(sugar,variable_domain(CNAME,X,E)), IDX = #count { E2 : _passed(sugar,variable_domain(CNAME,X,E2)), E2 < E }.
+order(CNAME,X,E,IDX) :- _passed(sugar,variable_domain(CNAME,X,E)), IDX = #count { E2 : _passed(sugar,variable_domain(CNAME,X,E2)), E2 < E }, engine(CNAME,propagator).
 
 higher_assigned_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), propagator_variable_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N).
 higher_assigned_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), higher_assigned_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N).
