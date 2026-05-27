@@ -277,15 +277,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # backtracking due to conflicts in evaluation of variables
             return
 
-        # check that all variables have a value
-        # TODO: this makes reasoning modes test fail?
-        if self.reasoning_mode == ReasoningMode.STANDARD:
-            for var in self.symbol2var.get_variables():
-                if var.get_value() == ValueStatus.NOT_SET:
-                    # variable has no value, adding nogood!
-                    self.add_nogood_for_variable(control, var)
-                    return
-
         # Evaluated assignments
         self.evaluations.update_evaluations(self.symbol2var.get_variables())
 
@@ -898,15 +889,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.literal2var.setdefault(_literal, []).append(optional_variable)
             self.literal2var[literal] = [optional_variable]
 
-        # loop over variables, if they have no domain, then we add an empty nogood
-        # Maybe we can make this more sophisticated by looking into the domains
-        # and seeing if the variables in those domains can actually take any value
-        # E.g. var_Declare(x, fromfacts). var_define(y, x)
-        # x cant have a value, so y cant have a value but this does not catch the y case
         for var in self.symbol2var.get_variables_by_type(getattr(Variable, "__name__")):
             var = cast(Variable, var)
             if len(var.expressions) == 0:
-                ctl.add_clause([])
+                var.add_value(expression.Bad.bad, 1, 1)
 
     def get_assign(self, ctl: clingo.PropagateInit):
         """
@@ -1026,9 +1012,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         domains = myClorm.findInPropagateInit(ctl, atom.Propagator_set_baseDomain)
         for (name, symbol_var, domain_expr), _literal in domains.items():
-            setvar: SetVariable = cast(
-                SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
-            )
+            try:
+                setvar: SetVariable = cast(
+                    SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
+                )
+            except KeyError:
+                continue
             setvar.add_value(domain_expr, _literal)
             self.literal2var.setdefault(_literal, []).append(setvar)
 
@@ -1183,7 +1172,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
                 continue
 
-            elif isinstance(var, Execution):
+            if isinstance(var, Execution):
                 for var, value in final_value:
                     if value is ValueStatus.NOT_SET:
                         assert False, f"Execution variable {var} has output with no value set in on_model!"
