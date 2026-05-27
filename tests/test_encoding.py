@@ -95,6 +95,7 @@ base_tests = [
     "variable/same_val_multi_expr",
     "warning/bad",
     "warning/fake_forbid",
+    "warning/ignore",
     "warning/python",
     "warning/python_unsupported_type",
     #    pytest.param(

@@ -108,6 +108,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.nogood_queue: list[Iterable[int]] = []
 
         self.forbidden_warnings: dict[warning.Kind, int] = {}
+        self.ignored_warnings: dict[warning.Kind, [int, bool]] = {}
 
     def get_configuration(self, ctl: clingo.Control):
         """
@@ -311,6 +312,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if self.using_optimization and self.optimization_sum.get_value() > self.best_value:
             print(f"New best optimization value found: {self.optimization_sum.get_value()} (old: {self.best_value})")
             self.best_value = self.optimization_sum.get_value()
+
+        self.handle_warning_ignore(control)
+
+    def handle_warning_ignore(self, ctl: clingo.PropagateControl) -> None:
+        for __warning, (literal, observed) in self.ignored_warnings.items():
+            if ctl.assignment.is_true(literal):
+                self.ignored_warnings[__warning] = (literal, True)
+            else:
+                self.ignored_warnings[__warning] = (literal, False)
 
     def evaluate_model(self, ctl: clingo.PropagateControl) -> bool:
         """
@@ -1001,9 +1011,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_set_assign)
         for (name, symbol_var, expr), literal in assigns.items():
-            setvar: SetVariable = cast(
-                SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
-            )
+            try:
+                setvar: SetVariable = cast(
+                    SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
+                )
+            except KeyError:
+                continue
             setvar.add_value(expr, literal)
             self.literal2var.setdefault(literal, []).append(setvar)
 
@@ -1042,9 +1055,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_assign)
         for (name, symbol_var, key_expr, expr), literal in assigns.items():
-            dictvar: DictVariable = cast(
-                DictVariable, self.symbol2var.get_variable(symbol_var, getattr(DictVariable, "__name__"))
-            )
+            try:
+                dictvar: DictVariable = cast(
+                    DictVariable, self.symbol2var.get_variable(symbol_var, getattr(DictVariable, "__name__"))
+                )
+            except KeyError:
+                continue
             dictvar.add_value(key_expr, expr, literal)
             self.literal2var.setdefault(literal, []).append(dictvar)
 
@@ -1099,9 +1115,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo propagation initializer.
         """
 
-        forbidden_warnings = myClorm.findInPropagateInit(ctl, warning.Warning_forbid)
+        forbidden_warnings = myClorm.findInPropagateInit(ctl, atom.Propagator_warning_forbid)
+        ignored_warnings = myClorm.findInPropagateInit(ctl, atom.Propagator_warning_ignore)
+
         for (name, error), literal in forbidden_warnings.items():
             self.forbidden_warnings[error] = literal
+
+        for (name, error), literal in ignored_warnings.items():
+            # Initially, set to False, and only set to True if the warning is actually observed
+            # The actual value is set in the check function
+            self.ignored_warnings[error] = literal, False
 
         # If a forbidden warning exists already, add empty constraint to make the program unsat
         # Since the warning comes from just reading the input
@@ -1329,4 +1352,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         assert self.python_model is not None
 
         for __warning in errors:
-            self.python_model.add(__warning)
+            if __warning.id in self.ignored_warnings:
+                assigned = self.ignored_warnings[__warning.id][1]
+                if not assigned:
+                    # if warning is not ignored, add to model
+                    self.python_model.add(__warning)

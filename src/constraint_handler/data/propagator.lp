@@ -10,10 +10,10 @@ propagator_variable_declare(CNAME,X,E) :- _passed(sugar,variable_declare(CNAME,X
 
 order(CNAME,X,E,IDX) :- _passed(sugar,variable_domain(CNAME,X,E)), IDX = #count { E2 : _passed(sugar,variable_domain(CNAME,X,E2)), E2 < E }, engine(CNAME,propagator).
 
-higher_assigned_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), propagator_variable_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N).
-higher_assigned_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), higher_assigned_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N).
+higher_assigned_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), propagator_variable_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N), engine(CNAME,propagator).
+higher_assigned_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), higher_assigned_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N), engine(CNAME,propagator).
 
-ensure(operation(neq,(variable(V),(E1,())))) :- higher_assigned_domain(CNAME,V,E1), _passed(sugar,variable_domain(CNAME,V,E1)).
+ensure(operation(neq,(variable(V),(E1,())))) :- higher_assigned_domain(CNAME,V,E1), _passed(sugar,variable_domain(CNAME,V,E1)), engine(CNAME,propagator).
 
 
 propagator_variable_define(CNAME,X,E) :- _passed(sugar,variable_define(CNAME,X,E)), engine(CNAME,propagator).
