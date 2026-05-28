@@ -10,8 +10,8 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.post_processor as post_processor
-import constraint_handler.schemas.propagator_atom as atom
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.propagator_atom as atom
 import constraint_handler.schemas.type_ as type_
 import constraint_handler.schemas.warning as warning
 from constraint_handler.PropagatorConstants import (
