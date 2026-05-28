@@ -55,5 +55,5 @@ _computedIdx(E,val(bool,false)) :- _computeIdx(E,leqv),
     N = #count { IDX : _computeIdx(E,IDX,val(bool,false)) }, N \ 2 = 1.
 
 %%%%%%%%%%%%%%%%% bool_evaluate
-1 { bool_evaluated(E,(bad;val(bool,(true;false)))) } 1 :- _passed(wf_check,bool_evaluate(LBL,E)), engine(LBL,propagator).
-bool_evaluated(E,V) :- _passed(wf_check,bool_evaluate(LBL,E)), engine(LBL,(compile;ground)), _se_value(E,V), V=(bad;val(bool,(true;false))).
+1 { bool_evaluated(E,(bad;val(bool,(true;false)))) } 1 :- _passed(propagator,bool_evaluate(LBL,E)).
+bool_evaluated(E,V) :- _passed(sugar,bool_evaluate(LBL,E)), engine(LBL,(compile;ground)), _se_value(E,V), V=(bad;val(bool,(true;false))).

@@ -4,25 +4,25 @@
 _type(int;float;bool;string;symbol;none;set;multimap).
 
 %%%%%%%%%%%%%%%%% type_variable
-_type_variable(type_check,X,T) :- _passed(wf_check,variable_define(LBL,X,E)), type_expression(PHASE,E,T).
-_type_variable(type_check,X,T) :- _passed(wf_check,variable_domain(LBL,X,E)), type_expression(PHASE,E,T).
-_type_variable(type_check,X,set) :- _passed(wf_check,variable_declare(LBL,X,set)).
-_type_variable(type_check,X,multimap) :- _passed(wf_check,variable_declare(LBL,X,multimap)).
-type_variable(X,T) :- _type_variable(PHASE,X,T).
+_type_variable(X,T) :- _passed(sugar,variable_define(LBL,X,E)), type_expression(E,T).
+_type_variable(X,T) :- _passed(sugar,variable_domain(LBL,X,E)), type_expression(E,T).
+_type_variable(X,set) :- _passed(sugar,variable_declare(LBL,X,set)).
+_type_variable(X,multimap) :- _passed(sugar,variable_declare(LBL,X,multimap)).
+type_variable(X,T) :- _type_variable(X,T).
 
 %%%%%%%%%%%%%%%%% type_expression
-_expression_query(type_check,E) :- type_query(E).
-_expression_typeQuery(EXPR) :- _expression_query(wf_check,EXPR).
+%_expression_query(type_check,E) :- type_query(E).
+_expression_typeQuery(EXPR) :- _expression(sugar,EXPR).
 _expression_typeQuery(EXPR) :- type_query(EXPR).
-type_expression(type_check,variable(X),T) :- _expression_typeQuery(variable(X)), _type_variable(SCOPE,X,T).
-type_expression(type_check,val(T,V),T) :- _expression_typeQuery(val(T,V)).
-type_expression(type_check,python(S),top) :- _expression_typeQuery(python(S)).
-type_expression(type_check,E,T) :- _expression_typeQuery(E), E=operation(O,ARGS), _type_operator(O,function(TS,T)), _type_list(E,TS).
-type_expression(type_check,(H,T),(TH,TT)) :- _expression_typeQuery((H,T)), type_expression(type_check,H,TH), type_expression(type_check,T,TT).
+type_expression(variable(X),T) :- _expression_typeQuery(variable(X)), _type_variable(X,T).
+type_expression(val(T,V),T) :- _expression_typeQuery(val(T,V)).
+type_expression(python(S),top) :- _expression_typeQuery(python(S)).
+type_expression(E,T) :- _expression_typeQuery(E), E=operation(O,ARGS), _type_operator(O,function(TS,T)), _type_list(E,TS).
+type_expression((H,T),(TH,TT)) :- _expression_typeQuery((H,T)), type_expression(H,TH), type_expression(T,TT). %TODO general tuples
 
 
-_type_listArgT(E,IDX,T) :- _expression_operationIndex(wf_check,E,IDX,ARG), type_expression(type_check,ARG,T).
-_type_listAux(E,N,()) :- _expression_typeQuery(E), E=operation(O,ARGS), _expression_operationLength(wf_check,E,N).
+_type_listArgT(E,IDX,T) :- _expression_operationIndex(sugar,E,IDX,ARG), type_expression(ARG,T).
+_type_listAux(E,N,()) :- _expression_typeQuery(E), E=operation(O,ARGS), _expression_operationLength(sugar,E,N).
 _type_listAux(E,IDX,(T,TS)) :- _type_listAux(E,IDX+1,TS), _type_listArgT(E,IDX,T).
 _type_list(E,TS) :- _type_listAux(E,0,TS).
 
@@ -32,8 +32,8 @@ _type_list(E,TS) :- _type_listAux(E,0,TS).
 %%%%%%%%%%%%%%%%% type_statement
 % TODO statements.
 
-type_expressionTyped(type_check,operation(O,ARGS)) :- type_expression(type_check,operation(O,ARGS),T).
-_warning(type(failed_operation),(),(O,ARGS)) :- _expression_typeQuery(operation(O,ARGS)), not type_expressionTyped(type_check,operation(O,ARGS)).
+type_expressionTyped(operation(O,ARGS)) :- type_expression(operation(O,ARGS),T).
+_warning(type(failed_operation),(),(O,ARGS)) :- _expression_typeQuery(operation(O,ARGS)), not type_expressionTyped(operation(O,ARGS)).
 
 
 %%%%%%%%%%%%%%%%% type_operator
@@ -44,6 +44,11 @@ _type_operator(O,function(TS,T)) :- operator_declare(O,TS,T).
 % - If the number of elements with a rank is equal to the number of arguments,
 %   then all arguments were valid.
 % - If all elements were valid, the result with the highest rank will be picked as the return type
+
+_expression_sequenceLength(type_check,E,N) :- _expression_sequence(type_check,E), N=@pythonListLength(E).
+_expression_sequenceIndex(type_check,E,IDX,X) :- _expression_sequence(type_check,E), (IDX,X)=@pythonEnumerateElements(E).
+
+
 
 operator_variadic(OP,RT) :- operator_declare_variadic(OP,T,RT,1).
 _expression_sequence(type_check,TS) :- _type_list(E,TS).

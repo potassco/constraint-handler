@@ -23,12 +23,14 @@ _passed(defaultArgs,evaluate(LBL,OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 #defined variable_domain/2.
 #defined variable_domain/3.
 
+_defaultArgs_variableDeclared(X) :- variable_declare(X,E).
+_defaultArgs_variableDeclared(X) :- variable_declare(LBL,X,E).
 _passed(defaultArgs,variable_declare(_label_anonymous,X,E)) :- variable_declare(X,E).
 _passed(defaultArgs,variable_declare(LBL,X,D)) :- variable_declare(LBL,X,D).
-_passed(defaultArgs,variable_declareOptional(_label_anonymous,X)) :- variable_declareOptional(X), not _passed(defaultArgs,variable_declare(_,X,_)).
+_passed(defaultArgs,variable_declareOptional(_label_anonymous,X)) :- variable_declareOptional(X), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,variable_declareOptional(LBL,X)) :- variable_declareOptional(X), _passed(defaultArgs,variable_declare(LBL,X,D)).
 _passed(defaultArgs,variable_declareOptional(LBL,X)) :- variable_declareOptional(LBL,X).
-_passed(defaultArgs,variable_domain(_label_anonymous,X,E)) :- variable_domain(X,E), not _passed(defaultArgs,variable_declare(_,X,_)).
+_passed(defaultArgs,variable_domain(_label_anonymous,X,E)) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,variable_domain(LBL,X,E)) :- variable_domain(X,E), _passed(defaultArgs,variable_declare(LBL,X,D)).
 _passed(defaultArgs,variable_domain(LBL,X,E)) :- variable_domain(LBL,X,E).
 
@@ -87,11 +89,13 @@ _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)) :- optimize_maximizeSum(LBL
 % Precision for specific priority (priority is last argument)
 _passed(defaultArgs,optimize_precision(_label_anonymous,PREC,PRIO)) :- optimize_precision(PREC,PRIO).
 % Default precision for all priorities if not specified
-_defaultArgs_optimize_precision(PREC) :- optimize_precision(PREC).
+_defaultArgs_optimizePrecision(PREC) :- optimize_precision(PREC).
+_defaultArgs_precisionProj :- optimize_precision(PREC).
+_defaultArgs_precisionProj(PRIO) :- optimize_precision(PREC,PRIO).
 % Default precision value of 1 if no precision is specified at all
-_defaultArgs_optimize_precision(val(int,1)) :- not optimize_precision(_).
+_defaultArgs_optimizePrecision(val(int,1)) :- not _defaultArgs_precisionProj.
 _defaultArgs_optimize_priority(PRIO) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,PRIO)).
-_passed(defaultArgs,optimize_precision(_label_anonymous,PREC,PRIO)) :- _defaultArgs_optimize_precision(PREC), _defaultArgs_optimize_priority(PRIO), not optimize_precision(_,PRIO).
+_passed(defaultArgs,optimize_precision(_label_anonymous,PREC,PRIO)) :- _defaultArgs_optimizePrecision(PREC), _defaultArgs_optimize_priority(PRIO), not _defaultArgs_precisionProj(PRIO).
 
 %%%%%% preference atoms
 #defined preference_holds/3.
@@ -117,31 +121,3 @@ _passed(defaultArgs,warning_forbid(_label_anonymous,KIND)) :- warning_forbid(KIN
 _passed(defaultArgs,warning_forbid(LBL,KIND)) :- warning_forbid(LBL,KIND).
 _passed(defaultArgs,warning_ignore(_label_anonymous,KIND)) :- warning_ignore(KIND).
 _passed(defaultArgs,warning_ignore(LBL,KIND)) :- warning_ignore(LBL,KIND).
-
-%%%%%%%%%%%%%%%%% collect labels
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=bool_evaluate(LBL,E).
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=ensure(LBL,E).
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=evaluate(LBL,O,ARGS).
-
-%%%%%% variable atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=variable_define(LBL,X,E).
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=variable_declare(LBL,X,D).
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=variable_domain(LBL,X,E).
-
-%%%%%% multimap atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=multimap_assign(LBL,X,K,B).
-
-%%%%% set atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=set_assign(LBL,X,E).
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=set_baseDomain(LBL,X,E).
-
-%%%%%% optimization atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=optimize_maximizeSum(LBL,E,X,PRIO).
-
-%%%%%% preference atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=preference_holds(LBL,E,K).
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=preference_variableValue(LBL,X,E,K).
-
-%%%%%% warning atoms
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=warning_forbid(LBL,KIND).
-_label(LBL,DECL) :- _passed(wf_check,DECL), DECL=warning_ignore(LBL,KIND).

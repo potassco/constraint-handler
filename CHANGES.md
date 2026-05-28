@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- reorganize preprocessing into phases
 - introduce `variable_declare(X,definition)`, `variable_declare(X,set)`, and `variable_declare(X,multimap)`
 - restrict engine interpreation to compile, ground, propagator, none
 - drop support for `assign/2` declarations
