@@ -1,7 +1,7 @@
 _main(solve).
 _passed(solve,DECL) :- _main(solve), _passed(sugar,DECL), not _solve_corrected(DECL).
-_solve_corrected(NDECL) :- _main(solve), _passed(correction,DECL,NDECL).
-_passed(solve,DECL) :- _main(solve), _solve_corrected(DECL).
+_solve_corrected(DECL) :- _main(solve), _passed(correction,DECL,NDECL).
+_passed(solve,NDECL) :- _main(solve), _passed(correction,DECL,NDECL).
 _label(LBL,NDECL) :- _label(LBL,DECL), _passed(correction,DECL,NDECL).
 
 _passed(compile,DECL) :- _passed(solve,DECL), _label(LBL,DECL), engine(LBL,compile), #false: DECL=warning_forbid(LBL,KIND); #false: DECL=warning_ignore(LBL,KIND).
