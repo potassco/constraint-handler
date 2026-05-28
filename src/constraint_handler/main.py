@@ -47,9 +47,9 @@ core_modules = [
     "wf_check",
 ]
 
-#t_modules = { "template" : ("PHASE", ["defaultArgs","ssa","sugar","wf_check", "type_check", "solve"]) }
-t_modules = { "template" : ("PHASE", ["defaultArgs","ssa","sugar", "solve", "compile"]) }
-#t_modules = { "template" : ("PHASE", ["sugar"]) }
+# t_modules = {"template" : ("PHASE", ["defaultArgs", "ssa", "sugar", "wf_check", "type_check", "solve"]) }
+t_modules = {"template": ("PHASE", ["defaultArgs", "ssa", "sugar", "solve", "compile"])}
+# t_modules = {"template" : ("PHASE", ["sugar"]) }
 modules = datatype_modules + extra_modules + core_modules
 # modules = extra_modules + core_modules
 # modules = core_modules
@@ -68,11 +68,11 @@ def add_to_control(
     for mod in modules:
         file = files("constraint_handler.data").joinpath(f"{mod}.lp")
         ctrl.load(str(file))
-    for (file_name,map) in t_modules.items():
-        kw,sub = map
+    for file_name, map in t_modules.items():
+        kw, sub = map
         data = files("constraint_handler.data").joinpath(f"{file_name}.lp").read_text()
         for phase in sub:
-            ndata = str(data).replace(kw,phase)
+            ndata = str(data).replace(kw, phase)
             ctrl.add(ndata)
     if environment is not None:
         eid = id(environment)

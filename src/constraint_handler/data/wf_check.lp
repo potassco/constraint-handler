@@ -86,4 +86,3 @@ _passed(sugar,optimize_precision(LBL,PREC,PRIO)) :- _passed(presugar,optimize_pr
 
 %%%%%% preference atoms
 _passed(sugar,preference_holds(LBL,E,K)) :- _passed(presugar,preference_holds(LBL,E,K)), _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).
-
