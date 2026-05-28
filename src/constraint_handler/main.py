@@ -33,6 +33,7 @@ core_modules = [
     "atom",
     "defaultArguments",
     "direct",
+    "engine",
     "expression",
     "main",
     "pythonHelper",
@@ -46,7 +47,9 @@ core_modules = [
     "wf_check",
 ]
 
-t_modules = { "template" : ("PHASE", ["sugar","wf_check", "type_check", "solve"]) }
+#t_modules = { "template" : ("PHASE", ["defaultArgs","ssa","sugar","wf_check", "type_check", "solve"]) }
+t_modules = { "template" : ("PHASE", ["defaultArgs","ssa","sugar", "solve", "compile"]) }
+#t_modules = { "template" : ("PHASE", ["sugar"]) }
 modules = datatype_modules + extra_modules + core_modules
 # modules = extra_modules + core_modules
 # modules = core_modules

@@ -178,6 +178,9 @@ _execution_isRunning(PRG) :- _execution_declare(LBL1,PRG,STMT,INS,OUTS), _passed
 _statement_introduce(LBL,EX,V) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
 _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), #false : _execution_ou_proj(PRG,X), _execution_isRunning(PRG).
 
+_expression(ssa,E) :- _statement_introduce(LBL,X,E).
+_expression(ssa,E) :- _statement_ensure(LBL,E).
+
 _passed(sugar,variable_define(LBL,X,E)) :- _statement_introduce(LBL,X,E).
 _passed(sugar,variable_declare(LBL,X,definition)) :- _statement_introduce(LBL,X,E).
 _passed(sugar,ensure(LBL,E)) :- _statement_ensure(LBL,E).

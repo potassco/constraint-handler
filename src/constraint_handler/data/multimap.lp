@@ -1,5 +1,5 @@
-_multimap_declare(LBL,X) :- _passed(wf_check,variable_declare(LBL,X,multimap)), engine(LBL,compile).
-_multimap_assign(LBL,variable(X),EK,EV) :- _passed(wf_check,multimap_assign(LBL,X,EK,EV)), engine(LBL,compile).
+_multimap_declare(LBL,X) :- _passed(compile,variable_declare(LBL,X,multimap)).
+_multimap_assign(LBL,variable(X),EK,EV) :- _passed(compile,multimap_assign(LBL,X,EK,EV)).
 
 direct_query(EK;EV) :- _multimap_assign(CNAME,EX,EK,EV).
 
