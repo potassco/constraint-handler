@@ -2,7 +2,7 @@ _expression(PHASE,E) :- _passed(PHASE,bool_evaluate(LBL,E)).
 _expression(PHASE,E) :- _passed(PHASE,ensure(LBL,E)).
 _expression(PHASE,operation(OP,ARGS)) :- _passed(PHASE,evaluate(LBL,OP,ARGS)).
 
-_expression(PHASE,E) :- _passed(PHASE,variable_declare(LBL,X,fromList(L))), E=@pythonListElements(L).
+%_expression(PHASE,E) :- _passed(PHASE,variable_declare(LBL,X,fromList(L))), E=@pythonListElements(L).
 _expression(PHASE,E) :- _passed(PHASE,variable_define(LBL,X,E)).
 _expression(PHASE,E) :- _passed(PHASE,variable_domain(LBL,X,E)).
 _expression(PHASE,E) :- _passed(PHASE,set_assign(LBL,X,E)).
@@ -28,3 +28,4 @@ _expression_operationLength(PHASE,E,N) :- _expression(PHASE,E), E=operation(OP,A
 _expression_operationIndex(PHASE,E,IDX,X) :- _expression(PHASE,E), E=operation(OP,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
 _expression_sequenceLength(PHASE,E,N) :- _expression_sequence(PHASE,E), N=@pythonListLength(E).
 _expression_sequenceIndex(PHASE,E,IDX,X) :- _expression_sequence(PHASE,E), (IDX,X)=@pythonEnumerateElements(E).
+#defined _expression_sequence/2.
