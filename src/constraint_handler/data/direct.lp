@@ -4,8 +4,6 @@ _se_assign(LBL,variable(X),E) :- _passed(compile,variable_define(LBL,X,E)).
 :- _passed((compile;ground),ensure(LBL,E)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
 evaluated(OP,ARGS,V) :- _passed((compile;ground),evaluate(LBL,OP,ARGS)), _se_value(operation(OP,ARGS),V).
 
-_deterministic(E) :- _deterministic(E,V).
-_se_value(E,V) :- _deterministic(E,V).
 direct_query(E)  :- _expression(compile,E), not _deterministic(E).
 direct_query(E)  :- _se_assign(LBL,X,E), not _deterministic(E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
@@ -29,14 +27,13 @@ _se_value(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(funct
 
 
 %%%%%%%%%%%%% blablablabla
-_expression_safeQuery(EXPR) :- _expression_query(sugar,EXPR).
-%_expression_dynamicTainted(bad).
-%_expression_dynamicTainted(EXPR) :- _expression_safeQuery(EXPR), _se_value(EXPR,bad).
-%_expression_dynamicTainted(EXPR) :- _expression_safeQuery(EXPR), _expression_tupleIndex(sugar,EXPR,IDX,F), _expression_dynamicTainted(F).
+_expression_dynamicTainted(bad).
+_expression_dynamicTainted(EXPR) :- _expression_safeQuery(EXPR), _se_value(EXPR,bad).
+_expression_dynamicTainted(EXPR) :- _expression_safeQuery(EXPR), _expression_tupleIndex(sugar,EXPR,IDX,F), _expression_dynamicTainted(F).
 %_expression_dynamicTainted(EXPR) :- _expression_safeQuery(EXPR), _expression_operationIndex(sugar,EXPR,IDX,F), _expression_dynamicTainted(F), _expression_operationOperator(sugar,EXPR,OP), not _operator_recoverable(OP).
-%%_expression_dynamicTainted_debug(EXPR,3) :- _expression_safeQuery(EXPR), _expression_operationIndex(sugar,EXPR,IDX,F), _expression_dynamicTainted(F).
-%%_expression_dynamicTainted_debug(EXPR,5) :- _expression_safeQuery(EXPR), _expression_operationIndex(sugar,EXPR,IDX,F), _expression_dynamicTainted(F), _expression_operationOperator(EXPR,OP).
-%_expression_dynamicTainted(EXPR) :- _expression_safeQuery(EXPR), _expression_operationOperator(sugar,EXPR,OP), _expression_dynamicTainted(OP).
+_expression_dynamicTainted(EXPR) :- _expression_safeQuery(EXPR), _expression_operationOperator(sugar,EXPR,OP), _expression_dynamicTainted(OP).
+_se_value(EXPR,bad) :- _expression_safeQuery(EXPR), _expression_operationOperator(sugar,EXPR,OP), _expression_dynamicTainted(OP).
+_se_value(EXPR,bad) :- _expression_safeQuery(EXPR), _expression_operationIndex(sugar,EXPR,IDX,F), _expression_dynamicTainted(F), _expression_operationOperator(sugar,EXPR,OP), not _operator_recoverable(OP).
 
 
 _argument_value(operation(OP,ARGS),V) :- direct_query(operation(OP,ARGS)), _expression_operationIndex(compile,operation(OP,ARGS),IDX,ARG), _se_value(ARG,V).
@@ -104,6 +101,7 @@ _expression_pythonEval(E,operation(pythonExtract(PSTMT,PEXPR),L)) :- _computeIdx
 %_se_value(operation(OP,ARGS),bad) :- _direct_bad_operation(OP,ARGS).
 %_se_value(bad,bad) :- direct_query(bad).
 _se_value(bad,bad).
+%_direct_imploded(bad,bad).
 
 %%%%%%%%%%%%%%%%% implode
 _direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), representation(T,extensional).

@@ -34,3 +34,5 @@ _safe_bad(EXPR) :- _main(safe), _expression(sugar,EXPR), _expression_operationOp
 
 _deterministic(E,bad) :- _safe_bad(E).
 _deterministic(val(T,V),val(T,V)) :- _expression(sugar,val(T,V)).
+
+_passed(correction(constant),variable_define(LBL,X,E),variable_define(LBL,X,V)) :- _deterministic(E,V), _passed(sugar,variable_define(LBL,X,E)).
