@@ -4,7 +4,7 @@ _se_assign(LBL,variable(X),E) :- _passed(compile,variable_define(LBL,X,E)).
 :- _passed((compile;ground),ensure(LBL,E)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
 evaluated(OP,ARGS,V) :- _passed((compile;ground),evaluate(LBL,OP,ARGS)), _se_value(operation(OP,ARGS),V).
 
-direct_query(E)  :- _expression(compile,E).
+direct_query(E)  :- _expression(compile,DECL,E).
 direct_query(E)  :- _se_assign(LBL,X,E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 direct_query(SE) :- direct_query(T), SE=@pythonTupleElements(T).

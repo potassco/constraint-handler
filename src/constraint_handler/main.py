@@ -36,6 +36,7 @@ core_modules = [
     "defaultArguments",
     "direct",
     "engine",
+    "finiteDomain",
     "main",
     "pythonHelper",
     "pythonInterface",
