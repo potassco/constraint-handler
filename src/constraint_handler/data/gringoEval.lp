@@ -8,7 +8,8 @@ _expression(ground,E) :- _passed(ground,variable_domain(LBL,X,E)).
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
 _ge_assign(LBL,X,E) :- _passed(ground,variable_define(LBL,X,E)).
 _ge_set_assign(LBL,X,E) :- _passed(ground,set_assign(LBL,X,E)).
-%%% TODO: handle set_baseDomain here?
+{ _ge_set_assign(LBL,X,E) } :- _passed(ground,set_baseDomain(LBL,X,E)).
+:- _passed(ground,set_baseDomain(LBL,X,E)), evaluated(set_isin,(E,(variable(X),())),val(bool,true)), not _set_assign(LBL,variable(X),E).
 _ge_set_declare(LBL,X) :- _passed(ground,variable_declare(LBL,X,set)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 

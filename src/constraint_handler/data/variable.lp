@@ -26,18 +26,13 @@ _warning(variable(emptyDomain),(LBL,()),X) :- _variable_declare(LBL,X), not _var
 %_variable_query(sugar,X) :- _passed(sugar,set_baseDomain(NAME,X,E)).
 %_variable_query(sugar,X) :- _passed(sugar,multimap_assign(NAME,X,K,B)).
 
-_variable_exists(presugar,X) :- _passed(defaultArgs,variable_declare(LBL,X,D)).
-_variable_exists(presugar,X) :- _passed(defaultArgs,variable_define(LBL,X,D)).
-_variable_exists(presugar,X) :- _passed(defaultArgs,set_declare(LBL,X)).
-_variable_exists(presugar,X) :- _passed(defaultArgs,multimap_declare(LBL,X)).
-_variable_exists(presugar,X) :- _statement_introduce(LBL,X,E).
+_variable_exists(sugar,X) :- _passed(sugar,variable_declare(LBL,X,D)).
 
 %_variable(sugar,X) :- _variable_query(sugar,X).
-_variable(presugar,X) :- _variable(ssa,X).
-_variable(presugar,X) :- _variable(defaultArgs,X).
-_warning(variable(undeclared),(),X) :- _variable(presugar,X), not _variable_exists(presugar,X).
-_passed(sugar,variable_declare(_internal0,X,definition)) :- _variable(presugar,X), not _variable_exists(presugar,X).
-_passed(sugar,variable_define(_internal0,X,bad)) :- _variable(presugar,X), not _variable_exists(presugar,X).
+_warning(variable(undeclared),(),X) :- _variable(sugar,X), not _variable_exists(sugar,X).
+_passed(correction(add),_internal0,variable_declare(_internal0,X,definition)) :- _variable(sugar,X), not _variable_exists(sugar,X).
+_passed(correction(add),_internal0,variable_define(_internal0,X,bad)) :- _variable(sugar,X), not _variable_exists(sugar,X).
+
 
 _variable_confusingName((assert;assign;if;noop;statement_python;seq2),keyword). % statement
 _variable_confusingName((lambda;operation;python;val;variable),keyword). % expression
@@ -45,8 +40,8 @@ _variable_confusingName((boolDomain;fromFacts;fromList),keyword). % domain
 _variable_confusingName((none;bool;int;float;string;symbol;set;multimap),type).
 _variable_confusingName(O,operator) :- _operator_declared(O).
 
-_warning(variable(confusingName),(),(X,REASON)) :- _variable_exists(presugar,X), _variable_confusingName(BAD,REASON), (function,BAD,N,ARGS)=@pythonReify(X).
-_warning(variable(confusingName),(),(X,number)) :- _variable_exists(presugar,X), (number,_,_,_)=@pythonReify(X).
+_warning(variable(confusingName),(),(X,REASON)) :- _variable_exists(sugar,X), _variable_confusingName(BAD,REASON), (function,BAD,N,ARGS)=@pythonReify(X).
+_warning(variable(confusingName),(),(X,number)) :- _variable_exists(sugar,X), (number,_,_,_)=@pythonReify(X).
 
 % TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
 
