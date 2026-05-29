@@ -56,12 +56,10 @@ _warning(KIND,PRG,MSG) :- _statement_pythonVarsResult(PRG,SCOPE,error(KIND,MSG))
 
 
 %%%%% statement_changed
-_statement_changed(STMT,X) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=assign(X,EX).
-_statement_changed(STMT,X) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=seq2(STM1,STM2), _statement_changed(STM1,X).
-_statement_changed(STMT,X) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=seq2(STM1,STM2), _statement_changed(STM2,X).
-_statement_changed(STMT,X) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(EXPR,THEN,ELSE), _statement_changed(THEN,X).
-_statement_changed(STMT,X) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=if(EXPR,THEN,ELSE), _statement_changed(ELSE,X).
-_statement_changed(STMT,X) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), STMT=statement_python(CODE), _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
+_statement_changed(assign(X,EX),X) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)).
+_statement_changed(seq2(STM1,STM2),X) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)), _statement_changed((STM1;STM2),X).
+_statement_changed(if(EXPR,THEN,ELSE),X) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed((THEN;ELSE),X).
+_statement_changed(statement_python(CODE),X) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
 
 
 %%%%% statement_context
@@ -80,17 +78,17 @@ _expression_context(SCOPE,E,X,XS) :- _expression_querySSA(PRG,SCOPE,E), _stateme
 % TODO: handle lambda context
 
 
-_expression_contextualized(SCOPE,E,E) :- _expression_querySSA(PRG,SCOPE,E), E=val(T,V).
-_expression_contextualized(SCOPE,E,E) :- _expression_querySSA(PRG,SCOPE,E), E=bad.
-_expression_contextualized(SCOPE,E,E) :- _expression_querySSA(PRG,SCOPE,E), E=python(CODE).
-_expression_contextualized(SCOPE,E,XS) :- _expression_querySSA(PRG,SCOPE,E), E=variable(X), _expression_context(SCOPE,E,X,XS).
+_expression_contextualized(SCOPE,val(T,V),val(T,V)) :- _expression_querySSA(PRG,SCOPE,val(T,V)).
+_expression_contextualized(SCOPE,bad,bad) :- _expression_querySSA(PRG,SCOPE,bad).
+_expression_contextualized(SCOPE,python(CODE),python(CODE)) :- _expression_querySSA(PRG,SCOPE,python(CODE)).
+_expression_contextualized(SCOPE,variable(X),XS) :- _expression_querySSA(PRG,SCOPE,variable(X)), _expression_context(SCOPE,variable(X),X,XS).
 %TODO other vars!
 _statement_hasContext(SCOPE,X) :- _statement_context(SCOPE,X,XS).
-_expression_contextualized(SCOPE,E,XS) :- _expression_querySSA(PRG,SCOPE,E), E=variable(X), not _statement_hasContext(SCOPE,X), XS=variable(execution_local(PRG,X)).
+_expression_contextualized(SCOPE,variable(X),variable(execution_local(PRG,X))) :- _expression_querySSA(PRG,SCOPE,variable(X)), not _statement_hasContext(SCOPE,X).
 _expression_contextualizedListAux(SCOPE,E,N,()) :- _expression_querySSA(PRG,SCOPE,E), _length(defaultArgs,E,N).
 _expression_contextualizedListAux(SCOPE,E,IDX,(DC,L)) :- _expression_querySSA(PRG,SCOPE,E), _expression_contextualizedListAux(SCOPE,E,IDX+1,L),
    _expression_index(defaultArgs,E,IDX,D), _expression_contextualized(SCOPE,D,DC).
-_expression_contextualized(SCOPE,E,operation(O,L)) :- _expression_contextualizedListAux(SCOPE,E,0,L), E=operation(O,ARGS).
+_expression_contextualized(SCOPE,operation(O,ARGS),operation(O,L)) :- _expression_contextualizedListAux(SCOPE,operation(O,ARGS),0,L).
 _expression_contextualized(SCOPE,E,@pythonReflect(function,(),L)) :- _expression_contextualizedListAux(SCOPE,E,0,L), _expression_isTuple(defaultArgs,E,N,ARGS).
 
 % TODO: operators
@@ -184,8 +182,8 @@ _passed(sugar,ensure(LBL,E)) :- _statement_ensure(LBL,E).
 
 
 %%%%%%%%%%%%%%%%% sequence helpers
-_length(defaultArgs,E,N) :- _expression_sequenceHelper(defaultArgs,E), E=operation(O,ARGS), N=@pythonListLength(ARGS).
-_expression_index(defaultArgs,E,IDX,X) :- _expression_sequenceHelper(defaultArgs,E), E=operation(O,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
+_length(defaultArgs,operation(O,ARGS),N) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), N=@pythonListLength(ARGS).
+_expression_index(defaultArgs,operation(O,ARGS),IDX,X) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), (IDX,X)=@pythonEnumerateElements(ARGS).
 _expression_isTuple(defaultArgs,E,N,ARGS) :- _expression_sequenceHelper(defaultArgs,E), true=@pythonIsTuple(E), (function,(),N,ARGS)=@pythonReify(E).
 _length(defaultArgs,E,N) :- _expression_sequenceHelper(defaultArgs,E), _expression_isTuple(defaultArgs,E,N,ARGS).
 _expression_index(defaultArgs,E,IDX,X) :- _expression_sequenceHelper(defaultArgs,E), _expression_isTuple(defaultArgs,E,N,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
