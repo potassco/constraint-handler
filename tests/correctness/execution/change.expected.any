@@ -1,0 +1,2 @@
+value(execution_output(prg,x),val(int,0))
+value(execution_output(prg,x),val(int,3))

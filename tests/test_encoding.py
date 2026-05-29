@@ -59,6 +59,7 @@ base_tests = [
     "error/recovery",
     "error/recovery_conditionals",
     "error/recovery_ensure",
+    "execution/change",
     "execution/main_absolut",
     "execution/main_pyt",
     "execution/main_swap",
