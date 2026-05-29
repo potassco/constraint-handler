@@ -84,7 +84,7 @@ _expression_contextualized(SCOPE,python(CODE),python(CODE)) :- _expression_query
 _expression_contextualized(SCOPE,variable(X),XS) :- _expression_querySSA(PRG,SCOPE,variable(X)), _expression_context(SCOPE,variable(X),X,XS).
 %TODO other vars!
 _statement_hasContext(SCOPE,X) :- _statement_context(SCOPE,X,XS).
-_expression_contextualized(SCOPE,variable(X),variable(execution_local(PRG,X))) :- _expression_querySSA(PRG,SCOPE,variable(X)), not _statement_hasContext(SCOPE,X).
+_expression_contextualized(SCOPE,variable(X),variable(execution_input(PRG,X))) :- _expression_querySSA(PRG,SCOPE,variable(X)), not _statement_hasContext(SCOPE,X).
 _expression_contextualizedListAux(SCOPE,E,N,()) :- _expression_querySSA(PRG,SCOPE,E), _length(defaultArgs,E,N).
 _expression_contextualizedListAux(SCOPE,E,IDX,(DC,L)) :- _expression_querySSA(PRG,SCOPE,E), _expression_contextualizedListAux(SCOPE,E,IDX+1,L),
    _expression_index(defaultArgs,E,IDX,D), _expression_contextualized(SCOPE,D,DC).
@@ -166,8 +166,6 @@ _statement_ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS)) :- _stat
   _statement_pythonInputMap(SCOPE,VARS),
   _execution_isRunning(PRG).
 
-_statement_introduce(LBL,execution_local(PRG,X),variable(execution_input(PRG,X))) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), _execution_input_var(PRG,X).
-
 %%% TODO: add bad / error handling
 _execution_ou_proj(PRG,X) :- _statement_latest((PRG,()),X,EX).
 
@@ -179,7 +177,7 @@ _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _
 _passed(sugar,variable_define(LBL,X,E)) :- _statement_introduce(LBL,X,E).
 _passed(sugar,variable_declare(LBL,X,definition)) :- _statement_introduce(LBL,X,E).
 _passed(sugar,ensure(LBL,E)) :- _statement_ensure(LBL,E).
-
+_variable(sugar,execution_input(PRG,X)) :- _execution_input_var(PRG,X).
 
 %%%%%%%%%%%%%%%%% sequence helpers
 _length(defaultArgs,operation(O,ARGS),N) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), N=@pythonListLength(ARGS).
