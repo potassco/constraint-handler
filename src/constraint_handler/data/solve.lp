@@ -1,7 +1,7 @@
 _main(solve).
 _passed(solve,DECL) :- _main(solve), _passed(sugar,DECL), not _solve_corrected(DECL).
 _solve_corrected(DECL) :- _main(solve), _passed(correction(REASON),DECL,NDECL).
-_solve_corrected(DECL) :- _main(solve), _passed(correction(rem),LBL,DECL).
+_solve_corrected(DECL) :- _main(solve), _passed(correction(rem),DECL).
 _passed(solve,NDECL) :- _main(solve), _passed(correction(REASON),DECL,NDECL).
 _label(LBL,NDECL) :- _label(LBL,DECL), _passed(correction(REASON),DECL,NDECL).
 _label(LBL,DECL) :- _main(solve), _passed(correction(add),LBL,DECL).
