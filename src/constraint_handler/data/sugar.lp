@@ -1,5 +1,3 @@
-_expression(sugar,E) :- _expression(defaultArgs,E).
-
 %%%%%%%%%%%%%%%%% check if well-formed
 _passed(sugar,bool_evaluate(LBL,E)) :- _passed(defaultArgs,bool_evaluate(LBL,E)).
 _passed(sugar,ensure(LBL,E)) :- _passed(defaultArgs,ensure(LBL,E)).
