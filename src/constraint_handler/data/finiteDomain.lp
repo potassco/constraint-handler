@@ -30,4 +30,3 @@ direct_query(E) :- _variable_domain(X,E).
    _variable_declare(compile,LBL,X), _variable_hasDomain(X), engine(LBL,compile).
 1 { _ge_assign(LBL,X,V) : _variable_domain(X,E), _se_value(E,V) } 1 :-
    _variable_declare(ground,LBL,X), _variable_hasDomain(X), engine(LBL,ground).
-
