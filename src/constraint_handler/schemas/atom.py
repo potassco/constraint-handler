@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import namedtuple
 from typing import NamedTuple
 
-import constraint_handler.schemas.domain as domain
+import constraint_handler.schemas.domain as domain  # fmt: skip
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning

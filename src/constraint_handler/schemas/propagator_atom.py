@@ -1,21 +1,19 @@
 from __future__ import annotations
 
-from collections import namedtuple
-
 import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.domain as domain
 import constraint_handler.schemas.warning as warning
-from constraint_handler.schemas.atom import (
-    Evaluated,
-    Main_solverIdentifiers,
-    Multimap_value,
-    Set_value,
-    Value,
-)
-from constraint_handler.schemas.domain import (
-    BoolDomain,
-    FromFacts,
-    FromList,
-)
+
+Evaluated = atom.Evaluated
+Main_solverIdentifiers = atom.Main_solverIdentifiers
+Multimap_value = atom.Multimap_value
+Set_value = atom.Set_value
+Value = atom.Value
+
+BoolDomain = domain.BoolDomain
+FromFacts = domain.FromFacts
+FromList = domain.FromList
+
 
 class Propagator_variable_declare(atom.Variable_declare):
     pass
