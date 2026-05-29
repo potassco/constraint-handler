@@ -177,7 +177,7 @@ def test_engine_ground(name: str):
 def test_engine_propagator(name: str, check_mode):
     unsupported: list[str] = [
         "core/type_checking",
-        "datatype/bool_evaluate",
+        # "datatype/bool_evaluate",
         "engine/request",
         "engine/request_mult",
         "execution/python_integrity",
@@ -188,7 +188,7 @@ def test_engine_propagator(name: str, check_mode):
         "set/selfref",
         "warning/python_unsupported_type",
         "warning/variables",
-        "warning/variable_undeclared",
+        # "warning/variable_undeclared",
     ]
     print(name, check_mode)
     if name not in unsupported:

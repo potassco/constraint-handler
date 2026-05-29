@@ -14,7 +14,6 @@ import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.warning as warning
 from constraint_handler.PropagatorConstants import (
-    ENSURE_VAR_NAME,
     EXECUTION_OUTPUT,
     OPTIMIZATION_HELPER_PROGRAM,
     OPTIMIZATION_STAGE_ATOM,
@@ -28,6 +27,7 @@ from constraint_handler.PropagatorConstants import (
     propagator_warning_t,
 )
 from constraint_handler.PropagatorVariables import (
+    BoolEvaluateVariable,
     DictVariable,
     EnsureVariable,
     EvaluateVariable,
@@ -164,9 +164,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.get_optimization_sums(init)
         self.get_execution_declarations(init)
         self.get_engine_variables(init)
-        self.set_parents()
-
         self.get_evaluate(init)
+
+        self.set_parents()
 
         self.add_reasoning_mode_helper_atoms(init)
         self.add_optimization_helper_atoms(init)
@@ -554,8 +554,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self,
         ctl: clingo.PropagateControl,
         var: VariableType | OptimizationHandler,
-        extra_literals: list[int] | None = None,
-    ) -> None:
+        extra_literals: Iterable[int] | None = None,
+        conflict: bool = True,
+    ) -> bool:
         """
         Add a nogood blocking the current assignment for a variable.
 
@@ -568,14 +569,23 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateControl object.
             var: Variable (or optimization handler) to block.
             extra_literals: Additional literals to include in the nogood.
+            conflict: Whether to treat the nogood as a conflict.
+        Returns:
+            bool: True if propagation must stop False otherwise
+        Raises:
+            AssertionError: If we expected the nogood to be a conflict but the solver did not detect it
         """
         ng: set[int] = self.get_reasons(var)
         if extra_literals:
             ng = ng.union(extra_literals)
-        if ctl.add_nogood(ng):
+
+        prop_stop = ctl.add_nogood(ng)
+        if conflict and prop_stop:
             assert (
                 False
             ), f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
+
+        return not prop_stop
 
     def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]) -> bool:
         """
@@ -624,6 +634,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if eval_result == EvaluationResult.CONFLICT:
             self.add_nogood_for_variable(ctl, var)
             return None
+        elif eval_result == EvaluationResult.INFER:
+            if self.add_nogood_for_variable(ctl, var, extra_literals=var.infer(), conflict=False):
+                return None
 
         # check if any errors are forbidden
         for _warning in var.get_errors():
@@ -935,26 +948,28 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         ensures = myClorm.findInPropagateInit(ctl, atom.Propagator_ensure)
-        c = 0
         for (name, expr), literal in ensures.items():
-            c += 1
             ensure_var: EnsureVariable = EnsureVariable(name, expr, literal)
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
             self.literal2var.setdefault(literal, []).append(ensure_var)
             # Var name is given here so it works well with the rest of the system
             # It should do nothing and also should never appear in any assignments!!
-            self.symbol2var.add_variable(clingo.Function(f"{ENSURE_VAR_NAME}{c}"), ensure_var)
+            self.symbol2var.add_variable(ensure_var.var, ensure_var)
 
     def get_evaluate(self, ctl: clingo.PropagateInit):
         """
         Load `evaluate` atoms into `EvaluateVariable` instances.
+        Also load "bool_evaluate" atoms and create the corresponding variables.
 
         Args:
             ctl: Clingo PropagateInit object.
         """
 
-        for (_, op, args), literal in myClorm.findInPropagateInit(ctl, atom.Propagator_evaluate).items():
+        evaluate_atoms = myClorm.findInPropagateInit(ctl, atom.Propagator_evaluate)
+        bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, atom.Propagator_bool_evaluate)
+        bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, atom.Bool_evaluated)
+        for (_, op, args), literal in evaluate_atoms.items():
             var = EvaluateVariable(op, args, literal)
             if literal != 1:
                 self.errors.append(
@@ -965,6 +980,28 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     )
                 )
             self.evaluatevars.append(var)
+
+        true_val = expression.Val(expression.BaseType.bool, True)  # ty:ignore[unresolved-attribute]
+        false_val = expression.Val(expression.BaseType.bool, False)  # ty:ignore[unresolved-attribute]
+
+        for (label, expr), literal in bool_evaluate_atoms.items():
+            b_vals = {}
+            for (bexpr, value), b_literal in bool_evaluated_atoms.items():
+                if bexpr == expr:
+                    b_vals[value] = b_literal
+                    ctl.add_watch(b_literal)
+                    ctl.add_watch(-b_literal)
+
+            bool_var = BoolEvaluateVariable(
+                label, expr, literal, b_vals[true_val], b_vals[false_val], b_vals[expression.Bad.bad]
+            )
+
+            ctl.add_watch(literal)
+            ctl.add_watch(-literal)
+            self.literal2var.setdefault(literal, []).append(bool_var)
+            # Var name is given here so it works well with the rest of the system
+            # It should do nothing and also should never appear in any assignments!!
+            self.symbol2var.add_variable(bool_var.var, bool_var)
 
     def get_solver_identifier(self, ctl: clingo.PropagateInit):
         """
@@ -1180,7 +1217,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         model_errors: propagator_warning_t = []
         for var in self.symbol2var.get_variables():
             self.handle_on_model_warning(var.get_errors())
-            if isinstance(var, EnsureVariable):
+            if isinstance(var, EnsureVariable) or isinstance(var, BoolEvaluateVariable):
                 continue
             if var.name == OTHER_ENGINE_VAR_NAME:
                 # these variables are only used to get values from other engines, they should not be exported to the model
