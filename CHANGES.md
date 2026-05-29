@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- introduce a correction mechanism to adjust the solving
 - reorganize preprocessing into phases
 - introduce `variable_declare(X,definition)`, `variable_declare(X,set)`, and
   `variable_declare(X,multimap)`
