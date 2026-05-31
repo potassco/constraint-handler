@@ -57,28 +57,3 @@ _type_variadicListAux(OP,TS,N,NT,1) :- _expression_typeQuery(E), E=operation(OP,
 _type_variadicListAux(OP,TS,IDX,IT,IR) :- _type_variadicListAux(OP,TS,IDX+1,NT,NR), _expression_sequenceIndex(type_check,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR > NR.
 _type_variadicListAux(OP,TS,IDX,NT,NR) :- _type_variadicListAux(OP,TS,IDX+1,NT,NR), _expression_sequenceIndex(type_check,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR <= NR.
 _type_operator(O,function(TS,T)) :- _type_variadicListAux(O,TS,0,T,R).
-
-%*
-_arg_rank(PHASE,OP,ARGS,IDX,RANK) :-
-    _expression_index(PHASE,ARGS,IDX,ARG),
-    type_expression(PHASE,ARG,T),
-    operator_declare_variadic(OP,T,TRESULT,RANK).
-
-_valid_args_count(SCOPE,OP,ARGS,COUNT) :-
-    _expression_typeQuery(SCOPE,operation(OP,ARGS)),
-    COUNT = #count { IDX : _arg_rank(SCOPE,OP,ARGS,IDX,RANK) }.
-
-_max_rank(SCOPE,OP,ARGS,1) :-
-    _valid_args_count(SCOPE,OP,ARGS,0).
-
-_max_rank(SCOPE,OP,ARGS,MAXR) :-
-    _valid_args_count(SCOPE,OP,ARGS,C), C > 0,
-    MAXR = #max { RANK : _arg_rank(SCOPE,OP,ARGS,IDX,RANK) }.
-
-_type_operator(SCOPE,OP,function(TS,T_RESULT)) :-
-    _type_listAux(SCOPE,ARGS,N,()),
-    _type_list(ARGS,TS),
-    _valid_args_count(SCOPE,OP,ARGS,N),
-    _max_rank(SCOPE,OP,ARGS,MAXR),
-    operator_declare_variadic(OP,T,T_RESULT,MAXR).
-*%

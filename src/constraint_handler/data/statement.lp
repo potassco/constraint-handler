@@ -9,12 +9,9 @@ _statement_query(PRG,SCOPE,ELSE) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE
 _statement_wellformed(seq2(STM1,STM2)) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)), _statement_wellformed(STM1), _statement_wellformed(STM2).
 _statement_wellformed(noop) :- _statement_query(PRG,SCOPE,noop).
 _statement_wellformed(statement_python(STR)) :- _statement_query(PRG,SCOPE,statement_python(STR)), (string,_,_,_)=@pythonReify(STR).
-_statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_wellformed(THEN), true=@pythonIsExpr(EXPR), _statement_wellformed(ELSE).
+_statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), true=@pythonIsExpr(EXPR), _statement_wellformed(THEN), _statement_wellformed(ELSE).
 _statement_wellformed(assign(X,EXPR)) :- _statement_query(PRG,SCOPE,assign(X,EXPR)), true=@pythonIsExpr(EXPR).
 _statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)), true=@pythonIsExpr(EXPR).
-%_statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), _expression_wellformed(EXPR), _statement_wellformed(THEN), _statement_wellformed(ELSE).
-%_statement_wellformed(assign(X,EXPR)) :- _statement_query(PRG,SCOPE,assign(X,EXPR)), _expression_wellformed(EXPR).
-%_statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)), _expression_wellformed(EXPR).
 
 
 
@@ -172,7 +169,8 @@ _execution_ou_proj(PRG,X) :- _statement_latest((PRG,()),X,EX).
 _execution_isRunning(PRG) :- _execution_declare(LBL1,PRG,STMT,INS,OUTS), _passed(defaultArgs,execution_run(LBL,PRG)).
 
 _statement_introduce(LBL,EX,V) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
-_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), #false : _execution_ou_proj(PRG,X), _execution_isRunning(PRG).
+_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_ou_proj(PRG,X).
+_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_isRunning(PRG).
 
 _passed(sugar,variable_define(LBL,X,E)) :- _statement_introduce(LBL,X,E).
 _passed(sugar,variable_declare(LBL,X,definition)) :- _statement_introduce(LBL,X,E).
