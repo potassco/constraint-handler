@@ -14,11 +14,5 @@ _passed(compile,DECL) :- _main(solve), _passed(solve,DECL), _label(LBL,DECL), en
 _passed(ground,DECL) :- _main(solve), _passed(solve,DECL), _label(LBL,DECL), engine(LBL,ground), #false: DECL=warning_forbid(LBL,KIND); #false: DECL=warning_ignore(LBL,KIND).
 _passed(propagator,DECL) :- _main(solve), _passed(solve,DECL), _label(LBL,DECL), engine(LBL,propagator), #false: DECL=warning_forbid(LBL,KIND); #false: DECL=warning_ignore(LBL,KIND).
 
-_passed(compile,warning_forbid(LBL,W)) :- _main(solve), _passed(solve,warning_forbid(LBL,W)), _main_engine(compile).
-_passed(compile,warning_ignore(LBL,W)) :- _main(solve), _passed(solve,warning_ignore(LBL,W)), _main_engine(compile).
-_passed(ground,warning_forbid(LBL,W)) :- _main(solve), _passed(solve,warning_forbid(LBL,W)), _main_engine(ground).
-_passed(ground,warning_ignore(LBL,W)) :- _main(solve), _passed(solve,warning_ignore(LBL,W)), _main_engine(ground).
-_passed(propagator,warning_forbid(LBL,W)) :- _main(solve), _passed(solve,warning_forbid(LBL,W)), _main_engine(propagator).
-_passed(propagator,warning_ignore(LBL,W)) :- _main(solve), _passed(solve,warning_ignore(LBL,W)), _main_engine(propagator).
-_passed(none,warning_forbid(LBL,W)) :- _main(solve), _passed(solve,warning_forbid(LBL,W)), _main_engine(none).
-_passed(none,warning_ignore(LBL,W)) :- _main(solve), _passed(solve,warning_ignore(LBL,W)), _main_engine(none).
+_passed((compile;ground;propagator;none),warning_forbid(LBL,W)) :- _passed(solve,warning_forbid(LBL,W)).
+_passed((compile;ground;propagator;none),warning_ignore(LBL,W)) :- _passed(solve,warning_ignore(LBL,W)).

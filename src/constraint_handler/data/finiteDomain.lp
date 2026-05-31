@@ -1,6 +1,7 @@
 %%% rules for compile and ground engines
 
-_variable_declare(ENG,LBL,X) :- _passed(ENG,variable_declare(LBL,X,fromFacts)), ENG=(compile;ground).
+_variable_declare(compile,LBL,X) :- _passed(compile,variable_declare(LBL,X,fromFacts)).
+_variable_declare(ground,LBL,X) :- _passed(ground,variable_declare(LBL,X,fromFacts)).
 _variable_domain(X,E) :- _passed((compile;ground),variable_domain(LBL,X,E)).
 
 _variable_hasDomain(X) :- _variable_domain(X,V).

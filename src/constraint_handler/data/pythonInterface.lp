@@ -50,7 +50,6 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
 
 
 def pythonEvalExpr(clExpr,clArgs,clId):
-    eval_error = warning.Expression(warning.ExpressionWarning.pythonError)
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
@@ -70,12 +69,14 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         results.append(evaluator.reducedExpr(pRes))
         return map(myClorm.pytocl,results)
     except myClorm.FailedInstantiationExn as exn:
-        return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
+        kind = warning.Expression(warning.ExpressionWarning.pythonError)
+        return myClorm.pytocl(warning.Error(kind,repr(exn)))
     except Exception as exn:
-        return myClorm.pytocl(warning.Error(eval_error,repr(exn)))
+        kind = warning.Statement(warning.StatementWarning.syntaxError)
+        kind = warning.Expression(warning.ExpressionWarning.pythonError)
+        return myClorm.pytocl(warning.Error(kind,repr(exn)))
 
 def pythonStatementVariables(clCode,clInTypes,clId):
-    exec_error = warning.Statement(warning.StatementWarning.pythonError)
     try:
         pCode = myClorm.cltopy(clCode,str)
         pInT  = myClorm.cltopy(clInTypes,list[tuple[expression.constant,type_.BaseType]])
@@ -95,5 +96,6 @@ def pythonStatementVariables(clCode,clInTypes,clId):
         kind = warning.Statement(warning.StatementWarning.syntaxError)
         return myClorm.pytocl(warning.Error(kind,str(exn)))
     except Exception as exn:
-        return myClorm.pytocl(warning.Error(exec_error,repr(exn)))
+        kind = warning.Statement(warning.StatementWarning.pythonError)
+        return myClorm.pytocl(warning.Error(kind,repr(exn)))
 #end.
