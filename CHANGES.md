@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+## v0.0.2.dev9
+
 - introduce the phase_request/2 predicate.
 - avoid badValue warnings for ssa internal variables
 - introduce a correction mechanism to adjust the solving
