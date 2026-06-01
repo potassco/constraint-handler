@@ -13,7 +13,7 @@ order(CNAME,X,E,IDX) :- _passed(sugar,variable_domain(CNAME,X,E)), IDX = #count 
 higher_assigned_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), propagator_variable_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N), engine(CNAME,propagator).
 higher_assigned_domain(CNAME,X,D) :- _passed(sugar,variable_domain(CNAME,X,D)), higher_assigned_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N), engine(CNAME,propagator).
 
-ensure(operation(neq,(variable(V),(E1,())))) :- higher_assigned_domain(CNAME,V,E1), _passed(sugar,variable_domain(CNAME,V,E1)), engine(CNAME,propagator).
+propagator_ensure(CNAME,operation(neq,(variable(V),(E1,())))) :- higher_assigned_domain(CNAME,V,E1), _passed(sugar,variable_domain(CNAME,V,E1)), engine(CNAME,propagator).
 
 
 propagator_variable_define(CNAME,X,E) :- _passed(sugar,variable_define(CNAME,X,E)), engine(CNAME,propagator).
@@ -24,7 +24,7 @@ propagator_set_assign(CNAME,X,E) :- _passed(sugar,set_assign(CNAME,X,E)), engine
 {propagator_set_baseDomain(CNAME1,X,E) : _passed(sugar,set_baseDomain(CNAME1,X,E)), engine(CNAME1,propagator)} :- propagator_set_declare(CNAME2,X).
 
 % ensure that value of expr is not in set if not chosen
-ensure(operation(set_notin,(E,(variable(X),())))) :- _passed(sugar,set_baseDomain(CNAME,X,E)), not propagator_set_baseDomain(CNAME,X,E), engine(CNAME,propagator).
+propagator_ensure(CNAME,operation(set_notin,(E,(variable(X),())))) :- _passed(sugar,set_baseDomain(CNAME,X,E)), not propagator_set_baseDomain(CNAME,X,E), engine(CNAME,propagator).
 
 
 propagator_multimap_assign(LBL,X,K,V) :- _passed(sugar,multimap_assign(LBL,X,K,V)), engine(LBL,propagator).
