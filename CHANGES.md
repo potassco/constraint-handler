@@ -2,7 +2,7 @@
 
 ## Ongoing
 
-## v0.0.2.dev9
+## v0.0.2.dev10
 
 - introduce the phase_request/2 predicate.
 - avoid badValue warnings for ssa internal variables
@@ -15,6 +15,8 @@
 - drop support for while statements
 - rewrite the handling of executions to be entirely SSA-based
 - add optimization result atoms `optimize_value/3`
+
+## v0.0.2.dev9
 
 ## v0.0.2.dev8
 
