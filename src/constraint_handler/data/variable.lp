@@ -25,6 +25,4 @@ _variable_confusingName(O,operator) :- _operator_declared(O).
 _warning(variable(confusingName),(),(X,REASON)) :- _variable_exists(sugar,X), _variable_confusingName(BAD,REASON), (function,BAD,N,ARGS)=@pythonReify(X).
 _warning(variable(confusingName),(),(X,number)) :- _variable_exists(sugar,X), (number,_,_,_)=@pythonReify(X).
 
-% TODO var unreliably there in statement if it's in a branch (the issue arises because let in and assign are conflated)
-
-_warning(variable(badValue),(),X) :- _se_value(variable(X),bad).
+_warning(variable(badValue),(),X) :- _se_value(variable(X),bad), not _statement_internalVariable(X).
