@@ -17,7 +17,20 @@ value(X,V) :- _se_value(variable(X),V).
 
 representation((bool;int;string;float;symbol;none),extensional).
 
+%%%%%%%%%%%%%%%%% warnings
 _warning_forbid(KIND) :- _passed(sugar,warning_forbid(LBL,KIND)).
 _warning_ignore(KIND) :- _passed(sugar,warning_ignore(LBL,KIND)).
 :- _warning(KIND,INFO,MSG), _warning_forbid(KIND), not _warning_ignore(KIND).
 warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not _warning_ignore(KIND).
+
+%%%%%%%%%%%%%%%%% phases
+#defined phase_request/2.
+
+_phase(solve;wf_check;type_check).
+_phase_default(solve,true).
+_phase_default(wf_check,true).
+_phase_default(type_check,true).
+
+_phase_userRequest(PHASE) :- phase_request(PHASE,BOOL), _phase(PHASE).
+_phase_active(PHASE) :- _phase_default(PHASE,true), not _phase_userRequest(PHASE).
+_phase_active(PHASE) :- phase_request(PHASE,true).
