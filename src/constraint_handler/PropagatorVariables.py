@@ -13,7 +13,6 @@ import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 import constraint_handler.solver_environment as solver_environment
 from constraint_handler.PropagatorConstants import (
-    DEBUG_PRINT,
     DEFAULT_DECISION_LEVEL,
     EXECUTION_INPUT,
     EXECUTION_OUTPUT,
@@ -22,20 +21,6 @@ from constraint_handler.PropagatorConstants import (
     evaluations_type,
     propagator_warning_t,
 )
-
-
-def myprint(*args: tuple, **kwargs: dict[str, Any]):
-    """Print debug output when debugging is enabled.
-
-    This helper is a thin wrapper around ``print`` controlled by the
-    ``DEBUG_PRINT`` constant.
-
-    Args:
-        *args: Positional arguments passed to ``print``.
-        **kwargs: Keyword arguments passed to ``print``.
-    """
-    if DEBUG_PRINT:
-        print(*args, **kwargs)
 
 
 class VariableType(Protocol):
@@ -83,7 +68,121 @@ class VariableType(Protocol):
     ) -> EvaluationResult: ...
 
     @abstractmethod
+    def infer(self) -> set[int]: ...
+
+    @abstractmethod
     def add_self_to_evaluations(self, e: Evaluations) -> None: ...
+
+
+class VariableManager:
+    """
+    Manages variables in the propagator. This includes storing variables, retrieving them by name and type,
+    and resetting them based on decision levels.
+
+    Attributes:
+        variables: Dictionary mapping variable names to VariableType instances.
+    """
+
+    def __init__(self):
+        self.variables: dict[clingo.Symbol, dict[VariableTypeNames, VariableType]] = {}
+
+    def add_variable(self, name: clingo.Symbol, variable: VariableType) -> None:
+        """
+        Add a variable to the manager.
+        We assume that this is called only once for a given VariableType
+
+        Args:
+            variable: The VariableType instance to add.
+        """
+        if name not in self.variables:
+            self.variables[name] = {}
+        self.variables[name][variable.__class__.__name__] = variable
+
+    def get_variables(self) -> Iterable[VariableType]:
+        """
+        Get all variables managed by this VariableManager.
+        Returns:
+            Iterable[VariableType]: An iterable of all VariableType instances.
+        """
+
+        for var_dict in self.variables.values():
+            for var in var_dict.values():
+                yield var
+
+    def get_variables_by_type(self, var_type: VariableTypeNames) -> Iterable[VariableType]:
+        """
+        Get all variables of a specific type.
+
+        Args:
+            var_type: The type of variables to retrieve.
+        Returns:
+            Iterable[VariableType]: An iterable of VariableType instances of the specified type.
+        """
+        for var_dict in self.variables.values():
+            if var_type in var_dict:
+                yield var_dict[var_type]
+
+    def get_variable(self, name: clingo.Symbol, var_type: VariableTypeNames) -> VariableType:
+        """
+        Get a variable by name and type.
+
+        Args:
+            name: The name of the variable to retrieve.
+            var_type: The type of the variable to retrieve.
+        Returns:
+            The VariableType instance if found.
+        Raises:
+            KeyError: If the variable with the specified name and type does not exist.
+        """
+
+        if name not in self.variables or var_type not in self.variables[name]:
+            raise KeyError(f"Variable with name {name} and type {var_type} does not exist.")
+        return self.variables[name][var_type]
+
+    def has_var_type(self, name: clingo.Symbol, var_type: VariableTypeNames) -> bool:
+        """
+        Check if a variable of a specific type exists for a given name.
+
+        Args:
+            name: The name of the variable to check.
+            var_type: The type of the variable to check.
+        Returns:
+            bool: True if the variable of the specified type exists, False otherwise.
+        """
+        return name in self.variables and var_type in self.variables[name]
+
+    def delete_variable(self, name: clingo.Symbol) -> None:
+        """
+        Delete a variable by name.
+
+        Args:
+            name: The name of the variable to delete.
+        Raises:
+            KeyError: If the variable with the specified name does not exist.
+        """
+        if name not in self.variables:
+            raise KeyError(f"Variable with name {name} does not exist. Can not delete")
+        del self.variables[name]
+
+    def reset(self, dl: int) -> None:
+        """
+        Reset variables based on the decision level.
+
+        Args:
+            dl: Decision level threshold for resetting variables.
+        """
+
+        for var in self.get_variables():
+            var.reset(dl)
+
+    def __getitem__(self, name: clingo.Symbol) -> dict[VariableTypeNames, VariableType]:
+        return self.variables[name]
+
+    def __contains__(self, name: clingo.Symbol) -> bool:
+        return name in self.variables
+
+    def __len__(self) -> int:
+        return len(self.variables)
 
 
 class VariableValue:
@@ -176,8 +275,6 @@ class VariableValue:
                     f"Bad value for expression {self.expr}",
                 )
             )
-
-        myprint(f"{self.expr} evaluated to {self.value}")
 
         self.decision_level = ctl.assignment.decision_level
         return True
@@ -286,7 +383,6 @@ class EvaluateVariable:
         """
         if not ctl.assignment.is_true(self.literal):
             return False
-        myprint(f"Evaluating {self.op}({self.args})")
         value, errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations.evaluations)
         self.value = value
         for error, msg in errors:
@@ -407,15 +503,18 @@ class EnsureVariable:
         changed is True if the value has changed.
         conflict is True if there is a conflict.
         """
-        if self.expression.assigned is not None and not self.expression.assigned:
-            # Ensure is false, so no conflict
-            return EvaluationResult.NOT_CHANGED
 
         if self.value != ValueStatus.NOT_SET:
             # already assigned
             return EvaluationResult.NOT_CHANGED
 
         changed = self.expression.evaluate(evaluations, ctl, env)
+
+        if self.expression.assigned is not None and not self.expression.assigned:
+            # Ensure is false, so no conflict
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+            self.decision_level = ctl.assignment.decision_level
+            return EvaluationResult.NOT_CHANGED
 
         if not changed:
             return EvaluationResult.NOT_CHANGED
@@ -488,6 +587,14 @@ class EnsureVariable:
             self.value = ValueStatus.NOT_SET
             self.decision_level = DEFAULT_DECISION_LEVEL
 
+    def infer(self) -> set[int]:
+        """
+        Curently this return an empty set as it does not support any inferences.
+        This is here for compatibility with the VariableType protocol.
+        """
+
+        return set()
+
     def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
         Does nothing, as ensure variables are not added to the evaluation dictionary.
@@ -503,6 +610,175 @@ class EnsureVariable:
 
     def __repr__(self) -> str:
         return f"EnsureVariable(name={self.name}, expression={self.expression})"
+
+
+class BoolEvaluateVariable:
+    """
+    Represents a boolean evaluation variable, which is a special case of EvaluateVariable that is expected to evaluate to a boolean value.
+    This class can be used for variables that are expected to represent conditions or constraints that must hold.
+
+    Attributes:
+        name: Name of the variable.
+        expression: The VariableValue instance being evaluated.
+    """
+
+    __c = 0
+    __var = "__bool_evaluate__"
+
+    def __init__(self, name: str, expr: expression.Expr, literal: int, true_lit: int, false_lit: int, bad_lit: int):
+        """
+        Initialize a BoolEvaluateVariable.
+
+        Args:
+            name: Name of the variable.
+            expr: Expression to evaluate, expected to yield a boolean value.
+            literal: Literal controlling whether this variable is active.
+            true_lit: Literal representing the true value of the variable.
+            false_lit: Literal representing the false value of the variable.
+            bad_lit: Literal representing a bad value of the variable.
+        """
+        self.name: str = name
+        self.expression: VariableValue = VariableValue(expr, literal)
+        self.value_lits = {True: true_lit, False: false_lit, expression.Bad.bad: bad_lit}
+
+        self.var = clingo.Function(BoolEvaluateVariable.__var, [clingo.Number(BoolEvaluateVariable.__c)])
+        BoolEvaluateVariable.__c += 1
+
+    @property
+    def parents(self) -> list[VariableType]:
+        """
+        Return parent variables.
+
+        Returns:
+            list[VariableType]: Empty list (bool evaluate variables have no parents).
+        """
+        return []
+
+    def has_domain(self) -> bool:
+        """
+        Return whether the variable has a domain.
+
+        Returns:
+            bool: Always True for BoolEvaluateVariable.
+        """
+        return True
+
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+        """
+        Evaluate the expression and return an EvaluationResult.
+
+        Args:
+            evaluations: Current variable evaluations.
+            ctl: PropagateControl
+            env: Environment for evaluation.
+        """
+        changed = self.expression.evaluate(evaluations, ctl, env)
+        if changed and self.get_value() is not ValueStatus.ASSIGNMENT_IS_FALSE:
+            # if we got a value, we can infer the corresponding literal
+            return EvaluationResult.INFER
+
+        return EvaluationResult.NOT_CHANGED
+
+    def infer(self) -> set[int]:
+        """
+        Infer the literal corresponding to the current value.
+
+        Returns:
+            set[int]: A singleton set containing the signed literal if assigned; otherwise empty.
+                      Note that literal is flipped so that the nogood infers the correct value.
+        """
+        value = self.get_value()
+        if value in self.value_lits:
+            return {-self.value_lits[value]}
+        return set()
+
+    def get_value(self) -> ValueStatus | bool | expression.Bad:
+        """
+        Return the current value of the boolean evaluation variable.
+
+        Returns:
+            ValueStatus | bool | expression.Bad: Current value, or NOT_SET.
+        """
+        return self.expression.value
+
+    def has_unassigned(self) -> bool:
+        """
+        Check whether the boolean evaluation variable is unassigned.
+
+        Returns:
+            bool: True if the value is NOT_SET.
+        """
+        return self.get_value() == ValueStatus.NOT_SET
+
+    def vars(self) -> set[clingo.Symbol]:
+        """
+        Collect variables referenced by the boolean evaluation expression.
+
+        Returns:
+            set[clingo.Symbol]: Variables referenced by the expression.
+        """
+        return set(self.expression.vars())
+
+    def get_errors(self) -> propagator_warning_t:
+        """
+        Return warnings collected during evaluation.
+
+        Returns:
+            propagator_warning_t: List of warnings.
+        """
+        return self.expression.get_errors()
+
+    def reset(self, dl: int) -> None:
+        """
+        Reset based on the decision level.
+
+        Args:
+            dl: Decision level threshold.
+        """
+        self.expression.reset(dl)
+
+    @property
+    def literals(self) -> set[int]:
+        """
+        Return signed literals that give the current value of the boolean evaluation variable.
+
+        Returns:
+            set[int]: Set of signed literals.
+        """
+        return self.expression.literals
+
+    @property
+    def decision_level(self) -> int:
+        """
+        Return the decision level at which the value was set.
+
+        Returns:
+            int: Decision level of the variable.
+        """
+        return self.expression.decision_level
+
+    def add_self_to_evaluations(self, e: Evaluations) -> None:
+        """
+        This variable is not added to the evaluation dictionary
+
+        Args:
+            e: Evaluations object to update.
+        """
+        return
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Variable):
+            return False
+        return self.var == other.var and self.expression == other.expression
+
+    def __hash__(self) -> int:
+        return hash((self.var, self.expression))
+
+    def __str__(self) -> str:
+        return f"Variable({self.name}, {self.var}, {self.expression})"
+
+    def __repr__(self) -> str:
+        return f"Variable({self.name}, {self.var}, {self.expression})"
 
 
 class Variable:
@@ -626,7 +902,6 @@ class Variable:
         if len(val) > 1:
             # multiple values assigned to the same variable
             # this is True even if the same value is assigned multiple times
-            myprint(f"Variable vals: {val}")
             self.decision_level = ctl.assignment.decision_level
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             return EvaluationResult.CONFLICT
@@ -708,6 +983,16 @@ class Variable:
             self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = ValueStatus.NOT_SET
             self.errors = []
+
+    def infer(self) -> set[int]:
+        """
+        Currently this returns an empty set as it does not support any inferences.
+        This is here for compatibility with the VariableType protocol.
+
+        Returns:
+            set[int]: Empty set (no inferences).
+        """
+        return set()
 
     def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
@@ -1020,6 +1305,14 @@ class SetVariable:
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
+    def infer(self) -> set[int]:
+        """
+        Curently this return an empty set as it does not support any inferences.
+        This is here for compatibility with the VariableType protocol.
+        """
+
+        return set()
+
     def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
         Add this variable's value into an output dictionary.
@@ -1261,6 +1554,14 @@ class DictVariable:
             self.value = ValueStatus.NOT_SET
             self.errors = []
 
+    def infer(self) -> set[int]:
+        """
+        Curently this return an empty set as it does not support any inferences.
+        This is here for compatibility with the VariableType protocol.
+        """
+
+        return set()
+
     def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
         Add this variable's value into the given Evaluations object.
@@ -1351,7 +1652,6 @@ class OptimizationSum:
         vals = set()
         # TODO: check if we need to also need to excluce Bad.bad from the sums
         for var, expr in self.expressions:
-            myprint(f"Summing {expr} with value {expr.value}")
             if expr.value not in [ValueStatus.NOT_SET, ValueStatus.ASSIGNMENT_IS_FALSE, None, expression.Bad.bad]:
                 vals.add((var, expr.value))
 
@@ -1559,6 +1859,16 @@ class OptimizationHandler:
             bool: True if there are unassigned values, False otherwise.
         """
         return self.sums[position].has_unassigned()
+
+    @property
+    def literals(self) -> set[int]:
+        """
+        returns the empty set since the optimization sums do not have literals directly associated with them.
+
+        Returns:
+            empty set: set()
+        """
+        return set()
 
 
 class Execution:
@@ -1853,6 +2163,14 @@ class Execution:
             self.errors = []
             self.values = ValueStatus.NOT_SET
 
+    def infer(self) -> set[int]:
+        """
+        Curently this return an empty set as it does not support any inferences.
+        This is here for compatibility with the VariableType protocol.
+        """
+
+        return set()
+
     def add_self_to_evaluations(self, e: Evaluations) -> None:
         """
         Add the execution's output values to the provided Evaluations object.
@@ -2021,7 +2339,9 @@ class Evaluations:
         """
         self.evaluations: evaluations_type = {}
         self.false_assignments: list[clingo.Symbol] = []
-        self.existing_vars: list[clingo.Symbol] = []
+        # for each variable, it also counts how many different types it can have.
+        # this is needed for the check to see if the variable is usable in the current evaluation.
+        self.existing_vars: dict[clingo.Symbol, int] = {}
 
     def init(self, variables: Iterable[VariableType]):
         """
@@ -2034,9 +2354,10 @@ class Evaluations:
         """
         for var in variables:
             if isinstance(var, Execution):
-                self.existing_vars.extend(var.converted_out_vars)
+                for v in var.converted_out_vars:
+                    self.existing_vars[v] = self.existing_vars.get(v, 0) + 1
             else:
-                self.existing_vars.append(var.var)
+                self.existing_vars[var.var] = self.existing_vars.get(var.var, 0) + 1
 
     def update_evaluations(
         self,
@@ -2069,4 +2390,25 @@ class Evaluations:
             bool: True if the variable is usable, False otherwise.
 
         """
-        return var in self.evaluations or var in self.false_assignments or var not in self.existing_vars
+        # return var in self.evaluations or var in self.false_assignments or var not in self.existing_vars
+        if var not in self.existing_vars:
+            return True
+
+        appearances = 0
+        if var in self.evaluations:
+            appearances += 1
+        if var in self.false_assignments:
+            appearances += 1
+        if appearances == self.existing_vars[var]:
+            return True
+        return False
+
+
+type VariableTypeNames = (
+    Literal[getattr(Variable, "__name__")]
+    | Literal[getattr(EnsureVariable, "__name__")]
+    | Literal[getattr(SetVariable, "__name__")]
+    | Literal[getattr(DictVariable, "__name__")]
+    | Literal[getattr(Execution, "__name__")]
+    | Literal[getattr(BoolEvaluateVariable, "__name__")]
+)
