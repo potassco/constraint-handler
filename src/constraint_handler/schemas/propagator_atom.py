@@ -4,6 +4,7 @@ import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.domain as domain
 import constraint_handler.schemas.warning as warning
 
+Bool_evaluated = atom.Bool_evaluated
 Evaluated = atom.Evaluated
 Main_solverIdentifiers = atom.Main_solverIdentifiers
 Multimap_value = atom.Multimap_value
