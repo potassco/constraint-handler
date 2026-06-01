@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- introduce the phase_request/2 predicate.
+- avoid badValue warnings for ssa internal variables
 - introduce a correction mechanism to adjust the solving
 - reorganize preprocessing into phases
 - introduce `variable_declare(X,definition)`, `variable_declare(X,set)`, and
