@@ -103,6 +103,7 @@ _statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _stat
 _statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed(if(EXPR,THEN,ELSE),X).
 _statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
+_statement_internalVariable(XS) :- _statement_scoped(SCOPE,X,variable(XS)).
 
 %_statement_scoped(SCOPE,X,variable(loc(SCOPE,X))) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)).
 %_statement_scoped(SCOPE,X,variable(loc(SCOPE,X))) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed(if(EXPR,THEN,ELSE),X).
