@@ -158,7 +158,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.get_solver_identifier(init)
 
         self.get_variables(init)
-        self.get_assign(init)
         self.get_ensure(init)
         self.get_set_declarations(init)
         self.get_multimap_declarations(init)
@@ -918,28 +917,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if len(var.expressions) == 0:
                 var.add_value(expression.Bad.bad, 1, 1)
 
-    def get_assign(self, ctl: clingo.PropagateInit):
-        """
-        Load `propagator_assign/..` atoms and attach values to variables.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-
-        assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_assign)
-        for (name, symbol_var, expr), literal in assigns.items():
-            variable: Variable
-            if not self.symbol2var.has_var_type(symbol_var, getattr(Variable, "__name__")):
-                variable = Variable(name, symbol_var)
-                self.symbol2var.add_variable(symbol_var, variable)
-
-            variable = cast(Variable, self.symbol2var.get_variable(symbol_var, getattr(Variable, "__name__")))
-            variable.add_value(expr, literal, literal)
-            self.literal2var.setdefault(literal, []).append(variable)
-
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
-
     def get_ensure(self, ctl: clingo.PropagateInit):
         """
         Load ensure constraints from ASP facts and create EnsureVariable instances.
@@ -982,8 +959,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 )
             self.evaluatevars.append(var)
 
-        true_val = expression.Val(expression.BaseType.bool, True)  # ty:ignore[unresolved-attribute]
-        false_val = expression.Val(expression.BaseType.bool, False)  # ty:ignore[unresolved-attribute]
+        true_val = expression.Val(type_.BaseType.bool, True)  # ty:ignore[unresolved-attribute]
+        false_val = expression.Val(type_.BaseType.bool, False)  # ty:ignore[unresolved-attribute]
 
         for (label, expr), literal in bool_evaluate_atoms.items():
             b_vals = {}
