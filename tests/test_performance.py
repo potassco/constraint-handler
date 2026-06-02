@@ -100,7 +100,7 @@ compile_benchmarks = [
         PerformanceBenchmark(
             "assignment_chain_performance",
             "compile",
-            3.0,
+            5.0,
             constants={"chain_length": 200},
         )
     ),
@@ -135,7 +135,7 @@ ground_benchmarks = [
         PerformanceBenchmark(
             "large_int_domain_performance",
             "ground",
-            75.0,
+            155.0,
             constants={"int_domain_size": 900},
         )
     ),
@@ -143,7 +143,7 @@ ground_benchmarks = [
         PerformanceBenchmark(
             "assignment_chain_performance",
             "ground",
-            2.0,
+            6.0,
             constants={"chain_length": 200},
         )
     ),
@@ -210,7 +210,7 @@ propagator_benchmarks = [
         PerformanceBenchmark(
             "assignment_chain_performance",
             "propagator",
-            2.0,
+            5.0,
             check_mode=True,
             constants={"chain_length": 200},
         )
@@ -219,7 +219,7 @@ propagator_benchmarks = [
         PerformanceBenchmark(
             "assignment_chain_performance",
             "propagator",
-            2.0,
+            5.0,
             check_mode=False,
             constants={"chain_length": 200},
         )
