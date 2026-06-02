@@ -26,36 +26,37 @@ def atoms_from_file(file_name):
 
 
 def contains(atom):
-    return clintest.assertion.Or(*(clintest.assertion.Contains(atom), TheoryContains(atom)))
+    return clintest.assertion.Or(clintest.assertion.Contains(atom), TheoryContains(atom))
 
 
 def absent(atom):
-    return clintest.assertion.Not(clintest.assertion.Or(*(clintest.assertion.Contains(atom), TheoryContains(atom))))
+    return clintest.assertion.Not(clintest.assertion.Or(clintest.assertion.Contains(atom), TheoryContains(atom)))
 
 
 def build_expectations(name):
+    tests = []
     expected_all = atoms_from_file(name + ".expected.all")
-    test_all = clintest.test.And(*(clintest.test.Assert(All(), contains(atom)) for atom in expected_all))
+    for atom in expected_all:
+        tests.append(clintest.test.Assert(All(), contains(atom)))
     expected_any = atoms_from_file(name + ".expected.any")
-    test_any = clintest.test.And(*(clintest.test.Assert(Any(), contains(atom)) for atom in expected_any))
+    for atom in expected_any:
+        tests.append(clintest.test.Assert(Any(), contains(atom)))
     expected_none = atoms_from_file(name + ".expected.none")
-    test_none = clintest.test.And(*(clintest.test.Assert(All(), absent(atom)) for atom in expected_none))
+    for atom in expected_none:
+        tests.append(clintest.test.Assert(All(), absent(atom)))
     expected_first = atoms_from_file(name + ".expected.first")
-    test_first = clintest.test.And(*(clintest.test.Assert(First(), contains(atom)) for atom in expected_first))
+    for atom in expected_first:
+        tests.append(clintest.test.Assert(First(), contains(atom)))
     expected_last = atoms_from_file(name + ".expected.last")
-    test_last = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_last))
+    for atom in expected_last:
+        tests.append(clintest.test.Assert(Last(), contains(atom)))
     expected_models: List = atoms_from_file(name + ".expected.models")
     if expected_models:
         expected_models = expected_models[0].number
-        test_models = clintest.test.And(clintest.test.Assert(Exact(expected_models), clintest.assertion.True_()))
-    else:
-        test_models = clintest.test.True_()
-    test_exists = (
-        clintest.test.Assert(Any(), clintest.assertion.True_())
-        if (expected_all or expected_first or expected_last) and not expected_any
-        else clintest.test.True_()
-    )
-    return clintest.test.And(test_exists, test_all, test_any, test_none, test_first, test_last, test_models)
+        tests.append(clintest.test.Assert(Exact(expected_models), clintest.assertion.True_()))
+    elif (expected_all or expected_first or expected_last) and not expected_any:
+        tests.append(clintest.test.Assert(Any(), clintest.assertion.True_()))
+    return clintest.test.And(*tests)
 
 
 def build_expectations_with_args(name) -> list[tuple[clintest.test.Test, list[str]]]:
