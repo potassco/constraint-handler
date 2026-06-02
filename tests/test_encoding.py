@@ -151,9 +151,9 @@ def test_engine_compile(name: str):
 def test_engine_ground(name: str):
     unsupported: list[str] = [
         "core/reasoning_modes",
-        "core/type_checking",
         "engine/request",
         "engine/request_mult",
+        "engine/request_set_ref",
         "expression/lambdas",
         "expression/lambda_recursive",
         "expression/lambda_zero_args",
@@ -166,7 +166,6 @@ def test_engine_ground(name: str):
         "optimization/ints",
         "optimization/priority",
         "set/fold_bools",
-        "engine/request_set_ref",
         "set/iterations",
         "set/same_val_multi_expr",
         "set/selfref",
@@ -191,7 +190,6 @@ def test_engine_propagator(name: str, check_mode):
         "set/iterations",
         "set/selfref",
         "warning/python_unsupported_type",
-        "warning/variables",
     ]
     if name not in unsupported:
         run_test(name, "propagator", check_mode)

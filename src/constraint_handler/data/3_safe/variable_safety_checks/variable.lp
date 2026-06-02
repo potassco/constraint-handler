@@ -32,10 +32,27 @@ _variable_declared(X) :- _passed(defaultArgs,variable_declare(LBL,X,fromFacts)).
 _passed(sugar,variable_declare(LBL,X,fromFacts)) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
 _warning(variable(undeclared),(),X) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
 
-_warning(variable(multipleDeclarations),(CNAME1,(CNAME2,())),(X,D1,D2)) :-
-  _passed(defaultArgs,variable_declare(CNAME1,X,D1)), _passed(defaultArgs,variable_declare(CNAME2,X,D2)), (CNAME1,D1) < (CNAME2,D2),
-  0 = #count { CNAME3,D3 : _passed(defaultArgs,variable_declare(CNAME3,X,D3)), (CNAME3,D3) < (CNAME2,D2), (CNAME3,D3) != (CNAME1,D1) }.
+%%%%%%%%%%%%%%%%% multiple declarations
+_variable_multipleDeclarations(LBL1,X,D1) :-
+  _passed(defaultArgs,variable_declare(LBL1,X,D1)),
+  1 = #count { LBL0,D0 : _passed(defaultArgs,variable_declare(LBL0,X,D0)), (LBL0,D0) < (LBL1,D1) }.
 
-_warning(variable(multipleDefinitions),(CNAME1,(CNAME2,())),(X,E1,E2)) :-
-  _passed(defaultArgs,variable_define(CNAME1,X,E1)), _passed(defaultArgs,variable_define(CNAME2,X,E2)), (CNAME1,E1) < (CNAME2,E2),
-  0 = #count { CNAME3,E3 : _passed(defaultArgs,variable_define(CNAME3,X,E3)), (CNAME3,E3) < (CNAME2,E2), (CNAME3,E3) != (CNAME1,E1) }.
+_variable_multipleDefinitions(LBL1,X,D1) :-
+  _passed(defaultArgs,variable_define(LBL1,X,D1)),
+  1 = #count { LBL0,D0 : _passed(defaultArgs,variable_define(LBL0,X,D0)), (LBL0,D0) < (LBL1,D1) }.
+
+_variable_multiple(LBL,X) :- _variable_multipleDeclarations(LBL,X,D).
+_variable_multiple(LBL,X) :- _variable_multipleDefinitions(LBL,X,D).
+_passed(correction(rem),DECL) :- _variable_multiple(LBL,X), _passed(sugar,DECL), DECL=variable_declare(LBL2,X,D2).
+_passed(correction(rem),DECL) :- _variable_multiple(LBL,X), _passed(sugar,DECL), DECL=variable_domain(LBL2,X,D2).
+_passed(correction(rem),DECL) :- _variable_multiple(LBL,X), _passed(sugar,DECL), DECL=variable_define(LBL2,X,D2).
+_passed(correction(add),LBL,variable_declare(LBL,X,definition)) :- _variable_multiple(LBL,X).
+_passed(correction(add),LBL,variable_define(LBL,X,bad)) :- _variable_multiple(LBL,X).
+
+_warning(variable(multipleDeclarations),(LBL0,(LBL1,())),(X,D0,D1)) :-
+  _variable_multipleDeclarations(LBL1,X,D1),
+  _passed(defaultArgs,variable_declare(LBL0,X,D0)), (LBL0,D0) < (LBL1,D1).
+
+_warning(variable(multipleDefinitions),(LBL0,(LBL1,())),(X,E0,E1)) :-
+  _variable_multipleDefinitions(LBL1,X,E1),
+  _passed(defaultArgs,variable_define(LBL0,X,E0)), (LBL0,E0) < (LBL1,E1).
