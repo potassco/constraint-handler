@@ -16,4 +16,3 @@ value(execution_output(alsobad,a),bad)
 value(execution_output(alsobad,b),bad)
 value(execution_output(alsobad,a),val(none,none))
 value(execution_output(alsobad,a),val(int,1))
-
