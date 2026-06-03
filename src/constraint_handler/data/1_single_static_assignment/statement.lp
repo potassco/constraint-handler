@@ -173,10 +173,10 @@ _statement_introduce(LBL,EX,V) :- _execution_outputVar(PRG,X,EX), _execution_dec
 _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_ou_proj(PRG,X).
 _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_isRunning(PRG).
 
-_passed(sugar,variable_define(LBL,X,E)) :- _statement_introduce(LBL,X,E).
-_passed(sugar,variable_declare(LBL,X,definition)) :- _statement_introduce(LBL,X,E).
-_passed(sugar,ensure(LBL,E)) :- _statement_ensure(LBL,E).
-_variable(sugar,execution_input(PRG,X)) :- _execution_input_var(PRG,X).
+_passed(ssa,variable_define(LBL,X,E)) :- _statement_introduce(LBL,X,E).
+_passed(ssa,variable_declare(LBL,X,definition)) :- _statement_introduce(LBL,X,E).
+_passed(ssa,ensure(LBL,E)) :- _statement_ensure(LBL,E).
+_variable(ssa,execution_input(PRG,X)) :- _execution_input_var(PRG,X).
 
 %%%%%%%%%%%%%%%%% sequence helpers
 _length(defaultArgs,operation(O,ARGS),N) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), N=@pythonListLength(ARGS).

@@ -12,8 +12,8 @@ _variable_exists(sugar,X) :- _passed(sugar,variable_declare(LBL,X,D)).
 
 %_variable(sugar,X) :- _variable_query(sugar,X).
 _warning(variable(undeclared),(),X) :- _variable(sugar,X), not _variable_exists(sugar,X).
-_passed(correction(add),_internal0,variable_declare(_internal0,X,definition)) :- _variable(sugar,X), not _variable_exists(sugar,X).
-_passed(correction(add),_internal0,variable_define(_internal0,X,bad)) :- _variable(sugar,X), not _variable_exists(sugar,X).
+_passed(correction(undeclared,add),_internal0,variable_declare(_internal0,X,definition)) :- _variable(sugar,X), not _variable_exists(sugar,X).
+_passed(correction(undeclared,add),_internal0,variable_define(_internal0,X,bad)) :- _variable(sugar,X), not _variable_exists(sugar,X).
 
 
 _variable_confusingName((assert;assign;if;noop;statement_python;seq2),keyword). % statement
@@ -27,7 +27,8 @@ _warning(variable(confusingName),(),(X,number)) :- _variable_exists(sugar,X), (n
 
 _warning(variable(badValue),(),X) :- _se_value(variable(X),bad), not _statement_internalVariable(X).
 
-% multiple dclarations
+
+%%%%%%%%%%%%%%%%% undeclared
 _variable_declared(X) :- _passed(defaultArgs,variable_declare(LBL,X,fromFacts)).
 _passed(sugar,variable_declare(LBL,X,fromFacts)) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
 _warning(variable(undeclared),(),X) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
@@ -43,11 +44,9 @@ _variable_multipleDefinitions(LBL1,X,D1) :-
 
 _variable_multiple(LBL,X) :- _variable_multipleDeclarations(LBL,X,D).
 _variable_multiple(LBL,X) :- _variable_multipleDefinitions(LBL,X,D).
-_passed(correction(rem),DECL) :- _variable_multiple(LBL,X), _passed(sugar,DECL), DECL=variable_declare(LBL2,X,D2).
-_passed(correction(rem),DECL) :- _variable_multiple(LBL,X), _passed(sugar,DECL), DECL=variable_domain(LBL2,X,D2).
-_passed(correction(rem),DECL) :- _variable_multiple(LBL,X), _passed(sugar,DECL), DECL=variable_define(LBL2,X,D2).
-_passed(correction(add),LBL,variable_declare(LBL,X,definition)) :- _variable_multiple(LBL,X).
-_passed(correction(add),LBL,variable_define(LBL,X,bad)) :- _variable_multiple(LBL,X).
+_passed(correction(multipleDeclarations,rem),DECL) :- _variable_multiple(LBL,X), _variable_involve(sugar,X,DECL).
+_passed(correction(multipleDeclarations,add),LBL,variable_declare(LBL,X,definition)) :- _variable_multiple(LBL,X).
+_passed(correction(multipleDeclarations,add),LBL,variable_define(LBL,X,bad)) :- _variable_multiple(LBL,X).
 
 _warning(variable(multipleDeclarations),(LBL0,(LBL1,())),(X,D0,D1)) :-
   _variable_multipleDeclarations(LBL1,X,D1),
