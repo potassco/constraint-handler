@@ -26,17 +26,23 @@ _warning(expression(syntaxError),(),EXPR) :- _phase_active(wf_check), _expressio
 
 
 %%%%%% variable atoms
-_passed(correction(change,wf),variable_domain(LBL,X,E),variable_domain(LBL,X,bad)) :- _phase_active(wf_check), _passed(sugar,variable_domain(LBL,X,E)), not _expression_wellformed(E).
-_passed(correction(change,wf),variable_define(LBL,X,E),variable_define(LBL,X,bad)) :- _phase_active(wf_check), _passed(sugar,variable_define(LBL,X,E)), not _expression_wellformed(E).
-_warning(atom(syntaxError),(),DECL) :- _passed(correction(change,wf),DECL,NDECL).
+_passed(correction(wf_check,rem),variable_domain(LBL,X,E)) :- _phase_active(wf_check), _passed(sugar,variable_domain(LBL,X,E)), not _expression_wellformed(E).
+_passed(correction(wf_check,add),LBL,variable_domain(LBL,X,bad)) :- _phase_active(wf_check), _passed(sugar,variable_domain(LBL,X,E)), not _expression_wellformed(E).
+
+_passed(correction(wf_check,rem),variable_define(LBL,X,E)) :- _phase_active(wf_check), _passed(sugar,variable_define(LBL,X,E)), not _expression_wellformed(E).
+_passed(correction(wf_check,add),LBL,variable_define(LBL,X,bad)) :- _phase_active(wf_check), _passed(sugar,variable_define(LBL,X,E)), not _expression_wellformed(E).
+_warning(atom(syntaxError),(),DECL) :- _passed(correction(wf_check,rem),DECL).
 
 %%%%%% multimap atoms
-%_passed(correction(change,wf),multimap_assign(LBL,X,K,B),multimap_assign(LBL,X,bad,bad)) :- _phase_active(wf_check), _passed(sugar,multimap_assign(LBL,X,K,B)), #false : _expression_wellformed(K), _expression_wellformed(B).
+%_passed(correction(wf_check,rem),multimap_assign(LBL,X,K,B)) :- _phase_active(wf_check), _passed(sugar,multimap_assign(LBL,X,K,B)), #false : _expression_wellformed(K), _expression_wellformed(B).
+%_passed(correction(wf_check,add),LBL,multimap_assign(LBL,X,bad,bad)) :- _phase_active(wf_check), _passed(sugar,multimap_assign(LBL,X,K,B)), #false : _expression_wellformed(K), _expression_wellformed(B).
 %%%% TODO
 
 %%%%% set atoms
-_passed(correction(change,wf),set_assign(LBL,X,E),set_assign(LBL,X,bad)) :- _phase_active(wf_check), _passed(sugar,set_assign(LBL,X,E)), not _expression_wellformed(E).
-_passed(correction(change,wf),set_baseDomain(LBL,X,E),set_baseDomain(LBL,X,bad)) :- _phase_active(wf_check), _passed(sugar,set_baseDomain(LBL,X,E)), not _expression_wellformed(E).
+_passed(correction(wf_check,rem),set_assign(LBL,X,E)) :- _phase_active(wf_check), _passed(sugar,set_assign(LBL,X,E)), not _expression_wellformed(E).
+_passed(correction(wf_check,add),LBL,set_assign(LBL,X,bad)) :- _phase_active(wf_check), _passed(sugar,set_assign(LBL,X,E)), not _expression_wellformed(E).
+_passed(correction(wf_check,rem),set_baseDomain(LBL,X,E)) :- _phase_active(wf_check), _passed(sugar,set_baseDomain(LBL,X,E)), not _expression_wellformed(E).
+_passed(correction(wf_check,add),LBL,set_baseDomain(LBL,X,bad)) :- _phase_active(wf_check), _passed(sugar,set_baseDomain(LBL,X,E)), not _expression_wellformed(E).
 
 %%%%%% statement atoms
 _warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _phase_active(wf_check), _passed(defaultArgs,execution_declare(LBL,PRG,STMT,INS,OUTS)),

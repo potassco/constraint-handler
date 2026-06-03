@@ -23,7 +23,7 @@ _set_contains(EX,V1) :-
 _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 
 %%%%%%%%%%%%%%%%% set_baseDomain
-_passed(correction(add),LBL,evaluate(set_isin,(E,(variable(X),())))) :- _passed(sugar,set_baseDomain(LBL,X,E)).
+_passed(correction(setSymmetry,add),LBL,evaluate(set_isin,(E,(variable(X),())))) :- _passed(sugar,set_baseDomain(LBL,X,E)).
 { _set_assign(LBL,variable(X),E) } :- _passed(compile,set_baseDomain(LBL,X,E)).
 :- _passed(compile,set_baseDomain(LBL,X,E)), evaluated(set_isin,(E,(variable(X),())),val(bool,true)), not _set_assign(LBL,variable(X),E).
 
