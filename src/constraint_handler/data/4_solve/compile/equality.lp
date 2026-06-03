@@ -1,5 +1,4 @@
 %%%%%%%%%%%%%%%%% generic eq neq
-operator_declare((eq;neq),(T,(T,())),bool) :- _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T,V)), _computeIdx(E,1,val(T,V)),
     _type_extensionalEquality(T).
@@ -51,7 +50,6 @@ _computedIdx(E,val(bool,true)) :- _tupleComp(E,neq,T1,T2,N), _tuple_pair(T1,T2,I
 
 
 %%%%%%%%%%%%%%%%% generic leq lt geq gt
-operator_declare((leq;lt;geq;gt),(T,(T,())),bool) :- _type_extensionalOrder(T).
 _computedIdx(E,val(bool,true))  :- _computeIdx(E,leq), _computeIdx(E,0,val(T,V1)), _computeIdx(E,1,val(T,V2)),
     V1 <= V2,
     _type_extensionalOrder(T).

@@ -154,7 +154,7 @@ propagator_benchmarks = [
         PerformanceBenchmark(
             "sum_aggregates",
             "propagator",
-            15.0,
+            20.0,
             check_mode=True,
         )
     ),

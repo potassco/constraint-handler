@@ -1,5 +1,5 @@
 % #include "direct.lp".
-% #include "gringoEval.lp".
+% #include "4_solve/ground/gringoEval.lp".
 % #include "display.lp".
 
 #defined _computed/4.
@@ -13,7 +13,6 @@ _main_solverIdentifiers(L) :- _main_solverIdentifierAux(X,L), 0 = #count { Z : m
 
 
 % needed for brave reasoning?
-value(X,V) :- _se_value(variable(X),V).
 
 representation((bool;int;string;float;symbol;none),extensional).
 
@@ -21,7 +20,6 @@ representation((bool;int;string;float;symbol;none),extensional).
 _warning_forbid(KIND) :- _passed(sugar,warning_forbid(LBL,KIND)).
 _warning_ignore(KIND) :- _passed(sugar,warning_ignore(LBL,KIND)).
 :- _warning(KIND,INFO,MSG), _warning_forbid(KIND), not _warning_ignore(KIND).
-warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not _warning_ignore(KIND).
 
 %%%%%%%%%%%%%%%%% phases
 #defined phase_request/2.
