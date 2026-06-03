@@ -21,7 +21,9 @@ _variable(PHASE,X) :- _passed(PHASE,LBL,set_assign(X,E)).
 _variable(PHASE,X) :- _passed(PHASE,LBL,set_baseDomain(X,E)).
 _variable(PHASE,X) :- _passed(PHASE,LBL,multimap_assign(X,K,B)).
 
-_isTuple(PHASE,E,N,ARGS) :- _expression(PHASE,E), true=@pythonIsTuple(E), (function,(),N,ARGS)=@pythonReify(E).
+_isTuple(PHASE,E) :- _expression(PHASE,E), true=@pythonIsTuple(E).
+_isTuple(PHASE,E,N,ARGS) :- _isTuple(PHASE,E), (function,(),N,ARGS)=@pythonReify(E).
+
 _expression_tupleLength(PHASE,E,N) :- _isTuple(PHASE,E,N,ARGS).
 _expression_tupleIndex(PHASE,E,IDX,X) :- _isTuple(PHASE,E,N,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
 _expression_operationOperator(PHASE,operation(OP,ARGS),OP) :- _expression(PHASE,operation(OP,ARGS)).

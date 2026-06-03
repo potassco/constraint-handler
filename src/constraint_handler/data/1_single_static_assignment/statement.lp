@@ -181,6 +181,9 @@ _variable(ssa,execution_input(PRG,X)) :- _execution_input_var(PRG,X).
 %%%%%%%%%%%%%%%%% sequence helpers
 _length(defaultArgs,operation(O,ARGS),N) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), N=@pythonListLength(ARGS).
 _expression_index(defaultArgs,operation(O,ARGS),IDX,X) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), (IDX,X)=@pythonEnumerateElements(ARGS).
-_expression_isTuple(defaultArgs,E,N,ARGS) :- _expression_sequenceHelper(defaultArgs,E), true=@pythonIsTuple(E), (function,(),N,ARGS)=@pythonReify(E).
+
+_expression_sequenceHelperisTuple(defaultArgs,E) :- _expression_sequenceHelper(defaultArgs,E), true=@pythonIsTuple(E).
+_expression_isTuple(defaultArgs,E,N,ARGS) :- _expression_sequenceHelperisTuple(defaultArgs,E), (function,(),N,ARGS)=@pythonReify(E).
+
 _length(defaultArgs,E,N) :- _expression_sequenceHelper(defaultArgs,E), _expression_isTuple(defaultArgs,E,N,ARGS).
 _expression_index(defaultArgs,E,IDX,X) :- _expression_sequenceHelper(defaultArgs,E), _expression_isTuple(defaultArgs,E,N,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
