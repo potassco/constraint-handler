@@ -1,13 +1,12 @@
 #script(python)
-
 import itertools
 import operator
 import typing
-
 from collections import defaultdict
 
 import clingo
 
+from constraint_handler.performance import performance
 import constraint_handler.myClorm as myClorm
 import constraint_handler.evaluator as evaluator
 import constraint_handler.schemas.atom as atom
@@ -19,25 +18,29 @@ import constraint_handler.solver_environment as solver_environment
 import constraint_handler.utils.python_statement_analysis as python_analysis
 
 
+@performance.route
 def pythonListElements(clL):
     try:
         return myClorm.cltopy(clL,list[clingo.Symbol])
     except myClorm.FailedInstantiationExn:
         return []
 
+@performance.route
 def pythonReversedList(clL):
     pL = pythonListElements(clL)
     return myClorm.pytocl(list(reversed(pL)))
 
+@performance.route
 def pythonEnumerateElements(clL):
     pL = pythonListElements(clL)
     return [myClorm.pytocl(e) for e in enumerate(pL)]
 
+@performance.route
 def pythonListLength(clL):
     pL = pythonListElements(clL)
     return myClorm.pytocl(len(pL))
 
-
+@performance.route
 def pythonIsList(clL):
     try:
         myClorm.cltopy(clL,list)
@@ -45,28 +48,32 @@ def pythonIsList(clL):
     except myClorm.FailedInstantiationExn:
         return myClorm.pytocl(False)
 
+@performance.route
 def pythonIsString(clS):
     return myClorm.pytocl(clS.type == clingo.SymbolType.String)
 
+@performance.route
 def pythonIsTuple(clT):
     return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "" and (len(clT.arguments) != 2 or clT.arguments[1] != clingo.Function("")))
 
+@performance.route
 def pythonTupleElements(clT):
     if clT.type == clingo.SymbolType.Function and clT.name == "":
         return clT.arguments
     else:
         return []
-
+@performance.route
 def pythonStringLength(clStr):
     pStr = myClorm.cltopy(clStr,str)
     return myClorm.pytocl(len(pStr))
 
+@performance.route
 def pythonStringAdd(clStr1,clStr2):
     pStr1 = myClorm.cltopy(clStr1,str)
     pStr2 = myClorm.cltopy(clStr2,str)
     return myClorm.pytocl(pStr1+pStr2)
 
-
+@performance.route
 def pythonScopeToString(clS,clVar):
     try:
         l = myClorm.cltopy(clS,list)
@@ -79,6 +86,7 @@ def pythonScopeToString(clS,clVar):
         return clS
         #return myClorm.pytocl(False)
 
+@performance.route
 def pythonReify(term):
     if term.type == clingo.SymbolType.Function:
         symb = clingo.symbol.Function(term.name)
@@ -89,6 +97,7 @@ def pythonReify(term):
     else:
         return myClorm.pytocl((clingo.symbol.Function("string"),term,0,()))
 
+@performance.route
 def pythonReflect(kind,term,args):
     if kind == clingo.symbol.Function("function") and term.type == clingo.SymbolType.Function:
         name = term.name

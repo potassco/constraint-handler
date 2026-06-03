@@ -5,6 +5,8 @@ import typing
 
 import clingo
 
+from constraint_handler.performance import performance
+
 
 class FailedInstantiationExn(Exception):
     pass
@@ -60,6 +62,7 @@ def _union_rows(target):
     return [target]
 
 
+@performance.route
 def pytocl(v, dtarget=None):
     if dtarget is None:
         dtarget = type(v)
@@ -147,6 +150,7 @@ def cltopyNoTarget(func):
         return func
 
 
+@performance.route
 def cltopy(func, dtarget=typing.Any, halt=True):
     dtarget = _resolve_type_alias(dtarget)
     rows = _union_rows(dtarget)
