@@ -1,0 +1,7 @@
+value(execution_outpput(itsbad,a),bad)
+value(execution_outpput(itsbad,a),val(int,1))
+value(execution_outpput(itsbad,a),val(int,2))
+value(execution_outpput(alsobad,a),bad)
+value(execution_outpput(alsobad,a),val(none,none))
+value(execution_outpput(alsobad,a),val(int,1))
+

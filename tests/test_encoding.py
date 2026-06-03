@@ -115,6 +115,7 @@ base_tests = [
     "warning/type",
     "warning/variables",
     "warning/variable_confusing_name",
+    # "warning/variable_reservedName",
     "warning/variable_undeclared",
     "warning/variable_undeclared_python_extract",
     "warning/variable_undeclared_statement",
