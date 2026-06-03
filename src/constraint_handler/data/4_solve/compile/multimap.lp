@@ -12,7 +12,6 @@ _multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,EX,EK,EV), _se_value(EX,val(mu
 direct_query(E1;E2) :- direct_query((E1,E2)).
 
 %%%%%%%%%%%%%%%%% multimap_make
-operator_declare_variadic(multimap_make,(K,V),multimap,1) :- _type(K), _type(V).
 _se_value(operation(multimap_make,L),val(multimap,ref(operation(multimap_make,L)))) :- direct_query(operation(multimap_make,L)).
 _multimap_add(ER,EK,EV) :- direct_query(operation(multimap_make,L)), _se_value(operation(multimap_make,L),val(multimap,ER)),
     (EK,EV)=@pythonListElements(L).
@@ -39,7 +38,6 @@ _multimap_entry(EM,RK,RV) :- _multimap_add(EM,EK,EV),
 multimap_value(X,KEY,VAL) :- _se_value(variable(X),val(multimap,EM)), _multimap_entry(EM,KEY,VAL).
 
 %%%%%%%%%%%%%%%%%% find
-operator_declare(find,(T1,(multimap,())),set) :- _type(T1).
 %%% TODO: this is fragile, maybe buggy.
 _computedIdx(E,ref(set,find((K,(val(multimap,EM),()))))) :- _computeIdx(E,find), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)).
 
@@ -47,7 +45,6 @@ _set_contains(find((K,(val(multimap,EM),()))),V) :- _computeIdx(E,find), _comput
     _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% count keys and entries
-operator_declare((countKeys;countEntries;sumIntEntries),(multimap,()),int).
 _computedIdx(E,val(int,N)) :- _computeIdx(E,countKeys), _computeIdx(E,0,val(multimap,EM)),
     N = #count { K : _multimap_entry(EM,K,V) }.
 
@@ -69,7 +66,6 @@ _computedIdx(E,M) :- _computeIdx(E,minEntries), _computeIdx(E,0,val(multimap,EM)
 %%%%%%%%%%%%%%%%%% union inter
 
 %%%%%%%%%%%%%%%%%% Equality
-operator_declare((eq;neq),(multimap,(multimap,())),bool).
 
 direct_query(operation(eq,(val(multimap,M0),(val(multimap,M1),())))) :- _computeIdx(E,neq), _computeIdx(E,0,val(multimap,M0)), _computeIdx(E,1,val(multimap,M1)).
 
@@ -125,7 +121,6 @@ _multimap_lastIndex(EM,0) :- _multimap_makeIndex(EM),
     #false : _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% multimap_isin
-operator_declare(multimap_isin,(T1,(multimap,())),bool) :- _type(T1).
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,multimap_isin), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),
     _multimap_entry(EM,K,V).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,multimap_isin), _computeIdx(E,0,K), _computeIdx(E,1,val(multimap,EM)),

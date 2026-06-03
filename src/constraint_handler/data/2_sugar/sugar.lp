@@ -17,19 +17,6 @@ _passed(sugar,variable_domain(LBL,X,E)) :- _passed(defaultArgs,variable_domain(L
 _expression(sugar,val(bool,(false;true))) :- _passed(defaultArgs,variable_declare(LBL,X,boolDomain)).
 _expression(sugar,val(none,none)) :- _passed(defaultArgs,variable_declareOptional(LBL,X)).
 
-_variable_declared(X) :- _passed(defaultArgs,variable_declare(LBL,X,fromFacts)).
-_passed(sugar,variable_declare(LBL,X,fromFacts)) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
-_warning(variable(undeclared),(),X) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
-
-_warning(variable(multipleDeclarations),(CNAME1,(CNAME2,())),(X,D1,D2)) :-
-  _passed(defaultArgs,variable_declare(CNAME1,X,D1)), _passed(defaultArgs,variable_declare(CNAME2,X,D2)), (CNAME1,D1) < (CNAME2,D2),
-  0 = #count { CNAME3,D3 : _passed(defaultArgs,variable_declare(CNAME3,X,D3)), (CNAME3,D3) < (CNAME2,D2), (CNAME3,D3) != (CNAME1,D1) }.
-
-_warning(variable(multipleDefinitions),(CNAME1,(CNAME2,())),(X,E1,E2)) :-
-  _passed(defaultArgs,variable_define(CNAME1,X,E1)), _passed(defaultArgs,variable_define(CNAME2,X,E2)), (CNAME1,E1) < (CNAME2,E2),
-  0 = #count { CNAME3,E3 : _passed(defaultArgs,variable_define(CNAME3,X,E3)), (CNAME3,E3) < (CNAME2,E2), (CNAME3,E3) != (CNAME1,E1) }.
-
-
 
 %%%%%% multimap atoms
 _passed(sugar,variable_declare(LBL,X,multimap)) :- _passed(defaultArgs,multimap_declare(LBL,X)).
@@ -57,3 +44,7 @@ _expression(sugar,operation(wnot,(E,()))) :- _passed(defaultArgs,preference_hold
 _expression(sugar,operation(eq,(variable(X),(E,())))) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K > 0.
 _expression(sugar,operation(neq,(variable(X),(E,())))) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K < 0.
 _expression(sugar,operation(wnot,(E,()))) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K < 0.
+
+%%%%%% warning atoms
+_passed(sugar,warning_forbid(LBL,KIND)) :- _passed(defaultArgs,warning_forbid(LBL,KIND)).
+_passed(sugar,warning_ignore(LBL,KIND)) :- _passed(defaultArgs,warning_ignore(LBL,KIND)).
