@@ -44,9 +44,9 @@ core_modules = [
     "1_single_static_assignment/statement",
     "2_sugar/sugar",
     "3_safe/variable_safety_checks/variable",
-    "output/bool_evaluate",
-    "output/conditional_hasValue",
-    "output/value",
+    "5_output/bool_evaluate",
+    "5_output/conditional_hasValue",
+    "5_output/value",
 ]
 
 t_modules = {"expression": ("PHASE", ["sugar", "compile"])}
