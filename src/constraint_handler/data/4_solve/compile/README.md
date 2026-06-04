@@ -80,7 +80,7 @@ representation(set,intensional). representation(multimap,intensional).
 
 ### Output predicates
 
-\_passed(correction(add),LBL,DECL).
+\_passed(correction(REASON,add),LBL,DECL).
 direct_query/1.
 \_se_value/2.
 evaluated/3.

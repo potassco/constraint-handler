@@ -22,4 +22,5 @@
 \_expression_safe/1.
 \_expression_safeQuery/1.
 \_operator_unsafe/1.
-\_passed(correction(change,constant),OLD,NEW).
+\_passed(correction(constant,rem),DECL).
+\_passed(correction(constant,add),LBL,DECL).
