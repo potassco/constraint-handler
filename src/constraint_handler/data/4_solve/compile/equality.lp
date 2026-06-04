@@ -25,10 +25,10 @@ _computedIdx(E,val(bool,false)) :- _computeIdx(E,neq), _computeIdx(E,0,val(T,V))
 %%%%%%%%%%%%%%%%% tuple eq neq
 %%%% Compare tuple entries through expression equality, not structural symbol equality,
 %%%% so nested sets/multimaps use their dedicated eq semantics.
-__computedIdx(E,val(bool,false)) :- _computeIdx(E,eq),
+_computedIdx(E,val(bool,false)) :- _computeIdx(E,eq),
     _computeIdx(E,0,T0), _expression_tupleLength(compile,T0,N0),
     _computeIdx(E,1,T1), _expression_tupleLength(compile,T1,N1), N0!=N1.
-__computedIdx(E,val(bool,true)) :- _computeIdx(E,neq),
+_computedIdx(E,val(bool,true)) :- _computeIdx(E,neq),
     _computeIdx(E,0,T0), _expression_tupleLength(compile,T0,N0),
     _computeIdx(E,1,T1), _expression_tupleLength(compile,T1,N1), N0!=N1.
 _tupleComp(E,OP,T0,T1,N) :- _computeIdx(E,OP), OP=(eq;neq),

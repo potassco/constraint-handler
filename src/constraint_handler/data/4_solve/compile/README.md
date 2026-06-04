@@ -30,7 +30,6 @@ preference_maximizeScore/0.
 \_direct_queryArgsValues/3.
 \_computeIdx/2. \_computeIdx/3.
 \_computedIdx/2.
-\_\_computedIdx/2.
 \_direct_compArg/3.
 \_direct_needs_args_list/2.
 \_length/2.

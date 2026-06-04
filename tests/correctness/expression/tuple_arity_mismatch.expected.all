@@ -1,0 +1,4 @@
+value(short,(val(int,1),val(int,2)))
+value(long,(val(int,1),val(int,2),val(int,3)))
+evaluated(eq,(variable(short),(variable(long),())),val(bool,false))
+evaluated(neq,(variable(short),(variable(long),())),val(bool,true))
