@@ -44,3 +44,13 @@ _expression(sugar,operation(wnot,(E,()))) :- _passed(defaultArgs,preference_hold
 _expression(sugar,operation(eq,(variable(X),(E,())))) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K > 0.
 _expression(sugar,operation(neq,(variable(X),(E,())))) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K < 0.
 _expression(sugar,operation(wnot,(E,()))) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K < 0.
+
+
+%%%%%% ssa atoms
+_passed(sugar,DEC) :- _passed(ssa,DEC).
+_variable(sugar,X) :- _variable(ssa,X).
+
+
+%%%%%% warning atoms
+_passed(sugar,warning_forbid(LBL,KIND)) :- _passed(defaultArgs,warning_forbid(LBL,KIND)).
+_passed(sugar,warning_ignore(LBL,KIND)) :- _passed(defaultArgs,warning_ignore(LBL,KIND)).
