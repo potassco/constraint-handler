@@ -77,6 +77,7 @@ base_tests = [
     "expression/python_extract",
     "expression/python_extract_binding_leak",
     "expression/tuple",
+    "expression/tuple_arity_mismatch",
     "multimap/basics",
     "multimap/equality",
     "multimap/executions",

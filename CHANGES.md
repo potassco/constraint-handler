@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- fix typo in different-arity tuple equality and add a corresponding unit test
 - introduce `variable(reservedName)` warning
 - update the correction format.
 
