@@ -1,8 +1,8 @@
 ### Input predicates
 
-\_passed(sugar,DECL).
+\_passed(sugar,LBL,DECL).
 \_passed(correction(REASON,add),LBL,DECL).
-\_passed(correction(REASON,rem),DECL).
+\_passed(correction(REASON,rem),LBL,DECL).
 \_expression_safe/1.
 \_expression_safeQuery/1.
 type_expression/2.
@@ -12,14 +12,14 @@ preference_maximizeScore/0.
 
 ### Intermediate predicates
 
-\_passed(correction(dummy,rem),dummy).
-\_passed(presolve,DECL).
-\_passed(solve,DECL).
-\_passed(compile,DECL).
-\_passed(ground,DECL).
-\_passed(propagator,DECL).
-\_passed((compile;ground;propagator;none),warning_forbid/2).
-\_passed((compile;ground;propagator;none),warning_ignore/2).
+\_passed(correction(dummy,rem),dummy,dummy).
+\_passed(presolve,LBL,DECL).
+\_passed(solve,LBL,DECL).
+\_passed(compile,LBL,DECL).
+\_passed(ground,LBL,DECL).
+\_passed(propagator,LBL,DECL).
+\_passed((compile;ground;propagator;none),LBL,warning_forbid/2).
+\_passed((compile;ground;propagator;none),LBL,warning_ignore/2).
 \_solve_removed/1.
 \_variable_involve/4.
 \_solve_conflictVariable/1.
@@ -130,9 +130,9 @@ propagator_warning_ignore/2.
 
 ### Output predicates
 
-\_passed(compile,bool_evaluate/2).
-\_passed(ground,bool_evaluate/2).
-\_passed(propagator,bool_evaluate/2).
+\_passed(compile,LBL,bool_evaluate/1).
+\_passed(ground,LBL,bool_evaluate/1).
+\_passed(propagator,LBL,bool_evaluate/1).
 \_se_value/2.
 \_set_contains/2.
 \_warning/3.

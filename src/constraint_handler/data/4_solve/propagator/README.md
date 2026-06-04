@@ -1,18 +1,18 @@
 ### Input predicates
 
-\_passed(propagator,bool_evaluate/2).
-\_passed(propagator,ensure/2).
-\_passed(propagator,evaluate/3).
-\_passed(propagator,variable_declare/3).
-\_passed(propagator,variable_domain/3).
-\_passed(propagator,variable_define/3).
-\_passed(propagator,set_assign/3).
-\_passed(propagator,set_baseDomain/3).
-\_passed(propagator,multimap_assign/4).
-\_passed(propagator,optimize_maximizeSum/4).
-\_passed(propagator,optimize_precision/3).
-\_passed(solve,warning_forbid/2).
-\_passed(solve,warning_ignore/2).
+\_passed(propagator,LBL,bool_evaluate/1).
+\_passed(propagator,LBL,ensure/1).
+\_passed(propagator,LBL,evaluate/2).
+\_passed(propagator,LBL,variable_declare/2).
+\_passed(propagator,LBL,variable_domain/2).
+\_passed(propagator,LBL,variable_define/2).
+\_passed(propagator,LBL,set_assign/2).
+\_passed(propagator,LBL,set_baseDomain/2).
+\_passed(propagator,LBL,multimap_assign/3).
+\_passed(propagator,LBL,optimize_maximizeSum/3).
+\_passed(propagator,LBL,optimize_precision/2).
+\_passed(solve,LBL,warning_forbid/1).
+\_passed(solve,LBL,warning_ignore/1).
 
 ### Intermediate predicates
 

@@ -18,15 +18,15 @@ _operator_unsafe(int_div;float_div).
 %_variable_safe(SCOPE,X) :- _variable_query(safe,X), not _variable_unsafe(SCOPE,X).
 %_variable_unsafe(SCOPE,X) :- _passed(sugar,variable_define(X,E)), not _expression_safe((),E).
 
-_variable_safe(X) :- _variable_query(safe,X), _expression_safe(E) : _passed(sugar,variable_define(LBL,X,E)); _expression_safe(E) : _passed(sugar,variable_domain(LBL,X,E)).
+_variable_safe(X) :- _variable_query(safe,X), _expression_safe(E) : _passed(sugar,LBL,variable_define(X,E)); _expression_safe(E) : _passed(sugar,LBL,variable_domain(X,E)).
 _variable_query(safe,X) :- _variable(sugar,X).
 
 
 
 _safe_bad(bad) :- _main(safe).
-_safe_bad(variable(X)) :- _main(safe), _expression(sugar,variable(X)), _passed(sugar,variable_define(LBL,X,E)), _safe_bad(E).
-_safe_bad(variable(X)) :- _main(safe), _expression(sugar,variable(X)), _passed(sugar,variable_declare(LBL,X,set)), _passed(sugar,set_assign(LBL2,X,E)), _safe_bad(E).
-_safe_bad(variable(X)) :- _main(safe), _expression(sugar,variable(X)), _passed(sugar,variable_declare(LBL,X,multimap)), _passed(sugar,multimap_assign(LBL2,X,KE,BE)), _safe_bad(KE;BE).
+_safe_bad(variable(X)) :- _main(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_define(X,E)), _safe_bad(E).
+_safe_bad(variable(X)) :- _main(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_declare(X,set)), _passed(sugar,LBL2,set_assign(LBL2,X,E)), _safe_bad(E).
+_safe_bad(variable(X)) :- _main(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_declare(X,multimap)), _passed(sugar,LBL2,multimap_assign(LBL2,X,KE,BE)), _safe_bad(KE;BE).
 _safe_bad(EXPR) :- _main(safe), _expression(sugar,EXPR), _expression_tupleIndex(sugar,EXPR,IDX,F), _safe_bad(F).
 %_safe_bad(EXPR) :- _main(safe), _expression(sugar,EXPR), _expression_tupleLength(EXPR,N), N > 0, _safe_bad(F) : _expression_tupleIndex(sugar,EXPR,IDX,F).
 _safe_bad(EXPR) :- _main(safe), _expression(sugar,EXPR), _expression_operationIndex(sugar,EXPR,IDX,F), _safe_bad(F), _expression_operationOperator(sugar,EXPR,OP), not _operator_recoverable(OP).
@@ -35,5 +35,5 @@ _safe_bad(EXPR) :- _main(safe), _expression(sugar,EXPR), _expression_operationOp
 _deterministic(E,bad) :- _safe_bad(E).
 _deterministic(val(T,V),val(T,V)) :- _phase_active(constantFolding), _expression(sugar,val(T,V)).
 
-_passed(correction(constant,rem),variable_define(LBL,X,E)) :- _deterministic(E,V), _passed(sugar,variable_define(LBL,X,E)).
-_passed(correction(constant,add),LBL,variable_define(LBL,X,V)) :- _deterministic(E,V), _passed(sugar,variable_define(LBL,X,E)).
+_passed(correction(constant,rem),LBL,variable_define(X,E)) :- _deterministic(E,V), _passed(sugar,LBL,variable_define(X,E)).
+_passed(correction(constant,add),LBL,variable_define(X,V)) :- _deterministic(E,V), _passed(sugar,LBL,variable_define(X,E)).

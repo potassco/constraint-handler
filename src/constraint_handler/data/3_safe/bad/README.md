@@ -6,7 +6,7 @@
 \_expression_tupleIndex(sugar,EXPR,IDX,F).
 \_operator_recoverable/1.
 \_operator_safe/1.
-\_passed(sugar,DECL).
+\_passed(sugar,LBL,DECL).
 \_variable(sugar,X).
 
 ### Intermediate predicates
@@ -22,5 +22,5 @@
 \_expression_safe/1.
 \_expression_safeQuery/1.
 \_operator_unsafe/1.
-\_passed(correction(constant,rem),DECL).
+\_passed(correction(constant,rem),LBL,DECL).
 \_passed(correction(constant,add),LBL,DECL).

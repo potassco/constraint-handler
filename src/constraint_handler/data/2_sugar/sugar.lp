@@ -1,56 +1,56 @@
 %%%%%%%%%%%%%%%%% check if well-formed
-_passed(sugar,bool_evaluate(LBL,E)) :- _passed(defaultArgs,bool_evaluate(LBL,E)).
-_passed(sugar,ensure(LBL,E)) :- _passed(defaultArgs,ensure(LBL,E)).
-_passed(sugar,evaluate(LBL,OP,ARGS)) :- _passed(defaultArgs,evaluate(LBL,OP,ARGS)).
+_passed(sugar,LBL,bool_evaluate(E)) :- _passed(defaultArgs,LBL,bool_evaluate(E)).
+_passed(sugar,LBL,ensure(E)) :- _passed(defaultArgs,LBL,ensure(E)).
+_passed(sugar,LBL,evaluate(OP,ARGS)) :- _passed(defaultArgs,LBL,evaluate(OP,ARGS)).
 
 
 %%%%%% variable atoms
-_passed(sugar,variable_declare(LBL,X,definition)) :- _passed(defaultArgs,variable_define(LBL,X,E)).
-_passed(sugar,variable_define(LBL,X,E)) :- _passed(defaultArgs,variable_define(LBL,X,E)).
+_passed(sugar,LBL,variable_declare(X,definition)) :- _passed(defaultArgs,LBL,variable_define(X,E)).
+_passed(sugar,LBL,variable_define(X,E)) :- _passed(defaultArgs,LBL,variable_define(X,E)).
 
-_passed(sugar,variable_declare(LBL,X,fromFacts)) :- _passed(defaultArgs,variable_declare(LBL,X,D)), D=(boolDomain;definition;fromFacts;fromList(L)).
-_passed(sugar,variable_domain(LBL,X,E)) :- _passed(defaultArgs,variable_domain(LBL,X,E)).
-_passed(sugar,variable_domain(LBL,X,E)) :- _passed(defaultArgs,variable_declare(LBL,X,fromList(L))), E=@pythonListElements(L).
-_passed(sugar,variable_domain(LBL,X,val(bool,(false;true)))) :- _passed(defaultArgs,variable_declare(LBL,X,boolDomain)).
-_passed(sugar,variable_domain(LBL,X,val(none,none))) :- _passed(defaultArgs,variable_declareOptional(LBL,X)).
-_passed(sugar,variable_domain(LBL,X,E)) :- _passed(defaultArgs,variable_domain(LBL,X,E)).
-_expression(sugar,val(bool,(false;true))) :- _passed(defaultArgs,variable_declare(LBL,X,boolDomain)).
-_expression(sugar,val(none,none)) :- _passed(defaultArgs,variable_declareOptional(LBL,X)).
+_passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(boolDomain;definition;fromFacts;fromList(L)).
+_passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
+_passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_declare(X,fromList(L))), E=@pythonListElements(L).
+_passed(sugar,LBL,variable_domain(X,val(bool,(false;true)))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
+_passed(sugar,LBL,variable_domain(X,val(none,none))) :- _passed(defaultArgs,LBL,variable_declareOptional(X)).
+_passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
+_expression(sugar,val(bool,(false;true))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
+_expression(sugar,val(none,none)) :- _passed(defaultArgs,LBL,variable_declareOptional(X)).
 
 
 %%%%%% multimap atoms
-_passed(sugar,variable_declare(LBL,X,multimap)) :- _passed(defaultArgs,multimap_declare(LBL,X)).
-_passed(sugar,multimap_assign(LBL,X,EKEY,EVAL)) :- _passed(defaultArgs,multimap_assign(LBL,X,EKEY,EVAL)).
+_passed(sugar,LBL,variable_declare(X,multimap)) :- _passed(defaultArgs,LBL,multimap_declare(X)).
+_passed(sugar,LBL,multimap_assign(X,EKEY,EVAL)) :- _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)).
 
 
 %%%%%% set atoms
-_passed(sugar,variable_declare(LBL,X,set)) :- _passed(defaultArgs,set_declare(LBL,X)).
-_passed(sugar,set_assign(LBL,X,E)) :- _passed(defaultArgs,set_assign(LBL,X,E)).
-_passed(sugar,set_baseDomain(LBL,X,E)) :- _passed(defaultArgs,set_baseDomain(LBL,X,E)).
+_passed(sugar,LBL,variable_declare(X,set)) :- _passed(defaultArgs,LBL,set_declare(X)).
+_passed(sugar,LBL,set_assign(X,E)) :- _passed(defaultArgs,LBL,set_assign(X,E)).
+_passed(sugar,LBL,set_baseDomain(X,E)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)).
 
 
 %%%%%% optimize atoms
-_passed(sugar,optimize_precision(LBL,PREC,PRIO)) :- _passed(defaultArgs,optimize_precision(LBL,PREC,PRIO)).
-_passed(sugar,optimize_maximizeSum(LBL,E,X,P)) :- _passed(defaultArgs,optimize_maximizeSum(LBL,E,X,P)).
+_passed(sugar,LBL,optimize_precision(PREC,PRIO)) :- _passed(defaultArgs,LBL,optimize_precision(PREC,PRIO)).
+_passed(sugar,LBL,optimize_maximizeSum(E,X,P)) :- _passed(defaultArgs,LBL,optimize_maximizeSum(E,X,P)).
 
 %%%%%% preference atoms
-_passed(sugar,preference_holds(LBL,operation(eq,(variable(X),(E,()))),K)) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K > 0.
-_passed(sugar,preference_holds(LBL,operation(neq,(variable(X),(E,()))),-K)) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K < 0.
-_passed(sugar,preference_holds(LBL,E,K)) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K > 0.
-_passed(sugar,preference_holds(LBL,operation(wnot,(E,())),-K)) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K < 0.
-_expression(sugar,operation(wnot,(E,()))) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K < 0.
+_passed(sugar,LBL,preference_holds(operation(eq,(variable(X),(E,()))),K)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K > 0.
+_passed(sugar,LBL,preference_holds(operation(neq,(variable(X),(E,()))),-K)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K < 0.
+_passed(sugar,LBL,preference_holds(E,K)) :- _passed(defaultArgs,LBL,preference_holds(E,K)), K > 0.
+_passed(sugar,LBL,preference_holds(operation(wnot,(E,())),-K)) :- _passed(defaultArgs,LBL,preference_holds(E,K)), K < 0.
+_expression(sugar,operation(wnot,(E,()))) :- _passed(defaultArgs,LBL,preference_holds(E,K)), K < 0.
 
 
-_expression(sugar,operation(eq,(variable(X),(E,())))) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K > 0.
-_expression(sugar,operation(neq,(variable(X),(E,())))) :- _passed(defaultArgs,preference_variableValue(LBL,X,E,K)), K < 0.
-_expression(sugar,operation(wnot,(E,()))) :- _passed(defaultArgs,preference_holds(LBL,E,K)), K < 0.
+_expression(sugar,operation(eq,(variable(X),(E,())))) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K > 0.
+_expression(sugar,operation(neq,(variable(X),(E,())))) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K < 0.
+_expression(sugar,operation(wnot,(E,()))) :- _passed(defaultArgs,LBL,preference_holds(E,K)), K < 0.
 
 
 %%%%%% ssa atoms
-_passed(sugar,DEC) :- _passed(ssa,DEC).
+_passed(sugar,LBL,DEC) :- _passed(ssa,LBL,DEC).
 _variable(sugar,X) :- _variable(ssa,X).
 
 
 %%%%%% warning atoms
-_passed(sugar,warning_forbid(LBL,KIND)) :- _passed(defaultArgs,warning_forbid(LBL,KIND)).
-_passed(sugar,warning_ignore(LBL,KIND)) :- _passed(defaultArgs,warning_ignore(LBL,KIND)).
+_passed(sugar,LBL,warning_forbid(KIND)) :- _passed(defaultArgs,LBL,warning_forbid(KIND)).
+_passed(sugar,LBL,warning_ignore(KIND)) :- _passed(defaultArgs,LBL,warning_ignore(KIND)).

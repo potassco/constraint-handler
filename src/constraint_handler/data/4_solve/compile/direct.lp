@@ -1,8 +1,8 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
-_se_assign(LBL,variable(X),E) :- _passed(compile,variable_define(LBL,X,E)).
+_se_assign(LBL,variable(X),E) :- _passed(compile,LBL,variable_define(X,E)).
 
-:- _passed((compile;ground),ensure(LBL,E)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
-evaluated(OP,ARGS,V) :- _passed((compile;ground),evaluate(LBL,OP,ARGS)), _se_value(operation(OP,ARGS),V).
+:- _passed((compile;ground),LBL,ensure(E)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
+evaluated(OP,ARGS,V) :- _passed((compile;ground),LBL,evaluate(OP,ARGS)), _se_value(operation(OP,ARGS),V).
 
 direct_query(E)  :- _expression(compile,DECL,E).
 direct_query(E)  :- _se_assign(LBL,X,E).

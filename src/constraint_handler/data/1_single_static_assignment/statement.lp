@@ -24,7 +24,7 @@ _warning(statement(syntaxError),PRG,STMT) :- _statement_query(PRG,SCOPE,STMT), n
 
 
 
-_execution_declare(LBL,PRG,STMT,INS,OUTS) :- _passed(defaultArgs,execution_declare(LBL,PRG,STMT,INS,OUTS)).
+_execution_declare(LBL,PRG,STMT,INS,OUTS) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)).
 _execution_input_var(PRG,X) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(INS).
 _execution_outputVar(PRG,X,execution_output(PRG,X)) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
@@ -167,15 +167,15 @@ _statement_ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS)) :- _stat
 %%% TODO: add bad / error handling
 _execution_ou_proj(PRG,X) :- _statement_latest((PRG,()),X,EX).
 
-_execution_isRunning(PRG) :- _execution_declare(LBL1,PRG,STMT,INS,OUTS), _passed(defaultArgs,execution_run(LBL,PRG)).
+_execution_isRunning(PRG) :- _execution_declare(LBL1,PRG,STMT,INS,OUTS), _passed(defaultArgs,LBL,execution_run(PRG)).
 
 _statement_introduce(LBL,EX,V) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
 _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_ou_proj(PRG,X).
 _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_isRunning(PRG).
 
-_passed(ssa,variable_define(LBL,X,E)) :- _statement_introduce(LBL,X,E).
-_passed(ssa,variable_declare(LBL,X,definition)) :- _statement_introduce(LBL,X,E).
-_passed(ssa,ensure(LBL,E)) :- _statement_ensure(LBL,E).
+_passed(ssa,LBL,variable_define(X,E)) :- _statement_introduce(LBL,X,E).
+_passed(ssa,LBL,variable_declare(X,definition)) :- _statement_introduce(LBL,X,E).
+_passed(ssa,LBL,ensure(E)) :- _statement_ensure(LBL,E).
 _variable(ssa,execution_input(PRG,X)) :- _execution_input_var(PRG,X).
 
 %%%%%%%%%%%%%%%%% sequence helpers

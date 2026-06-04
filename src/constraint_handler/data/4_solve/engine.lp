@@ -12,30 +12,4 @@ engine(LBL,ENG) :- _main_defaultEngine(ENG), not _main_requestedEngine(LBL), _la
 engine(_internal,compile).
 
 %%%%%%%%%%%%%%%%% collect labels
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=bool_evaluate(LBL,E).
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=ensure(LBL,E).
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=evaluate(LBL,O,ARGS).
-
-%%%%%% variable atoms
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=variable_define(LBL,X,E).
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=variable_declare(LBL,X,D).
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=variable_domain(LBL,X,E).
-
-%%%%%% multimap atoms
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=multimap_assign(LBL,X,K,B).
-
-%%%%% set atoms
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=set_assign(LBL,X,E).
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=set_baseDomain(LBL,X,E).
-
-%%%%%% optimization atoms
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=optimize_maximizeSum(LBL,E,X,PRIO).
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=optimize_precision(LBL,PREC,PRIO).
-
-%%%%%% preference atoms
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=preference_holds(LBL,E,K).
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=preference_variableValue(LBL,X,E,K).
-
-%%%%%% warning atoms
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=warning_forbid(LBL,KIND).
-_label(LBL,DECL) :- _passed(solve,DECL), DECL=warning_ignore(LBL,KIND).
+_label(LBL,DECL) :- _passed(solve,LBL,DECL).

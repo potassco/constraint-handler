@@ -1,19 +1,19 @@
 ### Input predicates
 
-\_passed(sugar,variable_declare/3).
-\_passed(sugar,variable_define/3).
-\_passed(sugar,variable_domain/3).
-\_passed(sugar,set_assign/3).
-\_passed(sugar,set_baseDomain/3).
-\_passed(sugar,multimap_assign/4).
-\_passed(defaultArgs,variable_declare/3).
-\_passed(defaultArgs,variable_domain/3).
-\_passed(defaultArgs,variable_define/3).
-\_passed(defaultArgs,set_declare/2).
-\_passed(defaultArgs,set_assign/3).
-\_passed(defaultArgs,set_baseDomain/3).
-\_passed(defaultArgs,multimap_declare/2).
-\_passed(defaultArgs,multimap_assign/4).
+\_passed(sugar,LBL,variable_declare/2).
+\_passed(sugar,LBL,variable_define/2).
+\_passed(sugar,LBL,variable_domain/2).
+\_passed(sugar,LBL,set_assign/2).
+\_passed(sugar,LBL,set_baseDomain/2).
+\_passed(sugar,LBL,multimap_assign/3).
+\_passed(defaultArgs,LBL,variable_declare/2).
+\_passed(defaultArgs,LBL,variable_domain/2).
+\_passed(defaultArgs,LBL,variable_define/2).
+\_passed(defaultArgs,LBL,set_declare/1).
+\_passed(defaultArgs,LBL,set_assign/2).
+\_passed(defaultArgs,LBL,set_baseDomain/2).
+\_passed(defaultArgs,LBL,multimap_declare/1).
+\_passed(defaultArgs,LBL,multimap_assign/3).
 \_variable(sugar,VAR).
 \_operator_declared/1.
 \_se_value/2.
@@ -34,8 +34,8 @@
 
 ### Output predicates
 
-\_passed(correction(REASON,add),LBL,variable_declare/3).
-\_passed(correction(REASON,add),LBL,variable_define/3).
-\_passed(correction(REASON,rem),DECL).
-\_passed(sugar,variable_declare/3).
+\_passed(correction(REASON,add),LBL,variable_declare/2).
+\_passed(correction(REASON,add),LBL,variable_define/2).
+\_passed(correction(REASON,rem),LBL,DECL).
+\_passed(sugar,LBL,variable_declare/2).
 \_warning/3.

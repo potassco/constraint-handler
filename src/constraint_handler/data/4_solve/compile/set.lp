@@ -1,5 +1,5 @@
-_set_assign(LBL,variable(X),E) :- _passed(compile,set_assign(LBL,X,E)).
-_set_declare(LBL,variable(X)) :- _passed(compile,variable_declare(LBL,X,set)).
+_set_assign(LBL,variable(X),E) :- _passed(compile,LBL,set_assign(X,E)).
+_set_declare(LBL,variable(X)) :- _passed(compile,LBL,variable_declare(X,set)).
 
 direct_query(E) :- _set_assign(NAME,X,E).
 
@@ -23,9 +23,9 @@ _set_contains(EX,V1) :-
 _set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
 
 %%%%%%%%%%%%%%%%% set_baseDomain
-_passed(correction(setSymmetry,add),LBL,evaluate(set_isin,(E,(variable(X),())))) :- _passed(sugar,set_baseDomain(LBL,X,E)).
-{ _set_assign(LBL,variable(X),E) } :- _passed(compile,set_baseDomain(LBL,X,E)).
-:- _passed(compile,set_baseDomain(LBL,X,E)), evaluated(set_isin,(E,(variable(X),())),val(bool,true)), not _set_assign(LBL,variable(X),E).
+_passed(correction(setSymmetry,add),LBL,evaluate(set_isin,(E,(variable(X),())))) :- _passed(sugar,LBL,set_baseDomain(X,E)).
+{ _set_assign(LBL,variable(X),E) } :- _passed(compile,LBL,set_baseDomain(X,E)).
+:- _passed(compile,LBL,set_baseDomain(X,E)), evaluated(set_isin,(E,(variable(X),())),val(bool,true)), not _set_assign(LBL,variable(X),E).
 
 %%%%%%%%%%%%%%%%% set_isin set_notin
 direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E,(set_isin;set_notin)), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),

@@ -1,8 +1,8 @@
 ### Input predicates
 
-\_passed(compile,DECL).
-\_passed((compile;ground),DECL).
-\_passed(sugar,set_baseDomain/3).
+\_passed(compile,LBL,DECL).
+\_passed((compile;ground),LBL,DECL).
+\_passed(sugar,LBL,set_baseDomain/2).
 \_expression_tupleLength(compile,EXPR,N).
 \_expression_tupleIndex(compile,EXPR,IDX,ARG).
 \_expression_operationIndex(compile,EXPR,IDX,ARG).
