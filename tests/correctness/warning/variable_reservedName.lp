@@ -29,5 +29,9 @@ multimap_declare(execution_output(alsobad,u)).
 variable_define(execution_output(alsobad,a),val(int,1)).
 variable_define(execution_output(alsobad,b),val(int,1)).
 
+%%% raise warning(variable(reservedName),...)
+variable_define(execution_output(notanybetter,x),val(bool,true)).
+variable_define(loc(insideIsReserved),val(bool,true)).
+
 #show warning/3.
 #show value/2.
