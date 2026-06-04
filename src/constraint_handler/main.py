@@ -54,7 +54,6 @@ core_modules = [
     "2_sugar/sugar",
     "5_output/bad_value",
     "5_output/bool_evaluate",
-    "5_output/conditional_hasValue",
     "5_output/value",
 ]
 
