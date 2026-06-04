@@ -28,5 +28,5 @@ preference_maximizeScore/0.
 ### Output predicates
 
 warning/3. set_value/2. value/2. multimap_value/3. evaluated/3.
-bool_evaluates/2. conditional_hasValue/1. conditional_hasNoValue/1.
+bool_evaluated/2. conditional_hasValue/1. conditional_hasNoValue/1.
 optimize_value/3. preference_score/1.

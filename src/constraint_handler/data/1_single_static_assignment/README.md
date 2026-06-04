@@ -19,6 +19,6 @@
 
 ### Output predicates
 
-\_passed(sugar,variable_define/3). \_passed(sugar,variable_declare/3).
-\_passed(sugar,ensure/2). \_variable(sugar,execution_input/2).
+\_passed(ssa,variable_define/3). \_passed(ssa,variable_declare/3).
+\_passed(ssa,ensure/2). \_variable(ssa,execution_input/2).
 \_statement_wellformed/1. \_statement_internalVariable/1. \_warning/3.
