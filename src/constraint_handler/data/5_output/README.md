@@ -7,7 +7,6 @@
 \_se_value/2.
 \_set_contains/2.
 \_warning/3.
-direct_query/1.
 
 ### Intermediate predicates
 
@@ -19,5 +18,3 @@ bool_evaluated/2.
 set_value/2.
 value/2.
 warning/3.
-conditional_hasValue/1.
-conditional_hasNoValue/1.

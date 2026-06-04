@@ -34,7 +34,5 @@ value/2.
 multimap_value/3.
 bool_evaluated/2.
 evaluated/3.
-conditional_hasValue/1.
-conditional_hasNoValue/1.
 optimize_value/3.
 preference_score/1.
