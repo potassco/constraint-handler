@@ -87,6 +87,8 @@ class Performance:
             "pythonStringLength": CacheMode.NATIVE,
             "pythonTupleElements": CacheMode.NATIVE,
             "pytocl": CacheMode.MANUAL,
+            "get_compiled_eval": CacheMode.NATIVE,
+            "get_compiled_exec": CacheMode.NATIVE,
         }
 
     def route(self, func):
