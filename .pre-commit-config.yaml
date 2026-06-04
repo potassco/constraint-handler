@@ -30,6 +30,6 @@ repos:
     hooks:
     - id: mdformat
       args: ["--wrap", "79"]
-      exclude: ^docs/
+      exclude: ^(docs/|src/constraint_handler/data(?:/.+)?/README\.md$)
       additional_dependencies:
       - mdformat-gfm

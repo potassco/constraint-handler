@@ -1,38 +1,92 @@
 ### Input predicates
 
-\_passed(compile,DECL). \_passed((compile;ground),DECL).
-\_passed(sugar,set_baseDomain/3). \_expression_tupleLength(compile,EXPR,N).
+\_passed(compile,DECL).
+\_passed((compile;ground),DECL).
+\_passed(sugar,set_baseDomain/3).
+\_expression_tupleLength(compile,EXPR,N).
 \_expression_tupleIndex(compile,EXPR,IDX,ARG).
 \_expression_operationIndex(compile,EXPR,IDX,ARG).
 \_expression_operationIndex(sugar,EXPR,IDX,ARG).
-\_expression_operationOperator(sugar,EXPR,OP). \_expression_safe/1.
-\_expression_safeQuery/1. \_operator_recoverable/1. \_main_solverIdentifiers/1.
-representation/2. type_expression/2. engine(LBL,compile). intToFloatOperator/1.
-floatUnOperator/1. floatBinOperator/1. preference_maximizeScore/0.
+\_expression_operationOperator(sugar,EXPR,OP).
+\_expression_safe/1.
+\_expression_safeQuery/1.
+\_operator_recoverable/1.
+\_main_solverIdentifiers/1.
+representation/2.
+type_expression/2.
+engine(LBL,compile).
+intToFloatOperator/1.
+floatUnOperator/1.
+floatBinOperator/1.
+preference_maximizeScore/0.
 
 ### Intermediate predicates
 
-\_direct_lazy/1. \_se_assign/3. \_expression_pythonEval/2.
-\_expression_dynamicTainted/1. \_argument_value/2. \_direct_queryArgsValues/3.
-\_computeIdx/2. \_computeIdx/3. \_computedIdx/2. \_\_computedIdx/2.
-\_direct_compArg/3. \_direct_needs_args_list/2. \_length/2.
-\_direct_args_list_aux/3. \_direct_args_list/2. \_lambda_aux/2.
-\_direct_implode/1. \_direct_imploded_args_aux/3. \_expression_eval_exec/2.
-\_expression(compile,EXPR). \_direct_implodeTupleAux/3. \_int_add/3.
-\_int_mult/3. \_tupleComp/5. \_tuple_pair/5. \_tupleEqAux/3.
-\_multimap_declare/2. \_multimap_assign/4. \_multimap_add/3. \_multimap_has/3.
-\_multimap_representative/4. \_multimap_entry/3. \_multimap_eqMissingEntry/1.
-\_multimap_makeIndex/1. \_multimap_foldStep/3. \_multimap_index/4.
-\_multimap_lastIndex/2. \_optimize_maximizeSum/4. \_optimize_precision/2.
-\_optimize_se_component/3. \_preference_expressionScore/2.
-\_preference_expression/1. \_preference_index/2. \_preference_potentialAux/2.
-\_preference_potentialScore/1. \_set_declare/2. \_set_eqMissingEntry/1.
-\_set_subsetMissingEntry/1. \_set_makeIndex/1. \_set_foldStep/3. \_set_index/3.
-\_set_lastIndex/2. \_set_implode/1. \_set_as_list_aux/3. \_set_imploded/2.
+\_direct_lazy/1.
+\_se_assign/3.
+\_expression_pythonEval/2.
+\_expression_dynamicTainted/1.
+\_argument_value/2.
+\_direct_queryArgsValues/3.
+\_computeIdx/2. \_computeIdx/3.
+\_computedIdx/2.
+\_\_computedIdx/2.
+\_direct_compArg/3.
+\_direct_needs_args_list/2.
+\_length/2.
+\_direct_args_list_aux/3.
+\_direct_args_list/2.
+\_lambda_aux/2.
+\_direct_implode/1.
+\_direct_imploded_args_aux/3.
+\_expression_eval_exec/2.
+\_expression(compile,EXPR).
+\_direct_implodeTupleAux/3.
+\_int_add/3.
+\_int_mult/3.
+\_tupleComp/5.
+\_tuple_pair/5.
+\_tupleEqAux/3.
+\_multimap_declare/2.
+\_multimap_assign/4.
+\_multimap_add/3.
+\_multimap_has/3.
+\_multimap_representative/4.
+\_multimap_entry/3.
+\_multimap_eqMissingEntry/1.
+\_multimap_makeIndex/1.
+\_multimap_foldStep/3.
+\_multimap_index/4.
+\_multimap_lastIndex/2.
+\_optimize_maximizeSum/4.
+\_optimize_precision/2.
+\_optimize_se_component/3.
+\_preference_expressionScore/2.
+\_preference_expression/1.
+\_preference_index/2.
+\_preference_potentialAux/2.
+\_preference_potentialScore/1.
+\_set_declare/2.
+\_set_eqMissingEntry/1.
+\_set_subsetMissingEntry/1.
+\_set_makeIndex/1.
+\_set_foldStep/3.
+\_set_index/3.
+\_set_lastIndex/2.
+\_set_implode/1.
+\_set_as_list_aux/3.
+\_set_imploded/2.
 representation(set,intensional). representation(multimap,intensional).
 
 ### Output predicates
 
-\_passed(correction(add),LBL,DECL). direct_query/1. \_se_value/2. evaluated/3.
-\_set_assign/3. \_set_contains/2. \_direct_imploded/2. \_warning/3.
-multimap_value/3. preference_score/1.
+\_passed(correction(add),LBL,DECL).
+direct_query/1.
+\_se_value/2.
+evaluated/3.
+\_set_assign/3.
+\_set_contains/2.
+\_direct_imploded/2.
+\_warning/3.
+multimap_value/3.
+preference_score/1.
