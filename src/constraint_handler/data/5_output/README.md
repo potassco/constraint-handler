@@ -1,5 +1,6 @@
 ### Input predicates
 
+\_statement_internalVariable/1.
 \_passed(propagator,bool_evaluate/2).
 \_passed(compile,bool_evaluate/2).
 \_passed(ground,bool_evaluate/2).
