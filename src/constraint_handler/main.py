@@ -31,6 +31,15 @@ extra_modules = [
     "3_safe/wf_check/wf_check",
 ]
 
+module_3_safe = [
+    "3_safe/variable_safety_checks/confusing_name",
+    "3_safe/variable_safety_checks/empty_domain",
+    "3_safe/variable_safety_checks/multiple_declarations",
+    "3_safe/variable_safety_checks/reserved_name",
+    "3_safe/variable_safety_checks/support",
+    "3_safe/variable_safety_checks/undeclared",
+]
+
 core_modules = [
     "0_default_arguments/default_arguments",
     "4_solve/compile/direct",
@@ -43,14 +52,14 @@ core_modules = [
     "4_solve/solve",
     "1_single_static_assignment/statement",
     "2_sugar/sugar",
-    "3_safe/variable_safety_checks/variable",
+    "5_output/bad_value",
     "5_output/bool_evaluate",
     "5_output/conditional_hasValue",
     "5_output/value",
 ]
 
 t_modules = {"expression": ("PHASE", ["sugar", "compile"])}
-modules = datatype_modules + extra_modules + core_modules
+modules = datatype_modules + extra_modules + core_modules + module_3_safe
 # modules = extra_modules + core_modules
 # modules = core_modules
 
