@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- introduce `variable(reservedName)` warning
 - update the correction format.
 
 ## v0.0.2.dev11

@@ -27,11 +27,42 @@ _warning(variable(confusingName),(),(X,number)) :- _variable_exists(sugar,X), (n
 
 _warning(variable(badValue),(),X) :- _se_value(variable(X),bad), not _statement_internalVariable(X).
 
+%%%%%%%%%%%%%%%%% reserved name
+_variable_reservedName(X) :- _variable_involve(defaultArgs,X,DECL), X=execution_output(PRG,Y).
+_variable_reservedName(X) :- _variable_involve(defaultArgs,X,DECL), X=loc(_).
+_warning(variable(reservedName),(),X) :- _variable_reservedName(X).
+
+_passed(correction(reservedName,rem),DECL):- _variable_reservedName(X), _variable_involve(sugar,X,DECL), _statement_introduce(LBL,X,E).
+_passed(correction(reservedName,add),LBL,variable_declare(LBL,X,definition)):- _variable_reservedName(X), _variable_involve(sugar,X,DECL), _statement_introduce(LBL,X,E).
+_passed(correction(reservedName,add),LBL,variable_define(LBL,X,E)):- _variable_reservedName(X), _variable_involve(sugar,X,DECL), _statement_introduce(LBL,X,E).
+
+_variable_involve(defaultArgs,X,DECL) :- _passed(defaultArgs,DECL), DECL=variable_declare(LBL,X,D).
+_variable_involve(defaultArgs,X,DECL) :- _passed(defaultArgs,DECL), DECL=variable_define(LBL,X,D).
+_variable_involve(defaultArgs,X,DECL) :- _passed(defaultArgs,DECL), DECL=variable_domain(LBL,X,D).
+_variable_involve(defaultArgs,X,DECL) :- _passed(defaultArgs,DECL), DECL=set_declare(LBL,X).
+_variable_involve(defaultArgs,X,DECL) :- _passed(defaultArgs,DECL), DECL=set_assign(LBL,X,D).
+_variable_involve(defaultArgs,X,DECL) :- _passed(defaultArgs,DECL), DECL=set_baseDomain(LBL,X,D).
+_variable_involve(defaultArgs,X,DECL) :- _passed(defaultArgs,DECL), DECL=multimap_declare(LBL,X).
+_variable_involve(defaultArgs,X,DECL) :- _passed(defaultArgs,DECL), DECL=multimap_assign(LBL,X,D,E).
+
+%_variable_exists(defaultArgs,LBL,X) :- _passed(defaultArgs,variable_declare(LBL,X,D)).
+%_variable_exists(defaultArgs,LBL,X) :- _passed(defaultArgs,variable_define(LBL,X,D)).
+%_variable_exists(defaultArgs,LBL,X) :- _passed(defaultArgs,set_declare(LBL,X)).
+%_variable_exists(defaultArgs,LBL,X) :- _passed(defaultArgs,multimap_declare(LBL,X)).
+
+_variable_involve(sugar,X,DECL) :- _passed(sugar,DECL), DECL=variable_declare(LBL,X,D).
+_variable_involve(sugar,X,DECL) :- _passed(sugar,DECL), DECL=variable_define(LBL,X,D).
+_variable_involve(sugar,X,DECL) :- _passed(sugar,DECL), DECL=variable_domain(LBL,X,D).
+_variable_involve(sugar,X,DECL) :- _passed(sugar,DECL), DECL=set_assign(LBL,X,D).
+_variable_involve(sugar,X,DECL) :- _passed(sugar,DECL), DECL=set_baseDomain(LBL,X,D).
+_variable_involve(sugar,X,DECL) :- _passed(sugar,DECL), DECL=multimap_assign(LBL,X,D,E).
+
 
 %%%%%%%%%%%%%%%%% undeclared
 _variable_declared(X) :- _passed(defaultArgs,variable_declare(LBL,X,fromFacts)).
 _passed(sugar,variable_declare(LBL,X,fromFacts)) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
 _warning(variable(undeclared),(),X) :- _passed(defaultArgs,variable_domain(LBL,X,E)), not _variable_declared(X).
+
 
 %%%%%%%%%%%%%%%%% multiple declarations
 _variable_multipleDeclarations(LBL1,X,D1) :-
