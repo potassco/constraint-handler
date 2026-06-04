@@ -2,7 +2,8 @@
 
 ## Ongoing
 
-- drop support for predicates `conditional_hasValue` and `conditional_hasNoValue`
+- drop support for predicates `conditional_hasValue` and
+  `conditional_hasNoValue`
 - fix typo in different-arity tuple equality and add a corresponding unit test
 - introduce `variable(reservedName)` warning
 - update the correction format.
