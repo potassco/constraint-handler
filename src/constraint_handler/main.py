@@ -8,30 +8,30 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
 
-datatype_modules = [
-    "4_solve/compile/bool",
-    "4_solve/compile/conditionals",
-    "4_solve/compile/equality",
-    "4_solve/compile/float",
-    "4_solve/compile/int",
-    "4_solve/compile/multimap",
+module_main = [
+    "main",
     "operator",
-    "4_solve/compile/set",
-    "4_solve/compile/string",
-    "4_solve/compile/symbol",
+    "pythonHelper",
+    "pythonInterface",
 ]
 
-extra_modules = [
+module_0_default_arguments = [
+    "0_default_arguments/default_arguments",
+]
+
+module_1_single_static_assignment = [
+    "1_single_static_assignment/statement",
+]
+
+module_2_sugar = [
+    "2_sugar/sugar",
+]
+
+module_3_simplify = [
     "3_domain/domain",
-    "4_solve/ground/gringoEval",
-    "4_solve/compile/optimize",
-    "4_solve/compile/preference",
-    "4_solve/propagator/propagator",
-    "3_safe/type_checking/type",
-    "3_safe/wf_check/wf_check",
 ]
 
-module_3_safe = [
+module_3_variable_safety_checks = [
     "3_safe/variable_safety_checks/confusing_name",
     "3_safe/variable_safety_checks/empty_domain",
     "3_safe/variable_safety_checks/multiple_declarations",
@@ -40,25 +40,70 @@ module_3_safe = [
     "3_safe/variable_safety_checks/undeclared",
 ]
 
-core_modules = [
-    "0_default_arguments/default_arguments",
+module_3_safe = (
+    [
+        "3_safe/bad/safe",
+        "3_safe/type_checking/type",
+        "3_safe/wf_check/wf_check",
+    ]
+    + module_3_simplify
+    + module_3_variable_safety_checks
+)
+
+module_4_datatype = [
+    "4_solve/compile/bool",
+    "4_solve/compile/conditionals",
+    "4_solve/compile/equality",
+    "4_solve/compile/float",
+    "4_solve/compile/int",
+    "4_solve/compile/multimap",
+    "4_solve/compile/set",
+    "4_solve/compile/string",
+    "4_solve/compile/symbol",
+]
+
+module_4_compile = [
     "4_solve/compile/direct",
-    "4_solve/engine",
-    "4_solve/finiteDomain",
-    "main",
-    "pythonHelper",
-    "pythonInterface",
-    "3_safe/bad/safe",
-    "4_solve/solve",
-    "1_single_static_assignment/statement",
-    "2_sugar/sugar",
+    "4_solve/compile/optimize",
+    "4_solve/compile/preference",
+]
+
+module_4_ground = [
+    "4_solve/ground/gringoEval",
+]
+
+module_4_propagator = [
+    "4_solve/propagator/propagator",
+]
+
+module_4_solve = (
+    [
+        "4_solve/engine",
+        "4_solve/finiteDomain",
+        "4_solve/solve",
+    ]
+    + module_4_datatype
+    + module_4_compile
+    + module_4_ground
+    + module_4_propagator
+)
+
+module_5_output = [
     "5_output/bad_value",
     "5_output/bool_evaluate",
     "5_output/value",
 ]
 
 t_modules = {"expression": ("PHASE", ["sugar", "compile"])}
-modules = datatype_modules + extra_modules + core_modules + module_3_safe
+modules = (
+    module_main
+    + module_0_default_arguments
+    + module_1_single_static_assignment
+    + module_2_sugar
+    + module_3_safe
+    + module_4_solve
+    + module_5_output
+)
 # modules = extra_modules + core_modules
 # modules = core_modules
 
