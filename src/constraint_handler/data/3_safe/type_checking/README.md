@@ -1,9 +1,9 @@
 ### Input predicates
 
 \_phase_active(type_check).
-\_passed(sugar,variable_declare/3).
-\_passed(sugar,variable_define/3).
-\_passed(sugar,variable_domain/3).
+\_passed(sugar,LBL,variable_declare/2).
+\_passed(sugar,LBL,variable_define/2).
+\_passed(sugar,LBL,variable_domain/2).
 \_expression(sugar,EXPR).
 \_expression_operationIndex(sugar,EXPR,IDX,ARG).
 \_expression_operationLength(sugar,EXPR,N).

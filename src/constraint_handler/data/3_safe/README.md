@@ -1,7 +1,7 @@
 ### Input predicates
 
-\_passed(defaultArgs,DECL).
-\_passed(sugar,DECL).
+\_passed(defaultArgs,LBL,DECL).
+\_passed(sugar,LBL,DECL).
 \_expression(sugar,EXPR).
 \_variable(sugar,VAR).
 \_statement_wellformed/1.
@@ -52,7 +52,7 @@ type_variable/2.
 ### Output predicates
 
 \_passed(correction(REASON,add),LBL,DECL).
-\_passed(correction(REASON,rem),DECL).
+\_passed(correction(REASON,rem),LBL,DECL).
 \_warning/3.
 \_expression_safe/1.
 \_expression_safeQuery/1.

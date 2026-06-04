@@ -2,8 +2,8 @@
 
 \_phase_active(wf_check).
 \_expression(sugar,EXPR).
-\_passed(sugar,DECL).
-\_passed(defaultArgs,execution_declare/5).
+\_passed(sugar,LBL,DECL).
+\_passed(defaultArgs,LBL,execution_declare/4).
 \_statement_wellformed/1.
 
 ### Intermediate predicates
@@ -14,6 +14,6 @@
 
 ### Output predicates
 
-\_passed(correction(wf_check,rem),DECL).
+\_passed(correction(wf_check,rem),LBL,DECL).
 \_passed(correction(wf_check,add),LBL,DECL).
 \_warning/3.

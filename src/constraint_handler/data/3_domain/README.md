@@ -2,11 +2,11 @@
 
 \_expression(sugar,val/2).
 \_expression(sugar,operation/2).
-\_passed(sugar,variable_define/3).
-\_passed(sugar,variable_domain/3).
-\_passed(sugar,variable_declare/3).
-\_passed(sugar,set_assign/3).
-\_passed(sugar,set_baseDomain/3).
+\_passed(sugar,LBL,variable_define/2).
+\_passed(sugar,LBL,variable_domain/2).
+\_passed(sugar,LBL,variable_declare/2).
+\_passed(sugar,LBL,set_assign/2).
+\_passed(sugar,LBL,set_baseDomain/2).
 
 ### Intermediate predicates
 

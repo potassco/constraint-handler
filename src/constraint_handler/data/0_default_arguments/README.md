@@ -30,23 +30,23 @@ warning_ignore/1. warning_ignore/2.
 
 ### Output predicates
 
-\_passed(defaultArgs,bool_evaluate/2).
-\_passed(defaultArgs,ensure/2).
-\_passed(defaultArgs,evaluate/3).
-\_passed(defaultArgs,variable_declare/3).
-\_passed(defaultArgs,variable_declareOptional/2).
-\_passed(defaultArgs,variable_domain/3).
-\_passed(defaultArgs,variable_define/3).
-\_passed(defaultArgs,multimap_declare/2).
-\_passed(defaultArgs,multimap_assign/4).
-\_passed(defaultArgs,set_declare/2).
-\_passed(defaultArgs,set_assign/3).
-\_passed(defaultArgs,set_baseDomain/3).
-\_passed(defaultArgs,execution_declare/5).
-\_passed(defaultArgs,execution_run/2).
-\_passed(defaultArgs,optimize_maximizeSum/4).
-\_passed(defaultArgs,optimize_precision/3).
-\_passed(defaultArgs,preference_holds/3).
-\_passed(defaultArgs,preference_variableValue/4).
-\_passed(defaultArgs,warning_forbid/2).
-\_passed(defaultArgs,warning_ignore/2).
+\_passed(defaultArgs,LBL,bool_evaluate/1).
+\_passed(defaultArgs,LBL,ensure/1).
+\_passed(defaultArgs,LBL,evaluate/2).
+\_passed(defaultArgs,LBL,variable_declare/2).
+\_passed(defaultArgs,LBL,variable_declareOptional/1).
+\_passed(defaultArgs,LBL,variable_domain/2).
+\_passed(defaultArgs,LBL,variable_define/2).
+\_passed(defaultArgs,LBL,multimap_declare/1).
+\_passed(defaultArgs,LBL,multimap_assign/3).
+\_passed(defaultArgs,LBL,set_declare/1).
+\_passed(defaultArgs,LBL,set_assign/2).
+\_passed(defaultArgs,LBL,set_baseDomain/2).
+\_passed(defaultArgs,LBL,execution_declare/4).
+\_passed(defaultArgs,LBL,execution_run/1).
+\_passed(defaultArgs,LBL,optimize_maximizeSum/3).
+\_passed(defaultArgs,LBL,optimize_precision/2).
+\_passed(defaultArgs,LBL,preference_holds/2).
+\_passed(defaultArgs,LBL,preference_variableValue/3).
+\_passed(defaultArgs,LBL,warning_forbid/1).
+\_passed(defaultArgs,LBL,warning_ignore/1).

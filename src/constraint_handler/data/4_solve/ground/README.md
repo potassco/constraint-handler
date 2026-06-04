@@ -1,13 +1,13 @@
 ### Input predicates
 
-\_passed(ground,bool_evaluate/2).
-\_passed(ground,ensure/2).
-\_passed(ground,evaluate/3).
-\_passed(ground,variable_define/3).
-\_passed(ground,variable_domain/3).
-\_passed(ground,variable_declare/3).
-\_passed(ground,set_assign/3).
-\_passed(ground,set_baseDomain/3).
+\_passed(ground,LBL,bool_evaluate/1).
+\_passed(ground,LBL,ensure/1).
+\_passed(ground,LBL,evaluate/2).
+\_passed(ground,LBL,variable_define/2).
+\_passed(ground,LBL,variable_domain/2).
+\_passed(ground,LBL,variable_declare/2).
+\_passed(ground,LBL,set_assign/2).
+\_passed(ground,LBL,set_baseDomain/2).
 evaluated/3.
 \_direct_imploded/2.
 \_main_solverIdentifiers/1.

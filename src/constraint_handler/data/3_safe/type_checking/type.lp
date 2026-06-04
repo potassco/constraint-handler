@@ -4,10 +4,10 @@
 _type(int;float;bool;string;symbol;none;set;multimap).
 
 %%%%%%%%%%%%%%%%% type_variable
-_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,variable_define(LBL,X,E)), type_expression(E,T).
-_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,variable_domain(LBL,X,E)), type_expression(E,T).
-_type_variable(X,set) :- _phase_active(type_check), _passed(sugar,variable_declare(LBL,X,set)).
-_type_variable(X,multimap) :- _phase_active(type_check), _passed(sugar,variable_declare(LBL,X,multimap)).
+_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_define(X,E)), type_expression(E,T).
+_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_domain(X,E)), type_expression(E,T).
+_type_variable(X,set) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,set)).
+_type_variable(X,multimap) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,multimap)).
 type_variable(X,T) :- _type_variable(X,T).
 
 %%%%%%%%%%%%%%%%% type_expression

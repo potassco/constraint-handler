@@ -1,16 +1,17 @@
-_expression(ground,E) :- _passed(ground,bool_evaluate(LBL,E)).
-_expression(ground,E) :- _passed(ground,ensure(LBL,E)).
-_expression(ground,E) :- _passed(ground,evaluate(LBL,OP,ARGS)), E=operation(OP,ARGS).
-_expression(ground,E) :- _passed(ground,variable_define(LBL,X,E)).
-_expression(ground,E) :- _passed(ground,variable_define(LBL,X,E)).
-_expression(ground,E) :- _passed(ground,variable_domain(LBL,X,E)).
+_expression(ground,E) :- _passed(ground,LBL,bool_evaluate(E)).
+_expression(ground,E) :- _passed(ground,LBL,ensure(E)).
+_expression(ground,E) :- _passed(ground,LBL,evaluate(OP,ARGS)), E=operation(OP,ARGS).
+_expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
+_expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
+_expression(ground,E) :- _passed(ground,LBL,variable_domain(X,E)).
 
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
-_ge_assign(LBL,X,E) :- _passed(ground,variable_define(LBL,X,E)).
-_ge_set_assign(LBL,X,E) :- _passed(ground,set_assign(LBL,X,E)).
-{ _ge_set_assign(LBL,X,E) } :- _passed(ground,set_baseDomain(LBL,X,E)).
-:- _passed(ground,set_baseDomain(LBL,X,E)), evaluated(set_isin,(E,(variable(X),())),val(bool,true)), not _set_assign(LBL,variable(X),E).
-_ge_set_declare(LBL,X) :- _passed(ground,variable_declare(LBL,X,set)).
+_ge_assign(LBL,X,E) :- _passed(ground,LBL,variable_define(X,E)).
+
+_ge_set_assign(LBL,X,E) :- _passed(ground,LBL,set_assign(X,E)).
+{ _ge_set_assign(LBL,X,E) } :- _passed(ground,LBL,set_baseDomain(X,E)).
+:- _passed(ground,LBL,set_baseDomain(X,E)), evaluated(set_isin,(E,(variable(X),())),val(bool,true)), not _ge_set_assign(LBL,X,E).
+_ge_set_declare(LBL,X) :- _passed(ground,LBL,variable_declare(X,set)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 
 ge_value(X,V) :- _ge_assign(LBL,X,EXPR), ge_result(EXPR,V).

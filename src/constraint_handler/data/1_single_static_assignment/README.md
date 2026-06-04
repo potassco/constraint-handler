@@ -1,7 +1,7 @@
 ### Input predicates
 
-\_passed(defaultArgs,execution_declare/5).
-\_passed(defaultArgs,execution_run/2).
+\_passed(defaultArgs,LBL,execution_declare/4).
+\_passed(defaultArgs,LBL,execution_run/1).
 
 ### Intermediate predicates
 
@@ -38,9 +38,9 @@
 
 ### Output predicates
 
-\_passed(ssa,variable_define/3).
-\_passed(ssa,variable_declare/3).
-\_passed(ssa,ensure/2).
+\_passed(ssa,LBL,variable_define/2).
+\_passed(ssa,LBL,variable_declare/2).
+\_passed(ssa,LBL,ensure/1).
 \_variable(ssa,execution_input/2).
 \_statement_wellformed/1.
 \_statement_internalVariable/1.
