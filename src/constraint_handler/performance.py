@@ -60,6 +60,7 @@ class Performance:
                 "count": 0,
                 "cached": 0,
                 "repeated": 0,
+                "exceptions": 0,
                 "total_time": 0.0,
                 "func_time": 0.0,
                 "overhead_time": 0.0,
@@ -172,10 +173,13 @@ class Performance:
                 stats["cached"] += 1
                 return self._safe_deepcopy(cache_dict[key])
 
-            snapshot = self._safe_deepcopy(func(*args, **kwargs))
-            cache_dict[key] = snapshot
-
-            return self._safe_deepcopy(snapshot)
+            try:
+                snapshot = self._safe_deepcopy(func(*args, **kwargs))
+                cache_dict[key] = snapshot
+                return self._safe_deepcopy(snapshot)
+            except Exception:
+                stats["exceptions"] += 1
+                raise
 
         return wrapper
 
@@ -209,26 +213,32 @@ class Performance:
                 result = self._safe_deepcopy(stats["cache"][arg_key])
 
                 t_end = time.perf_counter()
-                overhead_time = t_end - t0
-                func_time = 0.0
-            else:
-                t_pre_func = time.perf_counter()
+
+                stats["count"] += 1
+                stats["overhead_time"] += t_end - t0
+                stats["total_time"] += t_end - t0
+                return result
+
+            t_pre_func = time.perf_counter()
+            try:
                 result = func(*args, **kwargs)
                 t_post_func = time.perf_counter()
 
                 if use_cache:
                     stats["cache"][arg_key] = self._safe_deepcopy(result)
 
+                return result
+            except Exception:
+                stats["exceptions"] += 1
+                t_post_func = time.perf_counter()
+                raise
+            finally:
                 t_end = time.perf_counter()
-                func_time = t_post_func - t_pre_func
-                overhead_time = (t_pre_func - t0) + (t_end - t_post_func)
 
-            stats["count"] += 1
-            stats["total_time"] += t_end - t0
-            stats["func_time"] += func_time
-            stats["overhead_time"] += overhead_time
-
-            return result
+                stats["count"] += 1
+                stats["func_time"] += t_post_func - t_pre_func
+                stats["overhead_time"] += (t_pre_func - t0) + (t_end - t_post_func)
+                stats["total_time"] += t_end - t0
 
         return wrapper
 
