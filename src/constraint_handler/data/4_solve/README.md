@@ -1,8 +1,8 @@
 ### Input predicates
 
 \_passed(sugar,DECL).
-\_passed(correction(add),LBL,DECL).
-\_passed(correction(change,REASON),OLD,NEW).
+\_passed(correction(REASON,add),LBL,DECL).
+\_passed(correction(REASON,rem),DECL).
 \_expression_safe/1.
 \_expression_safeQuery/1.
 type_expression/2.

@@ -14,5 +14,6 @@
 
 ### Output predicates
 
-\_passed(correction(change,wf),OLD,NEW).
+\_passed(correction(wf_check,rem),DECL).
+\_passed(correction(wf_check,add),LBL,DECL).
 \_warning/3.

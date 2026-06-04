@@ -51,8 +51,8 @@ type_variable/2.
 
 ### Output predicates
 
-\_passed(correction(add),LBL,DECL).
-\_passed(correction(change,REASON),OLD,NEW).
+\_passed(correction(REASON,add),LBL,DECL).
+\_passed(correction(REASON,rem),DECL).
 \_warning/3.
 \_expression_safe/1.
 \_expression_safeQuery/1.

@@ -19,7 +19,8 @@
 
 ### Output predicates
 
-\_passed(correction(add),LBL,variable_declare/3).
-\_passed(correction(add),LBL,variable_define/3).
+\_passed(correction(REASON,add),LBL,variable_declare/3).
+\_passed(correction(REASON,add),LBL,variable_define/3).
+\_passed(correction(REASON,rem),DECL).
 \_passed(sugar,variable_declare/3).
 \_warning/3.
