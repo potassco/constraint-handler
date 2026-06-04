@@ -7,11 +7,13 @@ preference_maximizeScore/0.
 
 ### Intermediate predicates
 
-\_passed(correction(rem),dummy). \_passed(solve,DECL). \_passed(solve,NDECL).
+\_passed(correction(dummy,rem),dummy). \_passed(presolve,DECL).
+\_passed(solve,DECL).
 \_passed(compile,DECL). \_passed(ground,DECL). \_passed(propagator,DECL).
 \_passed((compile;ground;propagator;none),warning_forbid/2).
 \_passed((compile;ground;propagator;none),warning_ignore/2).
-\_solve_corrected/1. \_label/1. \_label/2. engine/2. \_phase_active/1.
+\_solve_removed/1. \_variable_involve/4. \_solve_conflictVariable/1.
+\_solve_firstLabel/2. \_label/1. \_label/2. engine/2. \_phase_active/1.
 \_main_engine/1. \_main_defaultEngine/1. \_main_defaultEngineProvided/0.
 \_main_requestedEngine/1. \_main_solverIdentifiers/1. \_variable_declare/3.
 \_variable_domain/2. \_variable_hasDomain/1. \_variable_indexedDomain/3.
