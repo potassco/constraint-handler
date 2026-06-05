@@ -112,10 +112,6 @@ base_tests = [
     "warning/ignore",
     "warning/python",
     "warning/python_unsupported_type",
-    #    pytest.param(
-    #        "warning/statement_python_declared_output",
-    #        marks=pytest.mark.xfail(reason="known failing regression for statement_python declared outputs"),
-    #    ),
     "warning/statement_malformed",
     "warning/syntax",
     "warning/type",
@@ -127,15 +123,14 @@ base_tests = [
     "warning/variable_undeclared_statement",
 ]
 
-compile_skip: set[str]  = {
-}
-compile_xfail: set[str] = {
+compile_skip: list[str] = []
+compile_xfail: list[str] = [
     "engine/request",
-}
-ground_skip: set[str]  = {
+]
+ground_skip: list[str] = [
     "set/selfref",
-}
-ground_xfail: set[str] = {
+]
+ground_xfail: list[str] = [
     "core/reasoning_modes",
     "engine/request",
     "engine/request_mixed_trig",
@@ -155,10 +150,10 @@ ground_xfail: set[str] = {
     "optimization/priority",
     "set/fold_bools",
     "set/iterations",
- }
+]
 
-propagator_skip: set[str]  = set()
-propagator_xfail: set[str] = {
+propagator_skip: list[str] = []
+propagator_xfail: list[str] = [
     "engine/request",
     "engine/request_mixed_trig",
     "execution/python_integrity",
@@ -169,9 +164,9 @@ propagator_xfail: set[str] = {
     "optimization/preferences",
     "set/fold_bools",
     "set/iterations",
-    "warning/python_unsupported_type",
     "set/selfref",
-}
+    "warning/python_unsupported_type",
+]
 
 
 def mark_for_engine(name: str, skip: set[str], xfail: set[str], engine: str):
@@ -208,9 +203,11 @@ def test_engine_ground(name: str):
 @pytest.mark.parametrize(
     ["name", "check_mode"],
     [
-        pytest.param(n, c, marks=mark_for_engine(n, propagator_skip, propagator_xfail, "propagator"))
-        if mark_for_engine(n, propagator_skip, propagator_xfail, "propagator") is not None
-        else (n, c)
+        (
+            pytest.param(n, c, marks=mark_for_engine(n, propagator_skip, propagator_xfail, "propagator"))
+            if mark_for_engine(n, propagator_skip, propagator_xfail, "propagator") is not None
+            else (n, c)
+        )
         for c in [True, False]
         for n in base_tests
     ],
@@ -219,118 +216,94 @@ def test_engine_propagator(name: str, check_mode):
     run_test(name, "propagator", check_mode)
 
 
-choice_statistics_tests = [
-    "core/basic_assignments",
-    "core/custom_globals",
-    "core/empty_variadics",
-    "engine/request",
-    "engine/request_interaction",
-    "engine/request_mult",
-    "engine/request_set_ref",
-    "datatype/int_eq_compound",
-    "error/recovery",
-    "engine/request_mixed_trig",
-    "expression/python",
-    "datatype/floats",
-    "datatype/ints",
-    "expression/lambda_recursive",
-    "expression/lambdas",
-    "expression/lambda_zero_args",
-    "multimap/basics",
-    "multimap/equality",
-    "multimap/executions",
-    "multimap/main",
-    "set/nested",
-    "expression/python_multi_args",
-    "set/comparisons",
-    "set/executions",
-    "set/fold_bools",
-    "set/iterations",
-    "set/manipulations",
-    "warning/statement_malformed",
-    "warning/syntax",
-    "warning/variable_confusing_name",
-    "warning/variable_undeclared_statement",
+choice_statistics_skip: list[str] = []
+choice_statistics_xfail: list[str] = [
+    "core/conditional_assign",
+    "core/integrity",
+    "core/reasoning_modes",
+    "core/type_checking",
+    "datatype/booleans_xyftz",
+    "datatype/bool_equivalence_bad",
+    "datatype/bool_evaluate",
+    "datatype/bool_negation",
+    "datatype/strings",
+    "error/recovery_ensure",
+    "execution/change",
+    "execution/main_absolut",
+    "execution/main_swap",
+    "execution/assert",
+    "execution/conditional",
+    "execution/optional_run",
+    "execution/python_integrity",
+    "expression/bad_equality",
+    "optimization/bools",
+    "optimization/floats",
+    "optimization/floats_precision",
+    "optimization/ints",
+    "optimization/labeled_values",
+    "optimization/none_as_zero",
+    "optimization/preferences",
+    "optimization/priority",
+    "set/membership_decomposed",
+    "set/membership_python",
+    "set/from_domain",
+    "set/same_val_multi_expr",
+    "set/selfref",
+    "variable/parallel_declaration",
+    "variable/flexible_domain",
+    "variable/main",
+    "variable/same_val_multi_expr",
+    "warning/bad",
+    "warning/fake_forbid",
+    "warning/python",
+    "warning/type",
+    "warning/variables",
+    "warning/variable_reservedName",
+    "warning/variable_undeclared",
 ]
 
 
-@pytest.mark.parametrize("name", choice_statistics_tests)
+@pytest.mark.parametrize(
+    "name",
+    [
+        mark_param_for_engine(
+            name,
+            choice_statistics_skip,
+            choice_statistics_xfail,
+            "compile statistics choices",
+        )
+        for name in base_tests
+    ],
+)
 def test_compile_statistics_have_zero_choices(name: str):
     statistics = solve_with_clingo_statistics(name)
     assert statistics["solving"]["solvers"]["choices"] == 0.0
 
 
-tightness_statistics_tests = [
-    "core/basic_assignments",
-    "datatype/booleans_xyftz",
-    "datatype/bool_equivalence_bad",
-    "datatype/bool_evaluate",
-    "datatype/bool_negation",
-    "core/conditional_assign",
-    "core/custom_globals",
-    "core/empty_variadics",
-    "engine/request",
-    "engine/request_interaction",
-    "engine/request_mult",
-    "engine/request_set_ref",
-    "datatype/int_eq_compound",
-    "error/recovery",
-    "error/recovery_ensure",
-    "expression/bad_equality",
-    "expression/python",
-    "execution/main_absolut",
-    "execution/main_pyt",
-    "execution/main_swap",
-    "execution/assert",
-    "execution/conditional",
-    "execution/loop",
-    "execution/optional_run",
-    "datatype/floats",
-    "datatype/ints",
-    "core/integrity",
-    "expression/lambdas",
-    "expression/lambda_recursive",
-    "expression/lambda_zero_args",
-    "multimap/basics",
-    "multimap/equality",
-    "multimap/executions",
-    "multimap/main",
-    "set/nested",
-    pytest.param("optimization/bools", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
-    pytest.param("optimization/floats", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
-    pytest.param("optimization/ints", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
-    pytest.param("optimization/priority", marks=pytest.mark.xfail(reason="tightness: sccs != 0.0")),
-    "set/membership_decomposed",
-    "set/membership_python",
-    "expression/python_multi_args",
-    "core/reasoning_modes",
-    "set/comparisons",
-    "set/executions",
-    "set/fold_bools",
-    "set/from_domain",
-    "set/iterations",
-    "set/manipulations",
-    "set/selfref",
-    "datatype/strings",
-    "core/type_checking",
-    "variable/parallel_declaration",
-    "variable/flexible_domain",
-    "variable/main",
-    "warning/bad",
-    "warning/fake_forbid",
-    "warning/python",
-    "warning/python_unsupported_type",
-    "warning/statement_malformed",
-    "warning/syntax",
-    "warning/type",
-    "warning/variables",
-    "warning/variable_confusing_name",
-    "warning/variable_undeclared",
-    "warning/variable_undeclared_statement",
+tightness_statistics_skip: set[str] = []
+tightness_statistics_xfail: set[str] = [
+    "optimization/floats_precision",
+    "optimization/labeled_values",
+    "optimization/none_as_zero",
+    "optimization/bools",
+    "optimization/floats",
+    "optimization/ints",
+    "optimization/priority",
 ]
 
 
-@pytest.mark.parametrize("name", tightness_statistics_tests)
+@pytest.mark.parametrize(
+    "name",
+    [
+        mark_param_for_engine(
+            name,
+            tightness_statistics_skip,
+            tightness_statistics_xfail,
+            "compile statistics tightness",
+        )
+        for name in base_tests
+    ],
+)
 def test_compile_statistics_are_tight(name: str):
     statistics = solve_with_clingo_statistics(name)
     assert statistics["problem"]["lp"]["sccs"] == 0.0
