@@ -123,14 +123,14 @@ base_tests = [
     "warning/variable_undeclared_statement",
 ]
 
-compile_skip: list[str] = []
-compile_xfail: list[str] = [
+compile_skip: set[str] = set()
+compile_xfail: set[str] = {
     "engine/request",
-]
-ground_skip: list[str] = [
+}
+ground_skip: set[str] = {
     "set/selfref",
-]
-ground_xfail: list[str] = [
+}
+ground_xfail: set[str] = {
     "core/reasoning_modes",
     "engine/request",
     "engine/request_mixed_trig",
@@ -150,10 +150,10 @@ ground_xfail: list[str] = [
     "optimization/priority",
     "set/fold_bools",
     "set/iterations",
-]
+}
 
-propagator_skip: list[str] = []
-propagator_xfail: list[str] = [
+propagator_skip: set[str] = set()
+propagator_xfail: set[str] = {
     "engine/request",
     "engine/request_mixed_trig",
     "execution/python_integrity",
@@ -166,58 +166,49 @@ propagator_xfail: list[str] = [
     "set/iterations",
     "set/selfref",
     "warning/python_unsupported_type",
+}
+
+engine_test_configs: list[tuple[str, set[str], set[str], tuple[bool, ...]]] = [
+    ("compile", compile_skip, compile_xfail, (False,)),
+    ("ground", ground_skip, ground_xfail, (False,)),
+    ("propagator", propagator_skip, propagator_xfail, (True, False)),
 ]
 
 
-def mark_for_engine(name: str, skip: set[str], xfail: set[str], engine: str):
+def param_marks(
+    name: str,
+    skip: set[str],
+    xfail: set[str],
+    engine: str,
+):
+    """Return pytest marks for a test name under a specific engine context."""
     if name in skip:
-        return pytest.mark.skip(reason=f"skipped in {engine} engine")
+        return [pytest.mark.skip(reason=f"skipped in {engine} engine")]
     if name in xfail:
-        return pytest.mark.xfail(reason=f"known failure in {engine} engine")
-    return None
-
-
-def mark_param_for_engine(name: str, skip: set[str], xfail: set[str], engine: str):
-    mark = mark_for_engine(name, skip, xfail, engine)
-    if mark is not None:
-        return pytest.param(name, marks=mark)
-    return name
+        return [pytest.mark.xfail(reason=f"known failure in {engine} engine")]
+    return []
 
 
 @pytest.mark.parametrize(
-    "name",
-    [mark_param_for_engine(name, compile_skip, compile_xfail, "compile") for name in base_tests],
-)
-def test_engine_compile(name: str):
-    run_test(name, "compile")
-
-
-@pytest.mark.parametrize(
-    "name",
-    [mark_param_for_engine(name, ground_skip, ground_xfail, "ground") for name in base_tests],
-)
-def test_engine_ground(name: str):
-    run_test(name, "ground")
-
-
-@pytest.mark.parametrize(
-    ["name", "check_mode"],
+    ["name", "engine", "check_mode"],
     [
-        (
-            pytest.param(n, c, marks=mark_for_engine(n, propagator_skip, propagator_xfail, "propagator"))
-            if mark_for_engine(n, propagator_skip, propagator_xfail, "propagator") is not None
-            else (n, c)
+        pytest.param(
+            name,
+            engine,
+            check_mode,
+            marks=param_marks(name, skip, xfail, engine),
         )
-        for c in [True, False]
-        for n in base_tests
+        for engine, skip, xfail, check_modes in engine_test_configs
+        for check_mode in check_modes
+        for name in base_tests
     ],
 )
-def test_engine_propagator(name: str, check_mode):
-    run_test(name, "propagator", check_mode)
+def test_engine(name: str, engine: Literal["compile", "ground", "propagator"], check_mode: bool):
+    run_test(name, engine, check_mode)
 
 
-choice_statistics_skip: list[str] = []
-choice_statistics_xfail: list[str] = [
+choice_statistics_skip: set[str] = set()
+choice_statistics_xfail: set[str] = {
     "core/conditional_assign",
     "core/integrity",
     "core/reasoning_modes",
@@ -260,17 +251,15 @@ choice_statistics_xfail: list[str] = [
     "warning/variables",
     "warning/variable_reservedName",
     "warning/variable_undeclared",
-]
+}
 
 
 @pytest.mark.parametrize(
     "name",
     [
-        mark_param_for_engine(
+        pytest.param(
             name,
-            choice_statistics_skip,
-            choice_statistics_xfail,
-            "compile statistics choices",
+            marks=param_marks(name, choice_statistics_skip, choice_statistics_xfail, "compile statistics choices"),
         )
         for name in base_tests
     ],
@@ -280,8 +269,8 @@ def test_compile_statistics_have_zero_choices(name: str):
     assert statistics["solving"]["solvers"]["choices"] == 0.0
 
 
-tightness_statistics_skip: set[str] = []
-tightness_statistics_xfail: set[str] = [
+tightness_statistics_skip: set[str] = set()
+tightness_statistics_xfail: set[str] = {
     "optimization/floats_precision",
     "optimization/labeled_values",
     "optimization/none_as_zero",
@@ -289,17 +278,15 @@ tightness_statistics_xfail: set[str] = [
     "optimization/floats",
     "optimization/ints",
     "optimization/priority",
-]
+}
 
 
 @pytest.mark.parametrize(
     "name",
     [
-        mark_param_for_engine(
+        pytest.param(
             name,
-            tightness_statistics_skip,
-            tightness_statistics_xfail,
-            "compile statistics tightness",
+            marks=param_marks(name, tightness_statistics_skip, tightness_statistics_xfail, "compile statistics tightness"),
         )
         for name in base_tests
     ],
