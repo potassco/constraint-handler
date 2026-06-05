@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- replace `.expected.models` with `.expected.stats` contains key-value pairs
 - use pytests's xfail and skip
 
 ## v0.0.2.dev13

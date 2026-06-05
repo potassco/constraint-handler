@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 import clingo
 import clintest.assertion
@@ -23,6 +23,19 @@ def atoms_from_file(file_name):
             return [clingo.symbol.parse_term(atom) for atom in contents]
     except FileNotFoundError:
         return []
+
+
+def stats_from_file(file_name: str) -> dict[str, str]:
+    try:
+        with open(file_name, "r", encoding="utf-8") as file_handle:
+            return {
+                key: value
+                for raw_line in file_handle
+                if (line := raw_line.strip())
+                for key, value in [line.split("=", 1)]
+            }
+    except FileNotFoundError:
+        return {}
 
 
 def contains(atom):
@@ -50,9 +63,9 @@ def build_expectations(name):
     expected_last = atoms_from_file(name + ".expected.last")
     for atom in expected_last:
         tests.append(clintest.test.Assert(Last(), contains(atom)))
-    expected_models: List = atoms_from_file(name + ".expected.models")
-    if expected_models:
-        expected_models = expected_models[0].number
+    expected_stats = stats_from_file(name + ".expected.stats")
+    if "models" in expected_stats:
+        expected_models = int(expected_stats["models"])
         tests.append(clintest.test.Assert(Exact(expected_models), clintest.assertion.True_()))
     elif (expected_all or expected_first or expected_last) and not expected_any:
         tests.append(clintest.test.Assert(Any(), clintest.assertion.True_()))
