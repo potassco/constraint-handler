@@ -14,7 +14,7 @@ When False, the route decorator will perform no tracking or caching and will sim
 
 So this needs to be True in order for any of the performance tracking or caching features to be applied.
 """
-PERFORMANCE_TRACKING = False
+PERFORMANCE_TRACKING = True
 """
 When True, detailed performance data will be collected for each decorated function.
 
@@ -86,7 +86,7 @@ class Performance:
             "pythonStatementVariables": CacheMode.NATIVE,
             "pythonStringLength": CacheMode.NATIVE,
             "pythonTupleElements": CacheMode.NATIVE,
-            "pytocl": CacheMode.MANUAL,
+            "pytocl": CacheMode.NONE,
             "get_compiled_eval": CacheMode.NATIVE,
             "get_compiled_exec": CacheMode.NATIVE,
         }

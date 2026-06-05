@@ -2,10 +2,9 @@ import enum
 import itertools
 import types
 import typing
+from functools import cache
 
 import clingo
-
-from constraint_handler.performance import performance
 
 
 class FailedInstantiationExn(Exception):
@@ -62,7 +61,6 @@ def _union_rows(target):
     return [target]
 
 
-@performance.route
 def pytocl(v, dtarget=None):
     if dtarget is None:
         dtarget = type(v)
@@ -150,7 +148,7 @@ def cltopyNoTarget(func):
         return func
 
 
-@performance.route
+@cache
 def cltopy(func, dtarget=typing.Any, halt=True):
     dtarget = _resolve_type_alias(dtarget)
     rows = _union_rows(dtarget)

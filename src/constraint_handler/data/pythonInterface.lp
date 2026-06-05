@@ -1,7 +1,7 @@
 #script (python)
-from constraint_handler.performance import performance
+from functools import cache
 
-@performance.route
+@cache
 def pythonIsExpr(clE):
     try:
         myClorm.cltopy(clE,expression.Expr)
@@ -9,7 +9,7 @@ def pythonIsExpr(clE):
     except myClorm.FailedInstantiationExn:
         return myClorm.pytocl(False)
 
-@performance.route
+@cache
 def pythonExpressionVariable(clExpr):
     try:
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
@@ -19,7 +19,7 @@ def pythonExpressionVariable(clExpr):
     except:
         return []
 
-@performance.route
+@cache
 def pythonEnumerateVariables(clExpr):
     try:
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
@@ -30,7 +30,7 @@ def pythonEnumerateVariables(clExpr):
     except:
         return []
 
-@performance.route
+@cache
 def pythonEnumerateExecutionVariables(clStmt,clIns):
     pStmt = myClorm.cltopy(clStmt,statement.Stmt)
     pIns = myClorm.cltopy(clIns,halt=False)
@@ -40,7 +40,7 @@ def pythonEnumerateExecutionVariables(clStmt,clIns):
     return result
 
  # TODO: dead?
-@performance.route
+@cache
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars,list)
     pArgs = myClorm.cltopy(clArgs,list[expression.ReducedExpr])
@@ -53,7 +53,7 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
     pRes = evaluator.beta_reduction(d,pExpr)
     return myClorm.pytocl(pRes)
 
-@performance.route
+@cache
 def pythonEvalExpr(clExpr,clArgs,clId):
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
@@ -81,7 +81,7 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
         return myClorm.pytocl(warning.Error(kind,repr(exn)))
 
-@performance.route
+@cache
 def pythonStatementVariables(clCode,clInTypes,clId):
     try:
         pCode = myClorm.cltopy(clCode,str)

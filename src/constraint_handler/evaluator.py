@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+from functools import cache
 
 import clingo
 
@@ -14,7 +15,6 @@ import constraint_handler.schemas.warning as warning
 import constraint_handler.set as myset
 import constraint_handler.solver_environment as solver_environment
 import constraint_handler.utils.python_statement_analysis as python_analysis
-from constraint_handler.performance import performance
 from constraint_handler.schemas.expression import (
     ConditionalOperator,
     EqOperator,
@@ -448,11 +448,11 @@ def get_environment(identifiers):
     return globs
 
 
-@performance.route
+@cache
 def get_compiled_eval(code: str):
     return compile(code, "<string>", "eval")
 
 
-@performance.route
+@cache
 def get_compiled_exec(code: str):
     return compile(code, "<string>", "exec")
