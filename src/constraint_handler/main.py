@@ -56,7 +56,7 @@ module_4_datatype = [
     "4_solve/compile/equality",
     "4_solve/compile/float",
     "4_solve/compile/int",
-    "4_solve/compile/multimap",
+    # "4_solve/compile/multimap",
     "4_solve/compile/set",
     "4_solve/compile/string",
     "4_solve/compile/symbol",
@@ -64,8 +64,8 @@ module_4_datatype = [
 
 module_4_compile = [
     "4_solve/compile/direct",
-    "4_solve/compile/optimize",
-    "4_solve/compile/preference",
+    # "4_solve/compile/optimize",
+    # "4_solve/compile/preference",
 ]
 
 module_4_ground = [
@@ -84,8 +84,8 @@ module_4_solve = (
     ]
     + module_4_datatype
     + module_4_compile
-    + module_4_ground
-    + module_4_propagator
+    # + module_4_ground
+    # + module_4_propagator
 )
 
 module_5_output = [
@@ -97,12 +97,12 @@ module_5_output = [
 t_modules = {"expression": ("PHASE", ["sugar", "compile"])}
 modules = (
     module_main
-    + module_0_default_arguments
-    + module_1_single_static_assignment
-    + module_2_sugar
-    + module_3_safe
+    # + module_0_default_arguments
+    # + module_1_single_static_assignment
+    # + module_2_sugar
+    # + module_3_safe
     + module_4_solve
-    + module_5_output
+    # + module_5_output
 )
 # modules = extra_modules + core_modules
 # modules = core_modules

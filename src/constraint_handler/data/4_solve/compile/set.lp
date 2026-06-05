@@ -58,27 +58,27 @@ _set_assign(_internal,set(L),SE) :- direct_query(set(L)), SE=@pythonListElements
 %%%%%%%%%%%%%%%%%% add
 %%% TODO
 
-%%%%%%%%%%%%%%%%% union inter diff
-_set_declare(_internal,operation(OP,L)) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
-_set_assign(_internal,operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
+% %%%%%%%%%%%%%%%%% union inter diff
+% _set_declare(_internal,operation(OP,L)) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
+% _set_assign(_internal,operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
-direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;inter),(S1,(S2,())))),
-    _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
-    _set_contains(R1,V1),
-    _set_contains(R2,V2),
-    (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
+% direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;inter),(S1,(S2,())))),
+%     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
+%     _set_contains(R1,V1),
+%     _set_contains(R2,V2),
+%     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
-_set_assign(_internal,operation(inter,(S1,(S2,()))),VSMALL) :- direct_query(operation(inter,(S1,(S2,())))),
-    _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
-    _set_contains(R1,V1),
-    _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
-    (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
+% _set_assign(_internal,operation(inter,(S1,(S2,()))),VSMALL) :- direct_query(operation(inter,(S1,(S2,())))),
+%     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
+%     _set_contains(R1,V1),
+%     _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
+%     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
-_set_assign(_internal,operation(diff,(S1,(S2,()))),V1) :- direct_query(operation(diff,(S1,(S2,())))),
-    _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
-    _set_contains(R1,V1),
-    #false : _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
-    (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
+% _set_assign(_internal,operation(diff,(S1,(S2,()))),V1) :- direct_query(operation(diff,(S1,(S2,())))),
+%     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
+%     _set_contains(R1,V1),
+%     #false : _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
+%     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
 %%%%%%%%%%%%%%%%% Equality
 direct_query(operation(eq,(ARG0,(ARG1,())))) :- _computeIdx(E,neq), _computeIdx(E,0,ARG0), _computeIdx(E,1,ARG1), (ARG0;ARG1)=ref(set,X).
@@ -135,48 +135,48 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,subset), _computeIdx(E,0,ref(set
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,subset), _computeIdx(E,0,val(T0,V0)), _computeIdx(E,1,val(T1,V1)),
     (T0;T1) != set, (T0;T1) = set.
 
-%%%%%%%%%%%%%%%%%% Fold
-%%% set_fold: a -> b -> b
-_set_makeIndex(VM) :- _computeIdx(E,set_fold), _computeIdx(E,1,ref(set,VM)).
-_set_foldStep(E,0,ACC) :- _computeIdx(E,set_fold), _computeIdx(E,2,ACC).
+% %%%%%%%%%%%%%%%%%% Fold
+% %%% set_fold: a -> b -> b
+% _set_makeIndex(VM) :- _computeIdx(E,set_fold), _computeIdx(E,1,ref(set,VM)).
+% _set_foldStep(E,0,ACC) :- _computeIdx(E,set_fold), _computeIdx(E,2,ACC).
 
 
-direct_query(operation(VO,(VI,(VB,())))) :- _computeIdx(E,set_fold), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,ref(set,VM)),
-    _set_foldStep(E,I,VB), _set_index(VM,I,VI).
+% direct_query(operation(VO,(VI,(VB,())))) :- _computeIdx(E,set_fold), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,ref(set,VM)),
+%     _set_foldStep(E,I,VB), _set_index(VM,I,VI).
 
-_set_foldStep(E,I+1,NEXT) :- _computeIdx(E,set_fold), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,ref(set,VM)),
-    _set_foldStep(E,I,VB), _set_index(VM,I,VI),
-    _se_value(operation(VO,(VI,(VB,()))),NEXT).
+% _set_foldStep(E,I+1,NEXT) :- _computeIdx(E,set_fold), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,ref(set,VM)),
+%     _set_foldStep(E,I,VB), _set_index(VM,I,VI),
+%     _se_value(operation(VO,(VI,(VB,()))),NEXT).
 
-_computedIdx(E,VB) :- _computeIdx(E,set_fold), _computeIdx(E,1,ref(set,VM)),
-    _set_foldStep(E,I,VB), _set_lastIndex(VM,I).
+% _computedIdx(E,VB) :- _computeIdx(E,set_fold), _computeIdx(E,1,ref(set,VM)),
+%     _set_foldStep(E,I,VB), _set_lastIndex(VM,I).
 
 
 
-_set_index(EM,0,V) :- _set_makeIndex(EM),
-    _set_contains(EM,V),
-    #false : _set_contains(EM,V1), V1 < V.
+% _set_index(EM,0,V) :- _set_makeIndex(EM),
+%     _set_contains(EM,V),
+%     #false : _set_contains(EM,V1), V1 < V.
 
-_set_index(EM,I+1,V) :- _set_index(EM,I,V0),
-    _set_contains(EM,V), V0 < V,
-    #false : _set_contains(EM,V1), V0 < V1, V1 < V.
+% _set_index(EM,I+1,V) :- _set_index(EM,I,V0),
+%     _set_contains(EM,V), V0 < V,
+%     #false : _set_contains(EM,V1), V0 < V1, V1 < V.
 
-_set_lastIndex(EM,I+1) :- _set_index(EM,I,V),
-    #false : _set_contains(EM,V1), V < V1.
+% _set_lastIndex(EM,I+1) :- _set_index(EM,I,V),
+%     #false : _set_contains(EM,V1), V < V1.
 
-_set_lastIndex(EM,0) :- _set_makeIndex(EM),
-    #false : _set_contains(EM,V).
+% _set_lastIndex(EM,0) :- _set_makeIndex(EM),
+%     #false : _set_contains(EM,V).
 
-%%%%%%%%%%%%%%%%% _set_implode
-_set_implode(REF) :- _direct_implode(ref(set,REF)).
-_set_implode(REF) :- _direct_implode(E), _se_value(E,ref(set,REF)).
-_direct_imploded(ref(set,REF),V) :- _direct_implode(ref(set,REF)), _set_imploded(REF,V).
-_direct_imploded(E,V) :- _direct_implode(E), _se_value(E,ref(set,REF)), _set_imploded(REF,V).
+% %%%%%%%%%%%%%%%%% _set_implode
+% _set_implode(REF) :- _direct_implode(ref(set,REF)).
+% _set_implode(REF) :- _direct_implode(E), _se_value(E,ref(set,REF)).
+% _direct_imploded(ref(set,REF),V) :- _direct_implode(ref(set,REF)), _set_imploded(REF,V).
+% _direct_imploded(E,V) :- _direct_implode(E), _se_value(E,ref(set,REF)), _set_imploded(REF,V).
 
-_direct_implode(val(TV,RV)) :- _set_implode(EM), _set_contains(EM,val(TV,RV)).
-_set_makeIndex(EM) :- _set_implode(EM).
-_set_as_list_aux(EM,0,()) :- _set_implode(EM).
-_set_as_list_aux(EM,IDX+1,(V,L)) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,val(TV,RV)), _direct_imploded(val(TV,RV),V).
-_set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
+% _direct_implode(val(TV,RV)) :- _set_implode(EM), _set_contains(EM,val(TV,RV)).
+% _set_makeIndex(EM) :- _set_implode(EM).
+% _set_as_list_aux(EM,0,()) :- _set_implode(EM).
+% _set_as_list_aux(EM,IDX+1,(V,L)) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,val(TV,RV)), _direct_imploded(val(TV,RV),V).
+% _set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
 
-%_direct_imploded(E,E) :- _direct_implode(E), E = set(_).
+% %_direct_imploded(E,E) :- _direct_implode(E), E = set(_).

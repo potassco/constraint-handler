@@ -18,6 +18,10 @@
 \_passed(defaultArgs,LBL,preference_variableValue/3).
 \_passed(defaultArgs,LBL,warning_forbid/1).
 \_passed(defaultArgs,LBL,warning_ignore/1).
+\_passed(ssa,LBL,variable_define/2).
+\_passed(ssa,LBL,variable_declare/2).
+\_passed(ssa,LBL,ensure/1).
+\_variable(ssa,VAR).
 
 ### Intermediate predicates
 
