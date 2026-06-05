@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- use pytests's xfail and skip
+
 ## v0.0.2.dev13
 
 - introduce caching for Clorm type resolution within `myClorm.py`.

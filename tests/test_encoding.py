@@ -54,6 +54,7 @@ base_tests = [
     "datatype/strings",
     "engine/request",
     "engine/request_interaction",
+    "engine/request_mixed_trig",
     "engine/request_mult",
     "engine/request_set_ref",
     "error/recovery",
@@ -84,7 +85,11 @@ base_tests = [
     "multimap/main",
     "optimization/bools",
     "optimization/floats",
+    "optimization/floats_precision",
     "optimization/ints",
+    "optimization/labeled_values",
+    "optimization/none_as_zero",
+    "optimization/preferences",
     "optimization/priority",
     "set/membership_decomposed",
     "set/membership_nested",
@@ -122,79 +127,96 @@ base_tests = [
     "warning/variable_undeclared_statement",
 ]
 
-compile_extra = [
-    "optimization/labeled_values",
-    "optimization/none_as_zero",
-    "optimization/preferences",
+compile_skip: set[str]  = {
+}
+compile_xfail: set[str] = {
+    "engine/request",
+}
+ground_skip: set[str]  = {
+    "set/selfref",
+}
+ground_xfail: set[str] = {
+    "core/reasoning_modes",
+    "engine/request",
+    "engine/request_mixed_trig",
+    "engine/request_set_ref",
+    "expression/lambdas",
+    "expression/lambda_recursive",
+    "expression/lambda_zero_args",
+    "multimap/basics",
+    "multimap/equality",
+    "multimap/executions",
+    "multimap/main",
+    "optimization/bools",
+    "optimization/floats",
     "optimization/floats_precision",
-]
-ground_extra = []
-propagator_extra = []
+    "optimization/ints",
+    "optimization/labeled_values",
+    "optimization/priority",
+    "set/fold_bools",
+    "set/iterations",
+ }
+
+propagator_skip: set[str]  = set()
+propagator_xfail: set[str] = {
+    "engine/request",
+    "engine/request_mixed_trig",
+    "execution/python_integrity",
+    "expression/lambda_recursive",
+    "multimap/main",
+    "optimization/floats_precision",
+    "optimization/labeled_values",
+    "optimization/preferences",
+    "set/fold_bools",
+    "set/iterations",
+    "warning/python_unsupported_type",
+    "set/selfref",
+}
+
+
+def mark_for_engine(name: str, skip: set[str], xfail: set[str], engine: str):
+    if name in skip:
+        return pytest.mark.skip(reason=f"skipped in {engine} engine")
+    if name in xfail:
+        return pytest.mark.xfail(reason=f"known failure in {engine} engine")
+    return None
+
+
+def mark_param_for_engine(name: str, skip: set[str], xfail: set[str], engine: str):
+    mark = mark_for_engine(name, skip, xfail, engine)
+    if mark is not None:
+        return pytest.param(name, marks=mark)
+    return name
 
 
 @pytest.mark.parametrize(
     "name",
-    base_tests + compile_extra,
+    [mark_param_for_engine(name, compile_skip, compile_xfail, "compile") for name in base_tests],
 )
 def test_engine_compile(name: str):
-    unsupported: list[str] = [
-        "engine/request",
-        "engine/request_mult",
-        "set/same_val_multi_expr",
-    ]
-    if name not in unsupported:
-        run_test(name, "compile")
+    run_test(name, "compile")
 
 
 @pytest.mark.parametrize(
     "name",
-    base_tests + ground_extra,
+    [mark_param_for_engine(name, ground_skip, ground_xfail, "ground") for name in base_tests],
 )
 def test_engine_ground(name: str):
-    unsupported: list[str] = [
-        "core/reasoning_modes",
-        "engine/request",
-        "engine/request_mult",
-        "engine/request_set_ref",
-        "expression/lambdas",
-        "expression/lambda_recursive",
-        "expression/lambda_zero_args",
-        "multimap/basics",
-        "multimap/equality",
-        "multimap/executions",
-        "multimap/main",
-        "optimization/bools",
-        "optimization/floats",
-        "optimization/ints",
-        "optimization/priority",
-        "set/fold_bools",
-        "set/iterations",
-        "set/same_val_multi_expr",
-        "set/selfref",
-    ]
-    if name not in unsupported:
-        run_test(name, "ground")
+    run_test(name, "ground")
 
 
 @pytest.mark.parametrize(
     ["name", "check_mode"],
-    [(n, c) for c in [True, False] for n in base_tests + propagator_extra],
+    [
+        pytest.param(n, c, marks=mark_for_engine(n, propagator_skip, propagator_xfail, "propagator"))
+        if mark_for_engine(n, propagator_skip, propagator_xfail, "propagator") is not None
+        else (n, c)
+        for c in [True, False]
+        for n in base_tests
+    ],
 )
 def test_engine_propagator(name: str, check_mode):
-    unsupported: list[str] = [
-        "core/type_checking",
-        "engine/request",
-        "engine/request_mult",
-        "execution/python_integrity",
-        "expression/lambda_recursive",
-        "multimap/main",
-        "set/fold_bools",
-        "set/iterations",
-        "set/selfref",
-        "warning/python_unsupported_type",
-    ]
-    if name not in unsupported:
-        run_test(name, "propagator", check_mode)
+    run_test(name, "propagator", check_mode)
 
 
 choice_statistics_tests = [
@@ -207,8 +229,7 @@ choice_statistics_tests = [
     "engine/request_set_ref",
     "datatype/int_eq_compound",
     "error/recovery",
-    "example2",
-    "example3",
+    "engine/request_mixed_trig",
     "expression/python",
     "datatype/floats",
     "datatype/ints",
@@ -226,7 +247,6 @@ choice_statistics_tests = [
     "set/fold_bools",
     "set/iterations",
     "set/manipulations",
-    "testAddition",
     "warning/statement_malformed",
     "warning/syntax",
     "warning/variable_confusing_name",
