@@ -2,6 +2,7 @@ import enum
 import itertools
 import types
 import typing
+from functools import cache
 
 import clingo
 
@@ -147,6 +148,7 @@ def cltopyNoTarget(func):
         return func
 
 
+@cache
 def cltopy(func, dtarget=typing.Any, halt=True):
     dtarget = _resolve_type_alias(dtarget)
     rows = _union_rows(dtarget)

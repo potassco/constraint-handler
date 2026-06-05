@@ -1,10 +1,9 @@
 #script(python)
-
 import itertools
 import operator
 import typing
-
 from collections import defaultdict
+from functools import cache
 
 import clingo
 
@@ -19,25 +18,29 @@ import constraint_handler.solver_environment as solver_environment
 import constraint_handler.utils.python_statement_analysis as python_analysis
 
 
+@cache
 def pythonListElements(clL):
     try:
         return myClorm.cltopy(clL,list[clingo.Symbol])
     except myClorm.FailedInstantiationExn:
         return []
 
+@cache
 def pythonReversedList(clL):
     pL = pythonListElements(clL)
     return myClorm.pytocl(list(reversed(pL)))
 
+@cache
 def pythonEnumerateElements(clL):
     pL = pythonListElements(clL)
     return [myClorm.pytocl(e) for e in enumerate(pL)]
 
+@cache
 def pythonListLength(clL):
     pL = pythonListElements(clL)
     return myClorm.pytocl(len(pL))
 
-
+@cache
 def pythonIsList(clL):
     try:
         myClorm.cltopy(clL,list)
@@ -45,28 +48,32 @@ def pythonIsList(clL):
     except myClorm.FailedInstantiationExn:
         return myClorm.pytocl(False)
 
+@cache
 def pythonIsString(clS):
     return myClorm.pytocl(clS.type == clingo.SymbolType.String)
 
+@cache
 def pythonIsTuple(clT):
     return myClorm.pytocl(clT.type == clingo.SymbolType.Function and clT.name == "" and (len(clT.arguments) != 2 or clT.arguments[1] != clingo.Function("")))
 
+@cache
 def pythonTupleElements(clT):
     if clT.type == clingo.SymbolType.Function and clT.name == "":
         return clT.arguments
     else:
         return []
-
+@cache
 def pythonStringLength(clStr):
     pStr = myClorm.cltopy(clStr,str)
     return myClorm.pytocl(len(pStr))
 
+@cache
 def pythonStringAdd(clStr1,clStr2):
     pStr1 = myClorm.cltopy(clStr1,str)
     pStr2 = myClorm.cltopy(clStr2,str)
     return myClorm.pytocl(pStr1+pStr2)
 
-
+@cache
 def pythonScopeToString(clS,clVar):
     try:
         l = myClorm.cltopy(clS,list)
@@ -79,6 +86,7 @@ def pythonScopeToString(clS,clVar):
         return clS
         #return myClorm.pytocl(False)
 
+@cache
 def pythonReify(term):
     if term.type == clingo.SymbolType.Function:
         symb = clingo.symbol.Function(term.name)
@@ -89,6 +97,7 @@ def pythonReify(term):
     else:
         return myClorm.pytocl((clingo.symbol.Function("string"),term,0,()))
 
+@cache
 def pythonReflect(kind,term,args):
     if kind == clingo.symbol.Function("function") and term.type == clingo.SymbolType.Function:
         name = term.name

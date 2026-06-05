@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+from functools import cache
 
 import clingo
 
@@ -219,7 +220,7 @@ class Evaluator:
             return __succeeds
         else:
             try:
-                return eval(expr_code, nested.globals, nested.locals)
+                return eval(get_compiled_eval(expr_code), nested.globals, nested.locals)
             except Exception as exn:
                 kind = warning.Expression(warning.ExpressionWarning.pythonError)
                 self.errors.append((kind, repr(exn)))
@@ -311,7 +312,7 @@ class Evaluator:
                     return expression.Bad.bad
             case expression.Python(code):
                 try:
-                    result = eval(code, self.globals, self.locals)
+                    result = eval(get_compiled_eval(code), self.globals, self.locals)
                     return result
                 except Exception as exn:
                     kind = warning.Expression(warning.ExpressionWarning.pythonError)
@@ -347,7 +348,7 @@ class Evaluator:
 
     def stmt_python(self, code):
         try:
-            exec(code, self.globals, self.locals)
+            exec(get_compiled_exec(code), self.globals, self.locals)
         except solver_environment.FailIntegrityExn:
             raise
         except Exception as exn:
@@ -445,3 +446,13 @@ def get_environment(identifiers):
         else:
             print(f"undeclared globals for {identifier}")
     return globs
+
+
+@cache
+def get_compiled_eval(code: str):
+    return compile(code, "<string>", "eval")
+
+
+@cache
+def get_compiled_exec(code: str):
+    return compile(code, "<string>", "exec")

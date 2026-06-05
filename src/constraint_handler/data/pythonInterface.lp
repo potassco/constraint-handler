@@ -1,5 +1,7 @@
 #script (python)
+from functools import cache
 
+@cache
 def pythonIsExpr(clE):
     try:
         myClorm.cltopy(clE,expression.Expr)
@@ -7,6 +9,7 @@ def pythonIsExpr(clE):
     except myClorm.FailedInstantiationExn:
         return myClorm.pytocl(False)
 
+@cache
 def pythonExpressionVariable(clExpr):
     try:
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
@@ -16,7 +19,7 @@ def pythonExpressionVariable(clExpr):
     except:
         return []
 
-
+@cache
 def pythonEnumerateVariables(clExpr):
     try:
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
@@ -27,6 +30,7 @@ def pythonEnumerateVariables(clExpr):
     except:
         return []
 
+@cache
 def pythonEnumerateExecutionVariables(clStmt,clIns):
     pStmt = myClorm.cltopy(clStmt,statement.Stmt)
     pIns = myClorm.cltopy(clIns,halt=False)
@@ -36,6 +40,7 @@ def pythonEnumerateExecutionVariables(clStmt,clIns):
     return result
 
  # TODO: dead?
+@cache
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars,list)
     pArgs = myClorm.cltopy(clArgs,list[expression.ReducedExpr])
@@ -48,7 +53,7 @@ def pythonBetaReduction(clExpr,clVars,clArgs):
     pRes = evaluator.beta_reduction(d,pExpr)
     return myClorm.pytocl(pRes)
 
-
+@cache
 def pythonEvalExpr(clExpr,clArgs,clId):
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
@@ -67,7 +72,7 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         for (kind,msg) in errors:
             results.append(warning.Error(kind,msg))
         results.append(evaluator.reducedExpr(pRes))
-        return map(myClorm.pytocl,results)
+        return [myClorm.pytocl(result) for result in results]
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
         return myClorm.pytocl(warning.Error(kind,repr(exn)))
@@ -76,6 +81,7 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
         return myClorm.pytocl(warning.Error(kind,repr(exn)))
 
+@cache
 def pythonStatementVariables(clCode,clInTypes,clId):
     try:
         pCode = myClorm.cltopy(clCode,str)
@@ -91,7 +97,7 @@ def pythonStatementVariables(clCode,clInTypes,clId):
         pyInputs = { x: frozenset((type_.py_type(t),)) for (x,t) in pInT }
         analysis = python_analysis.analyze_python_statement_types(pCode, globals, pyInputs)
         results = [(x,type_.ch_type(t)) for (x,ts) in analysis.name_types.items() for t in ts]
-        return map(myClorm.pytocl,results)
+        return [myClorm.pytocl(result) for result in results]
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Statement(warning.StatementWarning.syntaxError)
         return myClorm.pytocl(warning.Error(kind,str(exn)))
