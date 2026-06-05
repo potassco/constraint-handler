@@ -4,8 +4,10 @@
 
 ## v0.0.2.dev12
 
-- introduce caching for Python functions and dynamic Python executions and evaluations.
-- split `pythonIsTuple` and `pythonReify` in rule bodies to prevent `pythonReify` from being called for non-tuples.
+- introduce caching for Python functions and dynamic Python executions and
+  evaluations.
+- split `pythonIsTuple` and `pythonReify` in rule bodies to prevent
+  `pythonReify` from being called for non-tuples.
 - drop support for predicates `conditional_hasValue` and
   `conditional_hasNoValue`
 - fix typo in different-arity tuple equality and add a corresponding unit test
