@@ -1,4 +1,6 @@
-%%% _set_contains(Expr, Value)
+%%% 
+%%% _set_contains(Expr, Value) collects all values if expression evaluates to a set
+%%% _se_value(Expr, set) is true if expression evaluates to a set
 
 
 %%% variable declarations, assignments and base domains
@@ -54,13 +56,70 @@ _set_contains(operation(set_make,Args),V) :-
     Arg=@pythonListElements(Args),
     _se_value(Arg,V).
 
+%%% wanko & Abdalla, please check from here
 %%% inter
+_se_value(operation(inter,Args),set)   :- direct_query(operation(inter,Args)).
+_set_contains(operation(inter,(Expr1, Rest)),V) :-
+    direct_query(operation(inter,(Expr1, Rest))),
+    _se_value(Expr1, set),
+    _set_contains(Expr1,V),
+    _set_contains(Arg,V) : Arg=@pythonListElements(Rest).
 
 %%% diff
+% I assume binary?
+_se_value(operation(diff,Args),set)   :- direct_query(operation(diff,Args)).
+_set_contains(operation(diff,(Expr1, (Expr2, ()))),V) :-
+    direct_query(operation(diff,(Expr1, (Expr2, ())))),
+    _se_value(Expr1, set),
+    _set_contains(Expr1,V),
+    not _set_contains(Expr2,V).
 
 %%% equality
+% I assume binary?
+
+_neq(Expr1, Expr2) :- direct_query(operation((eq;neq),(Expr1,(Expr2,())))),
+    _set_contains(Expr1,V),
+    not _set_contains(Expr2,V).
+_neq(Expr1, Expr2) :- direct_query(operation((eq;neq),(Expr1,(Expr2,())))),
+    _set_contains(Expr2,V),
+    not _set_contains(Expr1,V).
+
+_se_value(operation(neq,(Expr1,(Expr2,()))), val(bool, true)) :-
+    direct_query(operation(neq,(Expr1,(Expr2,())))),
+    _se_value(Expr1, set),
+    _se_value(Expr2, set),
+    _neq(Expr1, Expr2).
+_se_value(operation(neq,(Expr1,(Expr2,()))), val(bool, false)) :-
+    direct_query(operation(neq,(Expr1,(Expr2,())))),
+    _se_value(Expr1, set),
+    _se_value(Expr2, set),
+    not _neq(Expr1, Expr2).
+_se_value(operation(eq,(Expr1,(Expr2,()))), val(bool, false)) :-
+    direct_query(operation(eq,(Expr1,(Expr2,())))),
+    _se_value(Expr1, set),
+    _se_value(Expr2, set),
+    _neq(Expr1, Expr2).
+_se_value(operation(eq,(Expr1,(Expr2,()))), val(bool, true)) :-
+    direct_query(operation(eq,(Expr1,(Expr2,())))),
+    _se_value(Expr1, set),
+    _se_value(Expr2, set),
+    not _neq(Expr1, Expr2).
+
 
 %%% subset
+nsubset(Expr1, Expr2) :- direct_query(operation(subset,(Expr1,(Expr2,())))),
+    _set_contains(Expr1,V),
+    not _set_contains(Expr2,V).
+_se_value(operation(subset,(Expr1,(Expr2,()))), val(bool, true)) :-
+    direct_query(operation(subset,(Expr1,(Expr2,())))),
+    _se_value(Expr1, set),
+    _se_value(Expr2, set),
+    not nsubset(Expr1, Expr2).
+_se_value(operation(subset,(Expr1,(Expr2,()))), val(bool, false)) :-
+    direct_query(operation(subset,(Expr1,(Expr2,())))),
+    _se_value(Expr1, set),
+    _se_value(Expr2, set),
+    nsubset(Expr1, Expr2).
 
 
 %%% fold
