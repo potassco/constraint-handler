@@ -5,7 +5,7 @@ propagator_evaluate(LBL,O,E) :- _passed(propagator,LBL,evaluate(O,E)).
 
 propagator_variable_declare(CNAME,X,fromFacts) :- _passed(propagator,CNAME,variable_declare(X,fromFacts)).
 
-{propagator_variable_domain(CNAME,X, D) : _passed(propagator,CNAME,variable_domain(X,D))} 1 :- _passed(propagator,CNAME,variable_declare(X,fromFacts)).
+1 {propagator_variable_domain(CNAME,X, D) : _passed(propagator,CNAME,variable_domain(X,D))} 1 :- _passed(propagator,CNAME,variable_declare(X,fromFacts)).
 
 order(CNAME,X,E,IDX) :- _passed(propagator,CNAME,variable_domain(X,E)), IDX = #count { E2 : _passed(propagator,CNAME,variable_domain(X,E2)), E2 < E }.
 
