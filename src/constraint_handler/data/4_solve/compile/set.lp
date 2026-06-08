@@ -1,4 +1,66 @@
-_set_assign(LBL,variable(X),E) :- _passed(compile,LBL,set_assign(X,E)).
+%%% _set_contains(Expr, Value)
+
+
+%%% variable declarations, assignments and base domains
+_se_value(variable(X), set) :- _passed(compile, LBL, variable_declare(X,set)).
+_set_contains(Var, Value) :- _passed(compile, LBL, set_assign(Var, Expr)), _se_value(Expr, Value).
+{ _set_contains(Var, Value) } :- _passed(compile, LBL, set_baseDomain(Var, Expr)), _se_value(Expr, Value).
+
+
+%%% length
+
+_se_value(operation(length,(Expr,())), val(int, L)) :-
+    direct_query(operation(length,(Expr,()))),
+    _se_value(Expr, set),    
+    L = #count { V : _set_contains(Expr,V) }.
+
+%%% set_isin/set_notin
+
+_se_value(operation(set_isin,(Expr1,(Expr2,()))), val(bool, true)) :-
+    direct_query(operation(set_isin,(Expr1,(Expr2,())))),
+    _se_value(Expr2, set),
+    _se_value(Expr1, V),
+    _set_contains(Expr2, V).
+
+_se_value(operation(set_isin,(Expr1,(Expr2,()))), val(bool, false)) :-
+    direct_query(operation(set_isin,(Expr1,(Expr2,())))),
+    _se_value(Expr2, set),
+    _se_value(Expr1, V),
+    not _set_contains(Expr2, V).
+
+_se_value(operation(set_notin,(Expr1,(Expr2,()))), val(bool, false)) :-
+    direct_query(operation(set_notin,(Expr1,(Expr2,())))),
+    _se_value(Expr2, set),
+    _se_value(Expr1, V),
+    _set_contains(Expr2, V).
+
+_se_value(operation(set_notin,(Expr1,(Expr2,()))), val(bool, true)) :-
+    direct_query(operation(set_notin,(Expr1,(Expr2,())))),
+    _se_value(Expr2, set),
+    _se_value(Expr1, V),
+    not _set_contains(Expr2, V).
+
+%%% union
+_se_value(operation(union,Args),set)   :- direct_query(operation(union,Args)).
+_set_contains(operation(union,Args),V) :-
+    direct_query(operation(union,Args)),
+    Arg=@pythonListElements(Args),
+    _set_contains(Arg,V).
+
+%%% set_make
+_se_value(operation(set_make,Args),set) :- direct_query(operation(set_make,Args)).
+_set_contains(operation(set_make,Args),V) :-
+    direct_query(operation(set_make,Args)),
+    Arg=@pythonListElements(Args),
+    _se_value(Arg,V).
+
+%%% inter
+
+%%% diff
+
+
+
+%*_set_assign(LBL,variable(X),E) :- _passed(compile,LBL,set_assign(X,E)).
 _set_declare(LBL,variable(X)) :- _passed(compile,LBL,variable_declare(X,set)).
 
 direct_query(E) :- _set_assign(NAME,X,E).
@@ -180,3 +242,4 @@ _set_as_list_aux(EM,IDX+1,(V,L)) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,ID
 _set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
 
 %_direct_imploded(E,E) :- _direct_implode(E), E = set(_).
+*%
