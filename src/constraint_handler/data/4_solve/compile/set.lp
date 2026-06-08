@@ -58,6 +58,15 @@ _set_contains(operation(set_make,Args),V) :-
 
 %%% diff
 
+%%% equality
+
+%%% subset
+
+
+%%% fold
+
+%%% set_implode
+
 
 
 %*_set_assign(LBL,variable(X),E) :- _passed(compile,LBL,set_assign(X,E)).
