@@ -1,80 +1,107 @@
 %%%%%%%%%%%%%%%%% length
 
-:-
-    _expression(compile2, operation(length, (Expr, ()))),
+_se_value(operation(length, (Expr, ())), val(int, N)) :- 
+    _expression(compile, operation(length, (Expr, ()))),
     _se_value(Expr, val(string, S)),
-    N=@pythonStringLength(S),
-    not _se_value(operation(length, (Expr, ())), val(int, N)).
+    N=@pythonStringLength(S).
 
 %%%%%%%%%%%%%%%%% concat
 
-:-
-    _expression(compile2, operation(concat, (Expr1, (Expr2, ())))),
+_se_value(operation(concat, (Expr1, (Expr2, ()))), val(string, R)) :- 
+    _expression(compile, operation(concat, (Expr1, (Expr2, ())))), 
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    R=@pythonStringAdd(S1,S2),
-    not _se_value(operation(concat, (Expr1, (Expr2, ()))), val(string, R)).
+    R=@pythonStringAdd(S1,S2).
+
+%%%%%%%%%%%%%%%%% eq neq
+_se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, true)) :-
+    _expression(compile, operation(eq, (Expr1, (Expr2, ())))),
+    _se_value(Expr1, val(string, V)),
+    _se_value(Expr2, val(string, V)).
+
+_se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)) :-
+    _expression(compile, operation(eq, (Expr1, (Expr2, ())))),
+    _se_value(Expr1, val(string, V)),
+    not _se_value(Expr2, val(string, V)),
+    not _se_value(Expr2, bad).
+
+%%% TODO: do I actually need both directions?
+_se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)) :-
+    _expression(compile, operation(eq, (Expr1, (Expr2, ())))),
+    _se_value(Expr2, val(string, V)),
+    not _se_value(Expr1, val(string, V)),
+    not _se_value(Expr1, bad).
+
+_se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)) :-
+    _expression(compile, operation(neq, (Expr1, (Expr2, ())))),
+    _se_value(Expr1, val(string, V)),
+    not _se_value(Expr2, val(string, V)),
+    not _se_value(Expr2, bad).
+
+_se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)) :-
+    _expression(compile, operation(neq, (Expr1, (Expr2, ())))),
+    _se_value(Expr2, val(string, V)),
+    not _se_value(Expr1, val(string, V)),
+    not _se_value(Expr1, bad).
+
+_se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, false)) :-
+    _expression(compile, operation(neq, (Expr1, (Expr2, ())))),
+    _se_value(Expr1, val(string, V)),
+    _se_value(Expr2, val(string, V)).
+
 
 %%%%%%%%%%%%%%%%%%%% leq
 
-:-
-    _expression(compile2, operation(leq, (Expr1, (Expr2, ())))),
+_se_value(operation(leq, (Expr1, (Expr2, ()))), val(bool, true)) :-
+    _expression(compile, operation(leq, (Expr1, (Expr2, ())))),
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    S1 <= S2,
-    not _se_value(operation(leq, (Expr1, (Expr2, ()))), val(bool, true)).
+    S1 <= S2.
 
-:-
-    _expression(compile2, operation(leq, (Expr1, (Expr2, ())))),
+_se_value(operation(leq, (Expr1, (Expr2, ()))), val(bool, false)) :-
+    _expression(compile, operation(leq, (Expr1, (Expr2, ())))),
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    S1 > S2,
-    not _se_value(operation(leq, (Expr1, (Expr2, ()))), val(bool, false)).
+    S1 > S2.
 
 %%%%%%%%%%%%%%%%%%%%% lt
 
-:-
-    _expression(compile2, operation(lt, (Expr1, (Expr2, ())))),
+_se_value(operation(lt, (Expr1, (Expr2, ()))), val(bool, true)) :-
+    _expression(compile, operation(lt, (Expr1, (Expr2, ())))),
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    S1 < S2,
-    not _se_value(operation(lt, (Expr1, (Expr2, ()))), val(bool, true)).
+    S1 < S2.
 
-:-
-    _expression(compile2, operation(lt, (Expr1, (Expr2, ())))),
+_se_value(operation(lt, (Expr1, (Expr2, ()))), val(bool, false)) :-
+    _expression(compile, operation(lt, (Expr1, (Expr2, ())))),
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    S1 >= S2,
-    not _se_value(operation(lt, (Expr1, (Expr2, ()))), val(bool, false)).
+    S1 >= S2.
 
 %%%%%%%%%%%%%%%%%%%%%% geq
 
-:-
-    _expression(compile2, operation(geq, (Expr1, (Expr2, ())))),
+_se_value(operation(geq, (Expr1, (Expr2, ()))), val(bool, true)) :-
+    _expression(compile, operation(geq, (Expr1, (Expr2, ())))),
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    S1 >= S2,
-    not _se_value(operation(geq, (Expr1, (Expr2, ()))), val(bool, true)).
+    S1 >= S2.
 
-:-
-    _expression(compile2, operation(geq, (Expr1, (Expr2, ())))),
+_se_value(operation(geq, (Expr1, (Expr2, ()))), val(bool, false)) :-
+    _expression(compile, operation(geq, (Expr1, (Expr2, ())))),
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    S1 < S2,
-    not _se_value(operation(geq, (Expr1, (Expr2, ()))), val(bool, false)).
+    S1 < S2.
 
 %%%%%%%%%%%%%%%%%%%%%% gt
 
-:-
-    _expression(compile2, operation(gt, (Expr1, (Expr2, ())))),
+_se_value(operation(gt, (Expr1, (Expr2, ()))), val(bool, true)) :-
+    _expression(compile, operation(gt, (Expr1, (Expr2, ())))),
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    S1 > S2,
-    not _se_value(operation(gt, (Expr1, (Expr2, ()))), val(bool, true)).
+    S1 > S2.
 
-:-
-    _expression(compile2, operation(gt, (Expr1, (Expr2, ())))),
+_se_value(operation(gt, (Expr1, (Expr2, ()))), val(bool, false)) :-
+    _expression(compile, operation(gt, (Expr1, (Expr2, ())))),
     _se_value(Expr1, val(string, S1)),
     _se_value(Expr2, val(string, S2)),
-    S1 <= S2,
-    not _se_value(operation(gt, (Expr1, (Expr2, ()))), val(bool, false)).
+    S1 <= S2.
