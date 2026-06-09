@@ -12,3 +12,4 @@ evaluate(neq,(val(none,none),(variable(declared_set),()))).
 
 evaluate(eq,(variable(declared_set),(val(int,1),()))).
 evaluate(neq,(val(int,1),(variable(declared_set),()))).
+

@@ -5,8 +5,14 @@
 
 %%% variable declarations, assignments and base domains
 _se_value(variable(X), set) :- _passed(compile, LBL, variable_declare(X,set)).
-_set_contains(Var, Value) :- _passed(compile, LBL, set_assign(Var, Expr)), _se_value(Expr, Value).
-{ _set_contains(Var, Value) } :- _passed(compile, LBL, set_baseDomain(Var, Expr)), _se_value(Expr, Value).
+_set_contains(variable(X), Value) :- 
+    _passed(compile, LBL, variable_define(X,Expr)),
+    _se_value(Expr, set), _set_contains(Expr, Value).
+_set_contains(variable(Var), Value) :- _passed(compile, LBL, set_assign(Var, Expr)), _se_value(Expr, Value).
+{ _set_contains(variable(Var), Value) } :- _passed(compile, LBL, set_baseDomain(Var, Expr)), _se_value(Expr, Value).
+
+% #show _passed(compile, X, Y) : _passed(compile, X, Y).
+% #show .
 
 
 %%% length
@@ -56,7 +62,6 @@ _set_contains(operation(set_make,Args),V) :-
     Arg=@pythonListElements(Args),
     _se_value(Arg,V).
 
-%%% wanko & Abdalla, please check from here
 %%% inter
 _se_value(operation(inter,Args),set)   :- direct_query(operation(inter,Args)).
 _set_contains(operation(inter,(Expr1, Rest)),V) :-
@@ -66,7 +71,6 @@ _set_contains(operation(inter,(Expr1, Rest)),V) :-
     _set_contains(Arg,V) : Arg=@pythonListElements(Rest).
 
 %%% diff
-% I assume binary?
 _se_value(operation(diff,Args),set)   :- direct_query(operation(diff,Args)).
 _set_contains(operation(diff,(Expr1, (Expr2, ()))),V) :-
     direct_query(operation(diff,(Expr1, (Expr2, ())))),
@@ -75,8 +79,6 @@ _set_contains(operation(diff,(Expr1, (Expr2, ()))),V) :-
     not _set_contains(Expr2,V).
 
 %%% equality
-% I assume binary?
-
 _neq(Expr1, Expr2) :- direct_query(operation((eq;neq),(Expr1,(Expr2,())))),
     _set_contains(Expr1,V),
     not _set_contains(Expr2,V).
@@ -104,7 +106,16 @@ _se_value(operation(eq,(Expr1,(Expr2,()))), val(bool, true)) :-
     _se_value(Expr1, set),
     _se_value(Expr2, set),
     not _neq(Expr1, Expr2).
-
+_se_value(operation(eq,(Expr1,(Expr2,()))), val(bool, false)) :-
+    direct_query(operation(eq,(Expr1,(Expr2,())))),
+    not _se_value(Expr1, bad),
+    not _se_value(Expr2, bad),
+    1 = #sum {1:not _se_value(Expr1, set); 1:not _se_value(Expr2, set)}.
+_se_value(operation(neq,(Expr1,(Expr2,()))), val(bool, true)) :-
+    direct_query(operation(neq,(Expr1,(Expr2,())))),
+    not _se_value(Expr1, bad),
+    not _se_value(Expr2, bad),
+    1 = #sum {1:not _se_value(Expr1, set); 1:not _se_value(Expr2, set)}.
 
 %%% subset
 nsubset(Expr1, Expr2) :- direct_query(operation(subset,(Expr1,(Expr2,())))),
