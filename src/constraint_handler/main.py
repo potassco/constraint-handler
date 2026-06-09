@@ -65,8 +65,27 @@ module_4_datatype = [
 
 module_4_compile = [
     "4_solve/compile/direct",
-    "4_solve/compile/optimize",
-    "4_solve/compile/preference",
+    #"4_solve/compile/optimize",
+    #"4_solve/compile/preference",
+]
+
+module_4_compile2 = [
+    "4_solve/compile2/variables",
+    "4_solve/compile2/ensure",
+    "4_solve/compile2/value",
+    "4_solve/compile2/boolean",
+    "4_solve/compile2/set",
+    "4_solve/compile2/int",
+    "4_solve/compile2/float",
+    "4_solve/compile2/string",
+    "4_solve/compile2/symbol",
+    "4_solve/compile2/optimize",
+    "4_solve/compile2/output",
+    "4_solve/compile2/evaluate",
+    "4_solve/compile2/bad",
+    "4_solve/compile2/none",
+    "4_solve/compile2/preference",
+    "4_solve/compile2/python",
 ]
 
 module_4_ground = [
@@ -80,13 +99,14 @@ module_4_propagator = [
 module_4_solve = (
     [
         "4_solve/engine",
-        "4_solve/finiteDomain",
+        #"4_solve/finiteDomain",
         "4_solve/solve",
     ]
-    + module_4_datatype
-    + module_4_compile
-    + module_4_ground
-    + module_4_propagator
+    #+ module_4_datatype
+    #+ module_4_compile
+    #+ module_4_ground
+    #+ module_4_propagator
+    + module_4_compile2
 )
 
 module_5_output = [
