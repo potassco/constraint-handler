@@ -1,0 +1,7 @@
+evaluated(subset,(variable(a),(variable(b),())),val(bool,true))
+evaluated(subset,(variable(b),(variable(a),())),val(bool,false))
+evaluated(subset,(variable(empty),(variable(a),())),val(bool,true))
+evaluated(subset,(variable(a),(variable(empty),())),val(bool,false))
+evaluated(subset,(variable(a),(variable(nd),())),val(bool,true))
+value(bad_set,bad)
+evaluated(subset,(variable(a),(variable(bad_set),())),bad)

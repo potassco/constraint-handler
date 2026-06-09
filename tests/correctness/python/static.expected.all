@@ -1,0 +1,3 @@
+value(constant,val(int,2))
+value(abs_value,val(int,3))
+value(sum_value,val(int,7))

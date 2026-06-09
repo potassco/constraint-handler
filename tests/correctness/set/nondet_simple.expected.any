@@ -1,0 +1,5 @@
+set_value(s,val(int,2))
+evaluated(set_isin,(val(int,2),(variable(s),())),val(bool,true))
+evaluated(set_isin,(val(int,2),(variable(s),())),val(bool,false))
+evaluated(set_notin,(val(int,2),(variable(s),())),val(bool,true))
+evaluated(set_notin,(val(int,2),(variable(s),())),val(bool,false))

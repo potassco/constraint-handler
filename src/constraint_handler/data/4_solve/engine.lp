@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%% engines
-_main_engine(compile;ground;propagator;none).
+_main_engine(compile;compile2;ground;propagator;none).
 
 _main_defaultEngine(ENG) :- defaultEngine(ENG), _main_engine(ENG).
 _main_defaultEngineProvided :- defaultEngine(ENG), _main_engine(ENG).

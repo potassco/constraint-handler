@@ -1,0 +1,3 @@
+value(out,bad)
+value(out,val(int,1))
+value(out,val(int,2))

@@ -9,7 +9,9 @@ import tests.utils.testing as chut
 ctrl_options = ["0", "--heuristic=Domain"]
 
 
-def solve_with_clingo_statistics(name: str, engine: Literal["compile", "ground", "propagator"] = "compile") -> dict:
+def solve_with_clingo_statistics(
+    name: str, engine: Literal["compile", "compile2", "ground", "propagator"] = "compile"
+) -> dict:
     ctl = clingo.Control(["--stats=2"])
     constraint_handler.add_to_control(ctl)
     ctl.add(f"defaultEngine({engine}).")
@@ -22,7 +24,7 @@ def solve_with_clingo_statistics(name: str, engine: Literal["compile", "ground",
     return ctl.statistics
 
 
-def run_test(name: str, engine: Literal["compile", "ground", "propagator"], check_mode: bool = False):
+def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propagator"], check_mode: bool = False):
     name = "tests/correctness/" + name
     engine_prg = f"defaultEngine({engine})."
     for test, extra_args in chut.build_expectations(name):
@@ -81,6 +83,17 @@ base_tests = [
     "expression/tuple_arity_mismatch",
     "expression/tuple_nested",
     "expression/tuple",
+    "python/static",
+    "python/dynamic",
+    "python/bad",
+    "python/set_input",
+    "python/set_output",
+    "python/extract_static",
+    "python/extract_dynamic",
+    "python/extract_bad",
+    "python/extract_succeeds",
+    "python/extract_set_input",
+    "python/extract_set_output",
     "multimap/basics",
     "multimap/equality",
     "multimap/executions",
@@ -106,10 +119,19 @@ base_tests = [
     "set/fold_bools",
     "set/from_domain",
     "set/iterations",
+    "set/length_flat",
+    "set/diff_flat",
+    "set/eq_neq_flat",
+    "set/inter_flat",
     "set/manipulation_flat",
     "set/manipulations",
+    "set/nondet_simple",
+    "set/set_in_set_notin",
+    "set/set_make_flat",
     "set/same_val_multi_expr",
+    "set/subset_flat",
     "set/selfref",
+    "set/union_flat",
     "variable/parallel_declaration",
     "variable/flexible_domain",
     "variable/main",
@@ -134,6 +156,43 @@ base_tests = [
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "engine/request",
+}
+compile2_skip: set[str] = {
+    "engine/request_mult",  # mixed engines
+    "execution/python_integrity",  # non static input
+}
+compile2_xfail: set[str] = {
+    "engine/request",
+    "optimization/multimap_bool",
+    "optimization/multimap_float",
+    "optimization/multimap_float_precision",
+    "optimization/multimap_int",
+    "optimization/multimap_labeled_values",
+    "optimization/priority",
+    "optimization/preferences",
+    "set/manipulations",
+    "set/selfref",
+    "multimap/basics",
+    "multimap/equality",
+    "multimap/executions",
+    "multimap/main",
+    "expression/lambdas",
+    "expression/lambda_recursive",
+    "expression/lambda_zero_args",
+    "set/fold_bools",
+    "set/iterations",
+    "set/nested",
+    "set/membership_nested",
+    "core/type_checking",
+    "engine/request_set_ref",  # mixed engines?
+    "core/reasoning_modes",  # multimap
+    "warning/variable_reservedName",  # multimap
+    "warning/ignore",
+    "warning/syntax",
+    "warning/variable_confusing_name",
+    "warning/variable_undeclared",
+    "warning/python",
+    "warning/python_unsupported_type",
 }
 ground_skip: set[str] = {
     "set/selfref",
@@ -169,6 +228,8 @@ propagator_xfail: set[str] = {
     "optimization/multimap_float_precision",
     "optimization/no_multimap_float_precision",
     "optimization/preferences",
+    "python/set_output",
+    "python/extract_set_output",
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
@@ -181,6 +242,7 @@ propagator_true_xfail: set[str] = propagator_xfail | set()
 
 engine_test_configs: list[tuple[str, set[str], set[str], tuple[bool, ...]]] = [
     ("compile", compile_skip, compile_xfail, (False,)),
+    ("compile2", compile2_skip, compile2_xfail, (False,)),
     ("ground", ground_skip, ground_xfail, (False,)),
     ("propagator", propagator_skip, propagator_xfail, (False,)),
     ("propagator", propagator_true_skip, propagator_true_xfail, (True,)),
@@ -215,11 +277,15 @@ def param_marks(
         for name in base_tests
     ],
 )
-def test_engine(name: str, engine: Literal["compile", "ground", "propagator"], check_mode: bool):
+def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "propagator"], check_mode: bool):
     run_test(name, engine, check_mode)
 
 
-choice_statistics_skip: set[str] = set()
+choice_statistics_skip: set[str] = {
+    "python/dynamic",
+    "python/extract_dynamic",
+    "python/extract_succeeds",
+}
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",
     "core/integrity",
@@ -254,9 +320,18 @@ choice_statistics_xfail: set[str] = {
     "optimization/priority",
     "set/membership_decomposed",
     "set/membership_python",
+    "set/diff_flat",
     "set/from_domain",
+    "set/eq_neq_flat",
+    "set/inter_flat",
+    "set/nondet_simple",
     "set/same_val_multi_expr",
+    "set/set_in_set_notin",
+    "set/set_make_flat",
+    "set/length_flat",
     "set/selfref",
+    "set/subset_flat",
+    "set/union_flat",
     "variable/parallel_declaration",
     "variable/flexible_domain",
     "variable/main",
