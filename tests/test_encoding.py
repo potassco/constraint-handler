@@ -286,7 +286,9 @@ tightness_statistics_xfail: set[str] = {
     [
         pytest.param(
             name,
-            marks=param_marks(name, tightness_statistics_skip, tightness_statistics_xfail, "compile statistics tightness"),
+            marks=param_marks(
+                name, tightness_statistics_skip, tightness_statistics_xfail, "compile statistics tightness"
+            ),
         )
         for name in base_tests
     ],
