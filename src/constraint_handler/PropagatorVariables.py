@@ -44,6 +44,10 @@ class VariableType(Protocol):
     @abstractmethod
     def literals(self) -> set[int]: ...
 
+    @property
+    @abstractmethod
+    def expressions(self) -> set[VariableValue]: ...
+
     @abstractmethod
     def has_domain(self) -> bool: ...
 
@@ -509,6 +513,16 @@ class EnsureVariable:
         """
         return []
 
+    @property
+    def expressions(self) -> set[VariableValue]:
+        """
+        Return the set of VariableValue instances associated with this variable.
+
+        Returns:
+            set[VariableValue]: Set containing the VariableValue of this ensure variable.
+        """
+        return {self.expression}
+
     def has_domain(self) -> bool:
         """
         Return whether the variable has a domain.
@@ -664,6 +678,16 @@ class BoolEvaluateVariable:
 
         self.var = clingo.Function(BoolEvaluateVariable.__var, [clingo.Number(BoolEvaluateVariable.__c)])
         BoolEvaluateVariable.__c += 1
+
+    @property
+    def expressions(self) -> set[VariableValue]:
+        """
+        Return the set of VariableValue instances associated with this variable.
+
+        Returns:
+            set[VariableValue]: Set containing the VariableValue of this boolean evaluation variable.
+        """
+        return {self.expression}
 
     @property
     def parents(self) -> list[VariableType]:
@@ -1056,7 +1080,7 @@ class SetVariableValue:
 
     def __init__(self) -> None:
         """Initialize a SetVariableValue."""
-        self.values: set[VariableValue] = set()
+        self.expressions: set[VariableValue] = set()
 
     def has_domain(self) -> bool:
         """
@@ -1065,7 +1089,7 @@ class SetVariableValue:
         Returns:
             bool: True if any value expression exists.
         """
-        return len(self.values) > 0
+        return len(self.expressions) > 0
 
     def add_value(self, arg: expression.Expr, lit: int) -> None:
         """
@@ -1075,7 +1099,7 @@ class SetVariableValue:
             arg: Expression for a set element.
             lit: Literal guarding the element.
         """
-        self.values.add(VariableValue(arg, lit))
+        self.expressions.add(VariableValue(arg, lit))
 
     def get_errors(self) -> propagator_warning_t:
         """
@@ -1085,7 +1109,7 @@ class SetVariableValue:
             propagator_warning_t: List of warnings.
         """
         errors: propagator_warning_t = []
-        for var_value in self.values:
+        for var_value in self.expressions:
             errors.extend(var_value.get_errors())
         return errors
 
@@ -1098,7 +1122,7 @@ class SetVariableValue:
             set[int]: Set of signed literals.
         """
         lits = set()
-        for value in self.values:
+        for value in self.expressions:
             lits.update(value.literals)
         return lits
 
@@ -1110,7 +1134,7 @@ class SetVariableValue:
         if self.has_unassigned():
             return ValueStatus.NOT_SET
         # Note that we let None be a part of the set!
-        return frozenset(arg.value for arg in self.values if arg.value != ValueStatus.ASSIGNMENT_IS_FALSE)
+        return frozenset(arg.value for arg in self.expressions if arg.value != ValueStatus.ASSIGNMENT_IS_FALSE)
 
     def has_unassigned(self) -> bool:
         """
@@ -1119,7 +1143,7 @@ class SetVariableValue:
         Returns:
             bool: True if any element is NOT_SET.
         """
-        return any(arg.value == ValueStatus.NOT_SET for arg in self.values)
+        return any(arg.value == ValueStatus.NOT_SET for arg in self.expressions)
 
     def vars(self) -> set[clingo.Symbol]:
         """
@@ -1129,14 +1153,14 @@ class SetVariableValue:
             set[clingo.Symbol]: Referenced variables.
         """
         vars = set()
-        for arg in self.values:
+        for arg in self.expressions:
             vars.update(arg.vars())
         return vars
 
     def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         changed = False
-        for arg in self.values:
+        for arg in self.expressions:
             changed |= arg.evaluate(evaluations, ctl, env)
 
         return changed
@@ -1148,19 +1172,19 @@ class SetVariableValue:
         Args:
             dl: Decision level threshold.
         """
-        for arg in self.values:
+        for arg in self.expressions:
             arg.reset(dl)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, SetVariableValue):
             return False
-        return self.values == other.values
+        return self.expressions == other.expressions
 
     def __hash__(self) -> int:
-        return hash(frozenset(self.values))
+        return hash(frozenset(self.expressions))
 
     def __str__(self) -> str:
-        return f"SetVariableValue({self.values})"
+        return f"SetVariableValue({self.expressions})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -1198,7 +1222,7 @@ class SetVariable:
         """
         self.name: str = name
         self.var: clingo.Symbol = var
-        self.expressions: SetVariableValue = SetVariableValue()
+        self.set_expressions: SetVariableValue = SetVariableValue()
 
         self.value: ValueStatus | frozenset[Any] = ValueStatus.NOT_SET
 
@@ -1210,6 +1234,16 @@ class SetVariable:
 
         self.errors: propagator_warning_t = []
 
+    @property
+    def expressions(self) -> set[VariableValue]:
+        """
+        Return the set of VariableValue instances representing possible set elements.
+
+        Returns:
+            set[VariableValue]: Set of possible element expressions.
+        """
+        return self.set_expressions.expressions
+
     def has_domain(self) -> bool:
         """
         Check whether the set has a domain.
@@ -1217,7 +1251,7 @@ class SetVariable:
         Returns:
             bool: True if at least one value can be assigned.
         """
-        return self.expressions.has_domain()
+        return self.set_expressions.has_domain()
 
     def add_value(self, arg: expression.Expr, lit: int) -> None:
         """
@@ -1227,7 +1261,7 @@ class SetVariable:
             arg: Expression representing one possible set element.
             lit: Literal for the corresponding `set_assign/3` atom.
         """
-        self.expressions.add_value(arg, lit)
+        self.set_expressions.add_value(arg, lit)
 
     def get_errors(self) -> propagator_warning_t:
         """
@@ -1236,7 +1270,7 @@ class SetVariable:
         Returns:
             propagator_warning_t: Warnings and errors for this set and its elements.
         """
-        return self.expressions.get_errors() + self.errors
+        return self.set_expressions.get_errors() + self.errors
 
     @property
     def literals(self) -> set[int]:
@@ -1249,7 +1283,7 @@ class SetVariable:
         Returns:
             set[int]: Set of literals.
         """
-        lits = self.expressions.literals
+        lits = self.set_expressions.literals
         if self.assigned is not None:
             if self.assigned:
                 lits.add(self.literal)
@@ -1271,7 +1305,7 @@ class SetVariable:
         Returns:
             bool: True if at least one element is unassigned.
         """
-        return self.expressions.has_unassigned()
+        return self.set_expressions.has_unassigned()
 
     def vars(self) -> set[clingo.Symbol]:
         """
@@ -1280,7 +1314,7 @@ class SetVariable:
         Returns:
             set[clingo.Symbol]: Variables used in element expressions.
         """
-        return self.expressions.vars()
+        return self.set_expressions.vars()
 
     def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
         """
@@ -1301,10 +1335,10 @@ class SetVariable:
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CHANGED
 
-        changed = self.expressions.evaluate(evaluations, ctl, env)
+        changed = self.set_expressions.evaluate(evaluations, ctl, env)
 
         if changed or not self.has_unassigned():
-            self.value = self.expressions.get_value()
+            self.value = self.set_expressions.get_value()
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
@@ -1320,7 +1354,7 @@ class SetVariable:
         Args:
             dl: Decision level threshold.
         """
-        self.expressions.reset(dl)
+        self.set_expressions.reset(dl)
         if self.decision_level >= dl:
             self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = ValueStatus.NOT_SET
@@ -1353,10 +1387,10 @@ class SetVariable:
     def __eq__(self, value) -> bool:
         if not isinstance(value, SetVariable):
             return False
-        return self.var == value.var and self.expressions == value.expressions
+        return self.var == value.var and self.set_expressions == value.set_expressions
 
     def __hash__(self) -> int:
-        return hash((self.var, self.expressions))
+        return hash((self.var, self.set_expressions))
 
     def __str__(self) -> str:
         return f"SetVariable({self.name}, {self.var})"
@@ -1397,7 +1431,7 @@ class DictVariable:
         """
         self.name: str = name
         self.var: clingo.Symbol = var
-        self.expressions: dict[VariableValue, SetVariableValue] = multimap.HashableDict()
+        self.dict_expressions: dict[VariableValue, SetVariableValue] = multimap.HashableDict()
 
         self.value: ValueStatus | dict[clingo.Symbol, Any] = ValueStatus.NOT_SET
 
@@ -1408,6 +1442,20 @@ class DictVariable:
         self.parents: list[VariableType] = []
 
         self.errors: propagator_warning_t = []
+
+    @property
+    def expressions(self) -> set[VariableValue]:
+        """
+        Return the set of VariableValue instances representing possible keys and their associated values.
+
+        Returns:
+            set[VariableValue]: Set of possible key expressions.
+        """
+        exprs = set()
+        for key, value in self.dict_expressions.items():
+            exprs.add(key)
+            exprs.update(value.expressions)
+        return exprs
 
     def add_value(self, key: expression.Expr, expr: expression.Expr, lit: int) -> None:
         """
@@ -1421,9 +1469,9 @@ class DictVariable:
         # setting lit for key to 1 since it does not have its own literal
         # the literal is bound for the value!
         key_val = VariableValue(key, 1)
-        if key_val not in self.expressions:
-            self.expressions[key_val] = SetVariableValue()
-        self.expressions[key_val].add_value(expr, lit)
+        if key_val not in self.dict_expressions:
+            self.dict_expressions[key_val] = SetVariableValue()
+        self.dict_expressions[key_val].add_value(expr, lit)
 
     def has_domain(self) -> bool:
         """
@@ -1432,7 +1480,7 @@ class DictVariable:
         Returns:
             bool: True if there are key-value pairs, False otherwise.
         """
-        return len(self.expressions) > 0
+        return len(self.dict_expressions) > 0
 
     def get_errors(self) -> propagator_warning_t:
         """
@@ -1442,7 +1490,7 @@ class DictVariable:
             propagator_warning_t: List of warnings or errors.
         """
         errors: propagator_warning_t = []
-        for key, value in self.expressions.items():
+        for key, value in self.dict_expressions.items():
             errors.extend(key.get_errors())
             errors.extend(value.get_errors())
         return errors + self.errors
@@ -1459,7 +1507,7 @@ class DictVariable:
             set[int]: Set of literals.
         """
         lits = set()
-        for key, value in self.expressions.items():
+        for key, value in self.dict_expressions.items():
             lits.update(value.literals)
             lits.update(key.literals)
 
@@ -1486,7 +1534,7 @@ class DictVariable:
         If any value is unassigned, returns None for that key.
         """
         result = multimap.HashableDict()
-        for key, value in self.expressions.items():
+        for key, value in self.dict_expressions.items():
             key_val = key.value
             val = value.get_value()
             if val == ValueStatus.NOT_SET or key_val == ValueStatus.NOT_SET:
@@ -1509,7 +1557,7 @@ class DictVariable:
         Returns:
             bool: True if any key/value expression is unassigned.
         """
-        return any(key.assigned is None or value.has_unassigned() for key, value in self.expressions.items())
+        return any(key.assigned is None or value.has_unassigned() for key, value in self.dict_expressions.items())
 
     def vars(self) -> set[clingo.Symbol]:
         """
@@ -1519,7 +1567,7 @@ class DictVariable:
             set[clingo.Symbol]: Variables used in key/value expressions.
         """
         vars = set()
-        for key, value in self.expressions.items():
+        for key, value in self.dict_expressions.items():
             vars.update(value.vars())
             vars.update(key.vars())
         return vars
@@ -1545,7 +1593,7 @@ class DictVariable:
             return EvaluationResult.CHANGED
 
         changed = False
-        for key, value in self.expressions.items():
+        for key, value in self.dict_expressions.items():
             changed |= key.evaluate(evaluations, ctl, env)
             changed |= value.evaluate(evaluations, ctl, env)
 
@@ -1566,7 +1614,7 @@ class DictVariable:
         Args:
             dl: Decision level threshold.
         """
-        for key, value in self.expressions.items():
+        for key, value in self.dict_expressions.items():
             key.reset(dl)
             value.reset(dl)
 
@@ -1602,10 +1650,10 @@ class DictVariable:
     def __eq__(self, other) -> bool:
         if not isinstance(other, DictVariable):
             return False
-        return self.var == other.var and self.expressions == other.expressions
+        return self.var == other.var and self.dict_expressions == other.dict_expressions
 
     def __hash__(self) -> int:
-        return hash((self.var, frozenset(self.expressions.items())))
+        return hash((self.var, frozenset(self.dict_expressions.items())))
 
     def __str__(self) -> str:
         return f"DictVariable({self.name}, {self.var})"
@@ -1634,10 +1682,20 @@ class OptimizationSum:
         Args:
             priority: Priority of the optimization sum.
         """
-        self.expressions: list[tuple[clingo.Symbol, VariableValue]] = []
+        self.opt_expressions: list[tuple[clingo.Symbol, VariableValue]] = []
         self.value: int | float = -sys.maxsize
         self.priority: int = priority
         self.decision_level: int = DEFAULT_DECISION_LEVEL
+
+    @property
+    def expressions(self) -> set[VariableValue]:
+        """
+        Return the set of VariableValue instances representing the expressions in the optimization sum.
+
+        Returns:
+            set[VariableValue]: Set of expressions in the optimization sum.
+        """
+        return set(expr for _, expr in self.opt_expressions)
 
     def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int) -> None:
         """
@@ -1648,7 +1706,7 @@ class OptimizationSum:
             expr: Expression to evaluate.
             lit: Associated literal.
         """
-        self.expressions.append((var, VariableValue(expr, lit)))
+        self.opt_expressions.append((var, VariableValue(expr, lit)))
 
     @property
     def literals(self) -> set[int]:
@@ -1659,7 +1717,7 @@ class OptimizationSum:
             set[int]: Set of literals.
         """
         lits = set()
-        for var, expr in self.expressions:
+        for var, expr in self.opt_expressions:
             lits.update(expr.literals)
         return lits
 
@@ -1672,7 +1730,7 @@ class OptimizationSum:
         """
         vals = set()
         # TODO: check if we need to also need to excluce Bad.bad from the sums
-        for var, expr in self.expressions:
+        for var, expr in self.opt_expressions:
             if expr.value not in [ValueStatus.NOT_SET, ValueStatus.ASSIGNMENT_IS_FALSE, None, expression.Bad.bad]:
                 vals.add((var, expr.value))
 
@@ -1695,7 +1753,7 @@ class OptimizationSum:
             propagator_warning_t: List of warnings or errors.
         """
         errors: propagator_warning_t = []
-        for _, expr in self.expressions:
+        for _, expr in self.opt_expressions:
             errors.extend(expr.get_errors())
         return errors
 
@@ -1713,7 +1771,7 @@ class OptimizationSum:
         """
         changed = False
 
-        for var, expr in self.expressions:
+        for var, expr in self.opt_expressions:
             changed |= expr.evaluate(evaluations, ctl, env)
 
         if changed:
@@ -1721,7 +1779,7 @@ class OptimizationSum:
             if total != self.value:
                 self.decision_level = ctl.assignment.decision_level
                 self.value = total
-                return True
+            return True
 
         return False
 
@@ -1733,7 +1791,7 @@ class OptimizationSum:
             set[clingo.Symbol]: Set of variables in the optimization sum.
         """
         vars = set()
-        for var, expr in self.expressions:
+        for var, expr in self.opt_expressions:
             vars.update(expr.vars())
         return vars
 
@@ -1744,7 +1802,7 @@ class OptimizationSum:
         Args:
             dl: Decision level threshold.
         """
-        for var, expr in self.expressions:
+        for var, expr in self.opt_expressions:
             expr.reset(dl)
 
         if self.decision_level >= dl:
@@ -1758,10 +1816,10 @@ class OptimizationSum:
         Returns:
             bool: True if any value is unassigned, False otherwise.
         """
-        return any(expr.value == ValueStatus.NOT_SET for var, expr in self.expressions)
+        return any(expr.value == ValueStatus.NOT_SET for var, expr in self.opt_expressions)
 
     def __repr__(self) -> str:
-        return f"OptimizationSum({self.expressions})"
+        return f"OptimizationSum({self.opt_expressions})"
 
 
 class OptimizationHandler:
@@ -1779,6 +1837,19 @@ class OptimizationHandler:
         Initialize an OptimizationHandler.
         """
         self.sums: list[OptimizationSum] = []
+
+    @property
+    def expressions(self) -> set[VariableValue]:
+        """
+        Return the set of VariableValue instances representing all expressions in all optimization sums.
+
+        Returns:
+            set[VariableValue]: Set of expressions in all optimization sums.
+        """
+        exprs = set()
+        for _sum in self.sums:
+            exprs.update(_sum.expressions)
+        return exprs
 
     def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int, priority: int = 0) -> None:
         """
