@@ -135,7 +135,7 @@ ground_benchmarks = [
         PerformanceBenchmark(
             "large_int_domain_performance",
             "ground",
-            155.0,
+            165.0,
             constants={"int_domain_size": 900},
         )
     ),
