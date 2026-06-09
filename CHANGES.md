@@ -2,6 +2,12 @@
 
 ## Ongoing
 
+## v0.0.2.dev13
+
+- introduce caching for Clorm type resolution within `myClorm.py`.
+- fix typo in commented-out alternative variable guessing implementation inside
+  `finiteDomain.lp`.
+
 ## v0.0.2.dev12
 
 - introduce caching for Python functions and dynamic Python executions and
