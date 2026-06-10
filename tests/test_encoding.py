@@ -25,13 +25,9 @@ def solve_with_clingo_statistics(name: str, engine: Literal["compile", "ground",
 def run_test(name: str, engine: Literal["compile", "ground", "propagator"], check_mode: bool = False):
     name = "tests/correctness/" + name
     engine_prg = f"defaultEngine({engine})."
-    solver = chut.Solver(ctrl_options, engine_prg, files=[name + ".lp"], propagator_check_only=check_mode)
-    test = chut.build_expectations(name)
-    solver.solve(test)
-    test.assert_()
-
-    for test, extra_args in chut.build_expectations_with_args(name):
-        solver = chut.Solver(ctrl_options + extra_args, engine_prg, files=[name + ".lp"], propagator_check_only=check_mode)
+    for test, extra_args in chut.build_expectations(name):
+        options = ctrl_options + extra_args
+        solver = chut.Solver(options, engine_prg, files=[name + ".lp"], propagator_check_only=check_mode)
         solver.solve(test)
         test.assert_()
 
