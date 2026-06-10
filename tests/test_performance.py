@@ -135,8 +135,8 @@ ground_benchmarks = [
         PerformanceBenchmark(
             "large_int_domain_performance",
             "ground",
-            165.0,
-            constants={"int_domain_size": 900},
+            60.0,
+            constants={"int_domain_size": 600},
         )
     ),
     benchmark_param(
