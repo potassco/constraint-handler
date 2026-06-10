@@ -5,6 +5,7 @@ import sys
 from typing import Any, Iterable, Literal, Sequence, cast
 
 import clingo
+from clingo import Symbol
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
@@ -83,6 +84,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.best_value: list[int | float] = [-sys.maxsize]
         self.using_optimization: bool = False
         self.optimization_strength: OptimizationStrength = OptimizationStrength.STRICT
+        self.prop_sum_atoms: list[Symbol] = []  # used in the postprocessings
 
         self.environment: dict[Any, Any] = {}
 
@@ -154,6 +156,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.optimization_sum = OptimizationHandler()
         self.environment = {}
         self.errors.clear()
+
+        if self.check_only:
+            init.check_mode = clingo.PropagatorCheckMode.Total
 
         self.get_solver_identifier(init)
 
@@ -277,9 +282,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if backtrack:
             # backtracking due to conflicts in evaluation of variables
             return
-
-        # Evaluated assignments
-        self.evaluations.update_evaluations(self.symbol2var.get_variables())
 
         # If not backtracking, check optimization sums
         backtrack = self.evaluate_optimization_sum(control)
@@ -578,7 +580,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         ng: set[int] = self.get_reasons(var)
         if extra_literals:
             ng = ng.union(extra_literals)
-
         prop_stop = ctl.add_nogood(ng)
         if conflict and prop_stop:
             assert (
@@ -1009,6 +1010,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         maxSums = myClorm.findInPropagateInit(ctl, atom.Propagator_optimize_maximizeSum)
+
+        for prop_sum in ctl.symbolic_atoms.by_signature("propagator_optimize_maximizeSum", 4):
+            self.prop_sum_atoms.append(prop_sum.symbol)
+
         for (_, expr, symbol, priority), literal in maxSums.items():
             self.using_optimization = True
             self.optimization_sum.add_value(symbol, expr, literal, priority)
@@ -1261,6 +1266,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 model.extend([clAtom])
 
         if self.using_optimization:
+            self.add_optimization_values(model)
             if clingo.Function(OPTIMIZATION_STAGE_ATOM, [clingo.Number(2)]) in model.symbols(atoms=True):
                 self.optimal_models_found += 1
             if self.optimal_models_wanted > 0 and self.optimal_models_found >= self.optimal_models_wanted:
@@ -1388,3 +1394,38 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 if not assigned:
                     # if warning is not ignored, add to model
                     self.python_model.add(__warning)
+
+    def get_expr_values(self, variables: Iterable[VariableType | OptimizationHandler]) -> dict[Symbol, Symbol]:
+        """
+        Get the expressions and their evaluated values for a list of variables.
+        This is intended to be used in the post processing
+
+        Args:
+            variables: Iterable ofVariableTypes or OptimizationHandlers for which to get the expressions and their evaluated values.
+        """
+        vals = {}
+        for var in variables:
+            for expr in var.expressions:
+                if expr.value not in [ValueStatus.NOT_SET, ValueStatus.ASSIGNMENT_IS_FALSE, None, expression.Bad.bad]:
+                    vals[myClorm.pytocl(expr.expr)] = post_processor._numeric_value_symbol(
+                        expr.value, type(expr.value) is float
+                    )
+
+        return vals
+
+    def add_optimization_values(self, model: clingo.Model):
+        """
+        Add optimization value atoms for optimization sums to the model.
+        This uses the post_processor.py "_extend_optimize_values" function.
+
+        Args:
+            model: Clingo model to extend.
+        """
+        assert self.python_model is not None
+        optimize_values = post_processor._extend_optimize_values(
+            self.get_expr_values([self.optimization_sum]), self.prop_sum_atoms
+        )
+        for opt_val in optimize_values:
+            clAtom = myClorm.pytocl(opt_val)
+            if not model.contains(clAtom):
+                model.extend([clAtom])
