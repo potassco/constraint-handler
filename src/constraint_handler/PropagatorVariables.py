@@ -86,7 +86,7 @@ class VariableManager:
     def __init__(self):
         self.variables: dict[clingo.Symbol, dict[VariableTypeNames, VariableType]] = {}
         self.user_variable_names: set[clingo.Symbol] = set()
-    
+
     def add_user_variable_name(self, name: clingo.Symbol) -> None:
         """
         Add a variable name to the set of user variable names.

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.domain as domain
+import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.warning as warning
 
 Bool_evaluated = atom.Bool_evaluated
