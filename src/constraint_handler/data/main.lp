@@ -24,7 +24,8 @@ _warning_ignore(KIND) :- _passed(sugar,LBL,warning_ignore(KIND)).
 %%%%%%%%%%%%%%%%% phases
 #defined phase_request/2.
 
-_phase(solve;wf_check;type_check).
+_phase(solve).
+_phase(constantFolding;type_check;wf_check).
 _phase_default(constantFolding,true).
 _phase_default(solve,true).
 _phase_default(wf_check,true).
