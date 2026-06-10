@@ -174,7 +174,6 @@ def run_performance_session(session):
             *pytest_args,
             f"--benchmark-storage={BENCHMARK_ROOT.resolve().as_uri()}",
             f"--benchmark-save={benchmark_save_name()}",
-            "--benchmark-min-rounds=1",
             "-m",
             "performance",
             "-vvv",

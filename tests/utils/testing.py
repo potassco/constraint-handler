@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 import clingo
 import clintest.assertion
@@ -11,8 +11,6 @@ from clintest.outcome import Outcome
 from clintest.quantifier import All, Any, Exact, Finished, First, Last, Quantifier
 
 import constraint_handler
-import constraint_handler.evaluator as evaluator
-import constraint_handler.myClorm as myClorm
 from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM
 
 
@@ -25,6 +23,19 @@ def atoms_from_file(file_name):
         return []
 
 
+def stats_from_file(file_name: str) -> dict[str, str]:
+    try:
+        with open(file_name, "r", encoding="utf-8") as file_handle:
+            return {
+                key: value
+                for raw_line in file_handle
+                if (line := raw_line.strip())
+                for key, value in [line.split("=", 1)]
+            }
+    except FileNotFoundError:
+        return {}
+
+
 def contains(atom):
     return clintest.assertion.Or(clintest.assertion.Contains(atom), TheoryContains(atom))
 
@@ -33,65 +44,57 @@ def absent(atom):
     return clintest.assertion.Not(clintest.assertion.Or(clintest.assertion.Contains(atom), TheoryContains(atom)))
 
 
-def build_expectations(name):
-    tests = []
-    expected_all = atoms_from_file(name + ".expected.all")
-    for atom in expected_all:
-        tests.append(clintest.test.Assert(All(), contains(atom)))
-    expected_any = atoms_from_file(name + ".expected.any")
-    for atom in expected_any:
-        tests.append(clintest.test.Assert(Any(), contains(atom)))
-    expected_none = atoms_from_file(name + ".expected.none")
-    for atom in expected_none:
-        tests.append(clintest.test.Assert(All(), absent(atom)))
-    expected_first = atoms_from_file(name + ".expected.first")
-    for atom in expected_first:
-        tests.append(clintest.test.Assert(First(), contains(atom)))
-    expected_last = atoms_from_file(name + ".expected.last")
-    for atom in expected_last:
-        tests.append(clintest.test.Assert(Last(), contains(atom)))
-    expected_models: List = atoms_from_file(name + ".expected.models")
-    if expected_models:
-        expected_models = expected_models[0].number
-        tests.append(clintest.test.Assert(Exact(expected_models), clintest.assertion.True_()))
-    elif (expected_all or expected_first or expected_last) and not expected_any:
-        tests.append(clintest.test.Assert(Any(), clintest.assertion.True_()))
-    return clintest.test.And(*tests)
-
-
-def build_expectations_with_args(name) -> list[tuple[clintest.test.Test, list[str]]]:
+def build_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
+    name = name + ".expected."
     tests = []
 
-    expected_brave = atoms_from_file(name + ".expected.brave")
-    if expected_brave:
-        test_brave = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_brave))
-        test_brave = (test_brave, ["--enum-mode=brave"])
-        tests.append(test_brave)
+    test_noargs = []
+    for atom in atoms_from_file(name + "all"):
+        test_noargs.append(clintest.test.Assert(All(), contains(atom)))
+    for atom in atoms_from_file(name + "any"):
+        test_noargs.append(clintest.test.Assert(Any(), contains(atom)))
+    for atom in atoms_from_file(name + "none"):
+        test_noargs.append(clintest.test.Assert(All(), absent(atom)))
+    for atom in atoms_from_file(name + "first"):
+        test_noargs.append(clintest.test.Assert(First(), contains(atom)))
+    for atom in atoms_from_file(name + "last"):
+        test_noargs.append(clintest.test.Assert(Last(), contains(atom)))
+    expected_stats = stats_from_file(name + "stats")
+    if "models" in expected_stats:
+        expected_models = int(expected_stats["models"])
+        test_noargs.append(clintest.test.Assert(Exact(expected_models), clintest.assertion.True_()))
+    else:
+        satisfiability_implicit = any(
+            (os.path.isfile(name + extension) for extension in ("all", "none", "first", "last", "optall", "optnone"))
+        )
+        satisfiability_asserted = any(
+            (os.path.isfile(name + extension) for extension in ("any", "brave", "cautious", "optany"))
+        )
+        satisfiable = clintest.test.Assert(Any(), clintest.assertion.True_())
+        if satisfiability_implicit and not satisfiability_asserted:
+            test_noargs.append(satisfiable)
 
-    expected_cautious = atoms_from_file(name + ".expected.cautious")
-    if expected_cautious:
-        test_cautious = clintest.test.And(*(clintest.test.Assert(Last(), contains(atom)) for atom in expected_cautious))
-        test_cautious = (test_cautious, ["--enum-mode=cautious"])
-        tests.append(test_cautious)
+    if test_noargs:
+        tests.append((clintest.test.And(*test_noargs), []))
 
-    expected_opt_all = atoms_from_file(name + ".expected.optall")
-    if expected_opt_all:
-        test_opt_all = clintest.test.And(*(AssertOptimal(All(), contains(atom)) for atom in expected_opt_all))
-        tests.append((test_opt_all, ["--opt-mode=optN"]))
+    test_brave = (clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "brave"))
+    if test_brave:
+        tests.append((clintest.test.And(*test_brave), ["--enum-mode=brave"]))
 
-    expected_opt_any = atoms_from_file(name + ".expected.optany")
-    if expected_opt_any:
-        test_opt_any = clintest.test.And(*(AssertOptimal(Any(), contains(atom)) for atom in expected_opt_any))
-        tests.append((test_opt_any, ["--opt-mode=optN"]))
+    test_cautious = (clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "cautious"))
+    if test_cautious:
+        tests.append((clintest.test.And(*test_cautious), ["--enum-mode=cautious"]))
 
-    expected_opt_none = atoms_from_file(name + ".expected.optnone")
-    if expected_opt_none:
-        test_opt_none = clintest.test.And(*(AssertOptimal(All(), absent(atom)) for atom in expected_opt_none))
-        tests.append((test_opt_none, ["--opt-mode=optN"]))
+    test_optimize = []
+    for atom in atoms_from_file(name + "optall"):
+        test_optimize.append(AssertOptimal(All(), contains(atom)))
+    for atom in atoms_from_file(name + "optany"):
+        test_optimize.append(AssertOptimal(Any(), contains(atom)))
+    for atom in atoms_from_file(name + "optnone"):
+        test_optimize.append(AssertOptimal(All(), absent(atom)))
+    if test_optimize:
+        tests.append((clintest.test.And(*test_optimize), ["--opt-mode=optN"]))
 
-    if (expected_brave or expected_cautious or expected_opt_all) and not expected_opt_any:
-        test_exists = clintest.test.Assert(Any(), clintest.assertion.True_())
-        tests.append((test_exists, []))
     return tests
 
 
@@ -186,29 +189,3 @@ class Solver(clintest.solver.Solver):
         files = repr(self.__files)
         prop = repr(self.__propagator_check_only)
         return f"{name}({arguments}, {program}, {files}, {prop})"
-
-
-class PropPrint(clingo.propagator.Propagator):
-    def __init__(self):
-        print("creation")
-
-    def init(self, init):
-        print("init")
-
-    def propagate(self, ctl, changes):
-        for atom in changes:
-            print(atom, end=" ")
-        print()
-
-    def check(self, ctl):
-        print("check", len(ctl.assignment.trail))
-
-    def on_model(self, model):
-        value_map = {"b": True, "i": 42, "y": 85, "s": "foo", "x": "foo", "f": 47.1}
-        for var, val in value_map.items():
-            symbol = clingo.Function(var)
-            base_type = myClorm.pytocl(evaluator.get_baseType(val))
-            value = myClorm.pytocl(val)
-            fact = clingo.Function("value", [symbol, base_type, value])
-            print(f"extending with {fact}")
-            model.extend([fact])
