@@ -19,7 +19,7 @@ from constraint_handler.PropagatorConstants import (
 )
 
 
-def create_bad_value_warning(variable: VariableType) -> warning.Warning | None:
+def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warning.Warning | None:
 
     if not (
         variable.get_value() == expression.Bad.bad  # ty:ignore[unresolved-attribute]
@@ -412,25 +412,9 @@ class EvaluateVariable:
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
 
-        if (
-            self.value == expression.Bad.bad  # ty:ignore[unresolved-attribute]
-            or (
-                isinstance(self.value, frozenset) and expression.Bad.bad in self.value
-            )  # ty:ignore[unresolved-attribute]
-            or (
-                isinstance(self.value, dict)
-                and (
-                    expression.Bad.bad in self.value.values() or expression.Bad.bad in self.value.keys()
-                )  # ty:ignore[unresolved-attribute]
-            )
-        ):
-            self.errors.append(
-                warning.Warning(
-                    warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
-                    (self.op, tuple(self.args)),
-                    f"Bad value for operation {self.op} with arguments {self.args}",
-                )
-            )
+        bad_value_warning = create_bad_value_warning(self)
+        if bad_value_warning is not None:
+            self.errors.append(bad_value_warning)
 
         return True
 
