@@ -31,7 +31,7 @@ def run_test(name: str, engine: Literal["compile", "ground", "propagator"], chec
     test.assert_()
 
     for test, extra_args in chut.build_expectations_with_args(name):
-        solver = chut.Solver(ctrl_options + extra_args, engine_prg, files=[name + ".lp"])
+        solver = chut.Solver(ctrl_options + extra_args, engine_prg, files=[name + ".lp"], propagator_check_only=check_mode)
         solver.solve(test)
         test.assert_()
 
@@ -168,10 +168,19 @@ propagator_xfail: set[str] = {
     "warning/python_unsupported_type",
 }
 
+propagator_true_skip: set[str] = propagator_skip | set()
+propagator_true_xfail: set[str] = propagator_xfail | {
+    "optimization/bools",
+    "optimization/floats",
+    "optimization/ints",
+    "optimization/priority",
+}
+
 engine_test_configs: list[tuple[str, set[str], set[str], tuple[bool, ...]]] = [
     ("compile", compile_skip, compile_xfail, (False,)),
     ("ground", ground_skip, ground_xfail, (False,)),
-    ("propagator", propagator_skip, propagator_xfail, (True, False)),
+    ("propagator", propagator_skip, propagator_xfail, (False,)),
+    ("propagator", propagator_true_skip, propagator_true_xfail, (True,)),
 ]
 
 
