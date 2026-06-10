@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- avoid displaying detailed pytest-benchmarks statistics
 - unify testing of reasoning modes with testing of base solving
 - replace `.expected.models` with `.expected.stats` contains key-value pairs
 - use pytests's xfail and skip
