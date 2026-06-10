@@ -10,6 +10,14 @@ def pythonIsExpr(clE):
         return myClorm.pytocl(False)
 
 @cache
+def pythonNormalExpr(clE):
+    try:
+        pE = myClorm.cltopy(clE,expression.Expr)
+        return myClorm.pytocl(pE)
+    except myClorm.FailedInstantiationExn:
+        return myClorm.pytocl(expression.Bad.bad)
+
+@cache
 def pythonExpressionVariable(clExpr):
     try:
         pExpr = myClorm.cltopy(clExpr,expression.Expr)

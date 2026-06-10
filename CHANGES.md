@@ -2,7 +2,8 @@
 
 ## Ongoing
 
-- implement float equality operator extensionally (we still need to normalize the input)
+- implement float equality operators extensionally
+- normalize float constant representation
 - avoid generating badValue warnings for internal variables
 - avoid displaying detailed pytest-benchmarks statistics
 - unify testing of reasoning modes with testing of base solving

@@ -25,11 +25,15 @@ _warning_ignore(KIND) :- _passed(sugar,LBL,warning_ignore(KIND)).
 #defined phase_request/2.
 
 _phase(solve).
-_phase(constantFolding;type_check;wf_check).
-_phase_default(constantFolding,true).
 _phase_default(solve,true).
-_phase_default(wf_check,true).
+_phase(constantFolding).
+_phase_default(constantFolding,true).
+_phase(float_normalize).
+_phase_default(float_normalize,true).
+_phase(type_check).
 _phase_default(type_check,true).
+_phase(wf_check).
+_phase_default(wf_check,true).
 
 _phase_userRequest(PHASE) :- phase_request(PHASE,BOOL), _phase(PHASE).
 _phase_active(PHASE) :- _phase_default(PHASE,true), not _phase_userRequest(PHASE).
