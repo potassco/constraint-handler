@@ -16,7 +16,6 @@ import constraint_handler.schemas.propagator_atom as atom
 import constraint_handler.schemas.type_ as type_
 import constraint_handler.schemas.warning as warning
 from constraint_handler.PropagatorConstants import (
-    EXECUTION_OUTPUT,
     OPTIMIZATION_HELPER_PROGRAM,
     OPTIMIZATION_STAGE_ATOM,
     OTHER_ENGINE_VAR_NAME,
@@ -34,7 +33,6 @@ from constraint_handler.PropagatorVariables import (
     EnsureVariable,
     EvaluateVariable,
     Evaluations,
-    Execution,
     OptimizationHandler,
     SetVariable,
     Variable,
@@ -168,7 +166,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.get_set_declarations(init)
         self.get_multimap_declarations(init)
         self.get_optimization_sums(init)
-        self.get_execution_declarations(init)
         self.get_engine_variables(init)
         self.get_evaluate(init)
 
@@ -667,8 +664,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             seen = set()
         reasons = var.literals
         for dvar in var.vars():
-            if dvar.name == EXECUTION_OUTPUT:
-                dvar = dvar.arguments[0]
             if dvar not in self.symbol2var:
                 continue
             for vartype in self.symbol2var[dvar].values():
@@ -1101,46 +1096,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-    def get_execution_declarations(self, ctl: clingo.PropagateInit):
-        """
-        Load execution blocks and run-atoms from ASP facts and create Execution instances.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-        declares = myClorm.findInPropagateInit(ctl, atom.Propagator_execution_declare)
-        for (name, symbol_var, stmt, in_v, out_v), literal in declares.items():
-            if not self.symbol2var.has_var_type(symbol_var, getattr(Execution, "__name__")):
-                variable = Execution(name, symbol_var, in_v, out_v)
-                self.symbol2var.add_variable(symbol_var, variable)
-
-            variable = cast(Execution, self.symbol2var.get_variable(symbol_var, getattr(Execution, "__name__")))
-            variable.add_statement(stmt, literal)
-            self.literal2var.setdefault(literal, []).append(variable)
-
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
-
-        exec_runs = myClorm.findInPropagateInit(ctl, atom.Propagator_execution_run)
-        for (name, symbol_var), literal in exec_runs.items():
-            if not self.symbol2var.has_var_type(symbol_var, getattr(Execution, "__name__")):
-                self.errors.append(
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.undeclared),  # ty:ignore[unresolved-attribute]
-                        (symbol_var,),
-                        f"Execution variable '{symbol_var}' run exists but variable not declared!",
-                    )
-                )
-                continue
-            execvar: Execution = cast(
-                Execution, self.symbol2var.get_variable(symbol_var, getattr(Execution, "__name__"))
-            )
-            execvar.add_run_literal(literal)
-            self.literal2var.setdefault(literal, []).append(execvar)
-
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
-
     def get_forbidden_warnings(self, ctl: clingo.PropagateInit) -> None:
         """
         Load `warning_forbid` atoms.
@@ -1180,10 +1135,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for var in self.symbol2var.get_variables():
             for symbol_var in var.vars():
-                if symbol_var.name.startswith(EXECUTION_OUTPUT):
-                    # if the variable it depends on is an execution output,
-                    # then we look for the name of the execution variable
-                    symbol_var = symbol_var.arguments[0]
                 if symbol_var == var.var:
                     # don't add self as parent
                     # for self referencing variables
@@ -1229,14 +1180,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
                 continue
 
-            if isinstance(var, Execution):
-                for var, value in final_value:
-                    if value is ValueStatus.NOT_SET:
-                        assert False, f"Execution variable {var} has output with no value set in on_model!"
-
-                    self.handle_on_model_value(var, value)
-            else:
-                self.handle_on_model_value(var.var, final_value)
+            self.handle_on_model_value(var.var, final_value)
 
         for eval_var in self.evaluatevars:
             self.handle_on_model_warning(eval_var.get_errors())
