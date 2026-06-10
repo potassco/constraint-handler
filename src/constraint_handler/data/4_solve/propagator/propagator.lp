@@ -33,3 +33,6 @@ propagator_optimize_precision(PREC,PRIO) :- _passed(propagator,LBL,optimize_prec
 
 propagator_warning_forbid(LBL,W) :- _passed(solve,LBL,warning_forbid(W)).
 propagator_warning_ignore(LBL,W) :- _passed(solve,LBL,warning_ignore(W)).
+
+
+propagator_variable_interface(LBL,X) :- _passed(propagator,LBL,variable_interface(X)).

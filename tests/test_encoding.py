@@ -104,6 +104,7 @@ base_tests = [
     "variable/main",
     "variable/same_val_multi_expr",
     "warning/bad",
+    "warning/bad_interface",
     "warning/fake_forbid",
     "warning/ignore",
     "warning/python",
@@ -161,6 +162,7 @@ propagator_xfail: set[str] = {
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
+    "warning/bad_interface",
     "warning/python_unsupported_type",
 }
 
