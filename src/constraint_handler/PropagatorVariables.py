@@ -23,6 +23,29 @@ from constraint_handler.PropagatorConstants import (
 )
 
 
+def create_bad_value_warning(variable: VariableType) -> warning.Warning | None:
+
+    if not (
+        variable.get_value() == expression.Bad.bad  # ty:ignore[unresolved-attribute]
+        or (
+            isinstance(variable.get_value(), frozenset) and expression.Bad.bad in variable.get_value()
+        )  # ty:ignore[unresolved-attribute]
+        or (
+            isinstance(variable.get_value(), dict)
+            and (
+                expression.Bad.bad in variable.get_value().values() or expression.Bad.bad in variable.get_value().keys()
+            )  # ty:ignore[unresolved-attribute]
+        )
+    ):
+        return None
+
+    return warning.Warning(
+        warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
+        (),
+        variable.var,
+    )
+
+
 class VariableType(Protocol):
     """
     Protocol for variable types used in the propagator. Defines the required interface for variables.
@@ -280,26 +303,6 @@ class VariableValue:
 
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
-
-        if (
-            self.value == expression.Bad.bad  # ty:ignore[unresolved-attribute]
-            or (
-                isinstance(self.value, frozenset) and expression.Bad.bad in self.value
-            )  # ty:ignore[unresolved-attribute]
-            or (
-                isinstance(self.value, dict)
-                and (
-                    expression.Bad.bad in self.value.values() or expression.Bad.bad in self.value.keys()
-                )  # ty:ignore[unresolved-attribute]
-            )
-        ):
-            self.errors.append(
-                warning.Warning(
-                    warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
-                    (self.expr,),
-                    f"Bad value for expression {self.expr}",
-                )
-            )
 
         self.decision_level = ctl.assignment.decision_level
         return True
@@ -598,7 +601,11 @@ class EnsureVariable:
         Returns:
             propagator_warning_t: List of warnings.
         """
-        return self.expression.get_errors()
+        errors = self.expression.get_errors()
+        bad_value_warning = create_bad_value_warning(self)
+        if bad_value_warning is not None:
+            errors.append(bad_value_warning)
+        return errors
 
     @property
     def literals(self) -> set[int]:
@@ -771,7 +778,11 @@ class BoolEvaluateVariable:
         Returns:
             propagator_warning_t: List of warnings.
         """
-        return self.expression.get_errors()
+        errors = self.expression.get_errors()
+        bad_value_warning = create_bad_value_warning(self)
+        if bad_value_warning is not None:
+            errors.append(bad_value_warning)
+        return errors
 
     def reset(self, dl: int) -> None:
         """
@@ -845,21 +856,24 @@ class Variable:
         decision_level: Decision level at which the value was set.
         domain_literals: Literals defining the domain.
         errors: List of warnings or errors encountered during evaluation.
+        is_user_variable: Whether this variable is defined by the user or is an internal variable
     """
 
-    def __init__(self, name: str, var: clingo.Symbol):
+    def __init__(self, name: str, var: clingo.Symbol, is_user_variable: bool = False):
         """
         Initialize a Variable.
 
         Args:
             name: Name for the variable.
             var: Clingo symbol representing this variable.
+            is_user_variable: Whether this variable is defined by the user or is an internal variable.
         """
         self.name: str = name
         self.var: clingo.Symbol = var
         self.expressions: set[VariableValue] = set()
         self.value: Any = ValueStatus.NOT_SET
         self.parents: list[VariableType] = []
+        self.is_user_variable: bool = is_user_variable
         self.decision_level: int = DEFAULT_DECISION_LEVEL
 
         # literals for atoms that can define a domain
@@ -892,6 +906,7 @@ class Variable:
     def get_errors(self) -> propagator_warning_t:
         """
         Return warnings collected while evaluating candidate values.
+        Bad value warnings are filtered out for non user variables.
 
         Returns:
             propagator_warning_t: List of warnings.
@@ -899,6 +914,10 @@ class Variable:
         errors: propagator_warning_t = []
         for var_value in self.expressions:
             errors.extend(var_value.get_errors())
+            if self.is_user_variable:
+                bad_value_warning = create_bad_value_warning(self)
+                if bad_value_warning is not None:
+                    errors.append(bad_value_warning)
         return errors
 
     def has_unassigned(self) -> bool:
@@ -1209,9 +1228,10 @@ class SetVariable:
         decision_level: Decision level of the set declaration.
         parents: Parent variables.
         errors: List of warnings or errors encountered during evaluation.
+        is_user_variable: Whether this variable is defined by the user or is an internal variable
     """
 
-    def __init__(self, name: str, var: clingo.Symbol, lit: int):
+    def __init__(self, name: str, var: clingo.Symbol, lit: int, is_user_variable: bool = False):
         """
         Initialize a SetVariable.
 
@@ -1219,10 +1239,12 @@ class SetVariable:
             name: Name of the set variable.
             var: Clingo symbol identifying the variable.
             lit: Literal for the set declaration.
+            is_user_variable: Whether this variable is defined by the user or is an internal variable.
         """
         self.name: str = name
         self.var: clingo.Symbol = var
         self.set_expressions: SetVariableValue = SetVariableValue()
+        self.is_user_variable: bool = is_user_variable
 
         self.value: ValueStatus | frozenset[Any] = ValueStatus.NOT_SET
 
@@ -1266,11 +1288,19 @@ class SetVariable:
     def get_errors(self) -> propagator_warning_t:
         """
         Return warnings/errors collected during evaluation.
+        Bad value warnings are filtered out for non user variables
 
         Returns:
             propagator_warning_t: Warnings and errors for this set and its elements.
         """
-        return self.set_expressions.get_errors() + self.errors
+        errors = self.set_expressions.get_errors() + self.errors
+
+        if self.is_user_variable:
+            bad_value_warning = create_bad_value_warning(self)
+            if bad_value_warning is not None:
+                errors.append(bad_value_warning)
+
+        return errors
 
     @property
     def literals(self) -> set[int]:
@@ -1418,9 +1448,10 @@ class DictVariable:
         decision_level: Decision level of the current value.
         parents: Parent variables.
         errors: List of warnings or errors encountered during evaluation.
+        is_user_variable: Whether this variable is defined by the user or is an internal variable
     """
 
-    def __init__(self, name: str, var: clingo.Symbol, lit: int):
+    def __init__(self, name: str, var: clingo.Symbol, lit: int, is_user_variable: bool = False):
         """
         Initialize a DictVariable.
 
@@ -1428,10 +1459,12 @@ class DictVariable:
             name: Name of the dict variable.
             var: Clingo symbol identifying the variable.
             lit: Literal for the dict declaration.
+            is_user_variable: Whether this variable is defined by the user or is an internal variable.
         """
         self.name: str = name
         self.var: clingo.Symbol = var
         self.dict_expressions: dict[VariableValue, SetVariableValue] = multimap.HashableDict()
+        self.is_user_variable: bool = is_user_variable
 
         self.value: ValueStatus | dict[clingo.Symbol, Any] = ValueStatus.NOT_SET
 
@@ -1485,14 +1518,20 @@ class DictVariable:
     def get_errors(self) -> propagator_warning_t:
         """
         Get all errors from the dict variable and its key-value pairs.
+        Bad value warnings are filtered out for non user variables.
 
         Returns:
             propagator_warning_t: List of warnings or errors.
         """
         errors: propagator_warning_t = []
         for key, value in self.dict_expressions.items():
-            errors.extend(key.get_errors())
-            errors.extend(value.get_errors())
+            errors.extend(key.get_errors() + value.get_errors())
+
+            if self.is_user_variable:
+                bad_value_warning = create_bad_value_warning(self)
+                if bad_value_warning is not None:
+                    errors.append(bad_value_warning)
+
         return errors + self.errors
 
     @property

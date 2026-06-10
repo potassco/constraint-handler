@@ -162,6 +162,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_solver_identifier(init)
 
+        self.get_variable_interface(init)
         self.get_variables(init)
         self.get_ensure(init)
         self.get_set_declarations(init)
@@ -642,9 +643,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # check if any errors are forbidden
         for _warning in var.get_errors():
             if _warning.id in self.forbidden_warnings:
-                if _warning.id == warning.VariableWarning.badValue and not self.symbol2var.is_user_variable(var):
-                    # forbid badValue warnings only for user variables
-                    continue
                 literal = self.forbidden_warnings[_warning.id]
                 if ctl.assignment.is_true(literal):
                     # Forbidden warning exists, making program unsat
@@ -788,6 +786,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(_literal)
             ctl.add_watch(-_literal)
 
+    def get_variable_interface(self, ctl: clingo.PropagateInit):
+
+        user_var_names = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_interface)
+
+        for (_, id), _ in user_var_names.items():
+            self.symbol2var.add_user_variable_name(id)
+
     def get_variables(self, ctl: clingo.PropagateInit):
         """
         Load base variable declarations/definitions/domains from ASP facts.
@@ -803,15 +808,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         var_domains = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_domain)
         var_optionals = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declareOptional)
 
-        user_var_names = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_interface)
-
-        for (_, id), _ in user_var_names.items():
-            self.symbol2var.add_user_variable_name(id)
-
         from_facts_literals: dict[clingo.Symbol, int] = {}
         for (name, symbol_var, domain), _literal in var_declares.items():
             if not self.symbol2var.has_var_type(symbol_var, getattr(Variable, "__name__")):
-                self.symbol2var.add_variable(symbol_var, Variable(name, symbol_var))
+                self.symbol2var.add_variable(
+                    symbol_var, Variable(name, symbol_var, symbol_var in self.symbol2var.user_variable_names)
+                )
 
             variable: Variable = cast(Variable, self.symbol2var.get_variable(symbol_var, getattr(Variable, "__name__")))
 
@@ -870,7 +872,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for (name, symbol_var, expr), _literal in var_defines.items():
             if not self.symbol2var.has_var_type(symbol_var, getattr(Variable, "__name__")):
-                define_variable = Variable(name, symbol_var)
+                define_variable = Variable(name, symbol_var, symbol_var in self.symbol2var.user_variable_names)
                 self.symbol2var.add_variable(symbol_var, define_variable)
 
             define_variable: Variable = cast(
@@ -1030,7 +1032,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_set_declare)
         for (name, symbol_var), literal in declares.items():
-            variable = SetVariable(name, symbol_var, literal)
+            variable = SetVariable(
+                name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
+            )
             self.symbol2var.add_variable(symbol_var, variable)
             self.literal2var.setdefault(literal, []).append(variable)
 
@@ -1074,7 +1078,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         declares = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_declare)
         for (name, symbol_var), literal in declares.items():
-            variable = DictVariable(name, symbol_var, literal)
+            variable = DictVariable(
+                name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
+            )
             self.symbol2var.add_variable(symbol_var, variable)
             self.literal2var.setdefault(literal, []).append(variable)
 
@@ -1394,6 +1400,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 if not assigned:
                     # if warning is not ignored, add to model
                     self.python_model.add(__warning)
+            else:
+                self.python_model.add(__warning)
 
     def get_expr_values(self, variables: Iterable[VariableType | OptimizationHandler]) -> dict[Symbol, Symbol]:
         """

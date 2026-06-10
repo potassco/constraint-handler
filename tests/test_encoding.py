@@ -177,7 +177,6 @@ propagator_xfail: set[str] = {
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
-    "warning/bad_interface",
     "warning/python_unsupported_type",
 }
 
