@@ -11,8 +11,6 @@ from clintest.outcome import Outcome
 from clintest.quantifier import All, Any, Exact, Finished, First, Last, Quantifier
 
 import constraint_handler
-import constraint_handler.evaluator as evaluator
-import constraint_handler.myClorm as myClorm
 from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM
 
 
@@ -191,29 +189,3 @@ class Solver(clintest.solver.Solver):
         files = repr(self.__files)
         prop = repr(self.__propagator_check_only)
         return f"{name}({arguments}, {program}, {files}, {prop})"
-
-
-class PropPrint(clingo.propagator.Propagator):
-    def __init__(self):
-        print("creation")
-
-    def init(self, init):
-        print("init")
-
-    def propagate(self, ctl, changes):
-        for atom in changes:
-            print(atom, end=" ")
-        print()
-
-    def check(self, ctl):
-        print("check", len(ctl.assignment.trail))
-
-    def on_model(self, model):
-        value_map = {"b": True, "i": 42, "y": 85, "s": "foo", "x": "foo", "f": 47.1}
-        for var, val in value_map.items():
-            symbol = clingo.Function(var)
-            base_type = myClorm.pytocl(evaluator.get_baseType(val))
-            value = myClorm.pytocl(val)
-            fact = clingo.Function("value", [symbol, base_type, value])
-            print(f"extending with {fact}")
-            model.extend([fact])
