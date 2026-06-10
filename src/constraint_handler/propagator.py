@@ -641,6 +641,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # check if any errors are forbidden
         for _warning in var.get_errors():
             if _warning.id in self.forbidden_warnings:
+                if _warning.id == warning.VariableWarning.badValue and not self.symbol2var.is_user_variable(var):
+                    # forbid badValue warnings only for user variables
+                    continue
                 literal = self.forbidden_warnings[_warning.id]
                 if ctl.assignment.is_true(literal):
                     # Forbidden warning exists, making program unsat
@@ -798,6 +801,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         var_defines = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_define)
         var_domains = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_domain)
         var_optionals = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declareOptional)
+
+        user_var_names = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_interface)
+
+        for (_, id), _ in user_var_names.items():
+            self.symbol2var.add_user_variable_name(id)
 
         from_facts_literals: dict[clingo.Symbol, int] = {}
         for (name, symbol_var, domain), _literal in var_declares.items():

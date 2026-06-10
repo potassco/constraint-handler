@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- avoid generating badValue warnings for internal variables
 - avoid displaying detailed pytest-benchmarks statistics
 - unify testing of reasoning modes with testing of base solving
 - replace `.expected.models` with `.expected.stats` contains key-value pairs
