@@ -1,0 +1,4 @@
+value(z,val(int,5))
+value(t,bad)
+warning(variable(badValue),(),t)
+value(loc("prg_y_e"),bad)
