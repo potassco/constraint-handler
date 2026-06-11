@@ -14,4 +14,4 @@ _float_normalized/2.
 
 _passed(correction(float_normalize,rem),LBL,DECL).
 _passed(correction(float_normalize,add),LBL,DECL).
-_warning/3.
+_warning(expression(normalizedFloat),(),DECL).
