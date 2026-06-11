@@ -94,29 +94,31 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                 return atom.EvalResult(common.Bad.bad, NO_ERRORS)
             return atom.EvalResult(args[0].issubset(args[1]), NO_ERRORS)
         case operators.SetOperator.set_fold:
-            op_errors = []
             if len(args) != 3:
-                op_errors.append(
+                return atom.EvalResult(
+                    common.Bad.bad,
                     (
-                        warning.Expression(warning.ExpressionWarning.syntaxError),
-                        str(errors.incorrect_arity_error(o, 3, len(args))),
-                    )
+                        (
+                            warning.Expression(warning.ExpressionWarning.syntaxError),
+                            str(errors.incorrect_arity_error(o, 3, len(args))),
+                        ),
+                    ),
                 )
-                return atom.EvalResult(common.Bad.bad, tuple(op_errors))
             if args[1] == common.Bad.bad or args[2] == common.Bad.bad:
-                return atom.EvalResult(common.Bad.bad, tuple(op_errors))
+                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
             if apply_operator is None:
-                op_errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), "set_fold missing callback")
+                return atom.EvalResult(
+                    common.Bad.bad,
+                    ((warning.Expression(warning.ExpressionWarning.notImplemented), "set_fold missing callback"),),
                 )
-                return atom.EvalResult(common.Bad.bad, tuple(op_errors))
+            fold_errors = []
 
             def step(*aaa):
                 applied = apply_operator(args[0], aaa)
-                op_errors.extend(applied.errors)
+                fold_errors.extend(applied.errors)
                 return applied.value
 
-            return atom.EvalResult(fold(step, args[1], args[2]), tuple(op_errors))
+            return atom.EvalResult(fold(step, args[1], args[2]), tuple(fold_errors))
         case _:
             return atom.EvalResult(
                 common.Bad.bad,
