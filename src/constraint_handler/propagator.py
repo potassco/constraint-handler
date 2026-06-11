@@ -301,6 +301,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             control: Clingo PropagateControl object.
         """
         self.check_evaluate(control)
+        self.handle_warning_ignore(control)
         backtrack = self.evaluate_model(control)
         if backtrack:
             # backtracking due to brave/cautious model being updated
@@ -312,8 +313,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if self.using_optimization and self.optimization_sum.get_value() > self.best_value:
             print(f"New best optimization value found: {self.optimization_sum.get_value()} (old: {self.best_value})")
             self.best_value = self.optimization_sum.get_value()
-
-        self.handle_warning_ignore(control)
 
     def handle_warning_ignore(self, ctl: clingo.PropagateControl) -> None:
         for __warning, (literal, observed) in self.ignored_warnings.items():
