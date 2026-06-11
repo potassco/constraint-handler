@@ -8,7 +8,7 @@ execution_declare(div0,statement_python("z = x/y\nassert 1.5 < z"),("x",("y",())
 execution_run(div0).
 
 { activate }.
-warning_forbid(statement(pythonError)) :- activate.
+warning_forbid(expression(pythonError)) :- activate.
 variable_define(active,val(bool,true)) :- activate.
 variable_define(active,val(bool,false)) :- not activate.
 
@@ -21,4 +21,4 @@ GEQ = operation(geq,(variable(y),(val(int,1),()))).
 evaluate(limp,(variable(active),(variable(good_y),()))).
 #show value/2.
 #show warning/3.
-ignore_warning(type(failed_operation)).
+%warning_ignore(type(failed_operation)).
