@@ -11,8 +11,9 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.post_processor as post_processor
+import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
-import constraint_handler.schemas.propagator_atom as atom
+import constraint_handler.schemas.propagator_atom as prop_atom
 import constraint_handler.schemas.type_ as type_
 import constraint_handler.schemas.warning as warning
 from constraint_handler.PropagatorConstants import (
@@ -109,7 +110,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.nogood_queue: list[Iterable[int]] = []
 
         self.forbidden_warnings: dict[warning.Kind, int] = {}
-        self.ignored_warnings: dict[warning.Kind, [int, bool]] = {}
+        self.ignored_warnings: dict[warning.Kind, tuple[int, bool]] = {}
 
     def get_configuration(self, ctl: clingo.Control):
         """
@@ -130,15 +131,32 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.reasoning_mode = ReasoningMode.STANDARD
 
         if self.reasoning_mode != ReasoningMode.STANDARD:
-            ctl.configuration.solver.heuristic = "Domain"  # ty:ignore[invalid-assignment]
+            if ctl.configuration.solver.heuristic != "Domain":  # ty:ignore[unresolved-attribute]
+                self.errors.append(
+                    warning.Warning(
+                        warning.Propagator(),
+                        (),
+                        f"Brave/cautious reasoning requires --heuristic=Domain, but {ctl.configuration.solver.heuristic} was set. This may lead to incorrect results.",  # ty:ignore[unresolved-attribute]
+                    )
+                )
             ctl.add("base", [], REASONING_MODE_PROGRAM)
 
         # TODO: we shoudln't be changing the ctl.configuration
-        if ctl.configuration.solve.opt_mode == "optN":
-            self.optimal_models_wanted: int = int(ctl.configuration.solve.models)  # ty:ignore[unresolved-attribute]
+        if ctl.configuration.solve.opt_mode == "optN":  # ty:ignore[unresolved-attribute]
+            # if optN is used, then we get the amount of optimal models from the configuration
+            # unfortunately, here we have to change the configuration.
+            self.optimal_models_wanted: int = int(ctl.configuration.solve.models)  # ty:ignore[invalid-argument-type,unresolved-attribute]
             ctl.configuration.solve.models = 0  # ty:ignore[invalid-assignment]
-            ctl.configuration.solver.heuristic = "Domain"  # ty:ignore[invalid-assignment]
             ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
+
+            if ctl.configuration.solver.heuristic != "Domain":  # ty:ignore[unresolved-attribute]
+                self.errors.append(
+                    warning.Warning(
+                        warning.Propagator(),
+                        (),
+                        f"Optimization requires --heuristic=Domain, but {ctl.configuration.solver.heuristic} was set. This may lead to incorrect results.",  # ty:ignore[unresolved-attribute]
+                    )
+                )
 
     def init(self, init: clingo.PropagateInit) -> None:
         """
@@ -193,9 +211,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # Adding reasoning mode helper atoms
             for a in ctl.symbolic_atoms.by_signature(REASONING_STAGE_ATOM, 1):
                 assert a.symbol.arguments[0].number in (1, 2, 3), f"Unknown reasoning stage atom: {a.symbol}"
-                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(
-                    a.literal
-                )  # ty:ignore[invalid-assignment]
+                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(a.literal)  # ty:ignore[invalid-assignment]
 
             # TODO: check if it works with the new variable manager stuff
             for var in self.symbol2var.get_variables():
@@ -386,7 +402,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         return False
 
-    def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom], first_call: bool) -> list[Iterable[int]]:
+    def get_reasoning_mode_nogoods(self, variables: set[prop_atom.ResultAtom], first_call: bool) -> list[Iterable[int]]:
         """
         Create nogoods used to drive brave/cautious reasoning.
 
@@ -407,14 +423,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         nogoods: list[Iterable[int]] = []
         for result_var in variables:
             # TODO: add support for evaluate and warnings
-            if isinstance(result_var, (atom.Evaluated, warning.Warning)):
+            if isinstance(result_var, (prop_atom.Evaluated, warning.Warning)):
                 continue
             assert type(result_var) in (
-                atom.Value,
-                atom.Set_value,
-                atom.Multimap_value,
+                prop_atom.Value,
+                prop_atom.Set_value,
+                prop_atom.Multimap_value,
             ), f"Unexpected variable type: {type(result_var)} with value {result_var}"
-            assert isinstance(result_var.name, clingo.Symbol)
+            assert isinstance(result_var.name, Symbol)
 
             if self.reasoning_mode == ReasoningMode.BRAVE or first_call:
                 # The first time we add nogoods, it is the same for brave and cautious
@@ -579,9 +595,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ng = ng.union(extra_literals)
         prop_stop = ctl.add_nogood(ng)
         if conflict and prop_stop:
-            assert (
-                False
-            ), f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
+            assert False, (
+                f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
+            )
 
         return not prop_stop
 
@@ -704,7 +720,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return
         value_atoms = myClorm.findInPropagateInit(ctl, post_processor._se_value)
         set_value_atoms = myClorm.findInPropagateInit(ctl, post_processor._set_contains)
-        multimap_value_atoms = myClorm.findInPropagateInit(ctl, atom.Multimap_value)
+        multimap_value_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Multimap_value)
 
         for (name, val), _literal in value_atoms.items():
             if not isinstance(name, expression.Variable):
@@ -782,7 +798,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_variable_interface(self, ctl: clingo.PropagateInit):
 
-        user_var_names = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_interface)
+        user_var_names = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_interface)
 
         for (_, id), _ in user_var_names.items():
             self.symbol2var.add_user_variable_name(id)
@@ -797,12 +813,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo PropagateInit object.
         """
-        var_declares = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declare)
-        var_defines = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_define)
-        var_domains = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_domain)
-        var_optionals = myClorm.findInPropagateInit(ctl, atom.Propagator_variable_declareOptional)
+        var_declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_declare)
+        var_defines = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_define)
+        var_domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_domain)
+        var_optionals = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_declareOptional)
 
-        from_facts_literals: dict[clingo.Symbol, int] = {}
+        from_facts_literals: dict[Symbol, int] = {}
         for (name, symbol_var, domain), _literal in var_declares.items():
             if not self.symbol2var.has_var_type(symbol_var, getattr(Variable, "__name__")):
                 self.symbol2var.add_variable(
@@ -816,7 +832,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.literal2var.setdefault(_literal, []).append(variable)
 
-            if isinstance(domain, atom.BoolDomain):
+            if isinstance(domain, prop_atom.BoolDomain):
                 literal_true = ctl.add_literal(freeze=True)
                 literal_false = ctl.add_literal(freeze=True)
                 variable.add_value(
@@ -841,7 +857,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.literal2var[literal_true] = [variable]
                 self.literal2var[literal_false] = [variable]
 
-            elif isinstance(domain, atom.FromList):
+            elif isinstance(domain, prop_atom.FromList):
                 for expr in domain.elements:
                     literal = ctl.add_literal(freeze=True)
                     variable.add_value(expr, literal, _literal)
@@ -852,7 +868,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
                     self.literal2var[literal] = [variable]
 
-            elif isinstance(domain, atom.FromFacts):
+            elif isinstance(domain, prop_atom.FromFacts):
                 # values will be added from facts, nothing to do here
                 from_facts_literals[symbol_var] = _literal
             else:
@@ -906,9 +922,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 Variable, self.symbol2var.get_variable(optional, getattr(Variable, "__name__"))
             )
             literal = ctl.add_literal(freeze=True)
-            optional_variable.add_value(
-                expression.Val(type_.BaseType.none, None), literal, _literal
-            )  # ty:ignore[unresolved-attribute]
+            optional_variable.add_value(expression.Val(type_.BaseType.none, None), literal, _literal)  # ty:ignore[unresolved-attribute]
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
@@ -930,7 +944,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateInit object.
         """
 
-        ensures = myClorm.findInPropagateInit(ctl, atom.Propagator_ensure)
+        ensures = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_ensure)
         for (name, expr), literal in ensures.items():
             ensure_var: EnsureVariable = EnsureVariable(name, expr, literal)
             ctl.add_watch(literal)
@@ -949,9 +963,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateInit object.
         """
 
-        evaluate_atoms = myClorm.findInPropagateInit(ctl, atom.Propagator_evaluate)
-        bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, atom.Propagator_bool_evaluate)
-        bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, atom.Bool_evaluated)
+        evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_evaluate)
+        bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_bool_evaluate)
+        bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Bool_evaluated)
         for (_, op, args), literal in evaluate_atoms.items():
             var = EvaluateVariable(op, args, literal)
             if literal != 1:
@@ -994,7 +1008,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateInit object.
         """
 
-        for id, _ in myClorm.findInPropagateInit(ctl, atom.Main_solverIdentifiers).items():
+        for id, _ in myClorm.findInPropagateInit(ctl, prop_atom.Main_solverIdentifiers).items():
             self.environment = evaluator.get_environment(id.id)
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
@@ -1005,7 +1019,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateInit object.
         """
 
-        maxSums = myClorm.findInPropagateInit(ctl, atom.Propagator_optimize_maximizeSum)
+        maxSums = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_optimize_maximizeSum)
 
         for prop_sum in ctl.symbolic_atoms.by_signature("propagator_optimize_maximizeSum", 4):
             self.prop_sum_atoms.append(prop_sum.symbol)
@@ -1024,7 +1038,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo propagation initializer.
         """
 
-        declares = myClorm.findInPropagateInit(ctl, atom.Propagator_set_declare)
+        declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_declare)
         for (name, symbol_var), literal in declares.items():
             variable = SetVariable(
                 name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
@@ -1035,7 +1049,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_set_assign)
+        assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_assign)
         for (name, symbol_var, expr), literal in assigns.items():
             try:
                 setvar: SetVariable = cast(
@@ -1049,7 +1063,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        domains = myClorm.findInPropagateInit(ctl, atom.Propagator_set_baseDomain)
+        domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_baseDomain)
         for (name, symbol_var, domain_expr), _literal in domains.items():
             try:
                 setvar: SetVariable = cast(
@@ -1070,7 +1084,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo PropagateInit object.
         """
-        declares = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_declare)
+        declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_multimap_declare)
         for (name, symbol_var), literal in declares.items():
             variable = DictVariable(
                 name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
@@ -1081,7 +1095,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
-        assigns = myClorm.findInPropagateInit(ctl, atom.Propagator_multimap_assign)
+        assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_multimap_assign)
         for (name, symbol_var, key_expr, expr), literal in assigns.items():
             try:
                 dictvar: DictVariable = cast(
@@ -1103,8 +1117,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo propagation initializer.
         """
 
-        forbidden_warnings = myClorm.findInPropagateInit(ctl, atom.Propagator_warning_forbid)
-        ignored_warnings = myClorm.findInPropagateInit(ctl, atom.Propagator_warning_ignore)
+        forbidden_warnings = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_warning_forbid)
+        ignored_warnings = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_warning_ignore)
 
         for (name, error), literal in forbidden_warnings.items():
             self.forbidden_warnings[error] = literal
@@ -1222,7 +1236,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 # Stop search once the desired number of optimal models is found by adding an empty clause to make the program unsat
                 model.context.add_clause([])
 
-    def handle_on_model_value(self, var: clingo.Symbol, final_value: Any):
+    def handle_on_model_value(self, var: Symbol, final_value: Any):
         """
         Dispatch model export based on the final value type.
 
@@ -1248,7 +1262,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # In here come Variable(Lambda) and others
             print(f"Unknown variable type {type(final_value)} for variable {var} in on_model!")
 
-    def handle_on_model_set(self, var: clingo.Symbol, final_value: set | frozenset):
+    def handle_on_model_set(self, var: Symbol, final_value: set | frozenset):
         """
         Add atoms for a set-typed variable to the python model.
 
@@ -1277,7 +1291,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         except Exception as exn:  # TODO: add warnings?
             self.python_model.add(atom.Value(var, expression.Bad.bad))
 
-    def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict):
+    def handle_on_model_dict(self, var: Symbol, final_value: dict):
         """
         Add atoms for a dict/multimap-typed variable to the python model.
 
@@ -1311,10 +1325,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def handle_on_model_normal_type(
         self,
-        var: clingo.Symbol,
-        final_value: (
-            bool | int | float | str | clingo.Symbol | tuple[Any, ...] | expression.Bad.bad
-        ),  # ty:ignore[unresolved-attribute]
+        var: Symbol,
+        final_value: (bool | int | float | str | Symbol | tuple[Any, ...] | expression.Bad.bad),  # ty:ignore[unresolved-attribute]
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.
