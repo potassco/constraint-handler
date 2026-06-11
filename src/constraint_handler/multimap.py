@@ -70,39 +70,38 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
             assert len(args) == 3
             return atom.EvalResult(args[1] in args[0] and args[2] in args[0][args[1]], NO_ERRORS)
         case operators.MultimapOperator.multimap_fold:
-            op_errors = []
             if apply_operator is None:
-                op_errors.append(
-                    (
-                        warning.Expression(warning.ExpressionWarning.notImplemented),
-                        "multimap_fold missing callback",
-                    )
+                return atom.EvalResult(
+                    common.Bad.bad,
+                    ((warning.Expression(warning.ExpressionWarning.notImplemented), "multimap_fold missing callback"),),
                 )
-                return atom.EvalResult(common.Bad.bad, tuple(op_errors))
+            fold_errors = []
 
             def step(*aaa):
                 applied = apply_operator(args[0], aaa)
-                op_errors.extend(applied.errors)
+                fold_errors.extend(applied.errors)
                 return applied.value
 
-            return atom.EvalResult(fold(step, args[1], args[2]), tuple(op_errors))
+            return atom.EvalResult(fold(step, args[1], args[2]), tuple(fold_errors))
         case operators.MultimapOperator.multimap_fold_i:
-            op_errors = []
             if apply_operator is None:
-                op_errors.append(
+                return atom.EvalResult(
+                    common.Bad.bad,
                     (
-                        warning.Expression(warning.ExpressionWarning.notImplemented),
-                        "multimap_fold_i missing callback",
-                    )
+                        (
+                            warning.Expression(warning.ExpressionWarning.notImplemented),
+                            "multimap_fold_i missing callback",
+                        ),
+                    ),
                 )
-                return atom.EvalResult(common.Bad.bad, tuple(op_errors))
+            fold_errors = []
 
             def step(*aaa):
                 applied = apply_operator(args[0], aaa)
-                op_errors.extend(applied.errors)
+                fold_errors.extend(applied.errors)
                 return applied.value
 
-            return atom.EvalResult(fold_i(step, args[1], args[2]), tuple(op_errors))
+            return atom.EvalResult(fold_i(step, args[1], args[2]), tuple(fold_errors))
         case operators.MultimapOperator.multimap_make:
             d = HashableDict()
             for key, value in args:
