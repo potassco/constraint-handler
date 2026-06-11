@@ -35,5 +35,5 @@ _safe_bad(EXPR) :- _main(safe), _expression(sugar,EXPR), _expression_operationOp
 _deterministic(E,bad) :- _safe_bad(E).
 _deterministic(val(T,V),val(T,V)) :- _phase_active(constantFolding), _expression(sugar,val(T,V)).
 
-_passed(correction(constant,rem),LBL,variable_define(X,E)) :- _deterministic(E,V), _passed(sugar,LBL,variable_define(X,E)).
-_passed(correction(constant,add),LBL,variable_define(X,V)) :- _deterministic(E,V), _passed(sugar,LBL,variable_define(X,E)).
+_passed(correction(constant,rem),LBL,variable_define(X,E)) :- _deterministic(E,V), _passed(sugar,LBL,variable_define(X,E)), E!=V.
+_passed(correction(constant,add),LBL,variable_define(X,V)) :- _deterministic(E,V), _passed(sugar,LBL,variable_define(X,E)), E!=V.

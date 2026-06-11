@@ -43,6 +43,7 @@ module_3_variable_safety_checks = [
 module_3_safe = (
     [
         "3_safe/bad/safe",
+        "3_safe/float_normalize/float_normalize",
         "3_safe/type_checking/type",
         "3_safe/wf_check/wf_check",
     ]

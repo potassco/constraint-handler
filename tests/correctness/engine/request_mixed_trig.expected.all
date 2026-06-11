@@ -1,4 +1,4 @@
-value(i,val(float,float("42")))
+value(i,val(float,float("42.0")))
 value(f,val(float,float("47.1")))
 value(y,val(float,float("85.0")))
 value(z,val(float,float("37.9")))

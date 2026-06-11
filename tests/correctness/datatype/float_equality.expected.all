@@ -1,0 +1,6 @@
+value(xe,val(bool,true))
+value(ye,val(bool,true))
+value(ze,val(bool,true))
+value(xn,val(bool,false))
+value(yn,val(bool,false))
+value(zn,val(bool,false))
