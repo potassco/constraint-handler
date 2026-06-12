@@ -54,7 +54,16 @@ _python_set_param_last(ExprList, Idx, ParamList) :-
     _python_set_param(ExprList, Idx, Val, ParamList),
     #false : _set_contains(Expr, Val2), Val2 > Val.
 
+_python_param(ExprList, Idx, ((VariableName, set(SetTail)), Tail)) :-
+    _python_operation(named,ExprList),
+    (Idx, Arg) = @pythonEnumerateElements(ExprList),
+    Arg = (VariableNameExpr, Expr),
+    _se_value(VariableNameExpr, VariableName),
+    _python_param(ExprList, Idx+1, Tail),
+    _python_set_param_last(ExprList, Idx, SetTail).
+
 _python_param(ExprList, Idx, (set(SetTail),Tail)) :-
+    _python_operation(positional,ExprList),
     _python_param(ExprList, Idx+1, Tail),
     _python_set_param_last(ExprList, Idx, SetTail).
 
