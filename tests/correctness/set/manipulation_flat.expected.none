@@ -1,0 +1,5 @@
+value(tsubu,val(bool,false))
+value(tsubv,val(bool,true))
+value(tsubw,val(bool,true))
+value(usubw,val(bool,true))
+value(vsubw,val(bool,false))
