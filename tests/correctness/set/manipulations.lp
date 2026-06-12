@@ -76,7 +76,7 @@ variable_define(x, operation(set_make,
 
 variable_define(cx, operation(length,(variable(x),()))).
 
-set_declare(d).
+variable_declare(d,set).
 set_assign(d, operation(add,(val(int,1),(val(int,3),())))).
 set_assign(d, variable(s)).
 set_assign(d, operation(add,(val(int,2),(val(int,2),())))).

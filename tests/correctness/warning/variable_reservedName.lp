@@ -24,8 +24,8 @@ execution_run(alsobad).
 variable_declare(execution_output(alsobad,x),boolDomain).
 variable_define(execution_output(alsobad,y),val(int,3)).
 variable_declare(d_z,execution_output(alsobad,z),boolDomain).
-set_declare(execution_output(alsobad,t)).
-multimap_declare(execution_output(alsobad,u)).
+variable_declare(execution_output(alsobad,t),set).
+variable_declare(execution_output(alsobad,u),multimap).
 variable_define(execution_output(alsobad,a),val(int,1)).
 variable_define(execution_output(alsobad,b),val(int,1)).
 

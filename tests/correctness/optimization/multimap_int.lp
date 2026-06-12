@@ -4,7 +4,7 @@ item(b,2,1).
 item(c,2,1).
 item(d,3,3).
 
-multimap_declare(taken).
+variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
 optimize_maximizeSum(EXPR,X) :- item(X,W,V),

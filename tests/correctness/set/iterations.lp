@@ -10,7 +10,7 @@
 %%% set_fold(+,isquares,0) = 5
 %%% set_fold(*,isquares,1) = 0
 
-set_declare(empty).
+variable_declare(empty,set).
 evaluate(set_fold,(val(function,add),(variable(empty),(val(int,0),())))).
 
 variable_define(numbers, operation(set_make,
@@ -20,7 +20,7 @@ variable_define(numbers, operation(set_make,
                                     (val(int, 1),
                                     (val(int, 2),()))))))).
 
-set_declare(squares).
+variable_declare(squares,set).
 set_assign(squares, SQ) :-
     set_value(numbers,EX),
     SQ = operation(mult,(EX,(EX,()))),
@@ -28,7 +28,7 @@ set_assign(squares, SQ) :-
 
 variable_define(csquares, operation(length,(variable(squares),()))).
 
-set_declare(isquares).
+variable_declare(isquares,set).
 set_assign(isquares, SQ) :-
     set_value(numbers,EX),
     SQ = operation(mult,(EX,(EX,()))),

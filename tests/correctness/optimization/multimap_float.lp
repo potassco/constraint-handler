@@ -7,7 +7,7 @@ item(e,3,float("3")).
 
 optimize_precision(val(int,10)).
 
-multimap_declare(taken).
+variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
 optimize_maximizeSum(EXPR,X) :- item(X,W,V),

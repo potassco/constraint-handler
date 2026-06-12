@@ -49,7 +49,7 @@ variable_define(capitals, operation(multimap_make,
                                 ((val(string,"france"), val(string,"paris")),
                                 ((val(string,"belarus"), val(string,"minsk")),()))))).
 
-multimap_declare(cities).
+variable_declare(cities,multimap).
 multimap_assign(cities,val(string,"germany"),val(string,"berlin")).
 multimap_assign(cities,val(string,"germany"),val(string,"potsdam")).
 multimap_assign(cities,val(string,"germany"),val(string,"brest")).
@@ -63,7 +63,7 @@ multimap_assign(properDivisors,val(int,4),operation(set_make,(val(int,1),(val(in
 multimap_assign(properDivisors,val(int,5),variable(div5)).
 variable_define(div5,operation(set_make,(val(int,1),()))).
 multimap_assign(properDivisors,val(int,6), variable(div6)).
-set_declare(div6).
+variable_declare(div6,set).
 set_assign(div6,val(int,1)).
 set_assign(div6,val(int,2)).
 set_assign(div6,val(int,3)).
@@ -72,12 +72,12 @@ set_declare(div4).
 set_assign(div4,val(int,1)).
 set_assign(div4,val(int,2)).
 
-multimap_declare(sums).
+variable_declare(sums,multimap).
 multimap_assign(sums,variable(div4),val(int,3)).
 multimap_assign(sums,variable(div5),val(int,1)).
 multimap_assign(sums,variable(div6),val(int,6)).
 
-multimap_declare(properDivisors2).
+variable_declare(properDivisors2,multimap).
 multimap_assign(properDivisors2,val(int,4),val(int,1)).
 multimap_assign(properDivisors2,val(int,4),val(int,2)).
 multimap_assign(properDivisors2,val(int,5),val(int,1)).
@@ -116,5 +116,5 @@ _computedIdx(E,val(TN,VN)) :- _computeIdx(E,snoc), _computeIdx(E,0,val(TA,VA)), 
     VN=(VB, VA).
 
 
-multimap_declare(empty).
+variable_declare(empty,multimap).
 evaluate(multimap_fold,(val(function,plus),(variable(empty),(val(int,0),())))).

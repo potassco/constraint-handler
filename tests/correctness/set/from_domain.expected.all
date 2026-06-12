@@ -1,3 +1,6 @@
 set_value(s,val(int,1))
 set_value(s,val(int,2))
 set_value(s,val(int,4))
+set_value(s2,val(int,1))
+set_value(s2,val(int,2))
+set_value(s2,val(int,4))

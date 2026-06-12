@@ -1,4 +1,4 @@
-set_declare(declared_set).
+variable_declare(declared_set,set).
 set_assign(declared_set,val(int,(1;2;3))).
 
 variable_define(made_set_1,operation(set_make,(val(int,1),(val(int,2),(val(int,3),()))))).

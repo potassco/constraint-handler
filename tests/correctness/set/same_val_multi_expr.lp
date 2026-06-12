@@ -5,7 +5,7 @@ variable_define(a,val(int,1)).
 variable_define(b,val(int,2)).
 variable_define(c,val(int,3)).
 
-set_declare(s).
+variable_declare(s,set).
 set_baseDomain(s,val(int,1..3)).
 set_baseDomain(s,variable(a)).
 set_baseDomain(s,variable(b)).

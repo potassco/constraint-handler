@@ -1,27 +1,27 @@
-multimap_declare(a).
+variable_declare(a,multimap).
 multimap_assign(a,val(symbol,kind),val(symbol,rectangle)).
 multimap_assign(a,val(symbol,width),val(int,2)).
 multimap_assign(a,val(symbol,height),val(int,3)).
 
-multimap_declare(b).
+variable_declare(b,multimap).
 multimap_assign(b,val(symbol,kind),val(symbol,rectangle)).
 multimap_assign(b,val(symbol,width),val(int,5)).
 multimap_assign(b,val(symbol,height),val(int,4)).
 
-multimap_declare(c).
+variable_declare(c,multimap).
 multimap_assign(c,val(symbol,kind),val(symbol,square)).
 multimap_assign(c,val(symbol,side),val(int,5)).
 
-multimap_declare(d).
+variable_declare(d,multimap).
 multimap_assign(d,val(symbol,kind),val(symbol,circle)).
 multimap_assign(d,val(symbol,radius),val(int,4)).
 
-multimap_declare(e).
+variable_declare(e,multimap).
 multimap_assign(e,val(symbol,kind),val(symbol,rectangle)).
 multimap_assign(e,val(symbol,width),val(int,1)).
 multimap_assign(e,val(symbol,height),val(int,1)).
 
-set_declare(shapes).
+variable_declare(shapes,set).
 set_assign(shapes,variable(S)) :- S=(a;b;c;d;e).
 
 variable_define(nb_squares,E) :-

@@ -1,6 +1,6 @@
 %%% bools(e) = {] bools(t) = { true } bools(f) = { false} bools(b) = { true, false }
 
-set_declare(bools(e;t;f;b)).
+variable_declare(bools(e;t;f;b),set).
 set_assign(bools(t),val(bool,true)).
 set_assign(bools(f),val(bool,false)).
 set_assign(bools(b),val(bool,(true;false))).

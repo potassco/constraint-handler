@@ -11,7 +11,7 @@ item(d,5,float("4.0"),float("0.0")).
 
 optimize_precision(val(int,100),1).
 
-multimap_declare(taken).
+variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,PROFIT,BONUS).
 
 % Maximize total profit under the explicit label profit.

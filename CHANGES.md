@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- introduce `set` and `multimap` as possible variable declarations
 - support optimization in the ground engine
 - implement float equality operators extensionally
 - normalize float constant representation

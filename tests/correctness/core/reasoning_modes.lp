@@ -17,7 +17,7 @@ variable_declare(c,boolDomain).
 
 ensure(operation(eq,(variable(c),(val(bool,true),())))).
 
-set_declare(s1).
+variable_declare(s1,set).
 {set_assign(s1,val(int,1..2))}.
 
 set_declare(s2).
@@ -26,7 +26,7 @@ set_assign(s2,val(int,1)).
 {set_assign(s2,variable(a))}.
 
 
-multimap_declare(m1).
+variable_declare(m1,multimap).
 {multimap_assign(m1,val(int,1),val(int,1))}.
 {multimap_assign(m1,val(int,1),val(int,2))}.
 multimap_assign(m1,val(int,2),val(int,1)).
