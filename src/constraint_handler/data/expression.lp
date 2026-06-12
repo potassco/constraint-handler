@@ -1,17 +1,17 @@
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=bool_evaluate(E).
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=ensure(E).
-_expression(PHASE,DECL,operation(OP,ARGS)) :- _passed(PHASE,LBL,DECL), DECL=evaluate(OP,ARGS).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=bool_evaluate(E).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=ensure(E).
+_expression(PHASE,LBL,DECL,operation(OP,ARGS)) :- _passed(PHASE,LBL,DECL), DECL=evaluate(OP,ARGS).
 
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_define(X,E).
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_domain(X,E).
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_assign(X,E).
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_baseDomain(X,E).
-_expression(PHASE,DECL,(K;B)) :- _passed(PHASE,LBL,DECL), DECL=multimap_assign(X,K,B).
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=optimize_maximizeSum(E,X,P).
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=optimize_precision(E,PRIO).
-_expression(PHASE,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(E,K).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_define(X,E).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_domain(X,E).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_assign(X,E).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_baseDomain(X,E).
+_expression(PHASE,LBL,DECL,(K;B)) :- _passed(PHASE,LBL,DECL), DECL=multimap_assign(X,K,B).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=optimize_maximizeSum(E,X,P).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=optimize_precision(E,PRIO).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(E,K).
 
-_expression(PHASE,E) :- _expression(PHASE,DECL,E).
+_expression(PHASE,E) :- _expression(PHASE,LBL,DECL,E).
 _expression(PHASE,D) :- _expression(PHASE,operation(O,L)), D=@pythonListElements(L).
 _expression(PHASE,D) :- _expression(PHASE,T), D=@pythonTupleElements(T).
 
