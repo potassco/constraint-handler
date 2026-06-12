@@ -9,6 +9,7 @@ _passed(sugar,LBL,variable_declare(X,definition)) :- _passed(defaultArgs,LBL,var
 _passed(sugar,LBL,variable_define(X,E)) :- _passed(defaultArgs,LBL,variable_define(X,E)).
 
 _passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(boolDomain;definition;fromFacts;fromList(L)).
+_passed(sugar,LBL,variable_declare(X,D)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(set;multimap).
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_declare(X,fromList(L))), E=@pythonListElements(L).
 _passed(sugar,LBL,variable_domain(X,val(bool,(false;true)))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).

@@ -1,15 +1,18 @@
-capacity(7).
-item(a,5).
-item(b,4).
-item(c,3).
-item(d,3).
+capacity(6).
+item(a,4,5).
+item(b,2,1).
+item(c,2,1).
+item(d,3,3).
 
-multimap_declare(taken).
-{ multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W).
+variable_declare(taken,multimap).
+{ multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
-optimize_maximizeSum(EXPR,X) :- item(X,W),
+optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
-  EXPR = operation(multimap_isin,(ITEM,(variable(taken),()))).
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
+  VALU = val(int,V),
+  EXPR = operation(if,(COND,(VALU,()))).
+
 
 variable_define(carried,EXPR) :-
   EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),

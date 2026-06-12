@@ -23,7 +23,7 @@ item(b,3,10).
 item(c,4,11).
 item(d,5,11).
 
-multimap_declare(taken).
+variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
 % Maximize value with priority 1 (higher priority)

@@ -1,56 +1,16 @@
-set_value(s,val(bool,true))
-set_value(s,val(float,float("89.1")))
-
-set_value(t,val(bool,true))
-set_value(t,val(int,10))
-set_value(t,val(int,2))
-set_value(t,val(int,3))
-
-set_value(u,val(bool,true))
-set_value(u,val(float,float("89.1")))
-set_value(u,val(int,3))
-set_value(u,val(int,10))
-set_value(u,val(int,2))
-
-set_value(duv,val(float,float("89.1")))
-set_value(duv,val(int,3))
-set_value(duv,val(int,10))
-set_value(duv,val(int,2))
-
-value(cduv,val(int,4))
-
-value(cu,val(int,5))
-
-set_value(v,val(bool,true))
-
-set_value(w,val(bool,false))
-set_value(w,val(bool,true))
-set_value(w,val(int,2))
-set_value(w,val(int,5))
-
 set_value(x,val(int,3))
 value(cx,val(int,3))
 
 set_value(d,val(int,4))
-
 value(cd,val(int,2))
 
 evaluated(set_notin,(val(bool,true),(variable(d),())),val(bool,true))
 evaluated(set_notin,(val(bool,true),(variable(x),())),val(bool,true))
-evaluated(set_isin,(val(bool,true),(variable(t),())),val(bool,true))
-evaluated(set_isin,(val(int,17),(variable(t),())),val(bool,false))
 
 value(eqx3,val(bool,true))
 value(nqx3,val(bool,false))
 value(eqx4,val(bool,false))
 value(nqx4,val(bool,true))
 
-value(tsubu,val(bool,true))
-value(tsubv,val(bool,false))
-value(tsubw,val(bool,false))
-value(usubw,val(bool,false))
-value(vsubw,val(bool,true))
 value(usubx,val(bool,false))
 value(vsubx,val(bool,false))
-
-set_value(vp,val(int,7))

@@ -1,7 +1,7 @@
 ### Input predicates
 
 _passed(compile,LBL,DECL).
-_passed((compile;ground),LBL,DECL).
+_passed(ground,LBL,DECL).
 _passed(sugar,LBL,set_baseDomain/2).
 _expression_tupleLength(compile,EXPR,N).
 _expression_tupleIndex(compile,EXPR,IDX,ARG).

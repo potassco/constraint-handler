@@ -1,18 +1,5 @@
-%%%%%%%%%%%%%%%%% _expression_toplevel
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,bool_evaluate(E)).
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,ensure(E)).
-_expression_toplevel(sugar,LBL,operation(OP,ARGS)) :- _passed(sugar,LBL,evaluate(OP,ARGS)).
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,variable_define(X,E)).
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,variable_domain(X,E)).
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,set_assign(X,E)).
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,set_baseDomain(X,E)).
-_expression_toplevel(sugar,LBL,(K;B)) :- _passed(sugar,LBL,multimap_assign(X,K,B)).
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,optimize_maximizeSum(E,X,P)).
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,optimize_precision(E,PRIO)).
-_expression_toplevel(sugar,LBL,E) :- _passed(sugar,LBL,preference_holds(E,K)).
-
 %%%%%%%%%%%%%%%%% _expression_normal
-_float_normalizeQuery(EXPR) :- _phase_active(float_normalize), _expression_toplevel(sugar,LBL,EXPR).
+_float_normalizeQuery(EXPR) :- _phase_active(float_normalize), _expression(sugar,LBL,DECL,EXPR).
 _float_normal(EXPR,NXPR) :- _float_normalizeQuery(EXPR), NXPR=@pythonNormalExpr(EXPR), EXPR != NXPR.
 _float_normalized(EXPR) :- _float_normal(EXPR,NXPR).
 

@@ -18,13 +18,12 @@ variable_define(v(none),val(none,none)).
 variable_define(none_bool(1;2),fromFacts).
 variable_domain(none_bool(1;2),val(none,none)).
 variable_domain(none_bool(1;2),variable(v(bool))).
-set_declare(v(set)).
+variable_declare(v(set),set).
 set_assign(v(set),variable(v(int))).
-multimap_declare(v(multimap)).
+variable_declare(v(multimap),multimap).
 multimap_assign(v(multimap),variable(v(symbol)),variable(v(int))).
 
 check_types(T) :- variable_declare(v(T),_).
-check_types(T) :- T = (set;multimap).
 
 %%%%%%%%%%%%%%%%% None
 variable_define(check(OP,none), EXPR) :-

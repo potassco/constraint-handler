@@ -1,0 +1,4 @@
+value(conj_recovered,bad)
+value(disj_recovered,bad)
+value(limp_recovered,bad)
+value(limp_recovered_also,bad)

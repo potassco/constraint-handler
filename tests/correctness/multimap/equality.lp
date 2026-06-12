@@ -17,7 +17,7 @@ variable_define(a, operation(multimap_make,
                        ((operation(set_make,(val(int,2),(val(int,4),()))),operation(set_make,(val(int,1),(val(int,2),())))),
                        ()))))).
 
-multimap_declare(b).
+variable_declare(b,multimap).
 multimap_assign(b,
     operation(set_make,(val(int,1),(val(int,2),()))),
     operation(set_make,
@@ -35,7 +35,7 @@ multimap_assign(b,
              (val(int,1),
              ())))).
 
-set_declare(b48).
+variable_declare(b48,set).
 set_assign(b48,val(int,4)).
 set_assign(b48,val(int,8)).
 

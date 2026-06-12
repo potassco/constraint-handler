@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+- fix a tuple evaluation bug
+- introduce `set` and `multimap` as possible variable declarations
+- support optimization in the ground engine
 - implement float equality operators extensionally
 - normalize float constant representation
 - avoid generating badValue warnings for internal variables

@@ -4,7 +4,7 @@ _se_assign(LBL,variable(X),E) :- _passed(compile,LBL,variable_define(X,E)).
 :- _passed((compile;ground),LBL,ensure(E)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
 evaluated(OP,ARGS,V) :- _passed((compile;ground),LBL,evaluate(OP,ARGS)), _se_value(operation(OP,ARGS),V).
 
-direct_query(E)  :- _expression(compile,DECL,E).
+direct_query(E)  :- _expression(compile,LBL,DECL,E).
 direct_query(E)  :- _se_assign(LBL,X,E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 direct_query(SE) :- direct_query(T), SE=@pythonTupleElements(T).
@@ -20,11 +20,11 @@ _se_value(variable(X),V) :- _se_assign(LBL,variable(X),E2), _se_value(E2,V).
 
 
 %%%%%%%%%%%%%%%%% tuples
-_direct_tupleValuesAux(E,N,()) :- direct_query(E), _expression_tupleLength(compile,E,N).
+_direct_tupleValuesAux(E,N,()) :- _expression(compile,E), _expression_tupleLength(compile,E,N).
 _direct_tupleValuesAux(E,IDX,(V,VS)) :- _direct_tupleValuesAux(E,IDX+1,VS),
     _expression_tupleIndex(compile,E,IDX,ARG), _se_value(ARG,V).
 _se_value(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
-
+_isTuple(compile,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
 
 %%%%%%%%%%%%% blablablabla
 _expression_dynamicTainted(bad).
@@ -36,7 +36,7 @@ _se_value(EXPR,bad) :- _expression_safeQuery(EXPR), _expression_operationOperato
 _se_value(EXPR,bad) :- _expression_safeQuery(EXPR), _expression_operationIndex(sugar,EXPR,IDX,F), _expression_dynamicTainted(F), _expression_operationOperator(sugar,EXPR,OP), not _operator_recoverable(OP).
 
 
-_argument_value(operation(OP,ARGS),V) :- direct_query(operation(OP,ARGS)), _expression_operationIndex(compile,operation(OP,ARGS),IDX,ARG), _se_value(ARG,V).
+_argument_value(operation(OP,ARGS),V) :- _expression(compile,operation(OP,ARGS)), _expression_operationIndex(compile,operation(OP,ARGS),IDX,ARG), _se_value(ARG,V).
 _se_value(operation(OP,ARGS),bad) :- _argument_value(operation(OP,ARGS),bad), not _operator_recoverable(OP), not _expression_safe(operation(OP,ARGS)).
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
@@ -110,7 +110,8 @@ _direct_imploded(variable(X),V) :- _direct_implode(variable(X)), _se_value(varia
 _direct_implode(V) :- _direct_implode(variable(X)), _se_value(variable(X),V).
 _direct_imploded(variable(X),W) :- _direct_implode(variable(X)), _se_value(variable(X),V), _direct_imploded(V,W).
 
-_expression(compile,E) :- _direct_implode(E).
+_isTuple(compile,E) :- _direct_implode(E), true=@pythonIsTuple(E).
+_isTuple(compile,E,N,ARGS) :- _direct_implode(E), (function,(),N,ARGS)=@pythonReify(E).
 _direct_implode(X) :- _direct_implode(E), _expression_tupleIndex(compile,E,IDX,X).
 _direct_implodeTupleAux(E,N,()) :- _direct_implode(E), _expression_tupleLength(compile,E,N).
 _direct_implodeTupleAux(E,IDX,(V,L)) :- _direct_implodeTupleAux(E,IDX+1,L), _expression_tupleIndex(compile,E,IDX,X), _direct_imploded(X,V).

@@ -29,66 +29,66 @@
 %%% 7 in odd
 
 
-set_declare(a).
+variable_declare(a,set).
 set_assign(a,variable(a)).
-set_declare(b).
+variable_declare(b,set).
 set_assign(b,variable(b)).
-set_declare(c).
+variable_declare(c,set).
 set_assign(c,variable(c)).
-set_declare(d).
+variable_declare(d,set).
 set_assign(d,variable(a)).
 set_assign(d,variable(b)).
-set_declare(e).
+variable_declare(e,set).
 set_assign(e,SSA) :-
     SSA = operation(set_make,(SA,())),
     SA = operation(set_make,(A,())),
     A = variable(a).
-set_declare(f).
+variable_declare(f,set).
 set_assign(f,variable(f)).
 set_assign(f,val(int,1)).
-set_declare(g).
+variable_declare(g,set).
 set_assign(g,variable(g)).
 set_assign(g,val(int,1)).
 set_assign(g,val(int,2)).
-set_declare(h).
+variable_declare(h,set).
 set_assign(h,variable(f)).
 set_assign(h,val(int,1)).
 set_assign(h,val(int,2)).
-set_declare(i).
+variable_declare(i,set).
 set_assign(i,variable(i)).
 set_assign(i,val(int,1)).
 set_assign(i,val(int,2)).
 
-set_declare(nb).
+variable_declare(nb,set).
 set_assign(nb,val(int,0..10)).
 
-set_declare(even).
+variable_declare(even,set).
 set_assign(even,val(int,0)).
 set_assign(even,EX) :-
     EX = val(int,X),
     set_value(nb,EX),
     set_value(odd,val(int,X-1)).
 
-set_declare(odd).
+variable_declare(odd,set).
 set_assign(odd,EX) :-
     EX = val(int,X),
     set_value(nb,EX),
     set_value(even,val(int,X-1)).
 
-set_declare(doubles).
+variable_declare(doubles,set).
 set_assign(doubles,TWOX) :-
     TWO = val(int,2),
     EX = val(int,X),
     TWOX = operation(mult,(TWO,(EX,()))),
     set_value(nb,EX).
 
-set_declare(es).
+variable_declare(es,set).
 set_assign(es,EX) :-
     EX = val(int,X),
     set_value(nb,EX),
     not set_value(os,EX).
 
-set_declare(os).
+variable_declare(os,set).
 set_assign(os,EX) :-
     EX = val(int,X),
     set_value(nb,EX),
