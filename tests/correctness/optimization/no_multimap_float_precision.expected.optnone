@@ -1,0 +1,2 @@
+value(take(e),val(bool,true))
+value(take(a),val(bool,true))

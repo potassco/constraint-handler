@@ -1,0 +1,6 @@
+value(take(b),val(bool,false))
+value(take(c),val(bool,false))
+value(take(d),val(bool,false))
+value(take(b),val(bool,true))
+value(take(c),val(bool,true))
+value(take(d),val(bool,true))
