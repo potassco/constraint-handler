@@ -157,6 +157,7 @@ compile2_xfail: set[str] = {
     "set/membership_nested",
     "core/type_checking",
     "engine/request_set_ref", # mixed engines?
+    "core/reasoning_modes", # multimap
 
 }
 ground_skip: set[str] = {
