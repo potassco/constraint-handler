@@ -63,17 +63,7 @@ def pythonScaleInteger(value, scale):
     Scales the given float/bool/integer value by the provided scale factor.
     Returns floor of scaled value 
     """
-    number = 0
-    if value.type == clingo.SymbolType.Number:
-        number = value.number
-    elif value.type == clingo.SymbolType.String:
-        if value.string == "true":
-            number = 1
-        elif value.string == "false":
-            number = 0
-        else:
-            number = float(value.string)
-    return myClorm.pytocl(number * scale.number)
+    return myClorm.pytocl(math.floor(myClorm.cltopy(value, expression.constant) * myClorm.cltopy(scale, expression.constant)))
 
 @cache
 def _to_val(type_, v):

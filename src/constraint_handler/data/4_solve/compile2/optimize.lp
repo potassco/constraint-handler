@@ -14,6 +14,6 @@
 %%% Abdallah: why floor not round?
 #maximize { @pythonScaleInteger(Value, Scale)@Prio,ID :
              _passed(compile2,LBL,optimize_maximizeSum(Expr,ID,Prio)),
-             engine(LBL,compile2), %%% Abdallah: is this needed?
-             _passed(compile2,_,optimize_precision(Scale,Prio)), %%% Abdallah: is the LBL needed here?
+             _passed(compile2,_,optimize_precision(ScaleExpr,Prio)), %%% Abdallah: is the LBL needed here?
+             _se_value(ScaleExpr,val((float;int),Scale)),
              _se_value(Expr,val((float;int;bool),Value)) }.
