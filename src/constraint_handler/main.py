@@ -65,8 +65,8 @@ module_4_datatype = [
 
 module_4_compile = [
     "4_solve/compile/direct",
-    #"4_solve/compile/optimize",
-    #"4_solve/compile/preference",
+    "4_solve/compile/optimize",
+    "4_solve/compile/preference",
 ]
 
 module_4_compile2 = [
@@ -99,13 +99,13 @@ module_4_propagator = [
 module_4_solve = (
     [
         "4_solve/engine",
-        #"4_solve/finiteDomain",
+        "4_solve/finiteDomain",
         "4_solve/solve",
     ]
-    #+ module_4_datatype
-    #+ module_4_compile
-    #+ module_4_ground
-    #+ module_4_propagator
+    + module_4_datatype
+    + module_4_compile
+    + module_4_ground
+    + module_4_propagator
     + module_4_compile2
 )
 
@@ -115,7 +115,7 @@ module_5_output = [
     "5_output/value",
 ]
 
-t_modules = {"expression": ("PHASE", ["sugar", "compile"])}
+t_modules = {"expression": ("PHASE", ["sugar", "compile", "compile2"])}
 modules = (
     module_main
     + module_0_default_arguments

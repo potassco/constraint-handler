@@ -1,8 +1,8 @@
 %%% creating the parameter list
 _python_operation(named,ExprList) :-
-    _expression(compile, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)).
+    _expression(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)).
 _python_operation(positional,ExprList) :-
-    _expression(compile, operation(python(PythonExpression), ExprList)).
+    _expression(compile2, operation(python(PythonExpression), ExprList)).
 
 _python_param(ExprList, N, ()) :-
     _python_operation(_,ExprList),
@@ -83,42 +83,42 @@ _python_param(ExprList, Idx, (set(SetTail),Tail)) :-
 %%% executing the python code
 %% pythonExtract
 _python_output(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Result):-
-    _expression(compile, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
+    _expression(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
     _python_param(ExprList, 0, NamedParams),  % 0 means the complete list of evaluated parameters
     _main_solverIdentifiers(Magic),
     Result = @pythonEvalExpr(operation(pythonExtract(PythonStatement, PythonExpression), NamedParams), (), Magic).
 %% python
 _python_output(operation(python(PythonExpression), ExprList), Result):-
-    _expression(compile, operation(python(PythonExpression), ExprList)),
+    _expression(compile2, operation(python(PythonExpression), ExprList)),
     _python_param(ExprList, 0, PositionalParams),  % 0 means the complete list of evaluated parameters
     _main_solverIdentifiers(Magic),
     Result = @pythonEvalExpr(operation(python(PythonExpression), PositionalParams), (), Magic).
 
 %%% returned values
 _se_value(Expr, val(Type, Value)) :-
-    _expression(compile, Expr),
+    _expression(compile2, Expr),
     _python_output(Expr, val(Type, Value)).
 
 %%% return set values
 _se_value(Expr, set) :-
-    _expression(compile, Expr),
+    _expression(compile2, Expr),
     _python_output(Expr, set(L)).
 
 _set_contains(Expr, Arg) :-
-    _expression(compile, Expr),
+    _expression(compile2, Expr),
     _python_output(Expr, set(ExprList)),
     Arg = @pythonListElements(ExprList).
 
 %%% bad on error
 _se_value(Expr, bad) :-
-    _expression(compile, Expr),
+    _expression(compile2, Expr),
     _python_output(Expr, error(Kind, Message)).
 
 _se_value(Expr, bad) :-  %% maybe not necessary
-    _expression(compile, Expr),
+    _expression(compile2, Expr),
     _python_output(Expr, bad).
 
 %%% warnings on error
 _warning(Kind, (), (python, Expr, Message)) :-
-    _expression(compile, Expr),
+    _expression(compile2, Expr),
     _python_output(Expr, error(Kind, Message)).

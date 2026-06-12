@@ -1,30 +1,30 @@
 ### inputs
 
-_passed(compile, LBL, Declaration)
+_passed(compile2, LBL, Declaration)
 
 Declaration can be:
 
 %%% variable and domain definition
-_passed(compile, LBL, variable_declare(Var, fromFacts)). % the variable is connected to a domain, unecessary
-_passed(compile, LBL, variable_domain(Var, Expr)) % all possible expressions
+_passed(compile2, LBL, variable_declare(Var, fromFacts)). % the variable is connected to a domain, unecessary
+_passed(compile2, LBL, variable_domain(Var, Expr)) % all possible expressions
 
-_passed(compile, LBL, variable_declare(Var, set)). % variable is declared as a set
-_passed(compile, LBL, set_baseDomain(Var, Expr)).
+_passed(compile2, LBL, variable_declare(Var, set)). % variable is declared as a set
+_passed(compile2, LBL, set_baseDomain(Var, Expr)).
 
-_passed(compile, LBL, variable_declare(Var, definition)). % not used, define is enough
-_passed(compile, LBL, variable_define(Var, Expr))  % Expr is assign to Var
+_passed(compile2, LBL, variable_declare(Var, definition)). % not used, define is enough
+_passed(compile2, LBL, variable_define(Var, Expr))  % Expr is assign to Var
 
-_passed(compile, LBL, set_assign(Var, Expr)) % Expr is assigned to Var, but Var is a set
+_passed(compile2, LBL, set_assign(Var, Expr)) % Expr is assigned to Var, but Var is a set
 
 
 %%% constraints
-_passed(compile, LBL, ensure(Expr))
-_passed(compile, LBL, bool_evaluate(Expr))
-%% what about _passed(compile, LBL, evaluate())
+_passed(compile2, LBL, ensure(Expr))
+_passed(compile2, LBL, bool_evaluate(Expr))
+%% what about _passed(compile2, LBL, evaluate())
 
 %%% preferences and optimize statements
-_passed(compile,LBL,optimize_maximizeSum(E,X,P))
-_passed(compile,LBL,optimize_precision(PREC,PRIO))
+_passed(compile2,LBL,optimize_maximizeSum(E,X,P))
+_passed(compile2,LBL,optimize_precision(PREC,PRIO))
 
 %%% ignore
 warning_ignore
