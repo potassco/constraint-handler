@@ -13,7 +13,9 @@
 %%% Abdallah: is it ensured that there is always an optimize precision for each Prio?
 %%% Abdallah: why floor not round?
 #maximize { @pythonScaleInteger(Value, Scale)@Prio,ID :
-             _passed(compile2,LBL,optimize_maximizeSum(Expr,ID,Prio)),
+             _passed(compile2,_,optimize_maximizeSum(Expr,ID,Prio)),
              _passed(compile2,_,optimize_precision(ScaleExpr,Prio)), %%% Abdallah: is the LBL needed here?
              _se_value(ScaleExpr,val((float;int),Scale)),
              _se_value(Expr,val((float;int;bool),Value)) }.
+
+_optimize_maximizeSum(LBL,E,X,P) :- _passed(compile2,LBL,optimize_maximizeSum(E,X,P)), engine(LBL,compile2). %see issue #298
