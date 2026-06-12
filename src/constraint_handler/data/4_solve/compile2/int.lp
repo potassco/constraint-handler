@@ -134,42 +134,6 @@ _se_value(operation(minus, (Expr1, ())), val(int, -V)) :-
     _expression(compile2, operation(minus, (Expr1, ()))),
     _se_value(Expr1, val(int, V)).
 
-%%%%%%%%%%%%%%%%% eq neq
-%%% TODO: more generic eq/neq for all types?
-_se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, true)) :-
-    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(int, V)),
-    _se_value(Expr2, val(int, V)).
-
-_se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)) :-
-    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(int, V)),
-    not _se_value(Expr2, val(int, V)),
-    not _se_value(Expr2, bad).
-
-_se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)) :-
-    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
-    _se_value(Expr2, val(int, V)),
-    not _se_value(Expr1, val(int, V)),
-    not _se_value(Expr1, bad).
-
-_se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)) :-
-    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(int, V)),
-    not _se_value(Expr2, val(int, V)),
-    not _se_value(Expr2, bad).
-
-_se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)) :-
-    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
-    _se_value(Expr2, val(int, V)),
-    not _se_value(Expr1, val(int, V)),
-    not _se_value(Expr1, bad).
-
-_se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, false)) :-
-    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(int, V)),
-    _se_value(Expr2, val(int, V)).
-
 %%%%%%%%%%%%%%%%% leq
 %%% TODO: more generic leq/lt/geq/gt for all types?
 %%% order encoding for generic types or at least integer? might need domain

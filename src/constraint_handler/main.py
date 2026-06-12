@@ -79,6 +79,7 @@ module_4_compile2 = [
     "4_solve/compile2/float",
     "4_solve/compile2/string",
     "4_solve/compile2/symbol",
+    "4_solve/compile2/tuple",
     "4_solve/compile2/optimize",
     "4_solve/compile2/output",
     "4_solve/compile2/evaluate",
@@ -86,6 +87,7 @@ module_4_compile2 = [
     "4_solve/compile2/none",
     "4_solve/compile2/preference",
     "4_solve/compile2/python",
+    "4_solve/compile2/equality",
 ]
 
 module_4_ground = [

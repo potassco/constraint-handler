@@ -195,4 +195,9 @@ def pythonReflect(kind,term,args):
     else:
         return []
 
+@cache
+def pythonNestedToTuple(values):
+    pValues = myClorm.cltopy(values,list)
+    return myClorm.pytocl(tuple(pValues))
+
 #end.
