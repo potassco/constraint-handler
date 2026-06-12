@@ -218,13 +218,13 @@ compile2_skip: set[str] = {
 }
 compile2_xfail: set[str] = {
     "engine/request",
-    "expression/python_extract",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",
     "optimization/multimap_int",
     "optimization/multimap_labeled_values",
     "optimization/priority",
+    "optimization/preferences",
     "set/manipulations",
     "set/selfref",
     "multimap/basics",
@@ -239,16 +239,6 @@ compile2_xfail: set[str] = {
     "set/nested",
     "set/membership_nested",
     "core/type_checking",
-    "engine/request_set_ref", # mixed engines?
-    "core/reasoning_modes", # multimap
-    "warning/variable_reservedName", # multimap
-
-    "engine/request_set_ref",  # mixed engines?
-    "core/reasoning_modes",  # multimap
-    "python/extract_set_input",
-    "python/extract_static",
-    "warning/variable_confusing_name",
-    "warning/python",
 }
 ground_skip: set[str] = {
     "set/selfref",
