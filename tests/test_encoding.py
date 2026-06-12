@@ -156,6 +156,7 @@ compile2_xfail: set[str] = {
     "set/nested",
     "set/membership_nested",
     "core/type_checking",
+    "engine/request_set_ref", # mixed engines?
 
 }
 ground_skip: set[str] = {

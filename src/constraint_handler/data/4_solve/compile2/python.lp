@@ -88,6 +88,10 @@ _python_output(operation(pythonExtract(PythonStatement, PythonExpression), ExprL
     _main_solverIdentifiers(Magic),
     Result = @pythonEvalExpr(operation(pythonExtract(PythonStatement, PythonExpression), NamedParams), (), Magic).
 %% python
+_python_output(python(PythonExpression), Result):-
+    _expression(compile2, python(PythonExpression)),
+    _main_solverIdentifiers(Magic),
+    Result = @pythonEvalExpr(python(PythonExpression), (), Magic).
 _python_output(operation(python(PythonExpression), ExprList), Result):-
     _expression(compile2, operation(python(PythonExpression), ExprList)),
     _python_param(ExprList, 0, PositionalParams),  % 0 means the complete list of evaluated parameters
