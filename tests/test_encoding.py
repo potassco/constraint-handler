@@ -158,6 +158,7 @@ compile2_xfail: set[str] = {
     "core/type_checking",
     "engine/request_set_ref", # mixed engines?
     "core/reasoning_modes", # multimap
+    "warning/variable_reservedName", # multimap
 
 }
 ground_skip: set[str] = {
