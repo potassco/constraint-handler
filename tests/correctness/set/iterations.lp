@@ -2,8 +2,8 @@
 %%% set_fold(+,empty,0) = 0
 
 %%% numbers = { -2.0, -1, 0, 1, 2 }
-%%% squares = { x*x | x \in numbers, x float or x int } = { 0, 1, 4, 4.0 }
-%%% csquares = |squares| = 4
+%%% squares = { x*x | x \in numbers, x float or x int } = { 0, 1, 4 }
+%%% csquares = |squares| = 3
 
 %%% isquares = { x*x | x \in numbers, x int } = { 0, 1, 4 }
 %%% |isquares| = 3

@@ -4,18 +4,22 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T,V)), 
     _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T,V)),
+    _computeIdx(E,1,val(T,_)),
     not _computeIdx(E,1,val(T,V)), % TODO drop negation and suffer quadratic blow-up?
     _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,1,val(T,V)),
+    _computeIdx(E,0,val(T,_)),
     not _computeIdx(E,0,val(T,V)),
     _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,neq), _computeIdx(E,0,val(T,V)),
+    _computeIdx(E,1,val(T,_)),
     not _computeIdx(E,1,val(T,V)),
     _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,neq), _computeIdx(E,1,val(T,V)),
+    _computeIdx(E,0,val(T,_)),
     not _computeIdx(E,0,val(T,V)),
     _type_extensionalEquality(T).
 
