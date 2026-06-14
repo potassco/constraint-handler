@@ -4,6 +4,7 @@
 
 ## v0.0.3
 
+- clean-up post processor and unify handling of optimization directives
 - support preferences in the ground engine
 - skip internal values in the models
 - introduce warnings `type(notImplemented)` and `type(notSupported)`

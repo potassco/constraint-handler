@@ -1,4 +1,5 @@
 %%%%%%%%%%%%%%%%% engines
+_engine_supportOptimization(compile;ground;propagator).
 _main_engine(compile;ground;propagator;none).
 
 _main_defaultEngine(ENG) :- defaultEngine(ENG), _main_engine(ENG).

@@ -10,8 +10,7 @@ _passed(propagator,LBL,variable_interface/1).
 _passed(propagator,LBL,set_assign/2).
 _passed(propagator,LBL,set_baseDomain/2).
 _passed(propagator,LBL,multimap_assign/3).
-_passed(propagator,LBL,optimize_maximizeSum/3).
-_passed(propagator,LBL,optimize_precision/2).
+_passed(propagator,LBL,optimize_component/4).
 _passed(solve,LBL,warning_forbid/1).
 _passed(solve,LBL,warning_ignore/1).
 
@@ -35,6 +34,6 @@ propagator_set_baseDomain/3.
 propagator_multimap_assign/4.
 propagator_multimap_declare/2.
 propagator_optimize_maximizeSum/4.
-propagator_optimize_precision/2.
+propagator_share_value/2.
 propagator_warning_forbid/2.
 propagator_warning_ignore/2.

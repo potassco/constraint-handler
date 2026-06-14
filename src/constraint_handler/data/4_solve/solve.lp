@@ -30,5 +30,7 @@ _passed(compile,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _lab
 _passed(ground,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,ground), #false: DECL=warning_forbid(KIND); #false: DECL=warning_ignore(KIND).
 _passed(propagator,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,propagator), #false: DECL=warning_forbid(KIND); #false: DECL=warning_ignore(KIND).
 
-_passed((compile;ground;propagator;none),LBL,warning_forbid(W)) :- _passed(solve,LBL,warning_forbid(W)).
-_passed((compile;ground;propagator;none),LBL,warning_ignore(W)) :- _passed(solve,LBL,warning_ignore(W)).
+_passed((compile;ground;propagator),LBL,warning_forbid(W)) :- _passed(solve,LBL,warning_forbid(W)).
+_passed((compile;ground;propagator),LBL,warning_ignore(W)) :- _passed(solve,LBL,warning_ignore(W)).
+
+_optimize_component(LBL,E,PREC,ID,PRIO) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,PREC,ID,PRIO)), engine(LBL,ENG), _engine_supportOptimization(ENG).

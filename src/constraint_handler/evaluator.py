@@ -281,6 +281,8 @@ def operator(o, args, globals_env, locals_env):
                 )
             return eq_operator(o, args[0], args[1])
         case operators.ArithmeticOperator():
+            # iargs = (0 if arg is False or arg is None else 1 if arg is True else arg for arg in args)
+            # return arithmetic.evaluate_operator(o, list(iargs))
             return arithmetic.evaluate_operator(o, args)
         case operators.LogicOperator():
             return logic.evaluate_operator(o, args)

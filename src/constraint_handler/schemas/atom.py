@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from typing import Any, NamedTuple
 
 import constraint_handler.schemas.domain as domain  # fmt: skip
@@ -131,6 +130,12 @@ class Optimize_precision(NamedTuple):
 type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
 
 
+class Optimize_value(NamedTuple):
+    label: expression.constant
+    priority: expression.constant
+    total: expression.constant
+
+
 class Preference_maximizeScore(NamedTuple):
     pass
 
@@ -183,7 +188,3 @@ class Evaluated(NamedTuple):
 type MainAtom = Ensure | Evaluate
 type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
 type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_score | warning.Warning
-
-
-Main_solverIdentifiers = namedtuple("_main_solverIdentifiers", ["id"])
-Main_solverIdentifiers.__annotations__ = {"id": list[expression.constant]}

@@ -10,9 +10,9 @@ from clingo import Symbol
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
-import constraint_handler.post_processor as post_processor
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.internal as internal
 import constraint_handler.schemas.propagator_atom as prop_atom
 import constraint_handler.schemas.type_ as type_
 import constraint_handler.schemas.warning as warning
@@ -36,6 +36,7 @@ from constraint_handler.PropagatorVariables import (
     Evaluations,
     OptimizationHandler,
     SetVariable,
+    SharedValue,
     Variable,
     VariableManager,
     VariableType,
@@ -80,6 +81,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.evaluatevars: list[EvaluateVariable] = []
 
         self.optimization_sum: OptimizationHandler = OptimizationHandler()
+        self.shared_values: list[SharedValue] = []
         self.best_value: list[int | float] = [-sys.maxsize]
         self.using_optimization: bool = False
         self.optimization_strength: OptimizationStrength = OptimizationStrength.STRICT
@@ -191,6 +193,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.get_optimization_sums(init)
         self.get_engine_variables(init)
         self.get_evaluate(init)
+        self.get_shared_values(init)
 
         self.set_parents()
 
@@ -332,6 +335,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             control: Clingo PropagateControl object.
         """
         self.check_evaluate(control)
+        self.check_shared_values(control)
         self.handle_warning_ignore(control)
         backtrack = self.evaluate_model(control)
         if backtrack:
@@ -491,6 +495,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         self.evaluations.update_evaluations(self.symbol2var.get_variables())
         for var in self.evaluatevars:
+            var.evaluate(self.evaluations, ctl, self.environment)
+
+    def check_shared_values(self, ctl: clingo.PropagateControl):
+        """
+        Evaluate `evaluate` atoms against the current assignments.
+
+        Args:
+            ctl: Clingo PropagateControl object.
+        """
+        self.evaluations.update_evaluations(self.symbol2var.get_variables())
+        for var in self.shared_values:
             var.evaluate(self.evaluations, ctl, self.environment)
 
     def propagate(self, control: clingo.PropagateControl, changes: Sequence[int]) -> None:
@@ -733,8 +748,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if len(self.symbol2var) == 0:
             # if there are no variables, we can skip this part since propagator is not used
             return
-        value_atoms = myClorm.findInPropagateInit(ctl, post_processor._se_value)
-        set_value_atoms = myClorm.findInPropagateInit(ctl, post_processor._set_contains)
+        value_atoms = myClorm.findInPropagateInit(ctl, internal._se_value)
+        set_value_atoms = myClorm.findInPropagateInit(ctl, internal._set_contains)
         multimap_value_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Multimap_value)
 
         for (name, val), _literal in value_atoms.items():
@@ -745,11 +760,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # if it is a variable, get the symbol for it
             _name = myClorm.pytocl(name).arguments[0]
             if _name not in self.symbol2var:
-                if (
-                    isinstance(val, post_processor.Ref)
-                    and isinstance(val.expr, expression.Variable)
-                    and val.expr == name
-                ):
+                if isinstance(val, internal.Ref) and isinstance(val.expr, expression.Variable) and val.expr == name:
                     # If the set references itself, it should get its values later from _set_contains,
                     # Here, we make the set variable
                     # TODO: make a difference for sets and multimaps,
@@ -763,7 +774,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.symbol2var.add_variable(_name, Variable(OTHER_ENGINE_VAR_NAME, _name))
 
             variable: Variable = cast(Variable, self.symbol2var.get_variable(_name, getattr(Variable, "__name__")))
-            expr: expression.Expr = val.expr if isinstance(val, post_processor.Ref) else val
+            expr: expression.Expr = val.expr if isinstance(val, internal.Ref) else val
 
             variable.add_value(expr, _literal, _literal)
 
@@ -787,7 +798,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             set_variable = cast(SetVariable, self.symbol2var.get_variable(_name, getattr(SetVariable, "__name__")))
 
-            expr: expression.Expr = val_set.expr if isinstance(val_set, post_processor.Ref) else val_set
+            expr: expression.Expr = val_set.expr if isinstance(val_set, internal.Ref) else val_set
 
             set_variable.add_value(expr, _literal)
             ctl.add_watch(_literal)
@@ -971,6 +982,20 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # It should do nothing and also should never appear in any assignments!!
             self.symbol2var.add_variable(ensure_var.var, ensure_var)
 
+    def get_shared_values(self, ctl: clingo.PropagateInit):
+        """
+        Load shared value declarations from ASP facts and create SharedValueVariable instances.
+
+        Args:
+            ctl: Clingo PropagateInit object.
+        """
+
+        shared_values = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_share_value)
+        for (name, expr), literal in shared_values.items():
+            shared_value_var: SharedValue = SharedValue(expr, literal)
+
+            self.shared_values.append(shared_value_var)
+
     def get_evaluate(self, ctl: clingo.PropagateInit):
         """
         Load `evaluate` atoms into `EvaluateVariable` instances.
@@ -1025,7 +1050,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateInit object.
         """
 
-        for id, _ in myClorm.findInPropagateInit(ctl, prop_atom.Main_solverIdentifiers).items():
+        for id, _ in myClorm.findInPropagateInit(ctl, internal.Main_solverIdentifiers).items():
             self.environment = evaluator.get_environment(id.id)
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
@@ -1246,8 +1271,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if not model.contains(clAtom):
                 model.extend([clAtom])
 
+        self.add_shared_values(model)
         if self.using_optimization:
-            self.add_optimization_values(model)
             if clingo.Function(OPTIMIZATION_STAGE_ATOM, [clingo.Number(2)]) in model.symbols(atoms=True):
                 self.optimal_models_found += 1
             if self.optimal_models_wanted > 0 and self.optimal_models_found >= self.optimal_models_wanted:
@@ -1405,13 +1430,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for var in variables:
             for expr in var.expressions:
                 if expr.value not in [ValueStatus.NOT_SET, ValueStatus.ASSIGNMENT_IS_FALSE, None, expression.Bad.bad]:
-                    vals[myClorm.pytocl(expr.expr)] = post_processor._numeric_value_symbol(
-                        expr.value, type(expr.value) is float
-                    )
+                    val, errors = evaluator.reducedExpr(expr.value)  # TODO handle errors?
+                    vals[myClorm.pytocl(expr.expr)] = myClorm.pytocl(val)
 
         return vals
 
-    def add_optimization_values(self, model: clingo.Model):
+    def add_shared_values(self, model: clingo.Model):
         """
         Add optimization value atoms for optimization sums to the model.
         This uses the post_processor.py "_extend_optimize_values" function.
@@ -1420,10 +1444,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             model: Clingo model to extend.
         """
         assert self.python_model is not None
-        optimize_values = post_processor._extend_optimize_values(
-            self.get_expr_values([self.optimization_sum]), self.prop_sum_atoms
-        )
-        for opt_val in optimize_values:
-            clAtom = myClorm.pytocl(opt_val)
+
+        for shared_value in self.shared_values:
+            val, errors = evaluator.reducedExpr(shared_value.value)
+            clAtom = myClorm.pytocl(internal._shared_value(shared_value.expr, val))
             if not model.contains(clAtom):
                 model.extend([clAtom])

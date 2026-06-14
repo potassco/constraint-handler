@@ -9,7 +9,6 @@ import constraint_handler.schemas.warning as warning
 
 Bool_evaluated = atom.Bool_evaluated
 Evaluated = atom.Evaluated
-Main_solverIdentifiers = atom.Main_solverIdentifiers
 Multimap_value = atom.Multimap_value
 Set_value = atom.Set_value
 Value = atom.Value
@@ -65,6 +64,11 @@ class Propagator_multimap_assign(atom.Multimap_assign):
 
 class Propagator_optimize_maximizeSum(atom.Optimize_maximizeSum):
     pass
+
+
+class Propagator_share_value(NamedTuple):
+    label: expression.constant
+    expr: expression.Expr
 
 
 class Propagator_optimize_precision(atom.Optimize_precision):

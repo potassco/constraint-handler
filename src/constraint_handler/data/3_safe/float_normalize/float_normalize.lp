@@ -24,9 +24,16 @@ _float_normalizeDecl(LBL,multimap_assign(X,K,B),multimap_assign(X,NK,B)) :- _pas
   _float_normal(K,NK), not _float_normalized(B).
 _float_normalizeDecl(LBL,multimap_assign(X,K,B),multimap_assign(X,K,NB)) :- _passed(sugar,LBL,multimap_assign(X,K,B)),
   not _float_normalized(K), _float_normal(B,NB).
-_float_normalizeDecl(LBL,optimize_maximizeSum(E,X,P),optimize_maximizeSum(NE,X,P)) :- _passed(sugar,LBL,optimize_maximizeSum(E,X,P)),
-  _float_normal(E,NE).
-_float_normalizeDecl(LBL,optimize_precision(E,PRIO),optimize_precision(NE,PRIO)) :- _passed(sugar,LBL,optimize_precision(E,PRIO)),
+_float_normalizeDecl(LBL,optimize_component(E,PREC,ID,PRIO),optimize_component(NE,NPREC,ID,PRIO)) :- _passed(sugar,LBL,optimize_component(E,PREC,ID,PRIO)),
+  _float_normal(E,NE),
+  _float_normal(PREC,NPREC).
+_float_normalizeDecl(LBL,optimize_component(E,PREC,ID,PRIO),optimize_component(E,NPREC,ID,PRIO)) :- _passed(sugar,LBL,optimize_component(E,PREC,ID,PRIO)),
+  not _float_normalized(E),
+  _float_normal(PREC,NPREC).
+_float_normalizeDecl(LBL,optimize_component(E,PREC,ID,PRIO),optimize_component(NE,PREC,ID,PRIO)) :- _passed(sugar,LBL,optimize_component(E,PREC,ID,PRIO)),
+  _float_normal(E,NE),
+  not _float_normalized(PREC).
+_float_normalizeDecl(LBL,optimize_precision(E,P),optimize_precision(NE,P)) :- _passed(sugar,LBL,optimize_precision(E,P)),
   _float_normal(E,NE).
 _float_normalizeDecl(LBL,preference_holds(E,K),preference_holds(NE,K)) :- _passed(sugar,LBL,preference_holds(E,K)),
   _float_normal(E,NE).

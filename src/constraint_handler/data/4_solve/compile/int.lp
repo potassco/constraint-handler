@@ -1,17 +1,28 @@
 %%%%%%%%%%%%%%%%% add mult
 _int_add(operation(add,ARGS),LEN,val(int,0)) :- _computeIdx(operation(add,ARGS),add), _length(ARGS,LEN), LEN <= 2.
-_int_add(E,IDX,val(int,VO+V)) :- _computeIdx(E,IDX,val(int,V)), _int_add(E,IDX+1,val(int,VO)).
+_int_add(E,IDX,val(int,VO+V)) :- _int_add(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(int,V)).
+_int_add(E,IDX,val(int,VO+1)) :- _int_add(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(bool,true)).
+_int_add(E,IDX,val(int,VO))   :- _int_add(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(bool,false)).
+%%%_int_add(E,IDX,val(int,VO))   :- _int_add(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(none,none)).
 _computedIdx(E,V)  :- _int_add(E,0,V).
 _computedIdx(operation(add,ARGS),val(int,N)) :-
     _computeIdx(operation(add,ARGS),add),
     _length(ARGS,LEN), LEN > 2,
-    LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val(int,V)) }, %%% TODO: remove
-    N = #sum { V,IDX : _computeIdx(operation(add,ARGS),IDX,val(int,V)) }.
+    %%% LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val((bool;int;none),V)) },
+    LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val((bool;int),V)) }, %%% TODO: remove
+    N = #sum { V,IDX : _computeIdx(operation(add,ARGS),IDX,val(int,V));
+               1,IDX : _computeIdx(operation(add,ARGS),IDX,val(bool,true)) }.
 
 % short circuit if there is a 0
 _computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,0)).
+_computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(bool,false)).
+%%%_computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(none,none)).
+
 _int_mult(operation(mult,ARGS),LEN,val(int,1)) :- _computeIdx(operation(mult,ARGS),mult), _length(ARGS,LEN).
-_int_mult(E,IDX,val(int,VO*V)) :- _computeIdx(E,IDX,val(int,V)), _int_mult(E,IDX+1,val(int,VO)).
+_int_mult(E,IDX,val(int,VO*V)) :- _int_mult(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(int,V)).
+_int_mult(E,IDX,val(int,VO))   :- _int_mult(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(bool,true)).
+_int_mult(E,IDX,val(int,0))    :- _int_mult(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(bool,false)).
+%%%_int_mult(E,IDX,val(int,0)) :- _computeIdx(E,IDX,val(none,none)), _int_mult(E,IDX+1,val(int,VO)).
 _computedIdx(E,V)  :- _int_mult(E,0,V).
 
 %%%%%%%%%%%%%%%%% sub pow
@@ -31,6 +42,8 @@ _warning(expression(zeroDivisionError),(),(OP,E)) :- _computeIdx(E,OP), OP = (in
 _computedIdx(E,val(int,|V|)) :- _computeIdx(E,abs), _computeIdx(E,0,val(int,V)).
 _computedIdx(E,val(int,V)) :- _computeIdx(E,(ceil;floor)), _computeIdx(E,0,val(int,V)).
 _computedIdx(E,val(int,-V))  :- _computeIdx(E,minus), _computeIdx(E,0,val(int,V)).
+
+_computedIdx(E,val(int,0)) :- _computeIdx(E,(ceil;floor)), _computeIdx(E,0,val(none,none)).
 
 %%%%%%%%%%%%%%%%% eq neq
 _type_extensionalEquality(int).
