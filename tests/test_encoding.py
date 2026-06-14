@@ -166,13 +166,8 @@ propagator_xfail: set[str] = {
     "execution/python_integrity",
     "expression/lambda_recursive",
     "multimap/main",
-    "optimization/no_multimap_bool",
-    "optimization/no_multimap_float",
     "optimization/multimap_float_precision",
-    "optimization/no_multimap_int",
-    "optimization/multimap_labeled_values",
     "optimization/no_multimap_float_precision",
-    "optimization/no_multimap_labeled_values",
     "optimization/preferences",
     "set/fold_bools",
     "set/iterations",
@@ -181,12 +176,7 @@ propagator_xfail: set[str] = {
 }
 
 propagator_true_skip: set[str] = propagator_skip | set()
-propagator_true_xfail: set[str] = propagator_xfail | {
-    "optimization/multimap_bool",
-    "optimization/multimap_float",
-    "optimization/multimap_int",
-    "optimization/priority",
-}
+propagator_true_xfail: set[str] = propagator_xfail | set()
 
 engine_test_configs: list[tuple[str, set[str], set[str], tuple[bool, ...]]] = [
     ("compile", compile_skip, compile_xfail, (False,)),

@@ -105,6 +105,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.previously_stage_2: bool = False
 
         self.optimization_stage_lits: dict[Literal[1, 2], int] = {1: -1, 2: -1}
+        self.previously_opt_stage_2: bool = False
         self.optimal_models_wanted: int = 0
         self.optimal_models_found: int = 0
         self.nogood_queue: list[Iterable[int]] = []
@@ -287,6 +288,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             control: Clingo PropagateControl object.
         """
+
+        if not self.previously_opt_stage_2 and control.assignment.is_true(self.optimization_stage_lits[2]):
+            # if we are now in the second stage of optimization,
+            # we can now look for equal valued solutions
+            self.set_optimization_check_strength("le")
+            print("Now in optimization stage 2, looking for equal or better solutions")
+            self.previously_opt_stage_2 = True
+
         if self.add_nogoods_from_queue(control):
             # backtracking due to nogoods in queue
             return
