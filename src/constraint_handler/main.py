@@ -65,7 +65,6 @@ module_4_datatype = [
 
 module_4_compile = [
     "4_solve/compile/direct",
-    "4_solve/compile/optimize",
     "4_solve/compile/preference",
 ]
 
@@ -100,6 +99,7 @@ module_4_solve = (
     [
         "4_solve/engine",
         "4_solve/finiteDomain",
+        "4_solve/optimize",
         "4_solve/solve",
     ]
     + module_4_datatype
@@ -171,9 +171,9 @@ def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
 
     def combine_on_model(on_model: typing.Callable[[clingo.Model], bool | None] | None = None):
         def om(model):
-            post_processor.set_optimize_valuation(post_prop, model)
             if prop.on_model(model) == False:
                 return False
+            post_processor.set_optimize_valuation(post_prop, model)
             if on_model is not None:
                 return on_model(model)
 

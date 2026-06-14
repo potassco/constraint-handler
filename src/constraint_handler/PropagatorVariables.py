@@ -462,6 +462,94 @@ class EvaluateVariable:
         return self.__str__()
 
 
+class SharedValue:
+    """
+    TODO
+    """
+
+    def __init__(self, expr: expression.Expr, literal: int = -1):
+        """
+        Initialize an EvaluateVariable.
+
+        Args:
+            op: Operator to apply.
+            args: Operands for the operator.
+            literal: Literal controlling whether this operation is active.
+        """
+        self.expr: expression.Expr = expr
+        self.value: Any = ValueStatus.NOT_SET
+        self.literal: int = literal
+
+        self.errors: propagator_warning_t = []
+
+    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
+        """
+        Evaluate the expression
+
+        Args:
+            evaluations: Current variable evaluations.
+            ctl: PropagateControl for checking literal assignments and decision levels.
+            env: Environment for evaluation.
+
+        Returns:
+            bool: True if the value has changed, False otherwise.
+        """
+        if not ctl.assignment.is_true(self.literal):
+            return False
+        value, errors = evaluator.evaluate_expr(self.expr, env, evaluations.evaluations)
+        self.value = value
+        for error, msg in errors:
+            self.errors.append(warning.Warning(error, (), repr(msg)))
+
+        bad_value_warning = create_bad_value_warning(self)
+        if bad_value_warning is not None:
+            self.errors.append(bad_value_warning)
+
+        return True
+
+    @property
+    def var(self) -> clingo.Symbol:
+        """
+        Return a symbolic representation of this evaluation variable.
+
+        Returns:
+            clingo.Symbol: A symbolic representation of this variable.
+        """
+        return myClorm.pytocl(self.expr)
+
+    def get_value(self) -> Any:
+        """
+        Return the current value of the evaluation.
+
+        Returns:
+            Any: Current value.
+        """
+        return self.value
+
+    def get_errors(self) -> propagator_warning_t:
+        """
+        Return warnings collected while evaluating this operation.
+
+        Returns:
+            propagator_warning_t: List of warnings.
+        """
+        return self.errors
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, SharedValue):
+            return False
+        return self.expr == other.expr and self.literal == other.literal
+
+    def __hash__(self) -> int:
+        return hash((str(self.expr), self.literal))
+
+    def __str__(self) -> str:
+        return f"SharedValue({self.expr})"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+
 class EnsureVariable:
     """
     Represents an 'ensure' atom, which ensures a certain expression holds.

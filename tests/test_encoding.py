@@ -235,11 +235,8 @@ propagator_skip: set[str] = set()
 propagator_xfail: set[str] = {
     "engine/request",
     "engine/request_mixed_trig",
-    "execution/python_integrity",
     "expression/lambda_recursive",
     "multimap/main",
-    "optimization/multimap_float_precision",
-    "optimization/no_multimap_float_precision",
     "optimization/preferences",
     "python/set_output",
     "python/extract_set_output",

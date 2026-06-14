@@ -35,8 +35,7 @@ _passed(sugar,LBL,variable_interface/1).
 _passed(sugar,LBL,multimap_assign/3).
 _passed(sugar,LBL,set_assign/2).
 _passed(sugar,LBL,set_baseDomain/2).
-_passed(sugar,LBL,optimize_precision/2).
-_passed(sugar,LBL,optimize_maximizeSum/3).
+_passed(sugar,LBL,optimize_component(EXPR,PRECISION,ID,PRIORITY)).
 _passed(sugar,LBL,preference_holds/2).
 _passed(sugar,LBL,warning_forbid/1).
 _passed(sugar,LBL,warning_ignore/1).
