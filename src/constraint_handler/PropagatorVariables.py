@@ -8,6 +8,7 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
+import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.warning as warning
 from constraint_handler.PropagatorConstants import (
@@ -417,6 +418,16 @@ class EvaluateVariable:
             self.errors.append(bad_value_warning)
 
         return True
+
+    @property
+    def var(self) -> clingo.Symbol:
+        """
+        Return a symbolic representation of this evaluation variable.
+
+        Returns:
+            clingo.Symbol: A symbolic representation of this variable.
+        """
+        return myClorm.pytocl(expression.Operation(self.op, self.args))
 
     def get_value(self) -> Any:
         """
