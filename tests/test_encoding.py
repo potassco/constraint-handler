@@ -46,6 +46,7 @@ base_tests = [
     "datatype/bool_negation",
     "datatype/float_equality",
     "datatype/floats",
+    "datatype/int_comparison",
     "datatype/int_eq_compound",
     "datatype/ints",
     "datatype/strings",
