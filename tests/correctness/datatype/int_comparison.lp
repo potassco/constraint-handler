@@ -33,20 +33,23 @@ variable_define(divtentwo, operation(int_div,(variable(ten),(variable(two),())))
 variable_define(powtwoten, operation(pow,(variable(two),(variable(ten),())))).
 variable_define(powtentwo, operation(pow,(variable(ten),(variable(two),())))).
 
-evaluate(add,(variable(x),(val(int,10),()))).
-evaluate(add,()).
-evaluate(add,(variable(ten),())).
-evaluate(add,(variable(two),(variable(ten),()))).
-evaluate(add,(variable(ten),(variable(two),()))).
-evaluate(add,(variable(ten),(variable(two),(variable(two),(variable(ten),()))))).
-evaluate(mult,()).
-evaluate(mult,(variable(ten),())).
-evaluate(mult,(variable(two),(variable(ten),()))).
-evaluate(mult,(variable(ten),(variable(two),()))).
-evaluate(mult,(variable(ten),(variable(two),(variable(two),(variable(ten),()))))).
-evaluate(sub,(variable(two),(variable(ten),()))).
-evaluate(sub,(variable(ten),(variable(two),()))).
-evaluate(abs,(variable(subtwoten),())).
-evaluate(abs,(variable(subtentwo),())).
-evaluate(max,(variable(two),(variable(ten),()))).
-evaluate(min,(variable(two),(variable(ten),()))).
+evaluate(eq,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(neq,(variable(multtwoten),(variable(multtentwo),()))).
+evaluate(eq,(variable(subtwoten),(variable(subtentwo),()))).
+evaluate(eq,(operation(minus,(variable(subtwoten),())),(variable(subtentwo),()))).
+evaluate(neq,(operation(minus,(variable(two),())),(variable(two),()))).
+evaluate(neq,(operation(minus,(operation(minus,(variable(two),())),())),(variable(two),()))).
+evaluate(leq,(variable(two),(variable(ten),()))).
+evaluate(lt,(variable(two),(variable(ten),()))).
+evaluate(geq,(variable(two),(variable(ten),()))).
+evaluate(gt,(variable(two),(variable(ten),()))).
+evaluate(leq,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(lt,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(geq,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(gt,(variable(addtwoten),(variable(addtentwo),()))).
+evaluate(eq,(operation(int_div,(val(int,6),(val(int,2),()))),(val(int,3),()))).
+evaluate(eq,(operation(int_div,(val(int,5),(val(int,2),()))),(val(int,2),()))).
+evaluate(eq,(operation(float_div,(val(int,6),(val(int,2),()))),(val(float,float("3.0")),()))).
+evaluate(eq,(operation(float_div,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),()))).
+evaluate(eq,(val(int,1),(val(float,float("1.0")),()))).
+evaluate(neq,(val(int,1),(val(float,float("1.0")),()))).
