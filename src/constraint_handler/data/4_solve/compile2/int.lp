@@ -2,7 +2,7 @@
 %%% Abdallah: what about none handling
 
 _non_integer_operation(ExprList) :- _expression(compile2, operation((add;mult), ExprList)),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation((add;mult), ExprList), _, Arg),
     not _se_value(Arg, val(int, _)).
 
 _se_value(operation(add, ()), val(int, 0)) :-
@@ -23,15 +23,16 @@ _se_value(operation(add, (Expr1, (Expr2, ()))), val(int, V1 + V2)) :-
 _se_value(operation(add, ExprList), val(int, V)) :-
     _expression(compile2, operation(add, ExprList)),
     not _non_integer_operation(ExprList),
-    @pythonListLength(ExprList) > 2,
-    V = #sum { V1, Idx : _se_value(Arg, val(int, V1)), (Idx, Arg) = @pythonEnumerateElements(ExprList) }.
+    _expression_operationLength(compile2, operation(add, ExprList), Len),
+    Len > 2,
+    V = #sum { V1, Idx : _se_value(Arg, val(int, V1)), _expression_operationIndex(compile2, operation(add, ExprList), Idx, Arg) }.
 
 %%%%%%%%%%%%%%%%% mult
 
 _int_has_zero(ExprList) :-
     _expression(compile2, operation(mult, ExprList)),
     not _non_integer_operation(ExprList),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
     _se_value(Arg, val(int, 0)).
 
 _se_value(operation(mult, ()), val(int, 1)) :-
@@ -46,13 +47,13 @@ _int_mul(ExprList, -1, 1) :- _expression(compile2, operation(mult, ExprList)),
    not _int_has_zero(ExprList).
 
 _int_mul(ExprList, Idx, ListVal * Val) :- _expression(compile2, operation(mult, ExprList)),
-    (Idx, Expr) = @pythonEnumerateElements(ExprList),
+    _expression_operationIndex(compile2, operation(mult, ExprList), Idx, Expr),
     _se_value(Expr, val(int, Val)),
     _int_mul(ExprList, Idx-1, ListVal).
 
 _se_value(operation(mult, ExprList), val(int, Val)) :-
     _expression(compile2, operation(mult, ExprList)),
-    Len = @pythonListLength(ExprList),
+    _expression_operationLength(compile2, operation(mult, ExprList), Len),
     _int_mul(ExprList, Len-1, Val).
 
 
@@ -61,7 +62,7 @@ _se_value(operation(mult, ExprList), val(int, 0)) :- _int_has_zero(ExprList).
 _se_value(operation(mult, ExprList), bad) :-
     _expression(compile2, operation(mult, ExprList)),
     not _non_integer_operation(ExprList),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
     _se_value(Arg, bad),
     not _int_has_zero(ExprList).
 
