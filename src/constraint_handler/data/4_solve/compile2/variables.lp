@@ -20,6 +20,12 @@ _set_contains(variable(Var), Value) :-
     _set_contains(Expr, Value).
 _set_contains(variable(Var), Value) :- _passed(compile2,_, set_assign(Var, Expr)), _se_value(Expr, Value).
 
+_variable_needs_value(variable(Var)) :- _passed(compile2, _, variable_define(Var, _)).
+_variable_needs_value(variable(Var)) :-
+    _passed(compile2, _, variable_declare(Var, fromFacts)),
+    _passed(compile2, _, variable_domain(Var, _)).
+_variable_needs_value(variable(Var)) :- _passed(compile2, _, variable_declare(Var, set)).
+
 % exactly one value
 % Note: this could be optimized only for fromFacts variables
-:- _variable(X), not 1 #sum { 1,Y : _se_value(X,Y) } 1.
+:- _variable_needs_value(X), not 1 #sum { 1,Y : _se_value(X,Y) } 1.

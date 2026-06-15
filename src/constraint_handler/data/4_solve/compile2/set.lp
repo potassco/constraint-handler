@@ -42,14 +42,14 @@ _se_value(operation(set_make, ExprList), set) :- _expression(compile2, operation
 
 _set_contains(operation(set_make, ExprList), Val) :-
     _expression(compile2, operation(set_make, ExprList)),
-    Expr = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(set_make, ExprList), _, Expr),
     _se_value(Expr, Val).
     
 %%%%%%%%%%%%%%%%% union
 
 _se_value(operation(union, ExprList), set) :- _expression(compile2, operation(union, ExprList)).
 _set_contains(operation(union, ExprList), Val) :- _expression(compile2, operation(union, ExprList)),
-    Expr = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(union, ExprList), _, Expr),
     _se_value(Expr, set),
     _set_contains(Expr, Val).
 
@@ -59,7 +59,7 @@ _se_value(operation(inter, ExprList), set) :- _expression(compile2, operation(in
 _set_contains(operation(inter, (Expr1, Rest)), Val) :- _expression(compile2, operation(inter, (Expr1, Rest))),
     _se_value(Expr1, set),
     _set_contains(Expr1, Val),
-    _set_contains(Expr, Val) : Expr = @pythonListElements(Rest).
+    _set_contains(Expr, Val) : _expression_operationIndex(compile2, operation(inter, (Expr1, Rest)), Idx, Expr), Idx > 0.
     
 %%%%%%%%%%%%%%%%% diff
 

@@ -1,62 +1,71 @@
 %%% creating the parameter list
-_python_operation(named,ExprList) :-
+_python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)) :-
     _expression(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)).
-_python_operation(positional,ExprList) :-
+_python_operation(positional, operation(python(PythonExpression), ExprList)) :-
     _expression(compile2, operation(python(PythonExpression), ExprList)).
 
-_python_param(ExprList, N, ()) :-
-    _python_operation(_,ExprList),
-    N = @pythonListLength(ExprList).
+_python_param(Operation, N, ()) :-
+    _python_operation(_, Operation),
+    _expression_operationLength(compile2, Operation, N).
 
-_python_param(ExprList, Idx, ((VariableName, Val), Tail)) :-
-    _python_operation(named,ExprList),
-    (Idx, Arg) = @pythonEnumerateElements(ExprList),
+_python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, ((VariableName, Val), Tail)) :-
+    _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
+    _expression_operationIndex(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Arg),
     Arg = (VariableNameExpr, Expr),
     _se_value(VariableNameExpr, VariableName),
     _se_value(Expr, Val),
     Val = (val(_,_); bad),
-    _python_param(ExprList, Idx+1, Tail).
-_python_param(ExprList, Idx, (Val, Tail)) :-
-    _python_operation(positional,ExprList),
-    (Idx, Arg) = @pythonEnumerateElements(ExprList),
+    _python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx+1, Tail).
+_python_param(operation(python(PythonExpression), ExprList), Idx, (Val, Tail)) :-
+    _python_operation(positional, operation(python(PythonExpression), ExprList)),
+    _expression_operationIndex(compile2, operation(python(PythonExpression), ExprList), Idx, Arg),
     Arg = Expr,
     _se_value(Expr, Val),
     Val = (val(_,_); bad),
-    _python_param(ExprList, Idx+1, Tail).
+    _python_param(operation(python(PythonExpression), ExprList), Idx+1, Tail).
 
-_python_set_param(ExprList, Idx, #inf, ()) :-
-    _python_operation(named,ExprList),
-    (Idx, Arg) = @pythonEnumerateElements(ExprList),
+_python_set_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, #inf, ()) :-
+    _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
+    _expression_operationIndex(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Arg),
     Arg = (VariableNameExpr, Expr),
     _se_value(Expr, set).
-_python_set_param(ExprList, Idx, #inf, ()) :-
-    _python_operation(positional,ExprList),
-    (Idx, Arg) = @pythonEnumerateElements(ExprList),
+_python_set_param(operation(python(PythonExpression), ExprList), Idx, #inf, ()) :-
+    _python_operation(positional, operation(python(PythonExpression), ExprList)),
+    _expression_operationIndex(compile2, operation(python(PythonExpression), ExprList), Idx, Arg),
     Arg = Expr,
     _se_value(Expr, set).
 
-_python_set_param(ExprList, Idx, Val, (Val, Tail)) :-
-    _python_operation(named,ExprList),
-    (Idx, Arg) = @pythonEnumerateElements(ExprList),
+_python_set_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Val, (Val, Tail)) :-
+    _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
+    _expression_operationIndex(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Arg),
     Arg = (VariableNameExpr, Expr),
     _set_contains(Expr, Val),
-    _python_set_param(ExprList, Idx, ValPrev, Tail), Val > ValPrev,
+    _python_set_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, ValPrev, Tail), Val > ValPrev,
     #false : _set_contains(Expr, Val2), Val2 > ValPrev, Val2 < Val.
-_python_set_param(ExprList, Idx, Val, (Val, Tail)) :-
-    _python_operation(positional,ExprList),
-    (Idx, Arg) = @pythonEnumerateElements(ExprList),
+_python_set_param(operation(python(PythonExpression), ExprList), Idx, Val, (Val, Tail)) :-
+    _python_operation(positional, operation(python(PythonExpression), ExprList)),
+    _expression_operationIndex(compile2, operation(python(PythonExpression), ExprList), Idx, Arg),
     Arg = Expr,
     _set_contains(Expr, Val),
-    _python_set_param(ExprList, Idx, ValPrev, Tail), Val > ValPrev,
+    _python_set_param(operation(python(PythonExpression), ExprList), Idx, ValPrev, Tail), Val > ValPrev,
     #false : _set_contains(Expr, Val2), Val2 > ValPrev, Val2 < Val.
 
-_python_set_param_last(ExprList, Idx, ParamList) :-
-    _python_set_param(ExprList, Idx, Val, ParamList),
+_python_set_param_last(Operation, Idx, ParamList) :-
+    _python_set_param(Operation, Idx, Val, ParamList),
     #false : _set_contains(Expr, Val2), Val2 > Val.
 
-_python_param(ExprList, Idx, (set(SetTail),Tail)) :-
-    _python_param(ExprList, Idx+1, Tail),
-    _python_set_param_last(ExprList, Idx, SetTail).
+_python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, ((VariableName, set(SetTail)), Tail)) :-
+    _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
+    _expression_operationIndex(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Arg),
+    Arg = (VariableNameExpr, Expr),
+    _se_value(VariableNameExpr, VariableName),
+    _python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx+1, Tail),
+    _python_set_param_last(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, SetTail).
+
+_python_param(operation(python(PythonExpression), ExprList), Idx, (set(SetTail),Tail)) :-
+    _python_operation(positional, operation(python(PythonExpression), ExprList)),
+    _python_param(operation(python(PythonExpression), ExprList), Idx+1, Tail),
+    _python_set_param_last(operation(python(PythonExpression), ExprList), Idx, SetTail).
 
 %#################################################
 %%% alternative version
@@ -84,13 +93,13 @@ _python_param(ExprList, Idx, (set(SetTail),Tail)) :-
 %% pythonExtract
 _python_output(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Result):-
     _expression(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
-    _python_param(ExprList, 0, NamedParams),  % 0 means the complete list of evaluated parameters
+    _python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), 0, NamedParams),  % 0 means the complete list of evaluated parameters
     _main_solverIdentifiers(Magic),
     Result = @pythonEvalExpr(operation(pythonExtract(PythonStatement, PythonExpression), NamedParams), (), Magic).
 %% python
 _python_output(operation(python(PythonExpression), ExprList), Result):-
     _expression(compile2, operation(python(PythonExpression), ExprList)),
-    _python_param(ExprList, 0, PositionalParams),  % 0 means the complete list of evaluated parameters
+    _python_param(operation(python(PythonExpression), ExprList), 0, PositionalParams),  % 0 means the complete list of evaluated parameters
     _main_solverIdentifiers(Magic),
     Result = @pythonEvalExpr(operation(python(PythonExpression), PositionalParams), (), Magic).
 

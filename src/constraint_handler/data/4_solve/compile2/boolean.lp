@@ -34,34 +34,34 @@ _se_value(operation(wnot, (Expr1, ())), val(bool, true)) :-
 % conj
 _se_value(operation(conj, ExprList), val(bool, false)) :-
     _expression(compile2, operation(conj, ExprList)),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg),
     _se_value(Arg, val(bool, false)).
 
 _se_value(operation(conj, ExprList), val(bool, true)) :-
     _expression(compile2, operation(conj, ExprList)),
-    _se_value(Arg, val(bool, true)) : Arg = @pythonListElements(ExprList).
+    _se_value(Arg, val(bool, true)) : _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg).
 
 _se_value(operation(conj, ExprList), bad) :-
     _expression(compile2, operation(conj, ExprList)),
-    Special = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(conj, ExprList), _, Special),
     _se_value(Special, bad),
-    #false : _se_value(Arg, val(bool, false)), Arg = @pythonListElements(ExprList).
+    #false : _se_value(Arg, val(bool, false)), _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg).
 
 % disj
 _se_value(operation(disj, ExprList), val(bool, true)) :-
     _expression(compile2, operation(disj, ExprList)),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg),
     _se_value(Arg, val(bool, true)).
 
 _se_value(operation(disj, ExprList), val(bool, false)) :-
     _expression(compile2, operation(disj, ExprList)),
-    _se_value(Arg, val(bool, false)) : Arg = @pythonListElements(ExprList).
+    _se_value(Arg, val(bool, false)) : _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg).
 
 _se_value(operation(disj, ExprList), bad) :-
     _expression(compile2, operation(disj, ExprList)),
-    Special = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(disj, ExprList), _, Special),
     _se_value(Special, bad),
-    #false : _se_value(Arg, val(bool, true)), Arg = @pythonListElements(ExprList).
+    #false : _se_value(Arg, val(bool, true)), _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg).
 
 % limp % implication
 _se_value(operation(limp, (Expr1, (Expr2, ()))), val(bool, true)) :-
@@ -108,23 +108,23 @@ _se_value(operation(limp, (Expr1, (Expr2, ()))), bad) :-
 % can be much better if we have a binary xor
 _bool_has_bad(ExprList) :-
     _expression(compile2, operation((lxor;leqv), ExprList)),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation((lxor;leqv), ExprList), _, Arg),
     _se_value(Arg, bad).
 
 _se_value(operation(lxor, ExprList),val(bool,true)) :-
     _expression(compile2,operation(lxor, ExprList)),
     not _bool_has_bad(ExprList),
-    N = #count { Idx : _se_value(Arg, val(bool,true)), (Idx, Arg) = @pythonEnumerateElements(ExprList) }, N \ 2 = 1.
+    N = #count { Idx : _se_value(Arg, val(bool,true)), _expression_operationIndex(compile2, operation(lxor, ExprList), Idx, Arg) }, N \ 2 = 1.
 _se_value(operation(lxor, ExprList),val(bool,false)) :- _expression(compile2,operation(lxor, ExprList)),
     not _bool_has_bad(ExprList),
-    N = #count { Idx : _se_value(Arg, val(bool,true)), (Idx, Arg) = @pythonEnumerateElements(ExprList) }, N \ 2 = 0.
+    N = #count { Idx : _se_value(Arg, val(bool,true)), _expression_operationIndex(compile2, operation(lxor, ExprList), Idx, Arg) }, N \ 2 = 0.
 
 _se_value(operation(leqv, ExprList),val(bool,true)) :- _expression(compile2,operation(leqv, ExprList)),
     not _bool_has_bad(ExprList),
-    N = #count { Idx : _se_value(Arg, val(bool,false)), (Idx, Arg) = @pythonEnumerateElements(ExprList) }, N \ 2 = 0.
+    N = #count { Idx : _se_value(Arg, val(bool,false)), _expression_operationIndex(compile2, operation(leqv, ExprList), Idx, Arg) }, N \ 2 = 0.
 _se_value(operation(leqv, ExprList),val(bool,false)) :- _expression(compile2,operation(leqv, ExprList)),
     not _bool_has_bad(ExprList),
-    N = #count { Idx : _se_value(Arg, val(bool,false)), (Idx, Arg) = @pythonEnumerateElements(ExprList) }, N \ 2 = 1.
+    N = #count { Idx : _se_value(Arg, val(bool,false)), _expression_operationIndex(compile2, operation(leqv, ExprList), Idx, Arg) }, N \ 2 = 1.
 
 %%%%%%%%%%%%%%%%%% ite
 _se_value(operation(ite,(E1,(E2,(E3,())))), Value) :-

@@ -1,6 +1,6 @@
 _float_operation(ExprList) :-
     _expression(compile2, operation((add;mult;sub;pow;abs;ceil;floor;minus;int_div;eq;neq;leq;lt;geq;gt;max;min), ExprList)),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation((add;mult;sub;pow;abs;ceil;floor;minus;int_div;eq;neq;leq;lt;geq;gt;max;min), ExprList), _, Arg),
     _se_value(Arg, val(float, _)).
 %%% Abdallah: works also on only ints but is float
 _float_operation(ExprList) :- _expression(compile2, operation(float_div, ExprList)).
@@ -36,20 +36,20 @@ _float_add(add, ExprList, -1, val(float, float("0.0"))) :-
 _float_add(add, ExprList, Idx, @pythonFloatBinary(add, Val, ListVal)) :-
     _expression(compile2, operation(add, ExprList)),
     _float_operation(ExprList),
-    (Idx, Expr) = @pythonEnumerateElements(ExprList),
+    _expression_operationIndex(compile2, operation(add, ExprList), Idx, Expr),
     _se_value(Expr, val((int;float), Val)),
     _float_add(add, ExprList, Idx-1, val(float, ListVal)).
     
 _se_value(operation(add, ExprList), val(float, Val)) :-
     _expression(compile2, operation(add, ExprList)),
     _float_operation(ExprList),
-    Len = @pythonListLength(ExprList),
+    _expression_operationLength(compile2, operation(add, ExprList), Len),
     _float_add(add, ExprList, Len-1, val(float, Val)).
 
 _float_has_zero(ExprList) :-
     _expression(compile2, operation(mult, ExprList)),
     _float_operation(ExprList),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
     _se_value(Arg, (val(float, "0.0"); val(int, 0))).
 
 _float_mul(mult, ExprList, -1, val(float, float("1.0"))) :-
@@ -59,13 +59,13 @@ _float_mul(mult, ExprList, -1, val(float, float("1.0"))) :-
 
 _float_mul(mult, ExprList, Idx, @pythonFloatBinary(mult, Val, ListVal)) :-
     _expression(compile2, operation(mult, ExprList)),
-    (Idx, Expr) = @pythonEnumerateElements(ExprList),
+    _expression_operationIndex(compile2, operation(mult, ExprList), Idx, Expr),
     _se_value(Expr, val((int;float), Val)),
     _float_mul(mult, ExprList, Idx-1, val(float, ListVal)).
 
 _se_value(operation(mult, ExprList), val(float, Val)) :-
     _expression(compile2, operation(mult, ExprList)),
-    Len = @pythonListLength(ExprList),
+    _expression_operationLength(compile2, operation(mult, ExprList), Len),
     _float_mul(mult, ExprList, Len-1, val(float, Val)).
 
 _se_value(operation(mult, ExprList), val(int, 0)) :- _float_has_zero(ExprList).
@@ -73,7 +73,7 @@ _se_value(operation(mult, ExprList), val(int, 0)) :- _float_has_zero(ExprList).
 _se_value(operation(mult, ExprList), bad) :-
     _expression(compile2, operation(mult, ExprList)),
     _float_operation(ExprList),
-    Arg = @pythonListElements(ExprList),
+    _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
     _se_value(Arg, bad),
     not _float_has_zero(ExprList).
   
