@@ -68,6 +68,7 @@ base_tests = [
     "execution/conditional_assert",
     "execution/optional_run",
     "execution/python_integrity",
+    "execution/python_list",
     "expression/bad_equality",
     "expression/lambdas",
     "expression/lambda_recursive",
@@ -132,6 +133,7 @@ base_tests = [
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "engine/request",
+    "execution/python_list",
 }
 ground_skip: set[str] = {
     "set/selfref",
@@ -140,6 +142,7 @@ ground_xfail: set[str] = {
     "core/reasoning_modes",
     "engine/request",
     "engine/request_set_ref",
+    "execution/python_list",
     "expression/lambdas",
     "expression/lambda_recursive",
     "expression/lambda_zero_args",
@@ -162,6 +165,7 @@ propagator_xfail: set[str] = {
     "engine/request",
     "engine/request_mixed_trig",
     "execution/python_integrity",
+    "execution/python_list",
     "expression/lambda_recursive",
     "multimap/main",
     "optimization/no_multimap_bool",
