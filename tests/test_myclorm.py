@@ -72,6 +72,22 @@ def test_pytocl_list_encodes_nested_cons_shape():
     )
 
 
+def test_hashablelist_is_immutable_sequence():
+    value = myClorm.HashableList([1, 2])
+
+    with pytest.raises(AttributeError):
+        value.append(3)
+
+
+def test_hashablelist_round_trip_preserves_list_shape():
+    value = myClorm.HashableList([1, 2])
+
+    symbol = myClorm.pytocl(value, myClorm.HashableList[int])
+
+    assert symbol == myClorm.pytocl([1, 2])
+    assert myClorm.cltopy(symbol, myClorm.HashableList[int]) == myClorm.HashableList([1, 2])
+
+
 def test_cltopy_without_target_decodes_primitives_and_collections():
     assert myClorm.cltopyNoTarget(clingo.Number(5)) == 5
     assert myClorm.cltopyNoTarget(clingo.String("abc")) == "abc"

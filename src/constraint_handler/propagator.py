@@ -1271,7 +1271,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         elif isinstance(final_value, (set, frozenset)):
             self.handle_on_model_set(var, final_value)
 
-        elif isinstance(final_value, (dict, multimap.HashableDict)):
+        elif isinstance(final_value, (dict, multimap.Multimap)):
             self.handle_on_model_dict(var, final_value)
 
         else:
@@ -1322,7 +1322,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         Args:
             var: Variable symbol.
-            final_value: Mapping value (may be a `HashableDict`).
+            final_value: Mapping value (may be a `multimap.Multimap`).
         """
         assert self.python_model is not None
 
