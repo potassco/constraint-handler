@@ -438,7 +438,7 @@ def beta_reduction(symbols, expr):
     match expr:
         case expression.Operation(eo, eargs):
             o = beta_reduction(symbols, eo)
-            args = myClorm.HashableList([beta_reduction(symbols, e) for e in eargs])
+            args = myClorm.ImmutableList([beta_reduction(symbols, e) for e in eargs])
             return expression.Operation(o, args)
         case expression.Variable(a):
             if a in symbols:

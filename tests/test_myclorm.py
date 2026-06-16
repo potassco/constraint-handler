@@ -72,20 +72,20 @@ def test_pytocl_list_encodes_nested_cons_shape():
     )
 
 
-def test_hashablelist_is_immutable_sequence():
-    value = myClorm.HashableList([1, 2])
+def test_immutablelist_is_immutable_sequence():
+    value = myClorm.ImmutableList([1, 2])
 
     with pytest.raises(AttributeError):
         value.append(3)
 
 
-def test_hashablelist_round_trip_preserves_list_shape():
-    value = myClorm.HashableList([1, 2])
+def test_immutablelist_round_trip_preserves_list_shape():
+    value = myClorm.ImmutableList([1, 2])
 
-    symbol = myClorm.pytocl(value, myClorm.HashableList[int])
+    symbol = myClorm.pytocl(value, myClorm.ImmutableList[int])
 
     assert symbol == myClorm.pytocl([1, 2])
-    assert myClorm.cltopy(symbol, myClorm.HashableList[int]) == myClorm.HashableList([1, 2])
+    assert myClorm.cltopy(symbol, myClorm.ImmutableList[int]) == myClorm.ImmutableList([1, 2])
 
 
 def test_cltopy_without_target_decodes_primitives_and_collections():
@@ -93,7 +93,7 @@ def test_cltopy_without_target_decodes_primitives_and_collections():
     assert myClorm.cltopyNoTarget(clingo.String("abc")) == "abc"
     assert myClorm.cltopyNoTarget(clingo.Function("none", [])) is None
     assert myClorm.cltopyNoTarget(clingo.Function("true", [])) is True
-    assert myClorm.cltopyNoTarget(myClorm.pytocl([1, 2])) == myClorm.HashableList([1, 2])
+    assert myClorm.cltopyNoTarget(myClorm.pytocl([1, 2])) == myClorm.ImmutableList([1, 2])
     assert myClorm.cltopyNoTarget(myClorm.pytocl(frozenset({1, 2}))) == frozenset({1, 2})
 
 
@@ -104,7 +104,7 @@ def test_cltopy_typed_namedtuple_decodes_symbol():
 
 
 def test_cltopy_typed_list_and_tuple():
-    assert myClorm.cltopy(myClorm.pytocl([1, 2]), list[int]) == myClorm.HashableList([1, 2])
+    assert myClorm.cltopy(myClorm.pytocl([1, 2]), list[int]) == myClorm.ImmutableList([1, 2])
     assert myClorm.cltopy(
         clingo.Function("", [clingo.Number(1), clingo.String("x")]),
         tuple[int, str],
