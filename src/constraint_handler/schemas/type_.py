@@ -1,5 +1,6 @@
 import builtins
 
+import constraint_handler.schemas.warning as warning
 import constraint_handler.utils.common as common
 import constraint_handler.utils.python_type_model as analysis
 
@@ -10,28 +11,28 @@ BaseType = common.PPEnum(
 
 def ch_type(t: analysis.TypeInfo):
     match t:
-        case analysis.UnknownType:
-            return None
         case analysis.ScalarType(typ=builtins.int):
-            return BaseType.int
+            return (BaseType.int, [])
         case analysis.ScalarType(typ=builtins.bool):
-            return BaseType.bool
+            return (BaseType.bool, [])
         case analysis.ScalarType(typ=builtins.float):
-            return BaseType.float
+            return (BaseType.float, [])
         case analysis.ScalarType(typ=builtins.str):
-            return BaseType.string
+            return (BaseType.string, [])
         case analysis.ScalarType(typ=clingo.Symbol):
-            return BaseType.symbol
+            return (BaseType.symbol, [])
         case analysis.ScalarType(typ=types.NoneType):
-            return BaseType.none
+            return (BaseType.none, [])
         case analysis.FunctionType():
-            return BaseType.function
+            return (BaseType.function, [])
         case analysis.SetOf():
-            return BaseType.set
+            return (BaseType.set, [])
         case analysis.DictOf():
-            return BaseType.multimap
+            return (BaseType.multimap, [])
+        case analysis.UnknownType:
+            return (None, [warning.Type(warning.TypeWarning.notSupported)])
         case _:
-            raise NotImplementedError("ch_type", t)
+            return (None, [warning.Type(warning.TypeWarning.notImplemented)])
 
 
 def py_type(t: analysis.TypeInfo):

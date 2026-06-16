@@ -1230,7 +1230,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for eval_var in self.evaluatevars:
             self.handle_on_model_warning(eval_var.get_errors())
             final_value = eval_var.get_value()
-            pyVal = evaluator.reducedExpr(final_value)
+            pyVal, errors = evaluator.reducedExpr(final_value)  # TODO: handle errors
             pyAtom = atom.Evaluated(
                 eval_var.op,
                 eval_var.args,
@@ -1340,8 +1340,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
 
             for val in value:
-                mm_pyKey = evaluator.reducedExpr(key)
-                mm_pyVal = evaluator.reducedExpr(val)
+                mm_pyKey, keyErrors = evaluator.reducedExpr(key)  # TODO: handle errors
+                mm_pyVal, valErrors = evaluator.reducedExpr(val)
                 mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
 
                 self.python_model.add(mm_pyAtom)
@@ -1361,7 +1361,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             final_value: Scalar value.
         """
         assert self.python_model is not None
-        pyVal = evaluator.reducedExpr(final_value)
+        pyVal, errors = evaluator.reducedExpr(final_value)  # TODO: handle errors
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 

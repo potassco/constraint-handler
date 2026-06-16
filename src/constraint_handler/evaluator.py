@@ -9,7 +9,9 @@ import constraint_handler.arithmetic as arithmetic
 import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.operators as operators
 import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 import constraint_handler.set as myset
@@ -28,6 +30,18 @@ _shared_environment = {
     "solver_environment": importlib.import_module("constraint_handler.solver_environment"),
 }
 _solver_environment = dict()
+
+
+NO_ERRORS: tuple[tuple[warning.Kind, str], ...] = ()
+
+
+def exprs(eargs, globals_env, locals_env):
+    values, errors = [], []
+    for arg in eargs:
+        arg_result = expr(arg, globals_env, locals_env)
+        values.append(arg_result.value)
+        errors.extend(arg_result.errors)
+    return (values, tuple(errors))
 
 
 def collectVars(expr) -> frozenset[clingo.Symbol]:
@@ -99,7 +113,7 @@ def get_baseType(v):
         raise NotImplementedError(f"get_baseType is not implemented for {v}")
 
 
-def reducedExpr(v):
+def reducedExprAux(v):
     if isinstance(v, float):
         return expression.Val(BaseType.float, v)
     elif isinstance(v, str):
@@ -113,7 +127,7 @@ def reducedExpr(v):
     elif isinstance(v, type(None)):
         return expression.Val(BaseType.none, None)
     elif isinstance(v, frozenset) or isinstance(v, set):
-        return frozenset({reducedExpr(x) for x in v})
+        return frozenset({reducedExprAux(x) for x in v})
     elif isinstance(v, dict):
         raise NotImplementedError(f"reducedExpr is not implemented for {dict} {v}")
     elif isinstance(v, expression.Lambda):
@@ -121,288 +135,303 @@ def reducedExpr(v):
     elif isinstance(v, expression.Bad):
         return v
     elif isinstance(v, tuple):
-        return tuple(reducedExpr(x) for x in v)
+        return tuple(reducedExprAux(x) for x in v)
     else:
         raise NotImplementedError(f"reducedExpr is not implemented for {v}")
 
 
-class Evaluator:
-    def __init__(self, globals=None, locals=None):
-        self.globals = globals if globals is not None else dict()
-        self.locals = locals if locals is not None else dict()
-        self.errors = []
-        self.arithmetic = arithmetic.Evaluator(Evaluator, self.errors)
-        self.logic = logic.Evaluator(Evaluator, self.errors)
-        self.multimap = multimap.Evaluator(Evaluator, self.errors)
-        self.set = myset.Evaluator(Evaluator, self.errors)
+def reducedExpr(v):
+    try:
+        result = reducedExprAux(v)
+        return (result, [])
+    except NotImplementedError as exn:
+        warn = warning.Expression(warning.ExpressionWarning.notImplemented)
+        return (expression.Bad.bad, ((warn, exn.message),))
 
-    def string_operator(self, o, args):
-        match o:
-            case StringOperator.length:
-                if len(args) != 1:
-                    self.errors.append(
+
+def string_operator(o, args):
+    match o:
+        case StringOperator.length:
+            if len(args) != 1:
+                return atom.EvalResult(
+                    expression.Bad.bad,
+                    (
                         (
                             warning.Expression(warning.ExpressionWarning.syntaxError),
                             f"len takes one argument ({len(args)} were given)",
-                        )
-                    )
-                    return expression.Bad.bad
-                return len(args[0])
-            case StringOperator.concat:
-                return "".join(args)
-            case _:
-                self.errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), f"string operator {o}")
+                        ),
+                    ),
                 )
-                return expression.Bad.bad
+            return atom.EvalResult(len(args[0]), NO_ERRORS)
+        case StringOperator.concat:
+            return atom.EvalResult("".join(args), NO_ERRORS)
+        case _:
+            return atom.EvalResult(
+                expression.Bad.bad,
+                ((warning.Expression(warning.ExpressionWarning.notImplemented), f"string operator {o}"),),
+            )
 
-    def eq_operator(self, o, lval, rval):
-        match o:
-            case EqOperator.eq:
-                return lval == rval
-            case EqOperator.neq:
-                return lval != rval
-            case _:
-                self.errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), f"equality operator {o}")
+
+def eq_operator(o, lval, rval):
+    match o:
+        case EqOperator.eq:
+            return atom.EvalResult(lval == rval, NO_ERRORS)
+        case EqOperator.neq:
+            return atom.EvalResult(lval != rval, NO_ERRORS)
+        case _:
+            return atom.EvalResult(
+                expression.Bad.bad,
+                ((warning.Expression(warning.ExpressionWarning.notImplemented), f"equality operator {o}"),),
+            )
+
+
+def conditional_operator(o, args):
+    match o:
+        case ConditionalOperator.default:
+            return atom.EvalResult(args[0] if args[0] is not None else args[1], NO_ERRORS)
+        case ConditionalOperator.IF:
+            if args[0] is expression.Bad.bad:
+                return atom.EvalResult(expression.Bad.bad, NO_ERRORS)
+            if args[0] is True:
+                return atom.EvalResult(args[1], NO_ERRORS)
+            return atom.EvalResult(None, NO_ERRORS)
+        case ConditionalOperator.hasValue:
+            return atom.EvalResult(args[0] is not None, NO_ERRORS)
+        case _:
+            return atom.EvalResult(
+                expression.Bad.bad,
+                ((warning.Expression(warning.ExpressionWarning.notImplemented), f"conditional operator {o}"),),
+            )
+
+
+def python_operator(fn, args, globals_env, locals_env):
+    try:
+        call = eval(fn, globals_env, locals_env)
+        return atom.EvalResult(call(*args), NO_ERRORS)
+    except Exception as exn:
+        kind = warning.Expression(warning.ExpressionWarning.pythonError)
+        return atom.EvalResult(None, ((kind, repr(exn)),))
+
+
+def pythonExtract_operator(stmt: str, expr_code: str, vars_mapping: list, globals_env):
+    locals_env = {name: val for name, val in vars_mapping}
+    if any(value == expression.Bad.bad for value in locals_env.values()):
+        return atom.EvalResult(expression.Bad.bad, NO_ERRORS)
+
+    nested_globals = dict(globals_env)
+    nested_locals = dict(locals_env)
+    try:
+        exec(get_compiled_exec(stmt), nested_globals, nested_locals)
+        succeeds = True
+    except solver_environment.FailIntegrityExn:
+        succeeds = False
+    except Exception as exn:
+        kind = warning.Expression(warning.ExpressionWarning.pythonError)
+        return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
+
+    if expr_code == "__succeeds":
+        return atom.EvalResult(succeeds, NO_ERRORS)
+
+    try:
+        return atom.EvalResult(
+            eval(get_compiled_eval(expr_code), nested_globals, nested_locals),
+            NO_ERRORS,
+        )
+    except Exception as exn:
+        kind = warning.Expression(warning.ExpressionWarning.pythonError)
+        return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
+
+
+def operator(o, args, globals_env, locals_env):
+    def apply_nested_operator(inner_o, inner_args):
+        return operator(inner_o, inner_args, globals_env, locals_env)
+
+    match o:
+        case expression.Bad.bad:
+            return atom.EvalResult(o, NO_ERRORS)
+        case expression.Python(fn):
+            return python_operator(fn, args, globals_env, locals_env)
+        case expression.PythonExtract(stmt, e):
+            return pythonExtract_operator(stmt, e, args, globals_env)
+        case expression.Lambda(vars, expr_body):
+            if len(vars) != len(args):
+                return atom.EvalResult(
+                    expression.Bad.bad,
+                    (
+                        (
+                            warning.Expression(warning.ExpressionWarning.syntaxError),
+                            f"evaluate_operator inconsistent parameters and argument lengths for {o}",
+                        ),
+                    ),
                 )
-                return expression.Bad.bad
-
-    def conditional_operator(self, o, args):
-        match o:
-            case ConditionalOperator.default:
-                if args[0] is not None:
-                    return args[0]
-                else:
-                    return args[1]
-            case ConditionalOperator.IF:
-                if args[0] is expression.Bad.bad:
-                    return expression.Bad.bad
-                elif args[0] == True:
-                    return args[1]
-                else:
-                    return None
-            case ConditionalOperator.hasValue:
-                return args[0] is not None
-            case _:
-                self.errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), f"conditional operator {o}")
+            nested_locals = dict(locals_env)
+            for var, value in zip(vars, args):
+                nested_locals[var] = value
+            return expr(expr_body, globals_env, nested_locals)
+        case EqOperator():
+            if len(args) != 2:
+                return atom.EvalResult(
+                    expression.Bad.bad,
+                    (
+                        (
+                            warning.Expression(warning.ExpressionWarning.syntaxError),
+                            f"eq takes two arguments, not {args}",
+                        ),
+                    ),
                 )
-                return expression.Bad.bad
+            return eq_operator(o, args[0], args[1])
+        case operators.ArithmeticOperator():
+            return arithmetic.evaluate_operator(o, args)
+        case operators.LogicOperator():
+            return logic.evaluate_operator(o, args)
+        case operators.MultimapOperator():
+            return multimap.evaluate_operator(o, args, apply_operator=apply_nested_operator)
+        case operators.SetOperator():
+            return myset.evaluate_operator(o, args, apply_operator=apply_nested_operator)
+        case StringOperator():
+            return string_operator(o, args)
+        case ConditionalOperator():
+            return conditional_operator(o, args)
+        case OtherOperator.max:
+            assert len(args)  # TODO
+            return atom.EvalResult(max(args), NO_ERRORS)
+        case OtherOperator.min:
+            assert len(args)
+            return atom.EvalResult(min(args), NO_ERRORS)
+        case _:
+            if callable(o):
+                return atom.EvalResult(o(*args), NO_ERRORS)
+            print(o, type(o))
+            return atom.EvalResult(
+                expression.Bad.bad,
+                ((warning.Expression(warning.ExpressionWarning.notImplemented), f"operator {o}"),),
+            )
 
-    def python_operator(self, fn, args):
-        try:
-            call = eval(fn, self.globals, self.locals)
-            result = call(*args)
-        except Exception as exn:
-            kind = warning.Expression(warning.ExpressionWarning.pythonError)
-            self.errors.append((kind, repr(exn)))
-            return None
-        return result
 
-    def pythonExtract_operator(self, stmt: str, expr_code: str, vars_mapping: list):
-        binding_error_count = len(self.errors)
-        locals_env = {name: val for name, val in vars_mapping}
-        if len(self.errors) > binding_error_count or any(value == expression.Bad.bad for value in locals_env.values()):
-            return expression.Bad.bad
+def expr(expr_, globals_env, locals_env):
+    match expr_:
+        case expression.Operation(eo, eargs):
+            args, args_errors = exprs(eargs, globals_env, locals_env)
+            op_result = expr(eo, globals_env, locals_env)
+            o = op_result.value
 
-        nested = Evaluator(self.globals, locals_env)
-        try:
-            nested.stmt_python(stmt)
-            __succeeds = True
-        except solver_environment.FailIntegrityExn:
-            __succeeds = False
-        # print(f"05-12 hello\nsucc {__succeeds}\n{stmt}\n{expr_code}\nerrors {nested.errors}")
-        self.errors.extend(nested.errors)
-        if nested.errors:
-            return expression.Bad.bad
-        elif expr_code == "__succeeds":
-            return __succeeds
-        else:
+            recoverable = [
+                operators.LogicOperator.conj,
+                operators.LogicOperator.disj,
+                operators.LogicOperator.limp,
+                operators.LogicOperator.ite,
+                ConditionalOperator.IF,
+                ConditionalOperator.default,
+                operators.ArithmeticOperator.pow,
+            ]
+
+            if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in recoverable):
+                return atom.EvalResult(expression.Bad.bad, op_result.errors + args_errors)
+
+            applied = operator(o, args, globals_env, locals_env)
+            return atom.EvalResult(applied.value, op_result.errors + args_errors + applied.errors)
+        case expression.Variable(a):
+            if a in locals_env:
+                return atom.EvalResult(locals_env[a], NO_ERRORS)
+            return atom.EvalResult(
+                expression.Bad.bad,
+                ((warning.Variable(warning.VariableWarning.undeclared), f"{a}"),),
+            )
+        case expression.Python(code):
             try:
-                return eval(get_compiled_eval(expr_code), nested.globals, nested.locals)
+                return atom.EvalResult(eval(get_compiled_eval(code), globals_env, locals_env), NO_ERRORS)
             except Exception as exn:
                 kind = warning.Expression(warning.ExpressionWarning.pythonError)
-                self.errors.append((kind, repr(exn)))
-                return expression.Bad.bad
-
-    def operator(self, o, args):
-        match o:
-            case expression.Bad.bad:
-                return o
-            case expression.Python(fn):
-                return self.python_operator(fn, args)
-            case expression.PythonExtract(stmt, expr):
-                return self.pythonExtract_operator(stmt, expr, args)
-            case expression.Lambda(vars, expr):
-                if len(vars) != len(args):
-                    self.errors.append(
-                        (
-                            warning.Expression(warning.ExpressionWarning.syntaxError),
-                            ValueError(f"evaluate_operator inconsistent parameters and argument lengths for {o}"),
-                        )
-                    )
-                    return expression.Bad.bad
-                locals = dict(self.locals)
-                for v, e in zip(vars, args):
-                    locals[v] = e
-                env = Evaluator(self.globals, locals)
-                return env.expr(expr)
-            case EqOperator():
-                if len(args) == 2:
-                    return self.eq_operator(o, args[0], args[1])
-                else:
-                    self.errors.append(
-                        (
-                            warning.Expression(warning.ExpressionWarning.syntaxError),
-                            ValueError(f"eq takes two arguments, not {args}"),
-                        )
-                    )
-                    return expression.Bad.bad
-            case arithmetic.Operator():
-                return self.arithmetic.operator(o, args)
-            case logic.Operator():
-                return self.logic.operator(o, args)
-            case multimap.Operator():
-                return self.multimap.operator(o, args)
-            case myset.Operator():
-                return self.set.operator(o, args)
-            case StringOperator():
-                return self.string_operator(o, args)
-            case ConditionalOperator():
-                return self.conditional_operator(o, args)
-            case OtherOperator.max:
-                assert len(args)  # TODO
-                return max(args)
-            case OtherOperator.min:
-                assert len(args)
-                return min(args)
-            case _:
-                if callable(o):
-                    return o(*args)
-                else:
-                    print(o, type(o))
-                    self.errors.append((warning.Expression(warning.ExpressionWarning.notImplemented), f"operator {o}"))
-                    return expression.Bad.bad
-
-    def expr(self, expr):
-        match expr:
-            case expression.Operation(eo, eargs):
-                args = [self.expr(a) for a in eargs]
-                o = self.expr(eo)
-
-                recoverable = [
-                    logic.Operator.conj,
-                    logic.Operator.disj,
-                    logic.Operator.limp,
-                    logic.Operator.ite,
-                    ConditionalOperator.IF,
-                    ConditionalOperator.default,
-                    arithmetic.Operator.pow,
-                ]
-
-                if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in recoverable):
-                    return expression.Bad.bad
-                return self.operator(o, args)
-            case expression.Variable(a):
-                if a in self.locals:
-                    return self.locals[a]  # TODO : and globals?
-                else:
-                    self.errors.append((warning.Variable(warning.VariableWarning.undeclared), f"{a}"))
-                    return expression.Bad.bad
-            case expression.Python(code):
-                try:
-                    result = eval(get_compiled_eval(code), self.globals, self.locals)
-                    return result
-                except Exception as exn:
-                    kind = warning.Expression(warning.ExpressionWarning.pythonError)
-                    self.errors.append((kind, repr(exn)))
-                    return expression.Bad.bad
-            case expression.Val(type_, val):
-                return val
-            case expression.Lambda(vars, body):
-                nsymbols = {x: v for x, v in self.locals.items() if x not in vars}
-                nglobals = dict(self.globals) if self.globals is not None else None
-                if self.globals is not None:
-                    for x in vars:
-                        if x in nglobals:
-                            del nglobals[x]
-                return expression.Lambda(vars, beta_reduction(nsymbols, body))
-            case o if isinstance(o, expression.Operator):
-                return expr
-            case tuple(eargs):
-                args = tuple(self.expr(a) for a in eargs)
-                return args
-            case set(eargs) | frozenset(eargs):
-                args = frozenset(self.expr(a) for a in eargs)
-                return args
-            case None:
-                return None
-            case expression.Bad.bad:
-                return expr
-            case _:
-                self.errors.append(
-                    (warning.Expression(warning.ExpressionWarning.notImplemented), NotImplementedError(f"expr {expr}"))
-                )
-                return expression.Bad.bad
-
-    def stmt_python(self, code):
-        try:
-            exec(get_compiled_exec(code), self.globals, self.locals)
-        except solver_environment.FailIntegrityExn:
-            raise
-        except Exception as exn:
-            kind = warning.Statement(warning.StatementWarning.pythonError)
-            self.errors.append((kind, repr(exn)))
-
-    def stmt(self, stmt):
-        match stmt:
-            case statement.Assert(expr):
-                condition = self.expr(expr)
-                if condition == expression.Bad.bad:
-                    assert self.errors
-                    return
-                if condition != True:
-                    raise solver_environment.FailIntegrityExn
-            case statement.Assign(var, expr):
-                self.locals[var] = self.expr(expr)  # TODO eval?
-            case statement.If(cond, stmt1, stmt2):
-                if self.expr(cond):
-                    self.stmt(stmt1)
-                else:
-                    self.stmt(stmt2)
-            case statement.Noop():
-                pass
-            case statement.Statement_python(code):
-                self.stmt_python(code)
-            case statement.Seq2(stmt1, stmt2):
-                self.stmt(stmt1)
-                self.stmt(stmt2)
-            case _:
-                self.errors.append((warning.Statement(warning.StatementWarning.notImplemented), f"{stmt}"))
+                return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
+        case expression.Val(type_, val):
+            return atom.EvalResult(val, NO_ERRORS)
+        case expression.Lambda(vars, body):
+            nsymbols = {x: v for x, v in locals_env.items() if x not in vars}
+            return atom.EvalResult(expression.Lambda(vars, beta_reduction(nsymbols, body)), NO_ERRORS)
+        case o if isinstance(o, expression.Operator):
+            return atom.EvalResult(expr_, NO_ERRORS)
+        case tuple(eargs):
+            values, errors = exprs(eargs, globals_env, locals_env)
+            return atom.EvalResult(tuple(values), errors)
+        case set(eargs) | frozenset(eargs):
+            values, errors = exprs(eargs, globals_env, locals_env)
+            return atom.EvalResult(frozenset(values), errors)
+        case None:
+            return atom.EvalResult(None, NO_ERRORS)
+        case expression.Bad.bad:
+            return atom.EvalResult(expr_, NO_ERRORS)
+        case _:
+            return atom.EvalResult(
+                expression.Bad.bad,
+                ((warning.Expression(warning.ExpressionWarning.notImplemented), f"expr {expr_}"),),
+            )
 
 
-def evaluate_expr(expr, globals=None, locals=None):
-    env = Evaluator(globals, locals)
+def stmt_python(code, globals_env, locals_env, errors):
     try:
-        result = env.expr(expr)
-        # print("05-12 goodbye",expr,env.errors)
-    except Exception as exn:
-        env.errors.append((warning.Expression(warning.ExpressionWarning.evaluatorError), repr(exn)))
-        return expression.Bad.bad, env.errors
-    return result, env.errors
-
-
-def evaluate_stmt(stmt, globals=None, locals=None):
-    env = Evaluator(globals, locals)
-    try:
-        env.stmt(stmt)
+        exec(get_compiled_exec(code), globals_env, locals_env)
     except solver_environment.FailIntegrityExn:
-        raise solver_environment.FailIntegrityExn
+        raise
+    except Exception as exn:
+        kind = warning.Statement(warning.StatementWarning.pythonError)
+        errors.append((kind, repr(exn)))
+
+
+def stmt(stmt_, globals_env, locals_env, errors):
+    match stmt_:
+        case statement.Assert(e):
+            evaluated = expr(e, globals_env, locals_env)
+            errors.extend(evaluated.errors)
+            condition = evaluated.value
+            if condition == expression.Bad.bad:
+                return
+            if condition != True:
+                raise solver_environment.FailIntegrityExn
+        case statement.Assign(var, e):
+            evaluated = expr(e, globals_env, locals_env)
+            errors.extend(evaluated.errors)
+            locals_env[var] = evaluated.value
+        case statement.If(cond, stmt1, stmt2):
+            evaluated = expr(cond, globals_env, locals_env)
+            errors.extend(evaluated.errors)
+            if evaluated.value:
+                stmt(stmt1, globals_env, locals_env, errors)
+            else:
+                stmt(stmt2, globals_env, locals_env, errors)
+        case statement.Noop():
+            return
+        case statement.Statement_python(code):
+            stmt_python(code, globals_env, locals_env, errors)
+        case statement.Seq2(stmt1, stmt2):
+            stmt(stmt1, globals_env, locals_env, errors)
+            stmt(stmt2, globals_env, locals_env, errors)
+        case _:
+            errors.append((warning.Statement(warning.StatementWarning.notImplemented), f"{stmt_}"))
+
+
+def evaluate_expr(e, globals=None, locals=None):
+    globs = globals if globals is not None else dict()
+    locs = locals if locals is not None else dict()
+
+    try:
+        result = expr(e, globs, locs)
+    except Exception as exn:
+        return expression.Bad.bad, [(warning.Expression(warning.ExpressionWarning.evaluatorError), repr(exn))]
+    return result.value, list(result.errors)
+
+
+def evaluate_stmt(s, globals=None, locals=None):
+    globs = globals if globals is not None else dict()
+    locs = locals if locals is not None else dict()
+    errors = []
+    try:
+        stmt(s, globs, locs, errors)
+    except solver_environment.FailIntegrityExn:
+        raise
     except Exception as exn:
         kind = warning.Statement(warning.StatementWarning.evaluatorError)
-        env.errors.append((kind, repr(exn)))
-    return env.errors
+        errors.append((kind, repr(exn)))
+    return errors
 
 
 def beta_reduction(symbols, expr):

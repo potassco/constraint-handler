@@ -79,7 +79,10 @@ def pythonEvalExpr(clExpr,clArgs,clId):
         pRes,errors = evaluator.evaluate_expr(pExpr, globals, locals)
         for (kind,msg) in errors:
             results.append(warning.Error(kind,msg))
-        results.append(evaluator.reducedExpr(pRes))
+        pVal,errors = evaluator.reducedExpr(pRes)
+        for (kind,msg) in errors:
+            results.append(warning.Error(kind,msg))
+        results.append(pVal)
         return [myClorm.pytocl(result) for result in results]
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
@@ -104,7 +107,12 @@ def pythonStatementVariables(clCode,clInTypes,clId):
         locals = dict()
         pyInputs = { x: frozenset((type_.py_type(t),)) for (x,t) in pInT }
         analysis = python_analysis.analyze_python_statement_types(pCode, globals, pyInputs)
-        results = [(x,type_.ch_type(t)) for (x,ts) in analysis.name_types.items() for t in ts]
+        for (x,ts) in analysis.name_types.items():
+            for t in ts:
+                (cht, errs) = type_.ch_type(t)
+                for error in errs:
+                    results.append(warning.Error(error,x))
+                results.append((x,cht))
         return [myClorm.pytocl(result) for result in results]
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Statement(warning.StatementWarning.syntaxError)
