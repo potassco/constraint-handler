@@ -41,7 +41,7 @@ operation(add, (1, (42, operation(mult, 3))))
 
 
 ### outputs
-_se_value(Expr, Value)
-_se_value(Expr, set) % if Expr evaluates to a set
+_se_domain(Expr, Value)
+_se_domain(Expr, set) % if Expr evaluates to a set
 _set_contains(Expr, Value)  % if Expr evaluates to a set, these values are in the set, no nested sets
 bool_evaluated(Expr, Value) % true of false for bool_evaluate Expressions ( or bad )

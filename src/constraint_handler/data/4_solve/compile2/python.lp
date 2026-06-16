@@ -12,15 +12,15 @@ _python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprLi
     _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
     _expression_operationIndex(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Arg),
     Arg = (VariableNameExpr, Expr),
-    _se_value(VariableNameExpr, VariableName),
-    _se_value(Expr, Val),
+    _se_domain(VariableNameExpr, VariableName),
+    _se_domain(Expr, Val),
     Val = (val(_,_); bad),
     _python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx+1, Tail).
 _python_param(operation(python(PythonExpression), ExprList), Idx, (Val, Tail)) :-
     _python_operation(positional, operation(python(PythonExpression), ExprList)),
     _expression_operationIndex(compile2, operation(python(PythonExpression), ExprList), Idx, Arg),
     Arg = Expr,
-    _se_value(Expr, Val),
+    _se_domain(Expr, Val),
     Val = (val(_,_); bad),
     _python_param(operation(python(PythonExpression), ExprList), Idx+1, Tail).
 
@@ -28,12 +28,12 @@ _python_set_param(operation(pythonExtract(PythonStatement, PythonExpression), Ex
     _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
     _expression_operationIndex(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Arg),
     Arg = (VariableNameExpr, Expr),
-    _se_value(Expr, set).
+    _se_domain(Expr, set).
 _python_set_param(operation(python(PythonExpression), ExprList), Idx, #inf, ()) :-
     _python_operation(positional, operation(python(PythonExpression), ExprList)),
     _expression_operationIndex(compile2, operation(python(PythonExpression), ExprList), Idx, Arg),
     Arg = Expr,
-    _se_value(Expr, set).
+    _se_domain(Expr, set).
 
 _python_set_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Val, (Val, Tail)) :-
     _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
@@ -58,7 +58,7 @@ _python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprLi
     _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
     _expression_operationIndex(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Arg),
     Arg = (VariableNameExpr, Expr),
-    _se_value(VariableNameExpr, VariableName),
+    _se_domain(VariableNameExpr, VariableName),
     _python_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx+1, Tail),
     _python_set_param_last(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, SetTail).
 
@@ -73,7 +73,7 @@ _python_param(operation(python(PythonExpression), ExprList), Idx, (set(SetTail),
 %     _python_param(ExprList, Idx+1, Tail),
 %     (Idx,Arg) = @pythonEnumerateElement(ExprList),
 %     Arg = (VariableName,Expr),
-%     _se_value(Expr,set),
+%     _se_domain(Expr,set),
 %     N=#count { Other : _set_contains(Expr,Other) }.
 
 % _python_set_param(ExprList, Idx, Tail, Expr, PIdx, (Val,SetTail)) :-
@@ -108,12 +108,12 @@ _python_output(operation(python(PythonExpression), ExprList), Result):-
     Result = @pythonEvalExpr(operation(python(PythonExpression), PositionalParams), (), Magic).
 
 %%% returned values
-_se_value(Expr, val(Type, Value)) :-
+_se_domain(Expr, val(Type, Value)) :-
     _expression(compile2, Expr),
     _python_output(Expr, val(Type, Value)).
 
 %%% return set values
-_se_value(Expr, set) :-
+_se_domain(Expr, set) :-
     _expression(compile2, Expr),
     _python_output(Expr, set(L)).
 
@@ -123,11 +123,11 @@ _set_contains(Expr, Arg) :-
     Arg = @pythonListElements(ExprList).
 
 %%% bad on error
-_se_value(Expr, bad) :-
+_se_domain(Expr, bad) :-
     _expression(compile2, Expr),
     _python_output(Expr, error(Kind, Message)).
 
-_se_value(Expr, bad) :-  %% maybe not necessary
+_se_domain(Expr, bad) :-  %% maybe not necessary
     _expression(compile2, Expr),
     _python_output(Expr, bad).
 

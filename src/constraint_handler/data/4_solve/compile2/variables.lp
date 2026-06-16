@@ -1,10 +1,11 @@
-% declarations
-_variable(variable(Var)) :- _passed(compile2, _, variable_declare(Var, _)).
-
 % domains
-{ _se_value(variable(Var), Value) } :- _passed(compile2, _, variable_declare(Var, fromFacts)),
+_se_domain(variable(Var), Value) :- 
+    _passed(compile2, _, variable_declare(Var, fromFacts)),
     _passed(compile2, _, variable_domain(Var, Expr)),
-    _se_value(Expr, Value).
+    _se_domain(Expr, Value).
+_se_domain(variable(Var), Value) :- 
+    _passed(compile2, _, variable_define(Var, Expr)),
+    _se_domain(Expr, Value).
 
 % set domains
 { _set_contains(variable(Var), Value) } :- _passed(compile2, _, variable_declare(Var, set)),
@@ -13,19 +14,11 @@ _variable(variable(Var)) :- _passed(compile2, _, variable_declare(Var, _)).
 
 % static assignments
 _se_value(variable(Var), set) :- _passed(compile2, _, variable_declare(Var, set)).
-_se_value(variable(Var), Value) :- _passed(compile2,_, variable_define(Var, Expr)), _se_value(Expr, Value).
+{_se_value(variable(Var), Value)} :- _passed(compile2,_, variable_define(Var, Expr)), _se_domain(Expr, Value).
+:- _passed(compile2, _, variable_define(Var, Expr)), _se_value(variable(Var), Value), not _se_value(Expr, Value).
+:- _passed(compile2, _, variable_define(Var, Expr)), _se_value(Expr, Value), not _se_value(variable(Var), Value).
 _set_contains(variable(Var), Value) :-
     _passed(compile2, _, variable_define(Var, Expr)),
     _se_value(Expr, set),
     _set_contains(Expr, Value).
 _set_contains(variable(Var), Value) :- _passed(compile2,_, set_assign(Var, Expr)), _se_value(Expr, Value).
-
-_variable_needs_value(variable(Var)) :- _passed(compile2, _, variable_define(Var, _)).
-_variable_needs_value(variable(Var)) :-
-    _passed(compile2, _, variable_declare(Var, fromFacts)),
-    _passed(compile2, _, variable_domain(Var, _)).
-_variable_needs_value(variable(Var)) :- _passed(compile2, _, variable_declare(Var, set)).
-
-% exactly one value
-% Note: this could be optimized only for fromFacts variables
-:- _variable_needs_value(X), not 1 #sum { 1,Y : _se_value(X,Y) } 1.

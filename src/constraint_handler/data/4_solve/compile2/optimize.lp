@@ -8,7 +8,7 @@
 
 % direct_query(E) :- _optimize_se_component(E,X,P).
 
-% #maximize { I@P,X : _optimize_se_component(E,X,P), _se_value(E,val(int,I)) }.
+% #maximize { I@P,X : _optimize_se_component(E,X,P), _se_domain(E,val(int,I)) }.
 
 %%% Abdallah: is it ensured that there is always an optimize precision for each Prio?
 %%% Abdallah: why floor not round?
