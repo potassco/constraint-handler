@@ -1,0 +1,6 @@
+value(execution_output(prg1,"x"),val(int,6))
+value(execution_output(prg2,"x"),val(int,6))
+value(execution_output(prg3,"x"),val(int,6))
+evaluated(eq,(variable(execution_output(prg1,"x")),(val(int,6),())),val(bool,true))
+evaluated(eq,(variable(execution_output(prg2,"x")),(val(int,6),())),val(bool,true))
+evaluated(eq,(variable(execution_output(prg3,"x")),(val(int,6),())),val(bool,true))

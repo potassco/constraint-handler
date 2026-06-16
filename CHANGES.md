@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- skip internal values in the models
 - introduce warnings `type(notImplemented)` and `type(notSupported)`
 - fix a tuple evaluation bug
 - introduce `set` and `multimap` as possible variable declarations
