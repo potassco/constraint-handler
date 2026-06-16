@@ -39,16 +39,6 @@ def pythonEnumerateVariables(clExpr):
         return []
 
 @cache
-def pythonEnumerateExecutionVariables(clStmt,clIns):
-    pStmt = myClorm.cltopy(clStmt,statement.Stmt)
-    pIns = myClorm.cltopy(clIns,halt=False)
-    pVars = list(evaluator.collectStmtVars(pStmt) | frozenset(pIns))
-    result = [myClorm.pytocl(e) for e in enumerate(pVars)]
-    result.append(clingo.Function("length",[clingo.Number(len(pVars))]))
-    return result
-
- # TODO: dead?
-@cache
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars,list)
     pArgs = myClorm.cltopy(clArgs,list[expression.ReducedExpr])
