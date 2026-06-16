@@ -35,9 +35,24 @@ def unnest(symb, cons="", nil=""):
             raise FailedInstantiationExn(f"{symb} is not a list")
 
 
-class HashableList(list):
-    def __hash__(self):
-        return hash(tuple(self))
+class HashableList(tuple):
+    def __new__(cls, values=()):
+        return super().__new__(cls, values)
+
+    @classmethod
+    def pytocl(cls, value, target_args=()):
+        subtarget = target_args[0] if target_args else None
+        if subtarget is not None:
+            return nest([pytocl(e, subtarget) for e in value])
+        return nest([pytocl(e) for e in value])
+
+    @classmethod
+    def cltopy(cls, func, target_args=()):
+        subtarget = target_args[0] if target_args else None
+        un = unnest(func)
+        if subtarget is not None:
+            return cls(cltopy(e, subtarget) for e in un)
+        return cls(un)
 
 
 baseTypes = {"bool": bool, "int": int, "float": float, "string": str, "none": type(None)}
@@ -246,10 +261,7 @@ def cltopy(func, dtarget=typing.Any):
                     else:
                         targets = target.asdict()
                     if name == func.name and len(target._fields) == len(func.arguments):
-                        args = (
-                            cltopy(symb, targets.get(field))
-                            for symb, field in zip(func.arguments, target._fields)
-                        )
+                        args = (cltopy(symb, targets.get(field)) for symb, field in zip(func.arguments, target._fields))
                         return target(*args)
             elif any(isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]):
                 if cltopy(func) == target:

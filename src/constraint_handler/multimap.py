@@ -1,5 +1,5 @@
 import typing
-from collections.abc import Callable
+from collections.abc import Callable, Iterator, Mapping
 
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.operators as operators
@@ -10,12 +10,38 @@ import constraint_handler.utils.common as common
 NO_ERRORS: tuple[tuple[warning.Kind, str], ...] = ()
 
 
-class HashableDict(dict):
-    def __hash__(self):
-        return hash(frozenset(self.items()))
+K = typing.TypeVar("K")
+V = typing.TypeVar("V")
+
+
+class Multimap(Mapping[K, frozenset[V]]):
+    def __init__(self, data: Mapping[K, frozenset[V]]):
+        # Copy into a plain dict to decouple from caller mutability.
+        self._data: dict[K, frozenset[V]] = dict(data)
+        self._hash = hash(frozenset(self._data.items()))
+
+    @classmethod
+    def from_pairs(cls, pairs: typing.Iterable[tuple[K, V]]) -> "Multimap[K, V]":
+        tmp: dict[K, set[V]] = {}
+        for key, value in pairs:
+            tmp.setdefault(key, set()).add(value)
+        frozen = {key: frozenset(values) for key, values in tmp.items()}
+        return cls(frozen)
+
+    def __getitem__(self, key: K) -> frozenset[V]:
+        return self._data[key]
+
+    def __iter__(self) -> Iterator[K]:
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __hash__(self) -> int:
+        return self._hash
 
     def __repr__(self):
-        kv = ", ".join(f"{str(k)}:{str(v)}" for k, v in self.items())
+        kv = ", ".join(f"{str(k)}:{str(v)}" for k, v in self._data.items())
         return f"{{{kv}}}"
 
 
@@ -36,7 +62,7 @@ def fold_i(f, m, start):
     return accu
 
 
-def compare(multimap: HashableDict, op: Callable):
+def compare(multimap: Multimap, op: Callable):
     best_val = None
     errors: list[tuple[warning.Kind, typing.Any]] = []
     try:
@@ -103,15 +129,7 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
 
             return atom.EvalResult(fold_i(step, args[1], args[2]), tuple(fold_errors))
         case operators.MultimapOperator.multimap_make:
-            d = HashableDict()
-            for key, value in args:
-                if key not in d:
-                    d[key] = {value}
-                else:
-                    d[key].add(value)
-            for key, value in d.items():
-                d[key] = frozenset(value)
-            return atom.EvalResult(d, NO_ERRORS)
+            return atom.EvalResult(Multimap.from_pairs(args), NO_ERRORS)
         case operators.MultimapOperator.countKeys:
             return atom.EvalResult(len(args[0]), NO_ERRORS)
         case operators.MultimapOperator.countEntries:
