@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- introduce warnings `type(notImplemented)` and `type(notSupported)`
 - fix a tuple evaluation bug
 - introduce `set` and `multimap` as possible variable declarations
 - support optimization in the ground engine
