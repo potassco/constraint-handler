@@ -1303,20 +1303,25 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         assert self.python_model is not None
 
-        pyVal = expression.Ref(evaluator.get_baseType(final_value), clingo.Function("variable", [var]))
-        pyAtom = atom.Value(var, pyVal)
-        self.python_model.add(pyAtom)
+        try:
+            pyVal = expression.Ref(evaluator.get_baseType(final_value), clingo.Function("variable", [var]))
+            pyAtoms = [atom.Value(var, pyVal)]
 
-        for value in final_value:
-            if value is ValueStatus.NOT_SET:
-                assert False, f"Set variable {var} has no value set in on_model!"
+            for value in final_value:
+                if value is ValueStatus.NOT_SET:
+                    assert False, f"Set variable {var} has no value set in on_model!"
 
-            if value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
-                set_pyVal = value
-            else:
-                set_pyVal = expression.Val(evaluator.get_baseType(value), value)
-            set_pyAtom = atom.Set_value(var, set_pyVal)
-            self.python_model.add(set_pyAtom)
+                if value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
+                    set_pyVal = value
+                else:
+                    set_pyVal = expression.Val(evaluator.get_baseType(value), value)
+                set_pyAtom = atom.Set_value(var, set_pyVal)
+                pyAtoms.append(set_pyAtom)
+            for pyAtom in pyAtoms:
+                self.python_model.add(pyAtom)
+        except Exception as exn:  # TODO: add warnings?
+            self.python_model.add(atom.Value(var, expression.Bad.bad))
+
 
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict):
         """
@@ -1331,20 +1336,24 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
             pyVal = final_value
         else:
-            pyVal = expression.Val(evaluator.get_baseType(final_value), var)
+            try:
+                pyVal = expression.Val(evaluator.get_baseType(final_value), var)
+            except Exception as exn:
+                pyVal = expression.Bad.bad
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
-        for key, value in final_value.items():
-            if value is ValueStatus.NOT_SET:
-                assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
+        if pyVal != expression.Bad.bad:
+            for key, value in final_value.items():
+                if value is ValueStatus.NOT_SET:
+                    assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
 
-            for val in value:
-                mm_pyKey, keyErrors = evaluator.reducedExpr(key)  # TODO: handle errors
-                mm_pyVal, valErrors = evaluator.reducedExpr(val)
-                mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
+                for val in value:
+                    mm_pyKey, keyErrors = evaluator.reducedExpr(key)  # TODO: handle errors
+                    mm_pyVal, valErrors = evaluator.reducedExpr(val)
+                    mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
 
-                self.python_model.add(mm_pyAtom)
+                    self.python_model.add(mm_pyAtom)
 
     def handle_on_model_normal_type(
         self,
