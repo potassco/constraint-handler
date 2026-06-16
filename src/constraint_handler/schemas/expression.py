@@ -74,7 +74,7 @@ class Ref(typing.NamedTuple):
 
 class Operation(typing.NamedTuple):
     op: Operator | Variable | Lambda
-    args: myClorm.HashableList["Expr"]
+    args: myClorm.ImmutableList["Expr"]
 
     def __repr__(self):
         comma = ","
@@ -89,7 +89,7 @@ class Variable(typing.NamedTuple):
 
 
 class Lambda(typing.NamedTuple):
-    vars: myClorm.HashableList[clingo.Symbol]
+    vars: myClorm.ImmutableList[clingo.Symbol]
     expr: "Expr"
 
     def __repr__(self):

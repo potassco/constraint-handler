@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
+import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.expression as expression
 
 
@@ -18,7 +19,7 @@ class BoolDomain(NamedTuple):
 
 
 class FromList(NamedTuple):
-    elements: list[expression.Expr]
+    elements: myClorm.ImmutableList[expression.Expr]
 
 
 class Set(NamedTuple):

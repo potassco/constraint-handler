@@ -35,7 +35,7 @@ def unnest(symb, cons="", nil=""):
             raise FailedInstantiationExn(f"{symb} is not a list")
 
 
-class HashableList(tuple):
+class ImmutableList(tuple):
     def __new__(cls, values=()):
         return super().__new__(cls, values)
 
@@ -229,7 +229,7 @@ def cltopyNoTarget(func):
         elif func.name == "":
             try:
                 l = unnest(func)
-                return HashableList([cltopyNoTarget(e) for e in l])
+                return ImmutableList([cltopyNoTarget(e) for e in l])
             except FailedInstantiationExn:
                 return tuple([cltopyNoTarget(e) for e in func.arguments])
         else:
@@ -311,7 +311,7 @@ def cltopy(func, dtarget=typing.Any):
                         result = [cltopy(e, subtarget[0]) for e in un]
                     else:
                         result = un
-                    return HashableList(result)
+                    return ImmutableList(result)
                 elif issubclass(utarget, set) or issubclass(utarget, frozenset):
                     subtarget = _cached_get_args(target)
                     if func.type == clingo.SymbolType.Function and func.name == "set" and len(func.arguments) == 1:
