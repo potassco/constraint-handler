@@ -6,12 +6,9 @@ from enum import Enum
 
 import clingo
 
-import constraint_handler.arithmetic as arithmetic
-import constraint_handler.logic as logic
-import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.operators as operators
 import constraint_handler.schemas.type_ as type_m
-import constraint_handler.set as myset
 import constraint_handler.utils.common as common
 
 EqOperator = common.PPEnum("EqOperator", ["eq", "neq"])
@@ -43,12 +40,12 @@ class PythonExtract(typing.NamedTuple):
 
 
 Operator = (
-    arithmetic.Operator
+    operators.ArithmeticOperator
     | EqOperator
-    | logic.Operator
+    | operators.LogicOperator
     | StringOperator
-    | multimap.Operator
-    | myset.Operator
+    | operators.MultimapOperator
+    | operators.SetOperator
     | OtherOperator
     | ConditionalOperator
     | Python
@@ -77,7 +74,7 @@ class Ref(typing.NamedTuple):
 
 class Operation(typing.NamedTuple):
     op: Operator | Variable | Lambda
-    args: myClorm.HashableList[Expr]
+    args: myClorm.HashableList["Expr"]
 
     def __repr__(self):
         comma = ","
@@ -93,7 +90,7 @@ class Variable(typing.NamedTuple):
 
 class Lambda(typing.NamedTuple):
     vars: myClorm.HashableList[clingo.Symbol]
-    expr: Expr
+    expr: "Expr"
 
     def __repr__(self):
         return f"Lambda({[str(x) for x in self.vars]},{str(self.expr)})"

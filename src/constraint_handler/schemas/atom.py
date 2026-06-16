@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import constraint_handler.schemas.domain as domain  # fmt: skip
 import constraint_handler.schemas.expression as expression
@@ -11,6 +11,11 @@ import constraint_handler.schemas.warning as warning
 
 class FailIntegrity(NamedTuple):
     pass
+
+
+class EvalResult(NamedTuple):
+    value: Any
+    errors: tuple[tuple[warning.Kind, str], ...]
 
 
 class Variable_declare(NamedTuple):

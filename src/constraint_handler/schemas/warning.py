@@ -44,7 +44,7 @@ class Statement(typing.NamedTuple):
 
 
 # TODO: rename failed_operation to failedOperation
-TypeWarning = common.PPEnum("TypeWarning", ["failed_operation"])
+TypeWarning = common.PPEnum("TypeWarning", ["failed_operation", "notImplemented", "notSupported"])
 
 
 class Type(typing.NamedTuple):
