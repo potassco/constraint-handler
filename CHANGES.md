@@ -4,6 +4,7 @@
 
 ## v0.0.3
 
+- add custom converter hooks for generic aliases in myClorm
 - support preferences in the ground engine
 - skip internal values in the models
 - introduce warnings `type(notImplemented)` and `type(notSupported)`
