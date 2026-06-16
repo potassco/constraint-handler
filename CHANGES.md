@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+## v0.0.3
+
+- support preferences in the ground engine
 - skip internal values in the models
 - introduce warnings `type(notImplemented)` and `type(notSupported)`
 - fix a tuple evaluation bug
