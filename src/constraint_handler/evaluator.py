@@ -113,7 +113,7 @@ def get_baseType(v):
         raise NotImplementedError(f"get_baseType is not implemented for {v}")
 
 
-def reducedExpr(v):
+def reducedExprAux(v):
     if isinstance(v, float):
         return expression.Val(BaseType.float, v)
     elif isinstance(v, str):
@@ -127,7 +127,7 @@ def reducedExpr(v):
     elif isinstance(v, type(None)):
         return expression.Val(BaseType.none, None)
     elif isinstance(v, frozenset) or isinstance(v, set):
-        return frozenset({reducedExpr(x) for x in v})
+        return frozenset({reducedExprAux(x) for x in v})
     elif isinstance(v, dict):
         raise NotImplementedError(f"reducedExpr is not implemented for {dict} {v}")
     elif isinstance(v, expression.Lambda):
@@ -135,9 +135,18 @@ def reducedExpr(v):
     elif isinstance(v, expression.Bad):
         return v
     elif isinstance(v, tuple):
-        return tuple(reducedExpr(x) for x in v)
+        return tuple(reducedExprAux(x) for x in v)
     else:
         raise NotImplementedError(f"reducedExpr is not implemented for {v}")
+
+
+def reducedExpr(v):
+    try:
+        result = reducedExprAux(v)
+        return (result, [])
+    except NotImplementedError as exn:
+        warn = warning.Expression(warning.ExpressionWarning.notImplemented)
+        return (expression.Bad, ((warn, exn.message),))
 
 
 def string_operator(o, args):
