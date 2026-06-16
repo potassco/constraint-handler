@@ -1322,7 +1322,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         except Exception as exn:  # TODO: add warnings?
             self.python_model.add(atom.Value(var, expression.Bad.bad))
 
-
     def handle_on_model_dict(self, var: clingo.Symbol, final_value: dict):
         """
         Add atoms for a dict/multimap-typed variable to the python model.
@@ -1338,7 +1337,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         else:
             try:
                 pyVal = expression.Val(evaluator.get_baseType(final_value), var)
-            except Exception as exn:
+            except Exception:
                 pyVal = expression.Bad.bad
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
