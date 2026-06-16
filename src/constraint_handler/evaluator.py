@@ -146,7 +146,7 @@ def reducedExpr(v):
         return (result, [])
     except NotImplementedError as exn:
         warn = warning.Expression(warning.ExpressionWarning.notImplemented)
-        return (expression.Bad, ((warn, exn.message),))
+        return (expression.Bad.bad, ((warn, exn.message),))
 
 
 def string_operator(o, args):
