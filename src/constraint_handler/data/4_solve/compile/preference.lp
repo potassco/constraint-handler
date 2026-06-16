@@ -6,7 +6,6 @@ _warning(preference(unsupported),(),("multiple scores for the same expression",E
 _preference_expressionScore(E,K) :- _passed((compile;ground),LBL,preference_holds(E,K)).
 
 _preference_expression(E) :- _preference_expressionScore(E,K).
-direct_query(E) :- _preference_expression(E).
 
 _preference_index(E,0) :- _preference_expression(E), #count { F : _preference_expression(F), F < E } = 0.
 _preference_index(F,IDX+1) :- _preference_index(E,IDX), _preference_expression(F), E < F,

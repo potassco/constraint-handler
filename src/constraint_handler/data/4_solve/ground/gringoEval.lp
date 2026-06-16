@@ -4,6 +4,7 @@ _expression(ground,E) :- _passed(ground,LBL,evaluate(OP,ARGS)), E=operation(OP,A
 _expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_domain(X,E)).
+_expression(ground,E) :- _passed(ground,LBL,preference_holds(E,K)).
 
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
 _ge_assign(LBL,X,E) :- _passed(ground,LBL,variable_define(X,E)).
