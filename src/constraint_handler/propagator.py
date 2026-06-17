@@ -142,6 +142,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 )
             ctl.add("base", [], REASONING_MODE_PROGRAM)
 
+        ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
+        self.optimal_models_wanted = 1
+
         # TODO: we shoudln't be changing the ctl.configuration
         if ctl.configuration.solve.opt_mode == "optN":  # ty:ignore[unresolved-attribute]
             # if optN is used, then we get the amount of optimal models from the configuration
@@ -150,7 +153,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 ctl.configuration.solve.models
             )  # ty:ignore[invalid-argument-type,unresolved-attribute]
             ctl.configuration.solve.models = 0  # ty:ignore[invalid-assignment]
-            ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
 
             if ctl.configuration.solver.heuristic != "Domain":  # ty:ignore[unresolved-attribute]
                 self.errors.append(
@@ -513,7 +515,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             lit = abs(rlit)
             if lit in self.literal2var:
                 to_evaluate.update(self.literal2var[lit])
-            elif lit == self.optimization_stage_lits[2]:
+            elif not self.previously_opt_stage_2 and lit == self.optimization_stage_lits[2]:
                 # if we are now in the second stage of optimization,
                 # we can now look for equal valued solutions
                 self.set_optimization_check_strength("le")
