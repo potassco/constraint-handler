@@ -1454,10 +1454,10 @@ class DictVariable:
         """
         self.name: str = name
         self.var: clingo.Symbol = var
-        self.dict_expressions: dict[VariableValue, SetVariableValue] = multimap.HashableDict()
+        self.dict_expressions: dict[VariableValue, SetVariableValue] = {}
         self.is_user_variable: bool = is_user_variable
 
-        self.value: ValueStatus | dict[clingo.Symbol, Any] = ValueStatus.NOT_SET
+        self.value: ValueStatus | multimap.Multimap[clingo.Symbol, Any] = ValueStatus.NOT_SET
 
         self.literal: int = lit
         self.assigned: bool | None = None
@@ -1549,21 +1549,21 @@ class DictVariable:
 
         return lits
 
-    def get_value(self) -> ValueStatus | dict[clingo.Symbol, Any]:
+    def get_value(self) -> ValueStatus | multimap.Multimap[clingo.Symbol, Any]:
         """
         Get the current value of the dict variable.
 
         Returns:
-            ValueStatus | dict[clingo.Symbol, Any]: Current dict value or NOT_SET.
+            ValueStatus | multimap.Multimap[clingo.Symbol, Any]: Current dict value or NOT_SET.
         """
         return self.value
 
-    def discern_value(self) -> ValueStatus | dict[clingo.Symbol, Any]:
+    def discern_value(self) -> ValueStatus | multimap.Multimap[clingo.Symbol, Any]:
         """
         Returns a dictionary mapping keys to their assigned values.
         If any value is unassigned, returns None for that key.
         """
-        result = multimap.HashableDict()
+        result: dict[clingo.Symbol, Any] = {}
         for key, value in self.dict_expressions.items():
             key_val = key.value
             val = value.get_value()
@@ -1578,7 +1578,7 @@ class DictVariable:
                 continue
 
             result[key_val] = val
-        return result
+        return multimap.Multimap(result)
 
     def has_unassigned(self) -> bool:
         """

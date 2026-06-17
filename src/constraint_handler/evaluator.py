@@ -35,13 +35,13 @@ _solver_environment = dict()
 NO_ERRORS: tuple[tuple[warning.Kind, str], ...] = ()
 
 
-def exprs(eargs, globals_env, locals_env):
+def exprs(eargs, globals_id, locals_env):
     values, errors = [], []
     for arg in eargs:
-        arg_result = expr(arg, globals_env, locals_env)
+        arg_result = expr(arg, globals_id, locals_env)
         values.append(arg_result.value)
         errors.extend(arg_result.errors)
-    return (values, tuple(errors))
+    return (tuple(values), tuple(errors))
 
 
 def collectVars(expr) -> frozenset[clingo.Symbol]:
@@ -103,7 +103,7 @@ def get_baseType(v):
         return BaseType.int
     elif isinstance(v, frozenset):
         return BaseType.set
-    elif isinstance(v, multimap.HashableDict):
+    elif isinstance(v, multimap.Multimap):
         return BaseType.multimap
     elif isinstance(v, clingo.Symbol):
         return BaseType.symbol
@@ -204,37 +204,50 @@ def conditional_operator(o, args):
             )
 
 
-def python_operator(fn, args, globals_env, locals_env):
+def python_operator(fn, args, globals_id, locals_env):
     try:
-        call = eval(fn, globals_env, locals_env)
+        globals_ = get_environment(globals_id)
+        call = eval(fn, globals_, locals_env)
         return atom.EvalResult(call(*args), NO_ERRORS)
     except Exception as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
         return atom.EvalResult(None, ((kind, repr(exn)),))
 
 
-def pythonExtract_operator(stmt: str, expr_code: str, vars_mapping: list, globals_env):
-    locals_env = {name: val for name, val in vars_mapping}
-    if any(value == expression.Bad.bad for value in locals_env.values()):
-        return atom.EvalResult(expression.Bad.bad, NO_ERRORS)
+@cache
+def cached_exec(stmt: str, vars_mapping: tuple, globals_id: myClorm.ImmutableList[expression.constant]):
+    nested_locals = dict()
+    for name, val in vars_mapping:
+        if val == expression.Bad.bad:
+            return (None, NO_ERRORS)
+        nested_locals[name] = val
 
-    nested_globals = dict(globals_env)
-    nested_locals = dict(locals_env)
+    globals_env = get_environment(globals_id)
     try:
-        exec(get_compiled_exec(stmt), nested_globals, nested_locals)
-        succeeds = True
+        exec(get_compiled_exec(stmt), globals_env, nested_locals)
+        result = (tuple(nested_locals.items()), NO_ERRORS)
     except solver_environment.FailIntegrityExn:
-        succeeds = False
+        result = (tuple(nested_locals.items()), None)
     except Exception as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
-        return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
+        result = (None, ((kind, repr(exn)),))
+    return result
 
+
+@cache
+def pythonExtract_operator(stmt: str, expr_code: str, vars_mapping: tuple, globals_id):
+    succ, warns = cached_exec(stmt, vars_mapping, globals_id)
+    if succ is None:
+        return atom.EvalResult(expression.Bad.bad, warns)
     if expr_code == "__succeeds":
-        return atom.EvalResult(succeeds, NO_ERRORS)
+        return atom.EvalResult(warns is not None, NO_ERRORS)
+
+    nested_locals = dict(succ)
 
     try:
+        globals_env = get_environment(globals_id)
         return atom.EvalResult(
-            eval(get_compiled_eval(expr_code), nested_globals, nested_locals),
+            eval(get_compiled_eval(expr_code), globals_env, nested_locals),
             NO_ERRORS,
         )
     except Exception as exn:
@@ -242,17 +255,17 @@ def pythonExtract_operator(stmt: str, expr_code: str, vars_mapping: list, global
         return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
 
 
-def operator(o, args, globals_env, locals_env):
+def operator(o, args: tuple, globals_id, locals_env):
     def apply_nested_operator(inner_o, inner_args):
-        return operator(inner_o, inner_args, globals_env, locals_env)
+        return operator(inner_o, inner_args, globals_id, locals_env)
 
     match o:
         case expression.Bad.bad:
             return atom.EvalResult(o, NO_ERRORS)
         case expression.Python(fn):
-            return python_operator(fn, args, globals_env, locals_env)
+            return python_operator(fn, args, globals_id, locals_env)
         case expression.PythonExtract(stmt, e):
-            return pythonExtract_operator(stmt, e, args, globals_env)
+            return pythonExtract_operator(stmt, e, args, globals_id)
         case expression.Lambda(vars, expr_body):
             if len(vars) != len(args):
                 return atom.EvalResult(
@@ -267,7 +280,7 @@ def operator(o, args, globals_env, locals_env):
             nested_locals = dict(locals_env)
             for var, value in zip(vars, args):
                 nested_locals[var] = value
-            return expr(expr_body, globals_env, nested_locals)
+            return expr(expr_body, globals_id, nested_locals)
         case EqOperator():
             if len(args) != 2:
                 return atom.EvalResult(
@@ -308,11 +321,11 @@ def operator(o, args, globals_env, locals_env):
             )
 
 
-def expr(expr_, globals_env, locals_env):
+def expr(expr_, globals_id, locals_env):
     match expr_:
         case expression.Operation(eo, eargs):
-            args, args_errors = exprs(eargs, globals_env, locals_env)
-            op_result = expr(eo, globals_env, locals_env)
+            args, args_errors = exprs(eargs, globals_id, locals_env)
+            op_result = expr(eo, globals_id, locals_env)
             o = op_result.value
 
             recoverable = [
@@ -328,7 +341,7 @@ def expr(expr_, globals_env, locals_env):
             if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in recoverable):
                 return atom.EvalResult(expression.Bad.bad, op_result.errors + args_errors)
 
-            applied = operator(o, args, globals_env, locals_env)
+            applied = operator(o, args, globals_id, locals_env)
             return atom.EvalResult(applied.value, op_result.errors + args_errors + applied.errors)
         case expression.Variable(a):
             if a in locals_env:
@@ -339,7 +352,8 @@ def expr(expr_, globals_env, locals_env):
             )
         case expression.Python(code):
             try:
-                return atom.EvalResult(eval(get_compiled_eval(code), globals_env, locals_env), NO_ERRORS)
+                globals_ = get_environment(globals_id)
+                return atom.EvalResult(eval(get_compiled_eval(code), globals_, locals_env), NO_ERRORS)
             except Exception as exn:
                 kind = warning.Expression(warning.ExpressionWarning.pythonError)
                 return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
@@ -351,10 +365,10 @@ def expr(expr_, globals_env, locals_env):
         case o if isinstance(o, expression.Operator):
             return atom.EvalResult(expr_, NO_ERRORS)
         case tuple(eargs):
-            values, errors = exprs(eargs, globals_env, locals_env)
+            values, errors = exprs(eargs, globals_id, locals_env)
             return atom.EvalResult(tuple(values), errors)
         case set(eargs) | frozenset(eargs):
-            values, errors = exprs(eargs, globals_env, locals_env)
+            values, errors = exprs(eargs, globals_id, locals_env)
             return atom.EvalResult(frozenset(values), errors)
         case None:
             return atom.EvalResult(None, NO_ERRORS)
@@ -367,9 +381,10 @@ def expr(expr_, globals_env, locals_env):
             )
 
 
-def stmt_python(code, globals_env, locals_env, errors):
+def stmt_python(code, globals_id, locals_env, errors):
     try:
-        exec(get_compiled_exec(code), globals_env, locals_env)
+        globals_ = get_environment(globals_id)
+        exec(get_compiled_exec(code), globals_, locals_env)
     except solver_environment.FailIntegrityExn:
         raise
     except Exception as exn:
@@ -377,10 +392,10 @@ def stmt_python(code, globals_env, locals_env, errors):
         errors.append((kind, repr(exn)))
 
 
-def stmt(stmt_, globals_env, locals_env, errors):
+def stmt(stmt_, globals_id, locals_env, errors):
     match stmt_:
         case statement.Assert(e):
-            evaluated = expr(e, globals_env, locals_env)
+            evaluated = expr(e, globals_id, locals_env)
             errors.extend(evaluated.errors)
             condition = evaluated.value
             if condition == expression.Bad.bad:
@@ -388,44 +403,42 @@ def stmt(stmt_, globals_env, locals_env, errors):
             if condition != True:
                 raise solver_environment.FailIntegrityExn
         case statement.Assign(var, e):
-            evaluated = expr(e, globals_env, locals_env)
+            evaluated = expr(e, globals_id, locals_env)
             errors.extend(evaluated.errors)
             locals_env[var] = evaluated.value
         case statement.If(cond, stmt1, stmt2):
-            evaluated = expr(cond, globals_env, locals_env)
+            evaluated = expr(cond, globals_id, locals_env)
             errors.extend(evaluated.errors)
             if evaluated.value:
-                stmt(stmt1, globals_env, locals_env, errors)
+                stmt(stmt1, globals_id, locals_env, errors)
             else:
-                stmt(stmt2, globals_env, locals_env, errors)
+                stmt(stmt2, globals_id, locals_env, errors)
         case statement.Noop():
             return
         case statement.Statement_python(code):
-            stmt_python(code, globals_env, locals_env, errors)
+            stmt_python(code, globals_id, locals_env, errors)
         case statement.Seq2(stmt1, stmt2):
-            stmt(stmt1, globals_env, locals_env, errors)
-            stmt(stmt2, globals_env, locals_env, errors)
+            stmt(stmt1, globals_id, locals_env, errors)
+            stmt(stmt2, globals_id, locals_env, errors)
         case _:
             errors.append((warning.Statement(warning.StatementWarning.notImplemented), f"{stmt_}"))
 
 
-def evaluate_expr(e, globals=None, locals=None):
-    globs = globals if globals is not None else dict()
+def evaluate_expr(e, globals=myClorm.ImmutableList(), locals=None):
     locs = locals if locals is not None else dict()
 
     try:
-        result = expr(e, globs, locs)
+        result = expr(e, globals, locs)
     except Exception as exn:
         return expression.Bad.bad, [(warning.Expression(warning.ExpressionWarning.evaluatorError), repr(exn))]
     return result.value, list(result.errors)
 
 
-def evaluate_stmt(s, globals=None, locals=None):
-    globs = globals if globals is not None else dict()
+def evaluate_stmt(s, globals=myClorm.ImmutableList(), locals=None):
     locs = locals if locals is not None else dict()
     errors = []
     try:
-        stmt(s, globs, locs, errors)
+        stmt(s, globals, locs, errors)
     except solver_environment.FailIntegrityExn:
         raise
     except Exception as exn:
@@ -438,7 +451,7 @@ def beta_reduction(symbols, expr):
     match expr:
         case expression.Operation(eo, eargs):
             o = beta_reduction(symbols, eo)
-            args = myClorm.HashableList([beta_reduction(symbols, e) for e in eargs])
+            args = myClorm.ImmutableList([beta_reduction(symbols, e) for e in eargs])
             return expression.Operation(o, args)
         case expression.Variable(a):
             if a in symbols:
@@ -465,16 +478,23 @@ def beta_reduction(symbols, expr):
             assert False
 
 
+_built_environments = {}
+
+
 def get_environment(identifiers):
     global _shared_environment
     global _solver_environment
-    globs = dict(_shared_environment)
+    global _built_environments
+    if identifiers in _built_environments:
+        return _built_environments[identifiers]
+    _built_environments[identifiers] = dict(_shared_environment)
+    exec("", _built_environments[identifiers])
     for identifier in identifiers:
         if identifier in _solver_environment:
-            globs.update(_solver_environment[identifier])
+            _built_environments[identifiers].update(_solver_environment[identifier])
         else:
-            print(f"undeclared globals for {identifier}")
-    return globs
+            print(f"debug: undeclared globals for {identifier}")
+    return _built_environments[identifiers]
 
 
 @cache

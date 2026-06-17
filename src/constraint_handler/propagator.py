@@ -85,7 +85,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.optimization_strength: OptimizationStrength = OptimizationStrength.STRICT
         self.prop_sum_atoms: list[Symbol] = []  # used in the postprocessings
 
-        self.environment: dict[Any, Any] = {}
+        self.environment: myClorm.ImmutableList[expression.constant] = myClorm.ImmutableList()
 
         self.check_only = check_only
 
@@ -1026,7 +1026,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         for id, _ in myClorm.findInPropagateInit(ctl, prop_atom.Main_solverIdentifiers).items():
-            self.environment = evaluator.get_environment(id.id)
+            self.environment = id.id
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
         """
@@ -1271,7 +1271,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         elif isinstance(final_value, (set, frozenset)):
             self.handle_on_model_set(var, final_value)
 
-        elif isinstance(final_value, (dict, multimap.HashableDict)):
+        elif isinstance(final_value, (dict, multimap.Multimap)):
             self.handle_on_model_dict(var, final_value)
 
         else:
@@ -1322,7 +1322,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         Args:
             var: Variable symbol.
-            final_value: Mapping value (may be a `HashableDict`).
+            final_value: Mapping value (may be a `multimap.Multimap`).
         """
         assert self.python_model is not None
 

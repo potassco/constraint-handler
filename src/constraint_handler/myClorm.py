@@ -26,25 +26,38 @@ def unnest(symb, cons="", nil=""):
     l = []
     s = symb
     while True:
-        # print("unnest",symb,l)
         if s.type == clingo.SymbolType.Function and s.name == cons and len(s.arguments) == 2:
             l.append(s.arguments[0])
             s = s.arguments[1]
         elif s.type == clingo.SymbolType.Function and s.name == nil and len(s.arguments) == 0:
-            # print("unnest return",l)
             return l
         else:
             raise FailedInstantiationExn(f"{symb} is not a list")
 
 
-class HashableList(list):
-    def __hash__(self):
-        return hash(tuple(self))
+class ImmutableList(tuple):
+    def __new__(cls, values=()):
+        return super().__new__(cls, values)
+
+    @classmethod
+    def pytocl(cls, value, target_args=()):
+        subtarget = target_args[0] if target_args else None
+        if subtarget is not None:
+            return nest([pytocl(e, subtarget) for e in value])
+        return nest([pytocl(e) for e in value])
+
+    @classmethod
+    def cltopy(cls, func, target_args=()):
+        subtarget = target_args[0] if target_args else None
+        un = unnest(func)
+        if subtarget is not None:
+            return cls(cltopy(e, subtarget) for e in un)
+        return cls(un)
 
 
 baseTypes = {"bool": bool, "int": int, "float": float, "string": str, "none": type(None)}
-# containers = { "set": set, "list": list, "tuple" : tuple }
 containers = {"set": set, "list": list}
+_NO_CUSTOM_CONVERTER = object()
 
 
 @cache
@@ -100,6 +113,24 @@ def _union_rows(target):
     return (target,)
 
 
+def _resolve_custom_converter(target, name, value):
+    origin = _cached_get_origin(target)
+    target_args = _cached_get_args(target)
+    converters = [
+        converter
+        for candidate in (target, origin)
+        if candidate is not None
+        for converter in [getattr(candidate, name, None)]
+        if converter is not None
+    ]
+    for converter in converters:
+        try:
+            return converter(value, target_args=target_args)
+        except TypeError:
+            return converter(value)
+    return _NO_CUSTOM_CONVERTER
+
+
 def pytocl(v, dtarget=None):
     if dtarget is None:
         dtarget = type(v)
@@ -127,14 +158,15 @@ def pytocl(v, dtarget=None):
     for target in rows:
         target = _resolve_type_alias(target)
         runtime_target = _cached_get_origin(target) or target
+        custom_value = _resolve_custom_converter(target, "pytocl", v)
+        if custom_value is not _NO_CUSTOM_CONVERTER:
+            return custom_value
         if runtime_target == typing.Any:
             return v
         elif not isinstance(runtime_target, type):
             pass
         elif not isinstance(v, runtime_target):
             pass
-        elif getattr(runtime_target, "pytocl", None):
-            return runtime_target.pytocl(v)
         elif issubclass(runtime_target, clingo.Symbol):
             return v
         elif issubclass(runtime_target, enum.Enum):
@@ -197,7 +229,7 @@ def cltopyNoTarget(func):
         elif func.name == "":
             try:
                 l = unnest(func)
-                return HashableList([cltopyNoTarget(e) for e in l])
+                return ImmutableList([cltopyNoTarget(e) for e in l])
             except FailedInstantiationExn:
                 return tuple([cltopyNoTarget(e) for e in func.arguments])
         else:
@@ -207,7 +239,7 @@ def cltopyNoTarget(func):
 
 
 @cache
-def cltopy(func, dtarget=typing.Any, halt=True):
+def cltopy(func, dtarget=typing.Any):
     dtarget = _resolve_type_alias(dtarget)
     rows = _union_rows(dtarget)
     for target in rows:
@@ -215,12 +247,10 @@ def cltopy(func, dtarget=typing.Any, halt=True):
         utarget = _cached_get_origin(target) or target  # unsubscripted_target
         try:
             if target == typing.Any:
-                if halt:
-                    return func
-                else:
-                    return cltopyNoTarget(func)
-            elif getattr(target, "cltopy", None):
-                return target.cltopy(func, halt=halt)
+                return func
+            custom_value = _resolve_custom_converter(target, "cltopy", func)
+            if custom_value is not _NO_CUSTOM_CONVERTER:
+                return custom_value
             elif getattr(target, "_fields", None) is not None:
                 if func.type == clingo.SymbolType.Function:  # NamedTuple
                     assert getattr(target, "__name__", None) is not None
@@ -231,13 +261,10 @@ def cltopy(func, dtarget=typing.Any, halt=True):
                     else:
                         targets = target.asdict()
                     if name == func.name and len(target._fields) == len(func.arguments):
-                        args = (
-                            cltopy(symb, targets.get(field), halt)
-                            for symb, field in zip(func.arguments, target._fields)
-                        )
+                        args = (cltopy(symb, targets.get(field)) for symb, field in zip(func.arguments, target._fields))
                         return target(*args)
             elif any(isinstance(utarget, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]):
-                if cltopy(func, halt=halt) == target:
+                if cltopy(func) == target:
                     return target
             elif isinstance(utarget, type):
                 if issubclass(utarget, clingo.Symbol):
@@ -280,21 +307,19 @@ def cltopy(func, dtarget=typing.Any, halt=True):
                 elif issubclass(utarget, list):
                     subtarget = _cached_get_args(target)
                     un = unnest(func)
-                    result = (
-                        [cltopy(e, subtarget[0], halt) for e in un]
-                        if subtarget
-                        else [cltopyNoTarget(e) for e in un] if not halt else un
-                    )
-                    return HashableList(result)
+                    if subtarget:
+                        result = [cltopy(e, subtarget[0]) for e in un]
+                    else:
+                        result = un
+                    return ImmutableList(result)
                 elif issubclass(utarget, set) or issubclass(utarget, frozenset):
                     subtarget = _cached_get_args(target)
                     if func.type == clingo.SymbolType.Function and func.name == "set" and len(func.arguments) == 1:
                         un = unnest(func.arguments[0])
-                        result = (
-                            frozenset(cltopy(e, subtarget[0], halt) for e in un)
-                            if subtarget
-                            else frozenset(cltopyNoTarget(e) for e in un) if not halt else frozenset(un)
-                        )
+                        if subtarget:
+                            result = frozenset(cltopy(e, subtarget[0]) for e in un)
+                        else:
+                            result = frozenset(un)
                         return result
                 elif issubclass(utarget, tuple):
                     subtargets = _cached_get_args(target)
@@ -306,10 +331,8 @@ def cltopy(func, dtarget=typing.Any, halt=True):
                         and len(subtargets) <= len(func.arguments)
                     ):
                         zipped = list(itertools.zip_longest(func.arguments, subtargets))
-                        result = tuple(cltopy(symb, subt, halt) for (symb, subt) in zipped)
+                        result = tuple(cltopy(symb, subt) for (symb, subt) in zipped)
                         return result
-            ### Missing is instance of NamedTuple
-            ######
             else:
                 if func.type == clingo.SymbolType.Function:
                     print(f"helloe func ={func}, target = {target}")
@@ -319,13 +342,10 @@ def cltopy(func, dtarget=typing.Any, halt=True):
                     name = getattr(target, "name", target.__name__)
                     name = predicatedefn_default_predicate_name(name)
                     args = _cached_get_type_hints(target).values()
-                    # print(f"product function '{len(func.arguments),func.name,func}' with '{len(args),name,args}', match? {name == func.name and len(args) == len(func.arguments)}")
                     if name == func.name and len(args) == len(func.arguments):
                         return target(*(cltopy(symb, field) for symb, field in zip(func.arguments, args)))
-            # print(f"ctp conj failure '{func}' is not of type '{target}'")
             raise FailedInstantiationExn(f"'{func}' is not of type '{target}'")
         except FailedInstantiationExn:
-            # print(f"disj failed once {func,target} {exn}")
             pass
     raise FailedInstantiationExn(f"'{func}' is not of type {dtarget}")
 
@@ -334,7 +354,6 @@ def findInModel(model, dtarget=typing.Any, atoms=True, theory=True):
     rows = _union_rows(dtarget)
     result = dict()
     for target in rows:
-        # print(f"ctp {target} {type(target)}")
         for symb in model.symbols(atoms=atoms, theory=theory):
             try:
                 v = cltopy(symb, target)
