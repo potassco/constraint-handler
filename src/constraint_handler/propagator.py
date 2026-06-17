@@ -85,7 +85,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.optimization_strength: OptimizationStrength = OptimizationStrength.STRICT
         self.prop_sum_atoms: list[Symbol] = []  # used in the postprocessings
 
-        self.environment: dict[Any, Any] = {}
+        self.environment: myClorm.ImmutableList[expression.constant] = myClorm.ImmutableList()
 
         self.check_only = check_only
 
@@ -1026,7 +1026,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         for id, _ in myClorm.findInPropagateInit(ctl, prop_atom.Main_solverIdentifiers).items():
-            self.environment = evaluator.get_environment(id.id)
+            self.environment = id.id
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
         """
