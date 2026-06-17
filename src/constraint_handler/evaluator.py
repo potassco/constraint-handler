@@ -41,7 +41,7 @@ def exprs(eargs, globals_id, locals_env):
         arg_result = expr(arg, globals_id, locals_env)
         values.append(arg_result.value)
         errors.extend(arg_result.errors)
-    return (values, tuple(errors))
+    return (tuple(values), tuple(errors))
 
 
 def collectVars(expr) -> frozenset[clingo.Symbol]:
@@ -214,29 +214,40 @@ def python_operator(fn, args, globals_id, locals_env):
         return atom.EvalResult(None, ((kind, repr(exn)),))
 
 
-def pythonExtract_operator(stmt: str, expr_code: str, vars_mapping: list, globals_id: myClorm.ImmutableList[expression.constant]):
-    globals_ = get_environment(globals_id)
-    locals_env = {name: val for name, val in vars_mapping}
-    if any(value == expression.Bad.bad for value in locals_env.values()):
-        return atom.EvalResult(expression.Bad.bad, NO_ERRORS)
+@cache
+def cached_exec(stmt: str, vars_mapping: tuple, globals_id: myClorm.ImmutableList[expression.constant]):
+    nested_locals = dict()
+    for name, val in vars_mapping:
+        if val == expression.Bad.bad:
+            return (None, NO_ERRORS)
+        nested_locals[name] = val
 
-    nested_globals = dict(globals_)
-    nested_locals = dict(locals_env)
+    globals_env = get_environment(globals_id)
     try:
-        exec(get_compiled_exec(stmt), nested_globals, nested_locals)
-        succeeds = True
+        exec(get_compiled_exec(stmt), globals_env, nested_locals)
+        result = (tuple(nested_locals.items()), NO_ERRORS)
     except solver_environment.FailIntegrityExn:
-        succeeds = False
+        result = (tuple(nested_locals.items()), None)
     except Exception as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
-        return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
+        result = (None, ((kind, repr(exn)),))
+    return result
 
+
+@cache
+def pythonExtract_operator(stmt: str, expr_code: str, vars_mapping: tuple, globals_id):
+    succ, warns = cached_exec(stmt, vars_mapping, globals_id)
+    if succ is None:
+        return atom.EvalResult(expression.Bad.bad, warns)
     if expr_code == "__succeeds":
-        return atom.EvalResult(succeeds, NO_ERRORS)
+        return atom.EvalResult(warns is not None, NO_ERRORS)
+
+    nested_locals = dict(succ)
 
     try:
+        globals_env = get_environment(globals_id)
         return atom.EvalResult(
-            eval(get_compiled_eval(expr_code), nested_globals, nested_locals),
+            eval(get_compiled_eval(expr_code), globals_env, nested_locals),
             NO_ERRORS,
         )
     except Exception as exn:
@@ -244,7 +255,7 @@ def pythonExtract_operator(stmt: str, expr_code: str, vars_mapping: list, global
         return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
 
 
-def operator(o, args, globals_id, locals_env):
+def operator(o, args: tuple, globals_id, locals_env):
     def apply_nested_operator(inner_o, inner_args):
         return operator(inner_o, inner_args, globals_id, locals_env)
 
@@ -467,16 +478,23 @@ def beta_reduction(symbols, expr):
             assert False
 
 
+_built_environments = {}
+
+
 def get_environment(identifiers):
     global _shared_environment
     global _solver_environment
-    globs = dict(_shared_environment)
+    global _built_environments
+    if identifiers in _built_environments:
+        return _built_environments[identifiers]
+    _built_environments[identifiers] = dict(_shared_environment)
+    exec("", _built_environments[identifiers])
     for identifier in identifiers:
         if identifier in _solver_environment:
-            globs.update(_solver_environment[identifier])
+            _built_environments[identifiers].update(_solver_environment[identifier])
         else:
-            print(f"undeclared globals for {identifier}")
-    return globs
+            print(f"debug: undeclared globals for {identifier}")
+    return _built_environments[identifiers]
 
 
 @cache
