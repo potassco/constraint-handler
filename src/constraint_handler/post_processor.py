@@ -36,6 +36,12 @@ class OptimizePostProcessingPropagator(clingo.Propagator):
         self._optimize_symbols = [
             symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_optimize_maximizeSum", 4)
         ]
+        self._optimize_symbols.extend(
+            [
+                symbolic_atom.symbol
+                for symbolic_atom in init.symbolic_atoms.by_signature("propagator_optimize_minimizeSum", 4)
+            ]
+        )
         optimize_exprs = {symbol.arguments[1] for symbol in self._optimize_symbols}
 
         self._value_symbols_by_expr.clear()
