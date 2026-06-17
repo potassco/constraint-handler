@@ -146,7 +146,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if ctl.configuration.solve.opt_mode == "optN":  # ty:ignore[unresolved-attribute]
             # if optN is used, then we get the amount of optimal models from the configuration
             # unfortunately, here we have to change the configuration.
-            self.optimal_models_wanted: int = int(ctl.configuration.solve.models)  # ty:ignore[invalid-argument-type,unresolved-attribute]
+            self.optimal_models_wanted: int = int(
+                ctl.configuration.solve.models
+            )  # ty:ignore[invalid-argument-type,unresolved-attribute]
             ctl.configuration.solve.models = 0  # ty:ignore[invalid-assignment]
             ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
 
@@ -212,7 +214,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # Adding reasoning mode helper atoms
             for a in ctl.symbolic_atoms.by_signature(REASONING_STAGE_ATOM, 1):
                 assert a.symbol.arguments[0].number in (1, 2, 3), f"Unknown reasoning stage atom: {a.symbol}"
-                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(a.literal)  # ty:ignore[invalid-assignment]
+                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(
+                    a.literal
+                )  # ty:ignore[invalid-assignment]
 
             # TODO: check if it works with the new variable manager stuff
             for var in self.symbol2var.get_variables():
@@ -604,9 +608,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ng = ng.union(extra_literals)
         prop_stop = ctl.add_nogood(ng)
         if conflict and prop_stop:
-            assert False, (
-                f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
-            )
+            assert (
+                False
+            ), f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
 
         return not prop_stop
 
@@ -931,7 +935,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 Variable, self.symbol2var.get_variable(optional, getattr(Variable, "__name__"))
             )
             literal = ctl.add_literal(freeze=True)
-            optional_variable.add_value(expression.Val(type_.BaseType.none, None), literal, _literal)  # ty:ignore[unresolved-attribute]
+            optional_variable.add_value(
+                expression.Val(type_.BaseType.none, None), literal, _literal
+            )  # ty:ignore[unresolved-attribute]
             ctl.add_watch(literal)
             ctl.add_watch(-literal)
 
@@ -1184,7 +1190,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         the clingo model and by brave/cautious reasoning to accumulate results.
         """
         self.python_model = set()
-        model_errors: propagator_warning_t = []
         for var in self.symbol2var.get_variables():
             self.handle_on_model_warning(var.get_errors())
             if isinstance(var, EnsureVariable) or isinstance(var, BoolEvaluateVariable):
@@ -1194,8 +1199,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 continue
             final_value = var.get_value()
             if final_value is ValueStatus.NOT_SET:
-                model_errors.append(
-                    warning.Warning(warning.Propagator(), (str(var),), "Variable has no value set in on_model!")
+                self.handle_on_model_warning(
+                    [warning.Warning(warning.Propagator(), (str(var),), "Variable has no value set in on_model!")]
                 )
                 continue
 
@@ -1207,7 +1212,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for eval_var in self.evaluatevars:
             self.handle_on_model_warning(eval_var.get_errors())
             final_value = eval_var.get_value()
-            pyVal, errors = evaluator.reducedExpr(final_value)  # TODO: handle errors
+            pyVal, errors = evaluator.reducedExpr(final_value)
             pyAtom = atom.Evaluated(
                 eval_var.op,
                 eval_var.args,
@@ -1215,10 +1220,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             )
             self.python_model.add(pyAtom)
 
+            self.handle_on_model_warning([warning.Warning(kind, (), msg) for kind, msg in errors])
+
         if self.using_optimization:
             self.handle_on_model_warning(self.optimization_sum.get_errors())
 
-        self.handle_on_model_warning(model_errors + self.errors)
+        self.handle_on_model_warning(self.errors)
 
     def on_model(self, model: clingo.Model):
         """
@@ -1256,7 +1263,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if final_value is ValueStatus.NOT_SET:
             assert False, f"Variable {var} has no value set in on_model!"
 
-        if isinstance(final_value, expression.constant | expression.Bad):
+        if isinstance(final_value, expression.constant | expression.Bad | tuple):
             self.handle_on_model_normal_type(var, final_value)
 
         elif isinstance(final_value, (set, frozenset)):
@@ -1265,8 +1272,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         elif isinstance(final_value, (dict, multimap.HashableDict)):
             self.handle_on_model_dict(var, final_value)
 
-        elif isinstance(final_value, tuple):
-            self.handle_on_model_normal_type(var, final_value)
         else:
             # In here come Variable(Lambda) and others
             print(f"Unknown variable type {type(final_value)} for variable {var} in on_model!")
@@ -1298,6 +1303,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             for pyAtom in pyAtoms:
                 self.python_model.add(pyAtom)
         except Exception as exn:  # TODO: add warnings?
+            self.handle_on_model_warning(
+                [
+                    warning.Warning(
+                        warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
+                        (),
+                        var,
+                    )
+                ]
+            )
             self.python_model.add(atom.Value(var, expression.Bad.bad))
 
     def handle_on_model_dict(self, var: Symbol, final_value: dict):
@@ -1321,21 +1335,28 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.python_model.add(pyAtom)
 
         if pyVal != expression.Bad.bad:
+            errors = []
             for key, value in final_value.items():
                 if value is ValueStatus.NOT_SET:
                     assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
 
                 for val in value:
-                    mm_pyKey, keyErrors = evaluator.reducedExpr(key)  # TODO: handle errors
+                    mm_pyKey, keyErrors = evaluator.reducedExpr(key)
+                    errors.extend(keyErrors)
                     mm_pyVal, valErrors = evaluator.reducedExpr(val)
+                    errors.extend(valErrors)
                     mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
 
                     self.python_model.add(mm_pyAtom)
 
+            self.handle_on_model_warning([warning.Warning(kind, (), msg) for kind, msg in errors])
+
     def handle_on_model_normal_type(
         self,
         var: Symbol,
-        final_value: (bool | int | float | str | Symbol | tuple[Any, ...] | expression.Bad.bad),  # ty:ignore[unresolved-attribute]
+        final_value: (
+            bool | int | float | str | Symbol | tuple[Any, ...] | expression.Bad.bad
+        ),  # ty:ignore[unresolved-attribute]
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.
@@ -1345,7 +1366,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             final_value: Scalar value.
         """
         assert self.python_model is not None
-        pyVal, errors = evaluator.reducedExpr(final_value)  # TODO: handle errors
+        pyVal, errors = evaluator.reducedExpr(final_value)
+
+        self.handle_on_model_warning([warning.Warning(kind, (), msg) for kind, msg in errors])
+
         pyAtom = atom.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
