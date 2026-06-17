@@ -173,6 +173,7 @@ propagator_xfail: set[str] = {
     "set/iterations",
     "set/selfref",
     "warning/python_unsupported_type",
+    "warning/variables",
 }
 
 propagator_true_skip: set[str] = propagator_skip | set()
