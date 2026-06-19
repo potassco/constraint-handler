@@ -28,12 +28,12 @@ _python_set_param(operation(pythonExtract(PythonStatement, PythonExpression), Ex
     _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),
     _expression_operationIndex(compile2, operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Arg),
     Arg = (VariableNameExpr, Expr),
-    _se_domain(Expr, set).
+    _se_value(Expr, set).
 _python_set_param(operation(python(PythonExpression), ExprList), Idx, #inf, ()) :-
     _python_operation(positional, operation(python(PythonExpression), ExprList)),
     _expression_operationIndex(compile2, operation(python(PythonExpression), ExprList), Idx, Arg),
     Arg = Expr,
-    _se_domain(Expr, set).
+    _se_value(Expr, set).
 
 _python_set_param(operation(pythonExtract(PythonStatement, PythonExpression), ExprList), Idx, Val, (Val, Tail)) :-
     _python_operation(named, operation(pythonExtract(PythonStatement, PythonExpression), ExprList)),

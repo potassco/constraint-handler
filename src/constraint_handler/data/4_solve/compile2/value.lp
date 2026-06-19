@@ -5,8 +5,6 @@ _se_value(val(Type, Value), val(Type, Value)) :- _expression(compile2, val(Type,
 _se_domain(bad, bad) :- _expression(compile2, bad).
 _se_value(bad, bad) :- _expression(compile2, bad).
 
+% expression values
 { _se_value(Expr, Value) } :-  _expression(compile2, Expr), _se_domain(Expr, Value).
-:- _expression(compile2, Expr), {_se_value(Expr, Value)} != 1.
-
-
-_no_domain(Expr) :- _expression(compile2, Expr), not _se_domain(Expr, _).
+:- _expression(compile2, Expr), not {_se_value(Expr, Value)} = 1.
