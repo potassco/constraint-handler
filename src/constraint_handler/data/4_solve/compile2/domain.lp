@@ -49,6 +49,7 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.operators as operators
 import constraint_handler.schemas.warning as warning
 import constraint_handler.set as set_ops
 import constraint_handler.schemas.expression as expression
@@ -272,29 +273,30 @@ def _evaluate_python_expr(code: str, globals_env: dict[Any, Any]) -> set[Reduced
         result = eval(evaluator.get_compiled_eval(code), globals_env, {})
     except Exception:
         return {expression.Bad.bad}
-    return {evaluator.reducedExpr(result)}
+    reduced, errors = evaluator.reducedExpr(result)
+    return {expression.Bad.bad if errors else reduced}
 
 
 _BOOLEAN_OUTPUT_OPERATORS = frozenset(
     {
-        arithmetic.Operator.leq,
-        arithmetic.Operator.lt,
-        arithmetic.Operator.geq,
-        arithmetic.Operator.gt,
+        operators.ArithmeticOperator.leq,
+        operators.ArithmeticOperator.lt,
+        operators.ArithmeticOperator.geq,
+        operators.ArithmeticOperator.gt,
         expression.EqOperator.eq,
         expression.EqOperator.neq,
-        logic.Operator.conj,
-        logic.Operator.disj,
-        logic.Operator.leqv,
-        logic.Operator.limp,
-        logic.Operator.lnot,
-        logic.Operator.lxor,
-        logic.Operator.snot,
-        logic.Operator.wnot,
-        set_ops.Operator.set_isin,
-        set_ops.Operator.set_notin,
-        set_ops.Operator.subset,
-        multimap.Operator.multimap_isin,
+        operators.LogicOperator.conj,
+        operators.LogicOperator.disj,
+        operators.LogicOperator.leqv,
+        operators.LogicOperator.limp,
+        operators.LogicOperator.lnot,
+        operators.LogicOperator.lxor,
+        operators.LogicOperator.snot,
+        operators.LogicOperator.wnot,
+        operators.SetOperator.set_isin,
+        operators.SetOperator.set_notin,
+        operators.SetOperator.subset,
+        operators.MultimapOperator.multimap_isin,
         expression.ConditionalOperator.hasValue,
     }
 )
@@ -302,7 +304,13 @@ _BOOLEAN_OUTPUT_OPERATORS = frozenset(
 
 def _boolean_output_domain() -> set[ReducedExpr]:
     """Return the coarse domain used to skip expensive boolean-domain enumeration."""
-    return {evaluator.reducedExpr(True), evaluator.reducedExpr(False), expression.Bad.bad}
+    reduced_true, true_errors = evaluator.reducedExpr(True)
+    reduced_false, false_errors = evaluator.reducedExpr(False)
+    return {
+        expression.Bad.bad if true_errors else reduced_true,
+        expression.Bad.bad if false_errors else reduced_false,
+        expression.Bad.bad,
+    }
 
 
 def _has_boolean_output(op_value: Any) -> bool:
@@ -315,28 +323,28 @@ def _apply_operation(
 ) -> ReducedExpr | None:
     """Apply one operator value to one tuple of reduced argument values."""
     recoverable = {
-        logic.Operator.conj,
-        logic.Operator.disj,
-        logic.Operator.limp,
-        logic.Operator.ite,
+        operators.LogicOperator.conj,
+        operators.LogicOperator.disj,
+        operators.LogicOperator.limp,
+        operators.LogicOperator.ite,
         expression.ConditionalOperator.IF,
         expression.ConditionalOperator.default,
-        arithmetic.Operator.pow,
+        operators.ArithmeticOperator.pow,
     }
 
     if op_value == expression.Bad.bad or (expression.Bad.bad in arg_values and op_value not in recoverable):
         return expression.Bad.bad
 
-    env = evaluator.Evaluator(globals_env, {})
     runtime_args = [_reduced_to_runtime(value) for value in arg_values]
     try:
-        result = env.operator(op_value, runtime_args)
+        result = evaluator.operator(op_value, runtime_args, globals_env, {}).value
     except Exception:
         return None
     if isinstance(result, dict) and not isinstance(result, multimap.HashableDict):
         result = multimap.HashableDict(result)
     try:
-        return evaluator.reducedExpr(result)
+        reduced, errors = evaluator.reducedExpr(result)
+        return expression.Bad.bad if errors else reduced
     except Exception:
         return None
 
@@ -441,7 +449,8 @@ def _python_result_terms(result: Any, errors: list[tuple[warning.Kind, Any]]) ->
     if isinstance(result, dict) and not isinstance(result, multimap.HashableDict):
         result = multimap.HashableDict(result)
     try:
-        return [evaluator.reducedExpr(result)]
+        reduced, reduction_errors = evaluator.reducedExpr(result)
+        return [expression.Bad.bad if reduction_errors else reduced]
     except Exception as exn:
         _ = exn
         return [expression.Bad.bad]
@@ -516,14 +525,13 @@ def _python_operation_output_terms(
     globals_env: dict[Any, Any],
 ) -> list[PythonEvaluationOutputTerm]:
     """Evaluate one Python operation on one concrete tuple of reduced arguments."""
-    env = evaluator.Evaluator(globals_env, {})
     runtime_args = [_reduced_to_runtime(value) for value in arg_values]
     try:
-        result = env.operator(op_value, runtime_args)
+        applied = evaluator.operator(op_value, runtime_args, globals_env, {})
     except Exception as exn:
         _ = exn
         return [expression.Bad.bad]
-    return _python_result_terms(result, env.errors)
+    return _python_result_terms(applied.value, list(applied.errors))
 
 
 def _execute_python_extract_statement(
@@ -540,13 +548,13 @@ def _execute_python_extract_statement(
     if any(value == expression.Bad.bad for value in locals_env.values()):
         return None, [], None
 
-    nested = evaluator.Evaluator(globals_env, locals_env)
+    errors: list[tuple[warning.Kind, Any]] = []
     try:
-        nested.stmt_python(stmt)
+        evaluator.stmt_python(stmt, globals_env, locals_env, errors)
         succeeds = True
     except evaluator.solver_environment.FailIntegrityExn:
         succeeds = False
-    return nested.locals, list(nested.errors), succeeds
+    return locals_env, errors, succeeds
 
 
 def _python_extract_output_terms(
@@ -644,7 +652,8 @@ def _evaluate_domain(
             child_domains = [expression_domains.get(arg, set()) for arg in args]
             return {frozenset(values) for values in _domain_product(child_domains)}
         case _ if _is_scalar_expression(expr_):
-            return {evaluator.reducedExpr(expr_)}
+            reduced, errors = evaluator.reducedExpr(expr_)
+            return {expression.Bad.bad if errors else reduced}
         case _:
             return {expression.Bad.bad}
 
