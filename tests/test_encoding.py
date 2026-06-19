@@ -40,6 +40,7 @@ base_tests = [
     "core/custom_globals",
     "core/empty_variadics",
     "core/integrity",
+    "core/optional_absent_comparison_evaluation",
     "core/python_extract_set_projection",
     "core/reasoning_modes",
     "core/python_extract_tuple_projection",
@@ -113,6 +114,7 @@ base_tests = [
     "optimization/no_multimap_float_precision",
     "optimization/no_multimap_int",
     "optimization/no_multimap_labeled_values",
+    "optimization/optional_absent_linked_value",
     "optimization/preferences",
     "optimization/priority",
     "set/comparisons",
@@ -291,6 +293,7 @@ choice_statistics_skip: set[str] = {
     "python/dynamic",
     "python/extract_dynamic",
     "python/extract_succeeds",
+    "optimization/optional_absent_linked_value",
     "core/unprojected_optional_equality",
     "core/set_interface_value_marker",
 }
