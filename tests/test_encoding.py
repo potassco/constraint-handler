@@ -42,6 +42,7 @@ base_tests = [
     "core/integrity",
     "core/reasoning_modes",
     "core/type_checking",
+    "core/unprojected_optional_equality",
     "datatype/booleans_xyftz",
     "datatype/bool_equivalence_bad",
     "datatype/bool_evaluate",
@@ -285,6 +286,7 @@ choice_statistics_skip: set[str] = {
     "python/dynamic",
     "python/extract_dynamic",
     "python/extract_succeeds",
+    "core/unprojected_optional_equality",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",

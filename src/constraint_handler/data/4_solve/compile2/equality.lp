@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%% eq neq
 
-_eq_comparable(Type) :- Type = (int;bool;symbol;string;tuple).
+_eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
 
 
 :-
