@@ -41,6 +41,7 @@ base_tests = [
     "core/empty_variadics",
     "core/integrity",
     "core/reasoning_modes",
+    "core/set_interface_value_marker",
     "core/set_execution_input_alias",
     "core/type_checking",
     "core/unprojected_optional_equality",
@@ -289,6 +290,7 @@ choice_statistics_skip: set[str] = {
     "python/extract_dynamic",
     "python/extract_succeeds",
     "core/unprojected_optional_equality",
+    "core/set_interface_value_marker",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",
