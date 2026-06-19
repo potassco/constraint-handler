@@ -37,7 +37,7 @@ def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propag
 base_tests = [
     "core/basic_assignments",
     "core/conditional_assign",
-    "core/fallback_connected_preset_membership",
+    "core/conditional_empty_set_linked_output",
     "core/custom_globals",
     "core/empty_variadics",
     "core/integrity",

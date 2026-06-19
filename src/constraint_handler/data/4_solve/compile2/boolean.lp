@@ -190,6 +190,16 @@ _bool_has_bad(ExprList) :-
     _se_value(E1, bad),
     not _se_value(operation(ite,(E1,(E2,(E3,())))), bad).
 
+_set_contains(operation(ite,(E1,(E2,(E3,())))), Val) :-
+    _expression(compile2, operation(ite,(E1,(E2,(E3,()))))),
+    _se_value(E1, val(bool, true)),
+    _set_contains(E2, Val).
+
+_set_contains(operation(ite,(E1,(E2,(E3,())))), Val) :-
+    _expression(compile2, operation(ite,(E1,(E2,(E3,()))))),
+    _se_value(E1, val(bool, false)),
+    _set_contains(E3, Val).
+
 %%%%%%%%%%%%%%%%%%% if
 :-
     _expression(compile2, operation(if,(E1,(E2,())))),
@@ -211,6 +221,11 @@ _bool_has_bad(ExprList) :-
     _expression(compile2, operation(if,(E1,(E2,())))),
     _se_value(E1, bad),
     not _se_value(operation(if,(E1,(E2,()))), bad).
+
+_set_contains(operation(if,(E1,(E2,()))), Val) :-
+    _expression(compile2, operation(if,(E1,(E2,())))),
+    _se_value(E1, val(bool, true)),
+    _set_contains(E2, Val).
 
 %%%%%%%%%%%%%%%%%% default
 :-
