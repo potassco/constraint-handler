@@ -6,20 +6,52 @@ _tuple_aux(Tuple, N, (V, Tail)) :-
     _expression_tupleIndex(compile2, Tuple, N, ARG),
     _se_value(ARG, V).
 
-_python_argument_tuple(Tuple) :-
-    _expression_operationIndex(compile2, operation(python(_), _), _, Tuple).
+_tuple_value_index(Tuple, TupleValue, Idx, Value) :-
+    _se_value(Tuple, TupleValue),
+    _expression_tupleIndex(compile2, Tuple, Idx, _),
+    (function, (), _, Args) = @pythonReify(TupleValue),
+    (Idx, Value) = @pythonEnumerateElements(Args).
 
-_python_argument_tuple(Tuple) :-
-    _expression_operationIndex(compile2, operation(pythonExtract(_, _), _), _, Tuple).
+_tuple_set_component(Tuple, TupleValue, Idx, Arg, SetValue) :-
+    _tuple_value_index(Tuple, TupleValue, Idx, SetValue),
+    _expression_tupleIndex(compile2, Tuple, Idx, Arg),
+    _se_is_set(Arg).
 
-_python_argument_tuple(Tuple) :-
-    _expression_tupleIndex(compile2, Parent, _, Tuple),
-    _python_argument_tuple(Parent).
+_se_set_domain_symbol(Arg, Uid, SetValue) :-
+    _tuple_set_component(_, _, _, Arg, _),
+    (Uid, SetValue) = @expressionSetDomainSymbol(Arg).
+
+_tuple_set_value_matches_uid(Arg, SetValue, Uid) :-
+    _tuple_set_component(_, _, _, Arg, SetValue),
+    _se_set_domain_symbol(Arg, Uid, SetValue).
 
 :-
-    _tuple_aux(Tuple, 0, Values),
-    not _python_argument_tuple(Tuple),
-    not _se_value(Tuple, @pythonNestedToTuple(Values)).
+    _tuple_value_index(Tuple, TupleValue, Idx, Value),
+    _expression_tupleIndex(compile2, Tuple, Idx, Arg),
+    not _se_is_set(Arg),
+    not _se_value(Arg, Value).
+
+:-
+    _tuple_value_index(Tuple, TupleValue, Idx, SetValue),
+    _expression_tupleIndex(compile2, Tuple, Idx, Arg),
+    _se_is_set(Arg),
+    not _tuple_set_value_matches_uid(Arg, SetValue, _).
+
+:-
+    _tuple_value_index(Tuple, TupleValue, Idx, SetValue),
+    _expression_tupleIndex(compile2, Tuple, Idx, Arg),
+    _se_is_set(Arg),
+    _tuple_set_value_matches_uid(Arg, SetValue, Uid),
+    _se_set_domain(Arg, Uid, pos, Value),
+    not _set_contains(Arg, Value).
+
+:-
+    _tuple_value_index(Tuple, TupleValue, Idx, SetValue),
+    _expression_tupleIndex(compile2, Tuple, Idx, Arg),
+    _se_is_set(Arg),
+    _tuple_set_value_matches_uid(Arg, SetValue, Uid),
+    _se_set_domain(Arg, Uid, neg, Value),
+    _set_contains(Arg, Value).
 
 %%%%%%%%%%%%%%%%%% eq neq
 

@@ -874,6 +874,18 @@ def expressionSetDomainValue() -> list[clingo.Symbol]:
     return result
 
 
+def expressionSetDomainSymbol(cl_expr: clingo.Symbol) -> list[clingo.Symbol]:
+    """Expose concrete set values only for the requested set expression."""
+    cache = _ensure_cached_domains()
+
+    expr_ = myClorm.cltopy(cl_expr, expression.Expr)
+    uid_map = cache.set_uid_maps.get(expr_, {})
+    return [
+        myClorm.pytocl((uid, set_value))
+        for set_value, uid in sorted(uid_map.items(), key=lambda item: item[1])
+    ]
+
+
 def expressionSet() -> list[clingo.Symbol]:
     """Expose expressions whose computed domain contains a set value."""
     cache = _ensure_cached_domains()
