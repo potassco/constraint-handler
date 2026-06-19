@@ -4,7 +4,15 @@ _bad_is_bad(add; sub; int_div; float_div; eq; neq; leq; lt; geq; gt; max; min;
     length; concat).
     %% set_fold and implode?
 
+_bad_on_none_arithmetic(add; mult; sub; int_div; float_div; abs; ceil; floor; minus; max; min).
 _bad_on_none_ordered_comparison(leq; lt; geq; gt).
+
+:-
+    _expression(compile2, operation(OP, ExprList)),
+    _bad_on_none_arithmetic(OP),
+    _expression_operationIndex(compile2, operation(OP, ExprList), _, Arg),
+    _se_value(Arg, val(none, none)),
+    not _se_value(operation(OP, ExprList), bad).
 
 :-
     _expression(compile2, operation(OP, (Expr1, (Expr2, ())))),
@@ -25,11 +33,3 @@ _bad_on_none_ordered_comparison(leq; lt; geq; gt).
     _expression_operationIndex(compile2, operation(OP, ExprList), _, Arg),
     _se_value(Arg, bad),
     not _se_value(operation(OP, ExprList), bad).
-
-
-
-% _se_value(operation(OP, ExprList), bad) :-
-%     _expression(compile2, operation(OP, ExprList)),
-%     _warning(type(failed_operation), (), (OP, ExprList)),
-%     not _se_value(operation(OP, ExprList), val(_, _)),
-%     not _se_value(operation(OP, ExprList), set).

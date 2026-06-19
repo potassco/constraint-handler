@@ -339,14 +339,14 @@ def _apply_operation(
     try:
         result = evaluator.operator(op_value, runtime_args, globals_env, {}).value
     except Exception:
-        return None
+        return expression.Bad.bad
     if isinstance(result, dict) and not isinstance(result, multimap.HashableDict):
         result = multimap.HashableDict(result)
     try:
         reduced, errors = evaluator.reducedExpr(result)
         return expression.Bad.bad if errors else reduced
     except Exception:
-        return None
+        return expression.Bad.bad
 
 
 def _flatten_set_values(values: set[ReducedExpr]) -> set[ReducedExpr]:
