@@ -838,10 +838,10 @@ def expressionDomain() -> list[clingo.Symbol]:
 
     result: list[clingo.Symbol] = []
     for expr_, values in sorted(cache.expression_domains.items(), key=lambda item: str(item[0])):
-        if expr_ in cache.set_expressions:
-            continue
         cl_expr = myClorm.pytocl(expr_)
         for value in sorted(values, key=str):
+            if expr_ in cache.set_expressions and isinstance(value, frozenset):
+                continue
             result.append(myClorm.pytocl((cl_expr, value)))
     return result
 

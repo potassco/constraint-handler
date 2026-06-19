@@ -24,6 +24,21 @@ var_has_domain(Var) :- _passed(compile2, _, variable_domain(Var, Expr)).
 
 % statically define it as a set
 _se_value(Expr, set) :- _se_is_set(Expr).
+_se_value(Expr, val(none, none)) :-
+	_se_is_set(Expr),
+	_se_domain(Expr, val(none, none)).
+_se_value(Expr, bad) :-
+	_se_is_set(Expr),
+	_se_domain(Expr, bad).
+
+_se_value(variable(Var), val(none, none)) :-
+    _passed(compile2, _, variable_define(Var, Expr)),
+	_se_is_set(variable(Var)),
+	_se_value(Expr, val(none, none)).
+_se_value(variable(Var), val(none, none)) :-
+    _passed(compile2, _, variable_domain(Var, Expr)),
+	_se_is_set(variable(Var)),
+	_se_value(Expr, val(none, none)).
 
 % bad
 _se_value(variable(Var), bad) :-
