@@ -35,6 +35,14 @@ _se_value(variable(Var), bad) :-
 	_se_is_set(variable(Var)),
 	not _se_is_set(Expr).
 _se_value(variable(Var), bad) :-
+    _passed(compile2, _, variable_domain(Var, Expr)),
+	_se_is_set(variable(Var)),
+	_se_value(Expr, bad).
+_se_value(variable(Var), bad) :-
+    _passed(compile2, _, variable_domain(Var, Expr)),
+	_se_is_set(variable(Var)),
+	not _se_is_set(Expr).
+_se_value(variable(Var), bad) :-
     _passed(compile2, _, set_baseDomain(Var, Expr)),
 	_se_value(Expr, bad).
 _se_value(variable(Var), bad) :-
@@ -43,6 +51,12 @@ _se_value(variable(Var), bad) :-
 
  _set_contains(variable(Var), Val):-
     _passed(compile2, _, variable_define(Var, Expr)),
+    _se_is_set(variable(Var)),
+	_set_contains(Expr, Val),
+	Val != bad.
+
+_set_contains(variable(Var), Val) :-
+    _passed(compile2, _, variable_domain(Var, Expr)),
     _se_is_set(variable(Var)),
 	_set_contains(Expr, Val),
 	Val != bad.

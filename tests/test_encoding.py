@@ -41,6 +41,7 @@ base_tests = [
     "core/empty_variadics",
     "core/integrity",
     "core/reasoning_modes",
+    "core/set_execution_input_alias",
     "core/type_checking",
     "core/unprojected_optional_equality",
     "datatype/booleans_xyftz",
@@ -200,6 +201,7 @@ ground_skip: set[str] = {
 }
 ground_xfail: set[str] = {
     "core/reasoning_modes",
+    "core/set_execution_input_alias",
     "engine/request",
     "engine/request_set_ref",
     "expression/lambdas",
