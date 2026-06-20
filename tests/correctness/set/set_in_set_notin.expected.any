@@ -1,0 +1,4 @@
+evaluated(set_isin,(val(int,2),(variable(nd),())),val(bool,true))
+evaluated(set_isin,(val(int,2),(variable(nd),())),val(bool,false))
+evaluated(set_notin,(val(int,2),(variable(nd),())),val(bool,true))
+evaluated(set_notin,(val(int,2),(variable(nd),())),val(bool,false))

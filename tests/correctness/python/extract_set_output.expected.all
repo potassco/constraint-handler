@@ -1,0 +1,3 @@
+set_value(pool,val(int,1))
+set_value(pool,val(int,3))
+value(size,val(int,2))

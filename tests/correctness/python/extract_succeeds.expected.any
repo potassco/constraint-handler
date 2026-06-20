@@ -1,0 +1,2 @@
+value(ok,val(bool,true))
+value(ok,val(bool,false))

@@ -1,0 +1,2 @@
+evaluated(length,(variable(nondeterministic),()),val(int,1))
+evaluated(length,(variable(nondeterministic),()),val(int,2))
