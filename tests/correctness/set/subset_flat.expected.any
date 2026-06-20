@@ -1,0 +1,2 @@
+evaluated(subset,(variable(b),(variable(nd),())),val(bool,true))
+evaluated(subset,(variable(b),(variable(nd),())),val(bool,false))

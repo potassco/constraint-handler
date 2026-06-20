@@ -1,0 +1,2 @@
+value(product_plus_rhs,val(int,16))
+value(lhs_is_five,val(bool,true))

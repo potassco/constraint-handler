@@ -61,7 +61,7 @@ def pythonIsTuple(clT):
 def pythonScaleInteger(value, scale):
     """
     Scales the given float/bool/integer value by the provided scale factor.
-    Returns floor of scaled value 
+    Returns floor of scaled value
     """
     return myClorm.pytocl(math.floor(myClorm.cltopy(value, expression.constant) * myClorm.cltopy(scale, expression.constant)))
 
@@ -101,8 +101,8 @@ def pythonFloatBinary(operator, val1, val2):
          val2.arguments[0].type == clingo.SymbolType.String:
         value2 = float(val2.arguments[0].string)
 
-    
-   
+
+
     match operator.name:
         case "add":
             return _to_val("float", value1 + value2)
@@ -138,8 +138,8 @@ def pythonFloatBinary(operator, val1, val2):
             return _to_val("float", min(value1, value2))
         case _:
             return clingo.Function("bad", [])
- 
-    
+
+
 
 @cache
 def pythonTupleElements(clT):
