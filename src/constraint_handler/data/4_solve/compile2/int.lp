@@ -3,7 +3,7 @@
 
 _non_integer_operation(ExprList) :- _expression(compile2, operation((add;mult), ExprList)),
     _expression_operationIndex(compile2, operation((add;mult), ExprList), _, Arg),
-    not _se_value(Arg, val(int, _)).
+    not _type_dynamic(compile2,Arg,int).
 
 :-
     _expression(compile2, operation(add, ())),

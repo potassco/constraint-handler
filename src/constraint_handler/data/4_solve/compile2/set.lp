@@ -10,11 +10,10 @@ _set_bad(operation(OP, ExprList)) :-
     _se_value(Arg, bad).
 
 %%%%%%%%%%%%%%%%% length
-
 % bad if not set input
 _set_bad(operation(length, (Expr, ()))) :-  _expression(compile2, operation(length, (Expr, ()))),
     not _se_value(Expr, set),
-    not _se_value(Expr, val(string, _)). % weird
+    not _type_dynamic(compile2,Expr,string). % weird
 %% can be optimized using chaining if you know the domain
 :-  _expression(compile2, operation(length, (Expr, ()))),
     not _set_bad(operation(length, (Expr, ()))),
@@ -120,12 +119,8 @@ _aux_eq_false(neq, val(bool, true)).
 
 _set_bad(operation(OP, (Expr1, (Expr2, ())))) :-
     _expression(compile2, operation(OP, (Expr1, (Expr2, ())))),
-    _aux_eq_false(OP, _),
-    _se_value(Expr1, bad).
-_set_bad(operation(OP, (Expr1, (Expr2, ())))) :-
-    _expression(compile2, operation(OP, (Expr1, (Expr2, ())))),
-    _aux_eq_false(OP, _),
-    _se_value(Expr2, bad).
+    OP=(eq;neq),
+    _se_value((Expr1;Expr2), bad).
 
 :- _expression(compile2, operation(OP, (Expr1, (Expr2, ())))),
     not _set_bad(operation(OP, (Expr1, (Expr2, ())))),
