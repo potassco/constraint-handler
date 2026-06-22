@@ -85,8 +85,7 @@ _set_contains(variable(Var), Val) :-
     _passed(compile2, _, set_assign(Var, Expr)),
 	not _se_is_set(Expr),
 	_se_value(Expr, Val),
-	Val != bad,
-	Val != set.
+	Val != bad.
 
 {_set_contains(variable(Var), Val) } :-
 	_passed(compile2, _, set_baseDomain(Var, Expr)),
