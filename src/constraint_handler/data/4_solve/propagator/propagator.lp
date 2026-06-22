@@ -9,11 +9,9 @@ propagator_variable_declare(CNAME,X,fromFacts) :- _passed(propagator,CNAME,varia
 
 order(CNAME,X,E,IDX) :- _passed(propagator,CNAME,variable_domain(X,E)), IDX = #count { E2 : _passed(propagator,CNAME,variable_domain(X,E2)), E2 < E }.
 
-higher_assigned_domain(CNAME,X,D) :- _passed(propagator,CNAME,variable_domain(X,D)), propagator_variable_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N).
-higher_assigned_domain(CNAME,X,D) :- _passed(propagator,CNAME,variable_domain(X,D)), higher_assigned_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N).
-
-propagator_ensure(CNAME,operation(neq,(variable(V),(E1,())))) :- higher_assigned_domain(CNAME,V,E1), _passed(propagator,CNAME,variable_domain(V,E1)).
-
+active(CNAME,X,IDX-1) :- order(CNAME,X,E,IDX), propagator_variable_domain(CNAME,X,E), IDX > 0.
+active(CNAME,X,N-1) :- active(CNAME,X,N), N > 1.
+propagator_ensure(CNAME,operation(neq,(variable(X),(E,())))) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
 
 propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_define(X,E)).
 
