@@ -181,7 +181,6 @@ compile2_xfail: set[str] = {
     "optimization/multimap_int",
     "optimization/multimap_labeled_values",
     "optimization/priority",
-    "optimization/preferences",
     "set/manipulations",
     "set/selfref",
     "multimap/basics",

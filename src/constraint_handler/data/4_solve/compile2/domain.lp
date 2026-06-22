@@ -3,8 +3,7 @@ _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=ensure(E).
 _top_level_expression(operation(OP,ARGS)) :- _passed(compile2,LBL,DECL), DECL=evaluate(OP,ARGS).
 
 %_top_level_expression((K;B)) :- _passed(compile2,LBL,DECL), DECL=multimap_assign(X,K,B).
-_top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=optimize_maximizeSum(E,X,P).
-_top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=optimize_precision(E,PRIO).
+_top_level_expression(E;PREC) :- _passed(compile2,LBL,DECL), DECL=optimize_component(E,PREC,X,P).
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=preference_holds(E,K).
 
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=variable_define(X,E).

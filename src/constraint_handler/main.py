@@ -65,7 +65,6 @@ module_4_datatype = [
 
 module_4_compile = [
     "4_solve/compile/direct",
-    "4_solve/compile/preference",
 ]
 
 module_4_compile2 = [
@@ -76,8 +75,6 @@ module_4_compile2 = [
     "4_solve/compile2/float",
     "4_solve/compile2/int",
     "4_solve/compile2/none",
-    "4_solve/compile2/optimize",
-    "4_solve/compile2/preference",
     "4_solve/compile2/python",
     "4_solve/compile2/set",
     "4_solve/compile2/string",
@@ -100,6 +97,7 @@ module_4_solve = (
         "4_solve/engine",
         "4_solve/finiteDomain",
         "4_solve/optimize",
+        "4_solve/preference",
         "4_solve/solve",
     ]
     + module_4_datatype

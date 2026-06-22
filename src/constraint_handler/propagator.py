@@ -10,7 +10,6 @@ from clingo import Symbol
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
-import constraint_handler.post_processor as post_processor
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.internal as internal
