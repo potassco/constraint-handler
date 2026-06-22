@@ -6,6 +6,8 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
 :-
    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
    not _float_operation((Expr1, (Expr2, ()))),
+   not _se_value(Expr1, set),
+   not _se_value(Expr2, set),
    _se_value(Expr1, val(Type, V)),
    _se_value(Expr2, val(Type, V)),
     _eq_comparable(Type),
@@ -14,6 +16,8 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
 :-
    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
    not _float_operation((Expr1, (Expr2, ()))),
+   not _se_value(Expr1, set),
+   not _se_value(Expr2, set),
    _se_value(Expr1, val(Type, V)),
    not _se_value(Expr2, val(Type, V)),
    not _se_value(Expr2, bad),
@@ -23,6 +27,8 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
 :-
    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
    not _float_operation((Expr1, (Expr2, ()))),
+   not _se_value(Expr1, set),
+   not _se_value(Expr2, set),
    _se_value(Expr2, val(Type, V)),
    not _se_value(Expr1, val(Type, V)),
    not _se_value(Expr1, bad),
@@ -32,6 +38,8 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
 :-
    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
    not _float_operation((Expr1, (Expr2, ()))),
+   not _se_value(Expr1, set),
+   not _se_value(Expr2, set),
    _se_value(Expr1, val(Type, V)),
    not _se_value(Expr2, val(Type, V)),
    not _se_value(Expr2, bad),
@@ -41,6 +49,8 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
 :-
    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
    not _float_operation((Expr1, (Expr2, ()))),
+   not _se_value(Expr1, set),
+   not _se_value(Expr2, set),
    _se_value(Expr2, val(Type, V)),
    not _se_value(Expr1, val(Type, V)),
    not _se_value(Expr1, bad),
@@ -50,6 +60,8 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
 :-
    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
    not _float_operation((Expr1, (Expr2, ()))),
+   not _se_value(Expr1, set),
+   not _se_value(Expr2, set),
    _se_value(Expr1, val(Type, V)),
    _se_value(Expr2, val(Type, V)),
    _eq_comparable(Type),

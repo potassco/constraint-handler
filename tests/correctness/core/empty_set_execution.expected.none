@@ -1,0 +1,2 @@
+value(execution_output(e,"b"),bad)
+set_value(execution_output(e,"b"),val(string,"x"))
