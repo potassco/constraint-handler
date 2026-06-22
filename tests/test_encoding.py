@@ -36,7 +36,7 @@ def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propag
 
 base_tests = [
     "core/basic_assignments",
-    #"core/empty_set_linked_output_execution",
+    "core/empty_set_linked_output_execution",
     "core/empty_set_execution",
     "core/conditional_assign",
     "core/conditional_empty_set_linked_output",
