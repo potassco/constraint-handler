@@ -39,16 +39,6 @@ def pythonEnumerateVariables(clExpr):
         return []
 
 @cache
-def pythonEnumerateExecutionVariables(clStmt,clIns):
-    pStmt = myClorm.cltopy(clStmt,statement.Stmt)
-    pIns = myClorm.cltopy(clIns,halt=False)
-    pVars = list(evaluator.collectStmtVars(pStmt) | frozenset(pIns))
-    result = [myClorm.pytocl(e) for e in enumerate(pVars)]
-    result.append(clingo.Function("length",[clingo.Number(len(pVars))]))
-    return result
-
- # TODO: dead?
-@cache
 def pythonBetaReduction(clExpr,clVars,clArgs):
     pVars = myClorm.cltopy(clVars,list)
     pArgs = myClorm.cltopy(clArgs,list[expression.ReducedExpr])
@@ -66,17 +56,16 @@ def pythonEvalExpr(clExpr,clArgs,clId):
     try:
         pArgs = myClorm.cltopy(clArgs,list[tuple[typing.Any,expression.ReducedExpr]])
         pExpr = myClorm.cltopy(clExpr,expression.Expr)
-        pId   = myClorm.cltopy(clId,list[expression.constant])
-        globals = evaluator.get_environment(pId)
+        pGlobId = myClorm.cltopy(clId,list[expression.constant])
         results = []
         locals = dict()
         for (var,vexpr) in pArgs:
-            val,errors = evaluator.evaluate_expr(vexpr,globals)
+            val,errors = evaluator.evaluate_expr(vexpr,pGlobId)
             locals[var] = val
             for (kind,msg) in errors:
                 results.append(warning.Error(kind,msg))
         prettyD = { str(var) : val for (var,val) in locals.items() }
-        pRes,errors = evaluator.evaluate_expr(pExpr, globals, locals)
+        pRes,errors = evaluator.evaluate_expr(pExpr, pGlobId, locals)
         for (kind,msg) in errors:
             results.append(warning.Error(kind,msg))
         pVal,errors = evaluator.reducedExpr(pRes)
@@ -97,7 +86,7 @@ def pythonStatementVariables(clCode,clInTypes,clId):
     try:
         pCode = myClorm.cltopy(clCode,str)
         pInT  = myClorm.cltopy(clInTypes,list[tuple[expression.constant,type_.BaseType]])
-        pId   = myClorm.cltopy(clId,list[expression.constant])
+        pId = myClorm.cltopy(clId,list[expression.constant])
         globals = evaluator.get_environment(pId)
         tEnv  = defaultdict(set)
         for (var,t) in pInT:

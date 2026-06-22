@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from typing import Any, NamedTuple
 
+import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.domain as domain  # fmt: skip
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
@@ -104,8 +104,8 @@ class Execution_declare(NamedTuple):
     label: expression.constant
     name: expression.constant
     body: statement.Stmt
-    inputs_vars: list[expression.constant]
-    outputs_vars: list[expression.constant]
+    inputs_vars: myClorm.ImmutableList[expression.constant]
+    outputs_vars: myClorm.ImmutableList[expression.constant]
 
 
 class Execution_run(NamedTuple):
@@ -129,6 +129,12 @@ class Optimize_precision(NamedTuple):
 
 
 type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
+
+
+class Optimize_value(NamedTuple):
+    label: expression.constant
+    priority: expression.constant
+    total: expression.constant
 
 
 class Preference_maximizeScore(NamedTuple):
@@ -171,19 +177,15 @@ class Value(NamedTuple):
 class Evaluate(NamedTuple):
     label: expression.constant
     operator: expression.Operator | expression.Variable
-    args: list[expression.Expr]
+    args: myClorm.ImmutableList[expression.Expr]
 
 
 class Evaluated(NamedTuple):
     name: expression.Operator
-    expr: list[expression.Expr]
+    expr: myClorm.ImmutableList[expression.Expr]
     value: expression.ReducedExpr
 
 
 type MainAtom = Ensure | Evaluate
 type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
 type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_score | warning.Warning
-
-
-Main_solverIdentifiers = namedtuple("_main_solverIdentifiers", ["id"])
-Main_solverIdentifiers.__annotations__ = {"id": list[expression.constant]}

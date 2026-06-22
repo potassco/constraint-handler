@@ -4,6 +4,8 @@ _expression(ground,E) :- _passed(ground,LBL,evaluate(OP,ARGS)), E=operation(OP,A
 _expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_domain(X,E)).
+_expression(ground,E) :- _passed(ground,LBL,optimize_component(E,PREC,ID,P)).
+_expression(ground,PREC) :- _passed(ground,LBL,optimize_component(E,PREC,ID,P)).
 _expression(ground,E) :- _passed(ground,LBL,preference_holds(E,K)).
 
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
@@ -29,6 +31,7 @@ _se_assign(_internal,variable(X),bad) :- ge_value(X,bad).
 _set_declare(_internal,variable(X)) :- ge_value(X,set(S)).
 _set_assign(_internal,variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
 _se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).
+_se_value(val(T,V),val(T,V)) :- _expression(ground,val(T,V)).
 
 %_se_assign(_internal,variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T).
 _se_value(variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T). % TODO: fragile and probably incorrect!

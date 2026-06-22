@@ -28,8 +28,9 @@ propagator_ensure(CNAME,operation(set_notin,(E,(variable(X),())))) :- _passed(pr
 propagator_multimap_assign(LBL,X,K,V) :- _passed(propagator,LBL,multimap_assign(X,K,V)).
 propagator_multimap_declare(LBL,X) :- _passed(propagator,LBL,variable_declare(X,multimap)).
 
-propagator_optimize_maximizeSum(LBL,E,X,P) :- _passed(propagator,LBL,optimize_maximizeSum(E,X,P)).
-propagator_optimize_precision(PREC,PRIO) :- _passed(propagator,LBL,optimize_precision(PREC,PRIO)).
+propagator_optimize_maximizeSum(LBL,E,ID,PRIO) :- _passed(propagator,LBL,optimize_component(E,PREC,ID,PRIO)).
+propagator_share_value(LBL,E) :- _passed(propagator,LBL,optimize_component(E,PREC,ID,PRIO)).
+propagator_share_value(LBL,PREC) :- _passed(propagator,LBL,optimize_component(E,PREC,ID,PRIO)).
 
 propagator_warning_forbid(LBL,W) :- _passed(solve,LBL,warning_forbid(W)).
 propagator_warning_ignore(LBL,W) :- _passed(solve,LBL,warning_ignore(W)).

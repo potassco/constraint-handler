@@ -33,3 +33,5 @@ _passed(propagator,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _
 
 _passed((compile;compile2;ground;propagator;none),LBL,warning_forbid(W)) :- _passed(solve,LBL,warning_forbid(W)).
 _passed((compile;compile2;ground;propagator;none),LBL,warning_ignore(W)) :- _passed(solve,LBL,warning_ignore(W)).
+
+_optimize_component(LBL,E,PREC,ID,PRIO) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,PREC,ID,PRIO)), engine(LBL,ENG), _engine_supportOptimization(ENG).

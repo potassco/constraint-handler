@@ -8,10 +8,37 @@ import pytest
 import constraint_handler.myClorm as myClorm
 from constraint_handler.schemas.expression import ConditionalOperator
 
+T = typing.TypeVar("T")
+
 
 class SampleRecord(typing.NamedTuple):
     count: int
     label: str
+
+
+class HookedTuple(tuple, typing.Generic[T]):
+    def __new__(cls, values=()):
+        return super().__new__(cls, values)
+
+    @classmethod
+    def pytocl(cls, value, target_args=()):
+        return myClorm.nest([myClorm.pytocl(e) for e in value], cons="hook", nil="nil")
+
+    @classmethod
+    def cltopy(cls, func, target_args=()):
+        subtarget = target_args[0] if target_args else typing.Any
+        elements = myClorm.unnest(func, cons="hook", nil="nil")
+        return cls(myClorm.cltopy(e, subtarget) for e in elements)
+
+
+class NoneReturningConverter:
+    @classmethod
+    def pytocl(cls, value, target_args=()):
+        return None
+
+    @classmethod
+    def cltopy(cls, func, target_args=()):
+        return None
 
 
 @pytest.mark.parametrize(
@@ -45,13 +72,29 @@ def test_pytocl_list_encodes_nested_cons_shape():
     )
 
 
+def test_immutablelist_is_immutable_sequence():
+    value = myClorm.ImmutableList([1, 2])
+
+    with pytest.raises(AttributeError):
+        value.append(3)
+
+
+def test_immutablelist_round_trip_preserves_list_shape():
+    value = myClorm.ImmutableList([1, 2])
+
+    symbol = myClorm.pytocl(value, myClorm.ImmutableList[int])
+
+    assert symbol == myClorm.pytocl([1, 2])
+    assert myClorm.cltopy(symbol, myClorm.ImmutableList[int]) == myClorm.ImmutableList([1, 2])
+
+
 def test_cltopy_without_target_decodes_primitives_and_collections():
-    assert myClorm.cltopy(clingo.Number(5), halt=False) == 5
-    assert myClorm.cltopy(clingo.String("abc"), halt=False) == "abc"
-    assert myClorm.cltopy(clingo.Function("none", []), halt=False) is None
-    assert myClorm.cltopy(clingo.Function("true", []), halt=False) is True
-    assert myClorm.cltopy(myClorm.pytocl([1, 2]), halt=False) == myClorm.HashableList([1, 2])
-    assert myClorm.cltopy(myClorm.pytocl(frozenset({1, 2})), halt=False) == frozenset({1, 2})
+    assert myClorm.cltopyNoTarget(clingo.Number(5)) == 5
+    assert myClorm.cltopyNoTarget(clingo.String("abc")) == "abc"
+    assert myClorm.cltopyNoTarget(clingo.Function("none", [])) is None
+    assert myClorm.cltopyNoTarget(clingo.Function("true", [])) is True
+    assert myClorm.cltopyNoTarget(myClorm.pytocl([1, 2])) == myClorm.ImmutableList([1, 2])
+    assert myClorm.cltopyNoTarget(myClorm.pytocl(frozenset({1, 2}))) == frozenset({1, 2})
 
 
 def test_cltopy_typed_namedtuple_decodes_symbol():
@@ -61,7 +104,7 @@ def test_cltopy_typed_namedtuple_decodes_symbol():
 
 
 def test_cltopy_typed_list_and_tuple():
-    assert myClorm.cltopy(myClorm.pytocl([1, 2]), list[int]) == myClorm.HashableList([1, 2])
+    assert myClorm.cltopy(myClorm.pytocl([1, 2]), list[int]) == myClorm.ImmutableList([1, 2])
     assert myClorm.cltopy(
         clingo.Function("", [clingo.Number(1), clingo.String("x")]),
         tuple[int, str],
@@ -122,7 +165,7 @@ def test_cltopy_without_target_decodes_nested_tuple():
         ],
     )
 
-    assert myClorm.cltopy(symbol, halt=False) == (1, ("x", 2))
+    assert myClorm.cltopyNoTarget(symbol) == (1, ("x", 2))
 
 
 def test_cltopy_variadic_tuple_target_is_supported():
@@ -155,3 +198,42 @@ def test_cltopy_fixed_length_tuple_arity_mismatch_raises_failed_instantiation():
 
     with pytest.raises(myClorm.FailedInstantiationExn):
         myClorm.cltopy(symbol, tuple[int, str])
+
+
+def test_pytocl_generic_alias_uses_origin_custom_converter_hook():
+    value = HookedTuple([1, 2])
+
+    symbol = myClorm.pytocl(value, HookedTuple[int])
+
+    assert symbol == clingo.Function(
+        "hook",
+        [
+            clingo.Number(1),
+            clingo.Function("hook", [clingo.Number(2), clingo.Function("nil", [])]),
+        ],
+    )
+
+
+def test_cltopy_generic_alias_uses_origin_custom_converter_hook():
+    symbol = clingo.Function(
+        "hook",
+        [
+            clingo.Number(1),
+            clingo.Function("hook", [clingo.Number(2), clingo.Function("nil", [])]),
+        ],
+    )
+
+    value = myClorm.cltopy(symbol, HookedTuple[int])
+
+    assert isinstance(value, HookedTuple)
+    assert value == HookedTuple([1, 2])
+
+
+def test_cltopy_custom_converter_returning_none_is_honored():
+    symbol = clingo.Number(1)
+
+    assert myClorm.cltopy(symbol, NoneReturningConverter) is None
+
+
+def test_pytocl_custom_converter_returning_none_is_honored():
+    assert myClorm.pytocl(1, NoneReturningConverter) is None

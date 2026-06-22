@@ -1,9 +1,14 @@
 %%%%%%%%%%%%%%%%% add
 %%% Abdallah: what about none handling
 
+_expression_badArgument(ExprList) :- _expression_operationIndex(compile2, operation((add;mult), ExprList), _, Arg),
+    _se_value(Arg,bad).
+
 _non_integer_operation(ExprList) :- _expression(compile2, operation((add;mult), ExprList)),
     _expression_operationIndex(compile2, operation((add;mult), ExprList), _, Arg),
-    not _se_value(Arg, val(int, _)).
+    not _type_dynamic(compile2,Arg,int),
+    not _type_dynamic(compile2,Arg,bool),
+    not _se_value(Arg,bad).
 
 :-
     _expression(compile2, operation(add, ())),
@@ -11,24 +16,25 @@ _non_integer_operation(ExprList) :- _expression(compile2, operation((add;mult), 
 
 :-
     _expression(compile2, operation(add, (Expr1, ()))),
-    _se_value(Expr1, val(int, V)),
-    not _se_value(operation(add, (Expr1, ())), val(int, V)).
-
+    _se_value(Expr1, val(T, V)), (T,V,N)=((int,V,V);(bool,true,1);(bool,false,0)),
+    not _se_value(operation(add, (Expr1, ())), val(int, N)).
 
 %%% binary add special handling
 :-
     _expression(compile2, operation(add, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(int, V1)),
-    _se_value(Expr2, val(int, V2)),
-    not _se_value(operation(add, (Expr1, (Expr2, ()))), val(int, V1 + V2)).
+    _se_value(Expr1, val(T1, V1)), (T1,V1,N1)=((int,V1,V1);(bool,true,1);(bool,false,0)),
+    _se_value(Expr2, val(T2, V2)), (T2,V2,N2)=((int,V2,V2);(bool,true,1);(bool,false,0)),
+    not _se_value(operation(add, (Expr1, (Expr2, ()))), val(int, N1 + N2)).
 
 %%% n-ary add
 :-
     _expression(compile2, operation(add, ExprList)),
     not _non_integer_operation(ExprList),
+    not _expression_badArgument(ExprList),
     _expression_operationLength(compile2, operation(add, ExprList), Len),
     Len > 2,
-    V = #sum { V1, Idx : _se_value(Arg, val(int, V1)), _expression_operationIndex(compile2, operation(add, ExprList), Idx, Arg) },
+    V = #sum { V1, Idx : _se_value(Arg, val(int, V1)), _expression_operationIndex(compile2, operation(add, ExprList), Idx, Arg);
+                1, Idx : _se_value(Arg, val(bool, true)), _expression_operationIndex(compile2, operation(add, ExprList), Idx, Arg) },
     not _se_value(operation(add, ExprList), val(int, V)).
 
 %%%%%%%%%%%%%%%%% mult
@@ -37,7 +43,7 @@ _int_has_zero(ExprList) :-
     _expression(compile2, operation(mult, ExprList)),
     not _non_integer_operation(ExprList),
     _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
-    _se_value(Arg, val(int, 0)).
+    _se_value(Arg, val(T,V)), (T,V)=((int,0);(bool,false)).
 
 :-
     _expression(compile2, operation(mult, ())),
@@ -45,8 +51,8 @@ _int_has_zero(ExprList) :-
 
 :-
     _expression(compile2, operation(mult, (Expr1, ()))),
-    _se_value(Expr1, val(int, V)),
-    not _se_value(operation(mult, (Expr1, ())), val(int, V)).
+    _se_value(Expr1, val(T, V)), (T,V,N)=((int,V,V);(bool,true,1);(bool,false,0)),
+    not _se_value(operation(mult, (Expr1, ())), val(int, N)).
 
 _int_mul(ExprList, -1, 1) :- _expression(compile2, operation(mult, ExprList)),
    not _non_integer_operation(ExprList),
@@ -54,7 +60,7 @@ _int_mul(ExprList, -1, 1) :- _expression(compile2, operation(mult, ExprList)),
 
 _int_mul(ExprList, Idx, ListVal * Val) :- _expression(compile2, operation(mult, ExprList)),
     _expression_operationIndex(compile2, operation(mult, ExprList), Idx, Expr),
-    _se_value(Expr, val(int, Val)),
+    _se_value(Expr, val(T, V)), (T,V,Val)=((int,V,V);(bool,true,1);(bool,false,0)),
     _int_mul(ExprList, Idx-1, ListVal).
 
 :-
@@ -66,14 +72,10 @@ _int_mul(ExprList, Idx, ListVal * Val) :- _expression(compile2, operation(mult, 
 
 :- _int_has_zero(ExprList), not _se_value(operation(mult, ExprList), val(int, 0)).
 
-:-
-    _expression(compile2, operation(mult, ExprList)),
-    not _non_integer_operation(ExprList),
-    _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
-    _se_value(Arg, bad),
-    not _int_has_zero(ExprList),
-    not _se_value(operation(mult, ExprList), bad).
-
+:- _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
+   _se_value(Arg, bad),
+   not _int_has_zero(ExprList),
+   not _se_value(operation(mult, ExprList), bad).
 
 %%%%%%%%%%%%%%%%% sub
 
