@@ -13,6 +13,7 @@ module_main = [
     "operator",
     "pythonHelper",
     "pythonInterface",
+    "pythonOther",
 ]
 
 module_0_default_arguments = [
