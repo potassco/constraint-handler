@@ -38,6 +38,7 @@ base_tests = [
     "core/basic_assignments",
     "core/empty_set_linked_output_execution",
     "core/empty_set_execution",
+    "core/optional_set_empty_execution",
     "core/conditional_assign",
     "core/conditional_empty_set_linked_output",
     "core/custom_globals",
@@ -295,6 +296,7 @@ def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "pro
 
 choice_statistics_skip: set[str] = {
     "core/empty_set_execution",
+    "core/optional_set_empty_execution",
     "python/dynamic",
     "python/extract_dynamic",
     "python/extract_succeeds",
