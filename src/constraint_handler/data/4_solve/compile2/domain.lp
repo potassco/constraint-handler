@@ -11,11 +11,13 @@ _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=variable_define(X,E
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=variable_domain(X,E).
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=set_assign(X,E).
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=set_baseDomain(X,E).
+_top_level_expression(operation(set_make,())) :- _passed(compile2,LBL,DECL), DECL=variable_declare(X,set).
 
 _top_level_expression(variable_define(X,E)) :- _passed(compile2,LBL,DECL), DECL=variable_define(X,E).
 _top_level_expression(variable_domain(X,E)) :- _passed(compile2,LBL,DECL), DECL=variable_domain(X,E).
 _top_level_expression(set_assign(X,E)) :- _passed(compile2,LBL,DECL), DECL=set_assign(X,E).
 _top_level_expression(set_baseDomain(X,E)) :- _passed(compile2,LBL,DECL), DECL=set_baseDomain(X,E).
+_top_level_expression(set_baseDomain(X,operation(set_make,()))) :- _passed(compile2,LBL,DECL), DECL=variable_declare(X,set).
 
 _top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_define(X,E).
 _top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_domain(X,E).
@@ -258,13 +260,15 @@ def _powerset(values: Iterable[ReducedExpr]) -> Iterable[frozenset[ReducedExpr]]
 
 
 def _declared_set_expressions() -> set[Expr]:
-    """Return set-valued variables explicitly declared via set assignment facts."""
+    """Return set-valued variables declared by the input program."""
     return {
         expression.Variable(cl_expr.arguments[0])
         for cl_expr in top_level_expressions
         if cl_expr.type == clingo.SymbolType.Function
-        and cl_expr.name in {"set_assign", "set_baseDomain"}
-        and len(cl_expr.arguments) == 2
+        and (
+            (cl_expr.name in {"set_assign", "set_baseDomain"} and len(cl_expr.arguments) == 2)
+            or (cl_expr.name == "variable_declare" and len(cl_expr.arguments) == 2 and str(cl_expr.arguments[1]) == "set")
+        )
     }
 
 def _evaluate_python_expr(code: str, globals_env: dict[Any, Any]) -> set[ReducedExpr]:
@@ -403,7 +407,10 @@ def _concrete_set_domain(
 
     match expr_:
         case expression.Variable(var):
+            declared_set_expressions = _declared_set_expressions()
             if var not in set_sources:
+                if expression.Variable(var) in declared_set_expressions:
+                    return {frozenset()}
                 return None
 
             source_info = set_sources[var]
