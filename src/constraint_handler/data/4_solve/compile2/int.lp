@@ -1,10 +1,14 @@
 %%%%%%%%%%%%%%%%% add
 %%% Abdallah: what about none handling
 
+_expression_badArgument(ExprList) :- _expression_operationIndex(compile2, operation((add;mult), ExprList), _, Arg),
+    _se_value(Arg,bad).
+
 _non_integer_operation(ExprList) :- _expression(compile2, operation((add;mult), ExprList)),
     _expression_operationIndex(compile2, operation((add;mult), ExprList), _, Arg),
     not _type_dynamic(compile2,Arg,int),
-    not _type_dynamic(compile2,Arg,bool).
+    not _type_dynamic(compile2,Arg,bool),
+    not _se_value(Arg,bad).
 
 :-
     _expression(compile2, operation(add, ())),
@@ -26,6 +30,7 @@ _non_integer_operation(ExprList) :- _expression(compile2, operation((add;mult), 
 :-
     _expression(compile2, operation(add, ExprList)),
     not _non_integer_operation(ExprList),
+    not _expression_badArgument(ExprList),
     _expression_operationLength(compile2, operation(add, ExprList), Len),
     Len > 2,
     V = #sum { V1, Idx : _se_value(Arg, val(int, V1)), _expression_operationIndex(compile2, operation(add, ExprList), Idx, Arg);
@@ -67,14 +72,10 @@ _int_mul(ExprList, Idx, ListVal * Val) :- _expression(compile2, operation(mult, 
 
 :- _int_has_zero(ExprList), not _se_value(operation(mult, ExprList), val(int, 0)).
 
-:-
-    _expression(compile2, operation(mult, ExprList)),
-    not _non_integer_operation(ExprList),
-    _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
-    _se_value(Arg, bad),
-    not _int_has_zero(ExprList),
-    not _se_value(operation(mult, ExprList), bad).
-
+:- _expression_operationIndex(compile2, operation(mult, ExprList), _, Arg),
+   _se_value(Arg, bad),
+   not _int_has_zero(ExprList),
+   not _se_value(operation(mult, ExprList), bad).
 
 %%%%%%%%%%%%%%%%% sub
 
