@@ -197,13 +197,8 @@ compile2_xfail: set[str] = {
     "core/type_checking",
     "engine/request_set_ref",  # mixed engines?
     "core/reasoning_modes",  # multimap
-    "warning/variable_reservedName",  # multimap
-    "warning/ignore",
-    "warning/syntax",
     "warning/variable_confusing_name",
-    "warning/variable_undeclared",
     "warning/python",
-    "warning/python_unsupported_type",
 }
 ground_skip: set[str] = {
     "set/selfref",
