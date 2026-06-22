@@ -21,15 +21,16 @@ var_has_domain(Var) :- _passed(compile2, _, variable_domain(Var, Expr)).
 	not _expression_is_value(Expr),
 	not _se_is_set(Expr).
 
+_set_choice_value(Expr, set) :-
+	_se_is_set(Expr),
+	_se_set_domain(Expr, _).
+_set_choice_value(Expr, Value) :-
+	_se_is_set(Expr),
+	_se_domain(Expr, Value),
+	Value != set.
 
-% statically define it as a set
-_se_value(Expr, set) :- _se_is_set(Expr).
-_se_value(Expr, val(none, none)) :-
-	_se_is_set(Expr),
-	_se_domain(Expr, val(none, none)).
-_se_value(Expr, bad) :-
-	_se_is_set(Expr),
-	_se_domain(Expr, bad).
+1 { _se_value(Expr, Value) : _set_choice_value(Expr, Value) } 1 :-
+	_set_choice_value(Expr, _).
 
 _se_value(variable(Var), val(none, none)) :-
     _passed(compile2, _, variable_define(Var, Expr)),
@@ -78,6 +79,12 @@ _set_contains(variable(Var), Val) :-
 
 _set_contains(variable(Var), Val) :-
     _passed(compile2, _, set_assign(Var, Expr)),
+	_set_contains(Expr, Val),
+	Val != bad.
+
+_set_contains(variable(Var), Val) :-
+    _passed(compile2, _, set_assign(Var, Expr)),
+	not _se_is_set(Expr),
 	_se_value(Expr, Val),
 	Val != bad.
 
