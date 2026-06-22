@@ -127,7 +127,7 @@ def loadTopLevelExpression(cl_expr: clingo.Symbol) -> clingo.Symbol:
 def loadSolverIdentifiers(cl_ids: clingo.Symbol) -> clingo.Symbol:
     """Store solver-environment identifiers used for Python-backed evaluation."""
     global solver_identifiers, cached_domains
-    solver_identifiers = tuple(myClorm.cltopy(cl_ids, list[expression.constant], halt=False))
+    solver_identifiers = tuple(myClorm.cltopy(cl_ids, list[expression.constant]))
     cached_domains = None
     return myClorm.pytocl(True)
 
@@ -271,9 +271,10 @@ def _declared_set_expressions() -> set[Expr]:
         )
     }
 
-def _evaluate_python_expr(code: str, globals_env: dict[Any, Any]) -> set[ReducedExpr]:
+def _evaluate_python_expr(code: str, solver_identifiers) -> set[ReducedExpr]:
     """Evaluate a bare Python expression as a singleton domain."""
     try:
+        globals_env = evaluator.get_environment(solver_identifiers)
         result = eval(evaluator.get_compiled_eval(code), globals_env, {})
     except Exception:
         return {expression.Bad.bad}
@@ -323,7 +324,7 @@ def _has_boolean_output(op_value: Any) -> bool:
 
 
 def _apply_operation(
-    op_value: Any, arg_values: tuple[ReducedExpr, ...], globals_env: dict[Any, Any]
+    op_value: Any, arg_values: tuple[ReducedExpr, ...], solver_identifiers: dict[Any, Any]
 ) -> ReducedExpr | None:
     """Apply one operator value to one tuple of reduced argument values."""
     recoverable = {
@@ -341,7 +342,7 @@ def _apply_operation(
 
     runtime_args = [_reduced_to_runtime(value) for value in arg_values]
     try:
-        result = evaluator.operator(op_value, runtime_args, globals_env, {}).value
+        result = evaluator.operator(op_value, runtime_args, solver_identifiers, {}).value
     except Exception:
         return expression.Bad.bad
     if isinstance(result, dict) and not isinstance(result, multimap.HashableDict):
@@ -529,12 +530,12 @@ def _compressed_python_evaluations(
 def _python_operation_output_terms(
     op_value: expression.Python | expression.PythonExtract,
     arg_values: tuple[ReducedExpr, ...],
-    globals_env: dict[Any, Any],
+    solver_identifiers,
 ) -> list[PythonEvaluationOutputTerm]:
     """Evaluate one Python operation on one concrete tuple of reduced arguments."""
     runtime_args = [_reduced_to_runtime(value) for value in arg_values]
     try:
-        applied = evaluator.operator(op_value, runtime_args, globals_env, {})
+        applied = evaluator.operator(op_value, runtime_args, solver_identifiers, {})
     except Exception as exn:
         _ = exn
         return [expression.Bad.bad]
@@ -544,7 +545,7 @@ def _python_operation_output_terms(
 def _execute_python_extract_statement(
     stmt: str,
     arg_values: tuple[ReducedExpr, ...],
-    globals_env: dict[Any, Any],
+    solver_identifiers,
 ) -> PythonExtractExecution:
     """Execute one Python statement body once for a concrete tuple of inputs."""
     runtime_args = [_reduced_to_runtime(value) for value in arg_values]
@@ -557,7 +558,7 @@ def _execute_python_extract_statement(
 
     errors: list[tuple[warning.Kind, Any]] = []
     try:
-        evaluator.stmt_python(stmt, globals_env, locals_env, errors)
+        evaluator.stmt_python(stmt, solver_identifiers, locals_env, errors)
         succeeds = True
     except evaluator.solver_environment.FailIntegrityExn:
         succeeds = False
@@ -568,14 +569,14 @@ def _python_extract_output_terms(
     stmt: str,
     expr_code: str,
     arg_values: tuple[ReducedExpr, ...],
-    globals_env: dict[Any, Any],
+    solver_identifiers,
     execution_cache: dict[tuple[str, tuple[ReducedExpr, ...]], PythonExtractExecution],
 ) -> list[PythonEvaluationOutputTerm]:
     """Evaluate one extracted Python output while reusing the underlying statement run."""
     cache_key = (stmt, arg_values)
     cached_execution = execution_cache.get(cache_key)
     if cached_execution is None:
-        cached_execution = _execute_python_extract_statement(stmt, arg_values, globals_env)
+        cached_execution = _execute_python_extract_statement(stmt, arg_values, solver_identifiers)
         execution_cache[cache_key] = cached_execution
     locals_env, errors, succeeds = cached_execution
 
@@ -587,6 +588,7 @@ def _python_extract_output_terms(
         return _python_result_terms(succeeds, [])
 
     try:
+        globals_env = evaluator.get_environment(solver_identifiers)
         result = eval(evaluator.get_compiled_eval(expr_code), globals_env, locals_env)
     except Exception as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
@@ -594,9 +596,9 @@ def _python_extract_output_terms(
     return _python_result_terms(result, [])
 
 
-def _python_expression_output_terms(expr_: expression.Python, globals_env: dict[Any, Any]) -> list[PythonEvaluationOutputTerm]:
+def _python_expression_output_terms(expr_: expression.Python, solver_identifiers) -> list[PythonEvaluationOutputTerm]:
     """Evaluate one zero-argument Python expression during domain computation."""
-    result, errors = evaluator.evaluate_expr(expr_, globals_env, {})
+    result, errors = evaluator.evaluate_expr(expr_, solver_identifiers, {})
     return _python_result_terms(result, errors)
 
 
@@ -617,7 +619,7 @@ def _python_value_reference(expr_: Expr, value: PythonEvaluationOutputValue, set
 def _evaluate_domain(
     expr_: Expr,
     expression_domains: ExpressionDomains,
-    globals_env: dict[Any, Any],
+    solver_identifiers,
 ) -> set[ReducedExpr]:
     """Evaluate one expression using already-computed child-expression domains."""
     match expr_:
@@ -628,7 +630,7 @@ def _evaluate_domain(
         case expression.Lambda(_, _):
             return {expr_}
         case expression.Python(code):
-            return _evaluate_python_expr(code, globals_env)
+            return _evaluate_python_expr(code, solver_identifiers)
         case expression.Operation(op, args):
             op_domains = (
                 expression_domains.get(op, set())
@@ -648,7 +650,7 @@ def _evaluate_domain(
             for op_domain_value in sorted(op_domains, key=str):
                 op_value = _reduced_to_runtime(op_domain_value) if op_domain_value != op else op
                 for arg_values in _domain_product(arg_domains):
-                    result = _apply_operation(op_value, arg_values, globals_env)
+                    result = _apply_operation(op_value, arg_values, solver_identifiers)
                     if result is not None:
                         results.add(result)
             return results
@@ -698,7 +700,7 @@ def _compute_domains() -> tuple[
                 expression_domains[expr_] = values
             case expression.Python(_):
                 python_evaluations.append((expr_, 0))
-                raw_outputs = _python_expression_output_terms(expr_, globals_env)
+                raw_outputs = _python_expression_output_terms(expr_, solver_identifiers)
                 expression_domains[expr_] = _python_domain_values(raw_outputs)
 
                 uid_map = _set_uid_map(expression_domains[expr_])
@@ -721,11 +723,11 @@ def _compute_domains() -> tuple[
                                 op_value.stmt,
                                 op_value.expr,
                                 arg_values,
-                                globals_env,
+                                solver_identifiers,
                                 python_extract_execution_cache,
                             )
                         else:
-                            raw_outputs = _python_operation_output_terms(op_value, arg_values, globals_env)
+                            raw_outputs = _python_operation_output_terms(op_value, arg_values, solver_identifiers)
                         outputs_by_assignment[arg_values] = _python_output_signature(raw_outputs)
                         values.update(_python_domain_values(raw_outputs))
 
@@ -782,7 +784,7 @@ def _compute_domains() -> tuple[
                             (expr_, uid, _python_value_reference(expr_, output_value, set_uid_maps))
                         )
             case _:
-                expression_domains[expr_] = _evaluate_domain(expr_, expression_domains, globals_env)
+                expression_domains[expr_] = _evaluate_domain(expr_, expression_domains, solver_identifiers)
 
         if expr_ not in set_uid_maps:
             uid_map = _set_uid_map(expression_domains[expr_])
