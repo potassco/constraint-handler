@@ -13,6 +13,7 @@ module_main = [
     "operator",
     "pythonHelper",
     "pythonInterface",
+    "pythonOther",
 ]
 
 module_0_default_arguments = [
@@ -65,8 +66,6 @@ module_4_datatype = [
 
 module_4_compile = [
     "4_solve/compile/direct",
-    "4_solve/compile/optimize",
-    "4_solve/compile/preference",
 ]
 
 module_4_compile3 = [
@@ -89,25 +88,20 @@ module_4_compile3 = [
     "4_solve/compile3/python",
     "4_solve/compile3/equality",
 module_4_compile2 = [
-    "4_solve/compile2/variables",
-    "4_solve/compile2/ensure",
-    "4_solve/compile2/domain",
-    "4_solve/compile2/value",
+    "4_solve/compile2/bad",
     "4_solve/compile2/boolean",
-    "4_solve/compile2/set",
-    "4_solve/compile2/int",
+    "4_solve/compile2/domain",
+    "4_solve/compile2/equality",
     "4_solve/compile2/float",
+    "4_solve/compile2/int",
+    "4_solve/compile2/none",
+    "4_solve/compile2/python",
+    "4_solve/compile2/set",
     "4_solve/compile2/string",
     "4_solve/compile2/symbol",
     "4_solve/compile2/tuple",
-    "4_solve/compile2/optimize",
-    "4_solve/compile2/output",
-    "4_solve/compile2/evaluate",
-    "4_solve/compile2/bad",
-    "4_solve/compile2/none",
-    "4_solve/compile2/preference",
-    "4_solve/compile2/python",
-    "4_solve/compile2/equality",
+    "4_solve/compile2/value",
+    "4_solve/compile2/variables",
 ]
 
 module_4_ground = [
@@ -122,6 +116,8 @@ module_4_solve = (
     [
         "4_solve/engine",
         "4_solve/finiteDomain",
+        "4_solve/optimize",
+        "4_solve/preference",
         "4_solve/solve",
     ]
     + module_4_datatype
@@ -194,9 +190,9 @@ def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
 
     def combine_on_model(on_model: typing.Callable[[clingo.Model], bool | None] | None = None):
         def om(model):
-            post_processor.set_optimize_valuation(post_prop, model)
             if prop.on_model(model) == False:
                 return False
+            post_processor.set_optimize_valuation(post_prop, model)
             if on_model is not None:
                 return on_model(model)
 

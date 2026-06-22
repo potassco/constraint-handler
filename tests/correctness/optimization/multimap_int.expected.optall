@@ -1,1 +1,2 @@
 multimap_value(taken,val(symbol,a),val(int,4))
+optimize_value(_label_anonymous,0,val(int,6))

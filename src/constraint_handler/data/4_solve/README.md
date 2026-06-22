@@ -12,14 +12,11 @@ preference_maximizeScore/0.
 
 ### Intermediate predicates
 
-_passed(correction(dummy,rem),dummy,dummy).
 _passed(presolve,LBL,DECL).
 _passed(solve,LBL,DECL).
 _passed(compile,LBL,DECL).
 _passed(ground,LBL,DECL).
 _passed(propagator,LBL,DECL).
-_passed((compile;ground;propagator;none),LBL,warning_forbid/2).
-_passed((compile;ground;propagator;none),LBL,warning_ignore/2).
 _solve_removed/1.
 _variable_involve/4.
 _solve_conflictVariable/1.
@@ -28,6 +25,7 @@ _label/1.
 _label/2.
 engine/2.
 _phase_active/1.
+_engine_supportOptimization/1.
 _main_engine/1.
 _main_defaultEngine/1.
 _main_defaultEngineProvided/0.
@@ -79,9 +77,6 @@ _tupleComp/5.
 _tuple_pair/5.
 _tupleEqAux/3.
 _direct_lazy/1.
-_optimize_maximizeSum/4.
-_optimize_precision/2.
-_optimize_se_component/3.
 _set_declare/2.
 _set_assign/3.
 _set_eqMissingEntry/1.
@@ -104,6 +99,7 @@ _multimap_makeIndex/1.
 _multimap_foldStep/3.
 _multimap_index/4.
 _multimap_lastIndex/2.
+_optimize_se_component/3.
 _preference_expressionScore/2.
 _preference_expression/1.
 _preference_index/2.
@@ -136,6 +132,8 @@ _passed(propagator,LBL,bool_evaluate/1).
 _se_value/2.
 _set_contains/2.
 _warning/3.
+_optimize_component/4.
+_optimize_precision/3.
 direct_query/1.
 evaluated/3.
 multimap_value/3.

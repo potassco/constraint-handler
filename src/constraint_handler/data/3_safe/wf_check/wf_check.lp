@@ -51,10 +51,9 @@ _warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _phase_active(wf_check
 
 
 %%%%%% optimization atoms
-_illformed(optimize_maximizeSum(E,X,P)) :- _phase_active(wf_check), _passed(sugar,LBL,optimize_maximizeSum(E,X,P)), #false:
+_illformed(optimize_component(E,PREC,ID,PRIO)) :- _phase_active(wf_check),
+    _passed(sugar,LBL,optimize_component(E,PREC,ID,PRIO)), #false:
     _expression_wellformed(E),
-    (number,_,_,_)=@pythonReify(P).
-_illformed(optimize_precision(PREC,PRIO)) :- _phase_active(wf_check), _passed(sugar,LBL,optimize_precision(PREC,PRIO)), #false:
     _expression_wellformed(PREC),
     (number,_,_,_)=@pythonReify(PRIO).
 _warning(atom(syntaxError),(),DECL) :- _illformed(DECL).

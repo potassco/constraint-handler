@@ -1,7 +1,7 @@
 _float_operation(ExprList) :-
     _expression(compile2, operation((add;mult;sub;pow;abs;ceil;floor;minus;int_div;eq;neq;leq;lt;geq;gt;max;min), ExprList)),
     _expression_operationIndex(compile2, operation((add;mult;sub;pow;abs;ceil;floor;minus;int_div;eq;neq;leq;lt;geq;gt;max;min), ExprList), _, Arg),
-    _se_value(Arg, val(float, _)).
+    _type_dynamic(compile2,Arg,float).
 %%% Abdallah: works also on only ints but is float
 _float_operation(ExprList) :- _expression(compile2, operation(float_div, ExprList)).
 

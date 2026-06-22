@@ -1,5 +1,6 @@
 %%%%%%%%%%%%%%%%% engines
-_main_engine(compile;compile2;compile3;ground;propagator;none).
+_engine_supportOptimization(compile;compile2;compile3;ground;propagator).
+_main_engine(compile;compile3;ground;propagator;none).
 
 _main_defaultEngine(ENG) :- defaultEngine(ENG), _main_engine(ENG).
 _main_defaultEngineProvided :- defaultEngine(ENG), _main_engine(ENG).

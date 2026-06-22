@@ -7,8 +7,8 @@ _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_domain(X
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_assign(X,E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_baseDomain(X,E).
 _expression(PHASE,LBL,DECL,(K;B)) :- _passed(PHASE,LBL,DECL), DECL=multimap_assign(X,K,B).
-_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=optimize_maximizeSum(E,X,P).
-_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=optimize_precision(E,PRIO).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,PREC,X,PRIO).
+_expression(PHASE,LBL,DECL,PREC) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,PREC,X,PRIO).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(E,K).
 
 _expression(PHASE,E) :- _expression(PHASE,LBL,DECL,E).

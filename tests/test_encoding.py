@@ -220,7 +220,6 @@ compile2_xfail: set[str] = {
     "optimization/multimap_int",
     "optimization/multimap_labeled_values",
     "optimization/priority",
-    "optimization/preferences",
     "set/manipulations",
     "set/selfref",
     "multimap/basics",
@@ -241,13 +240,8 @@ compile2_xfail: set[str] = {
 
     "engine/request_set_ref",  # mixed engines?
     "core/reasoning_modes",  # multimap
-    "warning/variable_reservedName",  # multimap
-    "warning/ignore",
-    "warning/syntax",
     "warning/variable_confusing_name",
-    "warning/variable_undeclared",
     "warning/python",
-    "warning/python_unsupported_type",
 }
 ground_skip: set[str] = {
     "set/selfref",
@@ -278,11 +272,8 @@ propagator_skip: set[str] = set()
 propagator_xfail: set[str] = {
     "engine/request",
     "engine/request_mixed_trig",
-    "execution/python_integrity",
     "expression/lambda_recursive",
     "multimap/main",
-    "optimization/multimap_float_precision",
-    "optimization/no_multimap_float_precision",
     "optimization/preferences",
     "python/set_output",
     "python/extract_set_output",

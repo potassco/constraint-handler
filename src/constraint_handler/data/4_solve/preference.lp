@@ -3,7 +3,7 @@
 _warning(preference(unsupported),(),("multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
 
 
-_preference_expressionScore(E,K) :- _passed((compile;ground),LBL,preference_holds(E,K)).
+_preference_expressionScore(E,K) :- _passed((compile;compile2;ground),LBL,preference_holds(E,K)).
 
 _preference_expression(E) :- _preference_expressionScore(E,K).
 
