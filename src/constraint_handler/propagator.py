@@ -865,43 +865,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.literal2var.setdefault(_literal, []).append(variable)
 
-            if isinstance(domain, prop_atom.BoolDomain):
-                literal_true = ctl.add_literal(freeze=True)
-                literal_false = ctl.add_literal(freeze=True)
-                variable.add_value(
-                    expression.Val(type_.BaseType.bool, True),  # ty:ignore[unresolved-attribute]
-                    literal_true,
-                    _literal,
-                )
-                variable.add_value(
-                    expression.Val(type_.BaseType.bool, False),  # ty:ignore[unresolved-attribute]
-                    literal_false,
-                    _literal,
-                )
-                ctl.add_watch(literal_true)
-                ctl.add_watch(-literal_true)
-                ctl.add_watch(literal_false)
-                ctl.add_watch(-literal_false)
-
-                # if the declaration is False, then the value it can give can not be true
-                ctl.add_clause([-literal_true, _literal])
-                ctl.add_clause([-literal_false, _literal])
-
-                self.literal2var[literal_true] = [variable]
-                self.literal2var[literal_false] = [variable]
-
-            elif isinstance(domain, prop_atom.FromList):
-                for expr in domain.elements:
-                    literal = ctl.add_literal(freeze=True)
-                    variable.add_value(expr, literal, _literal)
-                    ctl.add_watch(literal)
-                    ctl.add_watch(-literal)
-
-                    ctl.add_clause([-literal, _literal])
-
-                    self.literal2var[literal] = [variable]
-
-            elif isinstance(domain, prop_atom.FromFacts):
+            if isinstance(domain, prop_atom.FromFacts):
                 # values will be added from facts, nothing to do here
                 from_facts_literals[symbol_var] = _literal
             else:
