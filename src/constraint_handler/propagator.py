@@ -849,7 +849,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         var_declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_declare)
         var_defines = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_define)
         var_domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_domain)
-        var_optionals = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_declareOptional)
+        myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_declareOptional)
 
         from_facts_literals: dict[Symbol, int] = {}
         for (name, symbol_var, domain), _literal in var_declares.items():
@@ -910,25 +910,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # ctl.add_clause([-literal, _literal])
 
             self.literal2var.setdefault(_literal, []).append(domain_variable)
-
-        for (name, optional), _literal in var_optionals.items():
-            if not self.symbol2var.has_var_type(optional, getattr(Variable, "__name__")):
-                continue
-
-            optional_variable: Variable = cast(
-                Variable, self.symbol2var.get_variable(optional, getattr(Variable, "__name__"))
-            )
-            literal = ctl.add_literal(freeze=True)
-            optional_variable.add_value(
-                expression.Val(type_.BaseType.none, None), literal, _literal
-            )  # ty:ignore[unresolved-attribute]
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
-
-            ctl.add_clause([-literal, _literal])
-
-            self.literal2var.setdefault(_literal, []).append(optional_variable)
-            self.literal2var[literal] = [optional_variable]
 
         for var in self.symbol2var.get_variables_by_type(getattr(Variable, "__name__")):
             var = cast(Variable, var)
