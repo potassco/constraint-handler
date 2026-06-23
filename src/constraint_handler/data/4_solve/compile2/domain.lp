@@ -2,7 +2,6 @@ _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=bool_evaluate(E).
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=ensure(E).
 _top_level_expression(operation(OP,ARGS)) :- _passed(compile2,LBL,DECL), DECL=evaluate(OP,ARGS).
 
-%_top_level_expression((K;B)) :- _passed(compile2,LBL,DECL), DECL=multimap_assign(X,K,B).
 _top_level_expression(E;PREC) :- _passed(compile2,LBL,DECL), DECL=optimize_component(E,PREC,X,P).
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=preference_holds(E,K).
 
@@ -48,7 +47,6 @@ import clingo
 import constraint_handler.arithmetic as arithmetic
 import constraint_handler.evaluator as evaluator
 import constraint_handler.logic as logic
-import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.operators as operators
 import constraint_handler.schemas.warning as warning
@@ -300,7 +298,6 @@ _BOOLEAN_OUTPUT_OPERATORS = frozenset(
         operators.SetOperator.set_isin,
         operators.SetOperator.set_notin,
         operators.SetOperator.subset,
-        operators.MultimapOperator.multimap_isin,
         expression.ConditionalOperator.hasValue,
     }
 )
@@ -344,8 +341,6 @@ def _apply_operation(
         result = evaluator.operator(op_value, runtime_args, solver_identifiers, {}).value
     except Exception:
         return expression.Bad.bad
-    if isinstance(result, dict) and not isinstance(result, multimap.HashableDict):
-        result = multimap.HashableDict(result)
     try:
         reduced, errors = evaluator.reducedExpr(result)
         return expression.Bad.bad if errors else reduced
@@ -453,8 +448,6 @@ def _python_result_terms(result: Any, errors: list[tuple[warning.Kind, Any]]) ->
     """Convert evaluator outputs into exported Python evaluation terms."""
     if errors:
         return [expression.Bad.bad]
-    if isinstance(result, dict) and not isinstance(result, multimap.HashableDict):
-        result = multimap.HashableDict(result)
     try:
         reduced, reduction_errors = evaluator.reducedExpr(result)
         return [expression.Bad.bad if reduction_errors else reduced]
