@@ -309,7 +309,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # backtracking due to nogoods in queue
             return
 
-        backtrack = self.evaluated_solver_assignment(control, set(self.symbol2var.get_variables()))
+        to_evaluate: dict[VariableType, set[int] | None] = {var: None for var in self.symbol2var.get_variables()}
+        backtrack = self.evaluated_solver_assignment(control, to_evaluate)
 
         if backtrack:
             # backtracking due to conflicts in evaluation of variables
@@ -525,11 +526,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # backtracking due to nogoods in queue
             return
 
-        to_evaluate: set[VariableType] = set()
+        to_evaluate: dict[VariableType, set[int] | None] = {}
         for rlit in changes:
             lit = abs(rlit)
             if lit in self.literal2var:
-                to_evaluate.update(self.literal2var[lit])
+                for var in self.literal2var[lit]:
+                    to_evaluate.setdefault(var, set()).add(rlit)
             elif not self.previously_opt_stage_2 and lit == self.optimization_stage_lits[2]:
                 # if we are now in the second stage of optimization,
                 # we can now look for equal valued solutions
@@ -631,7 +633,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         return not prop_stop
 
-    def evaluated_solver_assignment(self, ctl: clingo.PropagateControl, to_evaluate: set[VariableType]) -> bool:
+    def evaluated_solver_assignment(
+        self, ctl: clingo.PropagateControl, to_evaluate: dict[VariableType, set[int] | None]
+    ) -> bool:
         """
         Evaluate a set of variables under the current solver assignment.
 
@@ -646,19 +650,22 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             False otherwise.
         """
         while len(to_evaluate) > 0:
-            var = to_evaluate.pop()
+            var, expr_lits = to_evaluate.popitem()
 
-            result = self.evaluate_variable(ctl, var)
+            result = self.evaluate_variable(ctl, var, expr_lits)
             if result is None:
                 # variable had issue, stop propagation!
                 return True
             elif result:
                 # variable changed, evaluate parents
                 for parent in var.parents:
-                    to_evaluate.add(parent)
+                    if parent not in to_evaluate:
+                        to_evaluate[parent] = None
         return False
 
-    def evaluate_variable(self, ctl: clingo.PropagateControl, var: VariableType) -> bool | None:
+    def evaluate_variable(
+        self, ctl: clingo.PropagateControl, var: VariableType, expr_lits: set[int] | None = None
+    ) -> bool | None:
         """
         Evaluate one variable against the current assignment.
 
@@ -673,7 +680,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 - None if evaluation detected a conflict (nogood added).
         """
         self.evaluations.update_evaluations(self.symbol2var.get_variables())
-        eval_result: EvaluationResult = var.evaluate(self.evaluations, ctl, self.environment)
+        eval_result: EvaluationResult = var.evaluate(self.evaluations, ctl, self.environment, expr_lits)
 
         if eval_result == EvaluationResult.CONFLICT:
             self.add_nogood_for_variable(ctl, var)

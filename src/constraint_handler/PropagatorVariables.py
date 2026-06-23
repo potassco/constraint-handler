@@ -88,7 +88,11 @@ class VariableType(Protocol):
 
     @abstractmethod
     def evaluate(
-        self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
     ) -> EvaluationResult: ...
 
     @abstractmethod
@@ -614,7 +618,13 @@ class EnsureVariable:
         """
         return True
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -794,7 +804,13 @@ class BoolEvaluateVariable:
         """
         return True
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
 
@@ -930,6 +946,7 @@ class Variable:
         name: Name of the variable.
         var: Clingo symbol for the variable.
         expressions: Set of possible values (VariableValue).
+        lit2expr: Mapping from literal to the corresponding VariableValue.
         value: Current value of the variable.
         parents: Parent variables.
         decision_level: Decision level at which the value was set.
@@ -950,6 +967,7 @@ class Variable:
         self.name: str = name
         self.var: clingo.Symbol = var
         self.expressions: set[VariableValue] = set()
+        self.lit2expr: dict[int, VariableValue] = {}
         self.value: Any = ValueStatus.NOT_SET
         self.parents: list[VariableType] = []
         self.is_user_variable: bool = is_user_variable
@@ -970,7 +988,9 @@ class Variable:
             value_lit: Literal for the value assignment.
             domain_lit: Literal indicating the truth value of the domain/declaration context.
         """
-        self.expressions.add(VariableValue(expr, value_lit))
+        value = VariableValue(expr, value_lit)
+        self.lit2expr[value_lit] = value
+        self.expressions.add(value)
         self.domain_literals.add(domain_lit)
 
     def get_value(self) -> Any:
@@ -1029,13 +1049,28 @@ class Variable:
         """
         return len(self.expressions) > 0
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
         """
         changed = False
-        for value in self.expressions:
-            changed |= value.evaluate(evaluations, ctl, env)
+        if expr_lits is None or len(expr_lits) == 0:
+            for value in self.expressions:
+                changed |= value.evaluate(evaluations, ctl, env)
+        else:
+            for lit in expr_lits:
+                if lit in self.domain_literals:
+                    continue
+                if lit < 0:
+                    continue
+                assert lit in self.lit2expr, f"Literal {lit} not found in variable {self.name}"
+                changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
 
         if not changed:
             return EvaluationResult.NOT_CHANGED
@@ -1255,7 +1290,13 @@ class SetVariableValue:
             vars.update(arg.vars())
         return vars
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         changed = False
         for arg in self.expressions:
@@ -1425,7 +1466,13 @@ class SetVariable:
         """
         return self.set_expressions.vars()
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
         """
@@ -1690,7 +1737,13 @@ class DictVariable:
             vars.update(key.vars())
         return vars
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
@@ -1875,7 +1928,12 @@ class OptimizationSum:
             errors.extend(expr.get_errors())
         return errors
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+    ) -> bool:
         """
         Evaluate the optimization sum and return True if the value has changed.
 
@@ -1998,7 +2056,13 @@ class OptimizationHandler:
         """
         return len(self.sums)
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> bool:
         """
         Evaluate all optimization sums and return True if any value has changed.
 
