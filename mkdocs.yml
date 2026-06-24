@@ -1,10 +1,10 @@
 site_name: constraint_handler
-site_url: https://potassco.org/constraint-handler/docs
+site_url: https://docs.potassco.org/constraint-handler/
 site_description:
 repo_name: potassco/constraint_handler
 repo_url: https://github.com/potassco/constraint-handler
 copyright: Copyright &copy; 2024 Potassco
-site_dir: site/docs
+site_dir: site
 
 extra_css:
   - _custom/css/extra.css
