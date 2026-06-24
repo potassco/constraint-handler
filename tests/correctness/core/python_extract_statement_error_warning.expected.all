@@ -1,0 +1,1 @@
+warning(expression(pythonError),(),(python,operation(pythonExtract("assert(False)","__succeeds"),((val(string,"a"),variable(execution_input(p,"a"))),())),"AssertionError()"))
