@@ -62,7 +62,7 @@ VariableSources: TypeAlias = dict[clingo.Symbol, set[Expr]]
 SetCandidateDomains: TypeAlias = dict[Expr, set[ReducedExpr]]
 SetVariableSources: TypeAlias = dict[clingo.Symbol, dict[str, set[Expr]]]
 SetUidMaps: TypeAlias = dict[Expr, dict[frozenset[ReducedExpr], int]]
-PythonEvaluationOutputTerm: TypeAlias = ReducedExpr
+PythonEvaluationOutputTerm: TypeAlias = ReducedExpr | warning.Error
 PythonEvaluationOutputValue: TypeAlias = PythonEvaluationOutputTerm | int
 PythonEvaluationInputValue: TypeAlias = ReducedExpr | int
 PythonEvaluationAtom: TypeAlias = tuple[Expr, int]
@@ -448,10 +448,12 @@ def _set_uid_map(values: set[ReducedExpr]) -> dict[frozenset[ReducedExpr], int]:
 def _python_result_terms(result: Any, errors: list[tuple[warning.Kind, Any]]) -> list[PythonEvaluationOutputTerm]:
     """Convert evaluator outputs into exported Python evaluation terms."""
     if errors:
-        return [expression.Bad.bad]
+        return [warning.Error(kind, message) for kind, message in errors] + [expression.Bad.bad]
     try:
         reduced, reduction_errors = evaluator.reducedExpr(result)
-        return [expression.Bad.bad if reduction_errors else reduced]
+        if reduction_errors:
+            return [warning.Error(kind, message) for kind, message in reduction_errors] + [expression.Bad.bad]
+        return [reduced]
     except Exception as exn:
         _ = exn
         return [expression.Bad.bad]
@@ -459,7 +461,7 @@ def _python_result_terms(result: Any, errors: list[tuple[warning.Kind, Any]]) ->
 
 def _python_output_signature(output_terms: list[PythonEvaluationOutputTerm]) -> PythonEvaluationOutputSignature:
     """Canonicalize one Python evaluation result so equivalent leaves can be merged."""
-    return tuple(sorted(_python_domain_values(output_terms), key=str))
+    return tuple(sorted(output_terms, key=str))
 
 
 def _python_evaluation_trie(
@@ -555,7 +557,12 @@ def _execute_python_extract_statement(
         succeeds = True
     except evaluator.solver_environment.FailIntegrityExn:
         succeeds = False
-    return locals_env, errors, succeeds
+    normalized_errors = []
+    for kind, message in errors:
+        if isinstance(kind, warning.Statement) and kind.symbol == warning.StatementWarning.pythonError:
+            kind = warning.Expression(warning.ExpressionWarning.pythonError)
+        normalized_errors.append((kind, message))
+    return locals_env, normalized_errors, succeeds
 
 
 def _python_extract_output_terms(
@@ -597,7 +604,7 @@ def _python_expression_output_terms(expr_: expression.Python, solver_identifiers
 
 def _python_domain_values(output_terms: list[PythonEvaluationOutputTerm]) -> set[ReducedExpr]:
     """Extract the actual expression-domain values from one Python evaluation."""
-    return set(output_terms)
+    return {term for term in output_terms if not isinstance(term, warning.Error)}
 
 
 def _python_value_reference(expr_: Expr, value: PythonEvaluationOutputValue, set_uid_maps: SetUidMaps) -> PythonEvaluationOutputValue:

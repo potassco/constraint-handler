@@ -46,6 +46,7 @@ base_tests = [
     "core/optional_absent_conditional_set_output",
     "core/python_set_bool_brave",
     "core/python_extract_set_projection",
+    "core/python_extract_statement_error_warning",
     "core/reasoning_modes",
     "core/python_extract_tuple_projection",
     "core/shared_optional_output_domains",
@@ -248,6 +249,7 @@ compile2_xfail: set[str] = {
 ground_skip: set[str] = {
     "set/selfref",
     "core/python_set_bool_brave",
+    "core/python_extract_statement_error_warning",
 }
 ground_xfail: set[str] = {
     "core/reasoning_modes",
@@ -271,7 +273,9 @@ ground_xfail: set[str] = {
     "set/iterations",
 }
 
-propagator_skip: set[str] = set()
+propagator_skip: set[str] = {
+    "core/python_extract_statement_error_warning",
+}
 propagator_xfail: set[str] = {
     "engine/request",
     "engine/request_mixed_trig",
@@ -343,6 +347,7 @@ choice_statistics_skip: set[str] = {
     "core/unprojected_optional_equality",
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
+    "core/python_extract_statement_error_warning",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",
