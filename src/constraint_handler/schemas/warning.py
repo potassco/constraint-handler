@@ -6,6 +6,10 @@ import typing
 import constraint_handler.utils.common as common
 
 
+class Correction(typing.NamedTuple):
+    reason: typing.Any
+
+
 class Error(typing.NamedTuple):
     kind: Kind
     message: typing.Any
@@ -43,8 +47,7 @@ class Statement(typing.NamedTuple):
     symbol: StatementWarning
 
 
-# TODO: rename failed_operation to failedOperation
-TypeWarning = common.PPEnum("TypeWarning", ["failed_operation", "notImplemented", "notSupported"])
+TypeWarning = common.PPEnum("TypeWarning", ["notSupported", "noConsistentType", "untyped"])
 
 
 class Type(typing.NamedTuple):
@@ -61,7 +64,7 @@ class Variable(typing.NamedTuple):
     symbol: VariableWarning
 
 
-type Kind = Expression | OtherError | Preference | Propagator | Statement | Type | Variable
+type Kind = Correction | Expression | OtherError | Preference | Propagator | Statement | Type | Variable
 
 
 class Warning(typing.NamedTuple):

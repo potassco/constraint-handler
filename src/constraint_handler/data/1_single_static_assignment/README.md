@@ -43,5 +43,4 @@ _passed(ssa,LBL,variable_declare/2).
 _passed(ssa,LBL,ensure/1).
 _variable(ssa,execution_input/2).
 _statement_wellformed/1.
-_statement_internalVariable/1.
 _warning/3.

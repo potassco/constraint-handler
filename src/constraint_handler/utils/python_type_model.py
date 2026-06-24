@@ -2,24 +2,63 @@
 
 from __future__ import annotations
 
-from collections import namedtuple
+from enum import Enum
+from typing import NamedTuple
+
+import clingo
 
 
 class UnknownType:
     """Marker type used when expression type cannot be inferred."""
 
 
-ListOf = namedtuple("ListOf", ["element_types"])
-TupleOf = namedtuple("TupleOf", ["element_types"])
-RepeatedTupleOf = namedtuple("RepeatedTupleOf", ["pattern_types"])
-SetOf = namedtuple("SetOf", ["element_types"])
-DictOf = namedtuple("DictOf", ["key_types", "value_types"])
-ScalarType = namedtuple("ScalarType", ["typ"])
-FunctionType = namedtuple("FunctionType", ["input_types", "return_types"])
+class UnsupportedType:
+    """Marker type used when expression type is outside supported model types."""
 
-TypeInfo = ScalarType | ListOf | TupleOf | RepeatedTupleOf | SetOf | DictOf | FunctionType | type[UnknownType]
-_NONE_SCALAR = ScalarType(type(None))
-_BOOL_SCALAR = ScalarType(bool)
-_INT_SCALAR = ScalarType(int)
-_FLOAT_SCALAR = ScalarType(float)
-_STR_SCALAR = ScalarType(str)
+
+class ListOf(NamedTuple):
+    element_types: TypeInfo
+
+
+class TupleOf(NamedTuple):
+    element_types: tuple[TypeInfo, ...]
+
+
+class RepeatedTupleOf(NamedTuple):
+    element_type: TypeInfo
+
+
+class SetOf(NamedTuple):
+    element_types: TypeInfo
+
+
+class DictOf(NamedTuple):
+    key_types: TypeInfo
+    value_types: TypeInfo
+
+
+class Scalar(Enum):
+    NONE = type(None)
+    BOOL = bool
+    INT = int
+    FLOAT = float
+    STRING = str
+    SYMBOL = clingo.Symbol
+
+
+class FunctionType(NamedTuple):
+    input_types: tuple[TypeInfo, ...] | None
+    return_type: TypeInfo
+
+
+TypeInfo = (
+    Scalar
+    | ListOf
+    | TupleOf
+    | RepeatedTupleOf
+    | SetOf
+    | DictOf
+    | FunctionType
+    | type[UnknownType]
+    | type[UnsupportedType]
+)

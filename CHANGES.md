@@ -2,8 +2,16 @@
 
 ## Ongoing
 
+- - introduce warning `correction/1`
+- - introduce corrections from the type_check phase
+- - implement rudimentary type inferrence support for `statement_python` and
+    `pythonExtract/2`
+- - rework type warnings to use `type(inconsistent)`, `type(risky)`, and
+    `type(untyped)`
+
 ## v0.0.3
 
+- - introduce compile2 engine
 - rename `myClorm.HashableList` into `myClorm.ImmutableList`
 - introduce `multimap.Multimap[K,V]` as an immutable mappng from keys `K` to
   sets of values `V`

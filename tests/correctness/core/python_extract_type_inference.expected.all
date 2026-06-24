@@ -1,0 +1,4 @@
+type_variable(lhs,int)
+type_variable(rhs,int)
+type_variable(sum_expr,int)
+type_variable(cmp_expr,bool)

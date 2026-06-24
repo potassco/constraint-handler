@@ -5,6 +5,7 @@ import clingo
 import constraint_handler.myClorm as myClorm
 import constraint_handler.python_externals.interface as interface
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.internal as internal
 
 
 def _clear_interface_caches() -> None:
@@ -52,8 +53,8 @@ def test_python_statement_variables_returns_sorted_symbols():
 
     expected = sorted(
         [
-            myClorm.pytocl(("a", interface.type_.BaseType.int)),
-            myClorm.pytocl(("b", interface.type_.BaseType.float)),
+            myClorm.pytocl(internal.Valid("a")),
+            myClorm.pytocl(internal.Valid("b")),
         ]
     )
     assert result == expected

@@ -1,0 +1,4 @@
+warning(type(untyped),(),variable(execution_output(py_nd_mix,"y")))
+warning(type(untyped),(),variable(output_add))
+warning(type(inconsistent),(),variable(execution_output(py_nd_mix,"y")))
+warning(type(risky),(),variable(output_add))

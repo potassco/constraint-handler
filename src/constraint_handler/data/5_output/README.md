@@ -1,6 +1,6 @@
 ### Input predicates
 
-_statement_internalVariable/1.
+_variable_internal(X).
 _passed(propagator,LBL,bool_evaluate/1).
 _passed(compile,LBL,bool_evaluate/1).
 _passed(ground,LBL,bool_evaluate/1).

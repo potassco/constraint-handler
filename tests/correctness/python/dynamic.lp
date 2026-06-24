@@ -7,4 +7,4 @@ variable_domain(raw,bad).
 
 variable_define(out,operation(python("lambda gate, raw: 0 if gate == 0 else raw"),(variable(gate),(variable(raw),())))).
 
-#show value/2.
+phase_request(type_check,false).
