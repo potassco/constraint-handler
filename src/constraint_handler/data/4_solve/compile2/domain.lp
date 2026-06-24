@@ -49,6 +49,7 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.logic as logic
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.operators as operators
+import constraint_handler.schemas.type_ as type_m
 import constraint_handler.schemas.warning as warning
 import constraint_handler.set as set_ops
 import constraint_handler.schemas.expression as expression
@@ -302,21 +303,39 @@ _BOOLEAN_OUTPUT_OPERATORS = frozenset(
     }
 )
 
+_BOOLEAN_OUTPUT_OPERATORS_WITH_NONE = frozenset(
+    {
+        operators.LogicOperator.lnot,
+        operators.LogicOperator.snot,
+        operators.LogicOperator.wnot,
+    }
+)
 
-def _boolean_output_domain() -> set[ReducedExpr]:
-    """Return the coarse domain used to skip expensive boolean-domain enumeration."""
-    reduced_true, true_errors = evaluator.reducedExpr(True)
-    reduced_false, false_errors = evaluator.reducedExpr(False)
-    return {
-        expression.Bad.bad if true_errors else reduced_true,
-        expression.Bad.bad if false_errors else reduced_false,
+_BOOLEAN_OUTPUT_TRUE = expression.Val(type_m.BaseType.bool, True)
+_BOOLEAN_OUTPUT_FALSE = expression.Val(type_m.BaseType.bool, False)
+_BOOLEAN_OUTPUT_NONE = expression.Val(type_m.BaseType.none, None)
+
+_BOOLEAN_OUTPUT_DOMAIN = frozenset(
+    {
+        _BOOLEAN_OUTPUT_TRUE,
+        _BOOLEAN_OUTPUT_FALSE,
         expression.Bad.bad,
     }
+)
+
+_BOOLEAN_OUTPUT_DOMAIN_WITH_NONE = _BOOLEAN_OUTPUT_DOMAIN | frozenset({_BOOLEAN_OUTPUT_NONE})
 
 
 def _has_boolean_output(op_value: Any) -> bool:
     """Check whether a concrete operator is known to produce a boolean-valued result."""
     return op_value in _BOOLEAN_OUTPUT_OPERATORS
+
+
+def _coarse_boolean_output_domain(op_value: Any) -> frozenset[ReducedExpr]:
+    """Return the operator-specific shortcut domain for boolean-valued operations."""
+    if op_value in _BOOLEAN_OUTPUT_OPERATORS_WITH_NONE:
+        return _BOOLEAN_OUTPUT_DOMAIN_WITH_NONE
+    return _BOOLEAN_OUTPUT_DOMAIN
 
 
 def _apply_operation(
@@ -646,7 +665,7 @@ def _evaluate_domain(
             for arg_domain in arg_domains:
                 apply_total *= len(arg_domain)
             if _has_boolean_output(op) and apply_total > 1:
-                return _boolean_output_domain()
+                return _coarse_boolean_output_domain(op)
             for op_domain_value in sorted(op_domains, key=str):
                 op_value = _reduced_to_runtime(op_domain_value) if op_domain_value != op else op
                 for arg_values in _domain_product(arg_domains):

@@ -1,0 +1,2 @@
+evaluated(lnot,(operation(lnot,(variable(execution_input(((((),"r"),"u"),"chk"),"result")),())),()),val(none,none))
+evaluated(hasValue,(variable(((((),"r"),"u"),"p")),()),val(bool,false))
