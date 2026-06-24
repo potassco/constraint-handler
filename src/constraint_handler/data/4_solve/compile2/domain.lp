@@ -367,7 +367,8 @@ def _set_candidate_domain(
     match expr_:
         case expression.Variable(var):
             if var not in set_sources:
-                return None
+                candidates = _flatten_set_values(expression_domains.get(expr_, set()))
+                return candidates or None
             candidates: set[ReducedExpr] = set()
             for source_expr in set_sources[var]["set_baseDomain"] | set_sources[var]["set_assign"]:
                 source_values = expression_domains.get(source_expr, set())
