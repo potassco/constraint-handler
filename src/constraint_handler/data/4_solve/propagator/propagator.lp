@@ -10,7 +10,8 @@ propagator_variable_declare(CNAME,X,fromFacts) :- _passed(propagator,CNAME,varia
 order(CNAME,X,E,IDX) :- _passed(propagator,CNAME,variable_domain(X,E)), IDX = #count { E2 : _passed(propagator,CNAME,variable_domain(X,E2)), E2 < E }.
 
 active(CNAME,X,IDX-1) :- order(CNAME,X,E,IDX), propagator_variable_domain(CNAME,X,E), IDX > 0.
-active(CNAME,X,N-1) :- active(CNAME,X,N), N > 1.
+active(CNAME,X,N-1) :- active(CNAME,X,N), N > 0.
+
 propagator_ensure(CNAME,operation(neq,(variable(X),(E,())))) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
 
 propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_define(X,E)).

@@ -17,7 +17,7 @@ _passed(solve,LBL,warning_ignore/1).
 ### Intermediate predicates
 
 order/4.
-higher_assigned_domain/3.
+active/3.
 
 ### Output predicates
 
