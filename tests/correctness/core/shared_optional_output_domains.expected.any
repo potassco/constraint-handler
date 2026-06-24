@@ -1,0 +1,1 @@
+evaluated(disj,(operation(eq,(variable(f),(val(float,float("1.1")),()))),(operation(eq,(variable(f),(val(float,float("2.2")),()))),())),val(bool,true))

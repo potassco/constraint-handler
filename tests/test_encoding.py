@@ -49,6 +49,7 @@ base_tests = [
     "core/python_extract_set_projection",
     "core/reasoning_modes",
     "core/python_extract_tuple_projection",
+    "core/shared_optional_output_domains",
     "core/set_interface_value_marker",
     "core/set_execution_input_alias",
     "core/type_checking",
@@ -294,6 +295,7 @@ choice_statistics_skip: set[str] = {
     "optimization/optional_absent_linked_value",
     "core/unprojected_optional_equality",
     "core/set_interface_value_marker",
+    "core/shared_optional_output_domains",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",

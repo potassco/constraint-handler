@@ -89,6 +89,52 @@ _float_mul(mult, ExprList, Idx, @pythonFloatBinary(mult, Val, ListVal)) :-
 _binary_float_operation(sub;pow;float_div;int_div;eq;neq;leq;lt;geq;gt;max;min).
 
 :-
+    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _se_value(Expr1, val(none, none)),
+    _se_value(Expr2, val(none, none)),
+    not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, true)).
+
+:-
+    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _se_value(Expr1, val(none, none)),
+    not _se_value(Expr2, val(none, none)),
+    not _se_value(Expr2, bad),
+    not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
+
+:-
+    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _se_value(Expr2, val(none, none)),
+    not _se_value(Expr1, val(none, none)),
+    not _se_value(Expr1, bad),
+    not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
+
+:-
+    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _se_value(Expr1, val(none, none)),
+    _se_value(Expr2, val(none, none)),
+    not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, false)).
+
+:-
+    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _se_value(Expr1, val(none, none)),
+    not _se_value(Expr2, val(none, none)),
+    not _se_value(Expr2, bad),
+    not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
+
+:-
+    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _se_value(Expr2, val(none, none)),
+    not _se_value(Expr1, val(none, none)),
+    not _se_value(Expr1, bad),
+    not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
+
+:-
     _expression(compile2, operation(OP, (Expr1, (Expr2, ())))),
     _float_operation((Expr1, (Expr2, ()))),
     _binary_float_operation(OP),
