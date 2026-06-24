@@ -1059,6 +1059,11 @@ class Variable:
         """
         Evaluate the expression and return an EvaluationResult.
         """
+
+        if self.value != ValueStatus.NOT_SET:
+            # already assigned
+            return EvaluationResult.NOT_CHANGED
+
         changed = False
         if expr_lits is None or len(expr_lits) == 0:
             for value in self.expressions:
@@ -1102,10 +1107,10 @@ class Variable:
                 # if no domain lit is true, then we can treat it as false
                 val = [ValueStatus.ASSIGNMENT_IS_FALSE]
 
-        elif len(val) == 1:
-            if val[0] == self.value:
-                # same value as before
-                return EvaluationResult.NOT_CHANGED
+        # elif len(val) == 1:
+        # if val[0] == self.value:
+        #     # same value as before
+        #     return EvaluationResult.NOT_CHANGED
 
         self.decision_level = ctl.assignment.decision_level
         self.value = val[0]
