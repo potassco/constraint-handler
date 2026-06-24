@@ -46,6 +46,7 @@ base_tests = [
     "core/integrity",
     "core/optional_absent_comparison_evaluation",
     "core/optional_absent_conditional_set_output",
+    "core/python_set_bool_brave",
     "core/python_extract_set_projection",
     "core/reasoning_modes",
     "core/python_extract_tuple_projection",
@@ -203,6 +204,7 @@ compile2_xfail: set[str] = {
 }
 ground_skip: set[str] = {
     "set/selfref",
+    "core/python_set_bool_brave",
 }
 ground_xfail: set[str] = {
     "core/reasoning_modes",
@@ -289,6 +291,7 @@ def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "pro
 choice_statistics_skip: set[str] = {
     "core/empty_set_execution",
     "core/optional_set_empty_execution",
+    "core/python_set_bool_brave",
     "python/dynamic",
     "python/extract_dynamic",
     "python/extract_succeeds",
@@ -373,6 +376,7 @@ def test_compile_statistics_have_zero_choices(name: str):
 
 
 tightness_statistics_skip: set[str] = set()
+tightness_statistics_skip.add("core/python_set_bool_brave")
 tightness_statistics_xfail: set[str] = {
     "optimization/multimap_bool",
     "optimization/multimap_float",
