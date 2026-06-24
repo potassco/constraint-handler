@@ -137,16 +137,16 @@ def reducedExprAux(v):
     elif isinstance(v, tuple):
         return tuple(reducedExprAux(x) for x in v)
     else:
-        raise NotImplementedError(f"reducedExpr is not implemented for {v}")
+        raise NotImplementedError
 
 
 def reducedExpr(v):
     try:
         result = reducedExprAux(v)
         return (result, [])
-    except NotImplementedError as exn:
+    except NotImplementedError:
         warn = warning.Expression(warning.ExpressionWarning.notImplemented)
-        return (expression.Bad.bad, ((warn, repr(exn)),))
+        return (expression.Bad.bad, ((warn, type(v)),))
 
 
 def string_operator(o, args):

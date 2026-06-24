@@ -1,0 +1,3 @@
+warning(type(notSupported),(),pythonExtract("y=[1,2,3]","y"))
+warning(type(noConsistentType),(),execution_output(py_mix,"y"))
+warning(type(noConsistentType),(),output_add)

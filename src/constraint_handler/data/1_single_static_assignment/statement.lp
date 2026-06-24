@@ -56,7 +56,7 @@ _warning(KIND,PRG,MSG) :- _statement_pythonVarsResult(PRG,SCOPE,error(KIND,MSG))
 _statement_changed(assign(X,EX),X) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)).
 _statement_changed(seq2(STM1,STM2),X) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)), _statement_changed((STM1;STM2),X).
 _statement_changed(if(EXPR,THEN,ELSE),X) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed((THEN;ELSE),X).
-_statement_changed(statement_python(CODE),X) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
+_statement_changed(statement_python(CODE),X) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_pythonVarsResult(PRG,SCOPE,valid(X)).
 
 
 %%%%% statement_context
@@ -102,13 +102,12 @@ _statement_condition((e,SCOPE),(NE,ES)) :- _statement_querySSA(LBL,PRG,SCOPE,if(
 _statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)).
 _statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed(if(EXPR,THEN,ELSE),X).
 _statement_scoped(SCOPE,X,variable(loc(@pythonScopeToString(SCOPE,X)))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
-  _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
-_statement_internalVariable(XS) :- _statement_scoped(SCOPE,X,variable(XS)).
+  _statement_pythonVarsResult(PRG,SCOPE,valid(X)).
 
 %_statement_scoped(SCOPE,X,variable(loc(SCOPE,X))) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)).
 %_statement_scoped(SCOPE,X,variable(loc(SCOPE,X))) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed(if(EXPR,THEN,ELSE),X).
 %_statement_scoped(SCOPE,X,variable(loc(SCOPE,X))) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
-%  _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
+%  _statement_pythonVarsResult(PRG,SCOPE,valid(X)).
 
 
 _statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,EX)), _statement_scoped(SCOPE,X,XS).
@@ -119,8 +118,8 @@ _statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM
 %_statement_context((r,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(STM1,STM2)), _statement_latest((r,SCOPE),X,XS).
 _statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_changed(STMT,X), _statement_scoped(SCOPE,X,XS).
 _statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,if(EXPR,THEN,ELSE)), _statement_context(SCOPE,X,XS), not _statement_changed(if(EXPR,THEN,ELSE),X).
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)), _statement_scoped(SCOPE,X,XS).
-_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_context(SCOPE,X,XS), #false : _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_pythonVarsResult(PRG,SCOPE,valid(X)), _statement_scoped(SCOPE,X,XS).
+_statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_context(SCOPE,X,XS), #false : _statement_pythonVarsResult(PRG,SCOPE,valid(X)).
 
 
 
@@ -159,7 +158,7 @@ _statement_ensure(LBL,ASSR) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
 
 _statement_introduce(LBL,XS,EX) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
 _statement_introduce(LBL,XS,operation(pythonExtract(CODE,X),VARS)) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
-  _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)), _statement_pythonInputMap(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
+  _statement_pythonVarsResult(PRG,SCOPE,valid(X)), _statement_pythonInputMap(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
 _statement_ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS)) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonInputMap(SCOPE,VARS),
   _execution_isRunning(PRG).

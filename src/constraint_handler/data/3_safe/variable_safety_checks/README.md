@@ -1,5 +1,6 @@
 ### Input predicates
 
+_variable_internal(X).
 _passed(sugar,LBL,variable_declare/2).
 _passed(sugar,LBL,variable_define/2).
 _passed(sugar,LBL,variable_domain/2).
@@ -17,7 +18,6 @@ _passed(defaultArgs,LBL,multimap_assign/3).
 _variable(sugar,VAR).
 _operator_declared/1.
 _se_value/2.
-_statement_internalVariable/1.
 _statement_introduce/3.
 
 ### Intermediate predicates

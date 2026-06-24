@@ -1,0 +1,4 @@
+warning(type(notSupported),(),pythonExtract("tmp=[1,2,3]","tmp"))
+warning(type(noConsistentType),(),execution_output(py_warn,"y"))
+warning(type(notSupported),(),pythonExtract("tmp=object()","tmp"))
+warning(type(untyped),(),execution_output(py_obj,"y"))

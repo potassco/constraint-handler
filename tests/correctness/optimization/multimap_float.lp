@@ -4,6 +4,7 @@ item(b,3,float("3.1")).
 item(c,3,float("3.1")).
 item(d,3,float("3.1")).
 item(e,3,float("3")).
+phase_request(type_check,false).
 
 optimize_precision(val(int,10)).
 

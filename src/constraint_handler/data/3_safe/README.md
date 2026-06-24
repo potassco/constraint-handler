@@ -5,7 +5,7 @@ _passed(sugar,LBL,DECL).
 _expression(sugar,EXPR).
 _variable(sugar,VAR).
 _statement_wellformed/1.
-_statement_internalVariable/1.
+_variable_internal(X).
 
 ### Intermediate predicates
 

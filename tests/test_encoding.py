@@ -36,25 +36,28 @@ def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propag
 
 base_tests = [
     "core/basic_assignments",
-    "core/empty_set_linked_output_execution",
     "core/empty_set_execution",
-    "core/optional_set_empty_execution",
     "core/conditional_assign",
-    "core/conditional_empty_set_linked_output",
     "core/custom_globals",
     "core/empty_variadics",
     "core/integrity",
     "core/optional_absent_comparison_evaluation",
-    "core/optional_absent_conditional_set_output",
     "core/python_set_bool_brave",
     "core/python_extract_set_projection",
     "core/python_extract_statement_error_warning",
+    "core/python_extract_type_inference",
+    "core/python_inference_type_warnings",
+    "core/type_inference_unknown_vs_no_type",
+    "core/type_inference_unknown_vs_no_type_statement_python",
+    "core/type_inference_unknown_vs_no_type_statement_python_nondeterministic",
     "core/reasoning_modes",
     "core/python_extract_tuple_projection",
     "core/shared_optional_output_domains",
     "core/set_interface_value_marker",
     "core/set_execution_input_alias",
     "core/type_checking",
+    "core/statement_python_type_inference",
+    "core/non_deterministic_python_type_inference",
     "core/unprojected_optional_equality",
     "datatype/booleans_xyftz",
     "datatype/bool_equivalence_bad",
@@ -167,6 +170,13 @@ base_tests = [
     "warning/variable_undeclared",
     "warning/variable_undeclared_python_extract",
     "warning/variable_undeclared_statement",
+]
+
+other_tests = [
+    "core/conditional_empty_set_linked_output",
+    "core/empty_set_linked_output_execution",
+    "core/optional_absent_conditional_set_output",
+    "core/optional_set_empty_execution",
 ]
 
 compile_skip: set[str] = set()
@@ -312,6 +322,8 @@ choice_statistics_xfail: set[str] = {
     "core/integrity",
     "core/reasoning_modes",
     "core/type_checking",
+    "core/non_deterministic_python_type_inference",
+    "core/type_inference_unknown_vs_no_type_statement_python_nondeterministic",
     "datatype/booleans_xyftz",
     "datatype/bool_equivalence_bad",
     "datatype/bool_evaluate",
@@ -382,8 +394,7 @@ def test_compile_statistics_have_zero_choices(name: str):
     assert statistics["solving"]["solvers"]["choices"] == 0.0
 
 
-tightness_statistics_skip: set[str] = set()
-tightness_statistics_skip.add("core/python_set_bool_brave")
+tightness_statistics_skip: set[str] = {"core/python_set_bool_brave"}
 tightness_statistics_xfail: set[str] = {
     "optimization/multimap_bool",
     "optimization/multimap_float",
