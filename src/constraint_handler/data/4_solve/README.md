@@ -133,7 +133,6 @@ _se_value/2.
 _set_contains/2.
 _warning/3.
 _optimize_component/4.
-_optimize_precision/3.
 direct_query/1.
 evaluated/3.
 multimap_value/3.

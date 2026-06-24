@@ -7,6 +7,7 @@ import clingo
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.internal as internal
 import constraint_handler.schemas.type_ as type_
 import constraint_handler.schemas.warning as warning
 import constraint_handler.utils.python_statement_analysis as python_analysis
@@ -65,7 +66,7 @@ def pythonBetaReduction(clExpr, clVars, clArgs):
     d = {var: val for (var, val) in zip(pVars, pArgs)}
     prettyArgs = ", ".join(f"{str(var)}={val}" for (var, val) in d.items())
     pRes = evaluator.beta_reduction(d, pExpr)
-    return myClorm.pytocl(pRes)
+    return myClorm.pytocl(internal.Valid(pRes))
 
 
 @cache
@@ -88,13 +89,12 @@ def pythonEvalExpr(clExpr, clArgs, clId):
         pVal, errors = evaluator.reducedExpr(pRes)
         for kind, msg in errors:
             results.append(warning.Error(kind, msg))
-        results.append(pVal)
+        results.append(internal.Valid(pVal))
         return [myClorm.pytocl(result) for result in results]
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
         return myClorm.pytocl(warning.Error(kind, repr(exn)))
     except Exception as exn:
-        kind = warning.Statement(warning.StatementWarning.syntaxError)
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
         return myClorm.pytocl(warning.Error(kind, repr(exn)))
 
@@ -114,15 +114,50 @@ def pythonStatementVariables(clCode, clInTypes, clId):
         pyInputs = {x: frozenset((type_.py_type(t),)) for (x, t) in pInT}
         analysis = python_analysis.analyze_python_statement_types(pCode, globals, pyInputs)
         for x, ts in analysis.name_types.items():
-            for t in ts:
-                cht, errs = type_.ch_type(t)
-                for error in errs:
-                    results.append(warning.Error(error, x))
-                results.append((x, cht))
+            results.append(internal.Valid(x))
         return sorted([myClorm.pytocl(result) for result in results])
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Statement(warning.StatementWarning.syntaxError)
         return myClorm.pytocl(warning.Error(kind, str(exn)))
     except Exception as exn:
         kind = warning.Statement(warning.StatementWarning.pythonError)
+        return myClorm.pytocl(warning.Error(kind, repr(exn)))
+
+
+# @cache
+def pythonTypeExtract(clStmt, clExpr, clArgs, clId):
+    try:
+        pStmt = myClorm.cltopy(clStmt, str)
+        pExpr = myClorm.cltopy(clExpr, str)
+        if pExpr == "__succeeds":
+            return myClorm.pytocl(internal.Valid(type_.BaseType.bool))
+        pArgs = myClorm.cltopy(clArgs, list[tuple[str, type_.BaseType]])
+        pGlobId = myClorm.cltopy(clId, list[expression.constant])
+        combined = f"{pStmt}\n__ch_expr = {pExpr}"
+        locals = dict()
+        locals = defaultdict(set)  # pArgs)
+        for v, t in pArgs:
+            locals[v].add(type_.py_type(t))
+        pyInputs = {x: frozenset(ts) for (x, ts) in locals.items()}
+        globals = evaluator.get_environment(pGlobId)
+        analysis = python_analysis.analyze_python_statement_types(combined, globals, pyInputs)
+        pts = analysis.name_types.get("__ch_expr", None)
+        if pts is None:
+            results.append(warning.Error(warning.TypeWarning.notSupported, expression.PythonExtract(clStmt, clExpr)))
+            results = [internal.Valid(type_.OtherType.top)]
+        elif len(pts) == 0:
+            results = [internal.Valid(type_.OtherType.bot)]
+        else:
+            results = []
+            for pt in pts:
+                cht, errs = type_.ch_type(pt)
+                results.append(internal.Valid(cht))
+                for err in errs:
+                    results.append(warning.Error(err, expression.PythonExtract(clStmt, clExpr)))
+        return sorted(map(myClorm.pytocl, results))
+    except myClorm.FailedInstantiationExn as exn:
+        kind = warning.Expression(warning.ExpressionWarning.pythonError)
+        return myClorm.pytocl(warning.Error(kind, repr(exn)))
+    except Exception as exn:
+        kind = warning.Statement(warning.StatementWarning.syntaxError)
         return myClorm.pytocl(warning.Error(kind, repr(exn)))

@@ -59,6 +59,11 @@ _passed(sugar,LBL,warning_forbid(KIND)) :- _passed(defaultArgs,LBL,warning_forbi
 _passed(sugar,LBL,warning_ignore(KIND)) :- _passed(defaultArgs,LBL,warning_ignore(KIND)).
 
 %%%%%% interface variables
-_variable_execution_outputVar(X) :- _passed(ssa,LBL,variable_declare(X,DECL)), X=execution_output(PRG,VAR).
-_variable_internal(X) :- _passed(ssa,LBL,variable_declare(X,DECL)), not _variable_execution_outputVar(X).
-_passed(sugar,LBL,variable_interface(X)) :- _passed(sugar,LBL,variable_declare(X,DECL)), not _variable_internal(X).
+_variable_execution_outputVar(X) :- _passed(ssa,LBL,variable_declare(X,DOM)), X=execution_output(PRG,VAR).
+_variable_internal(X) :- _passed(ssa,LBL,variable_declare(X,DOM)), not _variable_execution_outputVar(X).
+_passed(sugar,LBL,variable_interface(X)) :- _passed(sugar,LBL,variable_declare(X,DOM)), not _variable_internal(X).
+
+%%%%%% internal declarations
+_passed(internal_declaration,LBL,variable_declare(X,DOM)) :- _passed(ssa,LBL,variable_declare(X,DOM)), _variable_internal(X).
+_passed(internal_declaration,LBL,variable_define(X,DEF)) :- _passed(ssa,LBL,variable_define(X,DEF)), _variable_internal(X).
+_passed(internal_declaration,LBL,ensure(E)) :- _passed(ssa,LBL,ensure(E)).

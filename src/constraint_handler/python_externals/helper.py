@@ -4,22 +4,6 @@ import clingo
 
 import constraint_handler.myClorm as myClorm
 
-# import itertools
-# import operator
-# import typing
-# from collections import defaultdict
-
-# import math
-
-# import constraint_handler.evaluator as evaluator
-# import constraint_handler.schemas.atom as atom
-# import constraint_handler.schemas.expression as expression
-# import constraint_handler.schemas.statement as statement
-# import constraint_handler.schemas.type_ as type_
-# import constraint_handler.schemas.warning as warning
-# import constraint_handler.solver_environment as solver_environment
-# import constraint_handler.utils.python_statement_analysis as python_analysis
-
 
 @cache
 def pythonListElements(clL):

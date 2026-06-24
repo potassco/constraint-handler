@@ -61,7 +61,7 @@ _direct_args_list(E,VS) :- _direct_needs_args_list(E,ARGS), _direct_args_list_au
 
 _lambda_aux(E,RED) :- _computeIdx(E,lambda(VARS,ERES)),
     _direct_args_list(E,ARGS),
-    RED=@pythonBetaReduction(ERES,VARS,ARGS).
+    valid(RED)=@pythonBetaReduction(ERES,VARS,ARGS).
 
 direct_query(RED) :- _lambda_aux(E,RED).
 _computedIdx(E,VO) :- _lambda_aux(E,RED), _se_value(RED,VO).
@@ -75,13 +75,13 @@ _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L)
 _expression_pythonEval(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _direct_imploded_args_aux(E,0,L).
 
 _expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), RES=@pythonEvalExpr(E,(),ID), _main_solverIdentifiers(ID).
-_computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,val(TYPE,V)).
+_computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,valid(val(TYPE,V))).
 _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
 
-_set_declare(_internal,E) :- _expression_eval_exec(E,set(S)).
-_set_assign(_internal,E,VAL) :- _expression_eval_exec(E,set(S)), VAL=@pythonListElements(S).
+_set_declare(_internal,E) :- _expression_eval_exec(E,valid(set(S))).
+_set_assign(_internal,E,VAL) :- _expression_eval_exec(E,valid(set(S))), VAL=@pythonListElements(S).
 
 
 %%%%%%%%%%%%%%%%% pythonExtract operator

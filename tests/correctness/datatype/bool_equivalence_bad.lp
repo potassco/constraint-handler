@@ -1,6 +1,5 @@
 variable_declare(x,fromFacts).
 variable_domain(x,val(bool,(true;false))).
-%variable_domain(x,val(none,none)).
 
 variable_define(y,operation(ite,(operation(eq,(variable(x),(val(bool,false),()))),
   (val(int,5),(bad,()))))).

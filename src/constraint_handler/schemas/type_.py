@@ -1,4 +1,7 @@
 import builtins
+import types
+
+import clingo
 
 import constraint_handler.schemas.warning as warning
 import constraint_handler.utils.common as common
@@ -7,6 +10,8 @@ import constraint_handler.utils.python_type_model as analysis
 BaseType = common.PPEnum(
     "BaseType", ["int", "float", "string", "symbol", "bool", "none", "function", "multimap", "set"]
 )
+
+OtherType = common.PPEnum("OtherType", ["bot", "top"])
 
 
 def ch_type(t: analysis.TypeInfo):
@@ -30,9 +35,12 @@ def ch_type(t: analysis.TypeInfo):
         case analysis.DictOf():
             return (BaseType.multimap, [])
         case analysis.UnknownType:
-            return (None, [warning.Type(warning.TypeWarning.notSupported)])
+            return (OtherType.top, [warning.Type(warning.TypeWarning.notSupported)])
+        case analysis.ListOf():
+            return (OtherType.bot, [warning.Type(warning.TypeWarning.notSupported)])
         case _:
-            return (None, [warning.Type(warning.TypeWarning.notImplemented)])
+            assert False
+            return (None, [warning.Type(warning.TypeWarning.notSupported)])
 
 
 def py_type(t: analysis.TypeInfo):
@@ -44,7 +52,6 @@ def py_type(t: analysis.TypeInfo):
         case BaseType.bool:
             return analysis.ScalarType(bool)
         case BaseType.int:
-            print("returning", analysis.ScalarType(int))
             return analysis.ScalarType(int)
         case BaseType.float:
             return analysis.ScalarType(float)
@@ -56,5 +63,9 @@ def py_type(t: analysis.TypeInfo):
             return analysis.ScalarType(type(None))
         case BaseType.function:
             return analysis.FunctionType(None, frozenset((analysis.UnknownType,)))
+        case OtherType.top:
+            return analysis.UnknownType
+        case OtherType.bot:
+            return None
         case _:
             raise NotImplementedError("py_type", t)

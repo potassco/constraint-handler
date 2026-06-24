@@ -15,8 +15,7 @@ execution_declare(empty,STMT,(),("y",())) :-
     STMT = statement_python("y = '5'").
 execution_run(empty).
 
-#show value/2.
-#show warning/3.
+phase_request(type_check,false).
 
 #script (python)
 

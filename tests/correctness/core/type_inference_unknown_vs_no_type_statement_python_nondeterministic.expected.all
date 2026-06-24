@@ -1,0 +1,4 @@
+warning(type(notSupported),(),operation(add,(variable(execution_output(py_nd_mix,"y")),(val(string,"s"),()))))
+warning(type(noConsistentType),(),output_add)
+type_variable(execution_output(py_nd_mix,"y"),int)
+type_variable(execution_output(py_nd_mix,"y"),bot)
