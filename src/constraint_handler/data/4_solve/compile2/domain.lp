@@ -103,6 +103,7 @@ class PreprocessStorage(NamedTuple):
     python_evaluations: list[PythonEvaluationAtom]
     python_evaluation_inputs: list[PythonEvaluationInputAtom]
     python_evaluation_outputs: list[PythonEvaluationOutputAtom]
+    clingo_symbols: ClingoSymbolCache
 
 
 class PythonEvaluationLeaf(NamedTuple):
@@ -847,6 +848,7 @@ def _compute_domains() -> PreprocessStorage:
         python_evaluations=python_evaluations,
         python_evaluation_inputs=python_evaluation_inputs,
         python_evaluation_outputs=python_evaluation_outputs,
+        clingo_symbols={},
     )
 
 
@@ -856,11 +858,11 @@ def expression_domain() -> list[clingo.Symbol]:
 
     result: list[clingo.Symbol] = []
     for expr_, values in sorted(cache.expression_domains.items(), key=lambda item: str(item[0])):
-        cl_expr = myClorm.pytocl(expr_)
+        cl_expr = _cached_pytocl(expr_, cache.clingo_symbols)
         for value in sorted(values, key=str):
             if expr_ in cache.set_expressions and isinstance(value, frozenset):
                 continue
-            result.append(clingo.symbol.Function("", [cl_expr, myClorm.pytocl(value)]))
+            result.append(clingo.symbol.Function("", [cl_expr, _cached_pytocl(value, cache.clingo_symbols)]))
     return result
 
 
@@ -870,9 +872,9 @@ def expression_set_domain() -> list[clingo.Symbol]:
 
     result: list[clingo.Symbol] = []
     for expr_, uid_map in sorted(cache.set_uid_maps.items(), key=lambda item: str(item[0])):
-        cl_expr = myClorm.pytocl(expr_)
+        cl_expr = _cached_pytocl(expr_, cache.clingo_symbols)
         for _set_value, uid in sorted(uid_map.items(), key=lambda item: item[1]):
-            result.append(clingo.symbol.Function("", [cl_expr, myClorm.pytocl(uid)]))
+            result.append(clingo.symbol.Function("", [cl_expr, _cached_pytocl(uid, cache.clingo_symbols)]))
     return result
 
 
@@ -882,13 +884,23 @@ def expression_set_domain_value() -> list[clingo.Symbol]:
 
     result: list[clingo.Symbol] = []
     for expr_, uid_map in sorted(cache.set_uid_maps.items(), key=lambda item: str(item[0])):
-        cl_expr = myClorm.pytocl(expr_)
+        cl_expr = _cached_pytocl(expr_, cache.clingo_symbols)
         candidate_values = cache.set_candidate_domains.get(expr_, set())
         for set_value, uid in sorted(uid_map.items(), key=lambda item: item[1]):
             members = set(set_value)
             for member in sorted(candidate_values | members, key=str):
                 sign = SET_DOMAIN_POS if member in members else SET_DOMAIN_NEG
-                result.append(clingo.symbol.Function("", [cl_expr, myClorm.pytocl(uid), myClorm.pytocl(sign), myClorm.pytocl(member)]))
+                result.append(
+                    clingo.symbol.Function(
+                        "",
+                        [
+                            cl_expr,
+                            _cached_pytocl(uid, cache.clingo_symbols),
+                            _cached_pytocl(sign, cache.clingo_symbols),
+                            _cached_pytocl(member, cache.clingo_symbols),
+                        ],
+                    )
+                )
     return result
 
 
@@ -899,7 +911,7 @@ def expression_set_domain_symbol(cl_expr: clingo.Symbol) -> list[clingo.Symbol]:
     expr_ = myClorm.cltopy(cl_expr, expression.Expr)
     uid_map = cache.set_uid_maps.get(expr_, {})
     return [
-        myClorm.pytocl((uid, set_value))
+        _cached_pytocl((uid, set_value), cache.clingo_symbols)
         for set_value, uid in sorted(uid_map.items(), key=lambda item: item[1])
     ]
 
@@ -910,7 +922,7 @@ def expression_set() -> list[clingo.Symbol]:
 
     result: list[clingo.Symbol] = []
     for expr_ in sorted(cache.set_expressions, key=str):
-        result.append(myClorm.pytocl(expr_))
+        result.append(_cached_pytocl(expr_, cache.clingo_symbols))
     return result
 
 
@@ -919,13 +931,12 @@ def python_evaluation() -> list[clingo.Symbol]:
     cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
-    symbol_cache: ClingoSymbolCache = {}
     for evaluation in cache.python_evaluations:
         expr_, uid = evaluation
         result.append(
             clingo.Function(
                 "",
-                [_cached_pytocl(expr_, symbol_cache), _cached_pytocl(uid, symbol_cache)],
+                [_cached_pytocl(expr_, cache.clingo_symbols), _cached_pytocl(uid, cache.clingo_symbols)],
             )
         )
     return result
@@ -936,17 +947,16 @@ def python_evaluation_input() -> list[clingo.Symbol]:
     cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
-    symbol_cache: ClingoSymbolCache = {}
     for evaluation_input in cache.python_evaluation_inputs:
         expr_, uid, arg_expr, arg_value = evaluation_input
         result.append(
             clingo.Function(
                 "",
                 [
-                    _cached_pytocl(expr_, symbol_cache),
-                    _cached_pytocl(uid, symbol_cache),
-                    _cached_pytocl(arg_expr, symbol_cache),
-                    _cached_pytocl(arg_value, symbol_cache),
+                    _cached_pytocl(expr_, cache.clingo_symbols),
+                    _cached_pytocl(uid, cache.clingo_symbols),
+                    _cached_pytocl(arg_expr, cache.clingo_symbols),
+                    _cached_pytocl(arg_value, cache.clingo_symbols),
                 ],
             )
         )
@@ -958,16 +968,15 @@ def python_evaluation_output() -> list[clingo.Symbol]:
     cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
-    symbol_cache: ClingoSymbolCache = {}
     for evaluation_output in cache.python_evaluation_outputs:
         expr_, uid, output_value = evaluation_output
         result.append(
             clingo.Function(
                 "",
                 [
-                    _cached_pytocl(expr_, symbol_cache),
-                    _cached_pytocl(uid, symbol_cache),
-                    _cached_pytocl(output_value, symbol_cache),
+                    _cached_pytocl(expr_, cache.clingo_symbols),
+                    _cached_pytocl(uid, cache.clingo_symbols),
+                    _cached_pytocl(output_value, cache.clingo_symbols),
                 ],
             )
         )
