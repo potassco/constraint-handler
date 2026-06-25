@@ -1,10 +1,11 @@
-from functools import cache
 import math
+from functools import cache
 
 import clingo
 
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.expression as expression
+
 
 @cache
 def pythonScaleInteger(value, scale):
@@ -12,11 +13,15 @@ def pythonScaleInteger(value, scale):
     Scales the given float/bool/integer value by the provided scale factor.
     Returns floor of scaled value
     """
-    return myClorm.pytocl(math.floor(myClorm.cltopy(value, expression.constant) * myClorm.cltopy(scale, expression.constant)))
+    return myClorm.pytocl(
+        math.floor(myClorm.cltopy(value, expression.constant) * myClorm.cltopy(scale, expression.constant))
+    )
+
 
 @cache
 def _to_val(type_, v):
-        return clingo.Function("val", [clingo.Function(type_, []), myClorm.pytocl(v)])
+    return clingo.Function("val", [clingo.Function(type_, []), myClorm.pytocl(v)])
+
 
 @cache
 def pythonFloatUnary(operator, val):
@@ -33,24 +38,29 @@ def pythonFloatUnary(operator, val):
         case _:
             return clingo.Function("bad", [])
 
+
 @cache
 def pythonFloatBinary(operator, val1, val2):
-    """ given an operator and two values, evaluates the result of applying the operator to the values as floating string ("42.0") """
+    """given an operator and two values, evaluates the result of applying the operator to the values as floating string ("42.0")"""
     if val1.type == clingo.SymbolType.Number:
         value1 = val1.number
-    elif val1.type == clingo.SymbolType.Function and \
-         val1.name == "float" and len(val1.arguments) == 1 and \
-         val1.arguments[0].type == clingo.SymbolType.String:
+    elif (
+        val1.type == clingo.SymbolType.Function
+        and val1.name == "float"
+        and len(val1.arguments) == 1
+        and val1.arguments[0].type == clingo.SymbolType.String
+    ):
         value1 = float(val1.arguments[0].string)
 
     if val2.type == clingo.SymbolType.Number:
         value2 = val2.number
-    elif val2.type == clingo.SymbolType.Function and \
-         val2.name == "float" and len(val2.arguments) == 1 and \
-         val2.arguments[0].type == clingo.SymbolType.String:
+    elif (
+        val2.type == clingo.SymbolType.Function
+        and val2.name == "float"
+        and len(val2.arguments) == 1
+        and val2.arguments[0].type == clingo.SymbolType.String
+    ):
         value2 = float(val2.arguments[0].string)
-
-
 
     match operator.name:
         case "add":
@@ -68,7 +78,7 @@ def pythonFloatBinary(operator, val1, val2):
         case "sub":
             return _to_val("float", value1 - value2)
         case "pow":
-            return _to_val("float", value1 ** value2)
+            return _to_val("float", value1**value2)
         case "eq":
             return _to_val("bool", value1 == value2)
         case "neq":
@@ -87,4 +97,3 @@ def pythonFloatBinary(operator, val1, val2):
             return _to_val("float", min(value1, value2))
         case _:
             return clingo.Function("bad", [])
-
