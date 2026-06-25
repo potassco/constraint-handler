@@ -33,12 +33,12 @@ _loaded :- _load_top_level_expressions, _load_solver_identifiers.
 %%% for such an expression we might have
 %%% _se_set_domain_symbol()
 %%% _se_set_domain(Expr, Uid) means that Uid is an identifier of a possible value of the set
-%%% _se_set_domain(Expr, Uid, Sign, Value) means that Value is member of that Uid domain if Sign==pos
-%%% _se_set_domain(Expr, Uid, Sign, Value) means that Value is not member of that Uid domain if Sign==neg
+%%% _se_set_domain(Uid, Sign, Value) means that Value is member of that Uid domain if Sign==pos
+%%% _se_set_domain(Uid, Sign, Value) means that Value is not member of that Uid domain if Sign==neg
 
 _se_domain(Expr, Value) :- (Expr, Value) = @expression_domain(), _loaded.
 _se_set_domain(Expr, Uid) :- (Expr, Uid) = @expression_set_domain(), _loaded.
-_se_set_domain(Expr, Uid, Sign, Value) :- (Expr, Uid, Sign, Value) = @expression_set_domain_value(), _loaded.
+_se_set_domain(Uid, Sign, Value) :- (Uid, Sign, Value) = @expression_set_domain_value(), _loaded.
 _se_is_set(Expr) :- Expr = @expression_set(), _loaded.
 
 %%% compute the python evaluation traces
@@ -81,8 +81,7 @@ ExpressionGraph: TypeAlias = dict[Expr, set[Expr]]
 VariableSources: TypeAlias = dict[clingo.Symbol, set[Expr]]
 SetCandidateDomains: TypeAlias = dict[Expr, set[ReducedExpr]]
 SetVariableSources: TypeAlias = dict[clingo.Symbol, dict[str, set[Expr]]]
-SetUidMaps: TypeAlias = dict[Expr, dict[frozenset[ReducedExpr], int]]
-SetUidMapsBySymbol: TypeAlias = dict[clingo.Symbol, dict[frozenset[ReducedExpr], int]]
+GlobalSetUidMap: TypeAlias = dict[frozenset[ReducedExpr], int]
 PythonEvaluationOutputTerm: TypeAlias = ReducedExpr | warning.Error
 PythonEvaluationOutputValue: TypeAlias = PythonEvaluationOutputTerm | int
 PythonEvaluationInputValue: TypeAlias = ReducedExpr | int
@@ -100,8 +99,7 @@ class PreprocessStorage(NamedTuple):
     expression_domains: ExpressionDomains
     set_candidate_domains: SetCandidateDomains
     set_expressions: set[Expr]
-    set_uid_maps: SetUidMaps
-    set_uid_maps_by_symbol: SetUidMapsBySymbol
+    global_set_uids: GlobalSetUidMap
     python_evaluations: list[PythonEvaluationAtom]
     python_evaluation_inputs: list[PythonEvaluationInputAtom]
     python_evaluation_outputs: list[PythonEvaluationOutputAtom]
@@ -476,10 +474,16 @@ def _concrete_set_domain(
             return concrete_sets or None
 
 
-def _set_uid_map(values: set[ReducedExpr]) -> dict[frozenset[ReducedExpr], int]:
-    """Create stable identifiers for the concrete set values in one expression domain."""
+def _register_set_uids(values: set[ReducedExpr], global_set_uids: GlobalSetUidMap) -> None:
+    """Register globally stable identifiers for all concrete set values in one expression domain."""
     set_values = [value for value in sorted(values, key=str) if isinstance(value, frozenset)]
-    return {set_value: uid for uid, set_value in enumerate(set_values)}
+    for set_value in set_values:
+        global_set_uids.setdefault(set_value, len(global_set_uids))
+
+
+def _expression_set_values(values: set[ReducedExpr]) -> list[frozenset[ReducedExpr]]:
+    """Return the concrete set values present in one expression domain in stable order."""
+    return [value for value in sorted(values, key=str) if isinstance(value, frozenset)]
 
 
 def _python_result_terms(result: Any, errors: list[tuple[warning.Kind, Any]]) -> list[PythonEvaluationOutputTerm]:
@@ -644,12 +648,12 @@ def _python_domain_values(output_terms: list[PythonEvaluationOutputTerm]) -> set
     return {term for term in output_terms if not isinstance(term, warning.Error)}
 
 
-def _python_value_reference(expr_: Expr, value: PythonEvaluationOutputValue, set_uid_maps: SetUidMaps) -> PythonEvaluationOutputValue:
-    """Replace concrete set values by the stable UID of the owning set expression when available."""
+def _python_value_reference(value: PythonEvaluationOutputValue, global_set_uids: GlobalSetUidMap) -> PythonEvaluationOutputValue:
+    """Replace concrete set values by their global stable UID when available."""
     if isinstance(value, frozenset):
-        uid_map = set_uid_maps.get(expr_)
-        if uid_map is not None and value in uid_map:
-            return uid_map[value]
+        uid = global_set_uids.get(value)
+        if uid is not None:
+            return uid
     return value
 
 
@@ -708,10 +712,9 @@ def _evaluate_domain(
 def _compute_domains() -> PreprocessStorage:
     """Compute domains and Python evaluation traces in dependency order."""
     graph, variable_sources, set_sources = _build_expression_graph()
-    globals_env = evaluator.get_environment(solver_identifiers)
     expression_domains: ExpressionDomains = {}
     set_candidate_domains: SetCandidateDomains = {}
-    set_uid_maps: SetUidMaps = {}
+    global_set_uids: GlobalSetUidMap = {}
     python_evaluations: list[PythonEvaluationAtom] = []
     python_evaluation_inputs: list[PythonEvaluationInputAtom] = []
     python_evaluation_outputs: list[PythonEvaluationOutputAtom] = []
@@ -739,13 +742,11 @@ def _compute_domains() -> PreprocessStorage:
                 raw_outputs = _python_expression_output_terms(expr_, solver_identifiers)
                 expression_domains[expr_] = _python_domain_values(raw_outputs)
 
-                uid_map = _set_uid_map(expression_domains[expr_])
-                if uid_map:
-                    set_uid_maps[expr_] = uid_map
+                _register_set_uids(expression_domains[expr_], global_set_uids)
 
                 for output_value in raw_outputs:
                     python_evaluation_outputs.append(
-                        (expr_, 0, _python_value_reference(expr_, output_value, set_uid_maps))
+                        (expr_, 0, _python_value_reference(output_value, global_set_uids))
                     )
             case expression.Operation(op_value, args) if isinstance(op_value, (expression.Python, expression.PythonExtract)):
                 arg_domains = [expression_domains.get(arg, set()) for arg in args]
@@ -769,9 +770,7 @@ def _compute_domains() -> PreprocessStorage:
 
                 expression_domains[expr_] = values
 
-                uid_map = _set_uid_map(values)
-                if uid_map:
-                    set_uid_maps[expr_] = uid_map
+                _register_set_uids(values, global_set_uids)
 
                 for uid, (bindings, output_signature) in enumerate(
                     _compressed_python_evaluations(arg_domains, outputs_by_assignment)
@@ -800,7 +799,7 @@ def _compute_domains() -> PreprocessStorage:
                                     expr_,
                                     uid,
                                     value_expr,
-                                    _python_value_reference(value_expr, parameter_value, set_uid_maps),
+                                    _python_value_reference(parameter_value, global_set_uids),
                                 )
                             )
                     else:
@@ -811,21 +810,18 @@ def _compute_domains() -> PreprocessStorage:
                                     expr_,
                                     uid,
                                     arg_expr,
-                                    _python_value_reference(arg_expr, arg_value, set_uid_maps),
+                                    _python_value_reference(arg_value, global_set_uids),
                                 )
                             )
 
                     for output_value in output_signature:
                         python_evaluation_outputs.append(
-                            (expr_, uid, _python_value_reference(expr_, output_value, set_uid_maps))
+                            (expr_, uid, _python_value_reference(output_value, global_set_uids))
                         )
             case _:
                 expression_domains[expr_] = _evaluate_domain(expr_, expression_domains, solver_identifiers)
 
-        if expr_ not in set_uid_maps:
-            uid_map = _set_uid_map(expression_domains[expr_])
-            if uid_map:
-                set_uid_maps[expr_] = uid_map
+        _register_set_uids(expression_domains[expr_], global_set_uids)
 
         candidate_domain = _set_candidate_domain(expr_, expression_domains, set_sources)
         if candidate_domain is not None:
@@ -844,16 +840,11 @@ def _compute_domains() -> PreprocessStorage:
     set_expressions.update(declared_set_exprs)
     clingo_symbols={}
 
-    set_uid_maps_by_symbol: SetUidMapsBySymbol = {}
-    for expr_, uid_map in set_uid_maps.items():
-        set_uid_maps_by_symbol[_cached_pytocl(expr_, clingo_symbols)] = uid_map
-
     return PreprocessStorage(
         expression_domains=expression_domains,
         set_candidate_domains=set_candidate_domains,
         set_expressions=set_expressions,
-        set_uid_maps=set_uid_maps,
-        set_uid_maps_by_symbol=set_uid_maps_by_symbol,
+        global_set_uids=global_set_uids,
         python_evaluations=python_evaluations,
         python_evaluation_inputs=python_evaluation_inputs,
         python_evaluation_outputs=python_evaluation_outputs,
@@ -880,9 +871,10 @@ def expression_set_domain() -> list[clingo.Symbol]:
     cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
-    for expr_, uid_map in sorted(cache.set_uid_maps.items(), key=lambda item: str(item[0])):
+    for expr_, values in sorted(cache.expression_domains.items(), key=lambda item: str(item[0])):
         cl_expr = _cached_pytocl(expr_, cache.clingo_symbols)
-        for _set_value, uid in sorted(uid_map.items(), key=lambda item: item[1]):
+        for set_value in _expression_set_values(values):
+            uid = cache.global_set_uids[set_value]
             result.append(clingo.symbol.Function("", [cl_expr, _cached_pytocl(uid, cache.clingo_symbols)]))
     return result
 
@@ -891,25 +883,28 @@ def expression_set_domain_value() -> list[clingo.Symbol]:
     """Expose explicit positive and negative membership for each concrete set domain."""
     cache = _compute_domains()
 
+    uid_candidates: dict[int, set[ReducedExpr]] = {}
+    for expr_, candidate_values in cache.set_candidate_domains.items():
+        for set_value in _expression_set_values(cache.expression_domains.get(expr_, set())):
+            uid = cache.global_set_uids[set_value]
+            uid_candidates.setdefault(uid, set()).update(candidate_values)
+
     result: list[clingo.Symbol] = []
-    for expr_, uid_map in sorted(cache.set_uid_maps.items(), key=lambda item: str(item[0])):
-        cl_expr = _cached_pytocl(expr_, cache.clingo_symbols)
-        candidate_values = cache.set_candidate_domains.get(expr_, set())
-        for set_value, uid in sorted(uid_map.items(), key=lambda item: item[1]):
-            members = set(set_value)
-            for member in sorted(candidate_values | members, key=str):
-                sign = SET_DOMAIN_POS if member in members else SET_DOMAIN_NEG
-                result.append(
-                    clingo.symbol.Function(
-                        "",
-                        [
-                            cl_expr,
-                            _cached_pytocl(uid, cache.clingo_symbols),
-                            _cached_pytocl(sign, cache.clingo_symbols),
-                            _cached_pytocl(member, cache.clingo_symbols),
-                        ],
-                    )
+    for set_value, uid in sorted(cache.global_set_uids.items(), key=lambda item: item[1]):
+        members = set(set_value)
+        candidate_values = uid_candidates.get(uid, set())
+        for member in sorted(candidate_values | members, key=str):
+            sign = SET_DOMAIN_POS if member in members else SET_DOMAIN_NEG
+            result.append(
+                clingo.symbol.Function(
+                    "",
+                    [
+                        _cached_pytocl(uid, cache.clingo_symbols),
+                        _cached_pytocl(sign, cache.clingo_symbols),
+                        _cached_pytocl(member, cache.clingo_symbols),
+                    ],
                 )
+            )
     return result
 
 
@@ -917,11 +912,15 @@ def expression_set_domain_symbol(cl_expr: clingo.Symbol) -> list[clingo.Symbol]:
     """Expose concrete set values only for the requested set expression."""
     cache = _compute_domains()
 
-    uid_map = cache.set_uid_maps_by_symbol.get(cl_expr, {})
-    return [
-        _cached_pytocl((uid, set_value), cache.clingo_symbols)
-        for set_value, uid in sorted(uid_map.items(), key=lambda item: item[1])
-    ]
+    result: list[clingo.Symbol] = []
+    for expr_, values in sorted(cache.expression_domains.items(), key=lambda item: str(item[0])):
+        if _cached_pytocl(expr_, cache.clingo_symbols) != cl_expr:
+            continue
+        for set_value in _expression_set_values(values):
+            uid = cache.global_set_uids[set_value]
+            result.append(_cached_pytocl((uid, set_value), cache.clingo_symbols))
+        break
+    return result
 
 
 def expression_set() -> list[clingo.Symbol]:

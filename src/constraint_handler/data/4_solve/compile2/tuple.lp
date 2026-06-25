@@ -34,7 +34,7 @@ _tuple_set_value_matches_uid(Arg, SetValue, Uid) :-
     _expression_tupleIndex(compile2, Tuple, Idx, Arg),
     _se_is_set(Arg),
     _tuple_set_value_matches_uid(Arg, SetValue, Uid),
-    _se_set_domain(Arg, Uid, pos, Value),
+    _se_set_domain(Uid, pos, Value),
     not _set_contains(Arg, Value).
 
 :-
@@ -42,7 +42,7 @@ _tuple_set_value_matches_uid(Arg, SetValue, Uid) :-
     _expression_tupleIndex(compile2, Tuple, Idx, Arg),
     _se_is_set(Arg),
     _tuple_set_value_matches_uid(Arg, SetValue, Uid),
-    _se_set_domain(Arg, Uid, neg, Value),
+    _se_set_domain(Uid, neg, Value),
     _set_contains(Arg, Value).
 
 %%%%%%%%%%%%%%%%%% eq neq
