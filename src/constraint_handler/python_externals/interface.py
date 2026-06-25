@@ -110,7 +110,6 @@ def pythonStatementVariables(clCode, clInTypes, clId):
             if isinstance(var, str):
                 tEnv[var].add(t)
         results = []
-        locals = dict()
         pyInputs = {x: frozenset((type_.py_type(t),)) for (x, t) in pInT}
         analysis = python_analysis.analyze_python_statement_types(pCode, globals, pyInputs)
         for x, ts in analysis.name_types.items():
