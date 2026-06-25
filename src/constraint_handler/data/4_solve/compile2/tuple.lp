@@ -1,11 +1,3 @@
-_tuple_aux(Tuple, N, ()) :-
-    _expression(compile2, Tuple),
-    _expression_tupleLength(compile2, Tuple, N).
-_tuple_aux(Tuple, N, (V, Tail)) :-
-    _tuple_aux(Tuple, N+1, Tail),
-    _expression_tupleIndex(compile2, Tuple, N, ARG),
-    _se_value(ARG, V).
-
 _tuple_value_index(Tuple, TupleValue, Idx, Value) :-
     _se_value(Tuple, TupleValue),
     _expression_tupleIndex(compile2, Tuple, Idx, _),
@@ -19,7 +11,7 @@ _tuple_set_component(Tuple, TupleValue, Idx, Arg, SetValue) :-
 
 _se_set_domain_symbol(Arg, Uid, SetValue) :-
     _tuple_set_component(_, _, _, Arg, _),
-    (Uid, SetValue) = @expressionSetDomainSymbol(Arg).
+    (Uid, SetValue) = @expression_set_domain_symbol(Arg).
 
 _tuple_set_value_matches_uid(Arg, SetValue, Uid) :-
     _tuple_set_component(_, _, _, Arg, SetValue),
