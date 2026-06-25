@@ -82,6 +82,7 @@ VariableSources: TypeAlias = dict[clingo.Symbol, set[Expr]]
 SetCandidateDomains: TypeAlias = dict[Expr, set[ReducedExpr]]
 SetVariableSources: TypeAlias = dict[clingo.Symbol, dict[str, set[Expr]]]
 SetUidMaps: TypeAlias = dict[Expr, dict[frozenset[ReducedExpr], int]]
+SetUidMapsBySymbol: TypeAlias = dict[clingo.Symbol, dict[frozenset[ReducedExpr], int]]
 PythonEvaluationOutputTerm: TypeAlias = ReducedExpr | warning.Error
 PythonEvaluationOutputValue: TypeAlias = PythonEvaluationOutputTerm | int
 PythonEvaluationInputValue: TypeAlias = ReducedExpr | int
@@ -100,6 +101,7 @@ class PreprocessStorage(NamedTuple):
     set_candidate_domains: SetCandidateDomains
     set_expressions: set[Expr]
     set_uid_maps: SetUidMaps
+    set_uid_maps_by_symbol: SetUidMapsBySymbol
     python_evaluations: list[PythonEvaluationAtom]
     python_evaluation_inputs: list[PythonEvaluationInputAtom]
     python_evaluation_outputs: list[PythonEvaluationOutputAtom]
@@ -840,15 +842,22 @@ def _compute_domains() -> PreprocessStorage:
     }
     set_expressions.update(set_candidate_domains)
     set_expressions.update(declared_set_exprs)
+    clingo_symbols={}
+
+    set_uid_maps_by_symbol: SetUidMapsBySymbol = {}
+    for expr_, uid_map in set_uid_maps.items():
+        set_uid_maps_by_symbol[_cached_pytocl(expr_, clingo_symbols)] = uid_map
+
     return PreprocessStorage(
         expression_domains=expression_domains,
         set_candidate_domains=set_candidate_domains,
         set_expressions=set_expressions,
         set_uid_maps=set_uid_maps,
+        set_uid_maps_by_symbol=set_uid_maps_by_symbol,
         python_evaluations=python_evaluations,
         python_evaluation_inputs=python_evaluation_inputs,
         python_evaluation_outputs=python_evaluation_outputs,
-        clingo_symbols={},
+        clingo_symbols=clingo_symbols,
     )
 
 
@@ -908,8 +917,7 @@ def expression_set_domain_symbol(cl_expr: clingo.Symbol) -> list[clingo.Symbol]:
     """Expose concrete set values only for the requested set expression."""
     cache = _compute_domains()
 
-    expr_ = myClorm.cltopy(cl_expr, expression.Expr)
-    uid_map = cache.set_uid_maps.get(expr_, {})
+    uid_map = cache.set_uid_maps_by_symbol.get(cl_expr, {})
     return [
         _cached_pytocl((uid, set_value), cache.clingo_symbols)
         for set_value, uid in sorted(uid_map.items(), key=lambda item: item[1])
