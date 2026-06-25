@@ -1,5 +1,3 @@
-
-%%% collect all top-level expressions from the compile2 phase
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=bool_evaluate(E).
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=ensure(E).
 _top_level_expression(operation(OP,ARGS)) :- _passed(compile2,LBL,DECL), DECL=evaluate(OP,ARGS).
@@ -60,6 +58,7 @@ _python_evaluation_output(PyExpr, Uid, OutputVal) :-
 #script(python)
 import itertools
 from collections.abc import Iterable
+from functools import cache
 from typing import Any, NamedTuple, TypeAlias
 
 import clingo
@@ -96,7 +95,7 @@ PythonExtractExecution: TypeAlias = tuple[dict[str, Any] | None, list[tuple[warn
 ClingoSymbolCache: TypeAlias = dict[Any, clingo.Symbol]
 
 
-class DomainCache(NamedTuple):
+class PreprocessStorage(NamedTuple):
     expression_domains: ExpressionDomains
     set_candidate_domains: SetCandidateDomains
     set_expressions: set[Expr]
@@ -120,7 +119,6 @@ solver_identifiers: tuple[expression.constant, ...] = ()
 SET_DOMAIN_POS = clingo.Function("pos")
 SET_DOMAIN_NEG = clingo.Function("neg")
 PYTHON_EVAL_LEAF = object()
-
 
 def _cached_pytocl(value: Any, cache: ClingoSymbolCache) -> clingo.Symbol:
     """Convert one hashable value to a clingo symbol once and reuse it."""
@@ -420,6 +418,7 @@ def _concrete_set_domain(
     expr_: Expr,
     expression_domains: ExpressionDomains,
     set_sources: SetVariableSources,
+    declared_set_expressions: set[Expr],
 ) -> set[ReducedExpr] | None:
     """Enumerate concrete set values for set expressions using candidate and required members."""
 
@@ -439,7 +438,6 @@ def _concrete_set_domain(
 
     match expr_:
         case expression.Variable(var):
-            declared_set_expressions = _declared_set_expressions()
             if var not in set_sources:
                 if expression.Variable(var) in declared_set_expressions:
                     return {frozenset()}
@@ -703,14 +701,8 @@ def _evaluate_domain(
             return {expression.Bad.bad}
 
 
-def _compute_domains() -> tuple[
-    ExpressionDomains,
-    SetCandidateDomains,
-    SetUidMaps,
-    list[PythonEvaluationAtom],
-    list[PythonEvaluationInputAtom],
-    list[PythonEvaluationOutputAtom],
-]:
+@cache
+def _compute_domains() -> PreprocessStorage:
     """Compute domains and Python evaluation traces in dependency order."""
     graph, variable_sources, set_sources = _build_expression_graph()
     globals_env = evaluator.get_environment(solver_identifiers)
@@ -730,7 +722,12 @@ def _compute_domains() -> tuple[
                 for source_expr in variable_sources.get(expr_.arg, set()):
                     values.update(expression_domains.get(source_expr, set()))
 
-                concrete_set_domain = _concrete_set_domain(expr_, expression_domains, set_sources)
+                concrete_set_domain = _concrete_set_domain(
+                    expr_,
+                    expression_domains,
+                    set_sources,
+                    declared_set_exprs,
+                )
                 if concrete_set_domain is not None:
                     values.update(concrete_set_domain)
                 expression_domains[expr_] = values
@@ -835,36 +832,14 @@ def _compute_domains() -> tuple[
         expression_domains.setdefault(expr_, set())
         set_candidate_domains.setdefault(expr_, set())
 
-    return (
-        expression_domains,
-        set_candidate_domains,
-        set_uid_maps,
-        python_evaluations,
-        python_evaluation_inputs,
-        python_evaluation_outputs,
-    )
-
-
-@cache
-def _ensure_cached_domains() -> DomainCache:
-    """Return cached domain data, computing it once per grounding input."""
-    (
-        expression_domains,
-        set_candidate_domains,
-        set_uid_maps,
-        python_evaluations,
-        python_evaluation_inputs,
-        python_evaluation_outputs,
-    ) = _compute_domains()
-    declared_set_expressions = _declared_set_expressions()
     set_expressions = {
         expr_
         for expr_, values in expression_domains.items()
         if any(isinstance(value, frozenset) for value in values)
     }
     set_expressions.update(set_candidate_domains)
-    set_expressions.update(expr_ for expr_ in expression_domains if expr_ in declared_set_expressions)
-    cached_domains = DomainCache(
+    set_expressions.update(declared_set_exprs)
+    return PreprocessStorage(
         expression_domains=expression_domains,
         set_candidate_domains=set_candidate_domains,
         set_expressions=set_expressions,
@@ -873,12 +848,11 @@ def _ensure_cached_domains() -> DomainCache:
         python_evaluation_inputs=python_evaluation_inputs,
         python_evaluation_outputs=python_evaluation_outputs,
     )
-    return cached_domains
 
 
 def expression_domain() -> list[clingo.Symbol]:
     """Expose all computed expression-domain pairs back to clingo."""
-    cache = _ensure_cached_domains()
+    cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
     for expr_, values in sorted(cache.expression_domains.items(), key=lambda item: str(item[0])):
@@ -886,25 +860,25 @@ def expression_domain() -> list[clingo.Symbol]:
         for value in sorted(values, key=str):
             if expr_ in cache.set_expressions and isinstance(value, frozenset):
                 continue
-            result.append(myClorm.pytocl((cl_expr, value)))
+            result.append(clingo.symbol.Function("", [cl_expr, myClorm.pytocl(value)]))
     return result
 
 
 def expression_set_domain() -> list[clingo.Symbol]:
     """Expose one identifier per concrete set in the computed domain of a set expression."""
-    cache = _ensure_cached_domains()
+    cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
     for expr_, uid_map in sorted(cache.set_uid_maps.items(), key=lambda item: str(item[0])):
         cl_expr = myClorm.pytocl(expr_)
         for _set_value, uid in sorted(uid_map.items(), key=lambda item: item[1]):
-            result.append(myClorm.pytocl((cl_expr, uid)))
+            result.append(clingo.symbol.Function("", [cl_expr, myClorm.pytocl(uid)]))
     return result
 
 
 def expression_set_domain_value() -> list[clingo.Symbol]:
     """Expose explicit positive and negative membership for each concrete set domain."""
-    cache = _ensure_cached_domains()
+    cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
     for expr_, uid_map in sorted(cache.set_uid_maps.items(), key=lambda item: str(item[0])):
@@ -914,13 +888,13 @@ def expression_set_domain_value() -> list[clingo.Symbol]:
             members = set(set_value)
             for member in sorted(candidate_values | members, key=str):
                 sign = SET_DOMAIN_POS if member in members else SET_DOMAIN_NEG
-                result.append(myClorm.pytocl((cl_expr, uid, sign, member)))
+                result.append(clingo.symbol.Function("", [cl_expr, myClorm.pytocl(uid), myClorm.pytocl(sign), myClorm.pytocl(member)]))
     return result
 
 
 def expression_set_domain_symbol(cl_expr: clingo.Symbol) -> list[clingo.Symbol]:
     """Expose concrete set values only for the requested set expression."""
-    cache = _ensure_cached_domains()
+    cache = _compute_domains()
 
     expr_ = myClorm.cltopy(cl_expr, expression.Expr)
     uid_map = cache.set_uid_maps.get(expr_, {})
@@ -932,7 +906,7 @@ def expression_set_domain_symbol(cl_expr: clingo.Symbol) -> list[clingo.Symbol]:
 
 def expression_set() -> list[clingo.Symbol]:
     """Expose expressions whose computed domain contains a set value."""
-    cache = _ensure_cached_domains()
+    cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
     for expr_ in sorted(cache.set_expressions, key=str):
@@ -942,7 +916,7 @@ def expression_set() -> list[clingo.Symbol]:
 
 def python_evaluation() -> list[clingo.Symbol]:
     """Expose one identifier per Python evaluation considered during domain computation."""
-    cache = _ensure_cached_domains()
+    cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
     symbol_cache: ClingoSymbolCache = {}
@@ -959,7 +933,7 @@ def python_evaluation() -> list[clingo.Symbol]:
 
 def python_evaluation_input() -> list[clingo.Symbol]:
     """Expose the concrete inputs used in each Python evaluation."""
-    cache = _ensure_cached_domains()
+    cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
     symbol_cache: ClingoSymbolCache = {}
@@ -981,7 +955,7 @@ def python_evaluation_input() -> list[clingo.Symbol]:
 
 def python_evaluation_output() -> list[clingo.Symbol]:
     """Expose the outputs produced by each Python evaluation."""
-    cache = _ensure_cached_domains()
+    cache = _compute_domains()
 
     result: list[clingo.Symbol] = []
     symbol_cache: ClingoSymbolCache = {}

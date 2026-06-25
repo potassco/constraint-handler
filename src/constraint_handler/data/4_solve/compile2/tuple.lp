@@ -11,7 +11,7 @@ _tuple_set_component(Tuple, TupleValue, Idx, Arg, SetValue) :-
 
 _se_set_domain_symbol(Arg, Uid, SetValue) :-
     _tuple_set_component(_, _, _, Arg, _),
-    (Uid, SetValue) = @expression_set_domain_symbol(Arg).
+    (Uid, SetValue) = @expression_set_domain_symbol(Arg). % convert from old weird format
 
 _tuple_set_value_matches_uid(Arg, SetValue, Uid) :-
     _tuple_set_component(_, _, _, Arg, SetValue),
