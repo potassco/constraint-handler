@@ -110,7 +110,7 @@ def get_baseType(v):
     elif v is None:
         return BaseType.none
     else:
-        raise NotImplementedError(f"get_baseType is not implemented for {v}")
+        raise NotImplementedError(f"get_baseType is not implemented for {type(v).__name__}")
 
 
 def reducedExprAux(v):
