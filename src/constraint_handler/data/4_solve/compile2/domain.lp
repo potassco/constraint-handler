@@ -92,6 +92,7 @@ PythonEvaluationAssignment: TypeAlias = tuple[ReducedExpr, ...]
 PythonEvaluationOutputSignature: TypeAlias = tuple[PythonEvaluationOutputTerm, ...]
 PythonEvaluationCompressedTrace: TypeAlias = tuple[tuple[tuple[int, ReducedExpr], ...], PythonEvaluationOutputSignature]
 PythonExtractExecution: TypeAlias = tuple[dict[str, Any] | None, list[tuple[warning.Kind, Any]], bool | None]
+PythonExtractGroupKey: TypeAlias = tuple[str, tuple[Any, ...]]
 ClingoSymbolCache: TypeAlias = dict[Any, clingo.Symbol]
 
 
@@ -607,18 +608,10 @@ def _execute_python_extract_statement(
 
 
 def _python_extract_output_terms(
-    stmt: str,
     expr_code: str,
-    arg_values: tuple[ReducedExpr, ...],
-    solver_identifiers,
-    execution_cache: dict[tuple[str, tuple[ReducedExpr, ...]], PythonExtractExecution],
+    cached_execution: PythonExtractExecution,
 ) -> list[PythonEvaluationOutputTerm]:
-    """Evaluate one extracted Python output while reusing the underlying statement run."""
-    cache_key = (stmt, arg_values)
-    cached_execution = execution_cache.get(cache_key)
-    if cached_execution is None:
-        cached_execution = _execute_python_extract_statement(stmt, arg_values, solver_identifiers)
-        execution_cache[cache_key] = cached_execution
+    """Read one extracted Python output from a cached statement execution."""
     locals_env, errors, succeeds = cached_execution
 
     if locals_env is None:
@@ -627,14 +620,144 @@ def _python_extract_output_terms(
         return _python_result_terms(expression.Bad.bad, errors)
     if expr_code == "__succeeds":
         return _python_result_terms(succeeds, [])
+    if expr_code in locals_env:
+        return _python_result_terms(locals_env[expr_code], [])
 
-    try:
-        globals_env = evaluator.get_environment(solver_identifiers)
-        result = eval(evaluator.get_compiled_eval(expr_code), globals_env, locals_env)
-    except Exception as exn:
-        kind = warning.Expression(warning.ExpressionWarning.pythonError)
-        return _python_result_terms(expression.Bad.bad, [(kind, repr(exn))])
-    return _python_result_terms(result, [])
+    kind = warning.Expression(warning.ExpressionWarning.pythonError)
+    return _python_result_terms(expression.Bad.bad, [(kind, repr(KeyError(expr_code)))])
+
+
+def _python_extract_group_key(expr_: Expr) -> PythonExtractGroupKey | None:
+    """Return the grouping key for PythonExtract expressions that share one statement execution."""
+    match expr_:
+        case expression.Operation(expression.PythonExtract(stmt, _), args):
+            return (stmt, args)
+        case _:
+            return None
+
+
+def _group_python_extract_expressions(ordered_expressions: tuple[Expr, ...]) -> dict[PythonExtractGroupKey, tuple[Expr, ...]]:
+    """Collect PythonExtract expressions that can reuse the same statement-input iteration."""
+    grouped: dict[PythonExtractGroupKey, list[Expr]] = {}
+    for expr_ in ordered_expressions:
+        group_key = _python_extract_group_key(expr_)
+        if group_key is None:
+            continue
+        grouped.setdefault(group_key, []).append(expr_)
+    return {group_key: tuple(group_exprs) for group_key, group_exprs in grouped.items()}
+
+
+def _record_python_evaluation(
+    expr_: Expr,
+    args,
+    arg_domains: list[set[ReducedExpr]],
+    outputs_by_assignment: dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature],
+    global_set_uids: GlobalSetUidMap,
+    python_evaluations: list[PythonEvaluationAtom],
+    python_evaluation_inputs: list[PythonEvaluationInputAtom],
+    python_evaluation_outputs: list[PythonEvaluationOutputAtom],
+) -> None:
+    """Compress and export one Python evaluation trace set."""
+    for uid, (bindings, output_signature) in enumerate(
+        _compressed_python_evaluations(arg_domains, outputs_by_assignment)
+    ):
+        python_evaluations.append((expr_, uid))
+
+        if isinstance(expr_, expression.Operation) and isinstance(expr_.op, expression.PythonExtract):
+            for index, arg_value in bindings:
+                arg_expr = args[index]
+                if not (
+                    isinstance(arg_expr, tuple)
+                    and len(arg_expr) == 2
+                    and isinstance(arg_expr[0], expression.Val)
+                ):
+                    continue
+                if not (
+                    isinstance(arg_value, tuple)
+                    and len(arg_value) == 2
+                    and isinstance(arg_value[0], expression.Val)
+                ):
+                    continue
+                _, parameter_value = arg_value
+                _, value_expr = arg_expr
+                python_evaluation_inputs.append(
+                    (
+                        expr_,
+                        uid,
+                        value_expr,
+                        _python_value_reference(parameter_value, global_set_uids),
+                    )
+                )
+        else:
+            for index, arg_value in bindings:
+                arg_expr = args[index]
+                python_evaluation_inputs.append(
+                    (
+                        expr_,
+                        uid,
+                        arg_expr,
+                        _python_value_reference(arg_value, global_set_uids),
+                    )
+                )
+
+        for output_value in output_signature:
+            python_evaluation_outputs.append(
+                (expr_, uid, _python_value_reference(output_value, global_set_uids))
+            )
+
+
+def _process_python_extract_group(
+    group_exprs: tuple[Expr, ...],
+    expression_domains: ExpressionDomains,
+    solver_identifiers,
+    execution_cache: dict[tuple[str, tuple[ReducedExpr, ...]], PythonExtractExecution],
+    global_set_uids: GlobalSetUidMap,
+    python_evaluations: list[PythonEvaluationAtom],
+    python_evaluation_inputs: list[PythonEvaluationInputAtom],
+    python_evaluation_outputs: list[PythonEvaluationOutputAtom],
+) -> None:
+    """Evaluate a family of PythonExtract expressions by iterating their shared input product once."""
+    first_expr = group_exprs[0]
+    if not isinstance(first_expr, expression.Operation) or not isinstance(first_expr.op, expression.PythonExtract):
+        return
+
+    stmt = first_expr.op.stmt
+    args = first_expr.args
+    arg_domains = [expression_domains.get(arg, set()) for arg in args]
+    values_by_expr: dict[Expr, set[ReducedExpr]] = {expr_: set() for expr_ in group_exprs}
+    outputs_by_expr: dict[Expr, dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature]] = {
+        expr_: {} for expr_ in group_exprs
+    }
+
+    if not any(not domain for domain in arg_domains):
+        for arg_values in _domain_product(arg_domains):
+            cache_key = (stmt, arg_values)
+            cached_execution = execution_cache.get(cache_key)
+            if cached_execution is None:
+                cached_execution = _execute_python_extract_statement(stmt, arg_values, solver_identifiers)
+                execution_cache[cache_key] = cached_execution
+
+            for expr_ in group_exprs:
+                if not isinstance(expr_, expression.Operation) or not isinstance(expr_.op, expression.PythonExtract):
+                    continue
+                raw_outputs = _python_extract_output_terms(expr_.op.expr, cached_execution)
+                outputs_by_expr[expr_][arg_values] = _python_output_signature(raw_outputs)
+                values_by_expr[expr_].update(_python_domain_values(raw_outputs))
+
+    for expr_ in group_exprs:
+        values = values_by_expr[expr_]
+        expression_domains[expr_] = values
+        _register_set_uids(values, global_set_uids)
+        _record_python_evaluation(
+            expr_,
+            args,
+            arg_domains,
+            outputs_by_expr[expr_],
+            global_set_uids,
+            python_evaluations,
+            python_evaluation_inputs,
+            python_evaluation_outputs,
+        )
 
 
 def _python_expression_output_terms(expr_: expression.Python, solver_identifiers) -> list[PythonEvaluationOutputTerm]:
@@ -712,6 +835,8 @@ def _evaluate_domain(
 def _compute_domains() -> PreprocessStorage:
     """Compute domains and Python evaluation traces in dependency order."""
     graph, variable_sources, set_sources = _build_expression_graph()
+    ordered_expressions = tuple(_topological_order(graph))
+    python_extract_groups = _group_python_extract_expressions(ordered_expressions)
     expression_domains: ExpressionDomains = {}
     set_candidate_domains: SetCandidateDomains = {}
     global_set_uids: GlobalSetUidMap = {}
@@ -721,7 +846,31 @@ def _compute_domains() -> PreprocessStorage:
     python_extract_execution_cache: dict[tuple[str, tuple[ReducedExpr, ...]], PythonExtractExecution] = {}
     declared_set_exprs = _declared_set_expressions()
 
-    for expr_ in _topological_order(graph):
+    processed_python_extract_groups: set[PythonExtractGroupKey] = set()
+
+    for expr_ in ordered_expressions:
+        group_key = _python_extract_group_key(expr_)
+        if group_key is not None:
+            if group_key in processed_python_extract_groups:
+                continue
+            _process_python_extract_group(
+                python_extract_groups[group_key],
+                expression_domains,
+                solver_identifiers,
+                python_extract_execution_cache,
+                global_set_uids,
+                python_evaluations,
+                python_evaluation_inputs,
+                python_evaluation_outputs,
+            )
+            processed_python_extract_groups.add(group_key)
+
+            for group_expr in python_extract_groups[group_key]:
+                candidate_domain = _set_candidate_domain(group_expr, expression_domains, set_sources)
+                if candidate_domain is not None:
+                    set_candidate_domains[group_expr] = candidate_domain
+            continue
+
         match expr_:
             case expression.Variable(_):
                 values: set[ReducedExpr] = set()
@@ -748,76 +897,30 @@ def _compute_domains() -> PreprocessStorage:
                     python_evaluation_outputs.append(
                         (expr_, 0, _python_value_reference(output_value, global_set_uids))
                     )
-            case expression.Operation(op_value, args) if isinstance(op_value, (expression.Python, expression.PythonExtract)):
+            case expression.Operation(op_value, args) if isinstance(op_value, expression.Python):
                 arg_domains = [expression_domains.get(arg, set()) for arg in args]
                 values: set[ReducedExpr] = set()
                 outputs_by_assignment: dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature] = {}
 
                 if not any(not domain for domain in arg_domains):
                     for arg_values in _domain_product(arg_domains):
-                        if isinstance(op_value, expression.PythonExtract):
-                            raw_outputs = _python_extract_output_terms(
-                                op_value.stmt,
-                                op_value.expr,
-                                arg_values,
-                                solver_identifiers,
-                                python_extract_execution_cache,
-                            )
-                        else:
-                            raw_outputs = _python_operation_output_terms(op_value, arg_values, solver_identifiers)
+                        raw_outputs = _python_operation_output_terms(op_value, arg_values, solver_identifiers)
                         outputs_by_assignment[arg_values] = _python_output_signature(raw_outputs)
                         values.update(_python_domain_values(raw_outputs))
 
                 expression_domains[expr_] = values
 
                 _register_set_uids(values, global_set_uids)
-
-                for uid, (bindings, output_signature) in enumerate(
-                    _compressed_python_evaluations(arg_domains, outputs_by_assignment)
-                ):
-                    python_evaluations.append((expr_, uid))
-
-                    if isinstance(op_value, expression.PythonExtract):
-                        for index, arg_value in bindings:
-                            arg_expr = args[index]
-                            if not (
-                                isinstance(arg_expr, tuple)
-                                and len(arg_expr) == 2
-                                and isinstance(arg_expr[0], expression.Val)
-                            ):
-                                continue
-                            if not (
-                                isinstance(arg_value, tuple)
-                                and len(arg_value) == 2
-                                and isinstance(arg_value[0], expression.Val)
-                            ):
-                                continue
-                            _, parameter_value = arg_value
-                            _, value_expr = arg_expr
-                            python_evaluation_inputs.append(
-                                (
-                                    expr_,
-                                    uid,
-                                    value_expr,
-                                    _python_value_reference(parameter_value, global_set_uids),
-                                )
-                            )
-                    else:
-                        for index, arg_value in bindings:
-                            arg_expr = args[index]
-                            python_evaluation_inputs.append(
-                                (
-                                    expr_,
-                                    uid,
-                                    arg_expr,
-                                    _python_value_reference(arg_value, global_set_uids),
-                                )
-                            )
-
-                    for output_value in output_signature:
-                        python_evaluation_outputs.append(
-                            (expr_, uid, _python_value_reference(output_value, global_set_uids))
-                        )
+                _record_python_evaluation(
+                    expr_,
+                    args,
+                    arg_domains,
+                    outputs_by_assignment,
+                    global_set_uids,
+                    python_evaluations,
+                    python_evaluation_inputs,
+                    python_evaluation_outputs,
+                )
             case _:
                 expression_domains[expr_] = _evaluate_domain(expr_, expression_domains, solver_identifiers)
 
