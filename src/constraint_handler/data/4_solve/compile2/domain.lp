@@ -121,6 +121,7 @@ solver_identifiers: tuple[expression.constant, ...] = ()
 SET_DOMAIN_POS = clingo.Function("pos")
 SET_DOMAIN_NEG = clingo.Function("neg")
 PYTHON_EVAL_LEAF = object()
+THRESHOLD_ITERATIONS_BOOLEAN_OUTPUT = 4 * 4 # (true, false, none, bad) for 2 input parameters
 
 def _cached_pytocl(value: Any, cache: ClingoSymbolCache) -> clingo.Symbol:
     """Convert one hashable value to a clingo symbol once and reuse it."""
@@ -809,7 +810,7 @@ def _evaluate_domain(
             apply_total = len(op_domains)
             for arg_domain in arg_domains:
                 apply_total *= len(arg_domain)
-            if _has_boolean_output(op) and apply_total > 1:
+            if _has_boolean_output(op) and apply_total > THRESHOLD_ITERATIONS_BOOLEAN_OUTPUT:
                 return _coarse_boolean_output_domain(op)
             for op_domain_value in sorted(op_domains, key=str):
                 op_value = _reduced_to_runtime(op_domain_value) if op_domain_value != op else op
