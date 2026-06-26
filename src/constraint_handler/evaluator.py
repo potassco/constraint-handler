@@ -129,7 +129,7 @@ def reducedExprAux(v):
     elif isinstance(v, frozenset) or isinstance(v, set):
         return frozenset({reducedExprAux(x) for x in v})
     elif isinstance(v, dict):
-        raise NotImplementedError(f"reducedExpr is not implemented for {dict} {v}")
+        raise NotImplementedError(f"reducedExpr is not implemented for {type(v).__name__}")
     elif isinstance(v, expression.Lambda):
         return v
     elif isinstance(v, expression.Bad):
@@ -137,13 +137,13 @@ def reducedExprAux(v):
     elif isinstance(v, tuple):
         return tuple(reducedExprAux(x) for x in v)
     else:
-        raise NotImplementedError(f"reducedExpr is not implemented for {v}")
+        raise NotImplementedError(f"reducedExpr is not implemented for {type(v).__name__}")
 
 
 def reducedExpr(v):
     try:
         result = reducedExprAux(v)
-        return (result, [])
+        return (result, ())
     except NotImplementedError as exn:
         warn = warning.Expression(warning.ExpressionWarning.notImplemented)
         return (expression.Bad.bad, ((warn, repr(exn)),))

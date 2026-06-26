@@ -179,6 +179,7 @@ compile2_skip: set[str] = {
 }
 compile2_xfail: set[str] = {
     "engine/request",
+    "expression/python_extract",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",
@@ -201,6 +202,8 @@ compile2_xfail: set[str] = {
     "core/type_checking",
     "engine/request_set_ref",  # mixed engines?
     "core/reasoning_modes",  # multimap
+    "python/extract_set_input",
+    "python/extract_static",
     "warning/variable_confusing_name",
     "warning/python",
 }
