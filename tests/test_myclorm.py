@@ -97,6 +97,13 @@ def test_cltopy_without_target_decodes_primitives_and_collections():
     assert myClorm.cltopyNoTarget(myClorm.pytocl(frozenset({1, 2}))) == frozenset({1, 2})
 
 
+def test_cltopy_set_is_encoded_with_clingo_ordered_elements():
+    elements = [2, 1, "b", "a"]  # note: Python doesn't support`sorting of mixed types but clingo does.
+    symbol = myClorm.pytocl(frozenset(elements))
+    clingo_elements = sorted([clingo.Number(1), clingo.Number(2), clingo.String("a"), clingo.String("b")])
+    assert symbol == clingo.Function("set", [myClorm.pytocl(clingo_elements)])
+
+
 def test_cltopy_typed_namedtuple_decodes_symbol():
     symbol = clingo.Function("sampleRecord", [clingo.Number(4), clingo.String("item")])
 
