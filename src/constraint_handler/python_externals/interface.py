@@ -35,7 +35,7 @@ def pythonExpressionVariable(clExpr):
     try:
         pExpr = myClorm.cltopy(clExpr, expression.Expr)
         pVars = list(evaluator.collectVars(pExpr))
-        clVars = [myClorm.pytocl(var) for var in pVars]
+        clVars = sorted([myClorm.pytocl(var) for var in pVars])
         return clVars
     except:
         return []
@@ -46,7 +46,7 @@ def pythonEnumerateVariables(clExpr):
     try:
         pExpr = myClorm.cltopy(clExpr, expression.Expr)
         pVars = list(evaluator.collectVars(pExpr))
-        result = [myClorm.pytocl(e) for e in enumerate(pVars)]
+        result = sorted([myClorm.pytocl(e) for e in enumerate(pVars)])
         result.append(clingo.Function("length", [clingo.Number(len(pVars))]))
         return result
     except:
@@ -88,7 +88,7 @@ def pythonEvalExpr(clExpr, clArgs, clId):
         for kind, msg in errors:
             results.append(warning.Error(kind, msg))
         results.append(pVal)
-        return [myClorm.pytocl(result) for result in results]
+        return sorted([myClorm.pytocl(result) for result in results])
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
         return myClorm.pytocl(warning.Error(kind, repr(exn)))
@@ -118,7 +118,7 @@ def pythonStatementVariables(clCode, clInTypes, clId):
                 for error in errs:
                     results.append(warning.Error(error, x))
                 results.append((x, cht))
-        return [myClorm.pytocl(result) for result in results]
+        return sorted([myClorm.pytocl(result) for result in results])
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Statement(warning.StatementWarning.syntaxError)
         return myClorm.pytocl(warning.Error(kind, str(exn)))
