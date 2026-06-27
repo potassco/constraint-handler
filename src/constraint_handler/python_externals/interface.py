@@ -89,7 +89,6 @@ def pythonEvalExpr(clExpr, clArgs, clId):
         for kind, msg in errors:
             results.append(warning.Error(kind, msg))
         results.append(pVal)
-        return []
         return sorted([myClorm.pytocl(result) for result in results])
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
