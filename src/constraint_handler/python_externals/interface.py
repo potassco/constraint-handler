@@ -47,7 +47,7 @@ def pythonEnumerateVariables(clExpr):
         pExpr = myClorm.cltopy(clExpr, expression.Expr)
         pVars = list(evaluator.collectVars(pExpr))
         subresult = sorted(myClorm.pytocl(v) for v in pVars)
-        result = [clingo.Function('',[clingo.Number(i), e]) for (i, e) in enumerate(subresult)]
+        result = [clingo.Function("", [clingo.Number(i), e]) for (i, e) in enumerate(subresult)]
         result.append(clingo.Function("length", [clingo.Number(len(pVars))]))
         return result
     except:
