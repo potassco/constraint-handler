@@ -46,7 +46,8 @@ def pythonEnumerateVariables(clExpr):
     try:
         pExpr = myClorm.cltopy(clExpr, expression.Expr)
         pVars = list(evaluator.collectVars(pExpr))
-        result = sorted([myClorm.pytocl(e) for e in enumerate(pVars)])
+        subresult = sorted(myClorm.pytocl(v) for v in pVars)
+        result = [clingo.Function('',[clingo.Number(i), e]) for (i, e) in enumerate(subresult)]
         result.append(clingo.Function("length", [clingo.Number(len(pVars))]))
         return result
     except:
@@ -88,6 +89,7 @@ def pythonEvalExpr(clExpr, clArgs, clId):
         for kind, msg in errors:
             results.append(warning.Error(kind, msg))
         results.append(pVal)
+        return []
         return sorted([myClorm.pytocl(result) for result in results])
     except myClorm.FailedInstantiationExn as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
