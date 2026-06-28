@@ -5,7 +5,6 @@ import clingo
 import constraint_handler.myClorm as myClorm
 import constraint_handler.python_externals.interface as interface
 import constraint_handler.schemas.expression as expression
-import constraint_handler.schemas.warning as warning
 
 
 def _clear_interface_caches() -> None:
