@@ -150,7 +150,7 @@ def pytocl(v, dtarget=None):
     if dtarget is tuple:
         return clingo.Function("", [pytocl(e) for e in v])
     if dtarget is set or dtarget is frozenset:
-        return clingo.Function("set", [nest([pytocl(e) for e in v])])
+        return clingo.Function("set", [nest(sorted([pytocl(e) for e in v]))])
     if dtarget is clingo.Symbol:
         return v
 
@@ -185,7 +185,7 @@ def pytocl(v, dtarget=None):
         elif issubclass(runtime_target, list):
             return nest([pytocl(e) for e in v])
         elif issubclass(runtime_target, set) or issubclass(runtime_target, frozenset):
-            return clingo.Function("set", [nest([pytocl(e) for e in v])])
+            return clingo.Function("set", [nest(sorted([pytocl(e) for e in v]))])
         elif any(issubclass(runtime_target, cls) for cls in containers.values()):
             assert False
             n = next(name for name, cls in containers.items() if issubclass(runtime_target, cls))
