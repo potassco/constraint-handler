@@ -25,7 +25,8 @@ _variable_exists/2.
 _variable_involve/3.
 _variable_confusingName/2.
 _variable_declared/1.
-_variable_reservedName/1.
+_variable_name(conflict,X).
+_variable_name(reserved,X).
 _variable_multipleDeclarations/3.
 _variable_multipleDefinitions/3.
 _variable_multiple/2.
