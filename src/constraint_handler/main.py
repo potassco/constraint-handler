@@ -14,6 +14,7 @@ module_main = [
     "pythonHelper",
     "pythonInterface",
     "pythonOther",
+    "template/variable_involve",
 ]
 
 module_0_default_arguments = [
@@ -37,7 +38,6 @@ module_3_variable_safety_checks = [
     "3_safe/variable_safety_checks/empty_domain",
     "3_safe/variable_safety_checks/multiple_declarations",
     "3_safe/variable_safety_checks/reserved_name",
-    "3_safe/variable_safety_checks/support",
     "3_safe/variable_safety_checks/undeclared",
 ]
 
