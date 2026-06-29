@@ -21,15 +21,16 @@ _statement_introduce/3.
 
 ### Intermediate predicates
 
+_variable_declared/1.
 _variable_exists/2.
 _variable_involve/3.
-_variable_confusingName/2.
-_variable_declared/1.
-_variable_name(conflict,X).
-_variable_name(reserved,X).
 _variable_multipleDeclarations/3.
 _variable_multipleDefinitions/3.
 _variable_multiple/2.
+_variable_name(conflict,X).
+_variable_name(confusing/1,X).
+_variable_name(reserved,X).
+_variable_strip/3.
 
 ### Output predicates
 
