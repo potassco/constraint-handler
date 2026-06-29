@@ -9,6 +9,7 @@ type_expression/2.
 defaultEngine/1.
 requestEngine/2.
 preference_maximizeScore/0.
+_variable_involve(presolve,LBL,X,DECL).
 
 ### Intermediate predicates
 
@@ -18,7 +19,6 @@ _passed(compile,LBL,DECL).
 _passed(ground,LBL,DECL).
 _passed(propagator,LBL,DECL).
 _solve_removed/1.
-_variable_involve/4.
 _solve_conflictVariable/1.
 _solve_firstLabel/2.
 _label/1.
