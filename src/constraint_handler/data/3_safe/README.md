@@ -28,7 +28,6 @@ _operator_safe/1.
 _operator_unsafe/1.
 _phase_active/1.
 _safe_bad/1.
-_se_value/2.
 _type/1.
 _type_list/2.
 _type_listArgT/3.
@@ -39,7 +38,6 @@ _type_variadicListAux/5.
 _variable_confusingName/2.
 _variable_declared/1.
 _variable_exists/2.
-_variable_hasDomain/2.
 _variable_query/2.
 _variable_safe/1.
 operator_declare/3.
