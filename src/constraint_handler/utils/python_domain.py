@@ -10,7 +10,34 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.solver_environment as solver_environment
 
 DomainAtom = bool | int | float | str | None | clingo.Symbol | tuple["DomainAtom", ...] | frozenset["DomainAtom"]
+PythonExtractExecution = tuple[dict[str, Any] | None, tuple[str, ...], bool | None]
 PYTHON_BAD = object()
+
+
+@dataclass(frozen=True, slots=True)
+class PythonEvaluationOutputRequest:
+    """Describe one requested Python output for a concrete input assignment."""
+
+    output_id: object = None
+    expr_code: str | None = None
+
+
+class PythonEvaluationSession:
+    """Bidirectional interface used while enumerating Python evaluation traces."""
+
+    def output_requests(self) -> tuple[PythonEvaluationOutputRequest, ...]:
+        """Return the outputs the current Python evaluation should produce."""
+        return (PythonEvaluationOutputRequest(),)
+
+    def record_output(
+        self,
+        output_id: object,
+        arg_values: tuple[DomainAtom, ...],
+        assignment_domain: "Domain",
+        error_messages: tuple[str, ...],
+    ) -> None:
+        """Receive one concrete Python output for the current assignment."""
+        del output_id, arg_values, assignment_domain, error_messages
 
 
 def _environment_key(identifier: object) -> object:
@@ -596,13 +623,24 @@ class Domain:
             return cls.bad()
 
     @classmethod
-    def evaluate_python_expression(cls, code: str, solver_identifiers: tuple[clingo.Symbol, ...]) -> Domain:
-        """Evaluate one bare Python expression as a singleton domain."""
+    def evaluate_python_expression(
+        cls,
+        code: str,
+        solver_identifiers: tuple[clingo.Symbol, ...],
+        evaluation_session: PythonEvaluationSession,
+    ) -> Domain:
+        """Evaluate one bare Python expression and optionally expose the concrete output."""
         try:
             result = eval(get_compiled_eval(code), get_environment(solver_identifiers), {})
-        except Exception:
-            return cls.bad()
-        return cls.from_runtime(result)
+        except Exception as exn:
+            domain = cls.bad()
+            error_messages = (repr(exn),)
+        else:
+            domain = cls.from_runtime(result)
+            error_messages = ()
+        for request in evaluation_session.output_requests():
+            evaluation_session.record_output(request.output_id, (), domain, error_messages)
+        return domain
 
     @classmethod
     def evaluate_python_callable(
@@ -610,8 +648,9 @@ class Domain:
         code: str,
         domains: tuple[Domain, ...],
         solver_identifiers: tuple[clingo.Symbol, ...],
+        evaluation_session: PythonEvaluationSession,
     ) -> Domain:
-        """Evaluate one Python callable over the Cartesian product of child domains."""
+        """Evaluate one Python callable and optionally expose per-input outputs."""
         arg_options = [domain.options() for domain in domains]
         if any(not options for options in arg_options):
             return cls.empty()
@@ -619,17 +658,29 @@ class Domain:
         result = cls.empty()
         try:
             call = eval(get_compiled_eval(code), get_environment(solver_identifiers), {})
-        except Exception:
-            return cls.bad()
+        except Exception as exn:
+            call = None
+            call_error_messages = (repr(exn),)
+        else:
+            call_error_messages = ()
 
         for arg_values in product(*arg_options):
-            runtime_args = tuple(cls.value_to_runtime(value) for value in arg_values)
-            try:
-                applied = call(*runtime_args)
-            except Exception:
-                result.is_none = True
-                continue
-            result.absorb(cls.from_runtime(applied))
+            if call_error_messages:
+                domain = cls.bad()
+                error_messages = call_error_messages
+            else:
+                runtime_args = tuple(cls.value_to_runtime(value) for value in arg_values)
+                try:
+                    applied = call(*runtime_args)
+                except Exception as exn:
+                    domain = cls.bad()
+                    error_messages = (repr(exn),)
+                else:
+                    domain = cls.from_runtime(applied)
+                    error_messages = ()
+            result.absorb(domain)
+            for request in evaluation_session.output_requests():
+                evaluation_session.record_output(request.output_id, arg_values, domain, error_messages)
         return result
 
     @classmethod
@@ -639,41 +690,79 @@ class Domain:
         expr_code: str,
         domains: tuple[Domain, ...],
         solver_identifiers: tuple[clingo.Symbol, ...],
+        evaluation_session: PythonEvaluationSession,
     ) -> Domain:
-        """Evaluate one PythonExtract operator over the Cartesian product of child domains."""
+        """Evaluate one PythonExtract operator and optionally expose per-input outputs."""
         arg_options = [domain.options() for domain in domains]
         if any(not options for options in arg_options):
             return cls.empty()
 
         result = cls.empty()
         for arg_values in product(*arg_options):
-            runtime_args = tuple(cls.value_to_runtime(value) for value in arg_values)
-            try:
-                locals_env = {name: val for name, val in runtime_args}
-            except (TypeError, ValueError):
-                result.is_bad = True
-                continue
-            if any(value is PYTHON_BAD for value in locals_env.values()):
-                result.is_bad = True
-                continue
-            try:
-                exec(get_compiled_exec(stmt), get_environment(solver_identifiers), locals_env)
-                succeeds = True
-            except solver_environment.FailIntegrityExn:
-                succeeds = False
-            except Exception:
-                result.is_bad = True
-                continue
-            if expr_code == "__succeeds":
-                result.bools.add(succeeds)
-                continue
-            try:
-                result_value = eval(get_compiled_eval(expr_code), get_environment(solver_identifiers), locals_env)
-            except Exception:
-                result.is_bad = True
-                continue
-            result.absorb(cls.from_runtime(result_value))
+            execution = cls.execute_python_extract_statement(stmt, arg_values, solver_identifiers)
+            requests = evaluation_session.output_requests()
+            if not requests:
+                requests = (PythonEvaluationOutputRequest(expr_code=expr_code),)
+            primary_domain: Domain | None = None
+            for request in requests:
+                requested_expr = expr_code if request.expr_code is None else request.expr_code
+                domain, error_messages = cls.evaluate_python_extract_output(
+                    requested_expr,
+                    execution,
+                    solver_identifiers,
+                )
+                if primary_domain is None:
+                    primary_domain = domain
+                evaluation_session.record_output(request.output_id, arg_values, domain, error_messages)
+            if primary_domain is not None:
+                result.absorb(primary_domain)
         return result
+
+    @classmethod
+    def execute_python_extract_statement(
+        cls,
+        stmt: str,
+        arg_values: tuple[DomainAtom, ...],
+        solver_identifiers: tuple[clingo.Symbol, ...],
+    ) -> PythonExtractExecution:
+        """Execute one PythonExtract statement for one concrete input assignment."""
+        runtime_args = tuple(cls.value_to_runtime(value) for value in arg_values)
+        try:
+            locals_env = {name: val for name, val in runtime_args}
+        except (TypeError, ValueError):
+            return None, (), None
+        if any(value is PYTHON_BAD for value in locals_env.values()):
+            return None, (), None
+        try:
+            exec(get_compiled_exec(stmt), get_environment(solver_identifiers), locals_env)
+        except solver_environment.FailIntegrityExn:
+            return None, (), False
+        except Exception as exn:
+            return None, (repr(exn),), None
+        return locals_env, (), True
+
+    @classmethod
+    def evaluate_python_extract_output(
+        cls,
+        expr_code: str,
+        execution: PythonExtractExecution,
+        solver_identifiers: tuple[clingo.Symbol, ...],
+    ) -> tuple[Domain, tuple[str, ...]]:
+        """Evaluate one PythonExtract output expression against a cached statement execution."""
+        locals_env, error_messages, succeeds = execution
+        if locals_env is None:
+            if succeeds is False and expr_code == "__succeeds":
+                return cls.booleans(False), ()
+            if error_messages:
+                return cls.bad(), error_messages
+            return cls.bad(), ()
+        if expr_code == "__succeeds":
+            return cls.booleans(True), ()
+        try:
+            result_value = eval(get_compiled_eval(expr_code), get_environment(solver_identifiers), locals_env)
+        except Exception as exn:
+            return cls.bad(), (repr(exn),)
+        return cls.from_runtime(result_value), ()
 
     @classmethod
     def _fold_operation(
@@ -731,6 +820,7 @@ class Domain:
         operation: clingo.Symbol,
         *domains: Domain,
         solver_identifiers: tuple[clingo.Symbol, ...] = (),
+        evaluation_session: PythonEvaluationSession,
     ) -> Domain:
         """Compute one operation domain from its symbolic operator and child domains."""
         if any(not domain.has_values() and not domain.is_none and not domain.is_bad for domain in domains):
@@ -738,13 +828,19 @@ class Domain:
         if operation.type != clingo.SymbolType.Function:
             return cls.bad()
         if operation.name == "python" and len(operation.arguments) == 1:
-            return cls.evaluate_python_callable(operation.arguments[0].string, domains, solver_identifiers)
+            return cls.evaluate_python_callable(
+                operation.arguments[0].string,
+                domains,
+                solver_identifiers,
+                evaluation_session=evaluation_session,
+            )
         if operation.name == "pythonExtract" and len(operation.arguments) == 2:
             return cls.evaluate_python_extract(
                 operation.arguments[0].string,
                 operation.arguments[1].string,
                 domains,
                 solver_identifiers,
+                evaluation_session=evaluation_session,
             )
         if cls.has_boolean_output(operation):
             apply_total = 1

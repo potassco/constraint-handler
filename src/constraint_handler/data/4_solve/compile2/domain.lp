@@ -105,17 +105,14 @@ def expression_set():
 
 
 def python_evaluation():
-    _computed_domains()
-    return []
+    return _computed_domains().python_evaluation_symbols()
 
 
 def python_evaluation_input():
-    _computed_domains()
-    return []
+    return _computed_domains().python_evaluation_input_symbols()
 
 
 def python_evaluation_output():
-    _computed_domains()
-    return []
+    return _computed_domains().python_evaluation_output_symbols()
 
 #end.
