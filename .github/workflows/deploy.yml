@@ -22,14 +22,14 @@ jobs:
         env:
           TAG_NAME: ${{ github.ref_name }}
         run: |
-          if [[ "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.0$ ]]; then
             echo "version=${TAG_NAME#v}" >> "$GITHUB_OUTPUT"
             echo "repository_url=https://pypi.org/legacy/" >> "$GITHUB_OUTPUT"
-          elif [[ "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.dev[0-9]+$ ]]; then
+          elif [[ "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[1-9][0-9]$ ]]; then
             echo "version=${TAG_NAME#v}" >> "$GITHUB_OUTPUT"
             echo "repository_url=https://test.pypi.org/legacy/" >> "$GITHUB_OUTPUT"
           else
-            echo "Release tag must match vMajor.Minor.Revision or vMajor.Minor.Revision.devN, got: $TAG_NAME" >&2
+            echo "Release tag must match vMajor.Minor.0 for PyPI or vMajor.Minor.Revision (where Revision > 0) for TestPyPI. Got: $TAG_NAME" >&2
             exit 1
           fi
 
