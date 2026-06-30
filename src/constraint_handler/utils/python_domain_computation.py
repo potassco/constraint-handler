@@ -549,7 +549,7 @@ class DomainComputation:
                     if mask & (1 << index):
                         members.add(member)
                 concrete_sets.add(frozenset(members))
-            return Domain.set_values(*concrete_sets)
+        return Domain.set_values(*concrete_sets)
 
     @classmethod
     def evaluate_expression(
@@ -598,28 +598,72 @@ class DomainComputation:
         return {expr: domain}
 
     @classmethod
-    def sorted_expressions(cls, top_level_expressions: Iterable[clingo.Symbol]) -> Iterable[clingo.Symbol]:
+    def sorted_expressions(
+        cls,
+        top_level_expressions: Iterable[clingo.Symbol],
+        variable_sources: Mapping[clingo.Symbol, list[clingo.Symbol]] | None = None,
+        set_sources: Mapping[clingo.Symbol, dict[str, list[clingo.Symbol]]] | None = None,
+    ) -> Iterable[clingo.Symbol]:
         """Yield expressions in a dependency-first order with variable sources expanded first."""
         expressions = set(top_level_expressions)
         seen: set[clingo.Symbol] = set()
         visiting: set[clingo.Symbol] = set()
         expanded_variables: set[clingo.Symbol] = set()
-        variable_sources = {
-            var: sorted(
-                [
-                    expr
+        if variable_sources is None:
+            variable_sources = {
+                var: sorted(
+                    [
+                        expr
+                        for expr in expressions
+                        if cls.is_function(expr, arity=2)
+                        and expr.name in cls.VARIABLE_SOURCE_NAMES
+                        and expr.arguments[0] == var
+                    ]
+                )
+                for var in {
+                    expr.arguments[0]
                     for expr in expressions
-                    if cls.is_function(expr, arity=2)
-                    and expr.name in cls.VARIABLE_SOURCE_NAMES
-                    and expr.arguments[0] == var
-                ]
-            )
-            for var in {
-                expr.arguments[0]
-                for expr in expressions
-                if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES
+                    if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES
+                }
             }
-        }
+        else:
+            variable_sources = {var: sorted(source_exprs) for var, source_exprs in variable_sources.items()}
+        if set_sources is None:
+            set_sources = {
+                var: {
+                    "set_assign": sorted(
+                        [
+                            expr.arguments[1]
+                            for expr in expressions
+                            if cls.is_function(expr, arity=2)
+                            and expr.name == "set_assign"
+                            and expr.arguments[0] == var
+                        ]
+                    ),
+                    "set_baseDomain": sorted(
+                        [
+                            expr.arguments[1]
+                            for expr in expressions
+                            if cls.is_function(expr, arity=2)
+                            and expr.name == "set_baseDomain"
+                            and expr.arguments[0] == var
+                        ]
+                    ),
+                }
+                for var in {
+                    expr.arguments[0]
+                    for expr in expressions
+                    if cls.is_function(expr, arity=2) and expr.name in {"set_assign", "set_baseDomain"}
+                }
+            }
+        else:
+            set_sources = {
+                var: {
+                    "set_assign": sorted(source_exprs["set_assign"]),
+                    "set_baseDomain": sorted(source_exprs["set_baseDomain"]),
+                }
+                for var, source_exprs in set_sources.items()
+            }
 
         def visit(expr: clingo.Symbol):
             if expr in seen or expr in visiting:
@@ -628,6 +672,10 @@ class DomainComputation:
             if cls.is_function(expr, "variable", 1) and expr.arguments[0] not in expanded_variables:
                 expanded_variables.add(expr.arguments[0])
                 for dependency in variable_sources.get(expr.arguments[0], []):
+                    yield from visit(dependency)
+                for dependency in set_sources.get(expr.arguments[0], {}).get("set_assign", []):
+                    yield from visit(dependency)
+                for dependency in set_sources.get(expr.arguments[0], {}).get("set_baseDomain", []):
                     yield from visit(dependency)
             children = (
                 [expr.arguments[1]]
@@ -655,7 +703,7 @@ class DomainComputation:
         Domain.NEXT_SET_UID = 0
         solver_identifier_key = cls.normalize_solver_identifiers(solver_identifiers)
         variable_sources, set_sources = cls.source_maps(expressions)
-        ordered_expressions = tuple(cls.sorted_expressions(expressions))
+        ordered_expressions = tuple(cls.sorted_expressions(expressions, variable_sources, set_sources))
         python_extract_groups, skipped_python_extract_exprs = cls.group_python_extract_expressions(ordered_expressions)
         expression_domains: dict[clingo.Symbol, Domain] = {}
         set_expressions: set[clingo.Symbol] = set()

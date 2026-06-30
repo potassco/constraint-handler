@@ -553,6 +553,50 @@ def test_domain_computation_preserves_bad_tuple_inputs_for_python_extract() -> N
     assert computed.expression_domains[operation_expr] == Domain.bad()
 
 
+def test_domain_computation_combines_all_required_set_source_options() -> None:
+    left_name = clingo.String("left")
+    right_name = clingo.String("right")
+    target_name = clingo.String("target")
+    left_var = clingo.Function("variable", [left_name])
+    right_var = clingo.Function("variable", [right_name])
+    target_var = clingo.Function("variable", [target_name])
+
+    computed = DomainComputation.compute(
+        (
+            target_var,
+            left_var,
+            right_var,
+            clingo.Function(
+                "set_baseDomain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]
+            ),
+            clingo.Function(
+                "set_baseDomain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
+            ),
+            clingo.Function(
+                "set_assign", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]
+            ),
+            clingo.Function(
+                "set_baseDomain", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(3)])]
+            ),
+            clingo.Function(
+                "set_baseDomain", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(4)])]
+            ),
+            clingo.Function(
+                "set_assign", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(3)])]
+            ),
+            clingo.Function("set_assign", [target_name, left_var]),
+            clingo.Function("set_assign", [target_name, right_var]),
+        )
+    )
+
+    assert computed.expression_domains[target_var] == Domain.set_values(
+        frozenset({1, 3}),
+        frozenset({1, 3, 4}),
+        frozenset({1, 2, 3}),
+        frozenset({1, 2, 3, 4}),
+    )
+
+
 def test_domain_computation_exports_python_callable_trace_symbols() -> None:
     variable_name = clingo.String("x")
     variable_expr = clingo.Function("variable", [variable_name])

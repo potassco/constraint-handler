@@ -833,35 +833,38 @@ class Domain:
         evaluation_session: PythonEvaluationSession,
     ) -> Domain:
         """Compute one operation domain from its symbolic operator and child domains."""
+        result: Domain | None = None
         if any(not domain.has_values() and not domain.is_none and not domain.is_bad for domain in domains):
-            return cls.empty()
-        if operation.type != clingo.SymbolType.Function:
-            return cls.bad()
-        if operation.name == "python" and len(operation.arguments) == 1:
-            return cls.evaluate_python_callable(
+            result = cls.empty()
+        elif operation.type != clingo.SymbolType.Function:
+            result = cls.bad()
+        elif operation.name == "python" and len(operation.arguments) == 1:
+            result = cls.evaluate_python_callable(
                 operation.arguments[0].string,
                 domains,
                 solver_identifiers,
                 evaluation_session=evaluation_session,
             )
-        if operation.name == "pythonExtract" and len(operation.arguments) == 2:
-            return cls.evaluate_python_extract(
+        elif operation.name == "pythonExtract" and len(operation.arguments) == 2:
+            result = cls.evaluate_python_extract(
                 operation.arguments[0].string,
                 operation.arguments[1].string,
                 domains,
                 solver_identifiers,
                 evaluation_session=evaluation_session,
             )
-        if cls.has_boolean_output(operation):
+        elif cls.has_boolean_output(operation):
             apply_total = 1
             for domain in domains:
                 apply_total *= domain.value_count() + int(domain.is_bad)
             if apply_total > cls.THRESHOLD_ITERATIONS_BOOLEAN_OUTPUT:
-                return cls.coarse_boolean_output_domain(operation)
-        try:
-            return cls.apply(operation, *domains)
-        except Exception:
-            return cls.bad()
+                result = cls.coarse_boolean_output_domain(operation)
+        if result is None:
+            try:
+                result = cls.apply(operation, *domains)
+            except Exception:
+                result = cls.bad()
+        return result
 
     @classmethod
     def apply(

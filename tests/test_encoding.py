@@ -126,6 +126,7 @@ base_tests = [
     "optimization/optional_absent_linked_value",
     "optimization/preferences",
     "optimization/priority",
+    "set/base_from_set_source",
     "set/comparisons",
     "set/membership_decomposed",
     "set/membership_nested",
@@ -297,6 +298,7 @@ def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "pro
 
 
 choice_statistics_skip: set[str] = {
+    "set/base_from_set_source",
     "core/empty_set_execution",
     "core/optional_set_empty_execution",
     "core/python_set_bool_brave",
