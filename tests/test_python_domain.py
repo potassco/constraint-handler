@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from itertools import product
 import math
+from itertools import product
 
 import clingo
 import pytest
@@ -134,14 +134,22 @@ def test_from_value_covers_supported_runtime_types(value: object, expected: Doma
 def test_from_symbol_decodes_compile2_values_and_preserves_plain_symbols() -> None:
     plain_symbol = clingo.Function("plain", [clingo.Number(1)])
 
-    assert Domain.from_symbol(clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])) == Domain.booleans(True)
+    assert Domain.from_symbol(
+        clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])
+    ) == Domain.booleans(True)
     assert Domain.from_symbol(clingo.Function("val", [clingo.Function("int"), clingo.Number(7)])) == Domain.integers(7)
     assert Domain.from_symbol(
         clingo.Function("val", [clingo.Function("float"), clingo.Function("float", [clingo.String("2.5")])])
     ) == Domain.floats_only(2.5)
-    assert Domain.from_symbol(clingo.Function("val", [clingo.Function("none"), clingo.Function("none")])) == Domain.none()
-    assert Domain.from_symbol(clingo.Function("val", [clingo.Function("string"), clingo.String("txt")])) == Domain.strings_only("txt")
-    assert Domain.from_symbol(clingo.Function("val", [clingo.Function("symbol"), plain_symbol])) == Domain.symbols_only(plain_symbol)
+    assert (
+        Domain.from_symbol(clingo.Function("val", [clingo.Function("none"), clingo.Function("none")])) == Domain.none()
+    )
+    assert Domain.from_symbol(
+        clingo.Function("val", [clingo.Function("string"), clingo.String("txt")])
+    ) == Domain.strings_only("txt")
+    assert Domain.from_symbol(clingo.Function("val", [clingo.Function("symbol"), plain_symbol])) == Domain.symbols_only(
+        plain_symbol
+    )
     assert Domain.from_symbol(plain_symbol) == Domain.symbols_only(plain_symbol)
     assert Domain.from_symbol(clingo.Function("val", [clingo.Function("tuple"), plain_symbol])) == Domain.bad()
 
@@ -156,10 +164,12 @@ def test_runtime_and_symbol_roundtrips_cover_nested_structures_and_bad_marker() 
 
     encoded_set = Domain.value_to_symbol(frozenset({1, "x"}))
     assert encoded_set.name == "set"
-    assert Domain.value_to_symbol((1, "x")) == clingo.Tuple_([
-        Domain.value_to_symbol(1),
-        Domain.value_to_symbol("x"),
-    ])
+    assert Domain.value_to_symbol((1, "x")) == clingo.Tuple_(
+        [
+            Domain.value_to_symbol(1),
+            Domain.value_to_symbol("x"),
+        ]
+    )
 
 
 def test_options_without_none_and_has_values_cover_empty_optional_and_bad_cases() -> None:
@@ -343,9 +353,18 @@ def test_apply_matches_evaluator_for_string_and_conditional_operators(
         (operators.SetOperator.set_isin, (build_domain(1, 2), build_domain(frozenset({1}), frozenset({2, 3})))),
         (operators.SetOperator.set_notin, (build_domain(1, 2), build_domain(frozenset({1}), frozenset({2, 3})))),
         (operators.SetOperator.union, (build_domain(frozenset({1}), frozenset({2})), build_domain(frozenset({2, 3})))),
-        (operators.SetOperator.inter, (build_domain(frozenset({1, 2}), frozenset({2, 3})), build_domain(frozenset({2}), frozenset({3})))),
-        (operators.SetOperator.diff, (build_domain(frozenset({1, 2}), frozenset({2, 3})), build_domain(frozenset({2})))),
-        (operators.SetOperator.subset, (build_domain(frozenset(), frozenset({1})), build_domain(frozenset({1}), frozenset({1, 2})))),
+        (
+            operators.SetOperator.inter,
+            (build_domain(frozenset({1, 2}), frozenset({2, 3})), build_domain(frozenset({2}), frozenset({3}))),
+        ),
+        (
+            operators.SetOperator.diff,
+            (build_domain(frozenset({1, 2}), frozenset({2, 3})), build_domain(frozenset({2}))),
+        ),
+        (
+            operators.SetOperator.subset,
+            (build_domain(frozenset(), frozenset({1})), build_domain(frozenset({1}), frozenset({1, 2}))),
+        ),
     ],
 )
 def test_apply_matches_evaluator_for_set_operators(operation: object, domains: tuple[Domain, ...]) -> None:
@@ -384,8 +403,12 @@ def test_apply_if_default_and_hasvalue_cover_none_bad_and_false_cases() -> None:
         ints={7},
         is_none=True,
     )
-    assert Domain.apply(expression.ConditionalOperator.default, build_domain(None, 1), build_domain(2, 3)) == build_domain(1, 2, 3)
-    assert Domain.apply(expression.ConditionalOperator.hasValue, build_domain(None, 1, frozenset())) == Domain.booleans(True, False)
+    assert Domain.apply(
+        expression.ConditionalOperator.default, build_domain(None, 1), build_domain(2, 3)
+    ) == build_domain(1, 2, 3)
+    assert Domain.apply(expression.ConditionalOperator.hasValue, build_domain(None, 1, frozenset())) == Domain.booleans(
+        True, False
+    )
     assert Domain.apply(expression.ConditionalOperator.hasValue, Domain.bad()) == Domain(is_bad=True)
 
 
@@ -393,14 +416,22 @@ def test_apply_max_and_min_follow_evaluator_cross_product_semantics() -> None:
     left = build_domain(1, 5)
     right = build_domain(2, 3)
 
-    assert Domain.apply(expression.OtherOperator.max, left, right) == expected_domain_from_evaluator(expression.OtherOperator.max, left, right)
-    assert Domain.apply(expression.OtherOperator.min, left, right) == expected_domain_from_evaluator(expression.OtherOperator.min, left, right)
+    assert Domain.apply(expression.OtherOperator.max, left, right) == expected_domain_from_evaluator(
+        expression.OtherOperator.max, left, right
+    )
+    assert Domain.apply(expression.OtherOperator.min, left, right) == expected_domain_from_evaluator(
+        expression.OtherOperator.min, left, right
+    )
 
 
 def test_compute_domain_symbolic_dispatch_matches_apply_for_small_cases() -> None:
     assert compute_domain(clingo.Function("sub"), build_domain(7), build_domain(2)) == Domain.integers(5)
-    assert compute_domain(clingo.Function("conj"), build_domain(True, None), build_domain(False)) == Domain.booleans(False)
-    assert compute_domain(clingo.Function("concat"), build_domain("a"), build_domain("b", "c")) == Domain.strings_only("ab", "ac")
+    assert compute_domain(clingo.Function("conj"), build_domain(True, None), build_domain(False)) == Domain.booleans(
+        False
+    )
+    assert compute_domain(clingo.Function("concat"), build_domain("a"), build_domain("b", "c")) == Domain.strings_only(
+        "ab", "ac"
+    )
     assert compute_domain(clingo.Function("set_make"), build_domain(1, 2), build_domain("x")) == Domain.set_values(
         frozenset({1, "x"}),
         frozenset({2, "x"}),
@@ -456,9 +487,13 @@ def test_compute_domain_python_extract_matches_success_and_failure_semantics() -
     evaluator._solver_environment[99] = {"solver_environment": solver_environment}
 
     try:
-        assert compute_domain(operation, build_domain(("left", 1)), build_domain(("right", 2)), solver_identifiers=solver_id) == Domain.integers(3)
+        assert compute_domain(
+            operation, build_domain(("left", 1)), build_domain(("right", 2)), solver_identifiers=solver_id
+        ) == Domain.integers(3)
         assert compute_domain(succeeds_operation, build_domain()) == Domain.empty()
-        assert compute_domain(succeeds_operation, build_domain(("left", 1)), solver_identifiers=solver_id) == Domain.booleans(False)
+        assert compute_domain(
+            succeeds_operation, build_domain(("left", 1)), solver_identifiers=solver_id
+        ) == Domain.booleans(False)
     finally:
         evaluator._solver_environment.pop(99, None)
 
@@ -486,10 +521,12 @@ def test_compute_domain_python_extract_marks_bad_on_invalid_bindings_and_eval_er
 def test_domain_computation_preserves_bad_tuple_inputs_for_python_extract() -> None:
     variable_name = clingo.String("missing_input")
     variable_expr = clingo.Function("variable", [variable_name])
-    binding_expr = clingo.Tuple_([
-        clingo.Function("val", [clingo.Function("string"), clingo.String("lhs")]),
-        variable_expr,
-    ])
+    binding_expr = clingo.Tuple_(
+        [
+            clingo.Function("val", [clingo.Function("string"), clingo.String("lhs")]),
+            variable_expr,
+        ]
+    )
     operation_expr = clingo.Function(
         "operation",
         [
@@ -531,8 +568,12 @@ def test_domain_computation_exports_python_callable_trace_symbols() -> None:
         (
             operation_expr,
             variable_expr,
-            clingo.Function("variable_define", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]),
-            clingo.Function("variable_domain", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(0)])]),
+            clingo.Function(
+                "variable_define", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
+            ),
+            clingo.Function(
+                "variable_domain", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(0)])]
+            ),
         )
     )
 
@@ -541,41 +582,51 @@ def test_domain_computation_exports_python_callable_trace_symbols() -> None:
         clingo.Tuple_([operation_expr, clingo.Number(1)]),
     }
     assert set(computed.python_evaluation_input_symbols()) == {
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(0),
-            variable_expr,
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(0)]),
-        ]),
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(1),
-            variable_expr,
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(2)]),
-        ]),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(0),
+                variable_expr,
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(0)]),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(1),
+                variable_expr,
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(2)]),
+            ]
+        ),
     }
     assert set(computed.python_evaluation_output_symbols()) == {
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(0),
-            clingo.Function("bad"),
-        ]),
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(0),
-            clingo.Function(
-                "error",
-                [
-                    clingo.Function("expression", [clingo.Function("pythonError")]),
-                    clingo.String("ZeroDivisionError('division by zero')"),
-                ],
-            ),
-        ]),
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(1),
-            clingo.Function("val", [clingo.Function("float"), clingo.Function("float", [clingo.String("5.0")])]),
-        ]),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(0),
+                clingo.Function("bad"),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(0),
+                clingo.Function(
+                    "error",
+                    [
+                        clingo.Function("expression", [clingo.Function("pythonError")]),
+                        clingo.String("ZeroDivisionError('division by zero')"),
+                    ],
+                ),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(1),
+                clingo.Function("val", [clingo.Function("float"), clingo.Function("float", [clingo.String("5.0")])]),
+            ]
+        ),
     }
 
 
@@ -584,14 +635,18 @@ def test_domain_computation_exports_python_extract_inputs_against_value_expressi
     right_name = clingo.String("right")
     left_var = clingo.Function("variable", [left_name])
     right_var = clingo.Function("variable", [right_name])
-    left_binding = clingo.Tuple_([
-        clingo.Function("val", [clingo.Function("string"), left_name]),
-        left_var,
-    ])
-    right_binding = clingo.Tuple_([
-        clingo.Function("val", [clingo.Function("string"), right_name]),
-        right_var,
-    ])
+    left_binding = clingo.Tuple_(
+        [
+            clingo.Function("val", [clingo.Function("string"), left_name]),
+            left_var,
+        ]
+    )
+    right_binding = clingo.Tuple_(
+        [
+            clingo.Function("val", [clingo.Function("string"), right_name]),
+            right_var,
+        ]
+    )
     operation_expr = clingo.Function(
         "operation",
         [
@@ -611,9 +666,15 @@ def test_domain_computation_exports_python_extract_inputs_against_value_expressi
             operation_expr,
             left_var,
             right_var,
-            clingo.Function("variable_define", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]),
-            clingo.Function("variable_domain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]),
-            clingo.Function("variable_define", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]),
+            clingo.Function(
+                "variable_define", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]
+            ),
+            clingo.Function(
+                "variable_domain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
+            ),
+            clingo.Function(
+                "variable_define", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
+            ),
         )
     )
 
@@ -622,40 +683,50 @@ def test_domain_computation_exports_python_extract_inputs_against_value_expressi
         clingo.Tuple_([operation_expr, clingo.Number(1)]),
     }
     assert set(computed.python_evaluation_input_symbols()) == {
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(0),
-            left_var,
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(1)]),
-        ]),
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(1),
-            left_var,
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(2)]),
-        ]),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(0),
+                left_var,
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(1)]),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(1),
+                left_var,
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(2)]),
+            ]
+        ),
     }
     assert set(computed.python_evaluation_output_symbols()) == {
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(0),
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(3)]),
-        ]),
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(1),
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(4)]),
-        ]),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(0),
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(3)]),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(1),
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(4)]),
+            ]
+        ),
     }
 
 
 def test_domain_computation_exports_python_extract_statement_error_output() -> None:
     input_name = clingo.String("a")
     input_var = clingo.Function("variable", [input_name])
-    binding = clingo.Tuple_([
-        clingo.Function("val", [clingo.Function("string"), input_name]),
-        input_var,
-    ])
+    binding = clingo.Tuple_(
+        [
+            clingo.Function("val", [clingo.Function("string"), input_name]),
+            input_var,
+        ]
+    )
     operation_expr = clingo.Function(
         "operation",
         [
@@ -674,27 +745,33 @@ def test_domain_computation_exports_python_extract_statement_error_output() -> N
         (
             operation_expr,
             input_var,
-            clingo.Function("variable_define", [input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(4)])]),
+            clingo.Function(
+                "variable_define", [input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(4)])]
+            ),
         )
     )
 
     assert set(computed.python_evaluation_output_symbols()) == {
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(0),
-            clingo.Function("bad"),
-        ]),
-        clingo.Tuple_([
-            operation_expr,
-            clingo.Number(0),
-            clingo.Function(
-                "error",
-                [
-                    clingo.Function("expression", [clingo.Function("pythonError")]),
-                    clingo.String("AssertionError()"),
-                ],
-            ),
-        ]),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(0),
+                clingo.Function("bad"),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                operation_expr,
+                clingo.Number(0),
+                clingo.Function(
+                    "error",
+                    [
+                        clingo.Function("expression", [clingo.Function("pythonError")]),
+                        clingo.String("AssertionError()"),
+                    ],
+                ),
+            ]
+        ),
     }
 
 
@@ -705,10 +782,12 @@ def test_domain_computation_groups_python_extract_outputs_with_shared_inputs() -
 
     variable_name = clingo.String("x")
     variable_expr = clingo.Function("variable", [variable_name])
-    binding = clingo.Tuple_([
-        clingo.Function("val", [clingo.Function("string"), variable_name]),
-        variable_expr,
-    ])
+    binding = clingo.Tuple_(
+        [
+            clingo.Function("val", [clingo.Function("string"), variable_name]),
+            variable_expr,
+        ]
+    )
     first_expr = clingo.Function(
         "operation",
         [
@@ -742,8 +821,14 @@ def test_domain_computation_groups_python_extract_outputs_with_shared_inputs() -
                 first_expr,
                 second_expr,
                 variable_expr,
-                clingo.Function("variable_define", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]),
-                clingo.Function("variable_domain", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]),
+                clingo.Function(
+                    "variable_define",
+                    [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])],
+                ),
+                clingo.Function(
+                    "variable_domain",
+                    [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])],
+                ),
             ),
             solver_identifiers=(solver_identifier,),
         )
@@ -754,24 +839,32 @@ def test_domain_computation_groups_python_extract_outputs_with_shared_inputs() -
     assert computed.expression_domains[second_expr] == Domain.integers(11, 21)
     assert seen == [1, 2]
     assert set(computed.python_evaluation_output_symbols()) == {
-        clingo.Tuple_([
-            first_expr,
-            clingo.Number(0),
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(10)]),
-        ]),
-        clingo.Tuple_([
-            first_expr,
-            clingo.Number(1),
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(20)]),
-        ]),
-        clingo.Tuple_([
-            second_expr,
-            clingo.Number(0),
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(11)]),
-        ]),
-        clingo.Tuple_([
-            second_expr,
-            clingo.Number(1),
-            clingo.Function("val", [clingo.Function("int"), clingo.Number(21)]),
-        ]),
+        clingo.Tuple_(
+            [
+                first_expr,
+                clingo.Number(0),
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(10)]),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                first_expr,
+                clingo.Number(1),
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(20)]),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                second_expr,
+                clingo.Number(0),
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(11)]),
+            ]
+        ),
+        clingo.Tuple_(
+            [
+                second_expr,
+                clingo.Number(1),
+                clingo.Function("val", [clingo.Function("int"), clingo.Number(21)]),
+            ]
+        ),
     }

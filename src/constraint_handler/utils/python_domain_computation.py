@@ -5,7 +5,14 @@ from itertools import product
 from typing import Any, ClassVar, Iterable, Mapping
 
 import clingo
-from constraint_handler.utils.python_domain import Domain, DomainAtom, PythonEvaluationOutputRequest, PythonEvaluationSession
+
+from constraint_handler.utils.python_domain import (
+    Domain,
+    DomainAtom,
+    PythonEvaluationOutputRequest,
+    PythonEvaluationSession,
+)
+
 
 @dataclass(frozen=True, slots=True)
 class PythonWarningOutput:
@@ -53,7 +60,9 @@ class PythonEvaluationCollector(PythonEvaluationSession):
     current_arg_domains: list[Domain] | None = None
     current_is_extract: bool = False
     current_output_requests: tuple[PythonEvaluationOutputRequest, ...] = ()
-    current_outputs_by_expr: dict[clingo.Symbol, dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature]] | None = None
+    current_outputs_by_expr: (
+        dict[clingo.Symbol, dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature]] | None
+    ) = None
     current_domains_by_expr: dict[clingo.Symbol, Domain] | None = None
 
     def start_expression(
@@ -96,9 +105,7 @@ class PythonEvaluationCollector(PythonEvaluationSession):
         self.current_group_exprs = group_exprs
         self.current_arg_exprs = () if arg_exprs is None else tuple(arg_exprs)
         self.current_arg_domains = (
-            []
-            if arg_exprs is None
-            else [expression_domains.get(arg_expr, Domain.empty()) for arg_expr in arg_exprs]
+            [] if arg_exprs is None else [expression_domains.get(arg_expr, Domain.empty()) for arg_expr in arg_exprs]
         )
         self.current_is_extract = is_extract
         if is_extract:
@@ -137,7 +144,11 @@ class PythonEvaluationCollector(PythonEvaluationSession):
 
     def finish_expression(self) -> dict[clingo.Symbol, Domain]:
         """Flush the current expression trace into the exported trace lists."""
-        if self.current_outputs_by_expr is None or self.current_arg_domains is None or self.current_domains_by_expr is None:
+        if (
+            self.current_outputs_by_expr is None
+            or self.current_arg_domains is None
+            or self.current_domains_by_expr is None
+        ):
             return {}
         for expr, outputs_by_assignment in self.current_outputs_by_expr.items():
             self.record_python_evaluation(
@@ -266,12 +277,18 @@ class PythonEvaluationCollector(PythonEvaluationSession):
             python_evaluations.append((expr, uid))
             for index, arg_value in bindings:
                 arg_expr = arg_exprs[index]
-                if is_extract and DomainComputation.is_tuple(arg_expr, 2) and isinstance(arg_value, tuple) and len(arg_value) == 2:
+                if (
+                    is_extract
+                    and DomainComputation.is_tuple(arg_expr, 2)
+                    and isinstance(arg_value, tuple)
+                    and len(arg_value) == 2
+                ):
                     python_evaluation_inputs.append((expr, uid, arg_expr.arguments[1], arg_value[1]))
                     continue
                 python_evaluation_inputs.append((expr, uid, arg_expr, arg_value))
             for output_value in output_signature:
                 python_evaluation_outputs.append((expr, uid, output_value))
+
 
 @dataclass(slots=True)
 class ComputedDomains:
@@ -325,21 +342,25 @@ class ComputedDomains:
     def python_evaluation_input_symbols(self) -> Iterable[clingo.Symbol]:
         """Yield `_python_evaluation_input/4` tuples for all computed Python traces."""
         for expr, uid, arg_expr, arg_value in self.python_evaluation_inputs:
-            yield clingo.Tuple_([
-                expr,
-                clingo.Number(uid),
-                arg_expr,
-                self.python_value_reference_symbol(arg_value),
-            ])
+            yield clingo.Tuple_(
+                [
+                    expr,
+                    clingo.Number(uid),
+                    arg_expr,
+                    self.python_value_reference_symbol(arg_value),
+                ]
+            )
 
     def python_evaluation_output_symbols(self) -> Iterable[clingo.Symbol]:
         """Yield `_python_evaluation_output/3` tuples for all computed Python traces."""
         for expr, uid, output_value in self.python_evaluation_outputs:
-            yield clingo.Tuple_([
-                expr,
-                clingo.Number(uid),
-                self.python_value_reference_symbol(output_value),
-            ])
+            yield clingo.Tuple_(
+                [
+                    expr,
+                    clingo.Number(uid),
+                    self.python_value_reference_symbol(output_value),
+                ]
+            )
 
     def python_value_reference_symbol(self, value: PythonEvaluationValue) -> clingo.Symbol:
         """Return one export symbol for a Python trace value or set reference."""
@@ -353,12 +374,15 @@ class ComputedDomains:
 class DomainComputation:
     """Compute compile2 expression domains directly from raw clingo symbols."""
 
-    VARIABLE_SOURCE_NAMES: ClassVar[frozenset[str]] = frozenset({
-        "variable_define",
-        "variable_domain",
-        "set_assign",
-        "set_baseDomain",
-    })
+    VARIABLE_SOURCE_NAMES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "variable_define",
+            "variable_domain",
+            "set_assign",
+            "set_baseDomain",
+        }
+    )
+
     @classmethod
     def is_function(cls, symbol: clingo.Symbol, name: str | None = None, arity: int | None = None) -> bool:
         """Check whether one symbol is a function term with an optional signature."""
@@ -585,7 +609,9 @@ class DomainComputation:
                 [
                     expr
                     for expr in expressions
-                    if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES and expr.arguments[0] == var
+                    if cls.is_function(expr, arity=2)
+                    and expr.name in cls.VARIABLE_SOURCE_NAMES
+                    and expr.arguments[0] == var
                 ]
             )
             for var in {
@@ -603,7 +629,11 @@ class DomainComputation:
                 expanded_variables.add(expr.arguments[0])
                 for dependency in variable_sources.get(expr.arguments[0], []):
                     yield from visit(dependency)
-            children = [expr.arguments[1]] if expr.name in cls.VARIABLE_SOURCE_NAMES and len(expr.arguments) == 2 else cls.direct_subexpressions(expr)
+            children = (
+                [expr.arguments[1]]
+                if expr.name in cls.VARIABLE_SOURCE_NAMES and len(expr.arguments) == 2
+                else cls.direct_subexpressions(expr)
+            )
             for child in children:
                 yield from visit(child)
             visiting.remove(expr)

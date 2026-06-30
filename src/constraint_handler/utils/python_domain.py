@@ -1,11 +1,13 @@
 from __future__ import annotations
+
+import math
 from dataclasses import dataclass, field
 from functools import cache
 from itertools import product
-import math
 from typing import Any, Callable, ClassVar, Iterable, Mapping
 
 import clingo
+
 import constraint_handler.evaluator as evaluator
 import constraint_handler.solver_environment as solver_environment
 
@@ -279,11 +281,7 @@ class Domain:
     @classmethod
     def from_symbol(cls, symbol: clingo.Symbol) -> Domain:
         """Lift one compile2 value symbol into a runtime domain."""
-        if not (
-            symbol.type == clingo.SymbolType.Function
-            and symbol.name == "val"
-            and len(symbol.arguments) == 2
-        ):
+        if not (symbol.type == clingo.SymbolType.Function and symbol.name == "val" and len(symbol.arguments) == 2):
             return cls.symbols_only(symbol)
 
         type_symbol, raw_value = symbol.arguments
@@ -310,7 +308,9 @@ class Domain:
         if isinstance(value, int):
             return clingo.Function("val", [clingo.Function("int"), clingo.Number(value)])
         if isinstance(value, float):
-            return clingo.Function("val", [clingo.Function("float"), clingo.Function("float", [clingo.String(repr(value))])])
+            return clingo.Function(
+                "val", [clingo.Function("float"), clingo.Function("float", [clingo.String(repr(value))])]
+            )
         if value is None:
             return clingo.Function("val", [clingo.Function("none"), clingo.Function("none")])
         if isinstance(value, str):
@@ -412,8 +412,7 @@ class Domain:
         """Return cached global ids for all possible concrete set values."""
         if self._set_uids_cache is None:
             self._set_uids_cache = {
-                self.register_set_uid(set_value)
-                for set_value in sorted(self.sets, key=self.set_sort_key)
+                self.register_set_uid(set_value) for set_value in sorted(self.sets, key=self.set_sort_key)
             }
         return set(self._set_uids_cache)
 
@@ -532,6 +531,17 @@ class Domain:
         yield from self.ints
         for value in self.floats:
             if value not in self.ints:
+                yield value
+
+    def arithmetic_values(self) -> Iterable[int | float]:
+        """Yield numeric values with booleans coerced to their integer form."""
+        bool_as_ints = {int(value) for value in self.bools}
+        yield from bool_as_ints
+        for value in self.ints:
+            if value not in bool_as_ints:
+                yield value
+        for value in self.floats:
+            if value not in self.ints and value not in bool_as_ints:
                 yield value
 
     def truth_values(self) -> Iterable[bool | None]:
@@ -949,19 +959,23 @@ class Domain:
         """Apply one numeric binary function across the numeric cross-product."""
         ints: set[int] = set()
         floats: set[float] = set()
-        is_bad = left.is_bad or right.is_bad or bool(
-            left.bools
-            or left.is_none
-            or left.strings
-            or left.symbols
-            or left.tuples
-            or left.sets
-            or right.bools
-            or right.is_none
-            or right.strings
-            or right.symbols
-            or right.tuples
-            or right.sets
+        is_bad = (
+            left.is_bad
+            or right.is_bad
+            or bool(
+                left.bools
+                or left.is_none
+                or left.strings
+                or left.symbols
+                or left.tuples
+                or left.sets
+                or right.bools
+                or right.is_none
+                or right.strings
+                or right.symbols
+                or right.tuples
+                or right.sets
+            )
         )
         left_values = left.numeric_values()
         right_values = right.numeric_values()
@@ -974,6 +988,39 @@ class Domain:
             if force_int:
                 ints.add(int(result))
             elif isinstance(result, int) and not isinstance(result, bool):
+                ints.add(result)
+            else:
+                floats.add(float(result))
+        return cls(is_bad=is_bad, ints=ints, floats=floats)
+
+    @classmethod
+    def _map_arithmetic_binary(cls, left: Domain, right: Domain, fn) -> Domain:
+        """Apply integer-style arithmetic where booleans contribute as 0/1."""
+        ints: set[int] = set()
+        floats: set[float] = set()
+        is_bad = (
+            left.is_bad
+            or right.is_bad
+            or bool(
+                left.is_none
+                or left.strings
+                or left.symbols
+                or left.tuples
+                or left.sets
+                or right.is_none
+                or right.strings
+                or right.symbols
+                or right.tuples
+                or right.sets
+            )
+        )
+        for left_value, right_value in product(left.arithmetic_values(), right.arithmetic_values()):
+            try:
+                result = fn(left_value, right_value)
+            except Exception:
+                is_bad = True
+                continue
+            if isinstance(result, int) and not isinstance(result, bool):
                 ints.add(result)
             else:
                 floats.add(float(result))
@@ -1103,7 +1150,7 @@ class Domain:
     @classmethod
     def op_add(cls, left: Domain, right: Domain) -> Domain:
         """Compute the addition domain."""
-        return cls._map_numbers_binary(left, right, lambda lhs, rhs: lhs + rhs)
+        return cls._map_arithmetic_binary(left, right, lambda lhs, rhs: lhs + rhs)
 
     @classmethod
     def op_sub(cls, left: Domain, right: Domain) -> Domain:
@@ -1113,7 +1160,7 @@ class Domain:
     @classmethod
     def op_mult(cls, left: Domain, right: Domain) -> Domain:
         """Compute the multiplication domain."""
-        return cls._map_numbers_binary(left, right, lambda lhs, rhs: lhs * rhs)
+        return cls._map_arithmetic_binary(left, right, lambda lhs, rhs: lhs * rhs)
 
     @classmethod
     def op_int_div(cls, left: Domain, right: Domain) -> Domain:
@@ -1384,10 +1431,7 @@ class Domain:
     ) -> Domain:
         """Compute whether scalar members can occur in candidate sets."""
         resolved_sets = cls._resolve_sets(set_domain, set_members)
-        values = {
-            value in set_value
-            for value, set_value in product(member.values(), resolved_sets)
-        }
+        values = {value in set_value for value, set_value in product(member.values(), resolved_sets)}
         is_bad = member.is_bad or set_domain.is_bad or cls._has_nonset_values(set_domain)
         return cls._bool_domain(values, is_bad=is_bad)
 
@@ -1414,12 +1458,7 @@ class Domain:
         """Compute the pairwise union of all candidate sets."""
         left_sets = cls._resolve_sets(left, set_members)
         right_sets = cls._resolve_sets(right, set_members)
-        is_bad = (
-            left.is_bad
-            or right.is_bad
-            or cls._has_nonset_values(left)
-            or cls._has_nonset_values(right)
-        )
+        is_bad = left.is_bad or right.is_bad or cls._has_nonset_values(left) or cls._has_nonset_values(right)
         result = cls.set_values(*(lhs | rhs for lhs, rhs in product(left_sets, right_sets)))
         result.is_bad = is_bad
         return result
@@ -1435,12 +1474,7 @@ class Domain:
         """Compute the pairwise intersection of all candidate sets."""
         left_sets = cls._resolve_sets(left, set_members)
         right_sets = cls._resolve_sets(right, set_members)
-        is_bad = (
-            left.is_bad
-            or right.is_bad
-            or cls._has_nonset_values(left)
-            or cls._has_nonset_values(right)
-        )
+        is_bad = left.is_bad or right.is_bad or cls._has_nonset_values(left) or cls._has_nonset_values(right)
         result = cls.set_values(*(lhs & rhs for lhs, rhs in product(left_sets, right_sets)))
         result.is_bad = is_bad
         return result
@@ -1456,12 +1490,7 @@ class Domain:
         """Compute the pairwise set difference of all candidate sets."""
         left_sets = cls._resolve_sets(left, set_members)
         right_sets = cls._resolve_sets(right, set_members)
-        is_bad = (
-            left.is_bad
-            or right.is_bad
-            or cls._has_nonset_values(left)
-            or cls._has_nonset_values(right)
-        )
+        is_bad = left.is_bad or right.is_bad or cls._has_nonset_values(left) or cls._has_nonset_values(right)
         result = cls.set_values(*(lhs - rhs for lhs, rhs in product(left_sets, right_sets)))
         result.is_bad = is_bad
         return result
@@ -1478,10 +1507,5 @@ class Domain:
         left_sets = cls._resolve_sets(left, set_members)
         right_sets = cls._resolve_sets(right, set_members)
         values = {lhs <= rhs for lhs, rhs in product(left_sets, right_sets)}
-        is_bad = (
-            left.is_bad
-            or right.is_bad
-            or cls._has_nonset_values(left)
-            or cls._has_nonset_values(right)
-        )
+        is_bad = left.is_bad or right.is_bad or cls._has_nonset_values(left) or cls._has_nonset_values(right)
         return cls._bool_domain(values, is_bad=is_bad)
