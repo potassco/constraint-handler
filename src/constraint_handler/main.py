@@ -115,8 +115,8 @@ module_5_output = [
 ]
 
 t_modules = {
-  "expression": ("PHASE", ["sugar", "type_check", "compile", "compile2"]),
-  "correction": ("PHASE", ["constantFolding", "float_normalize", "safe", "type_check", "wf_check"])
+    "expression": ("PHASE", ["sugar", "type_check", "compile", "compile2"]),
+    "correction": ("PHASE", ["constantFolding", "float_normalize", "safe", "type_check", "wf_check"]),
 }
 modules = (
     module_main

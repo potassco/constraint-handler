@@ -22,9 +22,10 @@ _type_expression(variable(X),T) :- _expression(type_check,variable(X)), _type_va
 _type_expression(val(T,V),T) :- _expression(type_check,val(T,V)).
 _type_expression(python(S),T) :- _expression(type_check,python(S)), _type_expression(operation(pythonExtract("",S),()),T).
 _type_expression(operation(O,ARGS),T) :- _expression(type_check,operation(O,ARGS)), operator_declare(O,TS,T), _type_expressions(ARGS,TS).
-_type_expression(operation(O,ARGS),bot) :- _expression(type_check,operation(O,ARGS)), not _operator_variadic(O), _type_expressions(ARGS,TS), #false: _operator_declare(O,TS,T).
+_type_expression(operation(O,ARGS),bot) :- _expression(type_check,operation(O,ARGS)), not _operator_variadic(O), _type_expressions(ARGS,TS), #false: operator_declare(O,TS,T).
 _type_expression(operation(O,ARGS),bot) :- _expression(type_check,operation(O,ARGS)), _operator_variadic(O), _expression_operationIndex(type_check,operation(O,ARGS),IDX,ARG), _type_expression(ARG,T), not _operator_variadicAccepts(O,T).
 _type_expression(operation(O,ARGS),top) :- _expression(type_check,operation(O,ARGS)), _type_expression(O,top).
+_type_expression(E,top) :- _expression(type_check,E), _expression_operationIndex(type_check,E,IDX,ARG), _type_expression(ARG,top).
 _type_expression((H,T),(TH,TT)) :- _expression(type_check,(H,T)), _type_expression(H,TH), _type_expression(T,TT). %TODO general tuples
 
 _expression_sequence(type_check,ARGS) :- _expression(type_check,operation(OP,ARGS)).
@@ -76,6 +77,8 @@ _warning(type(untyped),(),X) :- _passed(sugar,LBL,variable_interface(X)), _type_
 
 _warning(type(notSupported),(),operation(OP,ARGS)) :- _expression(type_check,operation(OP,ARGS)), not _type_expressionTyped(operation(OP,ARGS)).
 
+type_expression(E,T) :- _type_expression(E,T), T != bot, not _type_expression(E,top).
+type_expression(E,top) :- _type_expression(E,top).
 
 %%%%%%%%%%%%%%%%% _expression_normal
 _type_normalizeQuery(EXPR) :- _phase_active(type_check), _expression(sugar,LBL,DECL,EXPR).
