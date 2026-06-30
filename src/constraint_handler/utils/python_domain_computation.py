@@ -481,9 +481,10 @@ class DomainComputation:
     def evaluate_tuple(cls, expr: clingo.Symbol, expression_domains: Mapping[clingo.Symbol, Domain]) -> Domain:
         """Enumerate tuple values from already-computed child domains."""
         child_domains = [expression_domains.get(child, Domain.empty()) for child in expr.arguments]
-        if any(not child.has_values() and not child.is_none for child in child_domains):
+        child_options = [domain.options() for domain in child_domains]
+        if any(not options for options in child_options):
             return Domain.empty()
-        tuple_values = {values for values in product(*(child.values(include_bad=True) for child in child_domains))}
+        tuple_values = {values for values in product(*child_options)}
         return Domain.tuple_values(*tuple_values)
 
     @classmethod

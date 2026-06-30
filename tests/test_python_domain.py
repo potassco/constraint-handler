@@ -483,6 +483,39 @@ def test_compute_domain_python_extract_marks_bad_on_invalid_bindings_and_eval_er
     assert compute_domain(eval_operation, build_domain(("left", 1))) == Domain.bad()
 
 
+def test_domain_computation_preserves_bad_tuple_inputs_for_python_extract() -> None:
+    variable_name = clingo.String("missing_input")
+    variable_expr = clingo.Function("variable", [variable_name])
+    binding_expr = clingo.Tuple_([
+        clingo.Function("val", [clingo.Function("string"), clingo.String("lhs")]),
+        variable_expr,
+    ])
+    operation_expr = clingo.Function(
+        "operation",
+        [
+            clingo.Function(
+                "pythonExtract",
+                [
+                    clingo.String("pass"),
+                    clingo.String("lhs"),
+                ],
+            ),
+            symbol_sequence(binding_expr),
+        ],
+    )
+
+    computed = DomainComputation.compute(
+        (
+            operation_expr,
+            variable_expr,
+            clingo.Function("variable_define", [variable_name, clingo.Function("bad")]),
+        )
+    )
+
+    assert computed.expression_domains[binding_expr] == Domain.tuple_values(("lhs", Domain.BAD_SYMBOL))
+    assert computed.expression_domains[operation_expr] == Domain.bad()
+
+
 def test_domain_computation_exports_python_callable_trace_symbols() -> None:
     variable_name = clingo.String("x")
     variable_expr = clingo.Function("variable", [variable_name])
