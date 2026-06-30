@@ -1130,23 +1130,13 @@ class Domain:
         """Compute the exponentiation domain."""
         ints: set[int] = set()
         floats: set[float] = set()
-        is_bad = left.is_bad or right.is_bad or bool(
-            left.bools
-            or left.is_none
-            or left.strings
-            or left.symbols
-            or left.tuples
-            or left.sets
-            or right.bools
-            or right.is_none
-            or right.strings
-            or right.symbols
-            or right.tuples
-            or right.sets
-        )
-        for left_value, right_value in product(left.numeric_values(), right.numeric_values()):
+        is_bad = False
+        for left_value, right_value in product(left.values(include_bad=True), right.values(include_bad=True)):
             if right_value == 0:
                 ints.add(1)
+                continue
+            if left_value == cls.BAD_SYMBOL or right_value == cls.BAD_SYMBOL:
+                is_bad = True
                 continue
             try:
                 result = left_value**right_value

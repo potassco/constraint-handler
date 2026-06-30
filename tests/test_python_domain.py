@@ -356,6 +356,8 @@ def test_apply_tracks_numeric_corner_cases_and_type_mismatches() -> None:
     assert Domain.apply(operators.ArithmeticOperator.sqrt, build_domain(-1)).is_bad is True
     assert compute_domain(clingo.Function("add"), build_domain("x"), build_domain(1)) == Domain.bad()
     assert compute_domain(clingo.Function("float_div"), build_domain(1.0), build_domain(0.0)) == Domain.bad()
+    assert compute_domain(clingo.Function("pow"), Domain.bad(), build_domain(0)) == Domain.integers(1)
+    assert compute_domain(clingo.Function("pow"), build_domain(None), build_domain(0)) == Domain.integers(1)
 
 
 def test_apply_length_marks_invalid_scalar_inputs_bad_but_keeps_valid_lengths() -> None:
