@@ -12,7 +12,6 @@ class ComputedDomains:
     """Cached compile2 domain-computation outputs for one grounding run."""
 
     expression_domains: dict[clingo.Symbol, Domain]
-    set_candidate_domains: dict[clingo.Symbol, set[DomainAtom]]
     set_expressions: set[clingo.Symbol]
     global_set_uids: dict[frozenset[DomainAtom], int]
 
@@ -35,7 +34,7 @@ class ComputedDomains:
         for expr, domain in sorted(self.expression_domains.items()):
             for symbol in domain.set_domain_value_symbols(
                 self.global_set_uids,
-                self.set_candidate_domains.get(expr, ()),
+                domain.domain_atoms,
             ):
                 if symbol in seen:
                     continue
@@ -93,32 +92,6 @@ class DomainComputation:
         return {value for value in domain.values() if not isinstance(value, frozenset)}
 
     @classmethod
-    def set_uid_sort_key(cls, value: object):
-        """Build a deterministic structural ordering key for set-uid assignment."""
-        if value is None:
-            return (0,)
-        if isinstance(value, bool):
-            return (1, int(value))
-        if isinstance(value, int):
-            return (2, value)
-        if isinstance(value, float):
-            return (3, value)
-        if isinstance(value, str):
-            return (4, value)
-        if isinstance(value, clingo.Symbol):
-            return (5, value)
-        if isinstance(value, tuple):
-            return (6, tuple(cls.set_uid_sort_key(item) for item in value))
-        if isinstance(value, frozenset):
-            return (7, tuple(sorted(cls.set_uid_sort_key(item) for item in value)))
-        return (8, repr(value))
-
-    @classmethod
-    def set_sort_key(cls, value: frozenset[DomainAtom]):
-        """Build a deterministic structural ordering key for one concrete set value."""
-        return tuple(sorted(cls.set_uid_sort_key(member) for member in value))
-
-    @classmethod
     def direct_subexpressions(cls, expr: clingo.Symbol) -> list[clingo.Symbol]:
         """Return the immediate child expressions that influence one expression domain."""
         if cls.is_function(expr, "operation", 2):
@@ -131,20 +104,6 @@ class DomainComputation:
         if cls.is_tuple(expr) and cls.sequence_items(expr) is None:
             return list(expr.arguments)
         return []
-
-    @classmethod
-    def flatten_set_values(cls, domain: Domain) -> set[DomainAtom]:
-        """Collect all members appearing in the concrete set values of one domain."""
-        values: set[DomainAtom] = set()
-        for set_value in domain.sets:
-            values.update(set_value)
-        return values
-
-    @classmethod
-    def register_set_uids(cls, domain: Domain, global_set_uids: dict[frozenset[DomainAtom], int]) -> None:
-        """Assign stable integer ids to newly seen concrete set values."""
-        for set_value in sorted(domain.sets, key=cls.set_sort_key):
-            global_set_uids.setdefault(set_value, len(global_set_uids))
 
     @classmethod
     def source_maps(
@@ -179,11 +138,6 @@ class DomainComputation:
         return raw_identifiers
 
     @classmethod
-    def domain_from_value(cls, symbol: clingo.Symbol) -> Domain:
-        """Convert one compile2 val(...) term into the matching runtime domain."""
-        return Domain.from_symbol(symbol)
-
-    @classmethod
     def evaluate_tuple(cls, expr: clingo.Symbol, expression_domains: Mapping[clingo.Symbol, Domain]) -> Domain:
         """Enumerate tuple values from already-computed child domains."""
         child_domains = [expression_domains.get(child, Domain.empty()) for child in expr.arguments]
@@ -198,8 +152,8 @@ class DomainComputation:
         var: clingo.Symbol,
         expression_domains: Mapping[clingo.Symbol, Domain],
         set_sources: Mapping[clingo.Symbol, dict[str, list[clingo.Symbol]]],
-    ) -> set[frozenset[DomainAtom]] | None:
-        """Enumerate the concrete set values implied by one set variable and its sources."""
+    ) -> Domain | None:
+        """Build the set-valued domain implied by one set variable and its sources."""
         if var not in set_sources:
             return None
         source_info = set_sources[var]
@@ -214,6 +168,8 @@ class DomainComputation:
             set_options = tuple(source_domain.sets)
             if set_options:
                 required_set_options.append(set_options)
+        if not required_scalars and not required_set_options:
+            return Domain.all_subsets(*optional_candidates)
         concrete_sets: set[frozenset[DomainAtom]] = set()
         set_combinations = product(*required_set_options) if required_set_options else [()]
         for chosen_sets in set_combinations:
@@ -228,29 +184,7 @@ class DomainComputation:
                     if mask & (1 << index):
                         members.add(member)
                 concrete_sets.add(frozenset(members))
-        return concrete_sets
-
-    @classmethod
-    def set_candidate_domain(
-        cls,
-        expr: clingo.Symbol,
-        expression_domains: Mapping[clingo.Symbol, Domain],
-        set_sources: Mapping[clingo.Symbol, dict[str, list[clingo.Symbol]]],
-    ) -> set[DomainAtom] | None:
-        """Collect candidate element values used when exporting set-domain memberships."""
-        if cls.is_function(expr, "variable", 1):
-            var = expr.arguments[0]
-            if var not in set_sources:
-                candidates = cls.flatten_set_values(expression_domains.get(expr, Domain.empty()))
-                return candidates or None
-            candidates: set[DomainAtom] = set()
-            for source_expr in set_sources[var]["set_baseDomain"] + set_sources[var]["set_assign"]:
-                source_domain = expression_domains.get(source_expr, Domain.empty())
-                candidates.update(cls.domain_values(source_domain))
-                candidates.update(cls.flatten_set_values(source_domain))
-            return candidates or None
-        candidates = cls.flatten_set_values(expression_domains.get(expr, Domain.empty()))
-        return candidates or None
+            return Domain.set_values(*concrete_sets)
 
     @classmethod
     def evaluate_expression(
@@ -263,7 +197,7 @@ class DomainComputation:
         if cls.is_function(expr, "bad", 0):
             return Domain.bad()
         if cls.is_function(expr, "val", 2):
-            return cls.domain_from_value(expr)
+            return Domain.from_symbol(expr)
         if cls.is_function(expr, "python", 1):
             return Domain.evaluate_python_expression(expr.arguments[0].string, solver_identifiers)
         if cls.is_function(expr, "operation", 2):
@@ -327,35 +261,34 @@ class DomainComputation:
     ) -> ComputedDomains:
         """Compute compile2 expression domains and the derived set export metadata."""
         expressions = set(top_level_expressions)
+        Domain.GLOBAL_SET_UIDS.clear()
+        Domain.NEXT_SET_UID = 0
         solver_identifier_key = cls.normalize_solver_identifiers(solver_identifiers)
         variable_sources, set_sources = cls.source_maps(expressions)
         expression_domains: dict[clingo.Symbol, Domain] = {}
-        set_candidate_domains: dict[clingo.Symbol, set[DomainAtom]] = {}
         set_expressions: set[clingo.Symbol] = set()
-        global_set_uids: dict[frozenset[DomainAtom], int] = {}
         for expr in cls.sorted_expressions(expressions):
             if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES:
                 continue
             if cls.is_function(expr, "variable", 1):
+                ### extend variable domains
                 var = expr.arguments[0]
                 domain = Domain.empty()
                 for source_expr in variable_sources.get(var, []):
                     domain.absorb(expression_domains.get(source_expr, Domain.empty()))
-                concrete_sets = cls.concrete_set_domain(var, expression_domains, set_sources)
-                if concrete_sets is not None:
-                    domain.sets.update(concrete_sets)
+                set_domain = cls.concrete_set_domain(var, expression_domains, set_sources)
+                if set_domain is not None:
+                    domain.absorb(set_domain)
                 expression_domains[expr] = domain
             else:
+                ### compute expression domains
                 expression_domains[expr] = cls.evaluate_expression(expr, expression_domains, solver_identifier_key)
             if expression_domains[expr].sets or (cls.is_function(expr, "variable", 1) and expr.arguments[0] in set_sources):
+                ### mark set-valued expressions for later export
                 set_expressions.add(expr)
-            candidate_domain = cls.set_candidate_domain(expr, expression_domains, set_sources)
-            if candidate_domain is not None:
-                set_candidate_domains[expr] = candidate_domain
-            cls.register_set_uids(expression_domains[expr], global_set_uids)
+                expression_domains[expr].set_uids
         return ComputedDomains(
             expression_domains=expression_domains,
-            set_candidate_domains=set_candidate_domains,
             set_expressions=set_expressions,
-            global_set_uids=global_set_uids,
+            global_set_uids=Domain.GLOBAL_SET_UIDS,
         )

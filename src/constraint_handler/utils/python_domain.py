@@ -81,12 +81,15 @@ def _identity_false(cls: type["Domain"]) -> "Domain":
 class Domain:
     """Compact domain model for compile2 without using expression wrappers.
 
-    This helper keeps concrete sets directly and also has a set-uid bucket for
-    the later export phase where concrete sets become stable integer ids.
+    Set-valued domains are modeled by their candidate atoms plus either an
+    explicit subset collection or ``None`` to mean that every subset of the
+    candidate atoms is valid.
     """
 
     LOGIC_BAD: ClassVar[object] = object()
     BAD_SYMBOL: ClassVar[clingo.Symbol] = clingo.Function("bad")
+    GLOBAL_SET_UIDS: ClassVar[dict[frozenset[DomainAtom], int]] = {}
+    NEXT_SET_UID: ClassVar[int] = 0
     THRESHOLD_ITERATIONS_BOOLEAN_OUTPUT: ClassVar[int] = 4 * 4
     BOOLEAN_OUTPUT_OPERATORS_WITH_NONE: ClassVar[frozenset[str]] = frozenset({"lnot", "snot", "wnot"})
     OPERATION_SPECS: ClassVar[dict[str, OperationSpec]] = {
@@ -128,8 +131,10 @@ class Domain:
     strings: set[str] = field(default_factory=set)
     symbols: set[clingo.Symbol] = field(default_factory=set)
     tuples: set[tuple[DomainAtom, ...]] = field(default_factory=set)
-    sets: set[frozenset[DomainAtom]] = field(default_factory=set)
-    set_uids: set[int] = field(default_factory=set)
+    domain_atoms: set[DomainAtom] = field(default_factory=set)
+    possible_subsets: set[frozenset[DomainAtom]] | None = field(default_factory=set)
+    _sets_cache: set[frozenset[DomainAtom]] | None = field(default=None, init=False, repr=False, compare=False)
+    _set_uids_cache: set[int] | None = field(default=None, init=False, repr=False, compare=False)
 
     @classmethod
     def empty(cls) -> Domain:
@@ -179,12 +184,49 @@ class Domain:
     @classmethod
     def set_values(cls, *values: frozenset[DomainAtom]) -> Domain:
         """Return a domain seeded with concrete set values."""
-        return cls(sets=set(values))
+        domain_atoms: set[DomainAtom] = set()
+        for value in values:
+            domain_atoms.update(value)
+        return cls(domain_atoms=domain_atoms, possible_subsets=set(values))
 
     @classmethod
-    def set_uid_values(cls, *values: int) -> Domain:
-        """Return a domain seeded with exported set identifiers."""
-        return cls(set_uids=set(values))
+    def all_subsets(cls, *values: DomainAtom) -> Domain:
+        """Return a domain where every subset of the candidate atoms is valid."""
+        return cls(domain_atoms=set(values), possible_subsets=None)
+
+    @classmethod
+    def set_uid_sort_key(cls, value: object):
+        """Build a deterministic structural ordering key for set-uid assignment."""
+        if value is None:
+            return (0,)
+        if isinstance(value, bool):
+            return (1, int(value))
+        if isinstance(value, int):
+            return (2, value)
+        if isinstance(value, float):
+            return (3, value)
+        if isinstance(value, str):
+            return (4, value)
+        if isinstance(value, clingo.Symbol):
+            return (5, value)
+        if isinstance(value, tuple):
+            return (6, tuple(cls.set_uid_sort_key(item) for item in value))
+        if isinstance(value, frozenset):
+            return (7, tuple(sorted((cls.set_uid_sort_key(item) for item in value))))
+        return (8, repr(value))
+
+    @classmethod
+    def set_sort_key(cls, value: frozenset[DomainAtom]):
+        """Build a deterministic structural ordering key for one concrete set value."""
+        return tuple(sorted(cls.set_uid_sort_key(member) for member in value))
+
+    @classmethod
+    def register_set_uid(cls, value: frozenset[DomainAtom]) -> int:
+        """Assign a stable global uid to one concrete set value."""
+        if value not in cls.GLOBAL_SET_UIDS:
+            cls.GLOBAL_SET_UIDS[value] = cls.NEXT_SET_UID
+            cls.NEXT_SET_UID += 1
+        return cls.GLOBAL_SET_UIDS[value]
 
     @classmethod
     def from_value(cls, value: DomainAtom) -> Domain:
@@ -309,9 +351,44 @@ class Domain:
             strings=set(self.strings),
             symbols=set(self.symbols),
             tuples=set(self.tuples),
-            sets=set(self.sets),
-            set_uids=set(self.set_uids),
+            domain_atoms=set(self.domain_atoms),
+            possible_subsets=None if self.possible_subsets is None else set(self.possible_subsets),
         )
+
+    def _invalidate_set_cache(self) -> None:
+        """Clear cached derived set views after mutating set-domain state."""
+        self._sets_cache = None
+        self._set_uids_cache = None
+
+    @classmethod
+    def _enumerate_all_subsets(cls, values: Iterable[DomainAtom]) -> set[frozenset[DomainAtom]]:
+        """Enumerate the full power set for the provided candidate atoms."""
+        items = tuple(sorted(set(values), key=cls.set_uid_sort_key))
+        result: set[frozenset[DomainAtom]] = set()
+        for mask in range(1 << len(items)):
+            members = {item for index, item in enumerate(items) if mask & (1 << index)}
+            result.add(frozenset(members))
+        return result
+
+    @property
+    def sets(self) -> set[frozenset[DomainAtom]]:
+        """Return all concrete set values represented by this domain."""
+        if self._sets_cache is None:
+            if self.possible_subsets is None:
+                self._sets_cache = self._enumerate_all_subsets(self.domain_atoms)
+            else:
+                self._sets_cache = set(self.possible_subsets)
+        return set(self._sets_cache)
+
+    @property
+    def set_uids(self) -> set[int]:
+        """Return cached global ids for all possible concrete set values."""
+        if self._set_uids_cache is None:
+            self._set_uids_cache = {
+                self.register_set_uid(set_value)
+                for set_value in sorted(self.sets, key=self.set_sort_key)
+            }
+        return set(self._set_uids_cache)
 
     def absorb(self, *domains: Domain) -> Domain:
         """Mutate this domain by unioning in the provided domains."""
@@ -324,8 +401,14 @@ class Domain:
             self.strings.update(domain.strings)
             self.symbols.update(domain.symbols)
             self.tuples.update(domain.tuples)
-            self.sets.update(domain.sets)
-            self.set_uids.update(domain.set_uids)
+            if self.possible_subsets is None or domain.possible_subsets is None:
+                merged_sets = self.sets | domain.sets
+                self.domain_atoms = {member for set_value in merged_sets for member in set_value}
+                self.possible_subsets = merged_sets
+            else:
+                self.domain_atoms.update(domain.domain_atoms)
+                self.possible_subsets.update(domain.possible_subsets)
+            self._invalidate_set_cache()
         return self
 
     @classmethod
@@ -383,21 +466,22 @@ class Domain:
     def expression_set_domain_symbols(
         self,
         expr: clingo.Symbol,
-        global_set_uids: Mapping[frozenset[DomainAtom], int],
+        global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
     ) -> Iterable[clingo.Symbol]:
         """Yield `_se_set_domain/2` tuples for this domain's concrete sets."""
         for set_value in self.sets:
-            yield clingo.Tuple_([expr, clingo.Number(global_set_uids[set_value])])
+            uid = self.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
+            yield clingo.Tuple_([expr, clingo.Number(uid)])
 
     def set_domain_value_symbols(
         self,
-        global_set_uids: Mapping[frozenset[DomainAtom], int],
+        global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
         candidate_values: Iterable[DomainAtom] = (),
     ) -> Iterable[clingo.Symbol]:
         """Yield `_se_set_domain/3` tuples for concrete set memberships."""
         candidate_values = tuple(candidate_values)
         for set_value in self.sets:
-            uid = global_set_uids[set_value]
+            uid = self.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
             members = set(set_value)
             for member in members | set(candidate_values):
                 sign = clingo.Function("pos" if member in members else "neg")
@@ -405,11 +489,12 @@ class Domain:
 
     def expression_set_domain_symbol_symbols(
         self,
-        global_set_uids: Mapping[frozenset[DomainAtom], int],
+        global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
     ) -> Iterable[clingo.Symbol]:
         """Yield `(Uid, SetValue)` tuples for this domain's concrete sets."""
         for set_value in self.sets:
-            yield clingo.Tuple_([clingo.Number(global_set_uids[set_value]), self.value_to_symbol(set_value)])
+            uid = self.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
+            yield clingo.Tuple_([clingo.Number(uid), self.value_to_symbol(set_value)])
 
     def scalar_values(self) -> Iterable[bool | int | float | str | None | clingo.Symbol]:
         """Yield only scalar values, excluding tuples and concrete sets."""
@@ -439,7 +524,6 @@ class Domain:
             or self.symbols
             or self.tuples
             or self.sets
-            or self.set_uids
         )
 
     def options(self) -> tuple[DomainAtom, ...]:
@@ -692,16 +776,10 @@ class Domain:
         cls,
         domain: Domain,
         set_members: Mapping[int, frozenset[DomainAtom]] | None,
-    ) -> tuple[set[frozenset[DomainAtom]], bool]:
-        """Resolve set ids into concrete sets when available."""
-        values = set(domain.sets)
-        unresolved = False
-        for uid in domain.set_uids:
-            if set_members is None or uid not in set_members:
-                unresolved = True
-                continue
-            values.add(set_members[uid])
-        return values, unresolved
+    ) -> set[frozenset[DomainAtom]]:
+        """Return the concrete sets represented by one domain."""
+        del set_members
+        return domain.sets
 
     @classmethod
     def _has_nonset_values(cls, domain: Domain) -> bool:
@@ -782,14 +860,12 @@ class Domain:
             or left.symbols
             or left.tuples
             or left.sets
-            or left.set_uids
             or right.bools
             or right.is_none
             or right.strings
             or right.symbols
             or right.tuples
             or right.sets
-            or right.set_uids
         )
         left_values = left.numeric_values()
         right_values = right.numeric_values()
@@ -965,14 +1041,12 @@ class Domain:
             or left.symbols
             or left.tuples
             or left.sets
-            or left.set_uids
             or right.bools
             or right.is_none
             or right.strings
             or right.symbols
             or right.tuples
             or right.sets
-            or right.set_uids
         )
         for left_value, right_value in product(left.numeric_values(), right.numeric_values()):
             if right_value == 0:
@@ -1135,7 +1209,7 @@ class Domain:
         lengths.update(len(value) for value in domain.tuples)
         lengths.update(len(value) for value in domain.sets)
         has_invalid_values = bool(domain.bools or domain.ints or domain.floats or domain.is_none or domain.symbols)
-        return cls(is_bad=domain.is_bad or bool(domain.set_uids) or has_invalid_values, ints=lengths)
+        return cls(is_bad=domain.is_bad or has_invalid_values, ints=lengths)
 
     @classmethod
     def op_max(cls, *domains: Domain) -> Domain:
@@ -1192,7 +1266,6 @@ class Domain:
             or domain.symbols
             or domain.tuples
             or domain.sets
-            or domain.set_uids
         )
         values: set[bool] = set()
         if has_real_values:
@@ -1204,16 +1277,15 @@ class Domain:
     @classmethod
     def op_set_make(cls, *domains: Domain) -> Domain:
         """Build all concrete sets produced by choosing one scalar from each input domain."""
-        result = cls(is_bad=any(domain.is_bad for domain in domains))
         if not domains:
-            result.sets.add(frozenset())
-            return result
+            return cls.set_values(frozenset())
 
         scalar_domains = [tuple(domain.scalar_values()) for domain in domains]
         if any(not values for values in scalar_domains):
-            return result
+            return cls(is_bad=any(domain.is_bad for domain in domains))
 
-        result.sets.update(frozenset(values) for values in product(*scalar_domains))
+        result = cls.set_values(*(frozenset(values) for values in product(*scalar_domains)))
+        result.is_bad = any(domain.is_bad for domain in domains)
         return result
 
     @classmethod
@@ -1225,12 +1297,12 @@ class Domain:
         set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute whether scalar members can occur in candidate sets."""
-        resolved_sets, unresolved = cls._resolve_sets(set_domain, set_members)
+        resolved_sets = cls._resolve_sets(set_domain, set_members)
         values = {
             value in set_value
             for value, set_value in product(member.values(), resolved_sets)
         }
-        is_bad = member.is_bad or set_domain.is_bad or unresolved or cls._has_nonset_values(set_domain)
+        is_bad = member.is_bad or set_domain.is_bad or cls._has_nonset_values(set_domain)
         return cls._bool_domain(values, is_bad=is_bad)
 
     @classmethod
@@ -1254,20 +1326,17 @@ class Domain:
         set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute the pairwise union of all candidate sets."""
-        left_sets, left_unresolved = cls._resolve_sets(left, set_members)
-        right_sets, right_unresolved = cls._resolve_sets(right, set_members)
+        left_sets = cls._resolve_sets(left, set_members)
+        right_sets = cls._resolve_sets(right, set_members)
         is_bad = (
             left.is_bad
             or right.is_bad
-            or left_unresolved
-            or right_unresolved
             or cls._has_nonset_values(left)
             or cls._has_nonset_values(right)
         )
-        return cls(
-            is_bad=is_bad,
-            sets={lhs | rhs for lhs, rhs in product(left_sets, right_sets)},
-        )
+        result = cls.set_values(*(lhs | rhs for lhs, rhs in product(left_sets, right_sets)))
+        result.is_bad = is_bad
+        return result
 
     @classmethod
     def op_inter(
@@ -1278,20 +1347,17 @@ class Domain:
         set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute the pairwise intersection of all candidate sets."""
-        left_sets, left_unresolved = cls._resolve_sets(left, set_members)
-        right_sets, right_unresolved = cls._resolve_sets(right, set_members)
+        left_sets = cls._resolve_sets(left, set_members)
+        right_sets = cls._resolve_sets(right, set_members)
         is_bad = (
             left.is_bad
             or right.is_bad
-            or left_unresolved
-            or right_unresolved
             or cls._has_nonset_values(left)
             or cls._has_nonset_values(right)
         )
-        return cls(
-            is_bad=is_bad,
-            sets={lhs & rhs for lhs, rhs in product(left_sets, right_sets)},
-        )
+        result = cls.set_values(*(lhs & rhs for lhs, rhs in product(left_sets, right_sets)))
+        result.is_bad = is_bad
+        return result
 
     @classmethod
     def op_diff(
@@ -1302,20 +1368,17 @@ class Domain:
         set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute the pairwise set difference of all candidate sets."""
-        left_sets, left_unresolved = cls._resolve_sets(left, set_members)
-        right_sets, right_unresolved = cls._resolve_sets(right, set_members)
+        left_sets = cls._resolve_sets(left, set_members)
+        right_sets = cls._resolve_sets(right, set_members)
         is_bad = (
             left.is_bad
             or right.is_bad
-            or left_unresolved
-            or right_unresolved
             or cls._has_nonset_values(left)
             or cls._has_nonset_values(right)
         )
-        return cls(
-            is_bad=is_bad,
-            sets={lhs - rhs for lhs, rhs in product(left_sets, right_sets)},
-        )
+        result = cls.set_values(*(lhs - rhs for lhs, rhs in product(left_sets, right_sets)))
+        result.is_bad = is_bad
+        return result
 
     @classmethod
     def op_subset(
@@ -1326,14 +1389,12 @@ class Domain:
         set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute the subset relation over all candidate set pairs."""
-        left_sets, left_unresolved = cls._resolve_sets(left, set_members)
-        right_sets, right_unresolved = cls._resolve_sets(right, set_members)
+        left_sets = cls._resolve_sets(left, set_members)
+        right_sets = cls._resolve_sets(right, set_members)
         values = {lhs <= rhs for lhs, rhs in product(left_sets, right_sets)}
         is_bad = (
             left.is_bad
             or right.is_bad
-            or left_unresolved
-            or right_unresolved
             or cls._has_nonset_values(left)
             or cls._has_nonset_values(right)
         )
