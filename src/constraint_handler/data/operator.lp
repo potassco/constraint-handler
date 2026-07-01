@@ -44,6 +44,7 @@ operator_declare((leq;lt;geq;gt),(T1,(T2,())),bool) :- T1 = (int;float),T2 = (in
 operator_declare((eq;neq),(float,(float,())),bool).
 
 % int
+operator_declare_variadic((add;mult),bool,int,1).
 operator_declare_variadic((add;mult),int,int,1).
 operator_declare((sub;pow),(int,(int,())),int).
 _operator_recoverable(pow).

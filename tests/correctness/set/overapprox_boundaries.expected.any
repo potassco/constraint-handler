@@ -1,0 +1,5 @@
+evaluated(subset,(variable(left),(variable(right),())),val(bool,true))
+evaluated(subset,(variable(left),(variable(right),())),val(bool,false))
+set_value(union_lr,val(int,12))
+set_value(inter_lr,val(int,5))
+set_value(diff_lr,val(int,1))
