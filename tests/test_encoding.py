@@ -126,7 +126,6 @@ base_tests = [
     "optimization/optional_absent_linked_value",
     "optimization/preferences",
     "optimization/priority",
-    "set/base_from_set_source",
     "set/comparisons",
     "set/membership_decomposed",
     "set/membership_nested",

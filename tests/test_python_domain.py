@@ -546,7 +546,8 @@ def test_domain_computation_preserves_bad_tuple_inputs_for_python_extract() -> N
             operation_expr,
             variable_expr,
             clingo.Function("variable_define", [variable_name, clingo.Function("bad")]),
-        )
+        ),
+        (),
     )
 
     assert computed.expression_domains[binding_expr] == Domain.tuple_values(("lhs", Domain.BAD_SYMBOL))
@@ -586,7 +587,8 @@ def test_domain_computation_combines_all_required_set_source_options() -> None:
             ),
             clingo.Function("set_assign", [target_name, left_var]),
             clingo.Function("set_assign", [target_name, right_var]),
-        )
+        ),
+        (),
     )
 
     assert computed.expression_domains[target_var] == Domain.set_values(
@@ -618,7 +620,8 @@ def test_domain_computation_exports_python_callable_trace_symbols() -> None:
             clingo.Function(
                 "variable_domain", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(0)])]
             ),
-        )
+        ),
+        (),
     )
 
     assert set(computed.python_evaluation_symbols()) == {
@@ -719,7 +722,8 @@ def test_domain_computation_exports_python_extract_inputs_against_value_expressi
             clingo.Function(
                 "variable_define", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
             ),
-        )
+        ),
+        (),
     )
 
     assert set(computed.python_evaluation_symbols()) == {
@@ -792,7 +796,8 @@ def test_domain_computation_exports_python_extract_statement_error_output() -> N
             clingo.Function(
                 "variable_define", [input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(4)])]
             ),
-        )
+        ),
+        (),
     )
 
     assert set(computed.python_evaluation_output_symbols()) == {
