@@ -59,6 +59,8 @@ _python_evaluation_output(PyExpr, Uid, OutputVal) :-
 import itertools
 from collections.abc import Iterable
 from functools import cache
+from pathlib import Path
+from time import perf_counter
 from typing import Any, NamedTuple, TypeAlias
 
 import clingo
@@ -122,6 +124,18 @@ SET_DOMAIN_POS = clingo.Function("pos")
 SET_DOMAIN_NEG = clingo.Function("neg")
 PYTHON_EVAL_LEAF = object()
 THRESHOLD_ITERATIONS_BOOLEAN_OUTPUT = 4 * 4 # (true, false, none, bad) for 2 input parameters
+DEBUG_LOG_PATH = Path("orig_debug.txt")
+
+
+def write_debug_profile(message: str) -> None:
+    """Append one profiling line to orig_debug.txt and flush it."""
+    try:
+        with DEBUG_LOG_PATH.open("a", encoding="utf-8") as debug_file:
+            debug_file.write(f"{message}\n")
+            debug_file.flush()
+    except OSError:
+        # Profiling must never interfere with solving.
+        pass
 
 def _cached_pytocl(value: Any, cache: ClingoSymbolCache) -> clingo.Symbol:
     """Convert one hashable value to a clingo symbol once and reuse it."""
@@ -832,9 +846,34 @@ def _evaluate_domain(
             return {expression.Bad.bad}
 
 
+def _profile_computed_domains(caller: str) -> PreprocessStorage:
+    """Return cached computed domains while logging cache-access cost."""
+    started_at = perf_counter()
+    computed = _compute_domains()
+    write_debug_profile(
+        f"[profile] {caller} computed_domains duration={perf_counter() - started_at:.6f}s"
+    )
+    return computed
+
+
+def _profile_iterable(caller: str, iterable):
+    """Yield one iterable while logging total emission time and item count."""
+    started_at = perf_counter()
+    emitted = 0
+    try:
+        for item in iterable:
+            emitted += 1
+            yield item
+    finally:
+        write_debug_profile(
+            f"[profile] {caller} emitted={emitted} duration={perf_counter() - started_at:.6f}s"
+        )
+
+
 @cache
 def _compute_domains() -> PreprocessStorage:
     """Compute domains and Python evaluation traces in dependency order."""
+    started_at = perf_counter()
     graph, variable_sources, set_sources = _build_expression_graph()
     ordered_expressions = tuple(_topological_order(graph))
     python_extract_groups = _group_python_extract_expressions(ordered_expressions)
@@ -849,7 +888,10 @@ def _compute_domains() -> PreprocessStorage:
 
     processed_python_extract_groups: set[PythonExtractGroupKey] = set()
 
-    for expr_ in ordered_expressions:
+    total_expressions = len(ordered_expressions)
+
+    for index, expr_ in enumerate(ordered_expressions, start=1):
+        write_debug_profile(f"[profile] compute expression {index}/{total_expressions} expr={expr_!s}")
         group_key = _python_extract_group_key(expr_)
         if group_key is not None:
             if group_key in processed_python_extract_groups:
@@ -944,6 +986,12 @@ def _compute_domains() -> PreprocessStorage:
     set_expressions.update(declared_set_exprs)
     clingo_symbols={}
 
+    write_debug_profile(
+        "[profile] compute "
+        f"expressions={total_expressions} computed_domains={len(expression_domains)} "
+        f"python_evaluations={len(python_evaluations)} duration={perf_counter() - started_at:.6f}s"
+    )
+
     return PreprocessStorage(
         expression_domains=expression_domains,
         set_candidate_domains=set_candidate_domains,
@@ -958,138 +1006,138 @@ def _compute_domains() -> PreprocessStorage:
 
 def expression_domain() -> list[clingo.Symbol]:
     """Expose all computed expression-domain pairs back to clingo."""
-    cache = _compute_domains()
+    computed = _profile_computed_domains("expression_domain")
 
-    result: list[clingo.Symbol] = []
-    for expr_, values in sorted(cache.expression_domains.items(), key=lambda item: str(item[0])):
-        cl_expr = _cached_pytocl(expr_, cache.clingo_symbols)
-        for value in sorted(values, key=str):
-            if expr_ in cache.set_expressions and isinstance(value, frozenset):
-                continue
-            result.append(clingo.symbol.Function("", [cl_expr, _cached_pytocl(value, cache.clingo_symbols)]))
-    return result
+    def _iter_result() -> Iterable[clingo.Symbol]:
+        for expr_, values in sorted(computed.expression_domains.items(), key=lambda item: str(item[0])):
+            cl_expr = _cached_pytocl(expr_, computed.clingo_symbols)
+            for value in sorted(values, key=str):
+                if expr_ in computed.set_expressions and isinstance(value, frozenset):
+                    continue
+                yield clingo.symbol.Function("", [cl_expr, _cached_pytocl(value, computed.clingo_symbols)])
+
+    return list(_profile_iterable("expression_domain", _iter_result()))
 
 
 def expression_set_domain() -> list[clingo.Symbol]:
     """Expose one identifier per concrete set in the computed domain of a set expression."""
-    cache = _compute_domains()
+    computed = _profile_computed_domains("expression_set_domain")
 
-    result: list[clingo.Symbol] = []
-    for expr_, values in sorted(cache.expression_domains.items(), key=lambda item: str(item[0])):
-        cl_expr = _cached_pytocl(expr_, cache.clingo_symbols)
-        for set_value in _expression_set_values(values):
-            uid = cache.global_set_uids[set_value]
-            result.append(clingo.symbol.Function("", [cl_expr, _cached_pytocl(uid, cache.clingo_symbols)]))
-    return result
+    def _iter_result() -> Iterable[clingo.Symbol]:
+        for expr_, values in sorted(computed.expression_domains.items(), key=lambda item: str(item[0])):
+            cl_expr = _cached_pytocl(expr_, computed.clingo_symbols)
+            for set_value in _expression_set_values(values):
+                uid = computed.global_set_uids[set_value]
+                yield clingo.symbol.Function("", [cl_expr, _cached_pytocl(uid, computed.clingo_symbols)])
+
+    return list(_profile_iterable("expression_set_domain", _iter_result()))
 
 
 def expression_set_domain_value() -> list[clingo.Symbol]:
     """Expose explicit positive and negative membership for each concrete set domain."""
-    cache = _compute_domains()
+    computed = _profile_computed_domains("expression_set_domain_value")
 
     uid_candidates: dict[int, set[ReducedExpr]] = {}
-    for expr_, candidate_values in cache.set_candidate_domains.items():
-        for set_value in _expression_set_values(cache.expression_domains.get(expr_, set())):
-            uid = cache.global_set_uids[set_value]
+    for expr_, candidate_values in computed.set_candidate_domains.items():
+        for set_value in _expression_set_values(computed.expression_domains.get(expr_, set())):
+            uid = computed.global_set_uids[set_value]
             uid_candidates.setdefault(uid, set()).update(candidate_values)
 
-    result: list[clingo.Symbol] = []
-    for set_value, uid in sorted(cache.global_set_uids.items(), key=lambda item: item[1]):
-        members = set(set_value)
-        candidate_values = uid_candidates.get(uid, set())
-        for member in sorted(candidate_values | members, key=str):
-            sign = SET_DOMAIN_POS if member in members else SET_DOMAIN_NEG
-            result.append(
-                clingo.symbol.Function(
+    def _iter_result() -> Iterable[clingo.Symbol]:
+        for set_value, uid in sorted(computed.global_set_uids.items(), key=lambda item: item[1]):
+            members = set(set_value)
+            candidate_values = uid_candidates.get(uid, set())
+            for member in sorted(candidate_values | members, key=str):
+                sign = SET_DOMAIN_POS if member in members else SET_DOMAIN_NEG
+                yield clingo.symbol.Function(
                     "",
                     [
-                        _cached_pytocl(uid, cache.clingo_symbols),
-                        _cached_pytocl(sign, cache.clingo_symbols),
-                        _cached_pytocl(member, cache.clingo_symbols),
+                        _cached_pytocl(uid, computed.clingo_symbols),
+                        _cached_pytocl(sign, computed.clingo_symbols),
+                        _cached_pytocl(member, computed.clingo_symbols),
                     ],
                 )
-            )
-    return result
+
+    return list(_profile_iterable("expression_set_domain_value", _iter_result()))
 
 
 def expression_set_domain_symbol(cl_expr: clingo.Symbol) -> list[clingo.Symbol]:
     """Expose concrete set values only for the requested set expression."""
-    cache = _compute_domains()
+    computed = _profile_computed_domains("expression_set_domain_symbol")
 
-    result: list[clingo.Symbol] = []
-    for expr_, values in sorted(cache.expression_domains.items(), key=lambda item: str(item[0])):
-        if _cached_pytocl(expr_, cache.clingo_symbols) != cl_expr:
-            continue
-        for set_value in _expression_set_values(values):
-            uid = cache.global_set_uids[set_value]
-            result.append(_cached_pytocl((uid, set_value), cache.clingo_symbols))
-        break
-    return result
+    def _iter_result() -> Iterable[clingo.Symbol]:
+        for expr_, values in sorted(computed.expression_domains.items(), key=lambda item: str(item[0])):
+            if _cached_pytocl(expr_, computed.clingo_symbols) != cl_expr:
+                continue
+            for set_value in _expression_set_values(values):
+                uid = computed.global_set_uids[set_value]
+                yield _cached_pytocl((uid, set_value), computed.clingo_symbols)
+            break
+
+    return list(_profile_iterable("expression_set_domain_symbol", _iter_result()))
 
 
 def expression_set() -> list[clingo.Symbol]:
     """Expose expressions whose computed domain contains a set value."""
-    cache = _compute_domains()
-
-    result: list[clingo.Symbol] = []
-    for expr_ in sorted(cache.set_expressions, key=str):
-        result.append(_cached_pytocl(expr_, cache.clingo_symbols))
+    started_at = perf_counter()
+    computed = _profile_computed_domains("expression_set")
+    result = sorted(_cached_pytocl(expr_, computed.clingo_symbols) for expr_ in computed.set_expressions)
+    write_debug_profile(
+        f"[profile] expression_set emitted={len(result)} duration={perf_counter() - started_at:.6f}s"
+    )
     return result
 
 
 def python_evaluation() -> list[clingo.Symbol]:
     """Expose one identifier per Python evaluation considered during domain computation."""
-    cache = _compute_domains()
+    computed = _profile_computed_domains("python_evaluation")
 
-    result: list[clingo.Symbol] = []
-    for evaluation in cache.python_evaluations:
-        expr_, uid = evaluation
-        result.append(
-            clingo.Function(
+    def _iter_result() -> Iterable[clingo.Symbol]:
+        for evaluation in computed.python_evaluations:
+            expr_, uid = evaluation
+            yield clingo.Function(
                 "",
-                [_cached_pytocl(expr_, cache.clingo_symbols), _cached_pytocl(uid, cache.clingo_symbols)],
+                [_cached_pytocl(expr_, computed.clingo_symbols), _cached_pytocl(uid, computed.clingo_symbols)],
             )
-        )
-    return result
+
+    return list(_profile_iterable("python_evaluation", _iter_result()))
 
 
 def python_evaluation_input() -> list[clingo.Symbol]:
     """Expose the concrete inputs used in each Python evaluation."""
-    cache = _compute_domains()
+    computed = _profile_computed_domains("python_evaluation_input")
 
-    result: list[clingo.Symbol] = []
-    for evaluation_input in cache.python_evaluation_inputs:
-        expr_, uid, arg_expr, arg_value = evaluation_input
-        result.append(
-            clingo.Function(
+    def _iter_result() -> Iterable[clingo.Symbol]:
+        for evaluation_input in computed.python_evaluation_inputs:
+            expr_, uid, arg_expr, arg_value = evaluation_input
+            yield clingo.Function(
                 "",
                 [
-                    _cached_pytocl(expr_, cache.clingo_symbols),
-                    _cached_pytocl(uid, cache.clingo_symbols),
-                    _cached_pytocl(arg_expr, cache.clingo_symbols),
-                    _cached_pytocl(arg_value, cache.clingo_symbols),
+                    _cached_pytocl(expr_, computed.clingo_symbols),
+                    _cached_pytocl(uid, computed.clingo_symbols),
+                    _cached_pytocl(arg_expr, computed.clingo_symbols),
+                    _cached_pytocl(arg_value, computed.clingo_symbols),
                 ],
             )
-        )
-    return result
+
+    return list(_profile_iterable("python_evaluation_input", _iter_result()))
 
 
 def python_evaluation_output() -> list[clingo.Symbol]:
     """Expose the outputs produced by each Python evaluation."""
-    cache = _compute_domains()
+    computed = _profile_computed_domains("python_evaluation_output")
 
-    result: list[clingo.Symbol] = []
-    for evaluation_output in cache.python_evaluation_outputs:
-        expr_, uid, output_value = evaluation_output
-        result.append(
-            clingo.Function(
+    def _iter_result() -> Iterable[clingo.Symbol]:
+        for evaluation_output in computed.python_evaluation_outputs:
+            expr_, uid, output_value = evaluation_output
+            yield clingo.Function(
                 "",
                 [
-                    _cached_pytocl(expr_, cache.clingo_symbols),
-                    _cached_pytocl(uid, cache.clingo_symbols),
-                    _cached_pytocl(output_value, cache.clingo_symbols),
+                    _cached_pytocl(expr_, computed.clingo_symbols),
+                    _cached_pytocl(uid, computed.clingo_symbols),
+                    _cached_pytocl(output_value, computed.clingo_symbols),
                 ],
             )
-        )
-    return result
+
+    return list(_profile_iterable("python_evaluation_output", _iter_result()))
 #end.
