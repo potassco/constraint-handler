@@ -1,0 +1,7 @@
+warning(type(untyped),(),list_var)
+warning(type(noConsistentType),(),mystery_call)
+warning(type(untyped),(),bad_add)
+type_variable(bad_add,int)
+type_variable(bad_add,string)
+warning(type(noConsistentType),(),x)
+warning(type(untyped),(),x)

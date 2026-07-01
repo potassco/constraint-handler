@@ -1,0 +1,7 @@
+warning(type(notSupported),(),pythonExtract("tmp=[1,2,3]","tmp"))
+warning(type(notSupported),(),pythonExtract("tmp=mystery(x)","tmp"))
+warning(type(noConsistentType),(),list_var)
+warning(type(untyped),(),mystery_call)
+warning(type(noConsistentType),(),bad_add)
+type_variable(x,int)
+value(x,val(int,1))

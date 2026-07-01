@@ -6,3 +6,4 @@ variable_define(copy,variable(pair)).
 
 evaluate(eq,(variable(pair),(variable(copy),()))).
 evaluate(neq,(variable(pair),(variable(computed),()))).
+phase_request(type_check,false).

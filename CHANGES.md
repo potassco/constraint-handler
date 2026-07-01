@@ -4,6 +4,12 @@
 
 ## v0.0.3
 
+- - introduce warning `correction/1`
+- - introduce corrections from the type_check phase
+- - implement rudimentary type inferrence support for `statement_python` and
+    `pythonExtract/2`
+- - replace warning `type(failed_operation)` with warnings
+    `type(noConsistentType)`, `type(notSupported)`, and `type(untyped)`
 - rename `myClorm.HashableList` into `myClorm.ImmutableList`
 - introduce `multimap.Multimap[K,V]` as an immutable mappng from keys `K` to
   sets of values `V`

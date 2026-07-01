@@ -1,5 +1,6 @@
 ### Input predicates
 
+_operator_declared/1.
 _passed(sugar,LBL,variable_declare/2).
 _passed(sugar,LBL,variable_define/2).
 _passed(sugar,LBL,variable_domain/2).
@@ -14,23 +15,23 @@ _passed(defaultArgs,LBL,set_assign/2).
 _passed(defaultArgs,LBL,set_baseDomain/2).
 _passed(defaultArgs,LBL,multimap_declare/1).
 _passed(defaultArgs,LBL,multimap_assign/3).
-_variable(sugar,VAR).
-_operator_declared/1.
-_se_value/2.
-_statement_internalVariable/1.
 _statement_introduce/3.
+_variable(sugar,VAR).
+_variable_internal(X).
+_variable_involve(defaultArgs,LBL,X,DECL).
+_variable_involve(sugar,LBL,X,DECL).
 
 ### Intermediate predicates
 
-_variable_hasDomain/2.
-_variable_exists/2.
-_variable_involve/3.
-_variable_confusingName/2.
 _variable_declared/1.
-_variable_reservedName/1.
+_variable_exists/2.
 _variable_multipleDeclarations/3.
 _variable_multipleDefinitions/3.
 _variable_multiple/2.
+_variable_name(conflict,X).
+_variable_name(confusing/1,X).
+_variable_name(reserved,X).
+_variable_strip/3.
 
 ### Output predicates
 
