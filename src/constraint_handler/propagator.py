@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import operator
 import sys
+from itertools import product
 from typing import Any, Iterable, Literal, Sequence, cast
 
 import clingo
@@ -85,7 +86,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.best_value: list[int | float] = [-sys.maxsize]
         self.using_optimization: bool = False
         self.optimization_strength: OptimizationStrength = OptimizationStrength.STRICT
-        self.prop_sum_atoms: list[Symbol] = []  # used in the postprocessings
 
         self.environment: myClorm.ImmutableList[expression.constant] = myClorm.ImmutableList()
 
@@ -182,6 +182,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         if self.check_only:
             init.check_mode = clingo.PropagatorCheckMode.Total
+            self.propagate = lambda control, changes: None  # type: ignore[assignment]
 
         self.get_solver_identifier(init)
 
@@ -202,7 +203,251 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_forbidden_warnings(init)
 
+        valuations = self.preprocess()
+
+        self.apply_preprocessing(valuations, init)
+
         self.evaluations.init(list(self.symbol2var.get_variables()))
+
+    def preprocess(self) -> dict[Symbol, set[Any]]:
+        """
+        Preprocess the propagator before solving.
+
+        This finds the possible domains for all variables, checks the ensures to see which ones are the possible ones
+        and prunes the variables based on their ability to be used in variables that depend on them.
+
+        Returns:
+            dict[Symbol, set[Any]]: A dictionary mapping variable symbols to their possible values.
+        """
+        valuations: dict[Symbol, set[Any]] = {}
+        evaluation_order = []
+
+        self.infer_domain(valuations, evaluation_order)
+
+        for _ in range(1):  # TODO: make this cycles configurable.
+            if not self.backward_prune(valuations, evaluation_order) and not self.forward_prune(
+                valuations, evaluation_order
+            ):
+                break
+        return valuations
+
+    def forward_prune(self, valuations: dict[Symbol, set[Any]], evaluation_order: list[Symbol]) -> bool:
+        """
+        Forward prune the valuations of variables based on their dependencies.
+
+        This is useful when during backward pruning a variable's domain is reduced, which may allow for further pruning of dependent variables.
+        E.g. y = x+1, z = x-1
+            x domain is {1,2,3}
+            y domain is {2,3,4} z domain is {0,1,2}
+            due to an ensure, y domain is now {2,3}
+            backward pruning will reduce x domain to {1,2}
+            now forward pruning will reduce z domain to {0,1} since x can only be 1 or 2.
+
+        Args:
+            valuations: Current valuations of variables.
+            evaluation_order: Order in which variables were evaluated.
+
+        Returns:
+            bool: True if any valuations were pruned, False otherwise.
+        """
+        changed = False
+        for var in evaluation_order:
+            deps = list(self.symbol2var.get_dependencies(var))
+            if len(deps) == 0:
+                continue
+
+            possible_values = set()
+            for _var in self.symbol2var[var].values():
+                possible_values.update(_var.simple_evaluate(valuations, self.environment))
+
+            if valuations[var].issubset(possible_values):
+                continue
+
+            valuations[var].intersection_update(possible_values)
+            changed = True
+
+        # TODO: optimization to not check ensures if nothing changed?
+        vals_after_ensures = self.check_ensures(valuations)
+        for s, vals in vals_after_ensures.items():
+            if len(vals) != len(valuations[s]):
+                changed = True
+        valuations.update(vals_after_ensures)
+
+        return changed
+
+    def backward_prune(self, valuations: dict[Symbol, set[Any]], evaluation_order: list[Symbol]) -> bool:
+        """
+        Prune the valuations of variables based on their dependencies.
+
+        Args:
+            valuations: Current valuations of variables.
+            evaluation_order: Order in which variables were evaluated.
+
+        Returns:
+            bool: True if any valuations were pruned, False otherwise.
+        """
+
+        var_values: dict[Symbol, set[Any]] = {}
+        changed = False
+
+        for var_symb in reversed(evaluation_order):
+            if var_symb not in var_values:
+                var_values[var_symb] = valuations[var_symb]
+            for var in self.symbol2var[var_symb].values():
+                for dep, values in var.asses_dependencies_values(valuations, self.environment).items():
+                    var_values.setdefault(dep, set()).update(values)
+
+        # Cant update valuations after every var since some values might be useful in other variables as well.
+        # so we must update after all variables are processed.
+        for dep, values in var_values.items():
+            if len(valuations[dep]) != len(values):
+                changed = True
+                valuations[dep] = values
+
+        vals_after_ensures = self.check_ensures(valuations)
+        for s, vals in vals_after_ensures.items():
+            if len(vals) != len(valuations[s]):
+                changed = True
+        valuations.update(vals_after_ensures)
+
+        return changed
+
+    def apply_preprocessing(self, valuations: dict[Symbol, set[Any]], init: clingo.PropagateInit) -> None:
+        """
+        Apply the preprocessed valuations to the propagator's variables.
+
+        Args:
+            valuations: A dictionary mapping variable symbols to their possible values.
+        """
+        for var_symb, values in valuations.items():
+            for var in self.symbol2var[var_symb].values():
+                var.set_possible_values(values, init)
+
+        del_list = []
+        for ensure_var in self.symbol2var.get_variables_by_type(getattr(EnsureVariable, "__name__")):
+            ensure_var = cast(EnsureVariable, ensure_var)
+
+            deps: list[Symbol] = list(ensure_var.vars())
+
+            if not all(dep in valuations for dep in deps):
+                continue
+
+            always_possible: bool = True
+            for values in product(*(valuations[dep] for dep in deps)):
+                eval_dict = dict(zip(deps, values))
+                success = ensure_var.simple_evaluate(eval_dict, self.environment)
+
+                # if the ensure variable can fail then only_possible becomes False eventually
+                always_possible &= success
+
+            if always_possible:
+                # if the ensure variable never fails
+                # then we don't have to keep it around since it is useless
+                del_list.append(ensure_var)
+
+        for ensure_var in del_list:
+            self.symbol2var.remove(ensure_var.var)
+
+    def infer_domain(self, valuations: dict[Symbol, set[Any]], eval_order: list[Symbol]) -> None:
+        """
+        Loop over all variables and calculate domains for the ones that have all dependencies known.
+        This function must be called repeatedly to do get the domain for all variables.
+
+        Args:
+            valuations: Current valuations of variables. This is modified in-place to add new possible values for variables.
+            eval_order: List of variable symbols in the order they were evaluated. This is modified in-place to add new variables that were evaluated.
+        """
+        preprocessed_something = False
+        current_vars = set(valuations.keys())
+        for var in self.symbol2var.keys():
+            if var in valuations:
+                continue
+
+            if self.symbol2var.has_var_type(var, getattr(EnsureVariable, "__name__")) or self.symbol2var.has_var_type(
+                var, getattr(BoolEvaluateVariable, "__name__")
+            ):
+                continue
+            preprocessed_something |= self.preprocess_variable(valuations, var, current_vars)
+            if preprocessed_something:
+                eval_order.append(var)
+
+        vals_after_ensures = self.check_ensures(valuations)
+        valuations.update(vals_after_ensures)
+
+        if preprocessed_something:
+            self.infer_domain(valuations, eval_order)
+
+    def preprocess_variable(self, valuations: dict[Symbol, set[Any]], var: Symbol, current_vars: set[Symbol]) -> bool:
+        """
+        Preprocess a single variable to calculate its possible domain.
+
+        Args:
+            valuations: Current valuations of variables.
+            var: The variable symbol to preprocess.
+            current_vars: Set of variable symbols that can contain the dependencies of the variable being preprocessed.
+
+        Returns:
+            bool: True if the variable was preprocessed, False if var does not exist or is already in valuations.
+        """
+        if var not in self.symbol2var:
+            return False
+
+        if self.symbol2var.has_var_type(var, getattr(EnsureVariable, "__name__")) or self.symbol2var.has_var_type(
+            var, getattr(BoolEvaluateVariable, "__name__")
+        ):
+            # Ensure variables are not preprocessed here, they are handled in check_ensures
+            return False
+
+        deps = list(self.symbol2var.get_dependencies(var))
+
+        possible_values: set[Any] = set()
+
+        if all(dep in current_vars for dep in deps):
+            for _var in self.symbol2var[var].values():
+                possible_values.update(_var.simple_evaluate(valuations, self.environment))
+        else:
+            return False
+
+        valuations[var] = possible_values
+
+        return True
+
+    def check_ensures(self, valuations: dict[Symbol, set[Any]]) -> dict[Symbol, set[Any]]:
+        """
+        Check ensure constraints for all variables and update their possible values.
+
+        Args:
+            valuations: Current valuations of variables.
+        """
+
+        possible_values: dict[Symbol, set[Any]] = {}
+        for ensure_var in self.symbol2var.get_variables_by_type(getattr(EnsureVariable, "__name__")):
+            ensure_var = cast(EnsureVariable, ensure_var)
+            if ensure_var.expression.literal != 1:
+                # only ensures that are always active can prune values
+                continue
+
+            deps: list[Symbol] = list(ensure_var.vars())
+
+            if not all(dep in valuations for dep in deps):
+                continue
+
+            # have to preemptively create the set for a dep
+            # in case it has no possible values
+            # otherwise, it will not be present in the dict at all
+            # and it will not update valuations correctly later on
+            for dep in deps:
+                possible_values[dep] = set()
+
+            for values in product(*(valuations[dep] for dep in deps)):
+                eval_dict = dict(zip(deps, values))
+                success = ensure_var.simple_evaluate(eval_dict, self.environment)
+
+                if success:
+                    for k, v in eval_dict.items():
+                        possible_values.setdefault(k, set()).add(v)
+
+        return possible_values
 
     def add_reasoning_mode_helper_atoms(self, ctl: clingo.PropagateInit) -> None:
         """
@@ -1015,9 +1260,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         maxSums = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_optimize_maximizeSum)
 
-        for prop_sum in ctl.symbolic_atoms.by_signature("propagator_optimize_maximizeSum", 4):
-            self.prop_sum_atoms.append(prop_sum.symbol)
-
         for (_, expr, symbol, priority), literal in maxSums.items():
             self.using_optimization = True
             self.optimization_sum.add_value(symbol, expr, literal, priority)
@@ -1369,23 +1611,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     self.python_model.add(__warning)
             else:
                 self.python_model.add(__warning)
-
-    def get_expr_values(self, variables: Iterable[VariableType | OptimizationHandler]) -> dict[Symbol, Symbol]:
-        """
-        Get the expressions and their evaluated values for a list of variables.
-        This is intended to be used in the post processing
-
-        Args:
-            variables: Iterable ofVariableTypes or OptimizationHandlers for which to get the expressions and their evaluated values.
-        """
-        vals = {}
-        for var in variables:
-            for expr in var.expressions:
-                if expr.value not in [ValueStatus.NOT_SET, ValueStatus.ASSIGNMENT_IS_FALSE, None, expression.Bad.bad]:
-                    val, errors = evaluator.reducedExpr(expr.value)  # TODO handle errors?
-                    vals[myClorm.pytocl(expr.expr)] = myClorm.pytocl(val)
-
-        return vals
 
     def add_shared_values(self, model: clingo.Model):
         """
