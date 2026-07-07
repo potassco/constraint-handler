@@ -1,3 +1,3 @@
-:- _passed(compile2, LBL, ensure(Expr)),
+:- _passed(compile3, LBL, ensure(Expr)),
     not _se_value(Expr, val(bool, true)),
     not _se_value(Expr, bad).

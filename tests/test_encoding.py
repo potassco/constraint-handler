@@ -9,7 +9,7 @@ import tests.utils.testing as chut
 ctrl_options = ["0", "--heuristic=Domain"]
 
 
-def solve_with_clingo_statistics(name: str, engine: Literal["compile", "compile2", "ground", "propagator"] = "compile") -> dict:
+def solve_with_clingo_statistics(name: str, engine: Literal["compile", "compile3", "ground", "propagator"] = "compile") -> dict:
     ctl = clingo.Control(["--stats=2"])
     constraint_handler.add_to_control(ctl)
     ctl.add(f"defaultEngine({engine}).")
@@ -22,7 +22,7 @@ def solve_with_clingo_statistics(name: str, engine: Literal["compile", "compile2
     return ctl.statistics
 
 
-def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propagator"], check_mode: bool = False):
+def run_test(name: str, engine: Literal["compile", "compile3", "ground", "propagator"], check_mode: bool = False):
     name = "tests/correctness/" + name
     engine_prg = f"defaultEngine({engine})."
     for test, extra_args in chut.build_expectations(name):
@@ -132,8 +132,8 @@ compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "engine/request",
 }
-compile2_skip: set[str] = set()
-compile2_xfail: set[str] = {
+compile3_skip: set[str] = set()
+compile3_xfail: set[str] = {
     "engine/request",
     "optimization/multimap_bool",
     "optimization/multimap_float",
@@ -217,7 +217,7 @@ propagator_true_xfail: set[str] = propagator_xfail | {
 
 engine_test_configs: list[tuple[str, set[str], set[str], tuple[bool, ...]]] = [
     ("compile", compile_skip, compile_xfail, (False,)),
-    ("compile2", compile2_skip, compile2_xfail, (False,)),
+    ("compile3", compile3_skip, compile3_xfail, (False,)),
     ("ground", ground_skip, ground_xfail, (False,)),
     ("propagator", propagator_skip, propagator_xfail, (False,)),
     ("propagator", propagator_true_skip, propagator_true_xfail, (True,)),
@@ -252,7 +252,7 @@ def param_marks(
         for name in base_tests
     ],
 )
-def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "propagator"], check_mode: bool):
+def test_engine(name: str, engine: Literal["compile", "compile3", "ground", "propagator"], check_mode: bool):
     run_test(name, engine, check_mode)
 
 

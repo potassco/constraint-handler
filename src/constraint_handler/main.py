@@ -69,25 +69,25 @@ module_4_compile = [
     "4_solve/compile/preference",
 ]
 
-module_4_compile2 = [
-    "4_solve/compile2/variables",
-    "4_solve/compile2/ensure",
-    "4_solve/compile2/value",
-    "4_solve/compile2/boolean",
-    "4_solve/compile2/set",
-    "4_solve/compile2/int",
-    "4_solve/compile2/float",
-    "4_solve/compile2/string",
-    "4_solve/compile2/symbol",
-    "4_solve/compile2/tuple",
-    "4_solve/compile2/optimize",
-    "4_solve/compile2/output",
-    "4_solve/compile2/evaluate",
-    "4_solve/compile2/bad",
-    "4_solve/compile2/none",
-    "4_solve/compile2/preference",
-    "4_solve/compile2/python",
-    "4_solve/compile2/equality",
+module_4_compile3 = [
+    "4_solve/compile3/variables",
+    "4_solve/compile3/ensure",
+    "4_solve/compile3/value",
+    "4_solve/compile3/boolean",
+    "4_solve/compile3/set",
+    "4_solve/compile3/int",
+    "4_solve/compile3/float",
+    "4_solve/compile3/string",
+    "4_solve/compile3/symbol",
+    "4_solve/compile3/tuple",
+    "4_solve/compile3/optimize",
+    "4_solve/compile3/output",
+    "4_solve/compile3/evaluate",
+    "4_solve/compile3/bad",
+    "4_solve/compile3/none",
+    "4_solve/compile3/preference",
+    "4_solve/compile3/python",
+    "4_solve/compile3/equality",
 ]
 
 module_4_ground = [
@@ -108,7 +108,7 @@ module_4_solve = (
     + module_4_compile
     + module_4_ground
     + module_4_propagator
-    + module_4_compile2
+    + module_4_compile3
 )
 
 module_5_output = [
@@ -117,7 +117,7 @@ module_5_output = [
     "5_output/value",
 ]
 
-t_modules = {"expression": ("PHASE", ["sugar", "compile", "compile2"])}
+t_modules = {"expression": ("PHASE", ["sugar", "compile", "compile3"])}
 modules = (
     module_main
     + module_0_default_arguments
