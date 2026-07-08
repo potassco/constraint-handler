@@ -86,7 +86,22 @@ _float_mul(mult, ExprList, Idx, @pythonFloatBinary(mult, Val, ListVal)) :-
 
 %%%%%%%%%%%%%%%%% binary operations
 
-_binary_float_operation(sub;pow;float_div;int_div;eq;neq;leq;lt;geq;gt;max;min).
+_binary_float_operation(sub;pow;float_div;int_div;leq;lt;geq;gt;max;min).
+
+_float_eq_used_expression(Expr) :-
+    _expression(compile2, operation((eq;neq), (Expr, (OtherExpr, ())))).
+
+_float_eq_used_expression(Expr) :-
+    _expression(compile2, operation((eq;neq), (OtherExpr, (Expr, ())))).
+
+_float_eq_value(Expr, FloatVal) :-
+    _float_eq_used_expression(Expr),
+    _se_value(Expr, val(float, FloatVal)).
+
+_float_eq_value(Expr, FloatVal) :-
+    _float_eq_used_expression(Expr),
+    _se_value(Expr, val(int, IntVal)),
+    val(float, FloatVal) = @pythonFloatBinary(add, IntVal, float("0.0")).
 
 :-
     _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
@@ -107,6 +122,31 @@ _binary_float_operation(sub;pow;float_div;int_div;eq;neq;leq;lt;geq;gt;max;min).
     _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
     _float_operation((Expr1, (Expr2, ()))),
     _se_value(Expr2, val(none, none)),
+    not _se_value(Expr1, val(none, none)),
+    not _se_value(Expr1, bad),
+    not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
+
+:-
+    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _float_eq_value(Expr1, FloatVal),
+    _float_eq_value(Expr2, FloatVal),
+    not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, true)).
+
+:-
+    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _float_eq_value(Expr1, FloatVal),
+    not _float_eq_value(Expr2, FloatVal),
+    not _se_value(Expr2, val(none, none)),
+    not _se_value(Expr2, bad),
+    not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
+
+:-
+    _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _float_eq_value(Expr2, FloatVal),
+    not _float_eq_value(Expr1, FloatVal),
     not _se_value(Expr1, val(none, none)),
     not _se_value(Expr1, bad),
     not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
@@ -133,6 +173,31 @@ _binary_float_operation(sub;pow;float_div;int_div;eq;neq;leq;lt;geq;gt;max;min).
     not _se_value(Expr1, val(none, none)),
     not _se_value(Expr1, bad),
     not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
+
+:-
+    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _float_eq_value(Expr1, FloatVal),
+    not _float_eq_value(Expr2, FloatVal),
+    not _se_value(Expr2, val(none, none)),
+    not _se_value(Expr2, bad),
+    not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
+
+:-
+    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _float_eq_value(Expr2, FloatVal),
+    not _float_eq_value(Expr1, FloatVal),
+    not _se_value(Expr1, val(none, none)),
+    not _se_value(Expr1, bad),
+    not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
+
+:-
+    _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
+    _float_operation((Expr1, (Expr2, ()))),
+    _float_eq_value(Expr1, FloatVal),
+    _float_eq_value(Expr2, FloatVal),
+    not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, false)).
 
 :-
     _expression(compile2, operation(OP, (Expr1, (Expr2, ())))),
