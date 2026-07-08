@@ -142,6 +142,7 @@ base_tests = [
     "set/manipulation_flat",
     "set/manipulations",
     "set/nondet_simple",
+    "set/overapprox_boundaries",
     "set/set_in_set_notin",
     "set/set_make_flat",
     "set/same_val_multi_expr",
@@ -211,6 +212,7 @@ ground_skip: set[str] = {
     "set/selfref",
     "core/python_set_bool_brave",
     "core/python_extract_statement_error_warning",
+    "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
 }
 ground_xfail: set[str] = {
     "core/reasoning_modes",
@@ -236,6 +238,7 @@ ground_xfail: set[str] = {
 
 propagator_skip: set[str] = {
     "core/python_extract_statement_error_warning",
+    "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
 }
 propagator_xfail: set[str] = {
     "engine/request",
@@ -353,6 +356,7 @@ choice_statistics_xfail: set[str] = {
     "set/set_in_set_notin",
     "set/set_make_flat",
     "set/length_flat",
+    "set/overapprox_boundaries",
     "set/selfref",
     "set/subset_flat",
     "set/union_flat",
