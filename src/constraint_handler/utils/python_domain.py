@@ -523,7 +523,7 @@ class Domain:
 
     def expression_domain_symbols(self, expr: clingo.Symbol, *, include_set_values: bool) -> Iterable[clingo.Symbol]:
         """Yield `_se_domain/2` tuples for one expression."""
-        for value in self.values():
+        for value in sorted(self.values(), key=self.set_uid_sort_key):
             if not include_set_values and isinstance(value, frozenset):
                 continue
             yield cached_tuple((expr, self.value_to_symbol(value)))
@@ -536,7 +536,7 @@ class Domain:
         global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
     ) -> Iterable[clingo.Symbol]:
         """Yield `_se_set_domain/2` tuples for this domain's concrete sets."""
-        for set_value in self.sets:
+        for set_value in sorted(self.sets, key=self.set_sort_key):
             uid = self.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
             yield cached_tuple((expr, cached_number(uid)))
 
@@ -564,7 +564,7 @@ class Domain:
         """Yield `_se_set_domain/3` tuples for one concrete set value."""
         uid = cls.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
         members = set(set_value)
-        for member in members | set(candidate_values):
+        for member in sorted(members | set(candidate_values), key=cls.set_uid_sort_key):
             sign = cached_function("pos" if member in members else "neg")
             yield cached_tuple((cached_number(uid), sign, cls.value_to_symbol(member)))
 
@@ -573,7 +573,7 @@ class Domain:
         global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
     ) -> Iterable[clingo.Symbol]:
         """Yield `(Uid, SetValue)` tuples for this domain's concrete sets."""
-        for set_value in self.sets:
+        for set_value in sorted(self.sets, key=self.set_sort_key):
             uid = self.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
             yield cached_tuple((cached_number(uid), self.value_to_symbol(set_value)))
 
