@@ -332,6 +332,41 @@ class Domain:
         return cls.bad()
 
     @classmethod
+    def value_to_symbol(cls, value: DomainAtom) -> clingo.Symbol:
+        """Convert one runtime domain value into the compile2 value encoding."""
+        if isinstance(value, bool):
+            return cached_function(
+                VAL_SYMBOL.name,
+                (BOOL_SYMBOL, TRUE_SYMBOL if value else FALSE_SYMBOL),
+            )
+        if isinstance(value, int):
+            return cached_function(VAL_SYMBOL.name, (INT_SYMBOL, cached_number(value)))
+        if isinstance(value, float):
+            return cached_function(
+                VAL_SYMBOL.name,
+                (
+                    FLOAT_SYMBOL,
+                    cached_function(FLOAT_SYMBOL.name, (clingo.String(repr(value)),)),
+                ),
+            )
+        if value is None:
+            return cached_function(VAL_SYMBOL.name, (NONE_SYMBOL, NONE_SYMBOL))
+        if isinstance(value, str):
+            return cached_function(VAL_SYMBOL.name, (STRING_SYMBOL, clingo.String(value)))
+        if isinstance(value, clingo.Symbol):
+            if value == cls.BAD_SYMBOL:
+                return value
+            return cached_function(VAL_SYMBOL.name, (SYMBOL_SYMBOL, value))
+        if isinstance(value, tuple):
+            return cached_tuple(tuple(cls.value_to_symbol(item) for item in value))
+        if isinstance(value, (set, frozenset)):
+            return cached_function(
+                SET_SYMBOL.name,
+                (cls._symbol_sequence(sorted(cls.value_to_symbol(item) for item in value)),),
+            )
+        raise TypeError(value)
+
+    @classmethod
     def value_to_runtime(cls, value: DomainAtom) -> Any:
         """Convert one internal domain value into direct Python runtime data."""
         if value == cls.BAD_SYMBOL:
@@ -480,49 +515,27 @@ class Domain:
         yield from self.tuples
         yield from self.sets
 
-    def to_symbols(self, *, include_bad: bool = False) -> Iterable[clingo.Symbol]:
-        """Yield compile2 symbols for all concrete values represented by this domain."""
-        for value in self.bools:
-            yield cached_function(
-                VAL_SYMBOL.name,
-                (BOOL_SYMBOL, TRUE_SYMBOL if value else FALSE_SYMBOL),
-            )
-        for value in self.ints:
-            if value in self.bools:
-                continue
-            yield cached_function(VAL_SYMBOL.name, (INT_SYMBOL, cached_number(value)))
-        for value in self.floats:
-            if value in self.bools or value in self.ints:
-                continue
-            yield cached_function(
-                VAL_SYMBOL.name,
-                (
-                    FLOAT_SYMBOL,
-                    cached_function(FLOAT_SYMBOL.name, (clingo.String(repr(value)),)),
-                ),
-            )
+    def to_symbols(self, *, include_bad: bool = False, include_set_values: bool = True) -> Iterable[clingo.Symbol]:
+        """Yield compile2 symbols while preserving native-value ordering and filtering."""
+        for value in sorted(self.bools):
+            yield self.value_to_symbol(value)
+        for value in sorted(self.ints):
+            if value not in self.bools:
+                yield self.value_to_symbol(value)
+        for value in sorted(self.floats):
+            if value not in self.bools and value not in self.ints:
+                yield self.value_to_symbol(value)
         if self.is_none:
-            yield cached_function(VAL_SYMBOL.name, (NONE_SYMBOL, NONE_SYMBOL))
-        for value in self.strings:
-            yield cached_function(VAL_SYMBOL.name, (STRING_SYMBOL, clingo.String(value)))
-        for value in self.symbols:
-            if value == self.BAD_SYMBOL:
-                yield value
-                continue
-            yield cached_function(VAL_SYMBOL.name, (SYMBOL_SYMBOL, value))
-        for value in self.tuples:
-            yield cached_tuple(tuple(self.from_value(item).to_symbols(include_bad=True).__next__() for item in value))
-        for value in self.sets:
-            yield cached_function(
-                SET_SYMBOL.name,
-                (
-                    self._symbol_sequence(
-                        sorted(
-                            (self.from_value(item).to_symbols(include_bad=True).__next__() for item in value),
-                        )
-                    ),
-                ),
-            )
+            yield self.value_to_symbol(None)
+        for value in sorted(self.strings):
+            yield self.value_to_symbol(value)
+        for value in sorted(self.symbols):
+            yield self.value_to_symbol(value)
+        for value in sorted(self.tuples, key=self.set_uid_sort_key):
+            yield self.value_to_symbol(value)
+        if include_set_values:
+            for value in sorted(self.sets, key=self.set_sort_key):
+                yield self.value_to_symbol(value)
         if include_bad and self.is_bad and self.BAD_SYMBOL not in self.symbols:
             yield self.BAD_SYMBOL
 
@@ -546,12 +559,8 @@ class Domain:
 
     def expression_domain_symbols(self, expr: clingo.Symbol, *, include_set_values: bool) -> Iterable[clingo.Symbol]:
         """Yield `_se_domain/2` tuples for one expression."""
-        for symbol in sorted(self.to_symbols(), key=self.set_uid_sort_key):
-            if not include_set_values and symbol.type == clingo.SymbolType.Function and symbol.name == "set":
-                continue
+        for symbol in self.to_symbols(include_bad=True, include_set_values=include_set_values):
             yield cached_tuple((expr, symbol))
-        if self.is_bad:
-            yield cached_tuple((expr, cached_function("bad")))
 
     def expression_set_domain_symbols(
         self,
@@ -589,7 +598,7 @@ class Domain:
         members = set(set_value)
         for member in sorted(members | set(candidate_values), key=cls.set_uid_sort_key):
             sign = cached_function("pos" if member in members else "neg")
-            yield cached_tuple((cached_number(uid), sign, cls.from_value(member).to_symbols(include_bad=True).__next__()))
+            yield cached_tuple((cached_number(uid), sign, cls.value_to_symbol(member)))
 
     def expression_set_domain_symbol_symbols(
         self,
@@ -598,7 +607,7 @@ class Domain:
         """Yield `(Uid, SetValue)` tuples for this domain's concrete sets."""
         for set_value in sorted(self.sets, key=self.set_sort_key):
             uid = self.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
-            yield cached_tuple((cached_number(uid), self.from_value(set_value).to_symbols(include_bad=True).__next__()))
+            yield cached_tuple((cached_number(uid), self.value_to_symbol(set_value)))
 
     def scalar_values(self) -> Iterable[bool | int | float | str | None | clingo.Symbol]:
         """Yield only scalar values, excluding tuples and concrete sets."""

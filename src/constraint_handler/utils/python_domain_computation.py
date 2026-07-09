@@ -510,7 +510,7 @@ class ComputedDomains:
             return value.symbol
         if isinstance(value, frozenset):
             return cached_number(self.global_set_uids[value])
-        return next(Domain.from_value(value).to_symbols(include_bad=True))
+        return Domain.value_to_symbol(value)
 
 
 class DomainComputation:
