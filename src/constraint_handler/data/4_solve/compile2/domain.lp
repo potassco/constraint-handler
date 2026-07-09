@@ -106,7 +106,7 @@ def expression_set_domain_symbol(cl_expr: clingo.Symbol):
 
 def expression_set():
     computed = _computed_domains()
-    return sorted(computed.set_expressions)
+    return computed.set_expression_symbols()
 
 
 def python_evaluation():

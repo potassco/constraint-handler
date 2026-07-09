@@ -162,12 +162,12 @@ def test_runtime_and_symbol_roundtrips_cover_nested_structures_and_bad_marker() 
     assert Domain.runtime_to_value(runtime_value) == nested_value
     assert Domain.runtime_to_value(Domain.value_to_runtime(Domain.BAD_SYMBOL)) == Domain.BAD_SYMBOL
 
-    encoded_set = Domain.value_to_symbol(frozenset({1, "x"}))
+    encoded_set = next(Domain.set_values(frozenset({1, "x"})).to_symbols())
     assert encoded_set.name == "set"
-    assert Domain.value_to_symbol((1, "x")) == clingo.Tuple_(
+    assert next(Domain.tuple_values((1, "x")).to_symbols()) == clingo.Tuple_(
         [
-            Domain.value_to_symbol(1),
-            Domain.value_to_symbol("x"),
+            next(Domain.integers(1).to_symbols()),
+            next(Domain.strings_only("x").to_symbols()),
         ]
     )
 
@@ -220,7 +220,7 @@ def test_domain_symbol_export_helpers_include_bad_and_candidate_members() -> Non
     global_set_uids = Domain.GLOBAL_SET_UIDS
 
     assert list(domain.expression_domain_symbols(expr_symbol, include_set_values=False)) == [
-        clingo.Tuple_([expr_symbol, Domain.value_to_symbol(1)]),
+        clingo.Tuple_([expr_symbol, next(Domain.integers(1).to_symbols())]),
         clingo.Tuple_([expr_symbol, clingo.Function("bad")]),
     ]
     assert list(domain.expression_set_domain_symbols(expr_symbol, global_set_uids)) == [
@@ -228,9 +228,9 @@ def test_domain_symbol_export_helpers_include_bad_and_candidate_members() -> Non
     ]
     assert sorted(domain.set_domain_value_symbols(global_set_uids, candidate_values=(3,)), key=str) == sorted(
         [
-            clingo.Tuple_([clingo.Number(uid), clingo.Function("pos"), Domain.value_to_symbol(1)]),
-            clingo.Tuple_([clingo.Number(uid), clingo.Function("pos"), Domain.value_to_symbol(2)]),
-            clingo.Tuple_([clingo.Number(uid), clingo.Function("neg"), Domain.value_to_symbol(3)]),
+            clingo.Tuple_([clingo.Number(uid), clingo.Function("pos"), next(Domain.integers(1).to_symbols())]),
+            clingo.Tuple_([clingo.Number(uid), clingo.Function("pos"), next(Domain.integers(2).to_symbols())]),
+            clingo.Tuple_([clingo.Number(uid), clingo.Function("neg"), next(Domain.integers(3).to_symbols())]),
         ],
         key=str,
     )
@@ -251,9 +251,9 @@ def test_set_value_domain_symbols_export_one_concrete_set() -> None:
         key=str,
     ) == sorted(
         [
-            clingo.Tuple_([clingo.Number(uid), clingo.Function("pos"), Domain.value_to_symbol(1)]),
-            clingo.Tuple_([clingo.Number(uid), clingo.Function("pos"), Domain.value_to_symbol(2)]),
-            clingo.Tuple_([clingo.Number(uid), clingo.Function("neg"), Domain.value_to_symbol(3)]),
+            clingo.Tuple_([clingo.Number(uid), clingo.Function("pos"), next(Domain.integers(1).to_symbols())]),
+            clingo.Tuple_([clingo.Number(uid), clingo.Function("pos"), next(Domain.integers(2).to_symbols())]),
+            clingo.Tuple_([clingo.Number(uid), clingo.Function("neg"), next(Domain.integers(3).to_symbols())]),
         ],
         key=str,
     )
@@ -816,38 +816,38 @@ def test_domain_computation_exports_set_memberships_only_for_python_and_tuple_co
     unused_uid = computed.global_set_uids[frozenset({7})]
 
     assert (
-        clingo.Tuple_([clingo.Number(python_input_uid), clingo.Function("pos"), Domain.value_to_symbol(1)])
+        clingo.Tuple_([clingo.Number(python_input_uid), clingo.Function("pos"), next(Domain.integers(1).to_symbols())])
         in membership_symbols
     )
     assert (
-        clingo.Tuple_([clingo.Number(python_input_uid), clingo.Function("pos"), Domain.value_to_symbol(2)])
+        clingo.Tuple_([clingo.Number(python_input_uid), clingo.Function("pos"), next(Domain.integers(2).to_symbols())])
         in membership_symbols
     )
     assert (
-        clingo.Tuple_([clingo.Number(python_input_uid), clingo.Function("neg"), Domain.value_to_symbol(4)])
-        in membership_symbols
-    )
-
-    assert (
-        clingo.Tuple_([clingo.Number(python_output_uid), clingo.Function("pos"), Domain.value_to_symbol(1)])
-        in membership_symbols
-    )
-    assert (
-        clingo.Tuple_([clingo.Number(python_output_uid), clingo.Function("pos"), Domain.value_to_symbol(3)])
+        clingo.Tuple_([clingo.Number(python_input_uid), clingo.Function("neg"), next(Domain.integers(4).to_symbols())])
         in membership_symbols
     )
 
     assert (
-        clingo.Tuple_([clingo.Number(tuple_child_uid), clingo.Function("pos"), Domain.value_to_symbol(5)])
+        clingo.Tuple_([clingo.Number(python_output_uid), clingo.Function("pos"), next(Domain.integers(1).to_symbols())])
         in membership_symbols
     )
     assert (
-        clingo.Tuple_([clingo.Number(tuple_child_uid), clingo.Function("neg"), Domain.value_to_symbol(6)])
+        clingo.Tuple_([clingo.Number(python_output_uid), clingo.Function("pos"), next(Domain.integers(3).to_symbols())])
         in membership_symbols
     )
 
     assert (
-        clingo.Tuple_([clingo.Number(unused_uid), clingo.Function("pos"), Domain.value_to_symbol(7)])
+        clingo.Tuple_([clingo.Number(tuple_child_uid), clingo.Function("pos"), next(Domain.integers(5).to_symbols())])
+        in membership_symbols
+    )
+    assert (
+        clingo.Tuple_([clingo.Number(tuple_child_uid), clingo.Function("neg"), next(Domain.integers(6).to_symbols())])
+        in membership_symbols
+    )
+
+    assert (
+        clingo.Tuple_([clingo.Number(unused_uid), clingo.Function("pos"), next(Domain.integers(7).to_symbols())])
         not in membership_symbols
     )
 

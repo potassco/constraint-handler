@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import csv
+from dataclasses import dataclass, field
 from itertools import product
+from math import prod
+from pathlib import Path
+from time import perf_counter
 from typing import Any, ClassVar, Iterable, Mapping
 
 import clingo
@@ -34,6 +38,101 @@ PythonEvaluationCompressedTrace = tuple[tuple[tuple[int, DomainAtom], ...], Pyth
 PythonExtractGroupKey = tuple[str, clingo.Symbol]
 SetMembershipExportRequest = tuple[frozenset[DomainAtom], frozenset[DomainAtom]]
 PYTHON_EVAL_LEAF = object()
+DEBUG_EXPR_CSV_PATH = Path("/home/ostrowski/work/potassco/constraint-handler/debug_expr.csv")
+DEBUG_CSV_PATH = Path("/home/ostrowski/work/potassco/constraint-handler/debug.csv")
+DEBUG_EXPORT_COLUMNS = (
+    "python_evaluation_output_symbols",
+    "python_evaluation_input_symbols",
+    "python_evaluation_symbols",
+    "set_expressions",
+    "expression_set_domain_value_symbols",
+    "expression_set_domain_symbols",
+    "expression_domain_symbols",
+)
+
+
+@dataclass(slots=True)
+class ExportDebugProfiler:
+    """Accumulate export timings and rewrite the aggregate CSV after each update."""
+
+    output_path: Path = DEBUG_CSV_PATH
+    timings: dict[str, float] = field(default_factory=dict)
+    calls: dict[str, int] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        self.timings = {name: 0.0 for name in DEBUG_EXPORT_COLUMNS}
+        self.calls = {name: 0 for name in DEBUG_EXPORT_COLUMNS}
+        self._write()
+
+    def record(self, name: str, elapsed_seconds: float) -> None:
+        """Add one timing sample and persist the updated aggregates immediately."""
+        self.timings[name] = self.timings.get(name, 0.0) + elapsed_seconds
+        self.calls[name] = self.calls.get(name, 0) + 1
+        self._write()
+
+    def _write(self) -> None:
+        total_seconds = sum(self.timings.values())
+        total_calls = sum(self.calls.values())
+        with self.output_path.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["name", "seconds", "calls"])
+            for name in DEBUG_EXPORT_COLUMNS:
+                writer.writerow([name, f"{self.timings[name]:.9f}", self.calls[name]])
+            writer.writerow(["total", f"{total_seconds:.9f}", total_calls])
+            handle.flush()
+
+
+@dataclass(slots=True)
+class ExpressionDebugLogger:
+    """Stream per-expression compute timings to CSV as domains are derived."""
+
+    output_path: Path = DEBUG_EXPR_CSV_PATH
+    _handle: Any = field(init=False, repr=False)
+    _writer: Any = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self._handle = self.output_path.open("w", newline="", encoding="utf-8")
+        self._writer = csv.writer(self._handle)
+        self._writer.writerow(
+            [
+                "expression_number",
+                "expression_total",
+                "expression",
+                "seconds",
+                "input_domain_formula",
+                "input_domain_formula_result",
+                "computed_domain_size",
+            ]
+        )
+        self._handle.flush()
+
+    def log(
+        self,
+        expression_number: int,
+        expression_total: int,
+        expr: clingo.Symbol,
+        elapsed_seconds: float,
+        formula: str,
+        formula_result: int,
+        computed_domain_size: int,
+    ) -> None:
+        """Append one timing row and flush it immediately."""
+        self._writer.writerow(
+            [
+                expression_number,
+                expression_total,
+                str(expr),
+                f"{elapsed_seconds:.9f}",
+                formula,
+                formula_result,
+                computed_domain_size,
+            ]
+        )
+        self._handle.flush()
+
+    def close(self) -> None:
+        """Close the CSV handle once the compute pass is complete."""
+        self._handle.close()
 
 
 @dataclass(frozen=True, slots=True)
@@ -306,33 +405,49 @@ class ComputedDomains:
     python_evaluation_inputs: list[PythonEvaluationInputAtom]
     python_evaluation_outputs: list[PythonEvaluationOutputAtom]
     set_membership_export_requests: tuple[SetMembershipExportRequest, ...]
+    export_debug_profiler: ExportDebugProfiler
 
     def expression_domain_symbols(self) -> Iterable[clingo.Symbol]:
         """Yield `_se_domain/2` facts for all computed expressions."""
-        for expr, domain in sorted(self.expression_domains.items()):
-            yield from domain.expression_domain_symbols(
-                expr,
-                include_set_values=expr not in self.set_expressions,
-            )
+        start = perf_counter()
+        try:
+            for expr, domain in sorted(self.expression_domains.items()):
+                yield from domain.expression_domain_symbols(
+                    expr,
+                    include_set_values=expr not in self.set_expressions,
+                )
+        finally:
+            self.export_debug_profiler.record("expression_domain_symbols", perf_counter() - start)
 
     def expression_set_domain_symbols(self) -> Iterable[clingo.Symbol]:
         """Yield `_se_set_domain(Expr,Uid)` facts for all computed expressions."""
-        for expr, domain in sorted(self.expression_domains.items()):
-            yield from domain.expression_set_domain_symbols(expr, self.global_set_uids)
+        start = perf_counter()
+        try:
+            for expr, domain in sorted(self.expression_domains.items()):
+                yield from domain.expression_set_domain_symbols(expr, self.global_set_uids)
+        finally:
+            self.export_debug_profiler.record("expression_set_domain_symbols", perf_counter() - start)
 
     def expression_set_domain_value_symbols(self) -> Iterable[clingo.Symbol]:
         """Yield `_se_set_domain(Uid,Sign,Value)` facts across all set expressions."""
-        seen: set[clingo.Symbol] = set()
-        for set_value, candidate_values in self.set_membership_export_requests:
-            for symbol in Domain.set_value_domain_symbols(
-                set_value,
-                global_set_uids=self.global_set_uids,
-                candidate_values=candidate_values,
-            ):
-                if symbol in seen:
-                    continue
-                seen.add(symbol)
-                yield symbol
+        start = perf_counter()
+        try:
+            seen: set[clingo.Symbol] = set()
+            for set_value, candidate_values in self.set_membership_export_requests:
+                for symbol in Domain.set_value_domain_symbols(
+                    set_value,
+                    global_set_uids=self.global_set_uids,
+                    candidate_values=candidate_values,
+                ):
+                    if symbol in seen:
+                        continue
+                    seen.add(symbol)
+                    yield symbol
+        finally:
+            self.export_debug_profiler.record(
+                "expression_set_domain_value_symbols",
+                perf_counter() - start,
+            )
 
     def expression_set_domain_symbol_symbols(self, expr: clingo.Symbol) -> Iterable[clingo.Symbol]:
         """Yield `(Uid,SetValue)` tuples for one set-valued expression."""
@@ -343,31 +458,51 @@ class ComputedDomains:
 
     def python_evaluation_symbols(self) -> Iterable[clingo.Symbol]:
         """Yield `_python_evaluation/2` tuples for all computed Python traces."""
-        for expr, uid in self.python_evaluations:
-            yield cached_tuple((expr, cached_number(uid)))
+        start = perf_counter()
+        try:
+            for expr, uid in self.python_evaluations:
+                yield cached_tuple((expr, cached_number(uid)))
+        finally:
+            self.export_debug_profiler.record("python_evaluation_symbols", perf_counter() - start)
 
     def python_evaluation_input_symbols(self) -> Iterable[clingo.Symbol]:
         """Yield `_python_evaluation_input/4` tuples for all computed Python traces."""
-        for expr, uid, arg_expr, arg_value in self.python_evaluation_inputs:
-            yield cached_tuple(
-                (
-                    expr,
-                    cached_number(uid),
-                    arg_expr,
-                    self.python_value_reference_symbol(arg_value),
+        start = perf_counter()
+        try:
+            for expr, uid, arg_expr, arg_value in self.python_evaluation_inputs:
+                yield cached_tuple(
+                    (
+                        expr,
+                        cached_number(uid),
+                        arg_expr,
+                        self.python_value_reference_symbol(arg_value),
+                    )
                 )
-            )
+        finally:
+            self.export_debug_profiler.record("python_evaluation_input_symbols", perf_counter() - start)
 
     def python_evaluation_output_symbols(self) -> Iterable[clingo.Symbol]:
         """Yield `_python_evaluation_output/3` tuples for all computed Python traces."""
-        for expr, uid, output_value in self.python_evaluation_outputs:
-            yield cached_tuple(
-                (
-                    expr,
-                    cached_number(uid),
-                    self.python_value_reference_symbol(output_value),
+        start = perf_counter()
+        try:
+            for expr, uid, output_value in self.python_evaluation_outputs:
+                yield cached_tuple(
+                    (
+                        expr,
+                        cached_number(uid),
+                        self.python_value_reference_symbol(output_value),
+                    )
                 )
-            )
+        finally:
+            self.export_debug_profiler.record("python_evaluation_output_symbols", perf_counter() - start)
+
+    def set_expression_symbols(self) -> list[clingo.Symbol]:
+        """Return the sorted set-valued expressions and time the export."""
+        start = perf_counter()
+        try:
+            return sorted(self.set_expressions)
+        finally:
+            self.export_debug_profiler.record("set_expressions", perf_counter() - start)
 
     def python_value_reference_symbol(self, value: PythonEvaluationValue) -> clingo.Symbol:
         """Return one export symbol for a Python trace value or set reference."""
@@ -375,7 +510,7 @@ class ComputedDomains:
             return value.symbol
         if isinstance(value, frozenset):
             return cached_number(self.global_set_uids[value])
-        return Domain.value_to_symbol(value)
+        return next(Domain.from_value(value).to_symbols(include_bad=True))
 
 
 class DomainComputation:
@@ -436,6 +571,53 @@ class DomainComputation:
         if cls.is_tuple(expr) and cls.sequence_items(expr) is None:
             return list(expr.arguments)
         return []
+
+    @classmethod
+    def debug_input_domain_sizes(
+        cls,
+        expr: clingo.Symbol,
+        expression_domains: Mapping[clingo.Symbol, Domain],
+        variable_sources: Mapping[clingo.Symbol, list[clingo.Symbol]],
+        set_sources: Mapping[clingo.Symbol, dict[str, list[clingo.Symbol]]],
+    ) -> tuple[int, ...]:
+        """Return the immediate input domain sizes used to derive one expression."""
+        if cls.is_function(expr, "variable", 1):
+            variable_name = expr.arguments[0]
+            dependencies = list(variable_sources.get(variable_name, []))
+            set_source_map = set_sources.get(variable_name, {})
+            dependencies.extend(set_source_map.get("set_assign", []))
+            dependencies.extend(set_source_map.get("set_baseDomain", []))
+        else:
+            dependencies = cls.direct_subexpressions(expr)
+        return tuple(expression_domains.get(dependency, Domain.empty()).value_count(include_bad=True) for dependency in dependencies)
+
+    @classmethod
+    def debug_input_domain_formula(cls, input_sizes: tuple[int, ...]) -> tuple[str, int]:
+        """Render a stable multiplicative formula for one expression's input sizes."""
+        if not input_sizes:
+            return "1", 1
+        return "*".join(str(size) for size in input_sizes), prod(input_sizes)
+
+    @classmethod
+    def debug_expression_total(
+        cls,
+        ordered_expressions: tuple[clingo.Symbol, ...],
+        skipped_python_extract_exprs: set[clingo.Symbol],
+        python_extract_groups: Mapping[clingo.Symbol, tuple[clingo.Symbol, ...]],
+    ) -> int:
+        """Count the number of expression rows that will be written to the debug CSV."""
+        total = 0
+        for expr in ordered_expressions:
+            if expr in skipped_python_extract_exprs:
+                continue
+            if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES:
+                continue
+            if cls.is_function(expr, "variable", 1):
+                total += 1
+                continue
+            grouped_exprs = python_extract_groups.get(expr)
+            total += len(grouped_exprs) if grouped_exprs else 1
+        return total
 
     @classmethod
     def python_extract_group_key(cls, expr: clingo.Symbol) -> PythonExtractGroupKey | None:
@@ -710,58 +892,88 @@ class DomainComputation:
         python_evaluation_inputs: list[PythonEvaluationInputAtom] = []
         python_evaluation_outputs: list[PythonEvaluationOutputAtom] = []
         set_membership_export_requests: set[SetMembershipExportRequest] = set()
+        export_debug_profiler = ExportDebugProfiler()
         python_evaluation_collector = PythonEvaluationCollector(
             python_evaluations,
             python_evaluation_inputs,
             python_evaluation_outputs,
         )
-        for expr in ordered_expressions:
-            if expr in skipped_python_extract_exprs:
-                continue
-            if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES:
-                continue
-            if cls.is_function(expr, "variable", 1):
-                ### extend variable domains
-                var = expr.arguments[0]
-                domain = Domain.empty()
-                for source_expr in variable_sources.get(var, []):
-                    domain.absorb(expression_domains.get(source_expr, Domain.empty()))
-                set_domain = cls.concrete_set_domain(var, expression_domains, set_sources)
-                if set_domain is not None:
-                    domain.absorb(set_domain)
-                expression_domains[expr] = domain
-                computed_exprs = (expr,)
-            else:
-                ### compute expression domains
-                input_start = len(python_evaluation_inputs)
-                output_start = len(python_evaluation_outputs)
-                computed_domains = cls.evaluate_expression(
-                    expr,
-                    expression_domains,
-                    solver_identifier_key,
-                    python_evaluation_collector,
-                    python_extract_groups.get(expr),
-                )
-                expression_domains.update(computed_domains)
-                cls.collect_python_set_membership_export_requests(
-                    set_membership_export_requests,
-                    expression_domains,
-                    python_evaluation_inputs[input_start:],
-                    python_evaluation_outputs[output_start:],
-                )
-                computed_exprs = tuple(computed_domains)
-            for computed_expr in computed_exprs:
-                if expression_domains[computed_expr].sets or (
-                    cls.is_function(computed_expr, "variable", 1) and computed_expr.arguments[0] in set_sources
-                ):
-                    ### mark set-valued expressions for later export
-                    set_expressions.add(computed_expr)
-                    expression_domains[computed_expr].set_uids
-                cls.collect_tuple_set_membership_export_requests(
-                    set_membership_export_requests,
-                    expression_domains,
-                    computed_expr,
-                )
+        debug_expression_total = cls.debug_expression_total(
+            ordered_expressions,
+            skipped_python_extract_exprs,
+            python_extract_groups,
+        )
+        debug_expression_number = 0
+        debug_logger = ExpressionDebugLogger()
+        try:
+            for expr in ordered_expressions:
+                if expr in skipped_python_extract_exprs:
+                    continue
+                if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES:
+                    continue
+                expr_start = perf_counter()
+                if cls.is_function(expr, "variable", 1):
+                    ### extend variable domains
+                    var = expr.arguments[0]
+                    domain = Domain.empty()
+                    for source_expr in variable_sources.get(var, []):
+                        domain.absorb(expression_domains.get(source_expr, Domain.empty()))
+                    set_domain = cls.concrete_set_domain(var, expression_domains, set_sources)
+                    if set_domain is not None:
+                        domain.absorb(set_domain)
+                    expression_domains[expr] = domain
+                    computed_exprs = (expr,)
+                else:
+                    ### compute expression domains
+                    input_start = len(python_evaluation_inputs)
+                    output_start = len(python_evaluation_outputs)
+                    computed_domains = cls.evaluate_expression(
+                        expr,
+                        expression_domains,
+                        solver_identifier_key,
+                        python_evaluation_collector,
+                        python_extract_groups.get(expr),
+                    )
+                    expression_domains.update(computed_domains)
+                    cls.collect_python_set_membership_export_requests(
+                        set_membership_export_requests,
+                        expression_domains,
+                        python_evaluation_inputs[input_start:],
+                        python_evaluation_outputs[output_start:],
+                    )
+                    computed_exprs = tuple(computed_domains)
+                elapsed_seconds = perf_counter() - expr_start
+                for computed_expr in computed_exprs:
+                    if expression_domains[computed_expr].sets or (
+                        cls.is_function(computed_expr, "variable", 1) and computed_expr.arguments[0] in set_sources
+                    ):
+                        ### mark set-valued expressions for later export
+                        set_expressions.add(computed_expr)
+                        expression_domains[computed_expr].set_uids
+                    cls.collect_tuple_set_membership_export_requests(
+                        set_membership_export_requests,
+                        expression_domains,
+                        computed_expr,
+                    )
+                    input_sizes = cls.debug_input_domain_sizes(
+                        computed_expr,
+                        expression_domains,
+                        variable_sources,
+                        set_sources,
+                    )
+                    formula, formula_result = cls.debug_input_domain_formula(input_sizes)
+                    debug_expression_number += 1
+                    debug_logger.log(
+                        debug_expression_number,
+                        debug_expression_total,
+                        computed_expr,
+                        elapsed_seconds,
+                        formula,
+                        formula_result,
+                        expression_domains[computed_expr].value_count(include_bad=True),
+                    )
+        finally:
+            debug_logger.close()
         return ComputedDomains(
             expression_domains=expression_domains,
             set_expressions=set_expressions,
@@ -775,4 +987,5 @@ class DomainComputation:
                     key=lambda item: (Domain.set_sort_key(item[0]), str(sorted(item[1], key=str))),
                 )
             ),
+            export_debug_profiler=export_debug_profiler,
         )
