@@ -589,7 +589,10 @@ class DomainComputation:
             dependencies.extend(set_source_map.get("set_baseDomain", []))
         else:
             dependencies = cls.direct_subexpressions(expr)
-        return tuple(expression_domains.get(dependency, Domain.empty()).value_count(include_bad=True) for dependency in dependencies)
+        return tuple(
+            expression_domains.get(dependency, Domain.empty()).value_count(include_bad=True)
+            for dependency in dependencies
+        )
 
     @classmethod
     def debug_input_domain_formula(cls, input_sizes: tuple[int, ...]) -> tuple[str, int]:

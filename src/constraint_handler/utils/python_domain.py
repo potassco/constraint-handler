@@ -194,6 +194,12 @@ class Domain:
     domain_atoms: set[DomainAtom] = field(default_factory=set)
     possible_subsets: set[frozenset[DomainAtom]] | None = field(default_factory=set)
     _sets_cache: set[frozenset[DomainAtom]] | None = field(default=None, init=False, repr=False, compare=False)
+    _ordered_sets_cache: tuple[frozenset[DomainAtom], ...] | None = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+    )
     _set_uids_cache: set[int] | None = field(default=None, init=False, repr=False, compare=False)
 
     @classmethod
@@ -426,6 +432,7 @@ class Domain:
     def _invalidate_set_cache(self) -> None:
         """Clear cached derived set views after mutating set-domain state."""
         self._sets_cache = None
+        self._ordered_sets_cache = None
         self._set_uids_cache = None
 
     @classmethod
@@ -459,12 +466,20 @@ class Domain:
         return set(self._sets_cache)
 
     @property
+    def ordered_sets(self) -> tuple[frozenset[DomainAtom], ...]:
+        """Return all concrete set values in stable export order."""
+        if self._ordered_sets_cache is None:
+            if self._sets_cache is None:
+                _ = self.sets
+            assert self._sets_cache is not None
+            self._ordered_sets_cache = tuple(sorted(self._sets_cache, key=self.set_sort_key))
+        return self._ordered_sets_cache
+
+    @property
     def set_uids(self) -> set[int]:
         """Return cached global ids for all possible concrete set values."""
         if self._set_uids_cache is None:
-            self._set_uids_cache = {
-                self.register_set_uid(set_value) for set_value in sorted(self.sets, key=self.set_sort_key)
-            }
+            self._set_uids_cache = {self.register_set_uid(set_value) for set_value in self.ordered_sets}
         return set(self._set_uids_cache)
 
     def absorb(self, *domains: Domain) -> Domain:
@@ -565,16 +580,16 @@ class Domain:
     def expression_set_domain_symbols(
         self,
         expr: clingo.Symbol,
-        global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
+        global_set_uids: Mapping[frozenset[DomainAtom], int],
     ) -> Iterable[clingo.Symbol]:
         """Yield `_se_set_domain/2` tuples for this domain's concrete sets."""
-        for set_value in sorted(self.sets, key=self.set_sort_key):
-            uid = self.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
+        for set_value in self.ordered_sets:
+            uid = global_set_uids[set_value]
             yield cached_tuple((expr, cached_number(uid)))
 
     def set_domain_value_symbols(
         self,
-        global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
+        global_set_uids: Mapping[frozenset[DomainAtom], int],
         candidate_values: Iterable[DomainAtom] = (),
     ) -> Iterable[clingo.Symbol]:
         """Yield `_se_set_domain/3` tuples for concrete set memberships."""
@@ -590,11 +605,11 @@ class Domain:
         cls,
         set_value: frozenset[DomainAtom],
         *,
-        global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
+        global_set_uids: Mapping[frozenset[DomainAtom], int],
         candidate_values: Iterable[DomainAtom] = (),
     ) -> Iterable[clingo.Symbol]:
         """Yield `_se_set_domain/3` tuples for one concrete set value."""
-        uid = cls.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
+        uid = global_set_uids[set_value]
         members = set(set_value)
         for member in sorted(members | set(candidate_values), key=cls.set_uid_sort_key):
             sign = cached_function("pos" if member in members else "neg")
@@ -602,11 +617,11 @@ class Domain:
 
     def expression_set_domain_symbol_symbols(
         self,
-        global_set_uids: Mapping[frozenset[DomainAtom], int] | None = None,
+        global_set_uids: Mapping[frozenset[DomainAtom], int],
     ) -> Iterable[clingo.Symbol]:
         """Yield `(Uid, SetValue)` tuples for this domain's concrete sets."""
-        for set_value in sorted(self.sets, key=self.set_sort_key):
-            uid = self.register_set_uid(set_value) if global_set_uids is None else global_set_uids[set_value]
+        for set_value in self.ordered_sets:
+            uid = global_set_uids[set_value]
             yield cached_tuple((cached_number(uid), self.value_to_symbol(set_value)))
 
     def scalar_values(self) -> Iterable[bool | int | float | str | None | clingo.Symbol]:
