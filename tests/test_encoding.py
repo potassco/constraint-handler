@@ -45,7 +45,9 @@ base_tests = [
     "core/empty_variadics",
     "core/integrity",
     "core/optional_absent_comparison_evaluation",
+    "core/optional_absent_string_comparison_evaluation",
     "core/optional_absent_conditional_set_output",
+    "core/conj_bad_none_recovery",
     "core/python_set_bool_brave",
     "core/python_extract_set_projection",
     "core/python_extract_statement_error_warning",
@@ -82,6 +84,7 @@ base_tests = [
     "execution/main_swap",
     "execution/assert",
     "execution/conditional",
+    "execution/conditional_string_equality_single_model",
     "execution/conditional_assert",
     "execution/optional_run",
     "execution/python_integrity",
@@ -312,6 +315,7 @@ choice_statistics_skip: set[str] = {
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
     "core/python_extract_statement_error_warning",
+    "execution/conditional_string_equality_single_model",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",
