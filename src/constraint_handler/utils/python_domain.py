@@ -135,7 +135,7 @@ def _identity_false(cls: type["Domain"]) -> "Domain":
     return cls.booleans(False)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Domain:
     """Compact domain model for compile2 without using expression wrappers.
 
@@ -1785,3 +1785,5 @@ class Domain:
         right_sets = right.sets
         values = {lhs <= rhs for lhs, rhs in product(left_sets, right_sets)}
         return cls._bool_domain(values, is_bad=is_bad)
+
+
