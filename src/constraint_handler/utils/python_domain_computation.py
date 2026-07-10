@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass, field
+from functools import cache
 from itertools import product
 from math import prod
 from pathlib import Path
 from time import perf_counter
-from typing import Any, ClassVar, Iterable, Mapping
+from typing import Any, Callable, ClassVar, Iterable, Mapping
 
 import clingo
 
@@ -34,7 +35,26 @@ PythonEvaluationInputAtom = tuple[clingo.Symbol, int, clingo.Symbol, DomainAtom]
 PythonEvaluationOutputAtom = tuple[clingo.Symbol, int, PythonEvaluationValue]
 PythonEvaluationAssignment = tuple[DomainAtom, ...]
 PythonEvaluationOutputSignature = tuple[PythonEvaluationValue, ...]
-PythonEvaluationCompressedTrace = tuple[tuple[tuple[int, DomainAtom], ...], PythonEvaluationOutputSignature]
+
+
+@dataclass(frozen=True, slots=True)
+class PythonEvaluationCompressedTrace:
+    """One wildcard-compressed Python trace for a family of input assignments."""
+
+    bindings: tuple[tuple[int, DomainAtom], ...]
+    outputs: PythonEvaluationOutputSignature
+
+
+@dataclass(frozen=True, slots=True)
+class CachedPythonEvaluation:
+    """Cached domain plus compressed trace bundle for one Python output request."""
+
+    expr_code: str | None
+    domain: Domain
+    traces: tuple[PythonEvaluationCompressedTrace, ...]
+
+
+CachedPythonEvaluations = tuple[CachedPythonEvaluation, ...]
 PythonExtractGroupKey = tuple[str, clingo.Symbol]
 SetMembershipExportRequest = tuple[frozenset[DomainAtom], frozenset[DomainAtom]]
 PYTHON_EVAL_LEAF = object()
@@ -49,6 +69,7 @@ DEBUG_EXPORT_COLUMNS = (
     "expression_set_domain_symbols",
     "expression_domain_symbols",
 )
+ENABLE_DEBUG = False
 
 
 @dataclass(slots=True)
@@ -60,26 +81,30 @@ class ExportDebugProfiler:
     calls: dict[str, int] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        self.timings = {name: 0.0 for name in DEBUG_EXPORT_COLUMNS}
-        self.calls = {name: 0 for name in DEBUG_EXPORT_COLUMNS}
-        self._write()
+        if ENABLE_DEBUG:
+            self.timings = {name: 0.0 for name in DEBUG_EXPORT_COLUMNS}
+            self.calls = {name: 0 for name in DEBUG_EXPORT_COLUMNS}
+            self._write()
 
     def record(self, name: str, elapsed_seconds: float) -> None:
         """Add one timing sample and persist the updated aggregates immediately."""
-        self.timings[name] = self.timings.get(name, 0.0) + elapsed_seconds
-        self.calls[name] = self.calls.get(name, 0) + 1
-        self._write()
+        if ENABLE_DEBUG:
+            self.timings[name] = self.timings.get(name, 0.0) + elapsed_seconds
+            self.calls[name] = self.calls.get(name, 0) + 1
+            self._write()
 
     def _write(self) -> None:
-        total_seconds = sum(self.timings.values())
-        total_calls = sum(self.calls.values())
-        with self.output_path.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.writer(handle)
-            writer.writerow(["name", "seconds", "calls"])
-            for name in DEBUG_EXPORT_COLUMNS:
-                writer.writerow([name, f"{self.timings[name]:.9f}", self.calls[name]])
-            writer.writerow(["total", f"{total_seconds:.9f}", total_calls])
-            handle.flush()
+        """Write the current aggregate timings to the debug CSV."""
+        if ENABLE_DEBUG:
+            total_seconds = sum(self.timings.values())
+            total_calls = sum(self.calls.values())
+            with self.output_path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow(["name", "seconds", "calls"])
+                for name in DEBUG_EXPORT_COLUMNS:
+                    writer.writerow([name, f"{self.timings[name]:.9f}", self.calls[name]])
+                writer.writerow(["total", f"{total_seconds:.9f}", total_calls])
+                handle.flush()
 
 
 @dataclass(slots=True)
@@ -91,20 +116,21 @@ class ExpressionDebugLogger:
     _writer: Any = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        self._handle = self.output_path.open("w", newline="", encoding="utf-8")
-        self._writer = csv.writer(self._handle)
-        self._writer.writerow(
-            [
-                "expression_number",
-                "expression_total",
-                "expression",
-                "seconds",
-                "input_domain_formula",
-                "input_domain_formula_result",
-                "computed_domain_size",
-            ]
-        )
-        self._handle.flush()
+        if ENABLE_DEBUG:
+            self._handle = self.output_path.open("w", newline="", encoding="utf-8")
+            self._writer = csv.writer(self._handle)
+            self._writer.writerow(
+                [
+                    "expression_number",
+                    "expression_total",
+                    "expression",
+                    "seconds",
+                    "input_domain_formula",
+                    "input_domain_formula_result",
+                    "computed_domain_size",
+                ]
+            )
+            self._handle.flush()
 
     def log(
         self,
@@ -117,22 +143,24 @@ class ExpressionDebugLogger:
         computed_domain_size: int,
     ) -> None:
         """Append one timing row and flush it immediately."""
-        self._writer.writerow(
-            [
-                expression_number,
-                expression_total,
-                str(expr),
-                f"{elapsed_seconds:.9f}",
-                formula,
-                formula_result,
-                computed_domain_size,
-            ]
-        )
-        self._handle.flush()
+        if ENABLE_DEBUG:
+            self._writer.writerow(
+                [
+                    expression_number,
+                    expression_total,
+                    str(expr),
+                    f"{elapsed_seconds:.9f}",
+                    formula,
+                    formula_result,
+                    computed_domain_size,
+                ]
+            )
+            self._handle.flush()
 
     def close(self) -> None:
         """Close the CSV handle once the compute pass is complete."""
-        self._handle.close()
+        if ENABLE_DEBUG:
+            self._handle.close()
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,80 +178,160 @@ class PythonEvaluationNode:
     branches: tuple[tuple[DomainAtom, PythonEvaluationLeaf | PythonEvaluationNode], ...]
 
 
+def python_error_output(message: str) -> PythonWarningOutput:
+    """Return the exported `error(expression(pythonError), Message)` symbol."""
+    return PythonWarningOutput(
+        cached_function(
+            "error",
+            (
+                cached_function("expression", (cached_function("pythonError"),)),
+                clingo.String(message),
+            ),
+        )
+    )
+
+
+def python_trace_signature(
+    domain: Domain,
+    error_messages: Iterable[str] = (),
+) -> PythonEvaluationOutputSignature:
+    """Return one stable trace signature including warning outputs when present."""
+    outputs: list[PythonEvaluationValue] = [python_error_output(message) for message in error_messages]
+    outputs.extend(domain.values(include_bad=True))
+    return tuple(sorted(outputs, key=str))
+
+
+def python_evaluation_trie(
+    outputs_by_assignment: Mapping[PythonEvaluationAssignment, PythonEvaluationOutputSignature],
+) -> dict[Any, Any]:
+    """Build a trie over concrete Python argument tuples."""
+    trie: dict[Any, Any] = {}
+    for arg_values, output_signature in outputs_by_assignment.items():
+        node = trie
+        for value in arg_values:
+            node = node.setdefault(value, {})
+        node[PYTHON_EVAL_LEAF] = output_signature
+    return trie
+
+
+def compress_python_evaluation_trie(
+    trie: dict[Any, Any],
+    ordered_domains: tuple[tuple[DomainAtom, ...], ...],
+    depth: int = 0,
+) -> PythonEvaluationLeaf | PythonEvaluationNode:
+    """Collapse trie levels when every value in one argument domain shares the same subtree."""
+    if depth == len(ordered_domains):
+        return PythonEvaluationLeaf(trie[PYTHON_EVAL_LEAF])
+
+    branches = tuple(
+        (value, compress_python_evaluation_trie(trie[value], ordered_domains, depth + 1))
+        for value in ordered_domains[depth]
+    )
+    first_child = branches[0][1]
+    if all(child == first_child for _, child in branches[1:]):
+        return first_child
+    return PythonEvaluationNode(depth, branches)
+
+
+def compressed_python_evaluations(
+    arg_domains: tuple[Domain, ...],
+    outputs_by_assignment: Mapping[PythonEvaluationAssignment, PythonEvaluationOutputSignature],
+) -> tuple[PythonEvaluationCompressedTrace, ...]:
+    """Return wildcard-safe Python evaluation traces that still cover the full input product."""
+    if not outputs_by_assignment:
+        return ()
+
+    ordered_domains = tuple(domain.options() for domain in arg_domains)
+    tree = compress_python_evaluation_trie(python_evaluation_trie(outputs_by_assignment), ordered_domains)
+    compressed: list[PythonEvaluationCompressedTrace] = []
+
+    def collect(
+        node: PythonEvaluationLeaf | PythonEvaluationNode,
+        bindings: tuple[tuple[int, DomainAtom], ...],
+    ) -> None:
+        if isinstance(node, PythonEvaluationLeaf):
+            compressed.append(PythonEvaluationCompressedTrace(bindings, node.outputs))
+            return
+        for value, child in node.branches:
+            collect(child, bindings + ((node.index, value),))
+
+    collect(tree, ())
+    return tuple(compressed)
+
+
+def record_compressed_python_evaluation(
+    expr: clingo.Symbol,
+    arg_exprs: tuple[clingo.Symbol, ...],
+    compressed_evaluations: tuple[PythonEvaluationCompressedTrace, ...],
+    python_evaluations: list[PythonEvaluationAtom],
+    python_evaluation_inputs: list[PythonEvaluationInputAtom],
+    python_evaluation_outputs: list[PythonEvaluationOutputAtom],
+    *,
+    is_extract: bool,
+) -> None:
+    """Record one already-compressed family of Python input/output traces."""
+    for uid, trace in enumerate(compressed_evaluations):
+        python_evaluations.append((expr, uid))
+        for index, arg_value in trace.bindings:
+            arg_expr = arg_exprs[index]
+            if (
+                is_extract
+                and DomainComputation.is_tuple(arg_expr, 2)
+                and isinstance(arg_value, tuple)
+                and len(arg_value) == 2
+            ):
+                python_evaluation_inputs.append((expr, uid, arg_expr.arguments[1], arg_value[1]))
+                continue
+            python_evaluation_inputs.append((expr, uid, arg_expr, arg_value))
+        for output_value in trace.outputs:
+            python_evaluation_outputs.append((expr, uid, output_value))
+
+
 @dataclass(slots=True)
-class PythonEvaluationCollector(PythonEvaluationSession):
-    """Collect and export Python traces for the expression currently being evaluated."""
+class PythonEvaluationExporter:
+    """Export cached Python traces into compile2 python-evaluation atoms."""
 
     python_evaluations: list[PythonEvaluationAtom]
     python_evaluation_inputs: list[PythonEvaluationInputAtom]
     python_evaluation_outputs: list[PythonEvaluationOutputAtom]
-    current_expr: clingo.Symbol | None = None
-    current_group_exprs: tuple[clingo.Symbol, ...] = ()
-    current_arg_exprs: tuple[clingo.Symbol, ...] = ()
-    current_arg_domains: list[Domain] | None = None
-    current_is_extract: bool = False
-    current_output_requests: tuple[PythonEvaluationOutputRequest, ...] = ()
-    current_outputs_by_expr: (
-        dict[clingo.Symbol, dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature]] | None
-    ) = None
-    current_domains_by_expr: dict[clingo.Symbol, Domain] | None = None
 
-    def start_expression(
+    def replay_cached_evaluation(
         self,
         expr: clingo.Symbol,
-        expression_domains: Mapping[clingo.Symbol, Domain],
-        grouped_exprs: tuple[clingo.Symbol, ...] | None = None,
+        arg_exprs: tuple[clingo.Symbol, ...],
+        compressed_evaluations: tuple[PythonEvaluationCompressedTrace, ...],
+        *,
+        is_extract: bool,
     ) -> None:
-        """Prepare trace metadata for one expression before evaluation starts."""
-        self.finish_expression()
-        self.current_expr = None
-        self.current_group_exprs = ()
-        self.current_arg_exprs = ()
-        self.current_arg_domains = None
-        self.current_is_extract = False
-        self.current_output_requests = ()
-        self.current_outputs_by_expr = None
-        self.current_domains_by_expr = None
-
-        if DomainComputation.is_function(expr, "python", 1):
-            self.current_expr = expr
-            self.current_group_exprs = (expr,)
-            self.current_arg_domains = []
-            self.current_output_requests = (PythonEvaluationOutputRequest(expr),)
-            self.current_outputs_by_expr = {expr: {}}
-            self.current_domains_by_expr = {expr: Domain.empty()}
-            return
-
-        if not DomainComputation.is_function(expr, "operation", 2):
-            return
-
-        operator, raw_args = expr.arguments
-        is_extract = DomainComputation.is_function(operator, "pythonExtract", 2)
-        if not (DomainComputation.is_function(operator, "python", 1) or is_extract):
-            return
-
-        arg_exprs = DomainComputation.sequence_items(raw_args)
-        group_exprs = tuple(grouped_exprs or (expr,))
-        self.current_expr = expr
-        self.current_group_exprs = group_exprs
-        self.current_arg_exprs = () if arg_exprs is None else tuple(arg_exprs)
-        self.current_arg_domains = (
-            [] if arg_exprs is None else [expression_domains.get(arg_expr, Domain.empty()) for arg_expr in arg_exprs]
+        """Append one cached compressed Python trace bundle to the exported lists."""
+        record_compressed_python_evaluation(
+            expr,
+            arg_exprs,
+            compressed_evaluations,
+            self.python_evaluations,
+            self.python_evaluation_inputs,
+            self.python_evaluation_outputs,
+            is_extract=is_extract,
         )
-        self.current_is_extract = is_extract
-        if is_extract:
-            self.current_output_requests = tuple(
-                PythonEvaluationOutputRequest(group_expr, DomainComputation.python_extract_output_code(group_expr))
-                for group_expr in group_exprs
-            )
-        else:
-            self.current_output_requests = (PythonEvaluationOutputRequest(expr),)
-        self.current_outputs_by_expr = {group_expr: {} for group_expr in group_exprs}
-        self.current_domains_by_expr = {group_expr: Domain.empty() for group_expr in group_exprs}
+
+
+@dataclass(slots=True)
+class PythonEvaluationCapture(PythonEvaluationSession):
+    """Capture reusable Python traces without binding them to compile2 expression ids."""
+
+    requests: tuple[PythonEvaluationOutputRequest, ...]
+    outputs_by_id: dict[object, dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature]] = field(
+        default_factory=dict
+    )
+    domains_by_id: dict[object, Domain] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        self.outputs_by_id = {request.output_id: {} for request in self.requests}
+        self.domains_by_id = {request.output_id: Domain.empty() for request in self.requests}
 
     def output_requests(self) -> tuple[PythonEvaluationOutputRequest, ...]:
-        """Return the outputs requested for the currently active expression family."""
-        return self.current_output_requests
+        """Return the requested reusable outputs for the current Python evaluation."""
+        return self.requests
 
     def record_output(
         self,
@@ -232,166 +340,26 @@ class PythonEvaluationCollector(PythonEvaluationSession):
         assignment_domain: Domain,
         error_messages: tuple[str, ...],
     ) -> None:
-        """Record one concrete Python evaluation for the current expression."""
-        if self.current_outputs_by_expr is None or self.current_domains_by_expr is None:
-            raise AssertionError("python evaluation emitted without active trace context")
-        if not isinstance(output_id, clingo.Symbol):
-            raise AssertionError(f"python evaluation emitted for unexpected output id: {output_id!r}")
-        if output_id not in self.current_outputs_by_expr:
-            raise AssertionError(f"python evaluation emitted for unknown output expression: {output_id!r}")
-        self.current_domains_by_expr[output_id].absorb(assignment_domain)
-        self.current_outputs_by_expr[output_id][arg_values] = self.python_trace_signature(
+        """Store one expression-independent Python output trace."""
+        self.domains_by_id[output_id] = Domain.merge(self.domains_by_id[output_id], assignment_domain)
+        self.outputs_by_id[output_id][arg_values] = python_trace_signature(
             assignment_domain,
             error_messages,
         )
 
-    def finish_expression(self) -> dict[clingo.Symbol, Domain]:
-        """Flush the current expression trace into the exported trace lists."""
-        expr = self.current_expr
-        if (
-            self.current_outputs_by_expr is None
-            or self.current_arg_domains is None
-            or self.current_domains_by_expr is None
-        ):
-            return {}
-        for expr, outputs_by_assignment in self.current_outputs_by_expr.items():
-            self.record_python_evaluation(
-                expr,
-                self.current_arg_exprs,
-                self.current_arg_domains,
-                outputs_by_assignment,
-                self.python_evaluations,
-                self.python_evaluation_inputs,
-                self.python_evaluation_outputs,
-                is_extract=self.current_is_extract,
-            )
-        domains_by_expr = self.current_domains_by_expr
-        self.current_expr = None
-        self.current_group_exprs = ()
-        self.current_arg_exprs = ()
-        self.current_arg_domains = None
-        self.current_is_extract = False
-        self.current_output_requests = ()
-        self.current_outputs_by_expr = None
-        self.current_domains_by_expr = None
-        return domains_by_expr
-
-    @classmethod
-    def python_trace_signature(
-        cls,
-        domain: Domain,
-        error_messages: Iterable[str] = (),
-    ) -> PythonEvaluationOutputSignature:
-        """Return one stable trace signature including warning outputs when present."""
-        outputs: list[PythonEvaluationValue] = [cls.python_error_output(message) for message in error_messages]
-        outputs.extend(domain.values(include_bad=True))
-        return tuple(sorted(outputs, key=str))
-
-    @classmethod
-    def python_error_output(cls, message: str) -> PythonWarningOutput:
-        """Return the exported `error(expression(pythonError), Message)` symbol."""
-        return PythonWarningOutput(
-            cached_function(
-                "error",
-                (
-                    cached_function("expression", (cached_function("pythonError"),)),
-                    clingo.String(message),
+    def compressed_results(self, arg_domains: tuple[Domain, ...]) -> CachedPythonEvaluations:
+        """Return cached domains plus compressed traces keyed only by output code."""
+        return tuple(
+            CachedPythonEvaluation(
+                request.expr_code,
+                self.domains_by_id[request.output_id],
+                compressed_python_evaluations(
+                    arg_domains,
+                    self.outputs_by_id[request.output_id],
                 ),
             )
+            for request in self.requests
         )
-
-    @classmethod
-    def python_evaluation_trie(
-        cls,
-        outputs_by_assignment: dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature],
-    ) -> dict[Any, Any]:
-        """Build a trie over concrete Python argument tuples."""
-        trie: dict[Any, Any] = {}
-        for arg_values, output_signature in outputs_by_assignment.items():
-            node = trie
-            for value in arg_values:
-                node = node.setdefault(value, {})
-            node[PYTHON_EVAL_LEAF] = output_signature
-        return trie
-
-    @classmethod
-    def compress_python_evaluation_trie(
-        cls,
-        trie: dict[Any, Any],
-        ordered_domains: tuple[tuple[DomainAtom, ...], ...],
-        depth: int = 0,
-    ) -> PythonEvaluationLeaf | PythonEvaluationNode:
-        """Collapse trie levels when every value in one argument domain shares the same subtree."""
-        if depth == len(ordered_domains):
-            return PythonEvaluationLeaf(trie[PYTHON_EVAL_LEAF])
-
-        branches = tuple(
-            (value, cls.compress_python_evaluation_trie(trie[value], ordered_domains, depth + 1))
-            for value in ordered_domains[depth]
-        )
-        first_child = branches[0][1]
-        if all(child == first_child for _, child in branches[1:]):
-            return first_child
-        return PythonEvaluationNode(depth, branches)
-
-    @classmethod
-    def compressed_python_evaluations(
-        cls,
-        arg_domains: list[Domain],
-        outputs_by_assignment: dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature],
-    ) -> list[PythonEvaluationCompressedTrace]:
-        """Return wildcard-safe Python evaluation traces that still cover the full input product."""
-        if not outputs_by_assignment:
-            return []
-
-        ordered_domains = tuple(domain.options() for domain in arg_domains)
-        tree = cls.compress_python_evaluation_trie(cls.python_evaluation_trie(outputs_by_assignment), ordered_domains)
-        compressed: list[PythonEvaluationCompressedTrace] = []
-
-        def collect(
-            node: PythonEvaluationLeaf | PythonEvaluationNode,
-            bindings: tuple[tuple[int, DomainAtom], ...],
-        ) -> None:
-            if isinstance(node, PythonEvaluationLeaf):
-                compressed.append((bindings, node.outputs))
-                return
-            for value, child in node.branches:
-                collect(child, bindings + ((node.index, value),))
-
-        collect(tree, ())
-        return compressed
-
-    @classmethod
-    def record_python_evaluation(
-        cls,
-        expr: clingo.Symbol,
-        arg_exprs: tuple[clingo.Symbol, ...],
-        arg_domains: list[Domain],
-        outputs_by_assignment: dict[PythonEvaluationAssignment, PythonEvaluationOutputSignature],
-        python_evaluations: list[PythonEvaluationAtom],
-        python_evaluation_inputs: list[PythonEvaluationInputAtom],
-        python_evaluation_outputs: list[PythonEvaluationOutputAtom],
-        *,
-        is_extract: bool,
-    ) -> None:
-        """Compress and record one family of Python input/output traces."""
-        for uid, (bindings, output_signature) in enumerate(
-            cls.compressed_python_evaluations(arg_domains, outputs_by_assignment)
-        ):
-            python_evaluations.append((expr, uid))
-            for index, arg_value in bindings:
-                arg_expr = arg_exprs[index]
-                if (
-                    is_extract
-                    and DomainComputation.is_tuple(arg_expr, 2)
-                    and isinstance(arg_value, tuple)
-                    and len(arg_value) == 2
-                ):
-                    python_evaluation_inputs.append((expr, uid, arg_expr.arguments[1], arg_value[1]))
-                    continue
-                python_evaluation_inputs.append((expr, uid, arg_expr, arg_value))
-            for output_value in output_signature:
-                python_evaluation_outputs.append((expr, uid, output_value))
 
 
 @dataclass(slots=True)
@@ -796,44 +764,88 @@ class DomainComputation:
         expr: clingo.Symbol,
         expression_domains: Mapping[clingo.Symbol, Domain],
         solver_identifiers: tuple[clingo.Symbol, ...],
-        evaluation_session: PythonEvaluationSession,
+        evaluation_session: PythonEvaluationExporter,
+        cached_compute_domain: Callable[[clingo.Symbol, tuple[Domain, ...], tuple[clingo.Symbol, ...]], Domain],
+        cached_python_expression_evaluation: Callable[[str, tuple[clingo.Symbol, ...]], CachedPythonEvaluations],
+        cached_python_callable_evaluation: Callable[
+            [str, tuple[Domain, ...], tuple[clingo.Symbol, ...]],
+            CachedPythonEvaluations,
+        ],
+        cached_python_extract_evaluation: Callable[
+            [str, tuple[Domain, ...], tuple[clingo.Symbol, ...], tuple[str, ...]],
+            CachedPythonEvaluations,
+        ],
         grouped_exprs: tuple[clingo.Symbol, ...] | None = None,
     ) -> dict[clingo.Symbol, Domain]:
         """Evaluate one raw compile2 expression symbol into one or more expression domains."""
-        evaluation_session.start_expression(expr, expression_domains, grouped_exprs)
         if cls.is_function(expr, "bad", 0):
             domain = Domain.bad()
         elif cls.is_function(expr, "val", 2):
             domain = Domain.from_symbol(expr)
         elif cls.is_function(expr, "python", 1):
-            domain = Domain.evaluate_python_expression(
-                expr.arguments[0].string,
-                solver_identifiers,
-                evaluation_session=evaluation_session,
-            )
+            (cached_trace,) = cached_python_expression_evaluation(expr.arguments[0].string, solver_identifiers)
+            domain = cached_trace.domain
+            evaluation_session.replay_cached_evaluation(expr, (), cached_trace.traces, is_extract=False)
         elif cls.is_function(expr, "operation", 2):
             operator, raw_args = expr.arguments
             arg_exprs = cls.sequence_items(raw_args)
             if arg_exprs is None:
                 domain = Domain.bad()
             else:
-                arg_domains = [expression_domains.get(arg_expr, Domain.empty()) for arg_expr in arg_exprs]
-                domain = Domain.compute_domain(
-                    operator,
-                    *arg_domains,
-                    solver_identifiers=solver_identifiers,
-                    evaluation_session=evaluation_session,
-                )
+                arg_expr_tuple = tuple(arg_exprs)
+                arg_domains = tuple(expression_domains.get(arg_expr, Domain.empty()) for arg_expr in arg_expr_tuple)
+                if cls.is_function(operator, "python", 1):
+                    (cached_trace,) = cached_python_callable_evaluation(
+                        operator.arguments[0].string,
+                        arg_domains,
+                        solver_identifiers,
+                    )
+                    domain = cached_trace.domain
+                    evaluation_session.replay_cached_evaluation(
+                        expr,
+                        arg_expr_tuple,
+                        cached_trace.traces,
+                        is_extract=False,
+                    )
+                    return {expr: domain}
+                if cls.is_function(operator, "pythonExtract", 2):
+                    output_codes = tuple(
+                        code
+                        for code in dict.fromkeys(
+                            cls.python_extract_output_code(group_expr) for group_expr in tuple(grouped_exprs or (expr,))
+                        )
+                        if code is not None
+                    )
+                    cached_results = {
+                        cached_trace.expr_code: cached_trace
+                        for cached_trace in cached_python_extract_evaluation(
+                            operator.arguments[0].string,
+                            arg_domains,
+                            solver_identifiers,
+                            output_codes,
+                        )
+                    }
+                    computed_domains: dict[clingo.Symbol, Domain] = {}
+                    for group_expr in tuple(grouped_exprs or (expr,)):
+                        output_code = cls.python_extract_output_code(group_expr)
+                        if output_code is None:
+                            continue
+                        cached_trace = cached_results[output_code]
+                        evaluation_session.replay_cached_evaluation(
+                            group_expr,
+                            arg_expr_tuple,
+                            cached_trace.traces,
+                            is_extract=True,
+                        )
+                        computed_domains[group_expr] = cached_trace.domain
+                    return computed_domains
+                domain = cached_compute_domain(operator, arg_domains, solver_identifiers)
         elif cls.is_tuple(expr) and cls.sequence_items(expr) is None:
             domain = cls.evaluate_tuple(expr, expression_domains)
         elif cls.is_function(expr, "variable", 1):
             domain = expression_domains.get(expr, Domain.empty())
         else:
             domain = Domain.symbols_only(expr)
-
-        collected_domains = evaluation_session.finish_expression()
-        if collected_domains:
-            return collected_domains
         return {expr: domain}
 
     @classmethod
@@ -882,9 +894,62 @@ class DomainComputation:
         solver_identifiers: tuple[clingo.Symbol, ...],
     ) -> ComputedDomains:
         """Compute compile2 expression domains and the derived set export metadata."""
+
+        @cache
+        def cached_compute_domain(
+            operation: clingo.Symbol,
+            domains: tuple[Domain, ...],
+            solver_ids: tuple[clingo.Symbol, ...],
+        ) -> Domain:
+            return Domain.compute_domain(
+                operation,
+                *domains,
+                solver_identifiers=solver_ids,
+                evaluation_session=PythonEvaluationSession(),
+            )
+
+        @cache
+        def cached_python_expression_evaluation(
+            code: str,
+            solver_ids: tuple[clingo.Symbol, ...],
+        ) -> CachedPythonEvaluations:
+            session = PythonEvaluationCapture((PythonEvaluationOutputRequest(),))
+            Domain.evaluate_python_expression(code, solver_ids, evaluation_session=session)
+            return session.compressed_results(())
+
+        @cache
+        def cached_python_callable_evaluation(
+            code: str,
+            domains: tuple[Domain, ...],
+            solver_ids: tuple[clingo.Symbol, ...],
+        ) -> CachedPythonEvaluations:
+            session = PythonEvaluationCapture((PythonEvaluationOutputRequest(),))
+            Domain.evaluate_python_callable(code, domains, solver_ids, evaluation_session=session)
+            return session.compressed_results(domains)
+
+        @cache
+        def cached_python_extract_evaluation(
+            stmt: str,
+            domains: tuple[Domain, ...],
+            solver_ids: tuple[clingo.Symbol, ...],
+            output_codes: tuple[str, ...],
+        ) -> CachedPythonEvaluations:
+            session = PythonEvaluationCapture(
+                tuple(PythonEvaluationOutputRequest(output_code, output_code) for output_code in output_codes)
+            )
+            Domain.evaluate_python_extract(
+                stmt,
+                output_codes[0],
+                domains,
+                solver_ids,
+                evaluation_session=session,
+            )
+            return session.compressed_results(domains)
+
         expressions = set(top_level_expressions)
         Domain.GLOBAL_SET_UIDS.clear()
         Domain.NEXT_SET_UID = 0
+        Domain.set_uids.fget.cache_clear()
         solver_identifier_key = cls.normalize_solver_identifiers(solver_identifiers)
         variable_sources, set_sources = cls.source_maps(expressions)
         ordered_expressions = tuple(cls.sorted_expressions(expressions, variable_sources, set_sources))
@@ -896,7 +961,7 @@ class DomainComputation:
         python_evaluation_outputs: list[PythonEvaluationOutputAtom] = []
         set_membership_export_requests: set[SetMembershipExportRequest] = set()
         export_debug_profiler = ExportDebugProfiler()
-        python_evaluation_collector = PythonEvaluationCollector(
+        python_evaluation_exporter = PythonEvaluationExporter(
             python_evaluations,
             python_evaluation_inputs,
             python_evaluation_outputs,
@@ -918,12 +983,13 @@ class DomainComputation:
                 if cls.is_function(expr, "variable", 1):
                     ### extend variable domains
                     var = expr.arguments[0]
-                    domain = Domain.empty()
+                    domain_parts: list[Domain] = []
                     for source_expr in variable_sources.get(var, []):
-                        domain.absorb(expression_domains.get(source_expr, Domain.empty()))
+                        domain_parts.append(expression_domains.get(source_expr, Domain.empty()))
                     set_domain = cls.concrete_set_domain(var, expression_domains, set_sources)
                     if set_domain is not None:
-                        domain.absorb(set_domain)
+                        domain_parts.append(set_domain)
+                    domain = Domain.merge(*domain_parts)
                     expression_domains[expr] = domain
                     computed_exprs = (expr,)
                 else:
@@ -934,7 +1000,11 @@ class DomainComputation:
                         expr,
                         expression_domains,
                         solver_identifier_key,
-                        python_evaluation_collector,
+                        python_evaluation_exporter,
+                        cached_compute_domain,
+                        cached_python_expression_evaluation,
+                        cached_python_callable_evaluation,
+                        cached_python_extract_evaluation,
                         python_extract_groups.get(expr),
                     )
                     expression_domains.update(computed_domains)
@@ -987,7 +1057,10 @@ class DomainComputation:
             set_membership_export_requests=tuple(
                 sorted(
                     set_membership_export_requests,
-                    key=lambda item: (Domain.set_sort_key(item[0]), str(sorted(item[1], key=str))),
+                    key=lambda item: (
+                        Domain.set_sort_key(item[0]),
+                        tuple(sorted(item[1], key=Domain.set_uid_sort_key)),
+                    ),
                 )
             ),
             export_debug_profiler=export_debug_profiler,

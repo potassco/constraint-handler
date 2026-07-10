@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from itertools import product
 
 import clingo
@@ -13,12 +14,19 @@ from constraint_handler.utils.python_domain import Domain, PythonEvaluationSessi
 from constraint_handler.utils.python_domain_computation import DomainComputation
 
 
+@pytest.fixture(autouse=True)
+def reset_domain_global_state() -> None:
+    Domain.GLOBAL_SET_UIDS.clear()
+    Domain.NEXT_SET_UID = 0
+    Domain.sets.fget.cache_clear()
+    Domain.set_uids.fget.cache_clear()
+
+
 def build_domain(*values, is_bad: bool = False) -> Domain:
-    domain = Domain.empty()
+    parts: list[Domain] = []
     for value in values:
-        domain.absorb(Domain.from_runtime(value))
-    domain.is_bad = domain.is_bad or is_bad
-    return domain
+        parts.append(Domain.from_runtime(value))
+    return Domain.merge(*parts, Domain.bad() if is_bad else Domain.empty())
 
 
 class IgnorePythonEvaluation(PythonEvaluationSession):
@@ -51,17 +59,18 @@ def expected_domain_from_evaluator(operation: object, *domains: Domain) -> Domai
         return Domain.empty()
 
     result = Domain.empty()
+    is_bad = False
     for args in product(*arg_options):
         try:
             applied = evaluator.operator(operation, args, (), {})
         except Exception:
-            result.is_bad = True
+            is_bad = True
             continue
         if applied.value is expression.Bad.bad:
-            result.is_bad = True
+            is_bad = True
             continue
-        result.absorb(Domain.from_runtime(applied.value))
-    return result
+        result = Domain.merge(result, Domain.from_runtime(applied.value))
+    return Domain.merge(result, Domain.bad() if is_bad else Domain.empty())
 
 
 def assert_same_semantics(operation: object, *domains: Domain) -> None:
@@ -78,15 +87,15 @@ def symbol_sequence(*items: clingo.Symbol) -> clingo.Symbol:
 def test_value_helpers_preserve_set_style_numeric_deduplication() -> None:
     domain = Domain(
         is_bad=True,
-        bools={True},
-        ints={1, 2},
-        floats={1.0, 2.5},
+        bools=frozenset({True}),
+        ints=frozenset({1, 2}),
+        floats=frozenset({1.0, 2.5}),
         is_none=True,
-        strings={"x"},
-        symbols={clingo.Function("sym")},
-        tuples={("tuple",)},
+        strings=frozenset({"x"}),
+        symbols=frozenset({clingo.Function("sym")}),
+        tuples=frozenset({("tuple",)}),
     )
-    domain.absorb(Domain.set_values(frozenset({"member"})))
+    domain = Domain.merge(domain, Domain.set_values(frozenset({"member"})))
 
     assert domain.value_count() == 10
     assert set(domain.numeric_values()) == {1, 2, 2.5}
@@ -176,7 +185,7 @@ def test_options_without_none_and_has_values_cover_empty_optional_and_bad_cases(
     domain = Domain.merge(Domain.booleans(True), Domain.none(), Domain.bad())
 
     assert domain.has_values() is True
-    assert domain.without_none() == Domain(is_bad=True, bools={True})
+    assert replace(domain, is_none=False) == Domain(is_bad=True, bools=frozenset({True}))
     assert domain.options() == tuple(sorted((Domain.BAD_SYMBOL, None, True), key=str))
     assert Domain.bad().has_values() is False
     assert Domain.empty().options() == ()
@@ -196,8 +205,6 @@ def test_set_domains_can_represent_all_subsets_without_materializing_them_up_fro
 
 
 def test_set_uids_are_cached_and_allocated_globally_from_possible_subsets() -> None:
-    Domain.GLOBAL_SET_UIDS.clear()
-    Domain.NEXT_SET_UID = 0
     left = Domain.all_subsets(1)
     right = Domain.set_values(frozenset(), frozenset({1}))
 
@@ -212,10 +219,7 @@ def test_set_uids_are_cached_and_allocated_globally_from_possible_subsets() -> N
 
 def test_domain_symbol_export_helpers_include_bad_and_candidate_members() -> None:
     expr_symbol = clingo.Function("expr")
-    domain = Domain(is_bad=True, ints={1})
-    domain.absorb(Domain.set_values(frozenset({1, 2})))
-    Domain.GLOBAL_SET_UIDS.clear()
-    Domain.NEXT_SET_UID = 0
+    domain = Domain.merge(Domain(is_bad=True, ints=frozenset({1})), Domain.set_values(frozenset({1, 2})))
     uid = next(iter(domain.set_uids))
     global_set_uids = Domain.GLOBAL_SET_UIDS
 
@@ -237,8 +241,6 @@ def test_domain_symbol_export_helpers_include_bad_and_candidate_members() -> Non
 
 
 def test_set_value_domain_symbols_export_one_concrete_set() -> None:
-    Domain.GLOBAL_SET_UIDS.clear()
-    Domain.NEXT_SET_UID = 0
     set_value = frozenset({1, 2})
     uid = Domain.register_set_uid(set_value)
 
@@ -405,7 +407,7 @@ def test_apply_tracks_numeric_corner_cases_and_type_mismatches() -> None:
 def test_apply_length_marks_invalid_scalar_inputs_bad_but_keeps_valid_lengths() -> None:
     domain = build_domain("abcd", frozenset({1, 2}), (1, 2, 3), 9, None)
 
-    assert Domain.apply(expression.StringOperator.length, domain) == Domain(is_bad=True, ints={2, 3, 4})
+    assert Domain.apply(expression.StringOperator.length, domain) == Domain(is_bad=True, ints=frozenset({2, 3, 4}))
 
 
 def test_apply_set_operations_use_complete_sets_and_nonset_values_mark_bad() -> None:
@@ -418,12 +420,12 @@ def test_apply_set_operations_use_complete_sets_and_nonset_values_mark_bad() -> 
         operators.SetOperator.union,
         build_domain(frozenset({1}), 9),
         build_domain(frozenset({2})),
-    ) == Domain.set_values(frozenset({1, 2})).absorb(Domain.bad())
+    ) == Domain.merge(Domain.set_values(frozenset({1, 2})), Domain.bad())
 
 
 def test_apply_if_default_and_hasvalue_cover_none_bad_and_false_cases() -> None:
     assert Domain.apply(expression.ConditionalOperator.IF, build_domain(True, False, None), build_domain(7)) == Domain(
-        ints={7},
+        ints=frozenset({7}),
         is_none=True,
     )
     assert Domain.apply(
@@ -447,6 +449,11 @@ def test_apply_max_and_min_follow_evaluator_cross_product_semantics() -> None:
     )
 
 
+def test_apply_max_and_min_reject_non_numeric_domains() -> None:
+    assert Domain.apply(expression.OtherOperator.max, build_domain("x"), build_domain(2)) == Domain.bad()
+    assert Domain.apply(expression.OtherOperator.min, build_domain(True), build_domain(2)) == Domain.bad()
+
+
 def test_apply_ordered_comparisons_use_extrema_shortcuts_without_changing_results() -> None:
     assert Domain.apply(operators.ArithmeticOperator.leq, build_domain(1, 2), build_domain(5, 6)) == Domain.booleans(
         True
@@ -462,7 +469,7 @@ def test_apply_ordered_comparisons_use_extrema_shortcuts_without_changing_result
 def test_apply_length_coarsens_large_symbolic_set_domains_by_cardinality_range() -> None:
     domain = Domain.all_subsets(*range(8))
 
-    assert Domain.apply(expression.StringOperator.length, domain) == Domain(ints=set(range(9)))
+    assert Domain.apply(expression.StringOperator.length, domain) == Domain(ints=frozenset(range(9)))
 
 
 def test_apply_set_operations_use_threshold_fallbacks_for_large_symbolic_domains() -> None:
@@ -480,7 +487,7 @@ def test_compute_domain_uses_shared_threshold_for_large_boolean_cross_products()
     left = Domain.all_subsets(1, 2, 3)
     right = Domain.all_subsets(2, 3, 4)
 
-    assert compute_domain(operation, left, right) == Domain(is_bad=True, bools={True, False})
+    assert compute_domain(operation, left, right) == Domain(is_bad=True, bools=frozenset({True, False}))
 
 
 def test_compute_domain_symbolic_dispatch_matches_apply_for_small_cases() -> None:
@@ -518,7 +525,7 @@ def test_compute_domain_python_callable_matches_evaluator_success_cases() -> Non
 def test_compute_domain_python_callable_exception_marks_bad_like_evaluator() -> None:
     operation = clingo.Function("python", [clingo.String("lambda x: 10 / x")])
 
-    assert compute_domain(operation, build_domain(2, 0)) == Domain(floats={5.0}, is_bad=True)
+    assert compute_domain(operation, build_domain(2, 0)) == Domain(floats=frozenset({5.0}), is_bad=True)
 
 
 def test_compute_domain_python_callable_bad_code_is_bad() -> None:
