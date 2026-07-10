@@ -31,10 +31,11 @@ _fch_static_expr_val(ID, TYPE_ID, VALUE) :-
 _fch_dynamic_expr_val(ID, TYPE, VAL) :- 
     _fch_static_expr_val(ID, TYPE, VAL).
 
-% For each declared variable we pick exactly one expression from its domain to define it. 
-1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID)}1 :- 
-    _fch_expr_var(ID, NAME), 
-    _fch_var_decl(NAME). 
+% For each declared variable we pick exactly one expression from its domain to define it.
+% This must also happen for variables that are only observed via public output.
+1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID)}1 :-
+    _fch_var_decl(NAME),
+    _fch_var_dom(NAME, _).
 
 _fch_dynamic_var_def_val(NAME, EXPR_ID, TYPE, VAL) :-
     _fch_dynamic_var_def(NAME, EXPR_ID),
