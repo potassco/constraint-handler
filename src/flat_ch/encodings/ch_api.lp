@@ -35,3 +35,21 @@ _fch_input(optimize_maximizeSum(LABEL, EXPR, ELEMENT, PRIORITY)) :- optimize_max
 
 #defined execution_declare/5.
 _fch_ssa(execution_declare(NAME, LABEL, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, LABEL, STATEMENTS, INPUT, OUTPUT).
+
+%
+% CH-facing output compatibility.
+%
+
+value(NAME, val(none, none)) :- value(NAME, none, none).
+value(NAME, val(int, VALUE)) :- value(NAME, int, VALUE).
+value(NAME, val(float, float(VALUE))) :- value(NAME, float, VALUE).
+value(NAME, val(string, VALUE)) :- value(NAME, string, VALUE).
+value(NAME, val(bool, VALUE)) :- value(NAME, bool, VALUE).
+
+value(NAME, bad) :-
+	_fch_var_def(NAME, EXPR_ID),
+	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
+
+value(NAME, bad) :-
+	_fch_dynamic_var_def(NAME, EXPR_ID),
+	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
