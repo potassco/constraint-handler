@@ -16,18 +16,18 @@ def evaluate_operator(o, args) -> atom.EvalResult:
         case operators.LogicOperator.conj:
             if False in args:
                 return atom.EvalResult(False, NO_ERRORS)
-            if None in args:
-                return atom.EvalResult(None, NO_ERRORS)
             if common.Bad.bad in args:
                 return atom.EvalResult(common.Bad.bad, NO_ERRORS)
+            if None in args:
+                return atom.EvalResult(None, NO_ERRORS)
             return atom.EvalResult(True, NO_ERRORS)
         case operators.LogicOperator.disj:
             if True in args:
                 return atom.EvalResult(True, NO_ERRORS)
-            if None in args:
-                return atom.EvalResult(None, NO_ERRORS)
             if common.Bad.bad in args:
                 return atom.EvalResult(common.Bad.bad, NO_ERRORS)
+            if None in args:
+                return atom.EvalResult(None, NO_ERRORS)
             return atom.EvalResult(False, NO_ERRORS)
         case operators.LogicOperator.ite:
             assert len(args) == 3

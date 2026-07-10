@@ -1249,10 +1249,10 @@ class Domain:
         """Evaluate conjunction on the abstract boolean lattice."""
         if left_value is False or right_value is False:
             return False
-        if left_value is None or right_value is None:
-            return None
         if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD:
             return cls.LOGIC_BAD
+        if left_value is None or right_value is None:
+            return None
         return True
 
     @classmethod
@@ -1260,10 +1260,10 @@ class Domain:
         """Evaluate disjunction on the abstract boolean lattice."""
         if left_value is True or right_value is True:
             return True
-        if left_value is None or right_value is None:
-            return None
         if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD:
             return cls.LOGIC_BAD
+        if left_value is None or right_value is None:
+            return None
         return False
 
     @classmethod

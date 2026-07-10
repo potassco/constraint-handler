@@ -1,0 +1,3 @@
+evaluated(leqv,(variable(execution_output(flagger,"__condition_holds__")),(operation(eq,(variable(execution_input(flagger,mode)),(val(string,"a"),()))),())),val(bool,false))
+evaluated(leqv,(variable(execution_output(flagger,"result")),(variable(execution_output(flagger,"__condition_holds__")),())),val(bool,false))
+evaluated(lxor,(variable(execution_output(flagger,"result")),(variable(execution_output(flagger,"other")),())),val(bool,false))

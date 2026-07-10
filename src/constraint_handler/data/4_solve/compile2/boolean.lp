@@ -51,17 +51,15 @@ _rev(false, true).
 
 :-
     _expression(compile2, operation(conj, ExprList)),
-    _expression_operationIndex(compile2, operation(conj, ExprList), _, Special),
-    _se_value(Special, val(none, none)),
-    #false : _se_value(Arg, val(bool, false)), _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg);
-    not _se_value(operation(conj, ExprList), val(none, none)).
+    _se_value(operation(conj, ExprList), val(bool, true)),
+    _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg),
+    not _se_value(Arg, val(bool, true)).
 
 :-
     _expression(compile2, operation(conj, ExprList)),
     _expression_operationIndex(compile2, operation(conj, ExprList), _, Special),
     _se_value(Special, bad),
     #false : _se_value(Arg, val(bool, false)), _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg);
-    #false : _se_value(Arg, val(none, none)), _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg);
     not _se_value(operation(conj, ExprList), bad).
 
 % disj
