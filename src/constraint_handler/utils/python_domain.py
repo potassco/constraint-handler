@@ -1785,5 +1785,3 @@ class Domain:
         right_sets = right.sets
         values = {lhs <= rhs for lhs, rhs in product(left_sets, right_sets)}
         return cls._bool_domain(values, is_bad=is_bad)
-
-
