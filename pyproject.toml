@@ -17,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 clingspector = "clingspector.main:main"
+fch = "flat_ch.main:main"
 
 [project.urls]
 Homepage = "https://github.com/potassco/constraint-handler.git/"
