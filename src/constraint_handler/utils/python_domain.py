@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import cache
 from itertools import product
 from typing import Any, Callable, ClassVar, Iterable, Mapping
@@ -92,6 +92,18 @@ def cached_number(value: int) -> clingo.Symbol:
     return clingo.Number(value)
 
 
+VAL_SYMBOL = cached_function("val")
+BOOL_SYMBOL = cached_function("bool")
+TRUE_SYMBOL = cached_function("true")
+FALSE_SYMBOL = cached_function("false")
+INT_SYMBOL = cached_function("int")
+FLOAT_SYMBOL = cached_function("float")
+NONE_SYMBOL = cached_function("none")
+STRING_SYMBOL = cached_function("string")
+SYMBOL_SYMBOL = cached_function("symbol")
+SET_SYMBOL = cached_function("set")
+
+
 @dataclass(frozen=True, slots=True)
 class OperationSpec:
     """Describe how one operator should be dispatched over child domains."""
@@ -101,7 +113,6 @@ class OperationSpec:
     max_arity: int | None = None
     fold_identity: Callable[[type["Domain"]], "Domain"] | None = None
     seed_with_identity: bool = False
-    pass_set_members: bool = False
 
 
 def _identity_empty(cls: type["Domain"]) -> "Domain":
@@ -124,7 +135,7 @@ def _identity_false(cls: type["Domain"]) -> "Domain":
     return cls.booleans(False)
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True)
 class Domain:
     """Compact domain model for compile2 without using expression wrappers.
 
@@ -151,38 +162,33 @@ class Domain:
         "min": OperationSpec("op_min"),
         "set_make": OperationSpec("op_set_make"),
         "if": OperationSpec("op_if", min_arity=2, max_arity=2),
-        "set_isin": OperationSpec("op_set_isin", pass_set_members=True),
-        "set_notin": OperationSpec("op_set_notin", pass_set_members=True),
+        "set_isin": OperationSpec("op_set_isin"),
+        "set_notin": OperationSpec("op_set_notin"),
         "union": OperationSpec(
             "op_union",
             fold_identity=_identity_empty,
-            pass_set_members=True,
         ),
         "inter": OperationSpec(
             "op_inter",
             fold_identity=_identity_empty,
-            pass_set_members=True,
         ),
         "diff": OperationSpec(
             "op_diff",
             fold_identity=_identity_empty,
-            pass_set_members=True,
         ),
-        "subset": OperationSpec("op_subset", pass_set_members=True),
+        "subset": OperationSpec("op_subset"),
     }
 
     is_bad: bool = False
-    bools: set[bool] = field(default_factory=set)
-    ints: set[int] = field(default_factory=set)
-    floats: set[float] = field(default_factory=set)
+    bools: frozenset[bool] = field(default_factory=frozenset)
+    ints: frozenset[int] = field(default_factory=frozenset)
+    floats: frozenset[float] = field(default_factory=frozenset)
     is_none: bool = False
-    strings: set[str] = field(default_factory=set)
-    symbols: set[clingo.Symbol] = field(default_factory=set)
-    tuples: set[tuple[DomainAtom, ...]] = field(default_factory=set)
-    domain_atoms: set[DomainAtom] = field(default_factory=set)
-    possible_subsets: set[frozenset[DomainAtom]] | None = field(default_factory=set)
-    _sets_cache: set[frozenset[DomainAtom]] | None = field(default=None, init=False, repr=False, compare=False)
-    _set_uids_cache: set[int] | None = field(default=None, init=False, repr=False, compare=False)
+    strings: frozenset[str] = field(default_factory=frozenset)
+    symbols: frozenset[clingo.Symbol] = field(default_factory=frozenset)
+    tuples: frozenset[tuple[DomainAtom, ...]] = field(default_factory=frozenset)
+    domain_atoms: frozenset[DomainAtom] = field(default_factory=frozenset)
+    possible_subsets: frozenset[frozenset[DomainAtom]] | None = field(default_factory=frozenset)
 
     @classmethod
     def empty(cls) -> Domain:
@@ -202,32 +208,32 @@ class Domain:
     @classmethod
     def booleans(cls, *values: bool) -> Domain:
         """Return a domain seeded with boolean values."""
-        return cls(bools=set(values))
+        return cls(bools=frozenset(values))
 
     @classmethod
     def integers(cls, *values: int) -> Domain:
         """Return a domain seeded with integer values."""
-        return cls(ints=set(values))
+        return cls(ints=frozenset(values))
 
     @classmethod
     def floats_only(cls, *values: float) -> Domain:
         """Return a domain seeded with float values."""
-        return cls(floats=set(values))
+        return cls(floats=frozenset(values))
 
     @classmethod
     def strings_only(cls, *values: str) -> Domain:
         """Return a domain seeded with string values."""
-        return cls(strings=set(values))
+        return cls(strings=frozenset(values))
 
     @classmethod
     def symbols_only(cls, *values: clingo.Symbol) -> Domain:
         """Return a domain seeded with symbol values."""
-        return cls(symbols=set(values))
+        return cls(symbols=frozenset(values))
 
     @classmethod
     def tuple_values(cls, *values: tuple[DomainAtom, ...]) -> Domain:
         """Return a domain seeded with tuple values."""
-        return cls(tuples=set(values))
+        return cls(tuples=frozenset(values))
 
     @classmethod
     def set_values(cls, *values: frozenset[DomainAtom]) -> Domain:
@@ -235,12 +241,12 @@ class Domain:
         domain_atoms: set[DomainAtom] = set()
         for value in values:
             domain_atoms.update(value)
-        return cls(domain_atoms=domain_atoms, possible_subsets=set(values))
+        return cls(domain_atoms=frozenset(domain_atoms), possible_subsets=frozenset(values))
 
     @classmethod
     def all_subsets(cls, *values: DomainAtom) -> Domain:
         """Return a domain where every subset of the candidate atoms is valid."""
-        return cls(domain_atoms=set(values), possible_subsets=None)
+        return cls(domain_atoms=frozenset(values), possible_subsets=None)
 
     @classmethod
     def set_uid_sort_key(cls, value: object):
@@ -321,35 +327,35 @@ class Domain:
 
     @classmethod
     def value_to_symbol(cls, value: DomainAtom) -> clingo.Symbol:
-        """Convert one runtime domain value back into the compile2 value encoding."""
+        """Convert one runtime domain value into the compile2 value encoding."""
         if isinstance(value, bool):
             return cached_function(
-                "val",
-                (cached_function("bool"), cached_function("true" if value else "false")),
+                VAL_SYMBOL.name,
+                (BOOL_SYMBOL, TRUE_SYMBOL if value else FALSE_SYMBOL),
             )
         if isinstance(value, int):
-            return cached_function("val", (cached_function("int"), cached_number(value)))
+            return cached_function(VAL_SYMBOL.name, (INT_SYMBOL, cached_number(value)))
         if isinstance(value, float):
             return cached_function(
-                "val",
+                VAL_SYMBOL.name,
                 (
-                    cached_function("float"),
-                    cached_function("float", (clingo.String(repr(value)),)),
+                    FLOAT_SYMBOL,
+                    cached_function(FLOAT_SYMBOL.name, (clingo.String(repr(value)),)),
                 ),
             )
         if value is None:
-            return cached_function("val", (cached_function("none"), cached_function("none")))
+            return cached_function(VAL_SYMBOL.name, (NONE_SYMBOL, NONE_SYMBOL))
         if isinstance(value, str):
-            return cached_function("val", (cached_function("string"), clingo.String(value)))
+            return cached_function(VAL_SYMBOL.name, (STRING_SYMBOL, clingo.String(value)))
         if isinstance(value, clingo.Symbol):
             if value == cls.BAD_SYMBOL:
                 return value
-            return cached_function("val", (cached_function("symbol"), value))
+            return cached_function(VAL_SYMBOL.name, (SYMBOL_SYMBOL, value))
         if isinstance(value, tuple):
             return cached_tuple(tuple(cls.value_to_symbol(item) for item in value))
         if isinstance(value, (set, frozenset)):
             return cached_function(
-                "set",
+                SET_SYMBOL.name,
                 (cls._symbol_sequence(sorted(cls.value_to_symbol(item) for item in value)),),
             )
         raise TypeError(value)
@@ -396,35 +402,41 @@ class Domain:
             result = cached_tuple((item, result))
         return result
 
-    def copy(self) -> Domain:
-        """Return a shallow copy with cloned mutable sets."""
-        return Domain(
-            is_bad=self.is_bad,
-            bools=set(self.bools),
-            ints=set(self.ints),
-            floats=set(self.floats),
-            is_none=self.is_none,
-            strings=set(self.strings),
-            symbols=set(self.symbols),
-            tuples=set(self.tuples),
-            domain_atoms=set(self.domain_atoms),
-            possible_subsets=None if self.possible_subsets is None else set(self.possible_subsets),
-        )
-
-    def _invalidate_set_cache(self) -> None:
-        """Clear cached derived set views after mutating set-domain state."""
-        self._sets_cache = None
-        self._set_uids_cache = None
+    @classmethod
+    def _accumulate_value(
+        cls,
+        value: DomainAtom,
+        *,
+        bools: set[bool],
+        ints: set[int],
+        floats: set[float],
+        strings: set[str],
+        tuples: set[tuple[DomainAtom, ...]],
+    ) -> None:
+        """Accumulate one scalar-or-tuple value into raw constructor buckets."""
+        del cls
+        if isinstance(value, bool):
+            bools.add(value)
+        elif isinstance(value, int):
+            ints.add(value)
+        elif isinstance(value, float):
+            floats.add(value)
+        elif isinstance(value, str):
+            strings.add(value)
+        elif isinstance(value, tuple):
+            tuples.add(value)
+        else:
+            raise TypeError(value)
 
     @classmethod
-    def _enumerate_all_subsets(cls, values: Iterable[DomainAtom]) -> set[frozenset[DomainAtom]]:
+    def _enumerate_all_subsets(cls, values: Iterable[DomainAtom]) -> frozenset[frozenset[DomainAtom]]:
         """Enumerate the full power set for the provided candidate atoms."""
-        items = tuple(sorted(set(values), key=cls.set_uid_sort_key))
+        items = tuple(frozenset(values))
         result: set[frozenset[DomainAtom]] = set()
         for mask in range(1 << len(items)):
             members = {item for index, item in enumerate(items) if mask & (1 << index)}
             result.add(frozenset(members))
-        return result
+        return frozenset(result)
 
     def set_count(self) -> int:
         """Count concrete set values without materializing symbolic all-subset domains."""
@@ -437,49 +449,57 @@ class Domain:
         return self.possible_subsets is None or bool(self.possible_subsets)
 
     @property
-    def sets(self) -> set[frozenset[DomainAtom]]:
+    @cache
+    def sets(self) -> frozenset[frozenset[DomainAtom]]:
         """Return all concrete set values represented by this domain."""
-        if self._sets_cache is None:
-            if self.possible_subsets is None:
-                self._sets_cache = self._enumerate_all_subsets(self.domain_atoms)
-            else:
-                self._sets_cache = set(self.possible_subsets)
-        return set(self._sets_cache)
+        if self.possible_subsets is None:
+            return self._enumerate_all_subsets(self.domain_atoms)
+        return self.possible_subsets
 
     @property
-    def set_uids(self) -> set[int]:
+    @cache
+    def set_uids(self) -> frozenset[int]:
         """Return cached global ids for all possible concrete set values."""
-        if self._set_uids_cache is None:
-            self._set_uids_cache = {
-                self.register_set_uid(set_value) for set_value in sorted(self.sets, key=self.set_sort_key)
-            }
-        return set(self._set_uids_cache)
-
-    def absorb(self, *domains: Domain) -> Domain:
-        """Mutate this domain by unioning in the provided domains."""
-        for domain in domains:
-            self.is_bad = self.is_bad or domain.is_bad
-            self.bools.update(domain.bools)
-            self.ints.update(domain.ints)
-            self.floats.update(domain.floats)
-            self.is_none = self.is_none or domain.is_none
-            self.strings.update(domain.strings)
-            self.symbols.update(domain.symbols)
-            self.tuples.update(domain.tuples)
-            if self.possible_subsets is None or domain.possible_subsets is None:
-                merged_sets = self.sets | domain.sets
-                self.domain_atoms = {member for set_value in merged_sets for member in set_value}
-                self.possible_subsets = merged_sets
-            else:
-                self.domain_atoms.update(domain.domain_atoms)
-                self.possible_subsets.update(domain.possible_subsets)
-            self._invalidate_set_cache()
-        return self
+        return frozenset(self.register_set_uid(set_value) for set_value in sorted(self.sets, key=self.set_sort_key))
 
     @classmethod
     def merge(cls, *domains: Domain) -> Domain:
         """Return one domain containing the union of all inputs."""
-        return cls.empty().absorb(*domains)
+        if not domains:
+            return cls.empty()
+        if len(domains) == 1:
+            return domains[0]
+
+        bools = frozenset(value for domain in domains for value in domain.bools)
+        ints = frozenset(value for domain in domains for value in domain.ints)
+        floats = frozenset(value for domain in domains for value in domain.floats)
+        strings = frozenset(value for domain in domains for value in domain.strings)
+        symbols = frozenset(value for domain in domains for value in domain.symbols)
+        tuples = frozenset(value for domain in domains for value in domain.tuples)
+        is_bad = any(domain.is_bad for domain in domains)
+        is_none = any(domain.is_none for domain in domains)
+        if any(domain.possible_subsets is None for domain in domains):
+            possible_subsets = frozenset(set_value for domain in domains for set_value in domain.sets)
+            domain_atoms = frozenset(member for set_value in possible_subsets for member in set_value)
+        else:
+            domain_atoms = frozenset(value for domain in domains for value in domain.domain_atoms)
+            possible_subsets = frozenset(
+                set_value
+                for domain in domains
+                for set_value in (() if domain.possible_subsets is None else domain.possible_subsets)
+            )
+        return cls(
+            is_bad=is_bad,
+            bools=bools,
+            ints=ints,
+            floats=floats,
+            is_none=is_none,
+            strings=strings,
+            symbols=symbols,
+            tuples=tuples,
+            domain_atoms=domain_atoms,
+            possible_subsets=possible_subsets,
+        )
 
     def _scalar_iter(self, *, include_bad: bool = False) -> Iterable[bool | int | float | str | None | clingo.Symbol]:
         """Yield scalar values while preserving set-style numeric deduplication."""
@@ -503,6 +523,30 @@ class Domain:
         yield from self.tuples
         yield from self.sets
 
+    def to_symbols(self, *, include_bad: bool = False, include_set_values: bool = True) -> Iterable[clingo.Symbol]:
+        """Yield compile2 symbols while preserving native-value ordering and filtering."""
+        for value in sorted(self.bools):
+            yield self.value_to_symbol(value)
+        for value in sorted(self.ints):
+            if value not in self.bools:
+                yield self.value_to_symbol(value)
+        for value in sorted(self.floats):
+            if value not in self.bools and value not in self.ints:
+                yield self.value_to_symbol(value)
+        if self.is_none:
+            yield self.value_to_symbol(None)
+        for value in sorted(self.strings):
+            yield self.value_to_symbol(value)
+        for value in sorted(self.symbols):
+            yield self.value_to_symbol(value)
+        for value in sorted(self.tuples, key=self.set_uid_sort_key):
+            yield self.value_to_symbol(value)
+        if include_set_values:
+            for value in sorted(self.sets, key=self.set_sort_key):
+                yield self.value_to_symbol(value)
+        if include_bad and self.is_bad and self.BAD_SYMBOL not in self.symbols:
+            yield self.BAD_SYMBOL
+
     def value_set(self, *, include_bad: bool = False) -> set[DomainAtom]:
         """Materialize the represented values when set operations are required."""
         return set(self.values(include_bad=include_bad))
@@ -523,12 +567,8 @@ class Domain:
 
     def expression_domain_symbols(self, expr: clingo.Symbol, *, include_set_values: bool) -> Iterable[clingo.Symbol]:
         """Yield `_se_domain/2` tuples for one expression."""
-        for value in sorted(self.values(), key=self.set_uid_sort_key):
-            if not include_set_values and isinstance(value, frozenset):
-                continue
-            yield cached_tuple((expr, self.value_to_symbol(value)))
-        if self.is_bad:
-            yield cached_tuple((expr, cached_function("bad")))
+        for symbol in self.to_symbols(include_bad=True, include_set_values=include_set_values):
+            yield cached_tuple((expr, symbol))
 
     def expression_set_domain_symbols(
         self,
@@ -622,12 +662,6 @@ class Domain:
         """Return one stable enumeration of domain alternatives, including bad when present."""
         return tuple(sorted(self.values(include_bad=True), key=str))
 
-    def without_none(self) -> Domain:
-        """Return a copy with the optional-none branch removed."""
-        result = self.copy()
-        result.is_none = False
-        return result
-
     @classmethod
     def operation_name(cls, operation: Any) -> str:
         """Normalize a symbolic operator representation to its name."""
@@ -643,11 +677,11 @@ class Domain:
     def coarse_boolean_output_domain(cls, operation: Any) -> Domain:
         """Return the old shortcut domain for expensive boolean-valued operators."""
         name = cls.operation_name(operation)
-        domain = cls.booleans(True, False)
-        if name in cls.BOOLEAN_OUTPUT_OPERATORS_WITH_NONE:
-            domain.is_none = True
-        domain.is_bad = True
-        return domain
+        return cls(
+            is_bad=True,
+            bools=frozenset({True, False}),
+            is_none=name in cls.BOOLEAN_OUTPUT_OPERATORS_WITH_NONE,
+        )
 
     @classmethod
     def has_boolean_output(cls, operation: Any) -> bool:
@@ -721,7 +755,7 @@ class Domain:
         if any(not options for options in arg_options):
             return cls.empty()
 
-        result = cls.empty()
+        result_domains: list[Domain] = []
         try:
             call = eval(get_compiled_eval(code), get_environment(solver_identifiers), {})
         except Exception as exn:
@@ -744,10 +778,10 @@ class Domain:
                 else:
                     domain = cls.from_runtime(applied)
                     error_messages = ()
-            result.absorb(domain)
+            result_domains.append(domain)
             for request in evaluation_session.output_requests():
                 evaluation_session.record_output(request.output_id, arg_values, domain, error_messages)
-        return result
+        return cls.merge(*result_domains)
 
     @classmethod
     def evaluate_python_extract(
@@ -763,7 +797,7 @@ class Domain:
         if any(not options for options in arg_options):
             return cls.empty()
 
-        result = cls.empty()
+        result_domains: list[Domain] = []
         for arg_values in product(*arg_options):
             execution = cls.execute_python_extract_statement(stmt, arg_values, solver_identifiers)
             requests = evaluation_session.output_requests()
@@ -780,10 +814,11 @@ class Domain:
                     primary_domain = domain
                 evaluation_session.record_output(request.output_id, arg_values, domain, error_messages)
             if primary_domain is not None:
-                result.absorb(primary_domain)
-        return result
+                result_domains.append(primary_domain)
+        return cls.merge(*result_domains)
 
     @classmethod
+    @cache
     def execute_python_extract_statement(
         cls,
         stmt: str,
@@ -832,8 +867,6 @@ class Domain:
         cls,
         domains: tuple[Domain, ...],
         spec: OperationSpec,
-        *,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Fold one operator spec from either the first argument or an explicit identity."""
         if spec.fold_identity is None:
@@ -848,10 +881,7 @@ class Domain:
             result = domains[0]
             remaining = domains[1:]
         for domain in remaining:
-            if spec.pass_set_members:
-                result = method(result, domain, set_members=set_members)
-            else:
-                result = method(result, domain)
+            result = method(result, domain)
         return result
 
     @classmethod
@@ -859,8 +889,6 @@ class Domain:
         cls,
         spec: OperationSpec,
         domains: tuple[Domain, ...],
-        *,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Apply one operator spec to a tuple of child domains."""
         domain_count = len(domains)
@@ -869,10 +897,8 @@ class Domain:
         if spec.max_arity is not None and domain_count > spec.max_arity:
             raise ValueError(f"expected at most {spec.max_arity} domains, got {domain_count}")
         if spec.fold_identity is not None:
-            return cls._fold_operation(domains, spec, set_members=set_members)
+            return cls._fold_operation(domains, spec)
         method = getattr(cls, spec.method_name)
-        if spec.pass_set_members:
-            return method(*domains, set_members=set_members)
         if spec.method_name == "op_if":
             return method(*domains, cls.empty())
         return method(*domains)
@@ -921,24 +947,13 @@ class Domain:
         cls,
         operation: Any,
         *domains: Domain,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Dispatch one operator name to the matching domain transfer function."""
         spec = cls.operation_spec(operation)
         method = getattr(cls, spec.method_name, None)
         if method is None:
             raise NotImplementedError(cls.operation_name(operation))
-        return cls._apply_spec(spec, domains, set_members=set_members)
-
-    @classmethod
-    def _resolve_sets(
-        cls,
-        domain: Domain,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None,
-    ) -> set[frozenset[DomainAtom]]:
-        """Return the concrete sets represented by one domain."""
-        del set_members
-        return domain.sets
+        return cls._apply_spec(spec, domains)
 
     @classmethod
     def _has_nonset_values(cls, domain: Domain) -> bool:
@@ -1015,21 +1030,29 @@ class Domain:
 
     @classmethod
     def _ordered_extremum(cls, domains: tuple[Domain, ...], *, prefer_max: bool) -> Domain | None:
-        """Compute exact min/max results without cross-product enumeration when ordered."""
+        """Compute exact numeric min/max results without cross-product enumeration."""
         if not domains:
             return cls.empty()
 
-        value_options: list[tuple[DomainAtom, ...]] = []
+        value_options: list[tuple[int | float, ...]] = []
         for domain in domains:
-            options = cls._ordered_options(domain)
-            if options is None:
+            if (
+                domain.bools
+                or domain.is_none
+                or domain.strings
+                or domain.symbols
+                or domain.tuples
+                or domain.has_possible_sets()
+            ):
                 return None
+            options = tuple(domain.numeric_values())
             if not options:
                 return cls.empty()
             value_options.append(options)
 
-        result = cls.empty()
-        result.is_bad = any(domain.is_bad for domain in domains)
+        ints: set[int] = set()
+        floats: set[float] = set()
+        is_bad = any(domain.is_bad for domain in domains)
         for index, options in enumerate(value_options):
             earlier_domains = value_options[:index]
             later_domains = value_options[index + 1 :]
@@ -1052,13 +1075,20 @@ class Domain:
                 except TypeError:
                     return None
                 if earlier_ok and later_ok:
-                    result.absorb(cls.from_value(candidate))
-        return result
+                    if isinstance(candidate, int):
+                        ints.add(candidate)
+                    else:
+                        floats.add(float(candidate))
+        return cls(
+            is_bad=is_bad,
+            ints=frozenset(ints),
+            floats=frozenset(floats),
+        )
 
     @classmethod
     def _bool_domain(cls, values: set[bool], is_bad: bool = False, is_none: bool = False) -> Domain:
         """Build a boolean domain with explicit flags."""
-        return cls(is_bad=is_bad, bools=set(values), is_none=is_none)
+        return cls(is_bad=is_bad, bools=frozenset(values), is_none=is_none)
 
     @classmethod
     def _logic_values(cls, domain: Domain) -> tuple[object, ...]:
@@ -1107,7 +1137,7 @@ class Domain:
                 ints.add(result)
             else:
                 floats.add(float(result))
-        return cls(is_bad=is_bad, ints=ints, floats=floats)
+        return cls(is_bad=is_bad, ints=frozenset(ints), floats=frozenset(floats))
 
     @classmethod
     def _map_numbers_binary(cls, left: Domain, right: Domain, fn, *, force_int: bool = False) -> Domain:
@@ -1146,7 +1176,7 @@ class Domain:
                 ints.add(result)
             else:
                 floats.add(float(result))
-        return cls(is_bad=is_bad, ints=ints, floats=floats)
+        return cls(is_bad=is_bad, ints=frozenset(ints), floats=frozenset(floats))
 
     @classmethod
     def _map_arithmetic_binary(cls, left: Domain, right: Domain, fn) -> Domain:
@@ -1179,7 +1209,7 @@ class Domain:
                 ints.add(result)
             else:
                 floats.add(float(result))
-        return cls(is_bad=is_bad, ints=ints, floats=floats)
+        return cls(is_bad=is_bad, ints=frozenset(ints), floats=frozenset(floats))
 
     @classmethod
     def _compare(cls, left: Domain, right: Domain, predicate, *, operation_name: str) -> Domain:
@@ -1349,7 +1379,7 @@ class Domain:
                 ints.add(result)
             else:
                 floats.add(float(result))
-        return cls(is_bad=is_bad, ints=ints, floats=floats)
+        return cls(is_bad=is_bad, ints=frozenset(ints), floats=frozenset(floats))
 
     @classmethod
     def op_leq(cls, left: Domain, right: Domain) -> Domain:
@@ -1430,28 +1460,56 @@ class Domain:
     @classmethod
     def op_ite(cls, condition: Domain, if_true: Domain, if_false: Domain) -> Domain:
         """Compute the if-then-else domain from the possible condition values."""
-        result = cls.empty()
-        if True in condition.bools:
-            result.absorb(if_true)
-        if False in condition.bools:
-            result.absorb(if_false)
-        if condition.is_none:
-            result.is_none = True
-        if condition.is_bad:
-            result.is_bad = True
-        return result
+        selected_domains = tuple(
+            domain
+            for include, domain in ((True in condition.bools, if_true), (False in condition.bools, if_false))
+            if include
+        )
+        return cls(
+            is_bad=condition.is_bad or any(domain.is_bad for domain in selected_domains),
+            bools=frozenset(value for domain in selected_domains for value in domain.bools),
+            ints=frozenset(value for domain in selected_domains for value in domain.ints),
+            floats=frozenset(value for domain in selected_domains for value in domain.floats),
+            is_none=condition.is_none or any(domain.is_none for domain in selected_domains),
+            strings=frozenset(value for domain in selected_domains for value in domain.strings),
+            symbols=frozenset(value for domain in selected_domains for value in domain.symbols),
+            tuples=frozenset(value for domain in selected_domains for value in domain.tuples),
+            domain_atoms=frozenset(value for domain in selected_domains for value in domain.domain_atoms),
+            possible_subsets=(
+                frozenset(set_value for domain in selected_domains for set_value in domain.sets)
+                if any(domain.possible_subsets is None for domain in selected_domains)
+                else frozenset(
+                    set_value
+                    for domain in selected_domains
+                    for set_value in (() if domain.possible_subsets is None else domain.possible_subsets)
+                )
+            ),
+        )
 
     @classmethod
     def op_if(cls, condition: Domain, if_true: Domain, if_false: Domain) -> Domain:
         """Compute the guarded-value domain for the two-argument `if` operator."""
-        result = cls.empty()
-        if True in condition.bools:
-            result.absorb(if_true)
-        if condition.is_none or False in condition.bools:
-            result.is_none = True
-        if condition.is_bad:
-            result.is_bad = True
-        return result
+        selected_domains = (if_true,) if True in condition.bools else ()
+        return cls(
+            is_bad=condition.is_bad or any(domain.is_bad for domain in selected_domains),
+            bools=frozenset(value for domain in selected_domains for value in domain.bools),
+            ints=frozenset(value for domain in selected_domains for value in domain.ints),
+            floats=frozenset(value for domain in selected_domains for value in domain.floats),
+            is_none=condition.is_none or False in condition.bools or any(domain.is_none for domain in selected_domains),
+            strings=frozenset(value for domain in selected_domains for value in domain.strings),
+            symbols=frozenset(value for domain in selected_domains for value in domain.symbols),
+            tuples=frozenset(value for domain in selected_domains for value in domain.tuples),
+            domain_atoms=frozenset(value for domain in selected_domains for value in domain.domain_atoms),
+            possible_subsets=(
+                frozenset(set_value for domain in selected_domains for set_value in domain.sets)
+                if any(domain.possible_subsets is None for domain in selected_domains)
+                else frozenset(
+                    set_value
+                    for domain in selected_domains
+                    for set_value in (() if domain.possible_subsets is None else domain.possible_subsets)
+                )
+            ),
+        )
 
     @classmethod
     def op_leqv(cls, left: Domain, right: Domain) -> Domain:
@@ -1481,25 +1539,25 @@ class Domain:
     @classmethod
     def op_snot(cls, domain: Domain) -> Domain:
         """Compute strong negation, where `none` collapses to `false`."""
-        result = cls._bool_domain({not value for value in domain.bools}, is_bad=domain.is_bad)
+        values = {not value for value in domain.bools}
         if domain.is_none:
-            result.bools.add(False)
-        return result
+            values.add(False)
+        return cls._bool_domain(values, is_bad=domain.is_bad)
 
     @classmethod
     def op_wnot(cls, domain: Domain) -> Domain:
         """Compute weak negation, where `none` collapses to `true`."""
-        result = cls._bool_domain({not value for value in domain.bools}, is_bad=domain.is_bad)
+        values = {not value for value in domain.bools}
         if domain.is_none:
-            result.bools.add(True)
-        return result
+            values.add(True)
+        return cls._bool_domain(values, is_bad=domain.is_bad)
 
     @classmethod
     def op_concat(cls, left: Domain, right: Domain) -> Domain:
         """Compute all string concatenations from two string domains."""
         return cls(
             is_bad=left.is_bad or right.is_bad,
-            strings={lhs + rhs for lhs, rhs in product(left.strings, right.strings)},
+            strings=frozenset(lhs + rhs for lhs, rhs in product(left.strings, right.strings)),
         )
 
     @classmethod
@@ -1512,11 +1570,21 @@ class Domain:
         else:
             lengths.update(len(value) for value in domain.possible_subsets)
         has_invalid_values = bool(domain.bools or domain.ints or domain.floats or domain.is_none or domain.symbols)
-        return cls(is_bad=domain.is_bad or has_invalid_values, ints=lengths)
+        return cls(is_bad=domain.is_bad or has_invalid_values, ints=frozenset(lengths))
 
     @classmethod
     def op_max(cls, *domains: Domain) -> Domain:
         """Compute all max results across the argument cross-product."""
+        if any(
+            domain.bools
+            or domain.is_none
+            or domain.strings
+            or domain.symbols
+            or domain.tuples
+            or domain.has_possible_sets()
+            for domain in domains
+        ):
+            return cls.bad()
         shortcut = cls._ordered_extremum(domains, prefer_max=True)
         if shortcut is not None:
             return shortcut
@@ -1526,18 +1594,37 @@ class Domain:
         if any(not options for options in value_options):
             return cls.empty()
 
-        result = cls.empty()
-        result.is_bad = any(domain.is_bad for domain in domains)
+        ints: set[int] = set()
+        floats: set[float] = set()
+        is_bad = any(domain.is_bad for domain in domains)
         for arg_values in product(*value_options):
             try:
-                result.absorb(cls.from_value(max(arg_values)))
+                result = max(arg_values)
+                if isinstance(result, int) and not isinstance(result, bool):
+                    ints.add(result)
+                else:
+                    floats.add(float(result))
             except Exception:
-                result.is_bad = True
-        return result
+                is_bad = True
+        return cls(
+            is_bad=is_bad,
+            ints=frozenset(ints),
+            floats=frozenset(floats),
+        )
 
     @classmethod
     def op_min(cls, *domains: Domain) -> Domain:
         """Compute all min results across the argument cross-product."""
+        if any(
+            domain.bools
+            or domain.is_none
+            or domain.strings
+            or domain.symbols
+            or domain.tuples
+            or domain.has_possible_sets()
+            for domain in domains
+        ):
+            return cls.bad()
         shortcut = cls._ordered_extremum(domains, prefer_max=False)
         if shortcut is not None:
             return shortcut
@@ -1547,22 +1634,45 @@ class Domain:
         if any(not options for options in value_options):
             return cls.empty()
 
-        result = cls.empty()
-        result.is_bad = any(domain.is_bad for domain in domains)
+        ints: set[int] = set()
+        floats: set[float] = set()
+        is_bad = any(domain.is_bad for domain in domains)
         for arg_values in product(*value_options):
             try:
-                result.absorb(cls.from_value(min(arg_values)))
+                result = min(arg_values)
+                if isinstance(result, int) and not isinstance(result, bool):
+                    ints.add(result)
+                else:
+                    floats.add(float(result))
             except Exception:
-                result.is_bad = True
-        return result
+                is_bad = True
+        return cls(
+            is_bad=is_bad,
+            ints=frozenset(ints),
+            floats=frozenset(floats),
+        )
 
     @classmethod
     def op_default(cls, primary: Domain, fallback: Domain) -> Domain:
         """Return the primary domain, falling back when it is only none-like."""
-        result = primary.without_none()
-        if primary.is_none:
-            result.absorb(fallback)
-        return result
+        if not primary.is_none:
+            return replace(primary, is_none=False)
+        return cls(
+            is_bad=primary.is_bad or fallback.is_bad,
+            bools=primary.bools | fallback.bools,
+            ints=primary.ints | fallback.ints,
+            floats=primary.floats | fallback.floats,
+            is_none=fallback.is_none,
+            strings=primary.strings | fallback.strings,
+            symbols=primary.symbols | fallback.symbols,
+            tuples=primary.tuples | fallback.tuples,
+            domain_atoms=primary.domain_atoms | fallback.domain_atoms,
+            possible_subsets=(
+                frozenset(primary.sets | fallback.sets)
+                if primary.possible_subsets is None or fallback.possible_subsets is None
+                else primary.possible_subsets | fallback.possible_subsets
+            ),
+        )
 
     @classmethod
     def op_hasValue(cls, domain: Domain) -> Domain:
@@ -1593,21 +1703,19 @@ class Domain:
         if any(not values for values in scalar_domains):
             return cls(is_bad=any(domain.is_bad for domain in domains))
 
-        result = cls.set_values(*(frozenset(values) for values in product(*scalar_domains)))
-        result.is_bad = any(domain.is_bad for domain in domains)
-        return result
+        return replace(
+            cls.set_values(*(frozenset(values) for values in product(*scalar_domains))),
+            is_bad=any(domain.is_bad for domain in domains),
+        )
 
     @classmethod
     def op_set_isin(
         cls,
         member: Domain,
         set_domain: Domain,
-        *,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute whether scalar members can occur in candidate sets."""
-        resolved_sets = cls._resolve_sets(set_domain, set_members)
-        values = {value in set_value for value, set_value in product(member.values(), resolved_sets)}
+        values = {value in set_value for value, set_value in product(member.values(), set_domain.sets)}
         is_bad = member.is_bad or set_domain.is_bad or cls._has_nonset_values(set_domain)
         return cls._bool_domain(values, is_bad=is_bad)
 
@@ -1616,11 +1724,9 @@ class Domain:
         cls,
         member: Domain,
         set_domain: Domain,
-        *,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute whether scalar members can be absent from candidate sets."""
-        isin = cls.op_set_isin(member, set_domain, set_members=set_members)
+        isin = cls.op_set_isin(member, set_domain)
         return cls._bool_domain({not value for value in isin.bools}, is_bad=isin.is_bad)
 
     @classmethod
@@ -1628,74 +1734,54 @@ class Domain:
         cls,
         left: Domain,
         right: Domain,
-        *,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute the pairwise union of all candidate sets."""
         is_bad = left.is_bad or right.is_bad or cls._has_nonset_values(left) or cls._has_nonset_values(right)
         if left.set_count() * right.set_count() > cls.THRESHOLD_ITERATIONS_GENERAL:
-            result = cls.all_subsets(*(left.domain_atoms | right.domain_atoms))
-            result.is_bad = is_bad
-            return result
-        left_sets = cls._resolve_sets(left, set_members)
-        right_sets = cls._resolve_sets(right, set_members)
-        result = cls.set_values(*(lhs | rhs for lhs, rhs in product(left_sets, right_sets)))
-        result.is_bad = is_bad
-        return result
+            return replace(cls.all_subsets(*(left.domain_atoms | right.domain_atoms)), is_bad=is_bad)
+        left_sets = left.sets
+        right_sets = right.sets
+        return replace(cls.set_values(*(lhs | rhs for lhs, rhs in product(left_sets, right_sets))), is_bad=is_bad)
 
     @classmethod
     def op_inter(
         cls,
         left: Domain,
         right: Domain,
-        *,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute the pairwise intersection of all candidate sets."""
         is_bad = left.is_bad or right.is_bad or cls._has_nonset_values(left) or cls._has_nonset_values(right)
         if left.set_count() * right.set_count() > cls.THRESHOLD_ITERATIONS_GENERAL:
-            result = cls.all_subsets(*(left.domain_atoms & right.domain_atoms))
-            result.is_bad = is_bad
-            return result
-        left_sets = cls._resolve_sets(left, set_members)
-        right_sets = cls._resolve_sets(right, set_members)
-        result = cls.set_values(*(lhs & rhs for lhs, rhs in product(left_sets, right_sets)))
-        result.is_bad = is_bad
-        return result
+            return replace(cls.all_subsets(*(left.domain_atoms & right.domain_atoms)), is_bad=is_bad)
+        left_sets = left.sets
+        right_sets = right.sets
+        return replace(cls.set_values(*(lhs & rhs for lhs, rhs in product(left_sets, right_sets))), is_bad=is_bad)
 
     @classmethod
     def op_diff(
         cls,
         left: Domain,
         right: Domain,
-        *,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute the pairwise set difference of all candidate sets."""
         is_bad = left.is_bad or right.is_bad or cls._has_nonset_values(left) or cls._has_nonset_values(right)
         if left.set_count() * right.set_count() > cls.THRESHOLD_ITERATIONS_GENERAL:
-            result = cls.all_subsets(*left.domain_atoms)
-            result.is_bad = is_bad
-            return result
-        left_sets = cls._resolve_sets(left, set_members)
-        right_sets = cls._resolve_sets(right, set_members)
-        result = cls.set_values(*(lhs - rhs for lhs, rhs in product(left_sets, right_sets)))
-        result.is_bad = is_bad
-        return result
+            return replace(cls.all_subsets(*left.domain_atoms), is_bad=is_bad)
+        left_sets = left.sets
+        right_sets = right.sets
+        return replace(cls.set_values(*(lhs - rhs for lhs, rhs in product(left_sets, right_sets))), is_bad=is_bad)
 
     @classmethod
     def op_subset(
         cls,
         left: Domain,
         right: Domain,
-        *,
-        set_members: Mapping[int, frozenset[DomainAtom]] | None = None,
     ) -> Domain:
         """Compute the subset relation over all candidate set pairs."""
         is_bad = left.is_bad or right.is_bad or cls._has_nonset_values(left) or cls._has_nonset_values(right)
         if left.set_count() * right.set_count() > cls.THRESHOLD_ITERATIONS_GENERAL:
             return cls._bool_domain({False, True}, is_bad=is_bad)
-        left_sets = cls._resolve_sets(left, set_members)
-        right_sets = cls._resolve_sets(right, set_members)
+        left_sets = left.sets
+        right_sets = right.sets
         values = {lhs <= rhs for lhs, rhs in product(left_sets, right_sets)}
         return cls._bool_domain(values, is_bad=is_bad)
