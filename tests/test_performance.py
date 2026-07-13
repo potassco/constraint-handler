@@ -190,21 +190,19 @@ propagator_benchmarks = [
         PerformanceBenchmark(
             "large_int_domain_performance",
             "propagator",
-            300.0,
+            max_average_seconds=10.0,
             check_mode=True,
-            constants={"int_domain_size": 3000},
+            constants={"int_domain_size": 8000},
         ),
-        marks=pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),
     ),
     benchmark_param(
         PerformanceBenchmark(
             "large_int_domain_performance",
             "propagator",
-            300.0,
+            10.0,
             check_mode=False,
-            constants={"int_domain_size": 3000},
+            constants={"int_domain_size": 8000},
         ),
-        marks=pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),
     ),
     benchmark_param(
         PerformanceBenchmark(
