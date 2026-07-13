@@ -363,12 +363,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if var in valuations:
                 continue
 
-            if self.symbol2var.has_var_type(var, getattr(EnsureVariable, "__name__")) or self.symbol2var.has_var_type(
-                var, getattr(BoolEvaluateVariable, "__name__")
+            if (
+                self.symbol2var.has_var_type(var, getattr(EnsureVariable, "__name__"))
+                or self.symbol2var.has_var_type(var, getattr(BoolEvaluateVariable, "__name__"))
+                or self.symbol2var.has_var_type(var, getattr(DictVariable, "__name__"))
             ):
                 continue
-            preprocessed_something |= self.preprocess_variable(valuations, var, current_vars)
-            if preprocessed_something:
+            preprocessed = self.preprocess_variable(valuations, var, current_vars)
+            preprocessed_something |= preprocessed
+            if preprocessed:
                 eval_order.append(var)
 
         vals_after_ensures = self.check_ensures(valuations)
