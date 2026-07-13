@@ -370,6 +370,10 @@ class VariableValue:
 
         self.value, errors = evaluator.evaluate_expr(self.expr, env, evaluations.evaluations)
 
+        # TODO: delete this part when pandas df bug is fixed
+        if getattr(self.value, "to_dict", False) and callable(getattr(self.value, "to_dict", False)):
+            self.value = self.value.to_dict()
+
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
 
@@ -1566,6 +1570,10 @@ class SetVariable:
         self.assigned: bool | None = None  # Truth value of the set declaration
         self.decision_level: int = DEFAULT_DECISION_LEVEL  # decision level of the set declaration
 
+        self.possible_values: set[frozenset[Any]] = set()  # possible values for the set variable
+        self.expr2values: dict[VariableValue, set[Any]] = {}  # mapping from VariableValue to possible values
+        self.is_preprocessed = False  # whether the variable has been preprocessed
+
         self.parents: list[VariableType] = []
 
         self.errors: propagator_warning_t = []
@@ -1671,14 +1679,34 @@ class SetVariable:
         possible_values = set()
         deps = list(self.vars())
 
+        expr_values: dict[VariableValue, set[Any]] = {}
+        for var_value in self.set_expressions.expressions:
+            expr_values[var_value] = set()
+            if var_value.literal != 1:
+                expr_values[var_value].add(ValueStatus.ASSIGNMENT_IS_FALSE)
+
+        # TODO: optimize this by evaluating on an expr basis, and then combining the results?
+        # Need to think about how the dependencies work in that case
+        # We don't want to create possible values that do not really exist...
+
         for values in product(*(valuations[dep] for dep in deps)):
+            # Get all possible values for each expr, then add a special empty value to represent the case where the expr is false (lit != 1)
+            # then, do a product of all those values to get all possible combinations of values for the set variable
+            # and delete the special empty value
             evaluations = dict(zip(deps, values))
 
-            set_val = set()
             for var_value in self.set_expressions.expressions:
                 val, errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
-                set_val.add(val)
-        possible_values.add(frozenset(set_val))
+                expr_values[var_value].add(val)
+
+        for possible_val in product(*(expr_values[var_value] for var_value in self.set_expressions.expressions)):
+            possible_val_set = set(possible_val)
+            possible_val_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
+            possible_values.add(frozenset(possible_val_set))
+
+        for var_value, vals in expr_values.items():
+            self.expr2values.setdefault(var_value, set()).update(vals)
+
         return possible_values
 
     def asses_dependencies_values(
@@ -1701,19 +1729,44 @@ class SetVariable:
         for values in product(*(valuations[dep] for dep in deps)):
             evaluations = dict(zip(deps, values))
 
-            set_val = set()
+            expr_values: dict[VariableValue, set[Any]] = {}
             for var_value in self.set_expressions.expressions:
+                if var_value.literal != 1:
+                    expr_values.setdefault(var_value, set()).add(ValueStatus.ASSIGNMENT_IS_FALSE)
+
                 val, errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
-                set_val.add(val)
-            if frozenset(set_val) in valuations[self.var]:
-                for dep, val in evaluations.items():
-                    possible_dep_values.setdefault(dep, set()).add(val)
+                expr_values.setdefault(var_value, set()).add(val)
+            for possible_val in product(*(expr_values[var_value] for var_value in self.set_expressions.expressions)):
+                possible_val_set = set(possible_val)
+                possible_val_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
+
+                if frozenset(possible_val_set) in valuations[self.var]:
+                    for dep, val in evaluations.items():
+                        possible_dep_values.setdefault(dep, set()).add(val)
 
         return possible_dep_values
 
     def set_possible_values(self, possible_values: set[frozenset[Any]], ctl: clingo.PropagateInit) -> None:
-        # TODO
-        pass
+        self.is_preprocessed = True
+        self.possible_values = possible_values
+
+        for var_value, vals in self.expr2values.items():
+            always_useful = True
+            useful = False
+            for possible_set in possible_values:
+                intersection = vals.intersection(possible_set)
+                if len(intersection) != 0:
+                    useful = True
+                else:
+                    always_useful = False
+
+            if not useful:
+                # Add a nogood to prevent this expression from being assigned
+                ctl.add_clause([-var_value.literal])
+
+            if always_useful:
+                # Add a nogood to ensure this expression is always assigned
+                ctl.add_clause([var_value.literal])
 
     def evaluate(
         self,
@@ -1747,6 +1800,12 @@ class SetVariable:
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
+
+                # only check for conflicts with the value if the variable has been preprocessed and possible values have been set
+                if self.is_preprocessed and self.value not in self.possible_values:
+                    # if the value is not in the possible values, then we have a conflict
+                    self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+                    return EvaluationResult.CONFLICT
                 return EvaluationResult.CHANGED
 
         # if nothing changed or the changes did not lead to a value
@@ -1996,8 +2055,31 @@ class DictVariable:
         Returns:
             set[multimap.Multimap[clingo.Symbol, Any]]: Possible values for the dict variable.
         """
+        return set()
         possible_values = set()
-        deps = list(self.vars())
+
+        # TODO: This part is very complicated...
+        # here, we have toevaluate the possible keys with each a possible set of values.
+        # The set of values has to be done in the same way as the SetVariable
+        # So, each specific key value has now a range of possible values
+        # Once we have done this for every key, value pairs of the DictVar
+        # We must somehow create all possible multimaps...
+        # however, we must be careful to not create too many multimaps as the expressions might share dependencies
+        # This part might not be 100% correct?
+
+        key_value_pairs: dict[VariableValue, tuple[Any, Any]] = {}
+        for key, value in self.dict_expressions.items():
+            deps = list(key.vars()) + list(value.vars())
+
+            for values in product(*(valuations[dep] for dep in deps)):
+                evaluations = dict(zip(deps, values))
+
+                key_val = evaluator.evaluate_expr(key.expr, env, evaluations)[0]
+                item_vals = set()
+                for mm_val in self.dict_expressions[key].expressions:
+                    val = evaluator.evaluate_expr(mm_val.expr, env, evaluations)[0]
+                    item_vals.add(val)
+                key_value_pairs[key_val] = frozenset(item_vals)
 
         for values in product(*(valuations[dep] for dep in deps)):
             evaluations = dict(zip(deps, values))
