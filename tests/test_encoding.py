@@ -137,6 +137,7 @@ base_tests = [
     "set/executions",
     "set/fold_bools",
     "set/from_domain",
+    "set/missing_declare_repair",
     "set/iterations",
     "set/length_flat",
     "set/diff_flat",
@@ -154,6 +155,7 @@ base_tests = [
     "set/union_flat",
     "variable/parallel_declaration",
     "variable/flexible_domain",
+    "variable/missing_domain_bad",
     "variable/main",
     "variable/same_val_multi_expr",
     "warning/bad",
@@ -316,6 +318,7 @@ choice_statistics_skip: set[str] = {
     "core/shared_optional_output_domains",
     "core/python_extract_statement_error_warning",
     "execution/conditional_string_equality_single_model",
+    "set/missing_declare_repair",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",
