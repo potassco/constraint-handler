@@ -1,1 +1,4 @@
 set_value(s,val(int,1))
+warning(variable(undeclared),(),s)
+set_value(t,val(int,2))
+warning(variable(undeclared),(),t)

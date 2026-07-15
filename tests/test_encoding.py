@@ -318,7 +318,6 @@ choice_statistics_skip: set[str] = {
     "core/shared_optional_output_domains",
     "core/python_extract_statement_error_warning",
     "execution/conditional_string_equality_single_model",
-    "set/missing_declare_repair",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",

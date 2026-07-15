@@ -1,1 +1,2 @@
 value(still_bad,val(bool,true))
+value(still_bad,val(bool,false))
