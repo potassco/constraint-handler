@@ -1,0 +1,3 @@
+value(has_no_domain,bad)
+value(still_bad,bad)
+warning(variable(emptyDomain),(_label_anonymous,()),has_no_domain)
