@@ -160,8 +160,12 @@ _statement_ensure(LBL,ASSR) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
 _statement_introduce(LBL,XS,EX) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
 _statement_introduce(LBL,XS,operation(pythonExtract(CODE,X),VARS)) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonVarsResult(PRG,SCOPE,(X,TYPE)), _statement_pythonInputMap(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
-_statement_ensure(LBL,operation(pythonExtract(CODE,"__succeeds"),VARS)) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
+_statement_ensure(LBL,ASSR) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonInputMap(SCOPE,VARS),
+  _statement_condition(SCOPE,ES),
+  CONJ=operation(conj,ES),
+  SUCCEEDS=operation(pythonExtract(CODE,"__succeeds"),VARS),
+  ASSR=operation(limp,(CONJ,(SUCCEEDS,()))),
   _execution_isRunning(PRG).
 
 %%% TODO: add bad / error handling

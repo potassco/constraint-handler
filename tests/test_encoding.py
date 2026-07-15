@@ -86,6 +86,7 @@ base_tests = [
     "execution/conditional",
     "execution/conditional_string_equality_single_model",
     "execution/conditional_assert",
+    "execution/python_integrity_should_be_ignored",
     "execution/optional_run",
     "execution/python_integrity",
     "execution/python_list",

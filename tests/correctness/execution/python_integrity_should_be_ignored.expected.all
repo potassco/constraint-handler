@@ -1,0 +1,6 @@
+value(execution_output(should_be_ignored,"x"),val(int,1))
+value(execution_output(prg2,"x"),val(int,2))
+value(execution_input(prg3,run),val(bool,false))
+value(execution_output(prg3,"x"),val(int,3))
+value(execution_input(prg4,"run"),val(bool,false))
+value(execution_output(prg4,"x"),val(int,4))
