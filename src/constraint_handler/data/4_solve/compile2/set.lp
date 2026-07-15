@@ -9,6 +9,30 @@ _set_bad(operation(OP, ExprList)) :-
     _expression_operationIndex(compile2, operation(OP, ExprList), _, Arg),
     _se_value(Arg, bad).
 
+_set_operation_has_bad_input(operation(OP, ExprList)) :-
+    _expression(compile2, operation(OP, ExprList)),
+    OP = (set_make; union; inter),
+    _expression_operationIndex(compile2, operation(OP, ExprList), _, Arg),
+    _se_value(Arg, bad).
+
+_set_operation_has_bad_input(operation(diff, (Expr1, (Expr2, ())))) :-
+    _expression(compile2, operation(diff, (Expr1, (Expr2, ())))),
+    _se_value((Expr1;Expr2), bad).
+
+_set_has_nonset_input(operation(OP, ExprList)) :-
+    _expression(compile2, operation(OP, ExprList)),
+    OP = (union; inter),
+    _expression_operationIndex(compile2, operation(OP, ExprList), _, Expr),
+    not _se_value(Expr, set).
+
+_set_has_nonset_input(operation(diff, (Expr1, (Expr2, ())))) :-
+    _expression(compile2, operation(diff, (Expr1, (Expr2, ())))),
+    not _se_value(Expr1, set).
+
+_set_has_nonset_input(operation(diff, (Expr1, (Expr2, ())))) :-
+    _expression(compile2, operation(diff, (Expr1, (Expr2, ())))),
+    not _se_value(Expr2, set).
+
 %%%%%%%%%%%%%%%%% length
 % bad if not set input
 _set_bad(operation(length, (Expr, ()))) :-  _expression(compile2, operation(length, (Expr, ()))),
@@ -61,6 +85,10 @@ _set_bad(operation(set_notin, (Expr1, (Expr2, ())))) :-
 
 %%%%%%%%%%%%%%%%% set_make
 
+_se_value(operation(set_make, ExprList), set) :-
+    _expression(compile2, operation(set_make, ExprList)),
+    not _set_operation_has_bad_input(operation(set_make, ExprList)).
+
 _set_contains(operation(set_make, ExprList), Val) :-
     _expression(compile2, operation(set_make, ExprList)),
     not _set_bad(operation(set_make, ExprList)),
@@ -73,6 +101,11 @@ _set_contains(operation(set_make, ExprList), Val) :-
 _set_bad(operation(union, ExprList)):- _expression(compile2, operation(union, ExprList)),
     _expression_operationIndex(compile2, operation(union, ExprList), _, Expr),
     not _se_value(Expr, set).
+
+_se_value(operation(union, ExprList), set) :-
+    _expression(compile2, operation(union, ExprList)),
+    not _set_has_nonset_input(operation(union, ExprList)),
+    not _set_operation_has_bad_input(operation(union, ExprList)).
 
 % derive membership from the arguments
 _set_contains(operation(union, ExprList), Val) :-
@@ -89,6 +122,11 @@ _set_bad(operation(inter, ExprList)):- _expression(compile2, operation(inter, Ex
     _expression_operationIndex(compile2, operation(inter, ExprList), _, Expr),
     not _se_value(Expr, set).
 
+_se_value(operation(inter, ExprList), set) :-
+    _expression(compile2, operation(inter, ExprList)),
+    not _set_has_nonset_input(operation(inter, ExprList)),
+    not _set_operation_has_bad_input(operation(inter, ExprList)).
+
 % derive membership from the arguments
 _set_contains(operation(inter, (Expr1, Rest)), Val) :-
     _expression(compile2, operation(inter, (Expr1, Rest))),
@@ -101,6 +139,11 @@ _set_contains(operation(inter, (Expr1, Rest)), Val) :-
 % bad if not set input
 _set_bad(operation(diff, (Expr1, (Expr2, ())))) :- _expression(compile2, operation(diff, (Expr1, (Expr2, ())))),
     not _se_value(Expr1, set).
+
+_se_value(operation(diff, (Expr1, (Expr2, ()))), set) :-
+    _expression(compile2, operation(diff, (Expr1, (Expr2, ())))),
+    not _set_has_nonset_input(operation(diff, (Expr1, (Expr2, ())))) ,
+    not _set_operation_has_bad_input(operation(diff, (Expr1, (Expr2, ())))) .
 _set_bad(operation(diff, (Expr1, (Expr2, ())))) :- _expression(compile2, operation(diff, (Expr1, (Expr2, ())))),
     not _se_value(Expr2, set).
 
@@ -127,6 +170,13 @@ _set_bad(operation(OP, (Expr1, (Expr2, ())))) :-
     _aux_eq_false(OP, Val),
     _se_value(Expr1, set),
     not _se_value(Expr2, set),
+    not _se_value(operation(OP, (Expr1, (Expr2, ()))), Val).
+
+:- _expression(compile2, operation(OP, (Expr1, (Expr2, ())))),
+    not _set_bad(operation(OP, (Expr1, (Expr2, ())))),
+    _aux_eq_false(OP, Val),
+    not _se_value(Expr1, set),
+    _se_value(Expr2, set),
     not _se_value(operation(OP, (Expr1, (Expr2, ()))), Val).
 
 _neq_sets(Expr1, Expr2) :-
