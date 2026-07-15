@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from abc import abstractmethod
+from itertools import product
 from typing import Any, Iterable, Protocol
 
 import clingo
@@ -87,8 +88,23 @@ class VariableType(Protocol):
     def vars(self) -> set[clingo.Symbol]: ...
 
     @abstractmethod
+    def simple_evaluate(self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]) -> set[Any]: ...
+
+    @abstractmethod
+    def asses_dependencies_values(
+        self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]
+    ) -> dict[clingo.Symbol, set[Any]]: ...
+
+    @abstractmethod
+    def set_possible_values(self, possible_values: set[Any], ctl: clingo.PropagateInit) -> None: ...
+
+    @abstractmethod
     def evaluate(
-        self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
     ) -> EvaluationResult: ...
 
     @abstractmethod
@@ -209,6 +225,22 @@ class VariableManager:
             raise KeyError(f"Variable with name {name} does not exist. Can not delete")
         del self.variables[name]
 
+    def get_dependencies(self, name: clingo.Symbol) -> set[clingo.Symbol]:
+        """
+        Get the dependencies of a variable by name.
+
+        Args:
+            name: The name of the variable to retrieve dependencies for.
+        Returns:
+            set[clingo.Symbol]: A set of variable names that are dependencies of the specified variable.
+        """
+        if name not in self.variables:
+            raise KeyError(f"Variable with name {name} does not exist. Can not get dependencies")
+        deps = set()
+        for var in self.variables[name].values():
+            deps.update(var.vars())
+        return deps
+
     def reset(self, dl: int) -> None:
         """
         Reset variables based on the decision level.
@@ -219,6 +251,46 @@ class VariableManager:
 
         for var in self.get_variables():
             var.reset(dl)
+
+    def items(self) -> Iterable[tuple[clingo.Symbol, dict[VariableTypeNames, VariableType]]]:
+        """
+        Get all variable items as (name, variable_dict) pairs.
+
+        Returns:
+            Iterable[tuple[clingo.Symbol, dict[VariableTypeNames, VariableType]]]: An iterable of (name, variable_dict) pairs.
+        """
+        return self.variables.items()
+
+    def keys(self) -> Iterable[clingo.Symbol]:
+        """
+        Get all variable names.
+
+        Returns:
+            Iterable[clingo.Symbol]: An iterable of variable names.
+        """
+        return self.variables.keys()
+
+    def values(self) -> Iterable[dict[VariableTypeNames, VariableType]]:
+        """
+        Get all variable dictionaries.
+
+        Returns:
+            Iterable[dict[VariableTypeNames, VariableType]]: An iterable of variable dictionaries.
+        """
+        return self.variables.values()
+
+    def remove(self, variable: clingo.Symbol) -> None:
+        """
+        Remove a variable by name.
+
+        Args:
+            variable: The name of the variable to remove.
+        Raises:
+            KeyError: If the variable with the specified name does not exist.
+        """
+        if variable not in self.variables:
+            raise KeyError(f"Variable with name {variable} does not exist. Can not delete")
+        del self.variables[variable]
 
     def __getitem__(self, name: clingo.Symbol) -> dict[VariableTypeNames, VariableType]:
         return self.variables[name]
@@ -297,6 +369,10 @@ class VariableValue:
                 return False
 
         self.value, errors = evaluator.evaluate_expr(self.expr, env, evaluations.evaluations)
+
+        # TODO: delete this part when pandas df bug is fixed
+        if getattr(self.value, "to_dict", False) and callable(getattr(self.value, "to_dict", False)):
+            self.value = self.value.to_dict()
 
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
@@ -614,7 +690,44 @@ class EnsureVariable:
         """
         return True
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def simple_evaluate(self, evaluations: dict[clingo.Symbol, Any], env: dict[Any, Any]) -> bool:
+        """
+        Evaluate the ensure variable without considering decision levels or literals.
+        This is used for preprocessing to determine which values result in either True or Bad.
+
+        Args:
+            valuations: Current variable evaluations.
+            env: Environment dictionary for evaluation context.
+        Returns:
+            dict[clingo.Symbol, set[Any]]: A dictionary mapping the variable's symbolic representation to a set of values that result in either True or Bad.
+        """
+        res = evaluator.evaluate_expr(self.expression.expr, env, evaluations)[0]
+        if res is True or res == expression.Bad.bad:
+            return True
+
+        return False
+
+    def asses_dependencies_values(
+        self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]
+    ) -> dict[clingo.Symbol, set[Any]]:
+        """
+        Just here to comply with VariableType protocol. Ensure variables already do this part in the propagator itself.
+        """
+        return {}
+
+    def set_possible_values(self, possible_values: set[Any], ctl: clingo.PropagateInit) -> None:
+        """
+        Just here to comply with VariableType protocol.
+        """
+        return
+
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
@@ -794,7 +907,13 @@ class BoolEvaluateVariable:
         """
         return True
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
 
@@ -930,6 +1049,7 @@ class Variable:
         name: Name of the variable.
         var: Clingo symbol for the variable.
         expressions: Set of possible values (VariableValue).
+        lit2expr: Mapping from literal to the corresponding VariableValue.
         value: Current value of the variable.
         parents: Parent variables.
         decision_level: Decision level at which the value was set.
@@ -950,6 +1070,8 @@ class Variable:
         self.name: str = name
         self.var: clingo.Symbol = var
         self.expressions: set[VariableValue] = set()
+        self.lit2expr: dict[int, VariableValue] = {}
+        self.expr2values: dict[VariableValue, list[Any]] = {}
         self.value: Any = ValueStatus.NOT_SET
         self.parents: list[VariableType] = []
         self.is_user_variable: bool = is_user_variable
@@ -970,7 +1092,9 @@ class Variable:
             value_lit: Literal for the value assignment.
             domain_lit: Literal indicating the truth value of the domain/declaration context.
         """
-        self.expressions.add(VariableValue(expr, value_lit))
+        value = VariableValue(expr, value_lit)
+        self.lit2expr[value_lit] = value
+        self.expressions.add(value)
         self.domain_literals.add(domain_lit)
 
     def get_value(self) -> Any:
@@ -1029,13 +1153,122 @@ class Variable:
         """
         return len(self.expressions) > 0
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def simple_evaluate(self, valuations: dict[clingo.Symbol, set[Any]], env: dict[Any, Any]) -> set[Any]:
+        """
+        evaluate the variable with the given evaluations and environment, without any checks for decision levels or literal assignments.
+        This function does not change the internal state of the variable.
+
+        Returns:
+            set[Any]: Possible values.
+        """
+        possible_values = set()
+        for var_value in self.expressions:
+            deps = list(var_value.vars())
+            if not all(dep in valuations for dep in deps):
+                # if any dependency is not in the valuations, we cannot evaluate this value
+                raise ValueError(
+                    f"Cannot evaluate {var_value.expr} because not all dependencies are in the valuations."
+                )
+
+            for values in product(*(valuations[dep] for dep in deps)):
+                evaluations = dict(zip(deps, values))
+
+                val, errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
+                self.add_value_to_expression(var_value, val)
+                possible_values.add(val)
+        return possible_values
+
+    def add_value_to_expression(self, expr: VariableValue, val: Any) -> None:
+        """
+        Add a value to the list of possible values for a given expression.
+
+        Args:
+            expr: The VariableValue expression to which the value should be added.
+            val: The value to add.
+        """
+        if expr not in self.expr2values:
+            self.expr2values[expr] = []
+        if val not in self.expr2values[expr]:
+            self.expr2values[expr].append(val)
+
+    def asses_dependencies_values(
+        self, valuations: dict[clingo.Symbol, set[Any]], env: dict[Any, Any]
+    ) -> dict[clingo.Symbol, set[Any]]:
+        """
+        This function is supposed to be used after pruning values with ensures.
+        It looks at the possible values for this variable, then checks which values for the dependencies generate those values.
+        It returns the values for the dependencies that can generate the possible values for this variable.
+
+        """
+        possible_dep_values: dict[clingo.Symbol, set[Any]] = {}
+
+        for var_value in self.expressions:
+            deps = list(var_value.vars())
+            if not all(dep in valuations for dep in deps):
+                # if any dependency is not in the valuations, we cannot evaluate this value
+                raise ValueError(
+                    f"Cannot evaluate {var_value.expr} because not all dependencies are in the valuations."
+                )
+
+            for values in product(*(valuations[dep] for dep in deps)):
+                evaluations = dict(zip(deps, values))
+
+                val, errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
+                if val in valuations[self.var]:
+                    for dep, val in evaluations.items():
+                        possible_dep_values.setdefault(dep, set()).add(val)
+
+        return possible_dep_values
+
+    def set_possible_values(self, possible_values: set[Any], ctl: clingo.PropagateInit) -> None:
+        """
+        Set the possible values for this variable based on the given set of possible values.
+        This function will add nogoods to the propagator to ensure that only the specified values can be assigned to this variable.
+        I.e. Expression that can't produce any value in the list have their literals set to false.
+
+        Args:
+            possible_values: Set of possible values for this variable.
+            ctl: PropagateInit object to add nogoods.
+        """
+        dels = []
+        for var_value, expr_values in self.expr2values.items():
+            if set(expr_values).isdisjoint(possible_values):
+                # Add a nogood to prevent this value from being assigned
+                ctl.add_clause([-var_value.literal])
+                dels.append(var_value)
+
+        for d in dels:
+            self.expressions.remove(d)
+            self.lit2expr.pop(d.literal, None)
+            self.expr2values.pop(d, None)
+
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
         """
+
+        if self.value != ValueStatus.NOT_SET:
+            # already assigned
+            return EvaluationResult.NOT_CHANGED
+
         changed = False
-        for value in self.expressions:
-            changed |= value.evaluate(evaluations, ctl, env)
+        if expr_lits is None or len(expr_lits) == 0:
+            for value in self.expressions:
+                changed |= value.evaluate(evaluations, ctl, env)
+        else:
+            for lit in expr_lits:
+                if lit in self.domain_literals:
+                    continue
+                if lit < 0:
+                    continue
+                assert lit in self.lit2expr, f"Literal {lit} not found in variable {self.name}"
+                changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
 
         if not changed:
             return EvaluationResult.NOT_CHANGED
@@ -1067,10 +1300,10 @@ class Variable:
                 # if no domain lit is true, then we can treat it as false
                 val = [ValueStatus.ASSIGNMENT_IS_FALSE]
 
-        elif len(val) == 1:
-            if val[0] == self.value:
-                # same value as before
-                return EvaluationResult.NOT_CHANGED
+        # elif len(val) == 1:
+        # if val[0] == self.value:
+        #     # same value as before
+        #     return EvaluationResult.NOT_CHANGED
 
         self.decision_level = ctl.assignment.decision_level
         self.value = val[0]
@@ -1255,7 +1488,13 @@ class SetVariableValue:
             vars.update(arg.vars())
         return vars
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> bool:
         """Evaluate the expression and return True if the value has changed."""
         changed = False
         for arg in self.expressions:
@@ -1330,6 +1569,10 @@ class SetVariable:
         self.literal: int = lit  # this is the literal for the set declaration
         self.assigned: bool | None = None  # Truth value of the set declaration
         self.decision_level: int = DEFAULT_DECISION_LEVEL  # decision level of the set declaration
+
+        self.possible_values: set[frozenset[Any]] = set()  # possible values for the set variable
+        self.expr2values: dict[VariableValue, set[Any]] = {}  # mapping from VariableValue to possible values
+        self.is_preprocessed = False  # whether the variable has been preprocessed
 
         self.parents: list[VariableType] = []
 
@@ -1425,7 +1668,113 @@ class SetVariable:
         """
         return self.set_expressions.vars()
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def simple_evaluate(self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]) -> set[frozenset[Any]]:
+        """
+        Evaluate the set variable with the given valuations and environment, without any checks for decision levels or literal assignments.
+        This function does not change the internal state of the variable.
+
+        Returns:
+            set[frozenset[Any]]: Possible values for the set variable.
+        """
+        possible_values = set()
+        deps = list(self.vars())
+
+        expr_values: dict[VariableValue, set[Any]] = {}
+        for var_value in self.set_expressions.expressions:
+            expr_values[var_value] = set()
+            if var_value.literal != 1:
+                expr_values[var_value].add(ValueStatus.ASSIGNMENT_IS_FALSE)
+
+        # TODO: optimize this by evaluating on an expr basis, and then combining the results?
+        # Need to think about how the dependencies work in that case
+        # We don't want to create possible values that do not really exist...
+
+        for values in product(*(valuations[dep] for dep in deps)):
+            # Get all possible values for each expr, then add a special empty value to represent the case where the expr is false (lit != 1)
+            # then, do a product of all those values to get all possible combinations of values for the set variable
+            # and delete the special empty value
+            evaluations = dict(zip(deps, values))
+
+            for var_value in self.set_expressions.expressions:
+                val, errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
+                expr_values[var_value].add(val)
+
+        for possible_val in product(*(expr_values[var_value] for var_value in self.set_expressions.expressions)):
+            possible_val_set = set(possible_val)
+            possible_val_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
+            possible_values.add(frozenset(possible_val_set))
+
+        for var_value, vals in expr_values.items():
+            self.expr2values.setdefault(var_value, set()).update(vals)
+
+        return possible_values
+
+    def asses_dependencies_values(
+        self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]
+    ) -> dict[clingo.Symbol, set[Any]]:
+        """
+        This function is supposed to be used after pruning values with ensures.
+        It looks at the possible values for this variable, then checks which values for the dependencies generate those values.
+        It returns those values
+
+        """
+        possible_dep_values: dict[clingo.Symbol, set[Any]] = {}
+
+        deps = list(self.vars())
+        if not all(dep in valuations for dep in deps):
+            print(
+                f"Cannot evaluate {self.var} in asses_dependencies_values because not all dependencies are in the valuations."
+            )
+
+        for values in product(*(valuations[dep] for dep in deps)):
+            evaluations = dict(zip(deps, values))
+
+            expr_values: dict[VariableValue, set[Any]] = {}
+            for var_value in self.set_expressions.expressions:
+                if var_value.literal != 1:
+                    expr_values.setdefault(var_value, set()).add(ValueStatus.ASSIGNMENT_IS_FALSE)
+
+                val, errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
+                expr_values.setdefault(var_value, set()).add(val)
+            for possible_val in product(*(expr_values[var_value] for var_value in self.set_expressions.expressions)):
+                possible_val_set = set(possible_val)
+                possible_val_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
+
+                if frozenset(possible_val_set) in valuations[self.var]:
+                    for dep, val in evaluations.items():
+                        possible_dep_values.setdefault(dep, set()).add(val)
+
+        return possible_dep_values
+
+    def set_possible_values(self, possible_values: set[frozenset[Any]], ctl: clingo.PropagateInit) -> None:
+        self.is_preprocessed = True
+        self.possible_values = possible_values
+
+        for var_value, vals in self.expr2values.items():
+            always_useful = True
+            useful = False
+            for possible_set in possible_values:
+                intersection = vals.intersection(possible_set)
+                if len(intersection) != 0:
+                    useful = True
+                else:
+                    always_useful = False
+
+            if not useful:
+                # Add a nogood to prevent this expression from being assigned
+                ctl.add_clause([-var_value.literal])
+
+            if always_useful:
+                # Add a nogood to ensure this expression is always assigned
+                ctl.add_clause([var_value.literal])
+
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
         """
@@ -1451,6 +1800,12 @@ class SetVariable:
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
+
+                # only check for conflicts with the value if the variable has been preprocessed and possible values have been set
+                if self.is_preprocessed and self.value not in self.possible_values:
+                    # if the value is not in the possible values, then we have a conflict
+                    self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+                    return EvaluationResult.CONFLICT
                 return EvaluationResult.CHANGED
 
         # if nothing changed or the changes did not lead to a value
@@ -1550,6 +1905,11 @@ class DictVariable:
         self.literal: int = lit
         self.assigned: bool | None = None
         self.decision_level: int = DEFAULT_DECISION_LEVEL
+
+        self.possible_values: set[dict[Any, frozenset[Any]]] = set()
+        self.key_expr2values: dict[VariableValue, set[Any]] = {}
+        self.val_expr2values: dict[VariableValue, set[Any]] = {}
+        self.is_preprocessed = False
 
         self.parents: list[VariableType] = []
 
@@ -1690,7 +2050,111 @@ class DictVariable:
             vars.update(key.vars())
         return vars
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> EvaluationResult:
+    def simple_evaluate(
+        self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]
+    ) -> set[multimap.Multimap[clingo.Symbol, Any]]:
+        """
+        Evaluate the dict variable with the given valuations and environment, without any checks for decision levels or literal assignments.
+        This function does not change the internal state of the variable.
+
+        Returns:
+            set[multimap.Multimap[clingo.Symbol, Any]]: Possible values for the dict variable.
+        """
+        possible_values = set()
+
+        deps = list(self.vars())
+
+        for values in product(*(valuations[dep] for dep in deps)):
+            evaluations = dict(zip(deps, values))
+
+            possible_values.update(self.get_dict_for_evaluations(evaluations, env))
+
+        return possible_values
+
+    def get_dict_for_evaluations(
+        self, evaluations: dict[clingo.Symbol, Any], env: dict[Any, Any]
+    ) -> set[multimap.Multimap[Any, frozenset[Any]]]:
+
+        possible_values: set[multimap.Multimap[Any, frozenset[Any]]] = set()
+        # tuple for key and possible values for the key
+        key_and_values: dict[VariableValue, set[tuple[Any, frozenset[Any]]]] = {}
+        for key, value in self.dict_expressions.items():
+            key_val = evaluator.evaluate_expr(key.expr, env, evaluations)[0]
+            self.key_expr2values.setdefault(key, set()).add(key_val)
+            # For this part we have to make sure that the values consider that the expr might be false
+            # so, we have to make multiple different "values" for the key.
+            # For each expr that can be false, we make a new value.
+            # There should be 2**n possible values for each key, where n is the number of expressions that can be false for that key.
+            possible_values_for_key: set[tuple[Any, frozenset[Any]]] = set()
+            expr_values: dict[VariableValue, set[Any]] = {}
+
+            for mm_val in value.expressions:
+                val = evaluator.evaluate_expr(mm_val.expr, env, evaluations)[0]
+                expr_values.setdefault(mm_val, set()).add(val)
+                self.val_expr2values.setdefault(mm_val, set()).add(val)
+
+                if mm_val.literal != 1:
+                    expr_values.setdefault(mm_val, set()).add(ValueStatus.ASSIGNMENT_IS_FALSE)
+
+            for possible_mm_vals in product(*(expr_values[mm_val] for mm_val in value.expressions)):
+                possible_mm_vals_set = set(possible_mm_vals)
+                possible_mm_vals_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
+                possible_values_for_key.add((key_val, frozenset(possible_mm_vals_set)))
+
+            key_and_values[key] = possible_values_for_key
+
+        # Now we have to combine the possible values for each key into a single dict
+        for combination in product(*(values for values in key_and_values.values())):
+            combined_dict: dict[Any, set[Any]] = {}
+            for key, values in combination:
+                combined_dict.setdefault(key, set()).update(values)
+
+            possible_values.add(multimap.Multimap(combined_dict))
+
+        return possible_values
+
+    def asses_dependencies_values(
+        self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]
+    ) -> dict[clingo.Symbol, set[Any]]:
+
+        possible_dep_values: dict[clingo.Symbol, set[Any]] = {}
+        deps = list(self.vars())
+
+        for values in product(*(valuations[dep] for dep in deps)):
+            evaluations = dict(zip(deps, values))
+
+            for possible_dict in self.get_dict_for_evaluations(evaluations, env):
+                if possible_dict in valuations[self.var]:
+                    for dep, val in evaluations.items():
+                        possible_dep_values.setdefault(dep, set()).add(val)
+
+        return possible_dep_values
+
+    def set_possible_values(self, possible_values: set[Any], ctl: clingo.PropagateInit) -> None:
+        self.possible_values = possible_values
+        self.is_preprocessed = True
+
+        possible_keys = set()
+        # possible_items: set[tuple[Any, frozenset[Any]]] = set()
+        for possible_dict in possible_values:
+            for key, values in possible_dict:
+                possible_keys.add(key)
+
+        # aside from setting to false, we could also delete them
+        for key, values in self.dict_expressions.items():
+            if self.key_expr2values[key].intersection(possible_keys) == set():
+                # Add a nogood to prevent this key from being assigned
+                ctl.add_clause([-key.literal])
+
+            # TODO: figure something out for the values
+
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> EvaluationResult:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
@@ -1720,6 +2184,10 @@ class DictVariable:
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
+                if self.is_preprocessed and self.value not in self.possible_values:
+                    # if the value is not in the possible values, then we have a conflict
+                    self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+                    return EvaluationResult.CONFLICT
                 return EvaluationResult.CHANGED
 
         # if nothing changed or the changes did not lead to a value
@@ -1875,7 +2343,12 @@ class OptimizationSum:
             errors.extend(expr.get_errors())
         return errors
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+    ) -> bool:
         """
         Evaluate the optimization sum and return True if the value has changed.
 
@@ -1998,7 +2471,13 @@ class OptimizationHandler:
         """
         return len(self.sums)
 
-    def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
+    def evaluate(
+        self,
+        evaluations: Evaluations,
+        ctl: clingo.PropagateControl,
+        env: dict[Any, Any],
+        expr_lits: set[int] | None = None,
+    ) -> bool:
         """
         Evaluate all optimization sums and return True if any value has changed.
 

@@ -7,13 +7,26 @@ propagator_variable_declare(CNAME,X,fromFacts) :- _passed(propagator,CNAME,varia
 
 1 {propagator_variable_domain(CNAME,X, D) : _passed(propagator,CNAME,variable_domain(X,D))} 1 :- _passed(propagator,CNAME,variable_declare(X,fromFacts)).
 
-order(CNAME,X,E,IDX) :- _passed(propagator,CNAME,variable_domain(X,E)), IDX = #count { E2 : _passed(propagator,CNAME,variable_domain(X,E2)), E2 < E }.
+#script (python)
 
-higher_assigned_domain(CNAME,X,D) :- _passed(propagator,CNAME,variable_domain(X,D)), propagator_variable_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N).
-higher_assigned_domain(CNAME,X,D) :- _passed(propagator,CNAME,variable_domain(X,D)), higher_assigned_domain(CNAME,X,D2), order(CNAME,X,D,N-1), order(CNAME,X,D2,N).
+from clingo import Number
 
-propagator_ensure(CNAME,operation(neq,(variable(V),(E1,())))) :- higher_assigned_domain(CNAME,V,E1), _passed(propagator,CNAME,variable_domain(V,E1)).
+order_num = {}
+def order(X,E):
+    if X not in order_num:
+        order_num[X] = {}
+    if E not in order_num[X]:
+        order_num[X][E] = Number(len(order_num[X].keys()))
 
+    return order_num[X][E]
+#end.
+
+order(CNAME,X,E,IDX) :- _passed(propagator,CNAME,variable_domain(X,E)), IDX = @order((propagator,X),E).
+
+active(CNAME,X,IDX-1) :- order(CNAME,X,E,IDX), propagator_variable_domain(CNAME,X,E), IDX > 0.
+active(CNAME,X,N-1) :- active(CNAME,X,N), N > 0.
+
+propagator_ensure(CNAME,operation(neq,(variable(X),(E,())))) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
 
 propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_define(X,E)).
 

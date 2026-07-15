@@ -10,8 +10,6 @@ DEBUG_PRINT = False
 DEFAULT_DECISION_LEVEL: Literal[-1] = -1
 
 ENSURE_VAR_NAME: Literal["__ensure__"] = "__ensure__"
-EXECUTION_INPUT: Literal["execution_input"] = "old_execution_input"
-EXECUTION_OUTPUT: Literal["execution_output"] = "old_execution_output"
 
 OTHER_ENGINE_VAR_NAME: Literal["__other_engine_var__"] = "__other_engine_var__"
 
@@ -59,11 +57,6 @@ OPTIMIZATION_HELPER_PROGRAM = f"""
 
 % #show {OPTIMIZATION_STAGE_ATOM}/3.
 """
-
-
-class NoValueSet(Exception):
-    pass
-
 
 type propagator_warning_t = list[Warning]
 type evaluations_type = dict[Symbol, Any | set[Any] | dict[Any, Any]]
