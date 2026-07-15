@@ -203,13 +203,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_forbidden_warnings(init)
 
-        valuations = self.preprocess()
+        # valuations = self.preprocess()
 
-        self.apply_preprocessing(valuations, init)
+        # self.apply_preprocessing(valuations, init)
 
         self.evaluations.init(list(self.symbol2var.get_variables()))
 
-    def preprocess(self) -> dict[Symbol, set[Any]]:
+    def preprocess(self, cycles: int = -1) -> dict[Symbol, set[Any]]:
         """
         Preprocess the propagator before solving.
 
@@ -224,11 +224,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.infer_domain(valuations, evaluation_order)
 
-        for _ in range(1):  # TODO: make this cycles configurable.
-            if not self.backward_prune(valuations, evaluation_order) and not self.forward_prune(
-                valuations, evaluation_order
-            ):
+        cycles_done = 0
+
+        while cycles < 0 or cycles_done < cycles:
+            cycles_done += 1
+            change1 = self.backward_prune(valuations, evaluation_order)
+            change2 = self.forward_prune(valuations, evaluation_order)
+            if not change1 and not change2:
                 break
+
+        print(f"Preprocessing done in {cycles_done} cycles.")
         return valuations
 
     def forward_prune(self, valuations: dict[Symbol, set[Any]], evaluation_order: list[Symbol]) -> bool:
