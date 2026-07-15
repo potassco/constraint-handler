@@ -1906,6 +1906,11 @@ class DictVariable:
         self.assigned: bool | None = None
         self.decision_level: int = DEFAULT_DECISION_LEVEL
 
+        self.possible_values: set[dict[Any, frozenset[Any]]] = set()
+        self.key_expr2values: dict[VariableValue, set[Any]] = {}
+        self.val_expr2values: dict[VariableValue, set[Any]] = {}
+        self.is_preprocessed = False
+
         self.parents: list[VariableType] = []
 
         self.errors: propagator_warning_t = []
@@ -2055,53 +2060,93 @@ class DictVariable:
         Returns:
             set[multimap.Multimap[clingo.Symbol, Any]]: Possible values for the dict variable.
         """
-        return set()
         possible_values = set()
 
-        # TODO: This part is very complicated...
-        # here, we have toevaluate the possible keys with each a possible set of values.
-        # The set of values has to be done in the same way as the SetVariable
-        # So, each specific key value has now a range of possible values
-        # Once we have done this for every key, value pairs of the DictVar
-        # We must somehow create all possible multimaps...
-        # however, we must be careful to not create too many multimaps as the expressions might share dependencies
-        # This part might not be 100% correct?
-
-        key_value_pairs: dict[VariableValue, tuple[Any, Any]] = {}
-        for key, value in self.dict_expressions.items():
-            deps = list(key.vars()) + list(value.vars())
-
-            for values in product(*(valuations[dep] for dep in deps)):
-                evaluations = dict(zip(deps, values))
-
-                key_val = evaluator.evaluate_expr(key.expr, env, evaluations)[0]
-                item_vals = set()
-                for mm_val in self.dict_expressions[key].expressions:
-                    val = evaluator.evaluate_expr(mm_val.expr, env, evaluations)[0]
-                    item_vals.add(val)
-                key_value_pairs[key_val] = frozenset(item_vals)
+        deps = list(self.vars())
 
         for values in product(*(valuations[dep] for dep in deps)):
             evaluations = dict(zip(deps, values))
 
-            dict_val = {}
-            for key, value in self.dict_expressions.items():
-                key_val = evaluator.evaluate_expr(key.expr, env, evaluations)[0]
-                item_vals = set()
-                for mm_val in self.dict_expressions[key].expressions:
-                    val = evaluator.evaluate_expr(mm_val.expr, env, evaluations)[0]
-                    item_vals.add(val)
-                dict_val[key_val] = frozenset(item_vals)
-            possible_values.add(multimap.Multimap(dict_val))
+            possible_values.update(self.get_dict_for_evaluations(evaluations, env))
+
+        return possible_values
+
+    def get_dict_for_evaluations(
+        self, evaluations: dict[clingo.Symbol, Any], env: dict[Any, Any]
+    ) -> set[multimap.Multimap[Any, frozenset[Any]]]:
+
+        possible_values: set[multimap.Multimap[Any, frozenset[Any]]] = set()
+        # tuple for key and possible values for the key
+        key_and_values: dict[VariableValue, set[tuple[Any, frozenset[Any]]]] = {}
+        for key, value in self.dict_expressions.items():
+            key_val = evaluator.evaluate_expr(key.expr, env, evaluations)[0]
+            self.key_expr2values.setdefault(key, set()).add(key_val)
+            # For this part we have to make sure that the values consider that the expr might be false
+            # so, we have to make multiple different "values" for the key.
+            # For each expr that can be false, we make a new value.
+            # There should be 2**n possible values for each key, where n is the number of expressions that can be false for that key.
+            possible_values_for_key: set[tuple[Any, frozenset[Any]]] = set()
+            expr_values: dict[VariableValue, set[Any]] = {}
+
+            for mm_val in value.expressions:
+                val = evaluator.evaluate_expr(mm_val.expr, env, evaluations)[0]
+                expr_values.setdefault(mm_val, set()).add(val)
+                self.val_expr2values.setdefault(mm_val, set()).add(val)
+
+                if mm_val.literal != 1:
+                    expr_values.setdefault(mm_val, set()).add(ValueStatus.ASSIGNMENT_IS_FALSE)
+
+            for possible_mm_vals in product(*(expr_values[mm_val] for mm_val in value.expressions)):
+                possible_mm_vals_set = set(possible_mm_vals)
+                possible_mm_vals_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
+                possible_values_for_key.add((key_val, frozenset(possible_mm_vals_set)))
+
+            key_and_values[key] = possible_values_for_key
+
+        # Now we have to combine the possible values for each key into a single dict
+        for combination in product(*(values for values in key_and_values.values())):
+            combined_dict: dict[Any, set[Any]] = {}
+            for key, values in combination:
+                combined_dict.setdefault(key, set()).update(values)
+
+            possible_values.add(multimap.Multimap(combined_dict))
+
         return possible_values
 
     def asses_dependencies_values(
         self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]
     ) -> dict[clingo.Symbol, set[Any]]:
-        return valuations
+
+        possible_dep_values: dict[clingo.Symbol, set[Any]] = {}
+        deps = list(self.vars())
+
+        for values in product(*(valuations[dep] for dep in deps)):
+            evaluations = dict(zip(deps, values))
+
+            for possible_dict in self.get_dict_for_evaluations(evaluations, env):
+                if possible_dict in valuations[self.var]:
+                    for dep, val in evaluations.items():
+                        possible_dep_values.setdefault(dep, set()).add(val)
+
+        return possible_dep_values
 
     def set_possible_values(self, possible_values: set[Any], ctl: clingo.PropagateInit) -> None:
-        pass
+        self.possible_values = possible_values
+        self.is_preprocessed = True
+
+        possible_keys = set()
+        # possible_items: set[tuple[Any, frozenset[Any]]] = set()
+        for possible_dict in possible_values:
+            for key, values in possible_dict:
+                possible_keys.add(key)
+
+        # aside from setting to false, we could also delete them
+        for key, values in self.dict_expressions.items():
+            if self.key_expr2values[key].intersection(possible_keys) == set():
+                # Add a nogood to prevent this key from being assigned
+                ctl.add_clause([-key.literal])
+
+            # TODO: figure something out for the values
 
     def evaluate(
         self,
@@ -2139,6 +2184,10 @@ class DictVariable:
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
                 self.decision_level = ctl.assignment.decision_level
+                if self.is_preprocessed and self.value not in self.possible_values:
+                    # if the value is not in the possible values, then we have a conflict
+                    self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+                    return EvaluationResult.CONFLICT
                 return EvaluationResult.CHANGED
 
         # if nothing changed or the changes did not lead to a value
