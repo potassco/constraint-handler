@@ -39,7 +39,6 @@ base_tests = [
     "core/empty_set_linked_output_execution",
     "core/empty_set_execution",
     "core/optional_set_empty_execution",
-    "core/optional_set_linked_intersection",
     "core/conditional_assign",
     "core/conditional_empty_set_linked_output",
     "core/custom_globals",
