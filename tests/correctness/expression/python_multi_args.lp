@@ -6,3 +6,4 @@
 % The custom_globals test removes it globally for the rest of the pytest run.
 
 variable_define(r,operation(python("pow"),(val(float,float("2")),(val(float,float("3")),())))).
+phase_request(type_check,false).

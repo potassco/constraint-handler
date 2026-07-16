@@ -1,3 +1,5 @@
+phase_request(type_check,true).
+
 variable_define(b,val(bool,true)).
 variable_define(i,val(int,42)).
 variable_define(f,val(float,float("47.1"))).

@@ -8,6 +8,7 @@ item(a,6,float("4.5"),float("0.5")).
 item(b,3,float("3.0"),float("0.25")).
 item(c,4,float("4.0"),float("0.25")).
 item(d,5,float("4.0"),float("0.0")).
+phase_request(type_check,false).
 
 optimize_precision(val(int,100),1).
 

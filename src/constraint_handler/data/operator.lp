@@ -11,14 +11,21 @@ operator_declare(lnot,(none,()),none).
 operator_declare((snot;wnot),(bool,()),none).
 operator_declare_variadic((conj;disj),bool,bool,1).
 _operator_recoverable((conj;disj)).
+operator_declare(limp,(bool,(bool,())),bool).
 _operator_recoverable(limp).
 
 % conditionals
-operator_declare(ite,(bool,(T,(T,()))),T) :- _type(T).
-_operator_recoverable(ite).
-_operator_recoverable(if).
 _operator_recoverable(default).
+operator_declare(default,(T1,(T2,())),T1) :- _type(T1), _type(T2), T1 != none.
+operator_declare(default,(none,(T,())),T) :- _type(T).
 operator_declare(hasValue,(T,()),bool) :- _type(T).
+_operator_recoverable(if).
+operator_declare(if,(bool,(T,())),T) :- _type(T).
+operator_declare(if,(bool,(T,())),none) :- _type(T).
+operator_declare(if,(bot,(T,())),bot) :- _type(T).
+operator_declare(if,(none,(T,())),none) :- _type(T).
+_operator_recoverable(ite).
+operator_declare(ite,(bool,(T1,(T2,()))),(T1;T2)) :- _type(T1), _type(T2).
 
 % equality
 operator_declare((eq;neq),(T,(T,())),bool) :- _type_extensionalEquality(T).
@@ -28,7 +35,7 @@ operator_declare((leq;lt;geq;gt),(T,(T,())),bool) :- _type_extensionalOrder(T).
 % float
 intToFloatOperator(sqrt;cos;sin;tan;acos;asin;atan).
 floatUnOperator(abs;sqrt;cos;sin;tan;acos;asin;atan;minus;ceil;floor).
-floatFloatFloatOperator(add;sub;mult;float_div;pow;max;min).
+floatFloatFloatOperator(add;mult;sub;float_div;pow;max;min).
 floatBinOperator(OP) :- floatFloatFloatOperator(OP).
 floatBinOperator(int_div;leq;lt;geq;gt).
 
@@ -46,6 +53,7 @@ operator_declare((eq;neq),(float,(float,())),bool).
 % int
 operator_declare_variadic((add;mult),bool,int,1).
 operator_declare_variadic((add;mult),int,int,1).
+operator_declare_variadic((add;mult),bool,int,1).
 operator_declare((sub;pow),(int,(int,())),int).
 _operator_recoverable(pow).
 operator_declare(int_div,((int;float),((int;float),())),int).
@@ -62,9 +70,11 @@ operator_declare(multimap_isin,(T1,(multimap,())),bool) :- _type(T1).
 operator_declare(length,(set,()),int).
 operator_declare((set_isin;set_notin),(T1,(set,())),bool) :- _type(T1).
 operator_declare_variadic(set_make,T,set,1) :- _type(T).
-operator_declare((union;inter;diff),(set,(set,())),set).
+operator_declare(diff,(set,(set,())),set).
+operator_declare_variadic((union;inter),T,set,1) :- _type(T).
 operator_declare((eq;neq),(set,(set,())),bool).
 operator_declare(subset,(set,(set,())),bool).
+operator_declare(fold,(function((TSET,(TACC,())),TACC),(set,(TACC,()))),bool) :- _type(TSET), _type(TACC).
 
 % string
 operator_declare(length,(string,()),int).

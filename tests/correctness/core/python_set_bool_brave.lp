@@ -1,4 +1,4 @@
-% Regression extracted from Kroco brave reasoning.
+% Regression extracted for brave reasoning.
 % Compile reaches the non-empty-set branch; compile2 does not.
 
 ensure(operation(limp,(val(bool,true),(operation(eq,(variable(execution_input(q,"c")),(variable(execution_output(p,"c")),()))),())))).

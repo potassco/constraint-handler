@@ -3,6 +3,7 @@ item(a,5).
 item(b,4).
 item(c,3).
 item(d,3).
+phase_request(type_check,false).
 
 variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W).

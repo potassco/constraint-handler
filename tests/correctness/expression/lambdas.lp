@@ -70,6 +70,4 @@ variable_define(nb_squares2,E) :-
   PLUS = operation(add,(MONE,(ACCU,()))),
   LAMB = lambda(VARS,PLUS).
 
-#show value/2.
-#show _ge_eval_exec/3.
-#show warning/3.
+phase_request(type_check,false).

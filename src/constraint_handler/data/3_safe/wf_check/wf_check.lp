@@ -23,40 +23,11 @@ _warning(expression(syntaxError),(),EXPR) :- _phase_active(wf_check), _expressio
 
 
 %%%%%%%%%%%%%%%%% check if well-formed
+_correction_expression(wf_check,EXPR,bad) :- _phase_active(wf_check), _expression(sugar,LBL,DECL,EXPR), not _expression_wellformed(EXPR).
 
-
-%%%%%% variable atoms
-_passed(correction(wf_check,rem),LBL,variable_domain(X,E)) :- _phase_active(wf_check), _passed(sugar,LBL,variable_domain(X,E)), not _expression_wellformed(E).
-_passed(correction(wf_check,add),LBL,variable_domain(X,bad)) :- _phase_active(wf_check), _passed(sugar,LBL,variable_domain(X,E)), not _expression_wellformed(E).
-
-_passed(correction(wf_check,rem),LBL,variable_define(X,E)) :- _phase_active(wf_check), _passed(sugar,LBL,variable_define(X,E)), not _expression_wellformed(E).
-_passed(correction(wf_check,add),LBL,variable_define(X,bad)) :- _phase_active(wf_check), _passed(sugar,LBL,variable_define(X,E)), not _expression_wellformed(E).
-_warning(atom(syntaxError),(),DECL) :- _passed(correction(wf_check,rem),LBL,DECL).
-
-%%%%%% multimap atoms
-%_passed(correction(wf_check,rem),multimap_assign(LBL,X,K,B)) :- _phase_active(wf_check), _passed(sugar,multimap_assign(LBL,X,K,B)), #false : _expression_wellformed(K), _expression_wellformed(B).
-%_passed(correction(wf_check,add),LBL,multimap_assign(LBL,X,bad,bad)) :- _phase_active(wf_check), _passed(sugar,multimap_assign(LBL,X,K,B)), #false : _expression_wellformed(K), _expression_wellformed(B).
-%%%% TODO
-
-%%%%% set atoms
-_passed(correction(wf_check,rem),LBL,set_assign(X,E)) :- _phase_active(wf_check), _passed(sugar,LBL,set_assign(X,E)), not _expression_wellformed(E).
-_passed(correction(wf_check,add),LBL,set_assign(X,bad)) :- _phase_active(wf_check), _passed(sugar,LBL,set_assign(X,E)), not _expression_wellformed(E).
-_passed(correction(wf_check,rem),LBL,set_baseDomain(X,E)) :- _phase_active(wf_check), _passed(sugar,LBL,set_baseDomain(X,E)), not _expression_wellformed(E).
-_passed(correction(wf_check,add),LBL,set_baseDomain(X,bad)) :- _phase_active(wf_check), _passed(sugar,LBL,set_baseDomain(X,E)), not _expression_wellformed(E).
+_correction_number(wf_check,N,0) :- _phase_active(wf_check), _number(sugar,N), #false: (number,_,_,_)=@pythonReify(N).
 
 %%%%%% statement atoms
 _warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _phase_active(wf_check), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)),
     #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS).
 %%% TODO add bad for all exec outs
-
-
-%%%%%% optimization atoms
-_illformed(optimize_component(E,PREC,ID,PRIO)) :- _phase_active(wf_check),
-    _passed(sugar,LBL,optimize_component(E,PREC,ID,PRIO)), #false:
-    _expression_wellformed(E),
-    _expression_wellformed(PREC),
-    (number,_,_,_)=@pythonReify(PRIO).
-_warning(atom(syntaxError),(),DECL) :- _illformed(DECL).
-
-%%%%%% preference atoms
-_illformed(sugar,preference_holds(LBL,E,K)) :- _phase_active(wf_check), _passed(sugar,LBL,preference_holds(LBL,E,K)), #false: _expression_wellformed(E), (number,_,_,_)=@pythonReify(K).

@@ -5,7 +5,9 @@ _passed(sugar,LBL,DECL).
 _expression(sugar,EXPR).
 _variable(sugar,VAR).
 _statement_wellformed/1.
-_statement_internalVariable/1.
+_variable_internal(X).
+_variable_involve(defaultArgs,LBL,X,DECL).
+_variable_involve(sugar,LBL,X,DECL).
 
 ### Intermediate predicates
 
@@ -28,7 +30,6 @@ _operator_safe/1.
 _operator_unsafe/1.
 _phase_active/1.
 _safe_bad/1.
-_se_value/2.
 _type/1.
 _type_list/2.
 _type_listArgT/3.
@@ -36,12 +37,12 @@ _type_listAux/3.
 _type_operator/2.
 _type_variable/2.
 _type_variadicListAux/5.
-_variable_confusingName/2.
+_variable_name/2.
 _variable_declared/1.
 _variable_exists/2.
-_variable_hasDomain/2.
 _variable_query/2.
 _variable_safe/1.
+_variable_strip/3.
 operator_declare/3.
 operator_declare_variadic/4.
 operator_variadic/2.

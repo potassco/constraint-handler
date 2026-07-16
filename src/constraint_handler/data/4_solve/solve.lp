@@ -1,9 +1,6 @@
-_passed(correction(dummy,rem),dummy,dummy).
-
 _label(LBL,DECL) :- _passed(correction(REASON,add),LBL,DECL).
 
-_solve_removed(LBL,DECL) :- _passed(correction(REASON,rem),LBL,DECL).
-_passed(presolve,LBL,DECL) :- _passed(sugar,LBL,DECL), not _solve_removed(LBL,DECL).
+_passed(presolve,LBL,DECL) :- _passed(sugar,LBL,DECL), #false : _passed(correction(REASON,rem),LBL,DECL).
 _passed(presolve,LBL,DECL) :- _passed(correction(REASON,add),LBL,DECL).
 
 _variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=variable_declare(X,D).

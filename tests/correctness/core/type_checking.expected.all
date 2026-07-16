@@ -87,6 +87,6 @@ type_variable(check(hasValue,multimap),bool)
 
 type_variable(check(length_find_multimap_make),int)
 
-warning(type(failed_operation),(),(add,(variable(v(string)),(variable(v(bool)),()))))
-warning(type(failed_operation),(),(mult,(variable(v(string)),(variable(v(bool)),()))))
-warning(type(failed_operation),(),(limp,(variable(v(string)),(variable(v(int)),()))))
+warning(type(inconsistent),(),operation(add,(variable(v(string)),(variable(v(bool)),()))))
+warning(type(inconsistent),(),operation(mult,(variable(v(string)),(variable(v(bool)),()))))
+warning(type(inconsistent),(),operation(limp,(variable(v(string)),(variable(v(int)),()))))
