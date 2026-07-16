@@ -1,3 +1,5 @@
+phase_request(type_check,true).
+
 execution_declare(py_mix,
     statement_python("y=[1,2,3]"),
     (),

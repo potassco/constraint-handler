@@ -33,7 +33,7 @@ _phase_default(float_normalize,true).
 _phase(safe).
 _phase_default(safe,true).
 _phase(type_check).
-_phase_default(type_check,true).
+_phase_default(type_check,false).
 _phase(wf_check).
 _phase_default(wf_check,true).
 

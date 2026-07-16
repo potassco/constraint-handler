@@ -1,3 +1,5 @@
+phase_request(type_check,true).
+
 set_declare(xset,xset).
 variable_define(execution_input(prg,"x"),variable(xset)).
 

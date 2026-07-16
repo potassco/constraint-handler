@@ -1,3 +1,5 @@
+phase_request(type_check,true).
+
 variable_define(extract_list,operation(pythonExtract("tmp=[1,2,3]","tmp"),())).
 
 execution_declare(py_warn,

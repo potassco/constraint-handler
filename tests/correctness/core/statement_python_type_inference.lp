@@ -1,3 +1,5 @@
+phase_request(type_check,true).
+
 execution_declare(py_stmt,
     statement_python("y = x + 1\nis_three = y == 3"),
     ("x",()),

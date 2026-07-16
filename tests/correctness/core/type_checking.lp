@@ -1,3 +1,5 @@
+phase_request(type_check,true).
+
 typed(VAR) :- type_variable(VAR,T), T!=bot.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

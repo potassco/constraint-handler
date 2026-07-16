@@ -1,3 +1,5 @@
+phase_request(type_check,true).
+
 variable_declare(lhs,fromFacts).
 variable_domain(lhs,val(int,2)).
 
