@@ -38,3 +38,7 @@ class _optimize_component(NamedTuple):
     precision: clingo.Symbol
     id: expression.constant
     priority: expression.Expr | expression.constant
+
+
+class Valid(NamedTuple):
+    result: type.Any

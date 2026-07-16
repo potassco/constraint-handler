@@ -6,212 +6,198 @@ import ast
 import builtins
 import collections.abc as collections_abc
 import inspect
+import itertools
 import types
 import typing
-from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from collections.abc import Mapping
+from typing import NamedTuple
+
+import clingo
 
 from constraint_handler.utils.python_type_model import (
-    _BOOL_SCALAR,
-    _FLOAT_SCALAR,
-    _INT_SCALAR,
-    _NONE_SCALAR,
-    _STR_SCALAR,
     DictOf,
     FunctionType,
     ListOf,
     RepeatedTupleOf,
+    Scalar,
     SetOf,
     TupleOf,
     TypeInfo,
     UnknownType,
+    UnsupportedType,
 )
 from constraint_handler.utils.python_type_signatures import (
-    BINARY_OPERATOR_OVERLOADS,
-    MATH_FUNCTION_TYPES,
-    UNARY_OPERATOR_OVERLOADS,
+    get_return_types,
+    resolve_static_overloads,
 )
 
 _RUNTIME_MISSING = object()
-_UNKNOWN_TYPES = frozenset({UnknownType})
-_UNKNOWN_FUNCTION_TYPE = FunctionType(None, _UNKNOWN_TYPES)
-_UNKNOWN_LIST_TYPE = ListOf(_UNKNOWN_TYPES)
-_BOOL_TYPES = frozenset({_BOOL_SCALAR})
-_ORDERABLE_SCALAR_TYPES = frozenset({_BOOL_SCALAR, _INT_SCALAR, _FLOAT_SCALAR})
-_UNKNOWN_LIST_TYPES = frozenset({_UNKNOWN_LIST_TYPE})
-_CONTAINER_TYPE_CLASSES = (ListOf, TupleOf, RepeatedTupleOf, SetOf, DictOf)
+_UNKNOWN_FUNCTION_TYPE = FunctionType(None, UnknownType)
+_ORDERABLE_SCALAR_TYPES = frozenset({Scalar.BOOL, Scalar.INT, Scalar.FLOAT})
 
 
-def _callable_annotation_to_function_type(annotation_args: tuple[object, ...]) -> FunctionType:
+def _callable_annotation_to_function_types(annotation_args: tuple[object, ...]) -> frozenset[TypeInfo]:
     if len(annotation_args) != 2:
-        return _UNKNOWN_FUNCTION_TYPE
+        return frozenset({_UNKNOWN_FUNCTION_TYPE})
 
     input_part, return_part = annotation_args
     return_types = _annotation_to_types(return_part)
 
     match input_part:
         case _ if input_part is Ellipsis:
-            return FunctionType(None, return_types)
+            return frozenset(FunctionType(None, return_type) for return_type in return_types)
         case [*param_annotations] | (*param_annotations,):
-            input_types = tuple(_annotation_to_types(param_ann) for param_ann in param_annotations)
-            return FunctionType(input_types, return_types)
+            input_type_options = tuple(_annotation_to_types(param_ann) for param_ann in param_annotations)
+            return frozenset(
+                FunctionType(input_types, return_type)
+                for input_types in itertools.product(*input_type_options)
+                for return_type in return_types
+            )
         case _:
-            return _UNKNOWN_FUNCTION_TYPE
-
-
-def _matches_function_inputs(function_type: FunctionType, arg_types: tuple[TypeInfo, ...]) -> bool:
-    return function_type.input_types is None or (
-        len(function_type.input_types) == len(arg_types)
-        and all(arg_type in accepted_types for arg_type, accepted_types in zip(arg_types, function_type.input_types))
-    )
+            return frozenset({_UNKNOWN_FUNCTION_TYPE})
 
 
 def _annotation_to_types(annotation: object) -> frozenset[TypeInfo]:
     origin = typing.get_origin(annotation)
     if origin in (types.UnionType, typing.Union):
         return frozenset().union(*(_annotation_to_types(arg) for arg in typing.get_args(annotation)))
-    return frozenset({_annotation_to_type(annotation)})
 
-
-def _annotation_to_type(annotation: object) -> TypeInfo:
-    origin = typing.get_origin(annotation)
-    args = typing.get_args(annotation)
+    annotation_args = typing.get_args(annotation)
+    arg_type_sets = tuple(_annotation_to_types(arg) for arg in annotation_args)
     dispatch = annotation if origin is None else origin
-
     match dispatch:
         case inspect.Signature.empty | typing.Any | builtins.object:
-            return UnknownType
+            return frozenset({UnknownType})
         case types.NoneType:
-            return _NONE_SCALAR
+            return frozenset({Scalar.NONE})
         case builtins.bool:
-            return _BOOL_SCALAR
+            return frozenset({Scalar.BOOL})
         case builtins.int:
-            return _INT_SCALAR
+            return frozenset({Scalar.INT})
         case builtins.float:
-            return _FLOAT_SCALAR
+            return frozenset({Scalar.FLOAT})
         case builtins.str:
-            return _STR_SCALAR
-        case builtins.list:
-            element_types = _UNKNOWN_TYPES if not args else _annotation_to_types(args[0])
-            return ListOf(element_types)
-        case builtins.set:
-            element_types = _UNKNOWN_TYPES if not args else _annotation_to_types(args[0])
-            return SetOf(element_types)
-        case builtins.dict:
-            if len(args) == 2:
-                return DictOf(_annotation_to_types(args[0]), _annotation_to_types(args[1]))
-            return DictOf(_UNKNOWN_TYPES, _UNKNOWN_TYPES)
-        case builtins.tuple:
-            if args.count(Ellipsis) == 1 and args[-1] is Ellipsis:
-                pattern_types = tuple(_annotation_to_types(arg) for arg in args[:-1])
-                if not pattern_types:
-                    return UnknownType
-                return RepeatedTupleOf(pattern_types)
-            if Ellipsis in args:
-                return UnknownType
-            return TupleOf(tuple(_annotation_to_types(arg) for arg in args))
+            return frozenset({Scalar.STRING})
         case collections_abc.Callable:
-            return _callable_annotation_to_function_type(args)
+            return _callable_annotation_to_function_types(typing.get_args(annotation))
+        case builtins.list:
+            return frozenset(
+                ListOf(element_type)
+                for element_type in (frozenset({UnknownType}) if not arg_type_sets else arg_type_sets[0])
+            )
+        case builtins.set:
+            return frozenset(
+                SetOf(element_type)
+                for element_type in (frozenset({UnknownType}) if not arg_type_sets else arg_type_sets[0])
+            )
+        case builtins.dict:
+            if len(arg_type_sets) == 2:
+                key_types, value_types = arg_type_sets
+                return frozenset(DictOf(key_type, value_type) for key_type in key_types for value_type in value_types)
+            return frozenset({DictOf(UnknownType, UnknownType)})
+        case builtins.tuple:
+            if annotation_args[-1:] == (Ellipsis,):
+                return frozenset(RepeatedTupleOf(element_type) for element_type in arg_type_sets[0])
+            if not arg_type_sets:
+                return frozenset({RepeatedTupleOf(UnknownType)})
+            return frozenset(TupleOf(tuple(element_types)) for element_types in itertools.product(*arg_type_sets))
         case _:
-            return UnknownType
+            return frozenset({UnsupportedType})
 
 
-def _callable_type_info(func: collections_abc.Callable) -> FunctionType:
-    input_types: tuple[frozenset[TypeInfo], ...] | None = None
-    return_types = _UNKNOWN_TYPES
+def _callable_type_info(func: collections_abc.Callable) -> frozenset[TypeInfo]:
+    input_type_options: tuple[frozenset[TypeInfo], ...] | None = None
+    return_types: frozenset[TypeInfo] = frozenset({UnknownType})
 
     try:
         hints = typing.get_type_hints(func)
+        return_types = _annotation_to_types(hints.get("return", inspect.Signature.empty))
     except Exception:
         hints = {}
 
     try:
         signature = inspect.signature(func)
+        return_types = _annotation_to_types(hints.get("return", signature.return_annotation))
+        if all(
+            parameter.kind not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+            for parameter in signature.parameters.values()
+        ):
+            input_type_options = tuple(
+                _annotation_to_types(hints.get(parameter.name, parameter.annotation))
+                for parameter in signature.parameters.values()
+            )
     except (TypeError, ValueError):
-        signature = None
+        pass
 
-    if signature is not None:
-        inferred_inputs: list[frozenset[TypeInfo]] = []
-        saw_var_args = False
-        for parameter in signature.parameters.values():
-            if parameter.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
-                saw_var_args = True
-                break
-            if parameter.name in hints:
-                inferred_inputs.append(_annotation_to_types(hints[parameter.name]))
-            elif parameter.annotation is not inspect.Signature.empty:
-                inferred_inputs.append(_annotation_to_types(parameter.annotation))
-            else:
-                inferred_inputs.append(_UNKNOWN_TYPES)
-        if not saw_var_args:
-            input_types = tuple(inferred_inputs)
+    if return_types == frozenset({UnknownType}):
+        static_overloads = resolve_static_overloads(
+            static_module_name=getattr(func, "__module__", None),
+            static_function_name=getattr(func, "__name__", None),
+        )
+        if static_overloads:
+            return static_overloads
 
-    if "return" in hints:
-        return_types = _annotation_to_types(hints["return"])
-    elif signature is not None and signature.return_annotation is not inspect.Signature.empty:
-        return_types = _annotation_to_types(signature.return_annotation)
+    if input_type_options is None:
+        return frozenset(FunctionType(None, return_type) for return_type in return_types)
 
-    module_name = getattr(func, "__module__", None)
-    function_name = getattr(func, "__name__", None)
-    if module_name == "math" and isinstance(function_name, str):
-        math_type = MATH_FUNCTION_TYPES.get(function_name)
-        if math_type is not None:
-            if input_types is None or all(param_types == _UNKNOWN_TYPES for param_types in input_types):
-                input_types = math_type.input_types
-            if return_types == _UNKNOWN_TYPES:
-                return_types = math_type.return_types
-
-    return FunctionType(input_types, return_types)
+    return frozenset(
+        FunctionType(input_types, return_type)
+        for input_types in itertools.product(*input_type_options)
+        for return_type in return_types
+    )
 
 
-def _union_value_types(values: Iterable[object]) -> frozenset[TypeInfo]:
-    return frozenset(_value_to_type(value) for value in values)
-
-
-def _value_to_type(value: object) -> TypeInfo:
+def _value_to_type(value: object) -> frozenset[TypeInfo]:
     match value:
         case _ if callable(value):
             return _callable_type_info(value)
         case None:
-            return _NONE_SCALAR
+            return frozenset({Scalar.NONE})
         case bool():
-            return _BOOL_SCALAR
+            return frozenset({Scalar.BOOL})
         case int():
-            return _INT_SCALAR
+            return frozenset({Scalar.INT})
         case float():
-            return _FLOAT_SCALAR
+            return frozenset({Scalar.FLOAT})
         case str():
-            return _STR_SCALAR
-        case list() as values if not values:
-            return _UNKNOWN_LIST_TYPE
-        case list() as values:
-            return ListOf(_union_value_types(values))
-        case tuple() as values:
-            return TupleOf(tuple(frozenset({_value_to_type(item)}) for item in values))
-        case set() as values if not values:
-            return SetOf(_UNKNOWN_TYPES)
-        case set() as values:
-            return SetOf(_union_value_types(values))
-        case dict() as values if not values:
-            return DictOf(_UNKNOWN_TYPES, _UNKNOWN_TYPES)
-        case dict() as values:
-            return DictOf(_union_value_types(values.keys()), _union_value_types(values.values()))
+            return frozenset({Scalar.STRING})
+        case clingo.Symbol():
+            return frozenset({Scalar.SYMBOL})
+        case list() if not value:
+            return frozenset({ListOf(UnknownType)})
+        case list():
+            return frozenset(ListOf(t) for item in value for t in _value_to_type(item))
+        case tuple():
+            return frozenset(
+                TupleOf(tuple(element_types))
+                for element_types in itertools.product(*(_value_to_type(item) for item in value))
+            )
+        case set() if not value:
+            return frozenset({SetOf(UnknownType)})
+        case set():
+            return frozenset(SetOf(t) for item in value for t in _value_to_type(item))
+        case dict() if not value:
+            return frozenset({DictOf(UnknownType, UnknownType)})
+        case dict():
+            return frozenset(
+                DictOf(key_type, value_type)
+                for key, item_value in value.items()
+                for key_type in _value_to_type(key)
+                for value_type in _value_to_type(item_value)
+            )
         case _:
-            return UnknownType
+            return frozenset({UnsupportedType})
 
 
 def _globals_to_type_env(global_env: Mapping[str, object]) -> dict[str, frozenset[TypeInfo]]:
-    return {name: frozenset({_value_to_type(value)}) for name, value in global_env.items() if isinstance(name, str)}
+    return {name: _value_to_type(value) for name, value in global_env.items() if isinstance(name, str)}
 
 
-@dataclass(frozen=True)
-class StatementAnalysisResult:
+class StatementAnalysisResult(NamedTuple):
     """Result of a statement-level name/type analysis."""
 
     name_types: dict[str, frozenset[TypeInfo]]
-    has_unsupported_features: bool
-    unsupported_witness: str | None = None
-    unsupported_reason: str | None = None
+    unsupported_events: tuple[tuple[str | None, str], ...] = ()
 
 
 class _StatementAnalyzer(ast.NodeVisitor):
@@ -237,8 +223,7 @@ class _StatementAnalyzer(ast.NodeVisitor):
         self.source = source
         self.name_types: dict[str, frozenset[TypeInfo]] = {}
         self.assigned_names: set[str] = set()
-        self.unsupported_witness: str | None = None
-        self.unsupported_reason: str | None = None
+        self.unsupported_event_list: list[tuple[str | None, str]] = []
         self._global_values: dict[str, object] = {} if not global_value_env else dict(global_value_env)
         self._global_env: dict[str, frozenset[TypeInfo]] = (
             {} if not global_value_env else _globals_to_type_env(global_value_env)
@@ -248,12 +233,15 @@ class _StatementAnalyzer(ast.NodeVisitor):
     def _resolve_global_value(self, node: ast.AST) -> object:
         match node:
             case ast.Name(id=name):
-                return self._global_values.get(name, _RUNTIME_MISSING)
+                if name in self._global_values:
+                    return self._global_values[name]
+                if hasattr(builtins, name):
+                    return getattr(builtins, name)
+                return _RUNTIME_MISSING
             case ast.Attribute(value=value, attr=attr):
                 base_value = self._resolve_global_value(value)
-                if base_value is _RUNTIME_MISSING:
-                    return _RUNTIME_MISSING
                 try:
+                    assert base_value is not _RUNTIME_MISSING
                     return getattr(base_value, attr)
                 except Exception:
                     return _RUNTIME_MISSING
@@ -263,17 +251,15 @@ class _StatementAnalyzer(ast.NodeVisitor):
     def _infer_global_reference_type(self, node: ast.AST) -> frozenset[TypeInfo]:
         runtime_value = self._resolve_global_value(node)
         if runtime_value is not _RUNTIME_MISSING:
-            return frozenset({_value_to_type(runtime_value)})
+            return _value_to_type(runtime_value)
 
         if isinstance(node, ast.Name):
-            return self._global_env.get(node.id, _UNKNOWN_TYPES)
+            return self._global_env.get(node.id, frozenset({UnknownType}))
 
-        return _UNKNOWN_TYPES
+        return frozenset({UnknownType})
 
     def _mark_unsupported(self, node: ast.AST, reason: str) -> None:
-        if self.unsupported_witness is None:
-            self.unsupported_witness = ast.get_source_segment(self.source, node)
-            self.unsupported_reason = reason
+        self.unsupported_event_list.append((ast.get_source_segment(self.source, node), reason))
 
     def _record_assignment_types(self, name: str, types: frozenset[TypeInfo]) -> None:
         self.assigned_names.add(name)
@@ -297,11 +283,10 @@ class _StatementAnalyzer(ast.NodeVisitor):
         merged = entry_env.copy()
         all_names = set().union(*(set(env) for env in branch_envs))
         for name in all_names:
-            merged[name] = frozenset(set().union(*(set(env.get(name, _UNKNOWN_TYPES)) for env in branch_envs)))
+            merged[name] = frozenset(
+                inferred_type for env in branch_envs for inferred_type in env.get(name, frozenset({UnknownType}))
+            )
         return merged
-
-    def _union_inferred_types(self, expressions: list[ast.AST | None]) -> frozenset[TypeInfo]:
-        return frozenset(set().union(*(self._infer_expr_type(expression) for expression in expressions)))
 
     def _infer_subscript_type(self, value: ast.AST, slice_node: ast.AST) -> frozenset[TypeInfo]:
         container_types = self._infer_expr_type(value)
@@ -311,25 +296,19 @@ class _StatementAnalyzer(ast.NodeVisitor):
 
         for container_t in container_types:
             match container_t:
-                case t if t is UnknownType:
-                    out.add(UnknownType)
-                case ListOf(element_types=element_types):
-                    out.update(element_types)
+                case t if t is UnsupportedType or t is UnknownType:
+                    out.add(t)
+                case ListOf(element_types=element_type):
+                    out.add(element_type)
                 case TupleOf(element_types=element_types):
                     if isinstance(index_value, int) and 0 <= index_value < len(element_types):
-                        out.update(element_types[index_value])
+                        out.add(element_types[index_value])
                     else:
-                        out.update(*element_types)
-                case RepeatedTupleOf(pattern_types=pattern_types):
-                    if isinstance(index_value, int) and index_value >= 0 and pattern_types:
-                        if index_value < len(pattern_types):
-                            out.update(pattern_types[index_value])
-                        else:
-                            out.update(pattern_types[-1])
-                    else:
-                        out.update(*pattern_types)
-                case DictOf(value_types=value_types):
-                    out.update(value_types)
+                        out.update(element_types)
+                case RepeatedTupleOf(element_type=element_type):
+                    out.add(element_type)
+                case DictOf(value_types=value_type):
+                    out.add(value_type)
                 case _:
                     out.add(UnknownType)
 
@@ -338,39 +317,54 @@ class _StatementAnalyzer(ast.NodeVisitor):
     def _infer_expr_type(self, node: ast.AST | None) -> frozenset[TypeInfo]:
         match node:
             case None:
-                return _UNKNOWN_TYPES
+                return frozenset({UnknownType})
 
             case ast.Constant(value=value):
-                return frozenset({_value_to_type(value)})
+                return _value_to_type(value)
 
             case ast.Name(id=name) as name_node:
                 return self._env.get(name, self._infer_global_reference_type(name_node))
 
             case ast.Call() as call_node:
-                self._scan_call(call_node)
-                inferred_func_types = self._infer_expr_type(call_node.func)
-                inferred_return_types: set[TypeInfo] = set()
-                for func_type in inferred_func_types:
-                    match func_type:
-                        case FunctionType(input_types=_, return_types=return_types):
-                            inferred_return_types.update(return_types)
-                        case t if t is UnknownType:
-                            inferred_return_types.add(UnknownType)
-                        case _:
-                            pass
-                if not inferred_return_types:
-                    return _UNKNOWN_TYPES
-                return frozenset(inferred_return_types)
+                if not isinstance(call_node.func, (ast.Name, ast.Attribute)):
+                    self._mark_unsupported(call_node.func, "unsupported expression: callable form")
+                    return frozenset({UnknownType})
+
+                if any(isinstance(arg, ast.Starred) for arg in call_node.args) or any(
+                    keyword.arg is None for keyword in call_node.keywords
+                ):
+                    self._mark_unsupported(call_node, "unsupported expression: positional/keyword unpacking")
+                    return frozenset({UnknownType})
+
+                inferred_func_types = frozenset(
+                    inferred_type
+                    for inferred_type in self._infer_expr_type(call_node.func)
+                    if isinstance(inferred_type, FunctionType)
+                )
+
+                return get_return_types(
+                    tuple(self._infer_expr_type(arg) for arg in call_node.args),
+                    inferred_func_types,
+                    static_overloads=resolve_static_overloads(
+                        static_function_name=(
+                            call_node.func.id
+                            if isinstance(call_node.func, ast.Name) and not call_node.keywords
+                            else None
+                        ),
+                    ),
+                )
 
             case ast.keyword(arg=None):
                 self._mark_unsupported(node, "unsupported expression: keyword unpacking")
-                return _UNKNOWN_TYPES
+                return frozenset({UnknownType})
 
             case ast.keyword(value=value):
                 return self._infer_expr_type(value)
 
             case ast.BoolOp(values=values):
-                return self._union_inferred_types(values)
+                return frozenset(
+                    inferred_type for expression in values for inferred_type in self._infer_expr_type(expression)
+                )
 
             case ast.Compare(left=left, comparators=comparators):
                 return self._infer_compare_type(left, node.ops, comparators)
@@ -380,29 +374,42 @@ class _StatementAnalyzer(ast.NodeVisitor):
                 return self._infer_expr_type(body) | self._infer_expr_type(orelse)
 
             case ast.BinOp(left=left, op=op, right=right):
-                return self._infer_binop_type(op, self._infer_expr_type(left), self._infer_expr_type(right))
+                return self._infer_operator_type(op, (self._infer_expr_type(left), self._infer_expr_type(right)))
 
             case ast.UnaryOp(op=op, operand=operand):
-                return self._infer_unaryop_type(op, self._infer_expr_type(operand))
+                return self._infer_operator_type(op, (self._infer_expr_type(operand),))
 
             case ast.Tuple(elts=elts):
-                element_types = tuple(self._infer_expr_type(element) for element in elts)
-                return frozenset({TupleOf(element_types)})
+                return frozenset(
+                    TupleOf(tuple(element_types_choice))
+                    for element_types_choice in itertools.product(*(self._infer_expr_type(element) for element in elts))
+                )
+
+            case ast.List(elts=elts) if not elts:
+                return frozenset({ListOf(UnknownType)})
 
             case ast.List(elts=elts):
-                return frozenset({ListOf(self._union_inferred_types(elts))})
+                return frozenset(
+                    ListOf(element_type) for expression in elts for element_type in self._infer_expr_type(expression)
+                )
+
+            case ast.Set(elts=elts) if not elts:
+                return frozenset({SetOf(UnknownType)})
 
             case ast.Set(elts=elts):
-                return frozenset({SetOf(self._union_inferred_types(elts))})
+                return frozenset(
+                    SetOf(element_type) for expression in elts for element_type in self._infer_expr_type(expression)
+                )
+
+            case ast.Dict(keys=keys, values=values) if not keys:
+                return frozenset({DictOf(UnknownType, UnknownType)})
 
             case ast.Dict(keys=keys, values=values):
                 return frozenset(
-                    {
-                        DictOf(
-                            self._union_inferred_types(keys),
-                            self._union_inferred_types(values),
-                        )
-                    }
+                    DictOf(key_type, value_type)
+                    for key, value in zip(keys, values)
+                    for key_type in self._infer_expr_type(key)
+                    for value_type in self._infer_expr_type(value)
                 )
 
             case ast.Subscript(value=value, slice=slice_node):
@@ -415,53 +422,26 @@ class _StatementAnalyzer(ast.NodeVisitor):
             case ast.expr():
                 for child in ast.iter_child_nodes(node):
                     self._infer_expr_type(child)
-                return _UNKNOWN_TYPES
+                return frozenset({UnknownType})
 
             case _:
                 self._mark_unsupported(node, f"unsupported expression: {type(node).__name__}")
-                return _UNKNOWN_TYPES
+                return frozenset({UnknownType})
 
-    def _infer_binop_type(
+    def _infer_operator_type(
         self,
-        op: ast.operator,
-        left: frozenset[TypeInfo],
-        right: frozenset[TypeInfo],
+        op: ast.operator | ast.unaryop,
+        operand_type_sets: tuple[frozenset[TypeInfo], ...],
     ) -> frozenset[TypeInfo]:
         out: set[TypeInfo] = set()
-        overloads = BINARY_OPERATOR_OVERLOADS.get(type(op), ())
-        for left_t in left:
-            for right_t in right:
-                if UnknownType in (left_t, right_t):
-                    out.add(UnknownType)
-                    continue
-
-                if isinstance(op, ast.Add) and isinstance(left_t, ListOf) and isinstance(right_t, ListOf):
-                    out.add(ListOf(left_t.element_types | right_t.element_types))
-                    continue
-
-                out.update(
-                    *(
-                        overload.return_types
-                        for overload in overloads
-                        if _matches_function_inputs(overload, (left_t, right_t))
-                    )
-                )
-        return frozenset(out)
-
-    def _infer_unaryop_type(self, op: ast.unaryop, operand_types: frozenset[TypeInfo]) -> frozenset[TypeInfo]:
-        out: set[TypeInfo] = set()
-        overloads = UNARY_OPERATOR_OVERLOADS.get(type(op), ())
-        for operand_type in operand_types:
-            if operand_type is UnknownType:
-                out.add(UnknownType)
-                continue
-            out.update(
-                *(
-                    overload.return_types
-                    for overload in overloads
-                    if _matches_function_inputs(overload, (operand_type,))
-                )
+        for operand_types in itertools.product(*operand_type_sets):
+            resolved_types = get_return_types(
+                tuple(frozenset({operand_type}) for operand_type in operand_types),
+                frozenset(),
+                static_overloads=resolve_static_overloads(operator=op),
             )
+            if resolved_types:
+                out.update(resolved_types)
         return frozenset(out)
 
     def _is_compare_pair_valid(self, op: ast.cmpop, left_t: TypeInfo, right_t: TypeInfo) -> bool:
@@ -469,12 +449,14 @@ class _StatementAnalyzer(ast.NodeVisitor):
             return True
 
         if isinstance(op, (ast.Lt, ast.LtE, ast.Gt, ast.GtE)):
-            return (left_t == _STR_SCALAR and right_t == _STR_SCALAR) or (
+            return (left_t == Scalar.STRING and right_t == Scalar.STRING) or (
                 left_t in _ORDERABLE_SCALAR_TYPES and right_t in _ORDERABLE_SCALAR_TYPES
             )
 
         if isinstance(op, (ast.In, ast.NotIn)):
-            return (right_t == _STR_SCALAR and left_t == _STR_SCALAR) or isinstance(right_t, _CONTAINER_TYPE_CLASSES)
+            return (right_t == Scalar.STRING and left_t == Scalar.STRING) or isinstance(
+                right_t, (ListOf, TupleOf, RepeatedTupleOf, SetOf, DictOf)
+            )
 
         return False
 
@@ -484,48 +466,35 @@ class _StatementAnalyzer(ast.NodeVisitor):
         ops: list[ast.cmpop],
         comparators: list[ast.expr],
     ) -> frozenset[TypeInfo]:
-        result = _BOOL_TYPES
+        result = frozenset({Scalar.BOOL})
         current_left_types = self._infer_expr_type(left)
 
         for op, comparator in zip(ops, comparators):
             right_types = self._infer_expr_type(comparator)
 
+            link_has_unsupported = UnsupportedType in current_left_types or UnsupportedType in right_types
             link_has_unknown = UnknownType in current_left_types or UnknownType in right_types
             link_has_known_valid = any(
-                left_t is not UnknownType
-                and right_t is not UnknownType
+                left_t not in (UnknownType, UnsupportedType)
+                and right_t not in (UnknownType, UnsupportedType)
                 and self._is_compare_pair_valid(op, left_t, right_t)
                 for left_t in current_left_types
                 for right_t in right_types
             )
 
-            link_result = (_BOOL_TYPES if link_has_known_valid else frozenset()) | (
-                _UNKNOWN_TYPES if link_has_unknown else frozenset()
-            )
-            if not link_result:
+            if not (link_has_known_valid or link_has_unsupported or link_has_unknown):
                 return frozenset()
 
-            if _BOOL_SCALAR not in link_result:
-                result = result - _BOOL_TYPES
-            if UnknownType in link_result:
-                result = result | _UNKNOWN_TYPES
+            if not link_has_known_valid:
+                result = result - frozenset({Scalar.BOOL})
+            if link_has_unsupported:
+                result = result | frozenset({UnsupportedType})
+            if link_has_unknown:
+                result = result | frozenset({UnknownType})
 
             current_left_types = right_types
 
         return result
-
-    def _scan_call(self, node: ast.Call) -> None:
-        if not isinstance(node.func, (ast.Name, ast.Attribute)):
-            self._mark_unsupported(node.func, "unsupported expression: callable form")
-        self._infer_expr_type(node.func)
-
-        for arg in node.args:
-            if isinstance(arg, ast.Starred):
-                self._mark_unsupported(arg, "unsupported expression: positional unpacking")
-            self._infer_expr_type(arg)
-
-        for keyword in node.keywords:
-            self._infer_expr_type(keyword)
 
     def _bind_target(self, target: ast.AST, value: ast.AST | None, value_types: frozenset[TypeInfo]) -> None:
         match target:
@@ -534,7 +503,7 @@ class _StatementAnalyzer(ast.NodeVisitor):
                 return
 
             case ast.Starred(value=starred_value):
-                self._bind_target(starred_value, None, _UNKNOWN_LIST_TYPES)
+                self._bind_target(starred_value, None, frozenset({ListOf(UnknownType)}))
                 return
 
             case ast.Tuple(elts=elts) | ast.List(elts=elts):
@@ -545,9 +514,9 @@ class _StatementAnalyzer(ast.NodeVisitor):
 
                 for sub_target in elts:
                     if isinstance(sub_target, ast.Starred):
-                        self._bind_target(sub_target, None, _UNKNOWN_LIST_TYPES)
+                        self._bind_target(sub_target, None, frozenset({ListOf(UnknownType)}))
                     else:
-                        self._bind_target(sub_target, None, _UNKNOWN_TYPES)
+                        self._bind_target(sub_target, None, frozenset({UnknownType}))
                 return
 
             case _:
@@ -592,7 +561,7 @@ class _StatementAnalyzer(ast.NodeVisitor):
 
     def visit_For(self, node: ast.For) -> None:
         self._infer_expr_type(node.iter)
-        self._bind_target(node.target, None, _UNKNOWN_TYPES)
+        self._bind_target(node.target, None, frozenset({UnknownType}))
 
         entry_env = self._env.copy()
         body_env = self._visit_branch(node.body, entry_env)
@@ -618,17 +587,13 @@ def analyze_python_statement_types(
         witness = exc.text.strip() if exc.text else None
         return StatementAnalysisResult(
             name_types={},
-            has_unsupported_features=True,
-            unsupported_witness=witness,
-            unsupported_reason="syntax error",
+            unsupported_events=((witness, "syntax error"),),
         )
 
     analyzer = _StatementAnalyzer(snippet, global_env, local_types)
     analyzer.visit(tree)
-    exit_name_types = {name: analyzer._env.get(name, _UNKNOWN_TYPES) for name in analyzer.assigned_names}
+    exit_name_types = {name: analyzer._env.get(name, frozenset({UnknownType})) for name in analyzer.assigned_names}
     return StatementAnalysisResult(
         name_types=exit_name_types,
-        has_unsupported_features=analyzer.unsupported_witness is not None,
-        unsupported_witness=analyzer.unsupported_witness,
-        unsupported_reason=analyzer.unsupported_reason,
+        unsupported_events=tuple(analyzer.unsupported_event_list),
     )

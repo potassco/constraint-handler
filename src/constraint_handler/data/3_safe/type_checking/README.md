@@ -17,6 +17,7 @@ _expression_sequence(type_check,EXPR).
 _expression_sequenceIndex(type_check,EXPR,IDX,ARG).
 _expression_sequenceLength(type_check,EXPR,N).
 _expression_typeQuery/1.
+_type_expression/2.
 _type_list/2.
 _type_listArgT/3.
 _type_listAux/3.
@@ -30,5 +31,5 @@ type_variable/2.
 ### Output predicates
 
 _type/1.
-_warning(type(failed_operation),(),(O,ARGS)).
-type_expression/2.
+_warning(type(noType),(),EXPR).
+_warning(type(notSupported),(),X).

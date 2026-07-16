@@ -1,0 +1,2 @@
+warning(type(untyped),(),variable(execution_output(py_mix,"y")))
+warning(type(untyped),(),variable(output_add))

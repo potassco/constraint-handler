@@ -1,0 +1,2 @@
+value(execution_output(prg,"result"),val(bool,true))
+type_variable(execution_output(prg,"result"),bool)

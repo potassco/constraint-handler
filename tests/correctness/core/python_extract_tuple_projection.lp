@@ -27,3 +27,4 @@ variable_domain(execution_input(c,"x"),variable(x)).
 variable_domain(execution_input(c,"y"),variable(y)).
 
 #show value/2.
+phase_request(type_check,false).

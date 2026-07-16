@@ -23,8 +23,7 @@ _passed(compile2, LBL, bool_evaluate(Expr))
 %% what about _passed(compile2, LBL, evaluate())
 
 %%% preferences and optimize statements
-_passed(compile2,LBL,optimize_maximizeSum(E,X,P))
-_passed(compile2,LBL,optimize_precision(PREC,PRIO))
+_passed(compile2,LBL,optimize_component(E,PREC,X,PRIO))
 
 %%% ignore
 warning_ignore
