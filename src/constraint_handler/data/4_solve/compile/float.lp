@@ -11,3 +11,10 @@ _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(float,
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,neq), _computeIdx(E,0,val(float,V)), _computeIdx(E,1,val(float,V)).
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,neq), _computeIdx(E,0,val(float,_)), _computeIdx(E,1,val(float,V)), not _computeIdx(E,0,val(float,V)).
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,neq), _computeIdx(E,0,val(float,V)), _computeIdx(E,1,val(float,_)), not _computeIdx(E,1,val(float,V)).
+
+_computedIdx(E,bad) :- _computeIdx(E,(lt;leq;geq;gt)), _computeIdx(E,0,val(T0,V0)), _computeIdx(E,1,val(T1,V1)),
+    (T0;T1)=(float;int), OT=(T0;T1), OT!=float, OT!=int.
+
+_computedIdx(E,val(bool,RESULT)) :- _computeIdx(E,OP), _computeIdx(E,0,val(T0,V0)), _computeIdx(E,1,val(T1,V1)),
+    (OP,RESULT)=((eq,false);(neq,true)),
+    (T0;T1)=(float;int), OT=(T0;T1), OT!=float, OT!=int.

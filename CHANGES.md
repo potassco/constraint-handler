@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - type equality and inequality between values of incompatible types to return
+    `bool`
 - - introduce warning `correction/1`
 - - introduce corrections from the type_check phase
 - - implement rudimentary type inferrence support for `statement_python` and
