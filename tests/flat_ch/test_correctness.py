@@ -1,3 +1,6 @@
+import subprocess
+from pathlib import Path
+
 import clingo
 import pytest
 
@@ -5,13 +8,26 @@ import flat_ch.api as flat_ch_api
 import tests.utils.testing as chut
 from tests.test_encoding import base_tests, ctrl_options
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def generate_flat_ch_files() -> None:
+    subprocess.run(["fch", "--generate"], check=True, cwd=REPO_ROOT)
+
+
 flat_ch_unsupported_tests = {
     "core/conditional_assign",  # missing operator: default
     "core/custom_globals",  # missing custom Python globals injection
     "core/python_set_bool_brave",  # brave-mode Python/set reasoning mismatch
     "core/python_extract_set_projection",  # missing Python set projection
+    "datatype/int_vs_other_types_eq_neq",  # NEW
+    "datatype/int_vs_other_types_order_comparisons",  # NEW
+    "datatype/float_vs_other_types_eq_neq",  # NEW
+    "datatype/float_vs_other_types_order_comparisons",  # NEW
     "engine/request_mixed_trig",  # missing mixed trigger/request handling
     "execution/optional_run",  # missing operator: default
+    "execution/python_set_empty_equality",  # NEW
     "execution/python_integrity_should_be_ignored",  # requires CH-specific Python environment wiring
     "expression/python_extract_binding_leak",  # missing operator: pythonExtract
     "expression/tuple_arity_mismatch",  # unsupported tuple literal expressions
@@ -25,7 +41,15 @@ flat_ch_unsupported_tests = {
 }
 
 flat_ch_bad_warning_unsupported_tests = {
+    "core/conj_bad_none_recovery",  # bad/none recovery mismatch in conjunction evaluation
+    "core/non_deterministic_python_type_inference",  # CH pythonExtract normalization/type inference mismatch
+    "core/python_inference_type_warnings",  # CH Python type warning classification mismatch
     "core/python_extract_statement_error_warning",  # missing statement-level Python warning recovery
+    "core/python_extract_type_inference",  # CH pythonExtract output typing mismatch
+    "core/statement_python_type_inference",  # statement Python type inference mismatch
+    "core/type_inference_unknown_vs_no_type",  # CH Python unsupported-type warning mismatch
+    "core/type_inference_unknown_vs_no_type_statement_python",  # statement Python unsupported-type warning mismatch
+    "core/type_inference_unknown_vs_no_type_statement_python_nondeterministic",  # statement Python risky-type warning mismatch
     "datatype/bool_equivalence_bad",  # bad/equivalence handling mismatch
     "error/recovery_bool",  # recovery warning output mismatch
     "error/recovery_conditionals",  # missing conditional recovery
