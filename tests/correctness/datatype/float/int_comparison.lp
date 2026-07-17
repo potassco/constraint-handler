@@ -1,3 +1,4 @@
+%%% float/float and float/int comparison checks
 variable_define(f_small,val(float,float("1.5"))).
 variable_define(f_large,val(float,float("2.5"))).
 variable_define(i_two,val(int,2)).

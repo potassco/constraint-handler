@@ -1,6 +1,4 @@
-%variable_declare(x,definition).
-%variable_declare(y,definition).
-%variable_declare(z,definition).
+%%% float equality/inequality checks against domain-derived equivalent values
 variable_define(x,val(float,float("5"))).
 variable_define(y,val(float,float("2.5"))).
 variable_define(z,val(float,float("2"))).
@@ -16,9 +14,6 @@ variable_domain(yy,operation(float_div,(val(int,5),(val(int,2),())))).
 variable_domain(zz,operation(float_div,(val(int,10),(val(int,5),())))).
 
 
-%variable_declare(xe,definition).
-%variable_declare(ye,definition).
-%variable_declare(ze,definition).
 variable_define(xe,operation(eq,(variable(x),(variable(xx),())))).
 variable_define(ye,operation(eq,(variable(y),(variable(yy),())))).
 variable_define(ze,operation(eq,(variable(z),(variable(zz),())))).

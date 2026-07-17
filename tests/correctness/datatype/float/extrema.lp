@@ -1,3 +1,4 @@
+%%% float min/max checks
 variable_define(x,val(float,float("5"))).
 variable_define(y,val(float,float("2.5"))).
 

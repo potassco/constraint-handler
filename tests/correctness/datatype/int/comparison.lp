@@ -1,22 +1,10 @@
-%%% x = 20     two = 2     ten = 10
-%%% addtwoten = two+ten = 12     addtentwo = ten+two = 12
-%%% multtwoten = two*ten = 20     multtentwo = ten*two = 20
-%%% subtwoten = two-ten = -8     subtentwo = ten-two = 8
-%%% divtwoten = two/ten = 0     divtentwo = ten/two = 5
-%%% powtwoten = two**ten = 1024     powtentwo = ten**two = 100
-
-%%% all:
-%%% x = 20     x+10 = 30     two+ten = 12     ten+two = 12
-%%% two*ten = 20     ten*two = 20     two-ten = -8     ten-two = 8
-%%% addtwoten==addtentwo     not multtwoten!=multtentwo
-%%% not subtwoten==subtentwo     -subtwoten==subtentwo
-%%% |subtwoten| = 8     |subtentwo| = 8
-%%% divtwoten = 0     divtentwo = 5     powtwoten = 1024     powtentwo  = 100
-%%%  -two!=two     --two!=two     two<=ten     two<ten     not two>=ten     not two>ten
-%%% addtwoten<=addtentwo     not addtwoten<addtentwo
-%%% addtwoten>=addtentwo     not addtwoten>addtentwo
+%%% int comparison checks only (minus/division/power are covered in dedicated files)
+%%% 12==12     not 20!=20     not -8==8
+%%% 2<=10     2<10     not 2>=10     not 2>10
+%%% 12<=12     not 12<12     12>=12     not 12>12
 %%% 6//2==3   5//2==2
-%%% 6/2==3.0    5/2==2.5
+%%% 6/2==3.0  5/2==2.5
+%%% 1==1.0    not 1!=1.0
 
 evaluate(eq,(val(int,12),(val(int,12),()))).
 evaluate(neq,(val(int,20),(val(int,20),()))).

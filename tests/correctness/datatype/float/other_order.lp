@@ -1,3 +1,4 @@
+%%% float compared with none/string for order operators
 variable_define(f,val(float,float("1.5"))).
 variable_define(n,val(none,none)).
 variable_define(s,val(string,"x")).
