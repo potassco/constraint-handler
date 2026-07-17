@@ -2,9 +2,8 @@ import clingo
 import pytest
 
 import flat_ch.api as flat_ch_api
-from tests.test_encoding import base_tests, ctrl_options
 import tests.utils.testing as chut
-
+from tests.test_encoding import base_tests, ctrl_options
 
 flat_ch_unsupported_tests = {
     "core/conditional_assign",  # missing operator: default
@@ -57,7 +56,9 @@ currently_unsupported_tests = [name for name in base_tests if name in all_flat_c
 
 supported_core_tests = [name for name in supported_tests if name.startswith("core/")]
 supported_non_core_tests = [name for name in supported_tests if not name.startswith("core/")]
-currently_unsupported_core_tests = [name for name in base_tests if name.startswith("core/") and name in all_flat_ch_unsupported_tests]
+currently_unsupported_core_tests = [
+    name for name in base_tests if name.startswith("core/") and name in all_flat_ch_unsupported_tests
+]
 
 
 def solve_with_flat_ch(name: str, test, extra_args: list[str]):
