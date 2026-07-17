@@ -1,0 +1,7 @@
+evaluated(disj,(),val(bool,false))
+evaluated(disj,(variable(false_case),(variable(false_case),())),val(bool,false))
+evaluated(disj,(variable(false_case),(variable(none_case),())),val(none,none))
+evaluated(disj,(variable(true_case),(variable(false_case),())),val(bool,true))
+evaluated(disj,(variable(true_case),(variable(none_case),())),val(bool,true))
+evaluated(disj,(variable(false_case),(variable(bad_case),())),bad)
+evaluated(disj,(variable(true_case),(variable(bad_case),())),val(bool,true))

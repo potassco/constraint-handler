@@ -1,0 +1,5 @@
+evaluated(add,(),val(int,0))
+evaluated(add,(variable(f_small),()),val(float,float("1.5")))
+evaluated(add,(variable(f_small),(variable(i_two),())),val(float,float("3.5")))
+evaluated(add,(variable(f_small),(variable(none_case),())),bad)
+evaluated(add,(variable(f_small),(variable(bad_case),())),bad)

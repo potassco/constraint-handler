@@ -1,0 +1,6 @@
+evaluated(concat,(variable(left_case),(variable(right_case),())),bad)
+evaluated(concat,(variable(left_case),(variable(right_case),())),val(none,none))
+evaluated(concat,(variable(none_case),(variable(right_case),())),val(string,"abc"))
+evaluated(concat,(variable(none_case),(variable(right_case),())),val(none,none))
+evaluated(concat,(variable(bad_case),(variable(right_case),())),val(string,"abc"))
+evaluated(concat,(variable(bad_case),(variable(right_case),())),val(none,none))

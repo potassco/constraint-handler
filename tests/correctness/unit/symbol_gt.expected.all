@@ -1,0 +1,6 @@
+evaluated(gt,(variable(sym_a),(variable(sym_a),())),val(bool,false))
+evaluated(gt,(variable(sym_a),(variable(sym_b),())),val(bool,false))
+evaluated(gt,(variable(sym_b),(variable(sym_a),())),val(bool,true))
+evaluated(gt,(variable(none_case),(variable(sym_a),())),bad)
+evaluated(gt,(variable(sym_a),(variable(none_case),())),bad)
+evaluated(gt,(variable(sym_a),(variable(bad_case),())),bad)

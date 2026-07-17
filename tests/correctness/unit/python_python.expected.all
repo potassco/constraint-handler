@@ -1,0 +1,7 @@
+evaluated(python("2"),(),bad)
+evaluated(python("abs"),(val(int,-3),()),val(int,3))
+evaluated(python("pow"),(val(int,2),(val(int,5),())),val(int,32))
+evaluated(python("bool"),(variable(int_case),()),val(bool,true))
+evaluated(python("bool"),(variable(none_case),()),val(bool,false))
+evaluated(python("bool"),(variable(bad_case),()),bad)
+evaluated(python("set.__contains__"),(variable(pool),(val(int,2),())),bad)

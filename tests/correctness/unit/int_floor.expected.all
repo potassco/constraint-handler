@@ -1,0 +1,4 @@
+evaluated(floor,(variable(i_neg),()),val(int,-3))
+evaluated(floor,(variable(i_two),()),val(int,2))
+evaluated(floor,(variable(none_case),()),bad)
+evaluated(floor,(variable(bad_case),()),bad)

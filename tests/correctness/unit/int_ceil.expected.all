@@ -1,0 +1,4 @@
+evaluated(ceil,(variable(i_neg),()),val(int,-3))
+evaluated(ceil,(variable(i_two),()),val(int,2))
+evaluated(ceil,(variable(none_case),()),bad)
+evaluated(ceil,(variable(bad_case),()),bad)

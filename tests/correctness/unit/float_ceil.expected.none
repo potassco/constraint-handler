@@ -1,0 +1,5 @@
+evaluated(ceil,(variable(f_small),()),bad)
+evaluated(ceil,(variable(f_small),()),val(none,none))
+evaluated(ceil,(variable(f_small),()),val(int,0))
+evaluated(ceil,(variable(none_case),()),val(none,none))
+evaluated(ceil,(variable(bad_case),()),val(none,none))

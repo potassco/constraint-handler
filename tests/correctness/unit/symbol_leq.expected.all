@@ -1,0 +1,6 @@
+evaluated(leq,(variable(sym_a),(variable(sym_a),())),val(bool,true))
+evaluated(leq,(variable(sym_a),(variable(sym_b),())),val(bool,true))
+evaluated(leq,(variable(sym_b),(variable(sym_a),())),val(bool,false))
+evaluated(leq,(variable(none_case),(variable(sym_a),())),bad)
+evaluated(leq,(variable(sym_a),(variable(none_case),())),bad)
+evaluated(leq,(variable(sym_a),(variable(bad_case),())),bad)

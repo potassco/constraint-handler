@@ -1,0 +1,4 @@
+evaluated(subset,(variable(small),(variable(big),())),val(bool,true))
+evaluated(subset,(variable(big),(variable(small),())),val(bool,false))
+evaluated(subset,(variable(empty),(variable(big),())),val(bool,true))
+evaluated(subset,(variable(small),(variable(bad_set),())),bad)

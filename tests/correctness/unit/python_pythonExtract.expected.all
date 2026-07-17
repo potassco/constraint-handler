@@ -1,0 +1,7 @@
+evaluated(pythonExtract("tmp=2","tmp"),(),val(int,2))
+evaluated(pythonExtract("tmp=lhs*rhs","tmp+rhs"),((val(string,"lhs"),val(int,3)),((val(string,"rhs"),val(int,4)),())),val(int,16))
+evaluated(pythonExtract("tmp=raw","tmp"),((val(string,"raw"),variable(int_case)),()),val(int,3))
+evaluated(pythonExtract("tmp=raw","tmp"),((val(string,"raw"),variable(none_case)),()),val(none,none))
+evaluated(pythonExtract("tmp=raw","tmp"),((val(string,"raw"),variable(bad_case)),()),bad)
+evaluated(pythonExtract("present=pool.__contains__(2)","present"),((val(string,"pool"),variable(pool)),()),val(bool,true))
+evaluated(pythonExtract("lhs=lhs+2","lhs==5"),((val(string,"lhs"),val(int,3)),()),val(bool,true))

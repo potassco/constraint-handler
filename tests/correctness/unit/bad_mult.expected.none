@@ -1,0 +1,6 @@
+evaluated(mult,(variable(two_case),(variable(three_case),())),bad)
+evaluated(mult,(variable(two_case),(variable(three_case),())),val(none,none))
+evaluated(mult,(variable(two_case),(variable(none_case),())),val(int,6))
+evaluated(mult,(variable(two_case),(variable(none_case),())),val(none,none))
+evaluated(mult,(variable(two_case),(variable(bad_case),())),val(int,6))
+evaluated(mult,(variable(two_case),(variable(bad_case),())),val(none,none))

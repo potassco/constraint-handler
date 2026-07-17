@@ -1,0 +1,8 @@
+evaluated(length,(operation(set_make,()),()),bad)
+evaluated(length,(operation(set_make,()),()),val(int,1))
+evaluated(eq,(operation(set_make,(val(int,1),(val(int,2),(val(int,1),(val(none,none),()))))),(operation(set_make,(val(none,none),(val(int,2),(val(int,1),())))),())),val(bool,false))
+evaluated(eq,(operation(set_make,(val(int,1),(val(int,2),(val(int,1),(val(none,none),()))))),(operation(set_make,(val(none,none),(val(int,2),(val(int,1),())))),())),bad)
+evaluated(set_isin,(val(none,none),(operation(set_make,(val(int,1),(val(int,2),(val(int,1),(val(none,none),()))))),())),val(bool,false))
+evaluated(set_isin,(val(int,3),(operation(set_make,(val(int,1),(val(int,2),(val(int,1),(val(none,none),()))))),())),val(bool,true))
+evaluated(length,(operation(set_make,(variable(bad_arg),(val(int,5),()))),()),val(int,1))
+evaluated(length,(operation(set_make,(variable(bad_arg),(val(int,5),()))),()),val(none,none))

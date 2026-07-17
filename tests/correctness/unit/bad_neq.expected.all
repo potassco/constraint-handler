@@ -1,0 +1,4 @@
+evaluated(neq,(variable(one_case),(variable(one_case),())),val(bool,false))
+evaluated(neq,(variable(one_case),(variable(two_case),())),val(bool,true))
+evaluated(neq,(variable(none_case),(variable(one_case),())),val(bool,true))
+evaluated(neq,(variable(one_case),(variable(bad_case),())),bad)

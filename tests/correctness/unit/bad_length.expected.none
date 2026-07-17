@@ -1,0 +1,6 @@
+evaluated(length,(variable(text_case),()),bad)
+evaluated(length,(variable(text_case),()),val(none,none))
+evaluated(length,(variable(none_case),()),val(int,2))
+evaluated(length,(variable(none_case),()),val(none,none))
+evaluated(length,(variable(bad_case),()),val(int,2))
+evaluated(length,(variable(bad_case),()),val(none,none))

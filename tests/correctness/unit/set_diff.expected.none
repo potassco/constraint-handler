@@ -1,0 +1,6 @@
+evaluated(eq,(operation(diff,(variable(a),(variable(b),()))),(operation(set_make,(val(int,1),(val(none,none),()))),())),val(bool,false))
+evaluated(eq,(operation(diff,(variable(a),(variable(empty),()))),(variable(a),())),val(bool,false))
+evaluated(length,(operation(diff,(variable(empty),(variable(a),()))),()),bad)
+evaluated(length,(operation(diff,(variable(empty),(variable(a),()))),()),val(int,1))
+evaluated(length,(operation(diff,(variable(a),(variable(bad_set),()))),()),val(int,0))
+evaluated(length,(operation(diff,(variable(a),(variable(bad_set),()))),()),val(none,none))

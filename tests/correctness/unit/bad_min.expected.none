@@ -1,0 +1,6 @@
+evaluated(min,(variable(one_case),(variable(two_case),())),bad)
+evaluated(min,(variable(one_case),(variable(two_case),())),val(none,none))
+evaluated(min,(variable(one_case),(variable(none_case),())),val(int,1))
+evaluated(min,(variable(one_case),(variable(none_case),())),val(none,none))
+evaluated(min,(variable(one_case),(variable(bad_case),())),val(int,1))
+evaluated(min,(variable(one_case),(variable(bad_case),())),val(none,none))

@@ -1,0 +1,5 @@
+evaluated(int_div,(variable(i_four),(variable(i_two),())),val(int,2))
+evaluated(int_div,(variable(i_neg),(variable(i_two),())),val(int,-2))
+evaluated(int_div,(variable(i_four),(variable(i_zero),())),bad)
+evaluated(int_div,(variable(i_four),(variable(none_case),())),bad)
+evaluated(int_div,(variable(i_four),(variable(bad_case),())),bad)

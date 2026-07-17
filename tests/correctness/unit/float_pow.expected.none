@@ -1,0 +1,5 @@
+evaluated(pow,(variable(f_large),(variable(i_two),())),bad)
+evaluated(pow,(variable(f_large),(variable(i_two),())),val(none,none))
+evaluated(pow,(variable(f_large),(variable(i_two),())),val(float,float("0.0")))
+evaluated(pow,(variable(f_large),(variable(none_case),())),val(none,none))
+evaluated(pow,(variable(f_large),(variable(bad_case),())),val(none,none))

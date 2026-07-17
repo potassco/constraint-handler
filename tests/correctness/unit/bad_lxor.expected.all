@@ -1,0 +1,4 @@
+evaluated(lxor,(variable(none_case),()),val(bool,false))
+evaluated(lxor,(variable(false_case),(variable(none_case),())),val(bool,false))
+evaluated(lxor,(variable(true_case),(variable(false_case),())),val(bool,true))
+evaluated(lxor,(variable(true_case),(variable(bad_case),())),bad)

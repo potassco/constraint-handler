@@ -1,0 +1,6 @@
+evaluated(sub,(variable(three_case),(variable(two_case),())),bad)
+evaluated(sub,(variable(three_case),(variable(two_case),())),val(none,none))
+evaluated(sub,(variable(three_case),(variable(none_case),())),val(int,1))
+evaluated(sub,(variable(three_case),(variable(none_case),())),val(none,none))
+evaluated(sub,(variable(three_case),(variable(bad_case),())),val(int,1))
+evaluated(sub,(variable(three_case),(variable(bad_case),())),val(none,none))

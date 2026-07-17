@@ -1,0 +1,6 @@
+evaluated(lt,(variable(less_case),(variable(greater_case),())),val(bool,true))
+evaluated(lt,(variable(greater_case),(variable(less_case),())),val(bool,false))
+evaluated(lt,(variable(less_case),(variable(less_case),())),val(bool,false))
+evaluated(lt,(variable(none_case),(variable(greater_case),())),bad)
+evaluated(lt,(variable(less_case),(variable(none_case),())),bad)
+evaluated(lt,(variable(less_case),(variable(bad_case),())),bad)

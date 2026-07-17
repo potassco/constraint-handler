@@ -1,0 +1,6 @@
+evaluated(float_div,(variable(four_case),(variable(two_case),())),bad)
+evaluated(float_div,(variable(four_case),(variable(two_case),())),val(none,none))
+evaluated(float_div,(variable(four_case),(variable(none_case),())),val(float,float("2.0")))
+evaluated(float_div,(variable(four_case),(variable(none_case),())),val(none,none))
+evaluated(float_div,(variable(four_case),(variable(bad_case),())),val(float,float("2.0")))
+evaluated(float_div,(variable(four_case),(variable(bad_case),())),val(none,none))

@@ -1,0 +1,8 @@
+evaluated(leq,(variable(f_small),(variable(i_two),())),val(bool,false))
+evaluated(leq,(variable(f_small),(variable(i_two),())),bad)
+evaluated(leq,(variable(f_small),(variable(i_two),())),val(none,none))
+evaluated(leq,(variable(f_large),(variable(i_two),())),val(bool,true))
+evaluated(leq,(variable(f_large),(variable(i_two),())),bad)
+evaluated(leq,(variable(f_large),(variable(i_two),())),val(none,none))
+evaluated(leq,(variable(f_small),(variable(none_case),())),val(none,none))
+evaluated(leq,(variable(f_small),(variable(bad_case),())),val(none,none))

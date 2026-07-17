@@ -1,0 +1,5 @@
+evaluated(eq,(operation(union,(variable(a),(variable(b),(variable(empty),())))),(operation(set_make,(val(int,1),(val(int,2),(val(none,none),())))),())),val(bool,false))
+evaluated(length,(operation(union,(variable(a),(variable(b),(variable(empty),())))),()),bad)
+evaluated(length,(operation(union,(variable(a),(variable(b),(variable(empty),())))),()),val(int,2))
+evaluated(length,(operation(union,(variable(a),(variable(bad_set),()))),()),val(int,2))
+evaluated(length,(operation(union,(variable(a),(variable(bad_set),()))),()),val(none,none))

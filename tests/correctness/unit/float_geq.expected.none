@@ -1,0 +1,8 @@
+evaluated(geq,(variable(i_two),(variable(f_small),())),val(bool,false))
+evaluated(geq,(variable(i_two),(variable(f_small),())),bad)
+evaluated(geq,(variable(i_two),(variable(f_small),())),val(none,none))
+evaluated(geq,(variable(i_two),(variable(f_large),())),val(bool,true))
+evaluated(geq,(variable(i_two),(variable(f_large),())),bad)
+evaluated(geq,(variable(i_two),(variable(f_large),())),val(none,none))
+evaluated(geq,(variable(f_small),(variable(none_case),())),val(none,none))
+evaluated(geq,(variable(f_small),(variable(bad_case),())),val(none,none))

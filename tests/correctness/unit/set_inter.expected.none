@@ -1,0 +1,5 @@
+evaluated(eq,(operation(inter,(variable(a),(variable(b),()))),(operation(set_make,(val(int,2),(val(none,none),()))),())),val(bool,false))
+evaluated(length,(operation(inter,(variable(a),(variable(empty),()))),()),bad)
+evaluated(length,(operation(inter,(variable(a),(variable(empty),()))),()),val(int,1))
+evaluated(length,(operation(inter,(variable(a),(variable(bad_set),()))),()),val(int,0))
+evaluated(length,(operation(inter,(variable(a),(variable(bad_set),()))),()),val(none,none))

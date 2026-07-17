@@ -1,0 +1,8 @@
+evaluated(lt,(variable(f_small),(variable(i_two),())),val(bool,false))
+evaluated(lt,(variable(f_small),(variable(i_two),())),bad)
+evaluated(lt,(variable(f_small),(variable(i_two),())),val(none,none))
+evaluated(lt,(variable(f_large),(variable(i_two),())),val(bool,true))
+evaluated(lt,(variable(f_large),(variable(i_two),())),bad)
+evaluated(lt,(variable(f_large),(variable(i_two),())),val(none,none))
+evaluated(lt,(variable(f_small),(variable(none_case),())),val(none,none))
+evaluated(lt,(variable(f_small),(variable(bad_case),())),val(none,none))

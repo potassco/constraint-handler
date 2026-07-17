@@ -1,0 +1,4 @@
+evaluated(snot,(variable(false_case),()),val(bool,true))
+evaluated(snot,(variable(true_case),()),val(bool,false))
+evaluated(snot,(variable(none_case),()),val(bool,false))
+evaluated(snot,(variable(bad_case),()),bad)

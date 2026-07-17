@@ -1,0 +1,4 @@
+evaluated(add,(variable(one_case),(variable(two_case),())),bad)
+evaluated(add,(variable(one_case),(variable(two_case),())),val(none,none))
+evaluated(add,(variable(none_case),()),val(none,none))
+evaluated(add,(variable(bad_case),()),val(none,none))

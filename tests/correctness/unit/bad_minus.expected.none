@@ -1,0 +1,6 @@
+evaluated(minus,(variable(two_case),()),bad)
+evaluated(minus,(variable(two_case),()),val(none,none))
+evaluated(minus,(variable(none_case),()),val(int,-2))
+evaluated(minus,(variable(none_case),()),val(none,none))
+evaluated(minus,(variable(bad_case),()),val(int,-2))
+evaluated(minus,(variable(bad_case),()),val(none,none))

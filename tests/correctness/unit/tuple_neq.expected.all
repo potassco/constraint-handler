@@ -1,0 +1,8 @@
+evaluated(neq,(variable(tuple_plain),(variable(tuple_plain_same),())),val(bool,false))
+evaluated(neq,(variable(tuple_plain),(variable(tuple_diff),())),val(bool,true))
+evaluated(neq,(variable(tuple_with_none),(variable(tuple_with_none_same),())),val(bool,false))
+evaluated(neq,(variable(tuple_plain),(variable(tuple_with_none),())),val(bool,true))
+evaluated(neq,(variable(tuple_plain),(variable(none_case),())),val(bool,true))
+evaluated(neq,(variable(none_case),(variable(tuple_plain),())),val(bool,true))
+evaluated(neq,(variable(tuple_plain),(variable(bad_case),())),bad)
+evaluated(neq,(variable(bad_case),(variable(tuple_plain),())),bad)

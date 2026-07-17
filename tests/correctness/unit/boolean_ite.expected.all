@@ -1,0 +1,8 @@
+evaluated(ite,(variable(true_case),(variable(then_int),(variable(else_string),()))),val(int,1))
+evaluated(ite,(variable(false_case),(variable(then_int),(variable(else_string),()))),val(string,"else"))
+evaluated(ite,(variable(none_case),(variable(then_int),(variable(else_string),()))),val(none,none))
+evaluated(ite,(variable(bad_case),(variable(then_int),(variable(else_string),()))),bad)
+evaluated(ite,(variable(true_case),(variable(payload_bad),(variable(else_string),()))),bad)
+evaluated(ite,(variable(false_case),(variable(then_int),(variable(payload_bad),()))),bad)
+evaluated(ite,(variable(true_case),(variable(then_int),(variable(payload_bad),()))),val(int,1))
+evaluated(ite,(variable(false_case),(variable(payload_bad),(variable(else_string),()))),val(string,"else"))

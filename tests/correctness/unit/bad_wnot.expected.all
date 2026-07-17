@@ -1,0 +1,4 @@
+evaluated(wnot,(variable(false_case),()),val(bool,true))
+evaluated(wnot,(variable(true_case),()),val(bool,false))
+evaluated(wnot,(variable(none_case),()),val(bool,true))
+evaluated(wnot,(variable(bad_case),()),bad)

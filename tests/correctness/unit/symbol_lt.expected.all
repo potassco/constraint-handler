@@ -1,0 +1,6 @@
+evaluated(lt,(variable(sym_a),(variable(sym_a),())),val(bool,false))
+evaluated(lt,(variable(sym_a),(variable(sym_b),())),val(bool,true))
+evaluated(lt,(variable(sym_b),(variable(sym_a),())),val(bool,false))
+evaluated(lt,(variable(none_case),(variable(sym_a),())),bad)
+evaluated(lt,(variable(sym_a),(variable(none_case),())),bad)
+evaluated(lt,(variable(sym_a),(variable(bad_case),())),bad)
