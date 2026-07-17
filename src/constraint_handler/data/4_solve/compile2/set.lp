@@ -227,6 +227,9 @@ _neq_sets(Expr1, Expr2) :-
 _set_bad(operation(subset, (Expr1, (Expr2, ())))) :-
     _expression(compile2, operation(subset, (Expr1, (Expr2, ())))),
     not _se_value(Expr2, set).
+_set_bad(operation(subset, (Expr1, (Expr2, ())))) :-
+    _expression(compile2, operation(subset, (Expr1, (Expr2, ())))),
+    not _se_value(Expr1, set).
 
 _not_subset(Expr1, Expr2) :-
     _expression(compile2, operation(subset, (Expr1, (Expr2, ())))),
