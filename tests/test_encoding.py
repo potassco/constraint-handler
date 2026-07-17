@@ -195,8 +195,6 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
-    "datatype/int_vs_other_types_eq_neq",
-    "datatype/int_vs_other_types_order_comparisons",
     "engine/request",
 }
 compile2_skip: set[str] = {
