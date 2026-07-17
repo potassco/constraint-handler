@@ -72,6 +72,8 @@ base_tests = [
     "datatype/float_vs_other_types_eq_neq",
     "datatype/float_vs_other_types_order_comparisons",
     "datatype/int_comparison",
+    "datatype/int_vs_other_types_eq_neq",
+    "datatype/int_vs_other_types_order_comparisons",
     "datatype/int_eq_compound",
     "datatype/ints",
     "datatype/strings",
@@ -193,6 +195,8 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
+    "datatype/int_vs_other_types_eq_neq",
+    "datatype/int_vs_other_types_order_comparisons",
     "engine/request",
 }
 compile2_skip: set[str] = {
