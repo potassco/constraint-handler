@@ -68,6 +68,5 @@ STRUCTURAL_FACT_SPECS: tuple[FlatFactSpec, ...] = (
 
 
 OPERATOR_PROJECTION_SPECS: tuple[OperatorProjectionSpec, ...] = tuple(
-    OperatorProjectionSpec(operator, OPERATOR_SPECS[operator].shapes)
-    for operator in Operator
+    OperatorProjectionSpec(operator, OPERATOR_SPECS[operator].shapes) for operator in Operator
 )

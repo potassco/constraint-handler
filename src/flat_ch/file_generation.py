@@ -1,5 +1,5 @@
-from pathlib import Path
 import re
+from pathlib import Path
 
 from flat_ch.core.domain import FlatFact
 from flat_ch.core.operators import Arity, Operator
@@ -42,6 +42,7 @@ _TEMPLATE_EXPANSIONS = {
 _EXPAND_DIRECTIVE = re.compile(r"^%\s*@expand\s+(\w+)\s*$")
 _END_EXPAND_DIRECTIVE = re.compile(r"^%\s*@endexpand\s*$")
 
+
 def generate_files() -> None:
     if not TEMPLATE_DIR.exists():
         print(f"Error: Template directory not found at: '{TEMPLATE_DIR}'")
@@ -61,18 +62,20 @@ def generate_files() -> None:
     }
     for template_path in template_files:
         base_name = template_path.stem
-        generated_files[f"{base_name}.lp"] = (lambda path=template_path: _generate_from_template(path))
+        generated_files[f"{base_name}.lp"] = lambda path=template_path: _generate_from_template(path)
 
     for file_name, generator_func in generated_files.items():
         lines = generator_func()
         _finish_file(file_name, lines)
 
+
 def _finish_file(file_name: str, lines: list[str]) -> None:
     file_path = GENERATED_DIR / file_name
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    
+
     print(f"[INFO] Successfully generated file at: {file_path}")
+
 
 def _build_header(*content: str) -> list[str]:
     lines = [
@@ -88,6 +91,7 @@ def _build_header(*content: str) -> list[str]:
     lines.extend([HEADER_RULE, ""])
     return lines
 
+
 def _generate_constants() -> list[str]:
     lines = []
     lines.extend(_build_header())
@@ -101,6 +105,7 @@ def _generate_constants() -> list[str]:
 
     return lines
 
+
 def _generate_from_template(template_path: Path) -> list[str]:
     raw_content = template_path.read_text(encoding="utf-8")
     raw_content = _expand_template_blocks(raw_content)
@@ -113,13 +118,15 @@ def _generate_from_template(template_path: Path) -> list[str]:
         f"Generated from: encodings/templates/{template_path.name}",
         "Contains: static and dynamic variants.",
     )
-    lines.extend([
-        "%% STATIC",
-        static_body,
-        "",
-        "%% DYNAMIC",
-        dynamic_body,
-    ])
+    lines.extend(
+        [
+            "%% STATIC",
+            static_body,
+            "",
+            "%% DYNAMIC",
+            dynamic_body,
+        ]
+    )
 
     return lines
 
@@ -164,6 +171,7 @@ def _expand_template_blocks(raw_content: str) -> str:
 
     return "\n".join(expanded_lines)
 
+
 def _generate_flatten() -> list[str]:
     lines = []
     lines.extend(_build_header("Generated from FlatFact and Operator metadata."))
@@ -186,18 +194,28 @@ def _generate_flatten() -> list[str]:
             if op_name not in lazy_ops:
                 lines.append(f"_fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_{op_name}(ID, ARG_1_ID).")
         if allowed & Arity.BINARY:
-            lines.append(f"_fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID) :- _fch_flat(op_{op_name}(ID, ARG_1_ID, ARG_2_ID)).")
+            lines.append(
+                f"_fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID) :- _fch_flat(op_{op_name}(ID, ARG_1_ID, ARG_2_ID))."
+            )
             if op_name not in lazy_ops:
                 lines.append(f"_fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID).")
                 lines.append(f"_fch_op_strict_child(ID, ARG_2_ID) :- _fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID).")
-            
+
         if allowed & Arity.TERNARY:
-            lines.append(f"_fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID) :- _fch_flat(op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID)).")
+            lines.append(
+                f"_fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID) :- _fch_flat(op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID))."
+            )
             if op_name not in lazy_ops:
-                lines.append(f"_fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID).")
-                lines.append(f"_fch_op_strict_child(ID, ARG_2_ID) :- _fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID).")
-                lines.append(f"_fch_op_strict_child(ID, ARG_3_ID) :- _fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID).")
-            
+                lines.append(
+                    f"_fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID)."
+                )
+                lines.append(
+                    f"_fch_op_strict_child(ID, ARG_2_ID) :- _fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID)."
+                )
+                lines.append(
+                    f"_fch_op_strict_child(ID, ARG_3_ID) :- _fch_op_{op_name}(ID, ARG_1_ID, ARG_2_ID, ARG_3_ID)."
+                )
+
         if allowed & Arity.VARIADIC:
             lines.append(f"_fch_op_{op_name}_variadic(ID, ARITY) :- _fch_flat(op_{op_name}_variadic(ID, ARITY)).")
             lines.append(f"_fch_op_{op_name}_arg(ID, INDEX, ARG) :- _fch_flat(op_{op_name}_arg(ID, INDEX, ARG)).")
@@ -206,6 +224,7 @@ def _generate_flatten() -> list[str]:
 
     return lines
 
+
 def _generate_output():
     lines = []
     lines.extend(_build_header())
@@ -213,43 +232,45 @@ def _generate_output():
     for t in Type:
         if t == Type.FAIL:
             continue
-        
+
         type_name = t.name.lower()
         const_name = f"_fch_type_{type_name}_id"
-        
+
         lines.append(f"value(NAME, {type_name}, VALUE) :- ")
         lines.append(f"    _fch_static_expr_val(EXPR_ID, {const_name}, VALUE), ")
         lines.append(f"    _fch_var_def(NAME, EXPR_ID).\n")
-        
+
         lines.append(f"value(NAME, {type_name}, VALUE) :- ")
         lines.append(f"    _fch_static_expr_val(EXPR_ID, {const_name}, VALUE), ")
         lines.append(f"    _fch_dynamic_var_def(NAME, EXPR_ID).\n")
-        
+
         lines.append(f"value(NAME, {type_name}, VALUE) :- ")
         lines.append(f"    _fch_dynamic_expr_val(EXPR_ID, {const_name}, VALUE), ")
         lines.append(f"    _fch_var_def(NAME, EXPR_ID).\n")
-        
+
         lines.append(f"value(NAME, {type_name}, VALUE) :- ")
         lines.append(f"    _fch_dynamic_expr_val(EXPR_ID, {const_name}, VALUE), ")
         lines.append(f"    _fch_dynamic_var_def(NAME, EXPR_ID).\n")
 
-    lines.extend([
-        "%% =============================================================================",
-        "%% SET MEMBERS",
-        "%% ============================================================================="
-    ])
-    
+    lines.extend(
+        [
+            "%% =============================================================================",
+            "%% SET MEMBERS",
+            "%% =============================================================================",
+        ]
+    )
+
     for t in Type:
         if t in (Type.FAIL, Type.SET, Type.DICT):
             continue
-            
+
         type_name = t.name.lower()
         const_name = f"_fch_type_{type_name}_id"
-        
+
         lines.append(f"set_member(NAME, {type_name}, VAL) :- ")
         lines.append(f"    _fch_set_decl(NAME), ")
         lines.append(f"    _fch_set_member(NAME, {const_name}, VAL).\n")
-        
+
         lines.append(f"set_member(VAR_NAME, {type_name}, VAL) :- ")
         lines.append(f"    _fch_var_def(VAR_NAME, TARGET_ID), ")
         lines.append(f"    _fch_set_member(TARGET_ID, {const_name}, VAL).\n")

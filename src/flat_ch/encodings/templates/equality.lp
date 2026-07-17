@@ -19,11 +19,11 @@ _fch_template_neq_right_val(ID, TYPE, VAL) :-
     _fch_template_expr_val(A2, TYPE, VAL).
 
 % The same identical structural references are trivially equal.
-_fch_template_expr_val(ID, _fch_type_bool_id, true) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
     _fch_op_eq(ID, VALUE_ID, VALUE_ID).
 
 % The same identical structural references are trivially NOT unequal.
-_fch_template_expr_val(ID, _fch_type_bool_id, false) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
     _fch_op_neq(ID, VALUE_ID, VALUE_ID).
 
 % The same source variables are trivially equal.
@@ -41,21 +41,21 @@ _fch_template_expr_val(ID, _fch_type_bool_id, false) :-
 % =============================================================================
 
 % References that evaluate to the same value are equal.
-_fch_template_expr_val(ID, _fch_type_bool_id, true) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
     _fch_op_eq(ID, A1, A2),
     not _fch_same_source_binary(ID),
     _fch_template_eq_left_val(ID, VAL_TYPE_ID, VAL),
     _fch_template_eq_right_val(ID, VAL_TYPE_ID, VAL).
 
 % References that evaluate to the same value are NOT unequal.
-_fch_template_expr_val(ID, _fch_type_bool_id, false) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
     _fch_op_neq(ID, A1, A2),
     not _fch_same_source_binary(ID),
     _fch_template_neq_left_val(ID, VAL_TYPE_ID, VAL),
     _fch_template_neq_right_val(ID, VAL_TYPE_ID, VAL).
 
 % References that evaluate to different values are not equal.
-_fch_template_expr_val(ID, _fch_type_bool_id, false) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
     _fch_op_eq(ID, A1, A2),
     not _fch_same_source_binary(ID),
     _fch_template_eq_left_val(ID, VAL_TYPE_ID, VAL_1),
@@ -64,7 +64,7 @@ _fch_template_expr_val(ID, _fch_type_bool_id, false) :-
     VAL_TYPE_ID != _fch_type_set_id.
 
 % References that evaluate to different values are unequal.
-_fch_template_expr_val(ID, _fch_type_bool_id, true) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
     _fch_op_neq(ID, A1, A2),
     not _fch_same_source_binary(ID),
     _fch_template_neq_left_val(ID, VAL_TYPE_ID, VAL_1),
