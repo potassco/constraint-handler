@@ -1,15 +1,15 @@
-% 
+%
 % This module contains the public facing API.
-% 
+%
 
 % All predicates defined here are intended to be used directly by external users. To differentiate them
 % from internal implementation details, all internal predicates are prefixed with '_fch_' and should not
 % be used outside of the internal encoding modules.
 %
-% This also means that this is the only file that should contain unprefixed predicates! 
+% This also means that this is the only file that should contain unprefixed predicates!
 %
-% For output predicates, this is the only file that should contain rules that derive unprefixed predicates. 
-% For input predicates, this is the only file that should contain rules that consume unprefixed predicates. 
+% For output predicates, this is the only file that should contain rules that derive unprefixed predicates.
+% For input predicates, this is the only file that should contain rules that consume unprefixed predicates.
 
 % =============================================================================
 % SPECIAL INPUT
@@ -18,7 +18,10 @@
 % But right now I try to eliminate them via SSA.
 % =============================================================================
 #defined execution_declare/4.
-_fch_ssa(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
+#defined execution_run/1.
+_fch_execution_run(NAME) :- execution_run(NAME).
+_fch_ssa(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT)) :-
+        execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
 
 % =============================================================================
 % INPUT
@@ -30,7 +33,7 @@ Defines a variable by associating it with a specific expression that can be eval
 
 Args:
  - Name: The unique identifier for the variable being defined.
- - Expression: The expression that computes the variable's value, which can include operations, 
+ - Expression: The expression that computes the variable's value, which can include operations,
     references to other variables, or literal values.
 *%
 #defined variable_define/2.
@@ -67,11 +70,10 @@ Args:
 *%
 #defined variable_declareOptional/1.
 _fch_input(variable_domain(NAME, val(none, none))) :- variable_declareOptional(NAME).
-_fch_input(variable_declare(NAME)) :- variable_declareOptional(NAME).
 
 %*! ensure(Expression)
 
-Defines an anonymous boolean constraint that must be satisfied for the solution to be valid. 
+Defines an anonymous boolean constraint that must be satisfied for the solution to be valid.
 
 Args:
  - Expression: A boolean expression that represents the constraint to be enforced.
@@ -81,7 +83,7 @@ _fch_input(ensure(__anonymous, EXPR))    :- ensure(EXPR).
 
 %*! ensure(Name, Expression)
 
-Defines a named boolean constraint that must be satisfied for the solution to be valid. 
+Defines a named boolean constraint that must be satisfied for the solution to be valid.
 The expression should evaluate to true for the constraint to hold.
 
 Args:
