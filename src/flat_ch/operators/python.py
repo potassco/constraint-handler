@@ -1,13 +1,16 @@
 import ast
-import itertools
 import hashlib
+import itertools
 import math
 from types import CodeType
 from typing import Any, Dict, List
-from clingo import Symbol
 
-from flat_ch.core.types import Type
+from clingo import Symbol
+from clingo.symbol import SymbolType
+
 from flat_ch.core.serialization import clingo_to_python, python_to_clingo
+from flat_ch.core.types import Type
+
 
 class FailIntegrity(Exception):
     pass
@@ -21,6 +24,7 @@ def set_default_globals(globals_map: Dict[str, Any]) -> None:
     DEFAULT_GLOBALS["FailIntegrity"] = FailIntegrity
     DEFAULT_GLOBALS["math"] = math
     DEFAULT_GLOBALS.update(globals_map)
+
 
 class PythonIOVisitor(ast.NodeVisitor):
     def __init__(self):
@@ -39,6 +43,7 @@ class PythonIOVisitor(ast.NodeVisitor):
             self.inputs.add(node.target.id)
             self.outputs.add(node.target.id)
         self.visit(node.value)
+
 
 def infer_python_io(script_payload: str) -> tuple[list[str], list[str]]:
     """
@@ -59,6 +64,7 @@ class PythonProgram:
     target: str
     inputs: dict[int, list[str]]
 
+
 class PythonRegistry:
     def __init__(self):
         self._program_id = itertools.count()
@@ -75,16 +81,16 @@ class PythonRegistry:
         Returns a unique program_id.
         """
         semantic_hash = hashlib.md5(f"{script_payload}::{target_output}".encode()).hexdigest()
-        
+
         if semantic_hash in self._lookup:
             program_id = self._lookup[semantic_hash]
             self._context_stack.append(program_id)
             return program_id
-            
+
         program_id = next(self._program_id)
-        
+
         compiled_code = compile(script_payload, f"<py_macro_{program_id}>", "exec")
-        
+
         program = PythonProgram()
         program.code = compiled_code
         program.target = target_output
@@ -95,7 +101,7 @@ class PythonRegistry:
         self._context_stack.append(program_id)
         return program_id
 
-    def add_input_to_current(self, variable_name:str, expression_id:int) -> None:
+    def add_input_to_current(self, variable_name: str, expression_id: int) -> None:
         if self._context_stack:
             current_program = self._context_stack[-1]
             program = self._programs[current_program]
@@ -105,12 +111,11 @@ class PythonRegistry:
         if self._context_stack:
             current_program = self._context_stack.pop()
             self._expr_to_program[expr_id] = current_program
-    
+
     def execute(self, operation_id_symbol: Symbol, argument_list) -> Symbol:
         operation_id = operation_id_symbol.number
         program_id = self._expr_to_program[operation_id]
         program = self._programs[program_id]
-
 
         local_scope = {}
         current_node = argument_list
@@ -118,34 +123,43 @@ class PythonRegistry:
         while current_node and hasattr(current_node, "arguments") and len(current_node.arguments) == 2:
             head = current_node.arguments[0]
             current_node = current_node.arguments[1]
-            
+
             arg_expr_id = head.arguments[0].number
-            
-            arg_type, pure_val = clingo_to_python(head.arguments[1])
+
+            typed_value = head.arguments[1]
+            arg_type = Type(typed_value.arguments[0].number)
+            if arg_type == Type.FAIL:
+                fail_value = typed_value.arguments[1]
+                pure_val = fail_value.string if fail_value.type == SymbolType.String else str(fail_value)
+                return python_to_clingo(Type.FAIL, pure_val)
+
+            arg_type, pure_val = clingo_to_python(typed_value)
             if arg_type == Type.FAIL:
                 return python_to_clingo(Type.FAIL, pure_val)
-            
+
             if arg_expr_id in program.inputs:
                 for var_name in program.inputs[arg_expr_id]:
                     local_scope[var_name] = pure_val
-        
+
         result_type, result_value = self._execute_program(program, local_scope)
         result = python_to_clingo(result_type, result_value)
         return result
-    
-    def execute_current_directly(self, constant_args: list[tuple[Type, Any]], argument_ids: list[int]) -> tuple[Type, Any]:
+
+    def execute_current_directly(
+        self, constant_args: list[tuple[Type, Any]], argument_ids: list[int]
+    ) -> tuple[Type, Any]:
         """
         Executes the current active program context directly and removes it from the parsing stack.
 
-        This is used during constant folding to remove the Python operation from the expression tree 
+        This is used during constant folding to remove the Python operation from the expression tree
         and replace it with its resulting value.
         """
         if not self._context_stack:
             raise IndexError("No active Python program context to execute directly.")
-            
+
         program_id = self._context_stack.pop()
         program = self._programs[program_id]
-        
+
         local_scope = {}
 
         for arg_id, (arg_type, pure_val) in zip(argument_ids, constant_args):
@@ -156,7 +170,7 @@ class PythonRegistry:
                     local_scope[var_name] = pure_val
 
         return self._execute_program(program, local_scope)
-    
+
     def _execute_program(self, program: PythonProgram, local_scope: Dict[str, Any]) -> tuple[Type, Any]:
         try:
             exec(program.code, dict(DEFAULT_GLOBALS), local_scope)

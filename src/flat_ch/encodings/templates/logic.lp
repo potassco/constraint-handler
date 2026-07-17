@@ -31,6 +31,15 @@ _fch_template_expr_val(ID, _fch_type_none_id, none) :-
     _fch_op_if(ID, CONDITION_ID, _),
     _fch_template_expr_val(CONDITION_ID, _fch_type_none_id, none).
 
+_fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
+    _fch_op_if(ID, CONDITION_ID, _),
+    _fch_dynamic_expr_val(CONDITION_ID, _fch_type_fail_id, VALUE).
+
+_fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
+    _fch_op_if(ID, CONDITION_ID, THEN_ID),
+    _fch_dynamic_expr_val(CONDITION_ID, _fch_type_bool_id, true),
+    _fch_dynamic_expr_val(THEN_ID, _fch_type_fail_id, VALUE).
+
 % =============================================================================
 % ITE (Ternary Shape)
 % =============================================================================
@@ -63,17 +72,31 @@ _fch_template_expr_val(ID, _fch_type_none_id, none) :-
     _fch_op_ite(ID, CONDITION_ID, _, _),
     _fch_template_expr_val(CONDITION_ID, _fch_type_none_id, none).
 
+_fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
+    _fch_op_ite(ID, CONDITION_ID, _, _),
+    _fch_dynamic_expr_val(CONDITION_ID, _fch_type_fail_id, VALUE).
+
+_fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
+    _fch_op_ite(ID, CONDITION_ID, THEN_ID, _),
+    _fch_dynamic_expr_val(CONDITION_ID, _fch_type_bool_id, true),
+    _fch_dynamic_expr_val(THEN_ID, _fch_type_fail_id, VALUE).
+
+_fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
+    _fch_op_ite(ID, CONDITION_ID, _, ELSE_ID),
+    _fch_dynamic_expr_val(CONDITION_ID, _fch_type_bool_id, false),
+    _fch_dynamic_expr_val(ELSE_ID, _fch_type_fail_id, VALUE).
+
 % =============================================================================
 % LIMP
 % =============================================================================
 
 % If the first argument is `false`, the result is always `true`.
-_fch_template_expr_val(ID, _fch_type_bool_id, true) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
     _fch_op_limp(ID, A1, _),
     _fch_template_expr_val(A1, _fch_type_bool_id, false).
 
 % If the second argument is `true`, the result is always `true`.
-_fch_template_expr_val(ID, _fch_type_bool_id, true) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
     _fch_op_limp(ID, _, A2),
     _fch_template_expr_val(A2, _fch_type_bool_id, true).
 
@@ -86,7 +109,7 @@ _fch_template_limp_left_true(ID, A2) :-
     _fch_op_limp(ID, A1, A2),
     _fch_template_expr_val(A1, _fch_type_bool_id, true).
 
-_fch_template_expr_val(ID, _fch_type_bool_id, false) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
     _fch_template_limp_left_true(ID, A2),
     _fch_template_expr_val(A2, _fch_type_bool_id, false).
 
@@ -94,6 +117,75 @@ _fch_template_expr_val(ID, _fch_type_none_id, none) :-
     _fch_op_limp(ID, _, _),
     not _fch_template_has_true(ID),
     not _fch_template_has_false(ID).
+
+% =============================================================================
+% LEQV
+% =============================================================================
+
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
+    _fch_op_leqv(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_bool_id, true),
+    _fch_template_expr_val(A2, _fch_type_bool_id, true).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
+    _fch_op_leqv(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_bool_id, false),
+    _fch_template_expr_val(A2, _fch_type_bool_id, false).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
+    _fch_op_leqv(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_bool_id, true),
+    _fch_template_expr_val(A2, _fch_type_bool_id, false).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
+    _fch_op_leqv(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_bool_id, false),
+    _fch_template_expr_val(A2, _fch_type_bool_id, true).
+
+_fch_template_expr_val(ID, _fch_type_none_id, none) :-
+    _fch_op_leqv(ID, A1, _),
+    _fch_template_expr_val(A1, _fch_type_none_id, none).
+
+_fch_template_expr_val(ID, _fch_type_none_id, none) :-
+    _fch_op_leqv(ID, _, A2),
+    _fch_template_expr_val(A2, _fch_type_none_id, none).
+
+_fch_template_leqv_prefix(ID, 0, true) :-
+    _fch_op_leqv_variadic(ID, _).
+
+_fch_template_leqv_prefix(ID, NEXT, true) :-
+    _fch_template_leqv_prefix(ID, INDEX, true),
+    _fch_op_leqv_arg(ID, NEXT, A),
+    NEXT = INDEX + 1,
+    _fch_template_expr_val(A, _fch_type_bool_id, true).
+
+_fch_template_leqv_prefix(ID, NEXT, false) :-
+    _fch_template_leqv_prefix(ID, INDEX, true),
+    _fch_op_leqv_arg(ID, NEXT, A),
+    NEXT = INDEX + 1,
+    _fch_template_expr_val(A, _fch_type_bool_id, false).
+
+_fch_template_leqv_prefix(ID, NEXT, true) :-
+    _fch_template_leqv_prefix(ID, INDEX, false),
+    _fch_op_leqv_arg(ID, NEXT, A),
+    NEXT = INDEX + 1,
+    _fch_template_expr_val(A, _fch_type_bool_id, false).
+
+_fch_template_leqv_prefix(ID, NEXT, false) :-
+    _fch_template_leqv_prefix(ID, INDEX, false),
+    _fch_op_leqv_arg(ID, NEXT, A),
+    NEXT = INDEX + 1,
+    _fch_template_expr_val(A, _fch_type_bool_id, true).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, VALUE) :-
+    _fch_op_leqv_variadic(ID, LEN),
+    LEN = #count { INDEX : _fch_op_leqv_arg(ID, INDEX, A), _fch_template_expr_val(A, _fch_type_bool_id, _) },
+    _fch_template_leqv_prefix(ID, LEN, VALUE).
+
+_fch_template_expr_val(ID, _fch_type_none_id, none) :-
+    _fch_op_leqv_variadic(ID, LEN),
+    LEN > #count { INDEX : _fch_op_leqv_arg(ID, INDEX, A), _fch_template_expr_val(A, _fch_type_bool_id, _) },
+    0 < #count { INDEX : _fch_op_leqv_arg(ID, INDEX, A), _fch_template_expr_val(A, _fch_type_none_id, none) }.
 
 % =============================================================================
 % LNOT
@@ -112,15 +204,116 @@ _fch_template_expr_val(ID, _fch_type_none_id, none) :-
     _fch_template_expr_val(A1, _fch_type_none_id, none).
 
 % =============================================================================
+% SNOT
+% =============================================================================
+
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
+    _fch_op_snot(ID, A1),
+    _fch_template_expr_val(A1, _fch_type_bool_id, false).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
+    _fch_op_snot(ID, A1),
+    _fch_template_expr_val(A1, _fch_type_bool_id, true).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
+    _fch_op_snot(ID, A1),
+    _fch_template_expr_val(A1, _fch_type_none_id, none).
+
+% =============================================================================
+% WNOT
+% =============================================================================
+
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
+    _fch_op_wnot(ID, A1),
+    _fch_template_expr_val(A1, _fch_type_bool_id, false).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
+    _fch_op_wnot(ID, A1),
+    _fch_template_expr_val(A1, _fch_type_none_id, none).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
+    _fch_op_wnot(ID, A1),
+    _fch_template_expr_val(A1, _fch_type_bool_id, true).
+
+% =============================================================================
+% LXOR
+% =============================================================================
+
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
+    _fch_op_lxor(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_bool_id, true),
+    _fch_template_expr_val(A2, _fch_type_bool_id, false).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
+    _fch_op_lxor(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_bool_id, false),
+    _fch_template_expr_val(A2, _fch_type_bool_id, true).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
+    _fch_op_lxor(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_bool_id, true),
+    _fch_template_expr_val(A2, _fch_type_bool_id, true).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
+    _fch_op_lxor(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_bool_id, false),
+    _fch_template_expr_val(A2, _fch_type_bool_id, false).
+
+_fch_template_expr_val(ID, _fch_type_none_id, none) :-
+    _fch_op_lxor(ID, A1, _),
+    _fch_template_expr_val(A1, _fch_type_none_id, none).
+
+_fch_template_expr_val(ID, _fch_type_none_id, none) :-
+    _fch_op_lxor(ID, _, A2),
+    _fch_template_expr_val(A2, _fch_type_none_id, none).
+
+_fch_template_lxor_prefix(ID, 0, false) :-
+    _fch_op_lxor_variadic(ID, _).
+
+_fch_template_lxor_prefix(ID, NEXT, false) :-
+    _fch_template_lxor_prefix(ID, INDEX, false),
+    _fch_op_lxor_arg(ID, NEXT, A),
+    NEXT = INDEX + 1,
+    _fch_template_expr_val(A, _fch_type_bool_id, false).
+
+_fch_template_lxor_prefix(ID, NEXT, true) :-
+    _fch_template_lxor_prefix(ID, INDEX, false),
+    _fch_op_lxor_arg(ID, NEXT, A),
+    NEXT = INDEX + 1,
+    _fch_template_expr_val(A, _fch_type_bool_id, true).
+
+_fch_template_lxor_prefix(ID, NEXT, true) :-
+    _fch_template_lxor_prefix(ID, INDEX, true),
+    _fch_op_lxor_arg(ID, NEXT, A),
+    NEXT = INDEX + 1,
+    _fch_template_expr_val(A, _fch_type_bool_id, false).
+
+_fch_template_lxor_prefix(ID, NEXT, false) :-
+    _fch_template_lxor_prefix(ID, INDEX, true),
+    _fch_op_lxor_arg(ID, NEXT, A),
+    NEXT = INDEX + 1,
+    _fch_template_expr_val(A, _fch_type_bool_id, true).
+
+_fch_template_expr_val(ID, _fch_type_bool_id, VALUE) :-
+    _fch_op_lxor_variadic(ID, LEN),
+    LEN = #count { INDEX : _fch_op_lxor_arg(ID, INDEX, A), _fch_template_expr_val(A, _fch_type_bool_id, _) },
+    _fch_template_lxor_prefix(ID, LEN, VALUE).
+
+_fch_template_expr_val(ID, _fch_type_none_id, none) :-
+    _fch_op_lxor_variadic(ID, LEN),
+    LEN > #count { INDEX : _fch_op_lxor_arg(ID, INDEX, A), _fch_template_expr_val(A, _fch_type_bool_id, _) },
+    0 < #count { INDEX : _fch_op_lxor_arg(ID, INDEX, A), _fch_template_expr_val(A, _fch_type_none_id, none) }.
+
+% =============================================================================
 % DISJ
 % =============================================================================
 
-_fch_template_expr_val(ID, _fch_type_bool_id, true) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
     _fch_op_disj_variadic(ID, _),
     _fch_op_disj_arg(ID, _, A),
     _fch_template_expr_val(A, _fch_type_bool_id, true).
 
-_fch_template_expr_val(ID, _fch_type_bool_id, false) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
     _fch_op_disj_variadic(ID, _),
     #false : _fch_op_disj_arg(ID, _, A), not _fch_template_expr_val(A, _fch_type_bool_id, false).
 
@@ -135,12 +328,12 @@ _fch_template_expr_val(ID, _fch_type_none_id, none) :-
 % CONJ
 % =============================================================================
 
-_fch_template_expr_val(ID, _fch_type_bool_id, false) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, false) :-
     _fch_op_conj_variadic(ID, _),
     _fch_op_conj_arg(ID, _, A),
     _fch_template_expr_val(A, _fch_type_bool_id, false).
 
-_fch_template_expr_val(ID, _fch_type_bool_id, true) :- 
+_fch_template_expr_val(ID, _fch_type_bool_id, true) :-
     _fch_op_conj_variadic(ID, _),
     #false : _fch_op_conj_arg(ID, _, A), not _fch_template_expr_val(A, _fch_type_bool_id, true).
 
