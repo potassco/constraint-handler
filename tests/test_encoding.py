@@ -194,8 +194,6 @@ other_tests = [
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "engine/request",
-    "datatype/float_vs_other_types_order_comparisons",
-    "datatype/float_vs_other_types_eq_neq",
 }
 compile2_skip: set[str] = {
     "engine/request_mult",  # mixed engines
@@ -348,7 +346,6 @@ choice_statistics_xfail: set[str] = {
     "datatype/bool_equivalence_bad",
     "datatype/bool_evaluate",
     "datatype/bool_negation",
-    "datatype/float_equality",
     "datatype/strings",
     "error/recovery_ensure",
     "execution/change",
