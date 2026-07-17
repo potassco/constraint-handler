@@ -30,6 +30,7 @@ operator_declare(ite,(bool,(T1,(T2,()))),(T1;T2)) :- _type(T1), _type(T2).
 % equality
 operator_declare((eq;neq),(T,(T,())),bool) :- _type_extensionalEquality(T).
 operator_declare((eq;neq),(T1,(T2,())),bool) :- T1 = (int;float), T2 = (int;float), T1 != T2.
+operator_declare((eq;neq),((T1,(T2,()));(T2,(T1,()))),bool) :- T1 = (int;float), _type(T2), T2 != int, T2 != float, T2 != none.
 operator_declare((leq;lt;geq;gt),(T,(T,())),bool) :- _type_extensionalOrder(T).
 
 % float
