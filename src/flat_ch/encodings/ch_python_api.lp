@@ -1,7 +1,7 @@
 #script (python)
-from clingo import Function, Number
+from clingo import Function, Number, String
 
-from flat_ch.ch_flattener import CHFlattener
+from flat_ch.ch_flattener import CHFlattener, normalize_execution_declare
 from flat_ch.ch_ssa import CHSSA
 from flat_ch.evaluator import evaluate_operation
 from flat_ch.operators.python import PythonRegistry
@@ -42,6 +42,27 @@ def fch_scaled_float_to_int(value, precision):
     return Number(int(numeric * precision.number // 1))
 
 
+def fch_scaled_int_to_float(value, precision):
+    numeric = value.number / precision.number
+    return String(repr(numeric))
+
+
+def fch_unscale_int(value, precision):
+    return Number(int(value.number / precision.number))
+
+
 def fch_ssa(clingo_term):
     return _global_ssa.apply(clingo_term)
+
+
+def fch_execution_inputs(clingo_term):
+    normalized_execution = normalize_execution_declare(clingo_term)
+    name_symbol, _, inputs_tuple, outputs_tuple = normalized_execution.arguments
+    return [
+        Function("execution_input_decl", [name_symbol, input_symbol])
+        for input_symbol in inputs_tuple.arguments
+    ] + [
+        Function("execution_output_decl", [name_symbol, output_symbol])
+        for output_symbol in outputs_tuple.arguments
+    ]
 #end.

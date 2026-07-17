@@ -6,6 +6,7 @@ import clingo.script
 
 from flat_ch.operators.python import set_default_globals
 
+
 def add_to_control(control: clingo.Control, globals_map: Dict[str, Any], api: str = "flat"):
     if api == "ch":
         from flat_ch import ch_api
@@ -19,7 +20,7 @@ def add_to_control(control: clingo.Control, globals_map: Dict[str, Any], api: st
 
     set_default_globals(globals_map)
 
-    modules= [
+    modules = [
         "encodings/api",
         "encodings/python",
         "encodings/python_api",
@@ -27,13 +28,13 @@ def add_to_control(control: clingo.Control, globals_map: Dict[str, Any], api: st
         "encodings/aliasing",
         "encodings/solve",
         "encodings/set",
-        "encodings/dict"
+        "encodings/dict",
     ]
 
     for mod in modules:
         file = files("flat_ch").joinpath(f"{mod}.lp")
         control.load(str(file))
-    
+
     generated_dir = files("flat_ch").joinpath("encodings/generated")
     for file in generated_dir.glob("*.lp"):
         control.load(str(file))

@@ -5,6 +5,7 @@ class Type(IntEnum):
     """
     Supported types.
     """
+
     NONE = auto()
     INT = auto()
     FLOAT = auto()

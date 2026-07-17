@@ -17,7 +17,7 @@ _global_flattener = Flattener(_global_python_registry, constant_folding=False)
 """
 The global Flattener instance used for turning nested expressions into a flat representation.
 
-This is loaded here in order to give each clingo control a separate flattener. 
+This is loaded here in order to give each clingo control a separate flattener.
 """
 
 
@@ -51,8 +51,8 @@ def fch_ssa(clingo_term):
     ssa_done = _global_ssa.apply(clingo_term)
 
     flatten_done = [
-        fact 
-        for term in ssa_done 
+        fact
+        for term in ssa_done
         for fact in _global_flattener.flatten(term)
     ]
     return flatten_done
