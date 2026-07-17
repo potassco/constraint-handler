@@ -1,0 +1,2 @@
+evaluated(max,(variable(two),(variable(ten),())),val(int,10))
+evaluated(min,(variable(two),(variable(ten),())),val(int,2))

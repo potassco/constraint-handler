@@ -1,0 +1,2 @@
+value(eq_ok,val(bool,true))
+value(neq_ok,val(bool,false))
