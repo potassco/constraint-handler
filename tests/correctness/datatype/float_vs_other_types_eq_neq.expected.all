@@ -1,0 +1,8 @@
+evaluated(eq,(variable(f),(variable(n),())),val(bool,false))
+evaluated(eq,(variable(n),(variable(f),())),val(bool,false))
+evaluated(neq,(variable(n),(variable(f),())),val(bool,true))
+
+evaluated(eq,(variable(f),(variable(s),())),val(bool,false))
+evaluated(eq,(variable(s),(variable(f),())),val(bool,false))
+evaluated(neq,(variable(f),(variable(s),())),val(bool,true))
+evaluated(neq,(variable(s),(variable(f),())),val(bool,true))

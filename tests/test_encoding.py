@@ -69,6 +69,8 @@ base_tests = [
     "datatype/float_int_comparison",
     "datatype/floats",
     "datatype/float_rounding",
+    "datatype/float_vs_other_types_eq_neq",
+    "datatype/float_vs_other_types_order_comparisons",
     "datatype/int_comparison",
     "datatype/int_eq_compound",
     "datatype/ints",
@@ -192,6 +194,8 @@ other_tests = [
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "engine/request",
+    "datatype/float_vs_other_types_order_comparisons",
+    "datatype/float_vs_other_types_eq_neq",
 }
 compile2_skip: set[str] = {
     "engine/request_mult",  # mixed engines
