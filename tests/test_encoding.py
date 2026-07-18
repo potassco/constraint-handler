@@ -189,10 +189,11 @@ base_tests = [
     "type/warning/python",
     "type/warning/python_unsupported_type",
     "type/warning/type",
-    "variable/parallel_declaration",
+    "variable/dynamic_type",
     "variable/flexible_domain",
-    "variable/missing_domain_bad",
     "variable/main",
+    "variable/missing_domain_bad",
+    "variable/parallel_declaration",
     "variable/same_val_multi_expr",
     "warning/bad",
     "warning/bad_interface",
@@ -227,6 +228,7 @@ compile_xfail: set[str] = {
 compile2_skip: set[str] = {
     "engine/request_mult",  # mixed engines
     "execution/python_integrity",  # non static input
+    "variable/dynamic_type",  # non static input
 }
 compile2_xfail: set[str] = {
     "datatype/bool/conj_disj_mixed",
@@ -417,6 +419,7 @@ choice_statistics_xfail: set[str] = {
     "variable/flexible_domain",
     "variable/main",
     "variable/same_val_multi_expr",
+    "variable/dynamic_type",
     "warning/bad",
     "warning/fake_forbid",
     "type/warning/python",
@@ -450,6 +453,7 @@ tightness_statistics_xfail: set[str] = {
     "optimization/multimap_labeled_values",
     "optimization/multimap_int",
     "optimization/priority",
+    "variable/dynamic_type",
 }
 
 
