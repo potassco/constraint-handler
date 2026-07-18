@@ -1,7 +1,3 @@
-type_variable(raw,int)
-type_variable(raw,bool)
-type_variable(extract_out,int)
-type_variable(extract_out,bool)
 type_variable(execution_input(py_nd,"x"),int)
 type_variable(execution_input(py_nd,"x"),string)
 type_variable(execution_output(py_nd,"y"),int)
