@@ -1,0 +1,7 @@
+value(lt_bad,bad)
+evaluated(conj,(val(bool,true),(variable(lt_bad),(val(none,none),()))),bad)
+evaluated(conj,(val(bool,true),(variable(lt_bad),(val(bool,false),(val(none,none),())))),val(bool,false))
+evaluated(conj,(val(bool,true),(val(none,none),(val(bool,true),()))),val(none,none))
+evaluated(disj,(val(bool,false),(variable(lt_bad),(val(none,none),()))),bad)
+evaluated(disj,(val(bool,false),(variable(lt_bad),(val(bool,true),(val(none,none),())))),val(bool,true))
+evaluated(disj,(val(bool,false),(val(none,none),(val(bool,false),(val(none,none),())))),val(bool,false))

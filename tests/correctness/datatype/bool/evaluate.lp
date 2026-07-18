@@ -1,8 +1,9 @@
+%%% bool_evaluate integration checks (success and failure forms)
+
 variable_declare(b,boolDomain).
 variable_declare(c,boolDomain).
 
 bool_evaluate(operation(lxor,(variable(b),(variable(c),())))).
-%variable_define(res,operation(lxor,(variable(b),(variable(c),())))).
 bool_evaluate(variable(c)).
 bool_evaluate(dummy,variable(b)).
 ensure(dammy,variable(c)).

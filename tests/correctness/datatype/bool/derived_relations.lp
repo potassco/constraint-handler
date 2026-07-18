@@ -1,20 +1,4 @@
-%% x = true or false
-%% y = true or false
-
-%% f = (x | y) & (-x | -y) & (-x | y)
-%% t = x xor y
-%% z = if x then y else -y
-
-%%% any:
-%%% x     not x     y     not y     f     not f     t     not t     z     not z
-%%% f->-y     -(f->-y)
-
-%%% all:
-%%% f->-x
-%%% f<->-x&y
-%%% z==(x<->y)
-%%% z!=t
-%%% not (f->-y)&f)
+%%% boolean derived relation checks over x/y/f/t/z
 
 variable_declare(x,boolDomain).
 variable_declare(y,boolDomain).

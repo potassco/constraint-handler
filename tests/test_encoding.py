@@ -61,10 +61,24 @@ base_tests = [
     "core/statement_python_type_inference",
     "core/non_deterministic_python_type_inference",
     "core/unprojected_optional_equality",
-    "datatype/booleans_xyftz",
-    "datatype/bool_equivalence_bad",
-    "datatype/bool_evaluate",
-    "datatype/bool_negation",
+    "datatype/bool/conj_disj",
+    "datatype/bool/conj_disj_bad",
+    "datatype/bool/conj_disj_none",
+    "datatype/bool/conj_disj_variadic",
+    "datatype/bool/conj_disj_mixed",
+    "datatype/bool/derived_relations",
+    "datatype/bool/equivalence_bad",
+    "datatype/bool/evaluate",
+    "datatype/bool/implication_bad",
+    "datatype/bool/negation_logical_basic",
+    "datatype/bool/negation_logical_none",
+    "datatype/bool/negation_logical_bad",
+    "datatype/bool/negation_strong_basic",
+    "datatype/bool/negation_strong_none",
+    "datatype/bool/negation_strong_bad",
+    "datatype/bool/negation_weak_basic",
+    "datatype/bool/negation_weak_none",
+    "datatype/bool/negation_weak_bad",
     "datatype/float/equality",
     "datatype/float/division",
     "datatype/float/extrema",
@@ -206,6 +220,8 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
+    "datatype/bool/conj_disj_none",
+    "datatype/bool/conj_disj_mixed",
     "engine/request",
 }
 compile2_skip: set[str] = {
@@ -213,6 +229,7 @@ compile2_skip: set[str] = {
     "execution/python_integrity",  # non static input
 }
 compile2_xfail: set[str] = {
+    "datatype/bool/conj_disj_mixed",
     "engine/request",
     "expression/python_extract",
     "optimization/multimap_bool",
@@ -249,6 +266,7 @@ ground_skip: set[str] = {
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
 }
 ground_xfail: set[str] = {
+    "datatype/bool/conj_disj_mixed",
     "core/reasoning_modes",
     "core/set_execution_input_alias",
     "engine/request",
@@ -275,6 +293,7 @@ propagator_skip: set[str] = {
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
 }
 propagator_xfail: set[str] = {
+    "datatype/bool/conj_disj_mixed",
     "engine/request",
     "engine/request_mixed_trig",
     "expression/lambda_recursive",
@@ -355,10 +374,10 @@ choice_statistics_xfail: set[str] = {
     "core/type_checking",
     "core/non_deterministic_python_type_inference",
     "core/type_inference_unknown_vs_no_type_statement_python_nondeterministic",
-    "datatype/booleans_xyftz",
-    "datatype/bool_equivalence_bad",
-    "datatype/bool_evaluate",
-    "datatype/bool_negation",
+    "datatype/bool/derived_relations",
+    "datatype/bool/equivalence_bad",
+    "datatype/bool/evaluate",
+    "datatype/bool/implication_bad",
     "datatype/strings",
     "error/recovery_ensure",
     "execution/change",
