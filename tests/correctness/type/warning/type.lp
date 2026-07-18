@@ -8,7 +8,6 @@ variable_define(x,variable(s)).
 variable_define(y,operation(add,(operation(mult,(val(int,2),
                                                 (variable(i), ()))),
                                 (val(int,1), ())))).
-
 variable_define(z,operation(ite,(variable(b),(variable(i),(variable(y),()))))).
 
 variable_declare(color,fromFacts).
