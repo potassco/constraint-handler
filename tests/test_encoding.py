@@ -34,7 +34,7 @@ def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propag
         test.assert_()
 
 
-base_tests = [
+core_tests = [
     "core/basic_assignments",
     "core/boolean_shortcut_optional_presence",
     "core/conditional_assign",
@@ -51,6 +51,9 @@ base_tests = [
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
     "core/unprojected_optional_equality",
+]
+
+datatype_tests = [
     "datatype/bool/conj_disj",
     "datatype/bool/conj_disj_bad",
     "datatype/bool/conj_disj_mixed",
@@ -89,15 +92,24 @@ base_tests = [
     "datatype/int/ordering_cross_type",
     "datatype/int/power",
     "datatype/strings",
+]
+
+engine_tests = [
     "engine/request",
     "engine/request_interaction",
     "engine/request_mixed_trig",
     "engine/request_mult",
     "engine/request_set_ref",
+]
+
+error_tests = [
     "error/recovery",
     "error/recovery_bool",
     "error/recovery_conditionals",
     "error/recovery_ensure",
+]
+
+execution_tests = [
     "execution/assert",
     "execution/change",
     "execution/conditional",
@@ -112,6 +124,9 @@ base_tests = [
     "execution/python_integrity_should_be_ignored",
     "execution/python_list",
     "execution/python_set_empty_equality",
+]
+
+expression_tests = [
     "expression/bad_equality",
     "expression/lambda_recursive",
     "expression/lambda_zero_args",
@@ -131,10 +146,16 @@ base_tests = [
     "expression/tuple",
     "expression/tuple_arity_mismatch",
     "expression/tuple_nested",
+]
+
+multimap_tests = [
     "multimap/basics",
     "multimap/equality",
     "multimap/executions",
     "multimap/main",
+]
+
+optimization_tests = [
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",
@@ -148,11 +169,17 @@ base_tests = [
     "optimization/optional_absent_linked_value",
     "optimization/preferences",
     "optimization/priority",
+]
+
+python_tests = [
     "python/bad",
     "python/dynamic",
     "python/set_input",
     "python/set_output",
     "python/static",
+]
+
+set_tests = [
     "set/comparisons",
     "set/diff_flat",
     "set/eq_neq_flat",
@@ -177,6 +204,9 @@ base_tests = [
     "set/set_make_flat",
     "set/subset_flat",
     "set/union_flat",
+]
+
+type_tests = [
     "type/bool/binary_ops",
     "type/bool/has_value",
     "type/bool/negation",
@@ -209,6 +239,12 @@ base_tests = [
     "type/warning/python",
     "type/warning/python_unsupported_type",
     "type/warning/type",
+]
+
+processed_unit_tests = [
+]
+
+unit_tests = [
     "unit/bad_abs",
     "unit/bad_add",
     "unit/bad_ceil",
@@ -309,12 +345,18 @@ base_tests = [
     "unit/symbol_lt",
     "unit/tuple_eq",
     "unit/tuple_neq",
+]
+
+variable_tests = [
     "variable/dynamic_type",
     "variable/flexible_domain",
     "variable/main",
     "variable/missing_domain_bad",
     "variable/parallel_declaration",
     "variable/same_val_multi_expr",
+]
+
+warning_tests = [
     "warning/bad",
     "warning/bad_interface",
     "warning/fake_forbid",
@@ -332,6 +374,24 @@ base_tests = [
     "warning/variable_undeclared_statement",
     "warning/variables",
 ]
+
+base_tests = (
+    core_tests +
+    datatype_tests +
+    engine_tests +
+    error_tests +
+    execution_tests +
+    expression_tests +
+    multimap_tests +
+    optimization_tests +
+    python_tests +
+    set_tests +
+    type_tests +
+    unit_tests +
+    processed_unit_tests +
+    variable_tests +
+    warning_tests
+)
 
 other_tests = [
     "core/conditional_empty_set_linked_output",
