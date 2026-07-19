@@ -45,10 +45,10 @@ base_tests = [
     "core/optional_absent_string_comparison_evaluation",
     "core/conj_bad_none_recovery",
     "core/python_set_bool_brave",
-    "core/python_extract_set_projection",
-    "core/python_extract_statement_error_warning",
+    "expression/python_extract/set_projection",
+    "warning/python_extract/statement_error",
     "core/reasoning_modes",
-    "core/python_extract_tuple_projection",
+    "expression/python_extract/tuple_projection",
     "core/shared_optional_output_domains",
     "core/set_interface_value_marker",
     "core/set_execution_input_alias",
@@ -120,8 +120,8 @@ base_tests = [
     "expression/lambda_zero_args",
     "expression/python",
     "expression/python_multi_args",
-    "expression/python_extract",
-    "expression/python_extract_binding_leak",
+    "expression/python_extract/basic",
+    "expression/python_extract/binding_leak",
     "expression/tuple_arity_mismatch",
     "expression/tuple_nested",
     "expression/tuple",
@@ -130,12 +130,12 @@ base_tests = [
     "python/bad",
     "python/set_input",
     "python/set_output",
-    "python/extract_static",
-    "python/extract_dynamic",
-    "python/extract_bad",
-    "python/extract_succeeds",
-    "python/extract_set_input",
-    "python/extract_set_output",
+    "expression/python_extract/static",
+    "expression/python_extract/dynamic",
+    "expression/python_extract/bad",
+    "expression/python_extract/succeeds",
+    "expression/python_extract/set_input",
+    "expression/python_extract/set_output",
     "multimap/basics",
     "multimap/equality",
     "multimap/executions",
@@ -229,7 +229,7 @@ base_tests = [
     "warning/variable_confusing_name",
     "warning/variable_reservedName",
     "warning/variable_undeclared",
-    "warning/variable_undeclared_python_extract",
+    "warning/python_extract/undeclared_variable",
     "warning/variable_undeclared_statement",
 ]
 
@@ -254,11 +254,11 @@ compile2_skip: set[str] = {
     "variable/dynamic_type",  # non static input
 }
 compile2_xfail: set[str] = {
+    "expression/python_extract/basic",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "datatype/bool/conj_disj_mixed",
     "engine/request",
-    "expression/python_extract",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",
@@ -282,13 +282,13 @@ compile2_xfail: set[str] = {
     "type/checking/numeric",
     "engine/request_set_ref",  # mixed engines?
     "core/reasoning_modes",  # multimap
-    "python/extract_set_input",
-    "python/extract_static",
+    "expression/python_extract/set_input",
+    "expression/python_extract/static",
 }
 ground_skip: set[str] = {
     "set/selfref",
     "core/python_set_bool_brave",
-    "core/python_extract_statement_error_warning",
+    "warning/python_extract/statement_error",
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
 }
 ground_xfail: set[str] = {
@@ -317,10 +317,11 @@ ground_xfail: set[str] = {
 }
 
 propagator_skip: set[str] = {
-    "core/python_extract_statement_error_warning",
+    "warning/python_extract/statement_error",
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
 }
 propagator_xfail: set[str] = {
+    "expression/python_extract/set_output",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "datatype/bool/conj_disj_mixed",
@@ -330,7 +331,6 @@ propagator_xfail: set[str] = {
     "multimap/main",
     "optimization/preferences",
     "python/set_output",
-    "python/extract_set_output",
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
@@ -387,14 +387,14 @@ choice_statistics_skip: set[str] = {
     "core/optional_set_empty_execution",
     "core/python_set_bool_brave",
     "python/dynamic",
-    "python/extract_dynamic",
-    "python/extract_succeeds",
+    "expression/python_extract/dynamic",
+    "expression/python_extract/succeeds",
     "optimization/optional_absent_linked_value",
     "core/boolean_shortcut_optional_presence",
     "core/unprojected_optional_equality",
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
-    "core/python_extract_statement_error_warning",
+    "warning/python_extract/statement_error",
     "execution/conditional_string_equality_single_model",
 }
 choice_statistics_xfail: set[str] = {
