@@ -1,0 +1,2 @@
+type_variable(check(multimap_isin,multimap),bool)
+type_variable(check(find,multimap),set)

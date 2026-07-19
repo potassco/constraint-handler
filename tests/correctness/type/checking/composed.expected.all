@@ -1,0 +1,2 @@
+type_variable(c_multimap_make_empty,multimap)
+type_variable(c_length_find_multimap_make,int)

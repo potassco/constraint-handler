@@ -1,7 +1,3 @@
-type_variable(v_int,int)
-type_variable(v_float,float)
-type_variable(v_string,string)
-type_variable(v_symbol,symbol)
 type_variable(v_map,multimap)
 type_variable(c_eq,bool)
 type_variable(c_neq,bool)

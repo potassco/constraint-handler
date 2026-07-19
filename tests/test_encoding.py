@@ -178,10 +178,19 @@ base_tests = [
     "set/subset_flat",
     "set/selfref",
     "set/union_flat",
+    "type/bool/has_value",
+    "type/bool/negation",
+    "type/bool/binary_ops",
+    "type/bool/with_none_binary",
+    "type/bool/with_none_unary",
+    "type/checking/composed",
+    "type/checking/disabled_no_inference",
     "type/checking/invalid",
-    "type/checking/multimap",
-    "type/checking/none_bool",
+    "type/checking/membership_set_polymorphic",
+    "type/multimap/membership",
+    "type/multimap/operations",
     "type/checking/numeric",
+    "type/checking/regression_guards",
     "type/checking/set",
     "type/checking/string_symbol",
     "type/python_extract/non_deterministic_python_type_inference",
@@ -196,12 +205,17 @@ base_tests = [
     "type/warning/python",
     "type/warning/python_unsupported_type",
     "type/warning/type",
+    "type/variadic/boolean_conj_disj",
+    "type/variadic/boolean_leqv_lxor",
+    "type/variadic/numeric",
     "variable/dynamic_type",
     "variable/flexible_domain",
     "variable/main",
     "variable/missing_domain_bad",
     "variable/parallel_declaration",
     "variable/same_val_multi_expr",
+    "type/variable/definition",
+    "type/variable/fromFacts",
     "warning/bad",
     "warning/bad_interface",
     "warning/fake_forbid",
@@ -228,6 +242,8 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
+    "type/bool/with_none_binary",
+    "type/bool/with_none_unary",
     "datatype/bool/conj_disj_none",
     "datatype/bool/conj_disj_mixed",
     "engine/request",
@@ -238,6 +254,8 @@ compile2_skip: set[str] = {
     "variable/dynamic_type",  # non static input
 }
 compile2_xfail: set[str] = {
+    "type/bool/with_none_binary",
+    "type/bool/with_none_unary",
     "datatype/bool/conj_disj_mixed",
     "engine/request",
     "expression/python_extract",
@@ -260,7 +278,7 @@ compile2_xfail: set[str] = {
     "set/iterations",
     "set/nested",
     "set/membership_nested",
-    "type/checking/multimap",
+    "type/multimap/operations",
     "type/checking/numeric",
     "engine/request_set_ref",  # mixed engines?
     "core/reasoning_modes",  # multimap
@@ -274,6 +292,8 @@ ground_skip: set[str] = {
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
 }
 ground_xfail: set[str] = {
+    "type/bool/with_none_binary",
+    "type/bool/with_none_unary",
     "datatype/bool/conj_disj_mixed",
     "core/reasoning_modes",
     "core/set_execution_input_alias",
@@ -301,6 +321,8 @@ propagator_skip: set[str] = {
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
 }
 propagator_xfail: set[str] = {
+    "type/bool/with_none_binary",
+    "type/bool/with_none_unary",
     "datatype/bool/conj_disj_mixed",
     "engine/request",
     "engine/request_mixed_trig",
@@ -380,7 +402,9 @@ choice_statistics_xfail: set[str] = {
     "core/integrity",
     "core/reasoning_modes",
     "type/checking/invalid",
-    "type/checking/none_bool",
+    "type/multimap/membership",
+    "type/checking/membership_set_polymorphic",
+    "type/checking/regression_guards",
     "type/python_extract/non_deterministic_python_type_inference",
     "type/statement_python/nondeterministic_inference",
     "type/statement_python/unknown_vs_untyped_nondeterministic",

@@ -1,0 +1,2 @@
+type_variable(check(set_isin,set),bool)
+type_variable(check(set_notin,set),bool)

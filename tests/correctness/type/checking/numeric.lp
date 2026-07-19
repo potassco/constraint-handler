@@ -5,15 +5,15 @@ variable_domain(v_int,val(int,3)).
 variable_declare(v_float,fromFacts).
 variable_domain(v_float,val(float,float("3.14"))).
 
-variable_define(c_int_add,operation(add,(variable(v_int),(variable(v_int),())))).
-variable_define(c_int_mult,operation(mult,(variable(v_int),(variable(v_int),())))).
+variable_define(c_int_add,operation(add,(variable(v_int),(val(int,4),())))).
+variable_define(c_int_mult,operation(mult,(variable(v_int),(val(int,2),())))).
 variable_define(c_int_sub,operation(sub,(variable(v_int),(variable(v_int),())))).
 variable_define(c_int_int_div,operation(int_div,(variable(v_int),(variable(v_int),())))).
 variable_define(c_int_float_div,operation(float_div,(variable(v_int),(variable(v_int),())))).
 variable_define(c_int_pow,operation(pow,(variable(v_int),(variable(v_int),())))).
 variable_define(c_int_abs,operation(abs,(variable(v_int),()))).
 variable_define(c_int_minus,operation(minus,(variable(v_int),()))).
-variable_define(c_int_eq,operation(eq,(variable(v_int),(variable(v_int),())))).
+variable_define(c_int_eq,operation(eq,(variable(v_int),(val(int,3),())))).
 variable_define(c_int_neq,operation(neq,(variable(v_int),(variable(v_int),())))).
 variable_define(c_int_lt,operation(lt,(variable(v_int),(variable(v_int),())))).
 variable_define(c_int_leq,operation(leq,(variable(v_int),(variable(v_int),())))).
@@ -21,8 +21,8 @@ variable_define(c_int_gt,operation(gt,(variable(v_int),(variable(v_int),())))).
 variable_define(c_int_geq,operation(geq,(variable(v_int),(variable(v_int),())))).
 variable_define(c_int_has_value,operation(hasValue,(variable(v_int),()))).
 
-variable_define(c_float_add,operation(add,(variable(v_float),(variable(v_int),())))).
-variable_define(c_float_mult,operation(mult,(variable(v_float),(variable(v_int),())))).
+variable_define(c_float_add,operation(add,(variable(v_float),(val(int,1),())))).
+variable_define(c_float_mult,operation(mult,(variable(v_float),(val(int,2),())))).
 variable_define(c_float_sub,operation(sub,(variable(v_float),(variable(v_int),())))).
 variable_define(c_float_int_div,operation(int_div,(variable(v_float),(variable(v_int),())))).
 variable_define(c_float_float_div,operation(float_div,(variable(v_float),(variable(v_int),())))).
@@ -30,7 +30,7 @@ variable_define(c_float_pow,operation(pow,(variable(v_float),(variable(v_int),()
 variable_define(c_float_abs,operation(abs,(variable(v_float),()))).
 variable_define(c_float_minus,operation(minus,(variable(v_float),()))).
 variable_define(c_float_floor,operation(floor,(variable(v_float),()))).
-variable_define(c_float_eq,operation(eq,(variable(v_float),(variable(v_int),())))).
+variable_define(c_float_eq,operation(eq,(variable(v_float),(val(float,float("2.5")),())))).
 variable_define(c_float_neq,operation(neq,(variable(v_float),(variable(v_int),())))).
 variable_define(c_float_lt,operation(lt,(variable(v_float),(variable(v_int),())))).
 variable_define(c_float_leq,operation(leq,(variable(v_float),(variable(v_int),())))).
