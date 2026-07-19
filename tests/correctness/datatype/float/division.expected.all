@@ -1,0 +1,4 @@
+evaluated(eq,(variable(y),(operation(float_div,(variable(x),(variable(z),()))),())),val(bool,true))
+evaluated(eq,(variable(z),(operation(float_div,(variable(x),(variable(y),()))),())),val(bool,true))
+evaluated(neq,(variable(z),(operation(float_div,(variable(x),(variable(z),()))),())),val(bool,true))
+evaluated(neq,(variable(y),(operation(float_div,(variable(x),(variable(y),()))),())),val(bool,true))

@@ -1,0 +1,3 @@
+warning(atom(syntaxError),malformed_decl_inputs_not_list,execution_declare(malformed_decl_inputs_not_list))
+warning(atom(syntaxError),malformed_decl_outputs_not_list,execution_declare(malformed_decl_outputs_not_list))
+warning(atom(syntaxError),malformed_decl_both_not_list,execution_declare(malformed_decl_both_not_list))

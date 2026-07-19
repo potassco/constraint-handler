@@ -1,0 +1,5 @@
+evaluated(int_div,(variable(x),(variable(z),())),val(int,2))
+evaluated(int_div,(variable(x),(variable(y),())),val(int,2))
+evaluated(int_div,(variable(x),(val(int,2),())),val(int,2))
+evaluated(int_div,(val(int,5),(variable(z),())),val(int,2))
+evaluated(int_div,(val(int,5),(variable(y),())),val(int,2))

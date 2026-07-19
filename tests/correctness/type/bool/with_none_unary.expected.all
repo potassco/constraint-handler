@@ -1,0 +1,3 @@
+type_variable(c_lnot_none,bool)
+type_variable(c_snot_none,bool)
+type_variable(c_wnot_none,bool)

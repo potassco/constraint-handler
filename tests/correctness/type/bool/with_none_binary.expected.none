@@ -1,0 +1,5 @@
+type_variable(c_conj_none_none,bool)
+type_variable(c_disj_none_none,bool)
+type_variable(c_lxor_none_none,bool)
+type_variable(c_leqv_none_none,bool)
+type_variable(c_limp_none_none,bool)

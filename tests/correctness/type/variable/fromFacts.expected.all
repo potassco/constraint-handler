@@ -1,0 +1,3 @@
+type_variable(v_bool_from_facts,bool)
+type_variable(v_int_from_facts,int)
+type_variable(v_none_from_facts,none)

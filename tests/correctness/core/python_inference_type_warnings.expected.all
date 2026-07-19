@@ -1,5 +1,0 @@
-warning(type(notSupported),(),operation(pythonExtract("tmp=[1,2,3]","tmp"),()))
-warning(type(inconsistent),(),operation(pythonExtract("tmp=[1,2,3]","tmp"),()))
-warning(type(inconsistent),(),variable(execution_output(py_warn,"y")))
-warning(type(inconsistent),(),operation(pythonExtract("tmp=object()","tmp"),()))
-warning(type(inconsistent),(),variable(execution_output(py_obj,"y")))

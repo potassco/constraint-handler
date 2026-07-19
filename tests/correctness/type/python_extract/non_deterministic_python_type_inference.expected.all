@@ -1,0 +1,4 @@
+type_variable(raw,int)
+type_variable(raw,bool)
+type_variable(extract_out,int)
+type_variable(extract_out,bool)

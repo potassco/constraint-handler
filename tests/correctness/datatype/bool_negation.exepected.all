@@ -1,3 +1,0 @@
-evaluated(snot,(variable(b),()),val(bool,false))
-evaluated(lnot,(operation(snot,(variable(b),())),()),val(bool,true))
-evaluated(wnot,(variable(a),()),val(bool,true))

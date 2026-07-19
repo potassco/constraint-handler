@@ -1,0 +1,3 @@
+warning(type(inconsistent),(),operation(add,(variable(v_string),(variable(v_bool),()))))
+warning(type(inconsistent),(),operation(mult,(variable(v_string),(variable(v_bool),()))))
+warning(type(inconsistent),(),operation(limp,(variable(v_string),(variable(v_int),()))))

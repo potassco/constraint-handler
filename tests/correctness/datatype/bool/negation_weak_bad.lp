@@ -1,0 +1,1 @@
+evaluate(wnot,(bad,())).

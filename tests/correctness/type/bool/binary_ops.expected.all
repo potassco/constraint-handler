@@ -1,0 +1,3 @@
+type_variable(c_bool_eq,bool)
+type_variable(c_bool_neq,bool)
+type_variable(c_bool_limp,bool)

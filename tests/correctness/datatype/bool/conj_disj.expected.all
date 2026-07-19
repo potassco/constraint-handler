@@ -1,0 +1,8 @@
+value(conj_tt,val(bool,true))
+value(conj_tf,val(bool,false))
+value(conj_ft,val(bool,false))
+value(conj_ff,val(bool,false))
+value(disj_tt,val(bool,true))
+value(disj_tf,val(bool,true))
+value(disj_ft,val(bool,true))
+value(disj_ff,val(bool,false))

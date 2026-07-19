@@ -1,4 +1,0 @@
-evaluated(snot,(variable(a),()),val(bool,true))
-evaluated(snot,(variable(a),()),val(bool,false))
-evaluated(wnot,(variable(b),()),val(bool,true))
-evaluated(wnot,(variable(b),()),val(bool,false))
