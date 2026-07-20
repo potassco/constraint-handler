@@ -1114,7 +1114,14 @@ class Domain:
         """Apply one numeric unary function to all numeric values in a domain."""
         ints: set[int] = set()
         floats: set[float] = set()
-        is_bad = domain.is_bad
+        is_bad = domain.is_bad or bool(
+            domain.bools
+            or domain.is_none
+            or domain.strings
+            or domain.symbols
+            or domain.tuples
+            or domain.has_possible_sets()
+        )
         for value in domain.ints:
             try:
                 result = fn(value)
@@ -1421,11 +1428,24 @@ class Domain:
         shared = left_values & right_values
         if not left_values or not right_values:
             return cls._bool_domain(set(), is_bad=left.is_bad or right.is_bad)
-        if shared and len(shared) == len(left_values) == len(right_values) == 1:
-            return cls._bool_domain({True}, is_bad=left.is_bad or right.is_bad)
-        if not shared:
-            return cls._bool_domain({False}, is_bad=left.is_bad or right.is_bad)
-        return cls._bool_domain({False, True}, is_bad=left.is_bad or right.is_bad)
+
+        left_non_none = left_values - {None}
+        right_non_none = right_values - {None}
+        values: set[bool] = set()
+        if shared:
+            values.add(True)
+        if left_non_none and right_non_none and not (
+            len(left_non_none) == len(right_non_none) == 1 and left_non_none == right_non_none
+        ):
+            values.add(False)
+
+        is_bad = (
+            left.is_bad
+            or right.is_bad
+            or (None in left_values and bool(right_non_none))
+            or (None in right_values and bool(left_non_none))
+        )
+        return cls._bool_domain(values, is_bad=is_bad)
 
     @classmethod
     def op_neq(cls, left: Domain, right: Domain) -> Domain:

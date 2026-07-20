@@ -20,8 +20,10 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
    not _se_value(Expr2, set),
    _se_value(Expr1, val(Type, V)),
    not _se_value(Expr2, val(Type, V)),
+   not _se_value(Expr2, val(none, none)),
    not _se_value(Expr2, bad),
    _eq_comparable(Type),
+   Type != none,
     not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
 
 :-
@@ -31,8 +33,10 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
    not _se_value(Expr2, set),
    _se_value(Expr2, val(Type, V)),
    not _se_value(Expr1, val(Type, V)),
+   not _se_value(Expr1, val(none, none)),
    not _se_value(Expr1, bad),
    _eq_comparable(Type),
+   Type != none,
     not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
 
 :-
@@ -42,8 +46,10 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
    not _se_value(Expr2, set),
    _se_value(Expr1, val(Type, V)),
    not _se_value(Expr2, val(Type, V)),
+   not _se_value(Expr2, val(none, none)),
    not _se_value(Expr2, bad),
    _eq_comparable(Type),
+   Type != none,
     not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
 
 :-
@@ -53,8 +59,10 @@ _eq_comparable(Type) :- Type = (int;bool;none;symbol;string;tuple).
    not _se_value(Expr2, set),
    _se_value(Expr2, val(Type, V)),
    not _se_value(Expr1, val(Type, V)),
+   not _se_value(Expr1, val(none, none)),
    not _se_value(Expr1, bad),
    _eq_comparable(Type),
+   Type != none,
     not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
 
 :-

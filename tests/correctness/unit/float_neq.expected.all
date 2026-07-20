@@ -1,5 +1,5 @@
 evaluated(neq,(variable(f_large),(val(float,float("2.5")),())),val(bool,false))
 evaluated(neq,(variable(i_two),(val(float,float("2.0")),())),val(bool,false))
 evaluated(neq,(variable(none_case),(variable(none_case),())),val(bool,false))
-evaluated(neq,(variable(f_small),(variable(none_case),())),val(bool,true))
+evaluated(neq,(variable(f_small),(variable(none_case),())),bad)
 evaluated(neq,(variable(f_small),(variable(bad_case),())),bad)

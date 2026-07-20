@@ -1,7 +1,7 @@
-evaluated(eq,(variable(i),(variable(n),())),val(bool,false))
-evaluated(eq,(variable(n),(variable(i),())),val(bool,false))
-evaluated(neq,(variable(i),(variable(n),())),val(bool,true))
-evaluated(neq,(variable(n),(variable(i),())),val(bool,true))
+evaluated(eq,(variable(i),(variable(n),())),bad)
+evaluated(eq,(variable(n),(variable(i),())),bad)
+evaluated(neq,(variable(i),(variable(n),())),bad)
+evaluated(neq,(variable(n),(variable(i),())),bad)
 
 evaluated(eq,(variable(i),(variable(s),())),val(bool,false))
 evaluated(eq,(variable(s),(variable(i),())),val(bool,false))

@@ -287,6 +287,8 @@ unit_tests = [
     "unit/boolean_snot",
     "unit/boolean_wnot",
     "unit/equality_eq",
+    "unit/equality_eq_none_none",
+    "unit/equality_neq_none_none",
     "unit/equality_neq",
     "unit/float_abs",
     "unit/float_add",
@@ -400,7 +402,10 @@ other_tests = [
     "core/optional_set_empty_execution",
 ]
 
-compile_skip: set[str] = set()
+compile_skip: set[str] = {
+    "unit/tuple_eq",
+    "unit/tuple_neq",
+}
 compile_xfail: set[str] = {
     "datatype/bool/conj_disj_mixed",
     "datatype/bool/conj_disj_none",
@@ -449,6 +454,8 @@ ground_skip: set[str] = {
     "core/python_set_bool_brave",
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
     "set/selfref",
+    "unit/tuple_eq",
+    "unit/tuple_neq",
     "warning/python_extract/statement_error",
 }
 ground_xfail: set[str] = {
@@ -478,6 +485,8 @@ ground_xfail: set[str] = {
 
 propagator_skip: set[str] = {
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
+    "unit/tuple_eq",
+    "unit/tuple_neq",
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {

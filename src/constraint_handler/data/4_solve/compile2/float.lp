@@ -115,16 +115,14 @@ _float_eq_value(Expr, FloatVal) :-
     _float_operation((Expr1, (Expr2, ()))),
     _se_value(Expr1, val(none, none)),
     not _se_value(Expr2, val(none, none)),
-    not _se_value(Expr2, bad),
-    not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
+    not _se_value(operation(eq, (Expr1, (Expr2, ()))), bad).
 
 :-
     _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
     _float_operation((Expr1, (Expr2, ()))),
     _se_value(Expr2, val(none, none)),
     not _se_value(Expr1, val(none, none)),
-    not _se_value(Expr1, bad),
-    not _se_value(operation(eq, (Expr1, (Expr2, ()))), val(bool, false)).
+    not _se_value(operation(eq, (Expr1, (Expr2, ()))), bad).
 
 :-
     _expression(compile2, operation(eq, (Expr1, (Expr2, ())))),
@@ -163,16 +161,14 @@ _float_eq_value(Expr, FloatVal) :-
     _float_operation((Expr1, (Expr2, ()))),
     _se_value(Expr1, val(none, none)),
     not _se_value(Expr2, val(none, none)),
-    not _se_value(Expr2, bad),
-    not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
+    not _se_value(operation(neq, (Expr1, (Expr2, ()))), bad).
 
 :-
     _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
     _float_operation((Expr1, (Expr2, ()))),
     _se_value(Expr2, val(none, none)),
     not _se_value(Expr1, val(none, none)),
-    not _se_value(Expr1, bad),
-    not _se_value(operation(neq, (Expr1, (Expr2, ()))), val(bool, true)).
+    not _se_value(operation(neq, (Expr1, (Expr2, ()))), bad).
 
 :-
     _expression(compile2, operation(neq, (Expr1, (Expr2, ())))),
