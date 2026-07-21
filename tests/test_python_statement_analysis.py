@@ -35,6 +35,7 @@ def _fs(*types_: TypeInfo) -> frozenset[TypeInfo]:
     ("snippet", "expected_names"),
     [
         ("x = 1", {"x"}),
+        ("x += 3", {"x"}),
         ("x, (y, *rest) = data", {"x", "y", "rest"}),
         ("if cond:\n    a = 1\nelse:\n    b = 2", {"a", "b"}),
         ("while ok:\n    i = i + 1", {"i"}),
@@ -116,6 +117,13 @@ def test_analyze_python_statement_types_basic_inference() -> None:
     assert result.name_types["y"] == _fs(_s(int))
     assert result.name_types["z"] == _fs(_s(str))
     assert result.name_types["w"] == _fs(_s(int), _s(str))
+
+
+def test_analyze_python_statement_types_augassign_uses_input_type() -> None:
+    result = analyze_python_statement_types("x += 3", None, {"x": _fs(_s(int))})
+
+    assert result.unsupported_events == ()
+    assert result.name_types["x"] == _fs(_s(int))
 
 
 def test_analyze_python_statement_types_reassignment_reports_exit_types_only() -> None:

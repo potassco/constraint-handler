@@ -118,6 +118,7 @@ execution_tests = [
     "execution/implicit_variable",
     "execution/main_absolut",
     "execution/main_pyt",
+    "execution/python_augassign",
     "execution/main_swap",
     "execution/optional_run",
     "execution/python_integrity",
