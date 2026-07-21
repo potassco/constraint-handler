@@ -1,0 +1,2 @@
+evaluated(max,(variable(one_case),(variable(maybe_bad_or_42_case),())),bad)
+evaluated(max,(variable(one_case),(variable(maybe_bad_or_42_case),())),val(int,42))

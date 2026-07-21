@@ -144,6 +144,16 @@ _bool_has_bad(ExprList) :-
     _expression(compile2, operation((lxor;leqv), ExprList)),
     _expression_operationIndex(compile2, operation((lxor;leqv), ExprList), _, Arg),
     _se_value(Arg, bad).
+_bool_has_bad(ExprList) :-
+    _expression(compile2, operation((lxor;leqv), ExprList)),
+    _expression_operationIndex(compile2, operation((lxor;leqv), ExprList), _, Arg),
+    _se_value(Arg, val(none, none)).
+
+:- 
+    _expression(compile2, operation(OP, ExprList)),
+    _bool_has_bad(ExprList),
+    OP = (lxor;leqv),
+    not _se_value(operation(OP, ExprList), bad).
 
 :-
     _expression(compile2,operation(lxor, ExprList)),

@@ -10,8 +10,12 @@ variable_domain(none_case,val(none,none)).
 variable_declare(bad_case,fromFacts).
 variable_domain(bad_case,bad).
 
+variable_declare(maybe_bad_or_42_case,fromFacts).
+variable_domain(maybe_bad_or_42_case,(bad;val(int,42))).
+
 evaluate(max,(variable(one_case),(variable(two_case),()))).
 evaluate(max,(variable(one_case),(variable(none_case),()))).
 evaluate(max,(variable(one_case),(variable(bad_case),()))).
+evaluate(max,(variable(one_case),(variable(maybe_bad_or_42_case),()))).
 
 #show evaluated/3.
