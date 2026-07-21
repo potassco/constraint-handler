@@ -50,4 +50,4 @@ untracked
 *.fls
 *.log
 
-src/flat_ch/encodings/generated/
+src/flat_ch/core/encodings/generated/
