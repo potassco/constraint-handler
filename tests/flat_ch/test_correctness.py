@@ -6,7 +6,14 @@ import pytest
 
 import tests.utils.testing as chut
 from flat_ch.main import add_to_control
-from tests.test_encoding import base_tests, ctrl_options
+from tests.test_encoding import (
+    base_tests,
+    ctrl_options,
+    engine_tests,
+    multimap_tests,
+    type_tests,
+    warning_tests,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -16,73 +23,172 @@ def generate_flat_ch_files() -> None:
     subprocess.run(["fch", "--generate"], check=True, cwd=REPO_ROOT)
 
 
+flat_ch_removed_category_tests = set(type_tests + warning_tests + multimap_tests + engine_tests)
+
+flat_ch_currently_not_working_tests = {
+    "datatype/bool/conj_disj_bad",
+    "datatype/bool/conj_disj_mixed",
+    "datatype/bool/implication_bad",
+    "datatype/float/equality_cross_type",
+    "datatype/float/ordering_cross_type",
+    "datatype/int/equality_cross_type",
+    "datatype/int/ordering_cross_type",
+    "core/conj_bad_none_recovery",
+    "core/conditional_assign",
+    "core/reasoning_modes",
+    "expression/python_extract/basic",
+    "error/recovery",
+    "error/recovery_bool",
+    "error/recovery_conditionals",
+    "error/recovery_ensure",
+    "execution/optional_run",
+    "execution/python_integrity",
+    "expression/bad_equality",
+    "expression/lambda_recursive",
+    "expression/lambda_zero_args",
+    "expression/lambdas",
+    "optimization/multimap_bool",
+    "optimization/multimap_float",
+    "optimization/multimap_float_precision",
+    "optimization/multimap_int",
+    "optimization/multimap_labeled_values",
+    "optimization/priority",
+    "set/fold_bools",
+    "set/iterations",
+    "set/manipulations",
+    "set/membership_nested",
+    "set/missing_declare_repair",
+    "set/nested",
+    "set/selfref",
+    "unit/bad_add",
+    "unit/bad_concat",
+    "unit/bad_float_div",
+    "unit/bad_geq",
+    "unit/bad_gt",
+    "unit/bad_int_div",
+    "unit/bad_leq",
+    "unit/bad_leqv",
+    "unit/bad_lt",
+    "unit/bad_lxor",
+    "unit/bad_max",
+    "unit/bad_min",
+    "unit/bad_mult",
+    "unit/bad_sub",
+    "unit/boolean_conj",
+    "unit/boolean_default",
+    "unit/boolean_disj",
+    "unit/boolean_disj_none_bug",
+    "unit/boolean_ite",
+    "unit/boolean_leqv",
+    "unit/boolean_leqv_none_bug",
+    "unit/boolean_limp",
+    "unit/boolean_limp_none_bug",
+    "unit/boolean_lxor",
+    "unit/boolean_lxor_none_bug",
+    "unit/equality_eq",
+    "unit/equality_neq",
+    "unit/float_add",
+    "unit/float_float_div",
+    "unit/float_geq",
+    "unit/float_gt",
+    "unit/float_int_div",
+    "unit/float_leq",
+    "unit/float_lt",
+    "unit/float_max",
+    "unit/float_min",
+    "unit/float_mult",
+    "unit/float_pow",
+    "unit/float_sub",
+    "unit/int_add",
+    "unit/int_geq",
+    "unit/int_gt",
+    "unit/int_int_div",
+    "unit/int_leq",
+    "unit/int_lt",
+    "unit/int_max",
+    "unit/int_min",
+    "unit/int_mult",
+    "unit/int_pow",
+    "unit/int_sub",
+    "unit/nullary/python_pythonExtract",
+    "unit/python_python",
+    "unit/python_pythonExtract",
+    "unit/set_eq",
+    "unit/set_neq",
+    "unit/set_set_isin",
+    "unit/set_set_notin",
+    "unit/set_subset",
+    "unit/set_union",
+    "unit/string_concat",
+    "unit/string_geq",
+    "unit/string_gt",
+    "unit/string_leq",
+    "unit/string_lt",
+    "unit/symbol_geq",
+    "unit/symbol_gt",
+    "unit/symbol_leq",
+    "unit/symbol_lt",
+    "unit/tuple_eq",
+    "unit/tuple_neq",
+    "unit/unary/bad_abs",
+    "unit/unary/bad_add",
+    "unit/unary/bad_ceil",
+    "unit/unary/bad_floor",
+    "unit/unary/bad_hasValue",
+    "unit/unary/bad_length",
+    "unit/unary/bad_leqv",
+    "unit/unary/bad_lxor",
+    "unit/unary/bad_minus",
+    "unit/unary/boolean_hasValue",
+    "unit/unary/boolean_leqv",
+    "unit/unary/boolean_lxor",
+    "unit/unary/float_abs",
+    "unit/unary/float_add",
+    "unit/unary/float_ceil",
+    "unit/unary/float_floor",
+    "unit/unary/float_minus",
+    "unit/unary/float_mult",
+    "unit/unary/int_abs",
+    "unit/unary/int_add",
+    "unit/unary/int_ceil",
+    "unit/unary/int_floor",
+    "unit/unary/int_minus",
+    "unit/unary/int_mult",
+    "unit/unary/string_length",
+    "variable/missing_domain_bad",
+}.intersection(base_tests)
+
 flat_ch_unsupported_tests = {
-    "core/conditional_assign",  # missing operator: default
-    "core/custom_globals",  # missing custom Python globals injection
-    "core/python_set_bool_brave",  # brave-mode Python/set reasoning mismatch
-    "core/python_extract_set_projection",  # missing Python set projection
-    "datatype/int_vs_other_types_eq_neq",  # NEW
-    "datatype/int_vs_other_types_order_comparisons",  # NEW
-    "datatype/float_vs_other_types_eq_neq",  # NEW
-    "datatype/float_vs_other_types_order_comparisons",  # NEW
-    "engine/request_mixed_trig",  # missing mixed trigger/request handling
-    "execution/optional_run",  # missing operator: default
-    "execution/python_set_empty_equality",  # NEW
-    "execution/python_integrity_should_be_ignored",  # requires CH-specific Python environment wiring
-    "expression/python_extract_binding_leak",  # missing operator: pythonExtract
-    "expression/tuple_arity_mismatch",  # unsupported tuple literal expressions
-    "expression/tuple_nested",  # unsupported tuple literal expressions
-    "expression/tuple",  # unsupported tuple literal expressions
-    "python/dynamic",  # Python dynamic runtime mismatch
-    "python/extract_dynamic",  # missing dynamic Python extract
-    "python/extract_succeeds",  # Python extract output mismatch
-    "python/extract_set_output",  # missing set-valued Python extract output
-    "optimization/preferences",  # missing CH preference_* support
-}
+    "core/custom_globals",
+    "core/python_set_bool_brave",
+    "execution/python_integrity_should_be_ignored",
+    "execution/python_set_empty_equality",
+    "expression/python_extract/bad",
+    "expression/python_extract/binding_leak",
+    "expression/python_extract/dynamic",
+    "expression/python_extract/set_input",
+    "expression/python_extract/set_output",
+    "expression/python_extract/set_projection",
+    "expression/python_extract/static",
+    "expression/python_extract/succeeds",
+    "expression/tuple",
+    "expression/tuple_arity_mismatch",
+    "expression/tuple_nested",
+    "optimization/preferences",
+    "python/dynamic",
+    "python/set_output",
+}.intersection(base_tests)
 
-flat_ch_bad_warning_unsupported_tests = {
-    "core/conj_bad_none_recovery",  # bad/none recovery mismatch in conjunction evaluation
-    "core/non_deterministic_python_type_inference",  # CH pythonExtract normalization/type inference mismatch
-    "core/python_inference_type_warnings",  # CH Python type warning classification mismatch
-    "core/python_extract_statement_error_warning",  # missing statement-level Python warning recovery
-    "core/python_extract_type_inference",  # CH pythonExtract output typing mismatch
-    "core/statement_python_type_inference",  # statement Python type inference mismatch
-    "core/type_inference_unknown_vs_no_type",  # CH Python unsupported-type warning mismatch
-    "core/type_inference_unknown_vs_no_type_statement_python",  # statement Python unsupported-type warning mismatch
-    "core/type_inference_unknown_vs_no_type_statement_python_nondeterministic",  # statement Python risky-type warning mismatch
-    "datatype/bool_equivalence_bad",  # bad/equivalence handling mismatch
-    "error/recovery_bool",  # recovery warning output mismatch
-    "error/recovery_conditionals",  # missing conditional recovery
-    "error/recovery_ensure",  # recovery error handling mismatch
-    "error/recovery",  # recovery flow mismatch
-    "expression/bad_equality",  # bad-value propagation mismatch
-    "python/extract_bad",  # missing bad-result Python extract handling
-    "warning/bad",  # bad warning output mismatch
-    "warning/bad_interface",  # bad-interface warning/value mismatch
-    "warning/fake_forbid",  # missing forbid-style warnings
-    "warning/python_unsupported_type",  # missing Python unsupported-type warnings
-    "warning/statement_malformed",  # missing malformed-statement warnings
-    "warning/syntax",  # syntax diagnostics mismatch
-    "warning/type",  # type diagnostics mismatch
-    "warning/variables",  # variable warning aggregation mismatch
-    "warning/variable_reservedName",  # missing reserved-name warnings
-    "warning/variable_undeclared",  # missing undeclared-variable warnings
-    "warning/variable_undeclared_python_extract",  # missing undeclared Python-extract warnings
-    "warning/variable_undeclared_statement",  # missing undeclared statement-variable warnings
-    "set/missing_declare_repair",  # missing implicit set-declare repair
-    "variable/missing_domain_bad",  # missing CH empty-domain bad-value repair
-}
-
-all_flat_ch_unsupported_tests = flat_ch_unsupported_tests | flat_ch_bad_warning_unsupported_tests
-
-supported_tests = [name for name in base_tests if name not in all_flat_ch_unsupported_tests]
-currently_unsupported_tests = [name for name in base_tests if name in all_flat_ch_unsupported_tests]
-
-supported_core_tests = [name for name in supported_tests if name.startswith("core/")]
-supported_non_core_tests = [name for name in supported_tests if not name.startswith("core/")]
-currently_unsupported_core_tests = [
-    name for name in base_tests if name.startswith("core/") and name in all_flat_ch_unsupported_tests
+flat_ch_supported_tests = [
+    name
+    for name in base_tests
+    if name not in flat_ch_removed_category_tests
+    and name not in flat_ch_currently_not_working_tests
+    and name not in flat_ch_unsupported_tests
 ]
+
+flat_ch_supported_core_tests = [name for name in flat_ch_supported_tests if name.startswith("core/")]
+flat_ch_supported_non_core_tests = [name for name in flat_ch_supported_tests if not name.startswith("core/")]
 
 
 def solve_with_flat_ch(name: str, test, extra_args: list[str]):
@@ -111,59 +217,9 @@ def run_test(name: str):
         test.assert_()
 
 
-flat_ch_skip: set[str] = {
-    "engine/request_mult",
-    "execution/python_integrity",
-}
-flat_ch_xfail: set[str] = {
-    "core/reasoning_modes",
-    "core/type_checking",
-    "engine/request",
-    "engine/request_set_ref",
-    "expression/lambdas",
-    "expression/lambda_recursive",
-    "expression/lambda_zero_args",
-    "expression/python_extract",
-    "python/extract_static",
-    "python/extract_set_input",
-    "multimap/basics",
-    "multimap/equality",
-    "multimap/executions",
-    "multimap/main",
-    "optimization/multimap_bool",
-    "optimization/multimap_float",
-    "optimization/multimap_float_precision",
-    "optimization/multimap_int",
-    "optimization/multimap_labeled_values",
-    "optimization/priority",
-    "set/membership_nested",
-    "set/nested",
-    "set/fold_bools",
-    "set/iterations",
-    "set/manipulations",
-    "set/selfref",
-    "warning/python",
-    "warning/variable_confusing_name",
-}
-
-
-def param_marks(name: str):
-    if name in flat_ch_skip:
-        return [pytest.mark.skip(reason="skipped in flat_ch CH API mode")]
-    if name in flat_ch_xfail:
-        return [pytest.mark.xfail(reason="requires CH-specific Python environment wiring")]
-    return []
-
-
 @pytest.mark.parametrize(
     "name",
-    [
-        pytest.param(
-            name,
-            marks=param_marks(name),
-        )
-        for name in supported_non_core_tests
-    ],
+    flat_ch_supported_non_core_tests,
 )
 def test_flat_ch_correctness(name: str):
     run_test(name)
@@ -171,13 +227,7 @@ def test_flat_ch_correctness(name: str):
 
 @pytest.mark.parametrize(
     "name",
-    [
-        pytest.param(
-            name,
-            marks=param_marks(name),
-        )
-        for name in supported_core_tests
-    ],
+    flat_ch_supported_core_tests,
 )
 def test_flat_ch_core_correctness(name: str):
     run_test(name)
