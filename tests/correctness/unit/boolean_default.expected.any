@@ -1,0 +1,6 @@
+evaluated(default,(variable(x),(val(int,2),())),val(int,1))
+evaluated(default,(variable(x),(val(int,2),())),val(int,2))
+evaluated(default,(variable(x),(val(int,2),())),bad)
+evaluated(default,(variable(x),(val(none,none),())),val(none,none))
+evaluated(default,(variable(x),(val(none,none),())),bad)
+evaluated(default,(variable(x),(bad,())),bad)

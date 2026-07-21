@@ -1,0 +1,6 @@
+evaluated(leq,(val(symbol,a),(val(symbol,a),())),val(bool,true))
+evaluated(leq,(val(symbol,a),(val(symbol,b),())),val(bool,true))
+evaluated(leq,(val(symbol,b),(val(symbol,a),())),val(bool,false))
+evaluated(leq,(val(none,none),(val(symbol,a),())),bad)
+evaluated(leq,(val(symbol,a),(val(none,none),())),bad)
+evaluated(leq,(val(symbol,a),(bad,())),bad)

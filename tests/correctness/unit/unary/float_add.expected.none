@@ -1,0 +1,2 @@
+evaluated(add,(val(float,float("1.5")),()),bad)
+evaluated(add,(val(float,float("1.5")),()),val(int,1))

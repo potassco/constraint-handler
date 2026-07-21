@@ -51,3 +51,6 @@ _passed(correction(PHASE,rem),LBL,DECL) :- _correction(PHASE,LBL,DECL,NECL).
 _passed(correction(PHASE,add),LBL,NECL) :- _correction(PHASE,LBL,DECL,NECL).
 
 _warning(correction(PHASE),(),DECL) :- _correction(PHASE,LBL,DECL,NECL), #false: _passed(internal_declaration,LBL2,DECL).
+
+#defined _correction_expression/3.
+#defined _correction_number/3.

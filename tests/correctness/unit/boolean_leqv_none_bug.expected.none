@@ -1,0 +1,6 @@
+evaluated(leqv,(val(none,none),()),val(bool,false))
+evaluated(leqv,(val(none,none),()),val(none,none))
+evaluated(leqv,(val(none,none),()),bad)
+evaluated(leqv,(val(bool,false),(val(none,none),())),val(bool,true))
+evaluated(leqv,(val(bool,false),(val(none,none),())),val(none,none))
+evaluated(leqv,(val(bool,false),(val(none,none),())),bad)

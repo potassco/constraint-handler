@@ -1,0 +1,6 @@
+evaluated(eq,(variable(left),(variable(same),())),val(bool,true))
+evaluated(eq,(variable(left),(variable(right),())),val(bool,false))
+evaluated(eq,(variable(empty),(operation(set_make,()),())),val(bool,true))
+evaluated(eq,(variable(left),(val(none,none),())),val(bool,false))
+evaluated(eq,(bad,(variable(left),())),bad)
+evaluated(eq,(variable(left),(variable(bad_set),())),bad)

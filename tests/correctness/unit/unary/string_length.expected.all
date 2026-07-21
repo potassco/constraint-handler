@@ -1,0 +1,4 @@
+evaluated(length,(val(string,"ab"),()),val(int,2))
+evaluated(length,(val(string,""),()),val(int,0))
+evaluated(length,(val(none,none),()),bad)
+evaluated(length,(bad,()),bad)

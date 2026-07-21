@@ -1,0 +1,6 @@
+evaluated(limp,(val(none,none),(val(bool,false),())),val(bool,true))
+evaluated(limp,(val(none,none),(val(bool,false),())),val(bool,false))
+evaluated(limp,(val(none,none),(val(bool,false),())),bad)
+evaluated(limp,(val(none,none),(val(none,none),())),val(bool,true))
+evaluated(limp,(val(none,none),(val(none,none),())),val(bool,false))
+evaluated(limp,(val(none,none),(val(none,none),())),bad)

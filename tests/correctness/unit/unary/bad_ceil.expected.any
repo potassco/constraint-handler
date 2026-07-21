@@ -1,0 +1,2 @@
+evaluated(ceil,(variable(x),()),val(int,2))
+evaluated(ceil,(variable(x),()),bad)

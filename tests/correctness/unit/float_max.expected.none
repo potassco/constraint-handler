@@ -1,0 +1,5 @@
+evaluated(max,(val(float,float("1.5")),(val(int,2),())),bad)
+evaluated(max,(val(float,float("1.5")),(val(int,2),())),val(none,none))
+evaluated(max,(val(float,float("1.5")),(val(int,2),())),val(int,0))
+evaluated(max,(val(float,float("1.5")),(val(none,none),())),val(none,none))
+evaluated(max,(val(float,float("1.5")),(bad,())),val(none,none))

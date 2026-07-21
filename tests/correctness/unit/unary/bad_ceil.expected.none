@@ -1,0 +1,6 @@
+evaluated(ceil,(val(int,2),()),bad)
+evaluated(ceil,(val(int,2),()),val(none,none))
+evaluated(ceil,(val(none,none),()),val(int,2))
+evaluated(ceil,(val(none,none),()),val(none,none))
+evaluated(ceil,(bad,()),val(int,2))
+evaluated(ceil,(bad,()),val(none,none))

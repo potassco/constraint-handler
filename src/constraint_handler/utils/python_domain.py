@@ -152,8 +152,8 @@ class Domain:
     THRESHOLD_ITERATIONS_GENERAL: ClassVar[int] = 150 * 150
     BOOLEAN_OUTPUT_OPERATORS_WITH_NONE: ClassVar[frozenset[str]] = frozenset({"lnot", "snot", "wnot"})
     OPERATION_SPECS: ClassVar[dict[str, OperationSpec]] = {
-        "add": OperationSpec("op_add", fold_identity=_identity_zero),
-        "mult": OperationSpec("op_mult", fold_identity=_identity_one),
+        "add": OperationSpec("op_add", fold_identity=_identity_zero, seed_with_identity=True),
+        "mult": OperationSpec("op_mult", fold_identity=_identity_one, seed_with_identity=True),
         "conj": OperationSpec("op_conj", fold_identity=_identity_true),
         "disj": OperationSpec("op_disj", fold_identity=_identity_false),
         "leqv": OperationSpec("op_leqv", fold_identity=_identity_true, seed_with_identity=True),
@@ -1047,7 +1047,7 @@ class Domain:
                 return None
             options = tuple(domain.numeric_values())
             if not options:
-                return cls.empty()
+                return cls.bad() if domain.is_bad else cls.empty()
             value_options.append(options)
 
         ints: set[int] = set()
@@ -1114,7 +1114,14 @@ class Domain:
         """Apply one numeric unary function to all numeric values in a domain."""
         ints: set[int] = set()
         floats: set[float] = set()
-        is_bad = domain.is_bad
+        is_bad = domain.is_bad or bool(
+            domain.bools
+            or domain.is_none
+            or domain.strings
+            or domain.symbols
+            or domain.tuples
+            or domain.has_possible_sets()
+        )
         for value in domain.ints:
             try:
                 result = fn(value)
@@ -1224,17 +1231,30 @@ class Domain:
         return cls._bool_domain(values, is_bad=is_bad)
 
     @classmethod
-    def _logic_binary(cls, left: Domain, right: Domain, fn, *, operation_name: str) -> Domain:
-        """Apply a binary logical operator to boolean and none-valued inputs."""
+    def _strict_bool_binary(cls, left: Domain, right: Domain, fn) -> Domain:
+        """Apply a binary boolean operator where `none` is treated as a bad contributor."""
         values: set[bool] = set()
-        is_bad = left.is_bad or right.is_bad
-        is_none = False
+        is_bad = (
+            left.is_bad
+            or right.is_bad
+            or bool(
+                left.is_none
+                or left.strings
+                or left.symbols
+                or left.tuples
+                or left.sets
+                or right.is_none
+                or right.strings
+                or right.symbols
+                or right.tuples
+                or right.sets
+            )
+        )
         for left_value, right_value in product(left.truth_values(), right.truth_values()):
             if left_value is None or right_value is None:
-                is_none = True
                 continue
             values.add(fn(left_value, right_value))
-        return cls._bool_domain(values, is_bad=is_bad, is_none=is_none)
+        return cls._bool_domain(values, is_bad=is_bad)
 
     @classmethod
     def _logic_unary(cls, domain: Domain, fn, *, operation_name: str) -> Domain:
@@ -1514,7 +1534,7 @@ class Domain:
     @classmethod
     def op_leqv(cls, left: Domain, right: Domain) -> Domain:
         """Compute the logical-equivalence domain."""
-        return cls._logic_binary(left, right, lambda lhs, rhs: lhs == rhs, operation_name="leqv")
+        return cls._strict_bool_binary(left, right, lambda lhs, rhs: lhs == rhs)
 
     @classmethod
     def op_limp(cls, left: Domain, right: Domain) -> Domain:
@@ -1534,7 +1554,7 @@ class Domain:
     @classmethod
     def op_lxor(cls, left: Domain, right: Domain) -> Domain:
         """Compute the logical-exclusive-or domain."""
-        return cls._logic_binary(left, right, lambda lhs, rhs: lhs != rhs, operation_name="lxor")
+        return cls._strict_bool_binary(left, right, lambda lhs, rhs: lhs != rhs)
 
     @classmethod
     def op_snot(cls, domain: Domain) -> Domain:
@@ -1555,8 +1575,28 @@ class Domain:
     @classmethod
     def op_concat(cls, left: Domain, right: Domain) -> Domain:
         """Compute all string concatenations from two string domains."""
+        is_bad = (
+            left.is_bad
+            or right.is_bad
+            or bool(
+                left.bools
+                or left.ints
+                or left.floats
+                or left.is_none
+                or left.symbols
+                or left.tuples
+                or left.sets
+                or right.bools
+                or right.ints
+                or right.floats
+                or right.is_none
+                or right.symbols
+                or right.tuples
+                or right.sets
+            )
+        )
         return cls(
-            is_bad=left.is_bad or right.is_bad,
+            is_bad=is_bad,
             strings=frozenset(lhs + rhs for lhs, rhs in product(left.strings, right.strings)),
         )
 

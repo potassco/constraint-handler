@@ -1,0 +1,5 @@
+evaluated(floor,(val(float,float("2.5")),()),bad)
+evaluated(floor,(val(float,float("2.5")),()),val(none,none))
+evaluated(floor,(val(float,float("2.5")),()),val(int,0))
+evaluated(floor,(val(none,none),()),val(none,none))
+evaluated(floor,(bad,()),val(none,none))

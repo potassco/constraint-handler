@@ -1,0 +1,6 @@
+evaluated(if,(val(bool,true),(val(int,1),())),val(int,1))
+evaluated(if,(val(bool,true),(bad,())),bad)
+evaluated(if,(val(bool,false),(val(int,1),())),val(none,none))
+evaluated(if,(val(bool,false),(bad,())),val(none,none))
+evaluated(if,(val(none,none),(val(int,1),())),val(none,none))
+evaluated(if,(bad,(val(int,1),())),bad)

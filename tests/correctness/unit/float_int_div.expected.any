@@ -1,0 +1,4 @@
+evaluated(int_div,(variable(x),(val(int,2),())),val(int,1))
+evaluated(int_div,(variable(x),(val(int,2),())),bad)
+evaluated(int_div,(variable(x),(val(none,none),())),bad)
+evaluated(int_div,(variable(x),(bad,())),bad)

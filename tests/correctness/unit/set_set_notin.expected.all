@@ -1,0 +1,5 @@
+evaluated(set_notin,(val(int,1),(variable(pool),())),val(bool,false))
+evaluated(set_notin,(val(int,2),(variable(pool),())),val(bool,true))
+evaluated(set_notin,(val(none,none),(variable(pool),())),val(bool,false))
+evaluated(set_notin,(bad,(variable(pool),())),bad)
+evaluated(set_notin,(val(int,1),(variable(bad_set),())),bad)

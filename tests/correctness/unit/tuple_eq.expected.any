@@ -1,0 +1,5 @@
+evaluated(eq,(variable(x),((val(int,1),val(string,"x"),val(symbol,key)),())),val(bool,true))
+evaluated(eq,(variable(x),((val(int,1),val(string,"x"),val(symbol,key)),())),val(bool,false))
+evaluated(eq,(variable(x),((val(int,1),val(string,"x"),val(symbol,key)),())),bad)
+evaluated(eq,(variable(x),(val(none,none),())),bad)
+evaluated(eq,(variable(x),(bad,())),bad)

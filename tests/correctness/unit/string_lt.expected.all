@@ -1,0 +1,6 @@
+evaluated(lt,(val(string,"aa"),(val(string,"ab"),())),val(bool,true))
+evaluated(lt,(val(string,"ab"),(val(string,"aa"),())),val(bool,false))
+evaluated(lt,(val(string,"aa"),(val(string,"aa"),())),val(bool,false))
+evaluated(lt,(val(none,none),(val(string,"ab"),())),bad)
+evaluated(lt,(val(string,"aa"),(val(none,none),())),bad)
+evaluated(lt,(val(string,"aa"),(bad,())),bad)

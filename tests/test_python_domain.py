@@ -340,10 +340,16 @@ def test_apply_matches_evaluator_for_numeric_operators(operation: object, domain
         (operators.LogicOperator.conj, (build_domain(True, False, None), build_domain(True, None))),
         (operators.LogicOperator.disj, (build_domain(True, False, None), build_domain(False, None))),
         (operators.LogicOperator.ite, (build_domain(True, False, None), build_domain(1, 2), build_domain(3, 4))),
-        (operators.LogicOperator.leqv, (build_domain(True, False, None), build_domain(True, False))),
+        (
+            operators.LogicOperator.leqv,
+            (build_domain(True, False, None), build_domain(True, False, expression.Bad.bad)),
+        ),
         (operators.LogicOperator.limp, (build_domain(True, False, None), build_domain(True, False, None))),
         (operators.LogicOperator.lnot, (build_domain(True, False, None),)),
-        (operators.LogicOperator.lxor, (build_domain(True, False, None), build_domain(True, False))),
+        (
+            operators.LogicOperator.lxor,
+            (build_domain(True, False, None), build_domain(True, False, expression.Bad.bad)),
+        ),
         (operators.LogicOperator.snot, (build_domain(True, False, None),)),
         (operators.LogicOperator.wnot, (build_domain(True, False, None),)),
     ],

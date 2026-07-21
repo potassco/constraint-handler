@@ -1,0 +1,4 @@
+evaluated(length,(operation(diff,(variable(x),(variable(b),()))),()),val(int,2))
+evaluated(length,(operation(diff,(variable(x),(variable(b),()))),()),val(int,0))
+evaluated(length,(operation(diff,(variable(x),(variable(b),()))),()),bad)
+evaluated(length,(operation(diff,(variable(x),(variable(bad_set),()))),()),bad)

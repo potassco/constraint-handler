@@ -1,0 +1,5 @@
+evaluated(max,(val(int,1),(val(int,2),())),val(int,2))
+evaluated(max,(val(int,1),(val(none,none),())),bad)
+evaluated(max,(val(int,1),(bad,())),bad)
+evaluated(max,(variable(x),(val(none,none),())),bad)
+evaluated(max,(variable(x),(bad,())),bad)

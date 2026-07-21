@@ -1,0 +1,3 @@
+evaluated(disj,(val(none,none),(bad,())),val(bool,true))
+evaluated(disj,(val(none,none),(bad,())),val(bool,false))
+evaluated(disj,(val(none,none),(bad,())),val(none,none))

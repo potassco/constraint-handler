@@ -1,0 +1,4 @@
+evaluated(float_div,(variable(x),(val(int,2),())),val(float,float("2.0")))
+evaluated(float_div,(variable(x),(val(int,2),())),bad)
+evaluated(float_div,(variable(x),(val(none,none),())),bad)
+evaluated(float_div,(variable(x),(bad,())),bad)

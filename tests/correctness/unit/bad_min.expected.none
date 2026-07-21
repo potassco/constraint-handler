@@ -1,0 +1,6 @@
+evaluated(min,(val(int,1),(val(int,2),())),bad)
+evaluated(min,(val(int,1),(val(int,2),())),val(none,none))
+evaluated(min,(val(int,1),(val(none,none),())),val(int,1))
+evaluated(min,(val(int,1),(val(none,none),())),val(none,none))
+evaluated(min,(val(int,1),(bad,())),val(int,1))
+evaluated(min,(val(int,1),(bad,())),val(none,none))

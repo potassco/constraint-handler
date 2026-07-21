@@ -1,0 +1,2 @@
+
+evaluate(leqv,()).

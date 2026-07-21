@@ -1,0 +1,5 @@
+evaluated(ceil,(val(float,float("1.5")),()),bad)
+evaluated(ceil,(val(float,float("1.5")),()),val(none,none))
+evaluated(ceil,(val(float,float("1.5")),()),val(int,0))
+evaluated(ceil,(val(none,none),()),val(none,none))
+evaluated(ceil,(bad,()),val(none,none))

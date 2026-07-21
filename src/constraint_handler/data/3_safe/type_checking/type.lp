@@ -1,4 +1,6 @@
 #defined type_query/1.
+#defined _never/0.
+_passed(type_check,LBL,DECL) :- _passed(type_check,LBL,DECL), _never.
 
 %%%%%%%%%%%%%%%%% type
 _type(bot;int;float;bool;string;symbol;none;set;multimap).

@@ -1,0 +1,7 @@
+evaluated(geq,(val(int,2),(val(int,1),())),val(bool,true))
+evaluated(geq,(val(int,1),(val(int,2),())),val(bool,false))
+evaluated(geq,(val(none,none),(val(int,2),())),bad)
+evaluated(geq,(val(int,1),(val(none,none),())),bad)
+evaluated(geq,(val(int,1),(bad,())),bad)
+evaluated(geq,(variable(x),(val(none,none),())),bad)
+evaluated(geq,(variable(x),(bad,())),bad)

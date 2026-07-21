@@ -1,0 +1,5 @@
+evaluated(default,(val(int,1),(val(int,2),())),val(int,1))
+evaluated(default,(bad,(val(int,2),())),bad)
+evaluated(default,(val(none,none),(val(int,2),())),val(int,2))
+evaluated(default,(val(none,none),(bad,())),bad)
+evaluated(default,(val(none,none),(val(none,none),())),val(none,none))

@@ -1,0 +1,7 @@
+evaluated(lt,(val(int,1),(val(int,2),())),val(bool,true))
+evaluated(lt,(val(int,2),(val(int,1),())),val(bool,false))
+evaluated(lt,(val(none,none),(val(int,2),())),bad)
+evaluated(lt,(val(int,1),(val(none,none),())),bad)
+evaluated(lt,(val(int,1),(bad,())),bad)
+evaluated(lt,(variable(x),(val(none,none),())),bad)
+evaluated(lt,(variable(x),(bad,())),bad)

@@ -1,0 +1,5 @@
+evaluated(set_isin,(val(int,1),(variable(pool),())),val(bool,true))
+evaluated(set_isin,(val(int,2),(variable(pool),())),val(bool,false))
+evaluated(set_isin,(val(none,none),(variable(pool),())),val(bool,true))
+evaluated(set_isin,(bad,(variable(pool),())),bad)
+evaluated(set_isin,(val(int,1),(variable(bad_set),())),bad)

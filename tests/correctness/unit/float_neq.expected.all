@@ -1,0 +1,5 @@
+evaluated(neq,(val(float,float("2.5")),(val(float,float("2.5")),())),val(bool,false))
+evaluated(neq,(val(int,2),(val(float,float("2.0")),())),val(bool,false))
+evaluated(neq,(val(none,none),(val(none,none),())),val(bool,false))
+evaluated(neq,(val(float,float("1.5")),(val(none,none),())),val(bool,true))
+evaluated(neq,(val(float,float("1.5")),(bad,())),bad)

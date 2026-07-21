@@ -1,0 +1,6 @@
+evaluated(geq,(val(string,"ab"),(val(string,"aa"),())),val(bool,true))
+evaluated(geq,(val(string,"aa"),(val(string,"ab"),())),val(bool,false))
+evaluated(geq,(val(string,"aa"),(val(string,"aa"),())),val(bool,true))
+evaluated(geq,(val(none,none),(val(string,"ab"),())),bad)
+evaluated(geq,(val(string,"aa"),(val(none,none),())),bad)
+evaluated(geq,(val(string,"aa"),(bad,())),bad)

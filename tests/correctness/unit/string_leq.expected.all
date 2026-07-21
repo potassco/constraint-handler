@@ -1,0 +1,6 @@
+evaluated(leq,(val(string,"aa"),(val(string,"ab"),())),val(bool,true))
+evaluated(leq,(val(string,"ab"),(val(string,"aa"),())),val(bool,false))
+evaluated(leq,(val(string,"aa"),(val(string,"aa"),())),val(bool,true))
+evaluated(leq,(val(none,none),(val(string,"ab"),())),bad)
+evaluated(leq,(val(string,"aa"),(val(none,none),())),bad)
+evaluated(leq,(val(string,"aa"),(bad,())),bad)

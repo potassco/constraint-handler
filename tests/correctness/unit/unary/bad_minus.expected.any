@@ -1,0 +1,2 @@
+evaluated(minus,(variable(x),()),val(int,-2))
+evaluated(minus,(variable(x),()),bad)

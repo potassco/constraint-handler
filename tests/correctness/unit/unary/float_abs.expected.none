@@ -1,0 +1,5 @@
+evaluated(abs,(val(float,float("-1.5")),()),bad)
+evaluated(abs,(val(float,float("-1.5")),()),val(none,none))
+evaluated(abs,(val(float,float("-1.5")),()),val(float,float("0.0")))
+evaluated(abs,(val(none,none),()),val(none,none))
+evaluated(abs,(bad,()),val(none,none))

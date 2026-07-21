@@ -1,0 +1,4 @@
+evaluated(gt,(val(int,2),(val(float,float("1.5")),())),val(bool,true))
+evaluated(gt,(val(int,2),(val(float,float("2.5")),())),val(bool,false))
+evaluated(gt,(val(float,float("1.5")),(val(none,none),())),bad)
+evaluated(gt,(val(float,float("1.5")),(bad,())),bad)

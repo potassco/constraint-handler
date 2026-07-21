@@ -1,0 +1,6 @@
+evaluated(concat,(val(string,"ab"),(val(string,"c"),())),bad)
+evaluated(concat,(val(string,"ab"),(val(string,"c"),())),val(none,none))
+evaluated(concat,(val(none,none),(val(string,"c"),())),val(string,"abc"))
+evaluated(concat,(val(none,none),(val(string,"c"),())),val(none,none))
+evaluated(concat,(bad,(val(string,"c"),())),val(string,"abc"))
+evaluated(concat,(bad,(val(string,"c"),())),val(none,none))

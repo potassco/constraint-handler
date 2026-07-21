@@ -1,0 +1,4 @@
+evaluated(eq,(operation(diff,(variable(a),(variable(b),()))),(operation(set_make,(val(int,1),(val(none,none),()))),())),val(bool,true))
+evaluated(eq,(operation(diff,(variable(a),(variable(empty),()))),(variable(a),())),val(bool,true))
+evaluated(length,(operation(diff,(variable(empty),(variable(a),()))),()),val(int,0))
+evaluated(length,(operation(diff,(variable(a),(variable(bad_set),()))),()),bad)

@@ -1,0 +1,6 @@
+evaluated(gt,(val(symbol,a),(val(symbol,a),())),val(bool,false))
+evaluated(gt,(val(symbol,a),(val(symbol,b),())),val(bool,false))
+evaluated(gt,(val(symbol,b),(val(symbol,a),())),val(bool,true))
+evaluated(gt,(val(none,none),(val(symbol,a),())),bad)
+evaluated(gt,(val(symbol,a),(val(none,none),())),bad)
+evaluated(gt,(val(symbol,a),(bad,())),bad)

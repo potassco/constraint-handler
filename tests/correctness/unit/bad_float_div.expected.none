@@ -1,0 +1,6 @@
+evaluated(float_div,(val(int,4),(val(int,2),())),bad)
+evaluated(float_div,(val(int,4),(val(int,2),())),val(none,none))
+evaluated(float_div,(val(int,4),(val(none,none),())),val(float,float("2.0")))
+evaluated(float_div,(val(int,4),(val(none,none),())),val(none,none))
+evaluated(float_div,(val(int,4),(bad,())),val(float,float("2.0")))
+evaluated(float_div,(val(int,4),(bad,())),val(none,none))

@@ -1,0 +1,8 @@
+evaluated(eq,(variable(tuple_plain),(variable(tuple_plain_same),())),val(bool,true))
+evaluated(eq,(variable(tuple_plain),(variable(tuple_diff),())),val(bool,false))
+evaluated(eq,(variable(tuple_with_none),(variable(tuple_with_none_same),())),val(bool,true))
+evaluated(eq,(variable(tuple_plain),(variable(tuple_with_none),())),val(bool,false))
+evaluated(eq,(variable(tuple_plain),(val(none,none),())),val(bool,false))
+evaluated(eq,(val(none,none),(variable(tuple_plain),())),val(bool,false))
+evaluated(eq,(variable(tuple_plain),(bad,())),bad)
+evaluated(eq,(bad,(variable(tuple_plain),())),bad)

@@ -1,0 +1,4 @@
+evaluated(snot,(val(bool,false),()),val(bool,true))
+evaluated(snot,(val(bool,true),()),val(bool,false))
+evaluated(snot,(val(none,none),()),val(bool,false))
+evaluated(snot,(bad,()),bad)

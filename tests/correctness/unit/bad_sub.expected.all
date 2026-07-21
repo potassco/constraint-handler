@@ -1,0 +1,5 @@
+evaluated(sub,(val(int,3),(val(int,2),())),val(int,1))
+evaluated(sub,(val(int,3),(val(none,none),())),bad)
+evaluated(sub,(val(int,3),(bad,())),bad)
+evaluated(sub,(variable(x),(val(none,none),())),bad)
+evaluated(sub,(variable(x),(bad,())),bad)

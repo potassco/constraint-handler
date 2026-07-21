@@ -1,0 +1,4 @@
+evaluated(abs,(val(int,-3),()),val(int,3))
+evaluated(abs,(val(int,2),()),val(int,2))
+evaluated(abs,(val(none,none),()),bad)
+evaluated(abs,(bad,()),bad)

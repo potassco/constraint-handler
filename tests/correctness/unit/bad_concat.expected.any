@@ -1,0 +1,4 @@
+evaluated(concat,(variable(x),(val(string,"c"),())),val(string,"abc"))
+evaluated(concat,(variable(x),(val(string,"c"),())),bad)
+evaluated(concat,(variable(x),(val(none,none),())),bad)
+evaluated(concat,(variable(x),(bad,())),bad)

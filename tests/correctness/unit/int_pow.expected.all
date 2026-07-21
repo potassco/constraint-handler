@@ -1,0 +1,7 @@
+evaluated(pow,(val(int,2),(val(int,3),())),val(int,8))
+evaluated(pow,(val(int,-3),(val(int,2),())),val(int,9))
+evaluated(pow,(val(none,none),(val(int,0),())),val(int,1))
+evaluated(pow,(bad,(val(int,0),())),val(int,1))
+evaluated(pow,(val(int,2),(val(none,none),())),bad)
+evaluated(pow,(val(int,2),(bad,())),bad)
+evaluated(pow,(bad,(val(int,3),())),bad)

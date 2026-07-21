@@ -1,0 +1,5 @@
+evaluated(min,(val(float,float("2.5")),(val(int,2),())),bad)
+evaluated(min,(val(float,float("2.5")),(val(int,2),())),val(none,none))
+evaluated(min,(val(float,float("2.5")),(val(int,2),())),val(int,0))
+evaluated(min,(val(float,float("2.5")),(val(none,none),())),val(none,none))
+evaluated(min,(val(float,float("2.5")),(bad,())),val(none,none))

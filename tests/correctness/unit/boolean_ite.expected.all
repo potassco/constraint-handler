@@ -1,0 +1,8 @@
+evaluated(ite,(val(bool,true),(val(int,1),(val(string,"else"),()))),val(int,1))
+evaluated(ite,(val(bool,false),(val(int,1),(val(string,"else"),()))),val(string,"else"))
+evaluated(ite,(val(none,none),(val(int,1),(val(string,"else"),()))),val(none,none))
+evaluated(ite,(bad,(val(int,1),(val(string,"else"),()))),bad)
+evaluated(ite,(val(bool,true),(bad,(val(string,"else"),()))),bad)
+evaluated(ite,(val(bool,false),(val(int,1),(bad,()))),bad)
+evaluated(ite,(val(bool,true),(val(int,1),(bad,()))),val(int,1))
+evaluated(ite,(val(bool,false),(bad,(val(string,"else"),()))),val(string,"else"))
