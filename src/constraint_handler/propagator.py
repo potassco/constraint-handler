@@ -94,7 +94,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.errors: propagator_warning_t = []
 
         self.reasoning_mode: ReasoningMode = ReasoningMode.STANDARD
-        self.reasoning_mode_stage_lits: dict[Literal[1, 2, 3], int] = {1: -1, 2: -1, 3: -1}
+        self.reasoning_mode_stage_lits: dict[Literal[1, 2], int] = {1: -1, 2: -1}
         self.reasoning_stage: Literal[0, 1, 2] = 0
         # this is used for cautious reasoning
         # for the first model, the set is assigned the first model
@@ -106,7 +106,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.variable_lits: dict[VariableType, int] = {}
         self.previously_stage_2: bool = False
 
-        self.optimization_stage_lits: dict[Literal[1, 2], int] = {1: -1, 2: -1}
+        self.optimization_stage_lits: dict[Literal[1, 2, 3], int] = {1: -1, 2: -1, 3: -1}
         self.previously_opt_stage_2: bool = False
         self.optimal_models_wanted: int = 0
         self.optimal_models_found: int = 0
@@ -477,8 +477,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 )  # ty:ignore[invalid-assignment]
 
             # TODO: check if it works with the new variable manager stuff
+            # TODO: support BoolevaluateVariable: probably needs to add it to the output model?
             for var in self.symbol2var.get_variables():
-                if isinstance(var, EnsureVariable):
+                if isinstance(var, EnsureVariable) or isinstance(var, BoolEvaluateVariable):
                     continue
                 lit = ctl.add_literal(freeze=True)
                 self.variable_lits[var] = lit
@@ -671,10 +672,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             return self.add_nogoods_from_queue(ctl)
 
-        assert ctl.assignment.is_true(self.reasoning_mode_stage_lits[3]), "stage 3 should be true!"
-
-        return False
-
     def get_reasoning_mode_nogoods(self, variables: set[prop_atom.ResultAtom], first_call: bool) -> list[Iterable[int]]:
         """
         Create nogoods used to drive brave/cautious reasoning.
@@ -772,6 +769,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             control: Clingo propagation control.
             changes: Sequence of (signed) solver literals that changed.
         """
+
         if self.check_only:
             return
 
