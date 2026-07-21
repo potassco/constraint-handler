@@ -1,5 +1,0 @@
-evaluated(minus,(variable(f_small),()),bad)
-evaluated(minus,(variable(f_small),()),val(none,none))
-evaluated(minus,(variable(f_small),()),val(float,float("0.0")))
-evaluated(minus,(variable(none_case),()),val(none,none))
-evaluated(minus,(variable(bad_case),()),val(none,none))

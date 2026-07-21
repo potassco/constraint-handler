@@ -1,0 +1,2 @@
+evaluated(floor,(variable(x),()),val(int,2))
+evaluated(floor,(variable(x),()),bad)

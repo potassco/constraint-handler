@@ -1,0 +1,5 @@
+evaluated(geq,(variable(x),(val(symbol,a),())),val(bool,true))
+evaluated(geq,(variable(x),(val(symbol,a),())),val(bool,false))
+evaluated(geq,(variable(x),(val(symbol,a),())),bad)
+evaluated(geq,(variable(x),(val(none,none),())),bad)
+evaluated(geq,(variable(x),(bad,())),bad)

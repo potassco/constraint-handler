@@ -1,25 +1,16 @@
-variable_declare(primary_int,fromFacts).
-variable_domain(primary_int,val(int,1)).
+phase_request(type_check,true).
 
-variable_declare(primary_none,fromFacts).
-variable_domain(primary_none,val(none,none)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(int,1)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(default,(variable(x),(val(int,2),()))).
+evaluate(default,(variable(x),(val(none,none),()))).
+evaluate(default,(variable(x),(bad,()))).
 
-variable_declare(primary_bad,fromFacts).
-variable_domain(primary_bad,bad).
 
-variable_declare(fallback_int,fromFacts).
-variable_domain(fallback_int,val(int,2)).
-
-variable_declare(fallback_none,fromFacts).
-variable_domain(fallback_none,val(none,none)).
-
-variable_declare(fallback_bad,fromFacts).
-variable_domain(fallback_bad,bad).
-
-evaluate(default,(variable(primary_int),(variable(fallback_int),()))).
-evaluate(default,(variable(primary_bad),(variable(fallback_int),()))).
-evaluate(default,(variable(primary_none),(variable(fallback_int),()))).
-evaluate(default,(variable(primary_none),(variable(fallback_bad),()))).
-evaluate(default,(variable(primary_none),(variable(fallback_none),()))).
-
-#show evaluated/3.
+evaluate(default,(val(int,1),(val(int,2),()))).
+evaluate(default,(bad,(val(int,2),()))).
+evaluate(default,(val(none,none),(val(int,2),()))).
+evaluate(default,(val(none,none),(bad,()))).
+evaluate(default,(val(none,none),(val(none,none),()))).

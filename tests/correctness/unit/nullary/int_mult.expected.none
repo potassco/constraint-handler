@@ -1,0 +1,3 @@
+evaluated(mult,(),bad)
+evaluated(mult,(),val(none,none))
+evaluated(mult,(),val(int,0))

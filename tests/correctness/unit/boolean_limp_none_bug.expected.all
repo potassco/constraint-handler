@@ -1,2 +1,2 @@
-evaluated(limp,(variable(none_case),(variable(false_case),())),val(none,none))
-evaluated(limp,(variable(none_case),(variable(none_case),())),val(none,none))
+evaluated(limp,(val(none,none),(val(bool,false),())),val(none,none))
+evaluated(limp,(val(none,none),(val(none,none),())),val(none,none))

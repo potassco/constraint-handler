@@ -1,6 +1,0 @@
-evaluated(floor,(variable(two_case),()),bad)
-evaluated(floor,(variable(two_case),()),val(none,none))
-evaluated(floor,(variable(none_case),()),val(int,2))
-evaluated(floor,(variable(none_case),()),val(none,none))
-evaluated(floor,(variable(bad_case),()),val(int,2))
-evaluated(floor,(variable(bad_case),()),val(none,none))

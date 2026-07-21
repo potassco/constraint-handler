@@ -1,2 +1,2 @@
-evaluated(leqv,(variable(none_case),()),val(bool,true))
-evaluated(leqv,(variable(false_case),(variable(none_case),())),val(bool,false))
+evaluated(leqv,(val(none,none),()),val(bool,true))
+evaluated(leqv,(val(bool,false),(val(none,none),())),val(bool,false))

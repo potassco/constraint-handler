@@ -1,26 +1,15 @@
-variable_declare(false_case,fromFacts).
-variable_domain(false_case,val(bool,false)).
+phase_request(type_check,true).
 
-variable_declare(true_case,fromFacts).
-variable_domain(true_case,val(bool,true)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(bool,true)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(if,(variable(x),(val(int,1),()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
 
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-variable_declare(payload_int,fromFacts).
-variable_domain(payload_int,val(int,1)).
-
-variable_declare(payload_bad,fromFacts).
-variable_domain(payload_bad,bad).
-
-evaluate(if,(variable(true_case),(variable(payload_int),()))).
-evaluate(if,(variable(true_case),(variable(payload_bad),()))).
-evaluate(if,(variable(false_case),(variable(payload_int),()))).
-evaluate(if,(variable(false_case),(variable(payload_bad),()))).
-evaluate(if,(variable(none_case),(variable(payload_int),()))).
-evaluate(if,(variable(bad_case),(variable(payload_int),()))).
-
-#show evaluated/3.
+evaluate(if,(val(bool,true),(val(int,1),()))).
+evaluate(if,(val(bool,true),(bad,()))).
+evaluate(if,(val(bool,false),(val(int,1),()))).
+evaluate(if,(val(bool,false),(bad,()))).
+evaluate(if,(val(none,none),(val(int,1),()))).
+evaluate(if,(bad,(val(int,1),()))).

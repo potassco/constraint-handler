@@ -1,19 +1,16 @@
-variable_declare(i_two,fromFacts).
-variable_domain(i_two,val(int,2)).
+evaluate(gt,(val(int,3),(val(int,2),()))).
+evaluate(gt,(val(int,2),(val(int,3),()))).
+evaluate(gt,(val(int,2),(val(int,2),()))).
+evaluate(gt,(val(int,2),(val(none,none),()))).
+evaluate(gt,(val(int,2),(bad,()))).
 
-variable_declare(i_three,fromFacts).
-variable_domain(i_three,val(int,3)).
+phase_request(type_check,true).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(int,3)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(gt,(variable(x),(val(int,2),()))).
+evaluate(gt,(variable(x),(val(none,none),()))).
+evaluate(gt,(variable(x),(bad,()))).
 
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(gt,(variable(i_three),(variable(i_two),()))).
-evaluate(gt,(variable(i_two),(variable(i_three),()))).
-evaluate(gt,(variable(i_two),(variable(i_two),()))).
-evaluate(gt,(variable(i_two),(variable(none_case),()))).
-evaluate(gt,(variable(i_two),(variable(bad_case),()))).
-
-#show evaluated/3.

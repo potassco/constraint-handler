@@ -1,3 +1,0 @@
-evaluated(abs,(variable(f_neg),()),val(float,float("1.5")))
-evaluated(abs,(variable(none_case),()),bad)
-evaluated(abs,(variable(bad_case),()),bad)

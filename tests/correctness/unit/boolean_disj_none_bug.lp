@@ -1,11 +1,14 @@
 % compile2 currently goes UNSAT here, while the other engines derive bad.
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
+phase_request(type_check,true).
 
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
+variable_declare(x,fromFacts).
+variable_domain(x,val(bool,false)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(disj,(variable(x),(val(bool,false),()))).
+evaluate(disj,(variable(x),(val(none,none),()))).
+evaluate(disj,(variable(x),(bad,()))).
 
-evaluate(disj,(variable(none_case),(variable(bad_case),()))).
 
-#show evaluated/3.
+evaluate(disj,(val(none,none),(bad,()))).

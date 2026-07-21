@@ -1,0 +1,2 @@
+evaluated(python("2"),(),val(int,2))
+evaluated(python("2"),(),val(none,none))

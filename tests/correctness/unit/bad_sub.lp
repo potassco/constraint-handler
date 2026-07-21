@@ -1,17 +1,13 @@
-variable_declare(three_case,fromFacts).
-variable_domain(three_case,val(int,3)).
+phase_request(type_check,true).
 
-variable_declare(two_case,fromFacts).
-variable_domain(two_case,val(int,2)).
+evaluate(sub,(val(int,3),(val(int,2),()))).
+evaluate(sub,(val(int,3),(val(none,none),()))).
+evaluate(sub,(val(int,3),(bad,()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
-
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(sub,(variable(three_case),(variable(two_case),()))).
-evaluate(sub,(variable(three_case),(variable(none_case),()))).
-evaluate(sub,(variable(three_case),(variable(bad_case),()))).
-
-#show evaluated/3.
+variable_declare(x,fromFacts).
+variable_domain(x,val(int,3)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(sub,(variable(x),(val(int,2),()))).
+evaluate(sub,(variable(x),(val(none,none),()))).
+evaluate(sub,(variable(x),(bad,()))).

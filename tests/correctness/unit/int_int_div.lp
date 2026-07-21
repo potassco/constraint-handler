@@ -1,25 +1,16 @@
-variable_declare(i_four,fromFacts).
-variable_domain(i_four,val(int,4)).
+evaluate(int_div,(val(int,4),(val(int,2),()))).
+evaluate(int_div,(val(int,-4),(val(int,2),()))).
+evaluate(int_div,(val(int,4),(val(int,0),()))).
+evaluate(int_div,(val(int,4),(val(none,none),()))).
+evaluate(int_div,(val(int,4),(bad,()))).
 
-variable_declare(i_neg,fromFacts).
-variable_domain(i_neg,val(int,-4)).
+phase_request(type_check,true).
 
-variable_declare(i_two,fromFacts).
-variable_domain(i_two,val(int,2)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(int,4)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(int_div,(variable(x),(val(int,2),()))).
+evaluate(int_div,(variable(x),(val(none,none),()))).
+evaluate(int_div,(variable(x),(bad,()))).
 
-variable_declare(i_zero,fromFacts).
-variable_domain(i_zero,val(int,0)).
-
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
-
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(int_div,(variable(i_four),(variable(i_two),()))).
-evaluate(int_div,(variable(i_neg),(variable(i_two),()))).
-evaluate(int_div,(variable(i_four),(variable(i_zero),()))).
-evaluate(int_div,(variable(i_four),(variable(none_case),()))).
-evaluate(int_div,(variable(i_four),(variable(bad_case),()))).
-
-#show evaluated/3.

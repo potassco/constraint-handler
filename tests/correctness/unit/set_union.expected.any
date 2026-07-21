@@ -1,0 +1,4 @@
+evaluated(length,(operation(union,(variable(x),(variable(b),()))),()),val(int,3))
+evaluated(length,(operation(union,(variable(x),(variable(b),()))),()),val(int,1))
+evaluated(length,(operation(union,(variable(x),(variable(b),()))),()),bad)
+evaluated(length,(operation(union,(variable(x),(variable(bad_set),()))),()),bad)

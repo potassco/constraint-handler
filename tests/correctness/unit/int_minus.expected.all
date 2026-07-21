@@ -1,4 +1,0 @@
-evaluated(minus,(variable(i_neg),()),val(int,3))
-evaluated(minus,(variable(i_two),()),val(int,-2))
-evaluated(minus,(variable(none_case),()),bad)
-evaluated(minus,(variable(bad_case),()),bad)

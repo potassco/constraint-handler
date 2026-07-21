@@ -1,0 +1,7 @@
+evaluated(leq,(variable(x),(val(int,2),())),val(bool,true))
+evaluated(leq,(variable(x),(val(int,2),())),bad)
+evaluated(leq,(variable(x),(val(int,1),())),val(bool,true))
+evaluated(leq,(variable(x),(val(int,1),())),val(bool,false))
+evaluated(leq,(variable(x),(val(int,1),())),bad)
+evaluated(leq,(variable(x),(val(none,none),())),bad)
+evaluated(leq,(variable(x),(bad,())),bad)

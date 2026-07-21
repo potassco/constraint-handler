@@ -1,17 +1,14 @@
-variable_declare(i_three,fromFacts).
-variable_domain(i_three,val(int,3)).
+evaluate(float_div,(val(int,3),(val(int,2),()))).
+evaluate(float_div,(val(int,3),(val(none,none),()))).
+evaluate(float_div,(val(int,3),(bad,()))).
 
-variable_declare(i_two,fromFacts).
-variable_domain(i_two,val(int,2)).
+phase_request(type_check,true).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(float,float("3.0"))).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(float_div,(variable(x),(val(int,2),()))).
+evaluate(float_div,(variable(x),(val(none,none),()))).
+evaluate(float_div,(variable(x),(bad,()))).
 
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(float_div,(variable(i_three),(variable(i_two),()))).
-evaluate(float_div,(variable(i_three),(variable(none_case),()))).
-evaluate(float_div,(variable(i_three),(variable(bad_case),()))).
-
-#show evaluated/3.

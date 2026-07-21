@@ -1,0 +1,4 @@
+evaluated(lnot,(val(bool,false),()),val(bool,true))
+evaluated(lnot,(val(bool,true),()),val(bool,false))
+evaluated(lnot,(val(none,none),()),val(none,none))
+evaluated(lnot,(bad,()),bad)

@@ -1,14 +1,19 @@
 variable_define(pool,operation(set_make,(val(int,1),(val(int,3),(val(none,none),()))))).
 
-variable_declare(bad_elem,fromFacts).
-variable_domain(bad_elem,bad).
+phase_request(type_check,true).
 
-variable_define(bad_set,operation(set_make,(variable(bad_elem),()))).
+variable_declare(x,fromFacts).
+variable_domain(x,val(int,1)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+
+
+variable_define(bad_set,operation(set_make,(bad,()))).
 
 evaluate(set_notin,(val(int,1),(variable(pool),()))).
 evaluate(set_notin,(val(int,2),(variable(pool),()))).
 evaluate(set_notin,(val(none,none),(variable(pool),()))).
-evaluate(set_notin,(variable(bad_elem),(variable(pool),()))).
+evaluate(set_notin,(bad,(variable(pool),()))).
 evaluate(set_notin,(val(int,1),(variable(bad_set),()))).
-
-#show evaluated/3.
+evaluate(set_notin,(variable(x),(variable(pool),()))).
+evaluate(set_notin,(variable(x),(variable(bad_set),()))).

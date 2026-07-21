@@ -1,0 +1,4 @@
+evaluated(pow,(variable(x),(val(int,2),())),val(float,float("6.25")))
+evaluated(pow,(variable(x),(val(int,2),())),bad)
+evaluated(pow,(variable(x),(val(none,none),())),bad)
+evaluated(pow,(variable(x),(bad,())),bad)

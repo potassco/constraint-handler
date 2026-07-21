@@ -1,2 +1,2 @@
-evaluated(lxor,(variable(none_case),()),val(bool,false))
-evaluated(lxor,(variable(false_case),(variable(none_case),())),val(bool,false))
+evaluated(lxor,(val(none,none),()),val(bool,false))
+evaluated(lxor,(val(bool,false),(val(none,none),())),val(bool,false))

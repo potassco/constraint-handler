@@ -1,0 +1,5 @@
+evaluated(eq,(variable(x),(val(float,float("2.5")),())),val(bool,true))
+evaluated(eq,(variable(x),(val(float,float("2.5")),())),val(bool,false))
+evaluated(eq,(variable(x),(val(float,float("2.5")),())),bad)
+evaluated(eq,(variable(x),(val(none,none),())),bad)
+evaluated(eq,(variable(x),(bad,())),bad)

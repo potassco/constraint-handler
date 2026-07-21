@@ -1,0 +1,4 @@
+evaluated(add,(variable(x),(val(int,2),())),val(float,float("4.5")))
+evaluated(add,(variable(x),(val(int,2),())),bad)
+evaluated(add,(variable(x),(val(none,none),())),bad)
+evaluated(add,(variable(x),(bad,())),bad)

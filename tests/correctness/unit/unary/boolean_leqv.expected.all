@@ -1,0 +1,2 @@
+evaluated(leqv,(val(bool,true),()),val(bool,true))
+evaluated(leqv,(val(bool,false),()),val(bool,false))

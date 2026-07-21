@@ -1,20 +1,17 @@
-variable_declare(less_case,fromFacts).
-variable_domain(less_case,val(string,"aa")).
+phase_request(type_check,true).
 
-variable_declare(greater_case,fromFacts).
-variable_domain(greater_case,val(string,"ab")).
+variable_declare(x,fromFacts).
+variable_domain(x,val(string,"ab")).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(leq,(variable(x),(val(string,"aa"),()))).
+evaluate(leq,(variable(x),(val(none,none),()))).
+evaluate(leq,(variable(x),(bad,()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
 
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(leq,(variable(less_case),(variable(greater_case),()))).
-evaluate(leq,(variable(greater_case),(variable(less_case),()))).
-evaluate(leq,(variable(less_case),(variable(less_case),()))).
-evaluate(leq,(variable(none_case),(variable(greater_case),()))).
-evaluate(leq,(variable(less_case),(variable(none_case),()))).
-evaluate(leq,(variable(less_case),(variable(bad_case),()))).
-
-#show evaluated/3.
+evaluate(leq,(val(string,"aa"),(val(string,"ab"),()))).
+evaluate(leq,(val(string,"ab"),(val(string,"aa"),()))).
+evaluate(leq,(val(string,"aa"),(val(string,"aa"),()))).
+evaluate(leq,(val(none,none),(val(string,"ab"),()))).
+evaluate(leq,(val(string,"aa"),(val(none,none),()))).
+evaluate(leq,(val(string,"aa"),(bad,()))).

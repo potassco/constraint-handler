@@ -1,23 +1,15 @@
-variable_declare(f_large,fromFacts).
-variable_domain(f_large,val(float,float("2.5"))).
+evaluate(mult,(val(float,float("2.5")),(val(int,2),()))).
+evaluate(mult,(val(float,float("0.0")),(bad,()))).
+evaluate(mult,(val(float,float("2.5")),(val(none,none),()))).
+evaluate(mult,(val(float,float("2.5")),(bad,()))).
 
-variable_declare(f_zero,fromFacts).
-variable_domain(f_zero,val(float,float("0.0"))).
+phase_request(type_check,true).
 
-variable_declare(i_two,fromFacts).
-variable_domain(i_two,val(int,2)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(float,float("2.5"))).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(mult,(variable(x),(val(int,2),()))).
+evaluate(mult,(variable(x),(val(none,none),()))).
+evaluate(mult,(variable(x),(bad,()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
-
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(mult,()).
-evaluate(mult,(variable(f_large),())).
-evaluate(mult,(variable(f_large),(variable(i_two),()))).
-evaluate(mult,(variable(f_zero),(variable(bad_case),()))).
-evaluate(mult,(variable(f_large),(variable(none_case),()))).
-evaluate(mult,(variable(f_large),(variable(bad_case),()))).
-
-#show evaluated/3.

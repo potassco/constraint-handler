@@ -1,0 +1,2 @@
+evaluated(length,(variable(x),()),val(int,2))
+evaluated(length,(variable(x),()),bad)

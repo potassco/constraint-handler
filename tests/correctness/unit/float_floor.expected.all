@@ -1,3 +1,0 @@
-evaluated(floor,(variable(f_large),()),val(int,2))
-evaluated(floor,(variable(none_case),()),bad)
-evaluated(floor,(variable(bad_case),()),bad)

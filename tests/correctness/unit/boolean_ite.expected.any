@@ -1,0 +1,4 @@
+evaluated(ite,(variable(x),(val(int,1),(val(string,"else"),()))),val(int,1))
+evaluated(ite,(variable(x),(val(int,1),(val(string,"else"),()))),val(string,"else"))
+evaluated(ite,(variable(x),(val(int,1),(val(string,"else"),()))),bad)
+evaluated(ite,(variable(x),(val(int,1),(val(string,"else"),()))),val(none,none))

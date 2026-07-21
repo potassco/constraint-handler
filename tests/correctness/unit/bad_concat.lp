@@ -1,17 +1,13 @@
-variable_declare(left_case,fromFacts).
-variable_domain(left_case,val(string,"ab")).
+phase_request(type_check,true).
 
-variable_declare(right_case,fromFacts).
-variable_domain(right_case,val(string,"c")).
+evaluate(concat,(val(string,"ab"),(val(string,"c"),()))).
+evaluate(concat,(val(none,none),(val(string,"c"),()))).
+evaluate(concat,(bad,(val(string,"c"),()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
-
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(concat,(variable(left_case),(variable(right_case),()))).
-evaluate(concat,(variable(none_case),(variable(right_case),()))).
-evaluate(concat,(variable(bad_case),(variable(right_case),()))).
-
-#show evaluated/3.
+variable_declare(x,fromFacts).
+variable_domain(x,val(string,"ab")).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(concat,(variable(x),(val(string,"c"),()))).
+evaluate(concat,(variable(x),(val(none,none),()))).
+evaluate(concat,(variable(x),(bad,()))).

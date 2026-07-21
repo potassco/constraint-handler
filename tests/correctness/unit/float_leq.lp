@@ -1,21 +1,15 @@
-variable_declare(f_small,fromFacts).
-variable_domain(f_small,val(float,float("1.5"))).
+evaluate(leq,(val(float,float("1.5")),(val(int,2),()))).
+evaluate(leq,(val(float,float("2.5")),(val(int,2),()))).
+evaluate(leq,(val(float,float("1.5")),(val(none,none),()))).
+evaluate(leq,(val(float,float("1.5")),(bad,()))).
 
-variable_declare(f_large,fromFacts).
-variable_domain(f_large,val(float,float("2.5"))).
+phase_request(type_check,true).
 
-variable_declare(i_two,fromFacts).
-variable_domain(i_two,val(int,2)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(float,float("2.5"))).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(leq,(variable(x),(val(float,float("1.5")),()))).
+evaluate(leq,(variable(x),(val(none,none),()))).
+evaluate(leq,(variable(x),(bad,()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
-
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(leq,(variable(f_small),(variable(i_two),()))).
-evaluate(leq,(variable(f_large),(variable(i_two),()))).
-evaluate(leq,(variable(f_small),(variable(none_case),()))).
-evaluate(leq,(variable(f_small),(variable(bad_case),()))).
-
-#show evaluated/3.

@@ -1,0 +1,4 @@
+evaluated(mult,(variable(x),(val(int,3),())),val(int,6))
+evaluated(mult,(variable(x),(val(int,3),())),bad)
+evaluated(mult,(variable(x),(val(none,none),())),bad)
+evaluated(mult,(variable(x),(bad,())),bad)

@@ -1,0 +1,5 @@
+evaluated(gt,(variable(x),(val(int,2),())),val(bool,true))
+evaluated(gt,(variable(x),(val(int,2),())),val(bool,false))
+evaluated(gt,(variable(x),(val(int,2),())),bad)
+evaluated(gt,(variable(x),(val(none,none),())),bad)
+evaluated(gt,(variable(x),(bad,())),bad)

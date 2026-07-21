@@ -1,27 +1,18 @@
-variable_declare(i_neg,fromFacts).
-variable_domain(i_neg,val(int,-3)).
+evaluate(pow,(val(int,2),(val(int,3),()))).
+evaluate(pow,(val(int,-3),(val(int,2),()))).
+evaluate(pow,(val(none,none),(val(int,0),()))).
+evaluate(pow,(bad,(val(int,0),()))).
+evaluate(pow,(val(int,2),(val(none,none),()))).
+evaluate(pow,(val(int,2),(bad,()))).
+evaluate(pow,(bad,(val(int,3),()))).
 
-variable_declare(i_two,fromFacts).
-variable_domain(i_two,val(int,2)).
+phase_request(type_check,true).
 
-variable_declare(i_three,fromFacts).
-variable_domain(i_three,val(int,3)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(int,2)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(pow,(variable(x),(val(int,3),()))).
+evaluate(pow,(variable(x),(val(none,none),()))).
+evaluate(pow,(variable(x),(bad,()))).
 
-variable_declare(i_zero,fromFacts).
-variable_domain(i_zero,val(int,0)).
-
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
-
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(pow,(variable(i_two),(variable(i_three),()))).
-evaluate(pow,(variable(i_neg),(variable(i_two),()))).
-evaluate(pow,(variable(none_case),(variable(i_zero),()))).
-evaluate(pow,(variable(bad_case),(variable(i_zero),()))).
-evaluate(pow,(variable(i_two),(variable(none_case),()))).
-evaluate(pow,(variable(i_two),(variable(bad_case),()))).
-evaluate(pow,(variable(bad_case),(variable(i_three),()))).
-
-#show evaluated/3.

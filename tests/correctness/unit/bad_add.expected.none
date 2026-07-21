@@ -1,4 +1,2 @@
-evaluated(add,(variable(one_case),(variable(two_case),())),bad)
-evaluated(add,(variable(one_case),(variable(two_case),())),val(none,none))
-evaluated(add,(variable(none_case),()),val(none,none))
-evaluated(add,(variable(bad_case),()),val(none,none))
+evaluated(add,(val(int,1),(val(int,2),())),bad)
+evaluated(add,(val(int,1),(val(int,2),())),val(none,none))

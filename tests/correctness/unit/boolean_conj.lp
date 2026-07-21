@@ -1,22 +1,18 @@
-variable_declare(false_case,fromFacts).
-variable_domain(false_case,val(bool,false)).
+phase_request(type_check,true).
 
-variable_declare(true_case,fromFacts).
-variable_domain(true_case,val(bool,true)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(bool,true)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(conj,(variable(x),(val(bool,false),()))).
+evaluate(conj,(variable(x),(val(none,none),()))).
+evaluate(conj,(variable(x),(bad,()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
 
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(conj,()).
-evaluate(conj,(variable(true_case),(variable(true_case),()))).
-evaluate(conj,(variable(true_case),(variable(none_case),()))).
-evaluate(conj,(variable(false_case),(variable(true_case),()))).
-evaluate(conj,(variable(false_case),(variable(none_case),()))).
-evaluate(conj,(variable(none_case),(variable(bad_case),()))).
-evaluate(conj,(variable(true_case),(variable(bad_case),()))).
-evaluate(conj,(variable(false_case),(variable(bad_case),()))).
-
-#show evaluated/3.
+evaluate(conj,(val(bool,true),(val(bool,true),()))).
+evaluate(conj,(val(bool,true),(val(none,none),()))).
+evaluate(conj,(val(bool,false),(val(bool,true),()))).
+evaluate(conj,(val(bool,false),(val(none,none),()))).
+evaluate(conj,(val(none,none),(bad,()))).
+evaluate(conj,(val(bool,true),(bad,()))).
+evaluate(conj,(val(bool,false),(bad,()))).

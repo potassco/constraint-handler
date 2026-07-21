@@ -1,4 +1,0 @@
-evaluated(hasValue,(variable(false_case),()),val(bool,true))
-evaluated(hasValue,(variable(true_case),()),val(bool,true))
-evaluated(hasValue,(variable(none_case),()),val(bool,false))
-evaluated(hasValue,(variable(bad_case),()),bad)

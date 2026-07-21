@@ -1,1 +1,1 @@
-evaluated(disj,(variable(none_case),(variable(bad_case),())),bad)
+evaluated(disj,(val(none,none),(bad,())),bad)

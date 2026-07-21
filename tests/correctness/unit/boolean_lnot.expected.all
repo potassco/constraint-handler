@@ -1,4 +1,0 @@
-evaluated(lnot,(variable(false_case),()),val(bool,true))
-evaluated(lnot,(variable(true_case),()),val(bool,false))
-evaluated(lnot,(variable(none_case),()),val(none,none))
-evaluated(lnot,(variable(bad_case),()),bad)

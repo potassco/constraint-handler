@@ -1,0 +1,3 @@
+evaluated(add,(),bad)
+evaluated(add,(),val(none,none))
+evaluated(add,(),val(int,1))

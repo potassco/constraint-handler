@@ -1,12 +1,15 @@
 % compile2 currently goes UNSAT for these left-none implication cases.
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
+phase_request(type_check,true).
 
-variable_declare(false_case,fromFacts).
-variable_domain(false_case,val(bool,false)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(bool,true)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(limp,(variable(x),(val(bool,false),()))).
+evaluate(limp,(variable(x),(val(none,none),()))).
+evaluate(limp,(variable(x),(bad,()))).
 
-evaluate(limp,(variable(none_case),(variable(false_case),()))).
-evaluate(limp,(variable(none_case),(variable(none_case),()))).
 
-#show evaluated/3.
+evaluate(limp,(val(none,none),(val(bool,false),()))).
+evaluate(limp,(val(none,none),(val(none,none),()))).

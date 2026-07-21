@@ -1,3 +1,0 @@
-evaluated(length,(variable(empty),()),val(int,0))
-evaluated(length,(variable(values),()),val(int,2))
-evaluated(length,(variable(bad_case),()),bad)

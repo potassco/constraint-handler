@@ -1,0 +1,6 @@
+evaluated(length,(variable(empty),()),bad)
+evaluated(length,(variable(empty),()),val(int,1))
+evaluated(length,(variable(values),()),bad)
+evaluated(length,(variable(values),()),val(int,3))
+evaluated(length,(bad,()),val(int,0))
+evaluated(length,(bad,()),val(none,none))

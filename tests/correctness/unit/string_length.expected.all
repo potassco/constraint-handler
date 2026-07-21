@@ -1,4 +1,0 @@
-evaluated(length,(variable(text_case),()),val(int,2))
-evaluated(length,(variable(empty_case),()),val(int,0))
-evaluated(length,(variable(none_case),()),bad)
-evaluated(length,(variable(bad_case),()),bad)

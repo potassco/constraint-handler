@@ -1,18 +1,14 @@
-variable_declare(false_case,fromFacts).
-variable_domain(false_case,val(bool,false)).
+phase_request(type_check,true).
 
-variable_declare(true_case,fromFacts).
-variable_domain(true_case,val(bool,true)).
+evaluate(lxor,(val(bool,false),(val(none,none),()))).
+evaluate(lxor,(val(bool,true),(val(bool,false),()))).
+evaluate(lxor,(val(bool,true),(bad,()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
-
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(lxor,(variable(none_case),())).
-evaluate(lxor,(variable(false_case),(variable(none_case),()))).
-evaluate(lxor,(variable(true_case),(variable(false_case),()))).
-evaluate(lxor,(variable(true_case),(variable(bad_case),()))).
-
-#show evaluated/3.
+variable_declare(x,fromFacts).
+variable_domain(x,val(bool,false)).
+variable_domain(x,val(bool,true)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(lxor,(variable(x),(val(bool,false),()))).
+evaluate(lxor,(variable(x),(val(none,none),()))).
+evaluate(lxor,(variable(x),(bad,()))).

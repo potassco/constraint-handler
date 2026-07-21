@@ -1,20 +1,17 @@
-variable_declare(sym_a,fromFacts).
-variable_domain(sym_a,val(symbol,a)).
+phase_request(type_check,true).
 
-variable_declare(sym_b,fromFacts).
-variable_domain(sym_b,val(symbol,b)).
+variable_declare(x,fromFacts).
+variable_domain(x,val(symbol,b)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(geq,(variable(x),(val(symbol,a),()))).
+evaluate(geq,(variable(x),(val(none,none),()))).
+evaluate(geq,(variable(x),(bad,()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
 
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(geq,(variable(sym_a),(variable(sym_a),()))).
-evaluate(geq,(variable(sym_a),(variable(sym_b),()))).
-evaluate(geq,(variable(sym_b),(variable(sym_a),()))).
-evaluate(geq,(variable(none_case),(variable(sym_a),()))).
-evaluate(geq,(variable(sym_a),(variable(none_case),()))).
-evaluate(geq,(variable(sym_a),(variable(bad_case),()))).
-
-#show evaluated/3.
+evaluate(geq,(val(symbol,a),(val(symbol,a),()))).
+evaluate(geq,(val(symbol,a),(val(symbol,b),()))).
+evaluate(geq,(val(symbol,b),(val(symbol,a),()))).
+evaluate(geq,(val(none,none),(val(symbol,a),()))).
+evaluate(geq,(val(symbol,a),(val(none,none),()))).
+evaluate(geq,(val(symbol,a),(bad,()))).

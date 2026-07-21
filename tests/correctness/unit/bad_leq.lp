@@ -1,19 +1,17 @@
-variable_declare(one_case,fromFacts).
-variable_domain(one_case,val(int,1)).
+phase_request(type_check,true).
 
-variable_declare(two_case,fromFacts).
-variable_domain(two_case,val(int,2)).
+evaluate(leq,(val(int,1),(val(int,2),()))).
+evaluate(leq,(val(int,2),(val(int,1),()))).
+evaluate(leq,(val(none,none),(val(int,2),()))).
+evaluate(leq,(val(int,1),(val(none,none),()))).
+evaluate(leq,(val(int,1),(bad,()))).
 
-variable_declare(none_case,fromFacts).
-variable_domain(none_case,val(none,none)).
-
-variable_declare(bad_case,fromFacts).
-variable_domain(bad_case,bad).
-
-evaluate(leq,(variable(one_case),(variable(two_case),()))).
-evaluate(leq,(variable(two_case),(variable(one_case),()))).
-evaluate(leq,(variable(none_case),(variable(two_case),()))).
-evaluate(leq,(variable(one_case),(variable(none_case),()))).
-evaluate(leq,(variable(one_case),(variable(bad_case),()))).
-
-#show evaluated/3.
+variable_declare(x,fromFacts).
+variable_domain(x,val(int,1)).
+variable_domain(x,val(int,2)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(leq,(variable(x),(val(int,2),()))).
+evaluate(leq,(variable(x),(val(int,1),()))).
+evaluate(leq,(variable(x),(val(none,none),()))).
+evaluate(leq,(variable(x),(bad,()))).

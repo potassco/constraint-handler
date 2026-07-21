@@ -1,0 +1,4 @@
+evaluated(pow,(variable(x),(val(int,3),())),val(int,8))
+evaluated(pow,(variable(x),(val(int,3),())),bad)
+evaluated(pow,(variable(x),(val(none,none),())),bad)
+evaluated(pow,(variable(x),(bad,())),bad)
