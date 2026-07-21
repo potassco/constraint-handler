@@ -140,37 +140,31 @@ _rev(false, true).
 %%%%%%%%%%%%%%%%% lxor leqv
 % this implementation of lxor and leqv is not very efficient,
 % can be much better if we have a binary xor
-_bool_has_bad(ExprList) :-
+_bool_lxor_has_bad_or_none(ExprList) :-
     _expression(compile2, operation((lxor;leqv), ExprList)),
     _expression_operationIndex(compile2, operation((lxor;leqv), ExprList), _, Arg),
     _se_value(Arg, bad).
-_bool_has_bad(ExprList) :-
+_bool_lxor_has_bad_or_none(ExprList) :-
     _expression(compile2, operation((lxor;leqv), ExprList)),
     _expression_operationIndex(compile2, operation((lxor;leqv), ExprList), _, Arg),
     _se_value(Arg, val(none, none)).
 
 :-
-    _expression(compile2, operation(OP, ExprList)),
-    _bool_has_bad(ExprList),
-    OP = (lxor;leqv),
-    not _se_value(operation(OP, ExprList), bad).
-
-:-
     _expression(compile2,operation(lxor, ExprList)),
-    not _bool_has_bad(ExprList),
+    not _bool_lxor_has_bad_or_none(ExprList),
     N = #count { Idx : _se_value(Arg, val(bool,true)), _expression_operationIndex(compile2, operation(lxor, ExprList), Idx, Arg) }, N \ 2 = 1,
     not _se_value(operation(lxor, ExprList),val(bool,true)).
 :- _expression(compile2,operation(lxor, ExprList)),
-    not _bool_has_bad(ExprList),
+    not _bool_lxor_has_bad_or_none(ExprList),
     N = #count { Idx : _se_value(Arg, val(bool,true)), _expression_operationIndex(compile2, operation(lxor, ExprList), Idx, Arg) }, N \ 2 = 0,
     not _se_value(operation(lxor, ExprList),val(bool,false)).
 
 :- _expression(compile2,operation(leqv, ExprList)),
-    not _bool_has_bad(ExprList),
+    not _bool_lxor_has_bad_or_none(ExprList),
     N = #count { Idx : _se_value(Arg, val(bool,false)), _expression_operationIndex(compile2, operation(leqv, ExprList), Idx, Arg) }, N \ 2 = 0,
     not _se_value(operation(leqv, ExprList),val(bool,true)).
 :- _expression(compile2,operation(leqv, ExprList)),
-    not _bool_has_bad(ExprList),
+    not _bool_lxor_has_bad_or_none(ExprList),
     N = #count { Idx : _se_value(Arg, val(bool,false)), _expression_operationIndex(compile2, operation(leqv, ExprList), Idx, Arg) }, N \ 2 = 1,
     not _se_value(operation(leqv, ExprList),val(bool,false)).
 

@@ -1613,33 +1613,45 @@ class Domain:
         return cls(is_bad=domain.is_bad or has_invalid_values, ints=frozenset(lengths))
 
     @classmethod
-    def op_max(cls, *domains: Domain) -> Domain:
-        """Compute all max results across the argument cross-product."""
-        if any(
-            domain.bools
-            or domain.is_none
-            or domain.strings
-            or domain.symbols
-            or domain.tuples
-            or domain.has_possible_sets()
-            for domain in domains
-        ):
-            return cls.bad()
-        shortcut = cls._ordered_extremum(domains, prefer_max=True)
-        if shortcut is not None:
-            return shortcut
+    def _numeric_extremum_domain(cls, domains: tuple[Domain, ...], *, prefer_max: bool) -> Domain:
+        """Compute min/max domain while preserving bad from non-numeric contributors."""
         if not domains:
             return cls.empty()
-        value_options = [tuple(domain.values()) for domain in domains]
+
+        is_bad = any(domain.is_bad for domain in domains)
+        numeric_domains: list[Domain] = []
+        for domain in domains:
+            if (
+                domain.bools
+                or domain.is_none
+                or domain.strings
+                or domain.symbols
+                or domain.tuples
+                or domain.has_possible_sets()
+            ):
+                is_bad = True
+            numeric_domain = cls(
+                ints=domain.ints,
+                floats=domain.floats,
+            )
+            if not numeric_domain.has_values():
+                return cls.bad() if is_bad else cls.empty()
+            numeric_domains.append(numeric_domain)
+
+        shortcut = cls._ordered_extremum(tuple(numeric_domains), prefer_max=prefer_max)
+        if shortcut is not None:
+            return replace(shortcut, is_bad=is_bad)
+
+        value_options = [tuple(domain.values()) for domain in numeric_domains]
         if any(not options for options in value_options):
             return cls.empty()
 
         ints: set[int] = set()
         floats: set[float] = set()
-        is_bad = any(domain.is_bad for domain in domains)
+        extremum = max if prefer_max else min
         for arg_values in product(*value_options):
             try:
-                result = max(arg_values)
+                result = extremum(arg_values)
                 if isinstance(result, int) and not isinstance(result, bool):
                     ints.add(result)
                 else:
@@ -1653,44 +1665,14 @@ class Domain:
         )
 
     @classmethod
+    def op_max(cls, *domains: Domain) -> Domain:
+        """Compute all max results across the argument cross-product."""
+        return cls._numeric_extremum_domain(domains, prefer_max=True)
+
+    @classmethod
     def op_min(cls, *domains: Domain) -> Domain:
         """Compute all min results across the argument cross-product."""
-        if any(
-            domain.bools
-            or domain.is_none
-            or domain.strings
-            or domain.symbols
-            or domain.tuples
-            or domain.has_possible_sets()
-            for domain in domains
-        ):
-            return cls.bad()
-        shortcut = cls._ordered_extremum(domains, prefer_max=False)
-        if shortcut is not None:
-            return shortcut
-        if not domains:
-            return cls.empty()
-        value_options = [tuple(domain.values()) for domain in domains]
-        if any(not options for options in value_options):
-            return cls.empty()
-
-        ints: set[int] = set()
-        floats: set[float] = set()
-        is_bad = any(domain.is_bad for domain in domains)
-        for arg_values in product(*value_options):
-            try:
-                result = min(arg_values)
-                if isinstance(result, int) and not isinstance(result, bool):
-                    ints.add(result)
-                else:
-                    floats.add(float(result))
-            except Exception:
-                is_bad = True
-        return cls(
-            is_bad=is_bad,
-            ints=frozenset(ints),
-            floats=frozenset(floats),
-        )
+        return cls._numeric_extremum_domain(domains, prefer_max=False)
 
     @classmethod
     def op_default(cls, primary: Domain, fallback: Domain) -> Domain:
