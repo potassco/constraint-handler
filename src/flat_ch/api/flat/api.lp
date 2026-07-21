@@ -19,6 +19,9 @@
 % =============================================================================
 #defined execution_declare/4.
 #defined execution_run/1.
+_fch_input(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT)) :-
+    execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
+_fch_input(execution_run(NAME)) :- execution_run(NAME).
 _fch_execution_run(NAME) :- execution_run(NAME).
 _fch_ssa(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT)) :-
         execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).

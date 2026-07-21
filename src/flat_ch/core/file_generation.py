@@ -2,10 +2,19 @@ import re
 from pathlib import Path
 
 from flat_ch.core.domain import FlatFact
-from flat_ch.core.operators import Arity, Operator
+from flat_ch.core.evaluation.operators import Arity, Operator
 from flat_ch.core.types import Type
 
 HEADER_RULE = "%% ============================================================================="
+
+_REGISTRATION_GUARDED_FLAT_FACTS: tuple[FlatFact, ...] = (
+    FlatFact.VARIABLE_DECLARE,
+    FlatFact.VARIABLE_DOMAIN,
+    FlatFact.VARIABLE_DEFINE,
+    FlatFact.ENSURE,
+    FlatFact.EVALUATE,
+    FlatFact.BOOL_EVALUATE,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 SRC_DIR = BASE_DIR / "encodings"
@@ -179,7 +188,14 @@ def _generate_flatten() -> list[str]:
 
     for fact in FlatFact:
         vars_str = ", ".join(fact.variables)
-        lines.append(f"_fch_{fact.value}({vars_str}) :- _fch_flat({fact.value}({vars_str})).")
+        if fact in _REGISTRATION_GUARDED_FLAT_FACTS:
+            reg_vars_str = ", ".join(("ID", *fact.variables))
+            lines.append(
+                f"_fch_{fact.value}({vars_str}) :- _fch_registered(_, ID), _fch_flat({fact.value}({reg_vars_str}))."
+            )
+            lines.append(f"_fch_{fact.value}({vars_str}) :- _fch_flat({fact.value}({vars_str})).")
+        else:
+            lines.append(f"_fch_{fact.value}({vars_str}) :- _fch_flat({fact.value}({vars_str})).")
 
     lines.extend(["", "%% OPERATIONS"])
 

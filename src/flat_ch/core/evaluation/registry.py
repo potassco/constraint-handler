@@ -1,9 +1,7 @@
 import typing
 
-from flat_ch.core.operators import Operator
-from flat_ch.core.types import Type
-from flat_ch.operators.comparison import handle_eq, handle_geq, handle_gt, handle_leq, handle_lt, handle_neq
-from flat_ch.operators.logic import (
+from flat_ch.core.evaluation.comparison import handle_eq, handle_geq, handle_gt, handle_leq, handle_lt, handle_neq
+from flat_ch.core.evaluation.logic import (
     handle_hasvalue,
     handle_if,
     handle_ite,
@@ -14,7 +12,7 @@ from flat_ch.operators.logic import (
     handle_snot,
     handle_wnot,
 )
-from flat_ch.operators.math import (
+from flat_ch.core.evaluation.math import (
     handle_abs,
     handle_add,
     handle_ceil,
@@ -31,6 +29,8 @@ from flat_ch.operators.math import (
     handle_sqrt,
     handle_sub,
 )
+from flat_ch.core.evaluation.operators import Operator
+from flat_ch.core.types import Type
 
 OperatorHandler = typing.Callable[[list[tuple[Type, typing.Any]]], tuple[Type, typing.Any]]
 
