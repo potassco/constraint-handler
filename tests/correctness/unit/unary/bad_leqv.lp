@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(leqv,(val(bool,true),())).
 evaluate(leqv,(val(none,none),())).

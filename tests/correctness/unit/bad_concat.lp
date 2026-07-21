@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(concat,(val(string,"ab"),(val(string,"c"),()))).
 evaluate(concat,(val(none,none),(val(string,"c"),()))).

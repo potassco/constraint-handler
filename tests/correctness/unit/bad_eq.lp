@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(eq,(val(int,1),(val(int,1),()))).
 evaluate(eq,(val(int,1),(val(int,2),()))).

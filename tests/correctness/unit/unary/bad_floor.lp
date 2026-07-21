@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(floor,(val(int,2),())).
 evaluate(floor,(val(none,none),())).

@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(hasValue,(val(bool,false),())).
 evaluate(hasValue,(val(bool,true),())).

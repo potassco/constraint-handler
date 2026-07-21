@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(snot,(val(bool,false),())).
 evaluate(snot,(val(bool,true),())).

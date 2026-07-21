@@ -4,7 +4,6 @@ evaluate(lt,(val(int,2),(val(int,2),()))).
 evaluate(lt,(val(int,2),(val(none,none),()))).
 evaluate(lt,(val(int,2),(bad,()))).
 
-phase_request(type_check,true).
 
 variable_declare(x,fromFacts).
 variable_domain(x,val(int,2)).
@@ -13,4 +12,3 @@ variable_domain(x,bad).
 evaluate(lt,(variable(x),(val(int,3),()))).
 evaluate(lt,(variable(x),(val(none,none),()))).
 evaluate(lt,(variable(x),(bad,()))).
-

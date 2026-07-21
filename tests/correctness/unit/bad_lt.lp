@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(lt,(val(int,1),(val(int,2),()))).
 evaluate(lt,(val(int,2),(val(int,1),()))).

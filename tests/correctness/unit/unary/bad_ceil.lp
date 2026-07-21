@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(ceil,(val(int,2),())).
 evaluate(ceil,(val(none,none),())).

@@ -18,7 +18,6 @@ evaluate(eq,(val(none,none),(val(bool,true),()))).
 evaluate(eq,(val(bool,true),(bad,()))).
 evaluate(eq,(bad,(val(bool,true),()))).
 
-phase_request(type_check,true).
 
 variable_declare(x,fromFacts).
 variable_domain(x,val(int,1)).
@@ -27,4 +26,3 @@ variable_domain(x,bad).
 evaluate(eq,(variable(x),(val(int,1),()))).
 evaluate(eq,(variable(x),(val(none,none),()))).
 evaluate(eq,(variable(x),(bad,()))).
-

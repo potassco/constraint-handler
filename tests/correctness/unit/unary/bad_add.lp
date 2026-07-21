@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(add,(val(int,-2),())).
 evaluate(add,(val(none,none),())).

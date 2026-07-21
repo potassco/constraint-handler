@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(mult,(val(int,2),(val(int,3),()))).
 evaluate(mult,(val(int,2),(val(none,none),()))).

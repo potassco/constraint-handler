@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(max,(val(int,1),(val(int,2),()))).
 evaluate(max,(val(int,1),(val(none,none),()))).

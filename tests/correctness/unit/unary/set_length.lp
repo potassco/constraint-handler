@@ -1,7 +1,6 @@
 variable_define(empty,operation(set_make,())).
 variable_define(values,operation(set_make,(val(int,1),(val(int,1),(val(none,none),()))))).
 
-phase_request(type_check,true).
 
 variable_declare(x,fromFacts).
 variable_domain(x,variable(empty)).

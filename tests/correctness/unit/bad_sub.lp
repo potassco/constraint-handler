@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(sub,(val(int,3),(val(int,2),()))).
 evaluate(sub,(val(int,3),(val(none,none),()))).

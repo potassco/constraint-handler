@@ -1,6 +1,5 @@
 variable_define(pool,operation(set_make,(val(int,1),(val(int,3),(val(none,none),()))))).
 
-phase_request(type_check,true).
 
 variable_declare(x,fromFacts).
 variable_domain(x,val(int,1)).

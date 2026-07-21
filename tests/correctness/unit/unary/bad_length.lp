@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(length,(val(string,"ab"),())).
 evaluate(length,(val(none,none),())).

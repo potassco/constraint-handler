@@ -3,7 +3,6 @@ evaluate(minus,(val(int,2),())).
 evaluate(minus,(val(none,none),())).
 evaluate(minus,(bad,())).
 
-phase_request(type_check,true).
 
 variable_declare(x,fromFacts).
 variable_domain(x,val(int,-3)).

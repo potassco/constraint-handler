@@ -395,21 +395,21 @@ warning_tests = [
 ]
 
 base_tests = (
-    core_tests +
-    datatype_tests +
-    engine_tests +
-    error_tests +
-    execution_tests +
-    expression_tests +
-    multimap_tests +
-    optimization_tests +
-    python_tests +
-    set_tests +
-    type_tests +
-    unit_tests +
-    processed_unit_tests +
-    variable_tests +
-    warning_tests
+    core_tests
+    + datatype_tests
+    + engine_tests
+    + error_tests
+    + execution_tests
+    + expression_tests
+    + multimap_tests
+    + optimization_tests
+    + python_tests
+    + set_tests
+    + type_tests
+    + unit_tests
+    + processed_unit_tests
+    + variable_tests
+    + warning_tests
 )
 
 other_tests = [

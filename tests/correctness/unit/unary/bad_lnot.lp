@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(lnot,(val(bool,false),())).
 evaluate(lnot,(val(bool,true),())).

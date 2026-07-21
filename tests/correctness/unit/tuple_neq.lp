@@ -14,7 +14,6 @@ evaluate(neq,(val(none,none),(variable(tuple_plain),()))).
 evaluate(neq,(variable(tuple_plain),(bad,()))).
 evaluate(neq,(bad,(variable(tuple_plain),()))).
 
-phase_request(type_check,true).
 
 variable_declare(x,fromFacts).
 variable_domain(x,(val(int,1),val(string,"x"),val(symbol,key))).
@@ -23,4 +22,3 @@ variable_domain(x,bad).
 evaluate(neq,(variable(x),((val(int,1),val(string,"x"),val(symbol,key)),()))).
 evaluate(neq,(variable(x),(val(none,none),()))).
 evaluate(neq,(variable(x),(bad,()))).
-

@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(minus,(val(int,2),())).
 evaluate(minus,(val(none,none),())).

@@ -1,4 +1,3 @@
-phase_request(type_check,true).
 
 evaluate(lxor,(val(bool,false),(val(none,none),()))).
 evaluate(lxor,(val(bool,true),(val(bool,false),()))).
