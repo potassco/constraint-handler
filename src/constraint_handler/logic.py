@@ -38,7 +38,7 @@ def evaluate_operator(o, args) -> atom.EvalResult:
             return atom.EvalResult(args[1] if args[0] else args[2], NO_ERRORS)
         case operators.LogicOperator.leqv:
             if None in args:
-                return atom.EvalResult(None, NO_ERRORS)
+                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
             return atom.EvalResult(functools.reduce(operator.eq, args, True), NO_ERRORS)
         case operators.LogicOperator.limp:
             assert len(args) == 2
@@ -56,7 +56,7 @@ def evaluate_operator(o, args) -> atom.EvalResult:
             return atom.EvalResult(not args[0], NO_ERRORS)
         case operators.LogicOperator.lxor:
             if None in args:
-                return atom.EvalResult(None, NO_ERRORS)
+                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
             return atom.EvalResult(functools.reduce(operator.xor, args, False), NO_ERRORS)
         case operators.LogicOperator.snot:
             assert len(args) == 1
