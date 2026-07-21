@@ -4,8 +4,8 @@ from pathlib import Path
 import clingo
 import pytest
 
-import flat_ch.api as flat_ch_api
 import tests.utils.testing as chut
+from flat_ch.main import add_to_control
 from tests.test_encoding import base_tests, ctrl_options
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -87,7 +87,7 @@ currently_unsupported_core_tests = [
 
 def solve_with_flat_ch(name: str, test, extra_args: list[str]):
     ctl = clingo.Control([*ctrl_options, *extra_args])
-    flat_ch_api.add_to_control(ctl, {}, api="ch")
+    add_to_control(ctl, {}, api="ch")
     if name.startswith("tests/correctness/optimization/"):
         ctl.add("base", [], "_fch_enable_optimize_value_output.")
 

@@ -58,7 +58,6 @@ class Operator(IntEnum):
     @property
     def allowed_arities(self) -> Arity:
         """Returns the bitmask of all structural shapes this operator permits."""
-        # Pre-cache or look up signatures instantly
         return _OPERATOR_ARITY_MASKS.get(self, Arity.BINARY)
 
     @property
