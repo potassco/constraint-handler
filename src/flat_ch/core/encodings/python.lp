@@ -6,9 +6,11 @@ _fch_python_set_member_typed(SET_ID, (TYPE, VALUE)) :-
     _fch_python_serialized_set(SET_ID),
     _fch_set_member(SET_ID, TYPE, VALUE).
 
+_fch_python_expr_is_var(ID) :- _fch_expr_var(ID, _).
+
 _fch_python_serialized_set(SET_ID) :-
     _fch_op_python_arg(ID, _, EXPR_ID),
-    not _fch_expr_var(ID, _),
+    not _fch_python_expr_is_var(ID),
     _fch_dynamic_expr_val(EXPR_ID, _fch_type_set_id, SET_ID).
 
 _fch_python_set_serialized(SET_ID, INDEX, ()) :-
