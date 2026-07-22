@@ -768,6 +768,9 @@ class Domain:
             if call_error_messages:
                 domain = cls.bad()
                 error_messages = call_error_messages
+            elif any(value == cls.BAD_SYMBOL for value in arg_values):
+                domain = cls.bad()
+                error_messages = ()
             else:
                 runtime_args = tuple(cls.value_to_runtime(value) for value in arg_values)
                 try:
