@@ -1,5 +1,4 @@
 evaluated(max,(variable(x),(val(int,3),())),val(int,3))
-evaluated(max,(variable(x),(val(int,3),())),val(int,2))
 evaluated(max,(variable(x),(val(int,3),())),bad)
 evaluated(max,(variable(x),(val(none,none),())),bad)
 evaluated(max,(variable(x),(bad,())),bad)
