@@ -1,5 +1,4 @@
 evaluated(neq,(variable(x),(variable(right),())),val(bool,true))
-evaluated(neq,(variable(x),(variable(right),())),val(bool,false))
 evaluated(neq,(variable(x),(variable(right),())),bad)
 evaluated(neq,(variable(x),(val(none,none),())),bad)
 evaluated(neq,(variable(x),(bad,())),bad)
