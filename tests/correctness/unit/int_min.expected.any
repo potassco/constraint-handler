@@ -1,5 +1,4 @@
 evaluated(min,(variable(x),(val(int,3),())),val(int,2))
-evaluated(min,(variable(x),(val(int,3),())),val(int,3))
 evaluated(min,(variable(x),(val(int,3),())),bad)
 evaluated(min,(variable(x),(val(none,none),())),bad)
 evaluated(min,(variable(x),(bad,())),bad)
