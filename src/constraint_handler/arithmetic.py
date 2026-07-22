@@ -40,6 +40,10 @@ def evaluate_operator(o, args) -> atom.EvalResult:
                 return atom.EvalResult(math.ceil(val), NO_ERRORS)
             case operators.ArithmeticOperator.floor:
                 return atom.EvalResult(math.floor(val), NO_ERRORS)
+            case operators.ArithmeticOperator.float_of_int:
+                return atom.EvalResult(float(val), NO_ERRORS)
+            case operators.ArithmeticOperator.int_of_float:
+                return atom.EvalResult(int(val), NO_ERRORS)
     else:
         lval = args[0]
         rval = args[1]
