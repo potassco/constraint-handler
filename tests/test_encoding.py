@@ -537,7 +537,6 @@ compile2_xfail: set[str] = {
     "type/bool/with_none_unary",
     "type/checking/numeric",
     "type/multimap/operations",
-    "unit/bad_concat",
     "unit/boolean_conj",
     "unit/boolean_disj",
     "unit/boolean_disj_none_bug",
