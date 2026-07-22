@@ -538,8 +538,6 @@ compile2_xfail: set[str] = {
     "type/checking/numeric",
     "type/multimap/operations",
     "unit/bad_concat",
-    "unit/bad_max",
-    "unit/bad_min",
     "unit/boolean_conj",
     "unit/boolean_disj",
     "unit/boolean_disj_none_bug",
