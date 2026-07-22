@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import itertools
 from dataclasses import dataclass
 from typing import Any
@@ -31,6 +32,14 @@ from flat_ch.core.domain import (
 from flat_ch.core.evaluation.operators import Arity, Operator
 from flat_ch.core.evaluation.python import PythonRegistry
 from flat_ch.core.serialization import SerializerProtocol
+
+
+def _is_python_expression(code: str) -> bool:
+    try:
+        ast.parse(code, mode="eval")
+    except SyntaxError:
+        return False
+    return True
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,10 +231,10 @@ class Flattener:
 
                 if not py_op.outputs:
                     executable_code = f"{target_out} = ({code_str})({call_args})"
-                elif "=" in code_str or "\n" in code_str or code_str.startswith("def "):
-                    executable_code = code_str
-                else:
+                elif _is_python_expression(code_str):
                     executable_code = f"{target_out} = {code_str}"
+                else:
+                    executable_code = code_str
 
                 python_id = self.py_reg.register_program(executable_code, target_output=target_out)
 
