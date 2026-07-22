@@ -95,13 +95,18 @@ _int_mul(ExprList, Idx, ListVal * Val) :- _expression(compile2, operation(mult, 
 %%% Abdallah: why do we need this special case? bad ** 0, none ** 0
 :-
     _expression(compile2, operation(pow, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, V0),
     _se_value(Expr2, val(int, 0)),
     not _se_value(operation(pow, (Expr1, (Expr2, ()))), val(int, 1)).
 
 :-
     _expression(compile2, operation(pow, (Expr1, (Expr2, ())))),
     _se_value(Expr1, bad),
+    not _se_value(Expr2, val(int, 0)),
+    not _se_value(operation(pow, (Expr1, (Expr2, ()))), bad).
+
+:-
+    _expression(compile2, operation(pow, (Expr1, (Expr2, ())))),
+    _se_value(Expr1, val(none, none)),
     not _se_value(Expr2, val(int, 0)),
     not _se_value(operation(pow, (Expr1, (Expr2, ()))), bad).
 
