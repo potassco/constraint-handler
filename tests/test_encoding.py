@@ -78,6 +78,7 @@ datatype_tests = [
     "datatype/float/equality_basic",
     "datatype/float/equality_cross_type",
     "datatype/float/extrema",
+    "datatype/float/nary_add",
     "datatype/float/ordering_cross_type",
     "datatype/float/ordering_with_int",
     "datatype/float/rounding",
