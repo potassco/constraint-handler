@@ -461,7 +461,6 @@ compile_xfail: set[str] = {
     "unit/float_pow",
     "unit/float_sub",
     "unit/int_add",
-    "unit/int_geq",
     "unit/int_gt",
     "unit/int_int_div",
     "unit/int_leq",
@@ -565,7 +564,6 @@ compile2_xfail: set[str] = {
     "unit/float_max",
     "unit/float_min",
     "unit/float_pow",
-    "unit/int_geq",
     "unit/int_gt",
     "unit/int_leq",
     "unit/int_lt",
@@ -625,8 +623,6 @@ ground_xfail: set[str] = {
     "set/iterations",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
-    "unit/bad_leqv",
-    "unit/bad_lxor",
     "unit/boolean_conj",
     "unit/boolean_disj",
     "unit/boolean_ite",
@@ -642,7 +638,6 @@ ground_xfail: set[str] = {
     "unit/float_lt",
     "unit/float_max",
     "unit/float_min",
-    "unit/int_geq",
     "unit/int_gt",
     "unit/int_leq",
     "unit/int_lt",
@@ -668,8 +663,6 @@ ground_xfail: set[str] = {
     "unit/tuple_neq",
     "unit/unary/bad_leqv",
     "unit/unary/bad_lxor",
-    "unit/unary/boolean_leqv",
-    "unit/unary/boolean_lxor",
     "unit/unary/set_length",
 }
 
@@ -693,8 +686,6 @@ propagator_xfail: set[str] = {
     "type/bool/with_none_unary",
     "type/warning/python_unsupported_type",
     "warning/variables",
-    "unit/bad_leqv",
-    "unit/bad_lxor",
     "unit/boolean_conj",
     "unit/boolean_disj",
     "unit/boolean_ite",
@@ -710,7 +701,6 @@ propagator_xfail: set[str] = {
     "unit/float_lt",
     "unit/float_max",
     "unit/float_min",
-    "unit/int_geq",
     "unit/int_gt",
     "unit/int_leq",
     "unit/int_lt",
@@ -732,8 +722,6 @@ propagator_xfail: set[str] = {
     "unit/symbol_lt",
     "unit/unary/bad_leqv",
     "unit/unary/bad_lxor",
-    "unit/unary/boolean_leqv",
-    "unit/unary/boolean_lxor",
 }
 
 propagator_true_skip: set[str] = propagator_skip | set()
