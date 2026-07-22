@@ -551,8 +551,7 @@ compile2_xfail: set[str] = {
     "unit/float_min",
     "unit/float_pow",
     "unit/int_mult",
-    "unit/python_python",
-    "unit/python_pythonExtract",
+    "unit/python_pythonExtract",  # currently extracts not only variables, unsupported in compile2 engine
     "unit/set_diff",
     "unit/set_eq",
     "unit/set_inter",
