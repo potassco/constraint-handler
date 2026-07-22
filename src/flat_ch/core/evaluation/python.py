@@ -12,6 +12,11 @@ from typing import Any
 from clingo import Symbol
 from clingo.symbol import SymbolType
 
+try:
+    import constraint_handler.solver_environment as constraint_solver_environment
+except ImportError:
+    constraint_solver_environment = None
+
 from flat_ch.core.serialization import SerializerProtocol, normalize_float_str
 from flat_ch.core.types import Type
 
@@ -63,11 +68,19 @@ class FailIntegrity(Exception):
     """Exception raised by user Python scripts to indicate an integrity failure."""
 
 
+_FAIL_INTEGRITY_EXCEPTIONS: tuple[type[Exception], ...] = (FailIntegrity,)
+if constraint_solver_environment is not None:
+    _FAIL_INTEGRITY_EXCEPTIONS = _FAIL_INTEGRITY_EXCEPTIONS + (constraint_solver_environment.FailIntegrityExn,)
+
+
 DEFAULT_GLOBALS: dict[str, Any] = {
     "FailIntegrity": FailIntegrity,
     "math": math,
     "pow": math.pow,
 }
+if constraint_solver_environment is not None:
+    DEFAULT_GLOBALS["solver_environment"] = constraint_solver_environment
+    DEFAULT_GLOBALS["FailIntegrityExn"] = constraint_solver_environment.FailIntegrityExn
 
 
 def set_default_globals(globals_map: dict[str, Any]) -> None:
@@ -271,7 +284,7 @@ class PythonRegistry:
 
         try:
             exec(program.code, execution_scope)
-        except FailIntegrity as error:
+        except _FAIL_INTEGRITY_EXCEPTIONS as error:
             return Type.FAIL, str(error)
         except Exception as error:
             return Type.FAIL, f"pythonError: {error}"

@@ -7,6 +7,8 @@ import clingo.script
 import constraint_handler.evaluator as evaluator
 import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
+import constraint_handler.solver_environment as solver_environment
+import flat_ch.main as flat_main
 
 module_main = [
     "main",
@@ -133,10 +135,33 @@ modules = (
 python_enabled = False
 
 
+def _build_fch_environment(environment):
+    merged_environment = dict(evaluator._shared_environment)
+    if environment is not None:
+        merged_environment.update(environment)
+
+    merged_environment.setdefault("solver_environment", solver_environment)
+    merged_environment.setdefault("FailIntegrityExn", solver_environment.FailIntegrityExn)
+    return merged_environment
+
+
 def add_to_control(
-    ctrl: clingo.Control, propagator_check_only: bool = False, environment=None, _environment_ids=dict()
+    ctrl: clingo.Control,
+    propagator_check_only: bool = False,
+    environment=None,
+    _environment_ids=dict(),
+    api: str = "ch",
 ):
     """Adds encoding logic to the provided Control instance. The environment argumennt specifies the locals used in the python statements and expressions."""
+    if api == "fch":
+        if propagator_check_only:
+            raise ValueError("propagator_check_only is not supported when api='fch'")
+        flat_main.add_to_control(ctrl, _build_fch_environment(environment), api="ch")
+        return
+
+    if api != "ch":
+        raise ValueError(f"Unsupported api mode: {api}")
+
     global python_enabled
     if not python_enabled:
         clingo.script.enable_python()
