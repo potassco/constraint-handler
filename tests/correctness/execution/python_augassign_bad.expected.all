@@ -1,0 +1,5 @@
+value(execution_output(prg(all),"t"),bad)
+value(execution_output(prg(all),"x"),bad)
+value(execution_output(prg(all),"y"),bad)
+value(execution_output(prg(y),"y"),val(float,float("6.5")))
+value(execution_output(prg(t),"t"),bad)

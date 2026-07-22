@@ -206,6 +206,7 @@ class _StatementAnalyzer(ast.NodeVisitor):
     _SUPPORTED_STATEMENTS = (
         ast.Assign,
         ast.AnnAssign,
+        ast.AugAssign,
         ast.If,
         ast.While,
         ast.For,
@@ -544,6 +545,12 @@ class _StatementAnalyzer(ast.NodeVisitor):
         self._infer_expr_type(node.annotation)
         value_types = self._infer_expr_type(node.value)
         self._bind_target(node.target, node.value, value_types)
+
+    def visit_AugAssign(self, node: ast.AugAssign) -> None:
+        current_types = self._infer_expr_type(node.target)
+        value_types = self._infer_expr_type(node.value)
+        result_types = self._infer_operator_type(node.op, (current_types, value_types))
+        self._bind_target(node.target, node.value, result_types)
 
     def visit_If(self, node: ast.If) -> None:
         self._infer_expr_type(node.test)
