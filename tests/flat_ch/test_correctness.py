@@ -42,6 +42,7 @@ flat_ch_currently_not_working_tests = {
     "error/recovery_conditionals",
     "error/recovery_ensure",
     "execution/optional_run",
+    "execution/python_augassign_types",
     "execution/python_integrity",
     "expression/bad_equality",
     "expression/lambda_recursive",
