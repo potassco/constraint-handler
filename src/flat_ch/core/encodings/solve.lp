@@ -41,9 +41,11 @@ _fch_dynamic_var_def_val(NAME, EXPR_ID, TYPE, VAL) :-
     _fch_dynamic_var_def(NAME, EXPR_ID),
     _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL).
 
+_fch_dynamic_expr_resolved(EXPR_ID) :- _fch_dynamic_expr_val(EXPR_ID, _, _).
+
 % A chosen domain entry must resolve to an actual value.
 :- _fch_dynamic_var_def(NAME, EXPR_ID),
-    not _fch_dynamic_expr_val(EXPR_ID, _, _).
+    not _fch_dynamic_expr_resolved(EXPR_ID).
 
 _fch_dynamic_dom_val(NAME, DOM_EXPR_ID, TYPE, VAL) :-
     _fch_var_dom(NAME, DOM_EXPR_ID),
@@ -72,10 +74,12 @@ _fch_inactive_execution_output((EXEC, VAR, out)) :-
     _fch_flat(execution_output_decl(EXEC, VAR)),
     not _fch_execution_run(EXEC).
 
+_fch_var_has_domain(NAME) :- _fch_var_dom(NAME, _).
+
 % Declared variables without any domain entries are treated as invalid inputs.
 _fch_empty_var_domain(NAME) :-
     _fch_var_decl(NAME),
-    not _fch_var_dom(NAME, _).
+    not _fch_var_has_domain(NAME).
 
 :- _fch_empty_var_domain(NAME),
     not _fch_inactive_execution_output(NAME).
@@ -93,9 +97,11 @@ _fch_dynamic_expr_val(ID, _fch_type_fail_id, empty_domain(NAME)) :-
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, undefined_variable(NAME)) :-
     _fch_expr_var(ID, NAME),
     not _fch_var_decl(NAME),
-    not _fch_var_def(NAME, _),
+    not _fch_var_has_definition(NAME),
     not _fch_set_decl(NAME),
 	not _fch_inactive_execution_output(NAME).
+
+_fch_var_has_definition(NAME) :- _fch_var_def(NAME, EXPR_ID).
 
 % Failures on strict child expressions propagate to the parent expression.
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
@@ -193,12 +199,15 @@ _fch_optimize_precision_value(Level, Precision) :-
     _fch_optimize_priority(Level),
     _fch_optimize_precision(ExprId, all),
     _fch_dynamic_expr_val(ExprId, _fch_type_int_id, Precision),
-    not _fch_optimize_precision(_, Level).
+    not _fch_has_optimize_precision(Level).
 
 _fch_optimize_precision_value(Level, 1) :-
     _fch_optimize_priority(Level),
-    not _fch_optimize_precision(_, Level),
-    not _fch_optimize_precision(_, all).
+    not _fch_has_optimize_precision(Level),
+    not _fch_has_global_optimize_precision.
+
+_fch_has_optimize_precision(Level) :- _fch_optimize_precision(_, Level).
+_fch_has_global_optimize_precision :- _fch_optimize_precision(_, all).
 
 _fch_optimize_weight_by_expr(ExprId, Level, Value) :-
     _fch_optimize_sum(ExprId, Key, Level),
