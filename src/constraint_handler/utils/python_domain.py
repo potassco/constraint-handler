@@ -1615,71 +1615,36 @@ class Domain:
     @classmethod
     def op_max(cls, *domains: Domain) -> Domain:
         """Compute all max results across the argument cross-product."""
-        if any(
-            domain.bools
-            or domain.is_none
-            or domain.strings
-            or domain.symbols
-            or domain.tuples
-            or domain.has_possible_sets()
-            for domain in domains
-        ):
-            return cls.bad()
-        shortcut = cls._ordered_extremum(domains, prefer_max=True)
-        if shortcut is not None:
-            return shortcut
-        if not domains:
-            return cls.empty()
-        value_options = [tuple(domain.values()) for domain in domains]
-        if any(not options for options in value_options):
-            return cls.empty()
-
-        ints: set[int] = set()
-        floats: set[float] = set()
-        is_bad = any(domain.is_bad for domain in domains)
-        for arg_values in product(*value_options):
-            try:
-                result = max(arg_values)
-                if isinstance(result, int) and not isinstance(result, bool):
-                    ints.add(result)
-                else:
-                    floats.add(float(result))
-            except Exception:
-                is_bad = True
-        return cls(
-            is_bad=is_bad,
-            ints=frozenset(ints),
-            floats=frozenset(floats),
-        )
+        return cls.op_minmax(*domains, prefer_max=True)
 
     @classmethod
     def op_min(cls, *domains: Domain) -> Domain:
         """Compute all min results across the argument cross-product."""
+        return cls.op_minmax(*domains, prefer_max=False)
+
+    @classmethod
+    def op_minmax(cls, *domains: Domain, prefer_max: bool) -> Domain:
+        """Compute all min or max results across the argument cross-product."""
         if any(
-            domain.bools
-            or domain.is_none
-            or domain.strings
-            or domain.symbols
-            or domain.tuples
-            or domain.has_possible_sets()
+            domain.bools or domain.strings or domain.symbols or domain.tuples or domain.has_possible_sets()
             for domain in domains
         ):
             return cls.bad()
-        shortcut = cls._ordered_extremum(domains, prefer_max=False)
+        shortcut = cls._ordered_extremum(domains, prefer_max=prefer_max)
         if shortcut is not None:
             return shortcut
         if not domains:
             return cls.empty()
         value_options = [tuple(domain.values()) for domain in domains]
         if any(not options for options in value_options):
-            return cls.empty()
+            return cls.bad() if any(domain.is_bad for domain in domains) else cls.empty()
 
         ints: set[int] = set()
         floats: set[float] = set()
         is_bad = any(domain.is_bad for domain in domains)
         for arg_values in product(*value_options):
             try:
-                result = min(arg_values)
+                result = max(arg_values) if prefer_max else min(arg_values)
                 if isinstance(result, int) and not isinstance(result, bool):
                     ints.add(result)
                 else:
