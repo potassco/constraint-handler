@@ -1,0 +1,2 @@
+value(iy,val(int,5))
+value(fx,val(float,float("3.0")))

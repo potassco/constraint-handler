@@ -54,6 +54,7 @@ core_tests = [
 ]
 
 datatype_tests = [
+    "datatype/casting",
     "datatype/bool/conj_disj",
     "datatype/bool/conj_disj_bad",
     "datatype/bool/conj_disj_mixed",
@@ -496,6 +497,7 @@ compile_xfail: set[str] = {
 }
 
 compile2_skip: set[str] = {
+    "datatype/casting",
     "engine/request_mult",  # mixed engines
     "execution/python_integrity",  # non static input
     "variable/dynamic_type",  # non static input

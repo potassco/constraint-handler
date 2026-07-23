@@ -54,6 +54,7 @@ module_3_safe = (
 
 module_4_datatype = [
     "4_solve/compile/bool",
+    "4_solve/compile/cast",
     "4_solve/compile/conditionals",
     "4_solve/compile/equality",
     "4_solve/compile/float",
