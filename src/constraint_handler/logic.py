@@ -42,13 +42,17 @@ def evaluate_operator(o, args) -> atom.EvalResult:
             return atom.EvalResult(functools.reduce(operator.eq, args, True), NO_ERRORS)
         case operators.LogicOperator.limp:
             assert len(args) == 2
-            if not args[0]:
+            if args[0] is False or args[1] is True:
                 return atom.EvalResult(True, NO_ERRORS)
-            if args[1] is True:
-                return atom.EvalResult(True, NO_ERRORS)
+            if args[0] is True and args[1] is False:
+                return atom.EvalResult(False, NO_ERRORS)
             if common.Bad.bad in args:
                 return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(args[1], NO_ERRORS)
+            if None in args:
+                return atom.EvalResult(None, NO_ERRORS)
+            return atom.EvalResult(
+                common.Bad.bad, ((warning.Expression(warning.ExpressionWarning.evaluatorError), f"operation {o,args}"),)
+            )
         case operators.LogicOperator.lnot:
             assert len(args) == 1
             if None in args:
