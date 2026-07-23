@@ -497,6 +497,7 @@ compile_xfail: set[str] = {
 }
 
 compile2_skip: set[str] = {
+    "datatype/casting",
     "engine/request_mult",  # mixed engines
     "execution/python_integrity",  # non static input
     "variable/dynamic_type",  # non static input

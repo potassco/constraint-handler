@@ -26,8 +26,8 @@ ArithmeticOperator = common.PPEnum(
         "lt",
         "geq",
         "gt",
-        "float_of_int",
-        "int_of_float",
+        "float_from_int",
+        "int_from_float",
     ],
 )
 
