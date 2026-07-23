@@ -1,5 +1,4 @@
 evaluated(disj,(variable(x),(val(bool,false),())),val(bool,true))
-evaluated(disj,(variable(x),(val(bool,false),())),val(bool,false))
 evaluated(disj,(variable(x),(val(bool,false),())),bad)
 evaluated(disj,(variable(x),(val(none,none),())),val(bool,true))
 evaluated(disj,(variable(x),(val(none,none),())),val(none,none))
