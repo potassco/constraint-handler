@@ -9,7 +9,7 @@ _expression(ground,PREC) :- _passed(ground,LBL,optimize_component(E,PREC,ID,P)).
 _expression(ground,E) :- _passed(ground,LBL,preference_holds(E,K)).
 
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
-_ge_assign(LBL,X,E) :- _passed(ground,LBL,variable_define(X,E)).
+_ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E)).
 
 _ge_set_assign(LBL,X,E) :- _passed(ground,LBL,set_assign(X,E)).
 { _ge_set_assign(LBL,X,E) } :- _passed(ground,LBL,set_baseDomain(X,E)).
@@ -17,23 +17,23 @@ _ge_set_assign(LBL,X,E) :- _passed(ground,LBL,set_assign(X,E)).
 _ge_set_declare(LBL,X) :- _passed(ground,LBL,variable_declare(X,set)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 
-ge_value(X,V) :- _ge_assign(LBL,X,EXPR), ge_result(EXPR,V).
+ge_value(X,V) :- _ge_assign(X,EXPR), ge_result(EXPR,V).
 
-_expression(ground,EXPR) :- _ge_assign(LBL,X,EXPR).
+_expression(ground,EXPR) :- _ge_assign(X,EXPR).
 
 %_ge_nonImploded(X) :- ge_value(X,set(S)).
 %_ge_nonImploded(X) :- ge_value(X,multimap(M)).
 
-_se_assign(_internal,variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T).
-%_se_assign(_internal,variable(X),val(T,V)) :- ge_value(X,val(T,V)).
+_se_assign(variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T).
+%_se_assign(variable(X),val(T,V)) :- ge_value(X,val(T,V)).
 _se_value(variable(X),val(T,V)) :- ge_value(X,val(T,V)).
-_se_assign(_internal,variable(X),bad) :- ge_value(X,bad).
-_set_declare(_internal,variable(X)) :- ge_value(X,set(S)).
-_set_assign(_internal,variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
+_se_assign(variable(X),bad) :- ge_value(X,bad).
+_set_declare(variable(X)) :- ge_value(X,set(S)).
+_set_assign(variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
 _se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).
 _se_value(val(T,V),val(T,V)) :- _expression(ground,val(T,V)).
 
-%_se_assign(_internal,variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T).
+%_se_assign(variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T).
 _se_value(variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T). % TODO: fragile and probably incorrect!
 
 _variable(ground,X) :- _expression(ground,EXPR), X=@pythonExpressionVariable(EXPR).
@@ -49,7 +49,7 @@ _ge_setAssignsAux(X,F,(F,L)) :- _ge_setAssignsAux(X,E,L), _ge_set_assign(CNAME,X
 _ge_setAssigns(X,L) :- _ge_setAssignsAux(X,E,L),
     0 = #count { G : _ge_set_assign(CNAME,X,G), E < G }.
 
-_ge_assign(CNAME,X,set(L)) :- _ge_set_declare(CNAME,X), _ge_setAssigns(X,L).
+_ge_assign(X,set(L)) :- _ge_set_declare(CNAME,X), _ge_setAssigns(X,L).
 
 _ge_enumeratedVariables(EXPR,R) :- _expression(ground,EXPR), R=@pythonEnumerateVariables(EXPR).
 

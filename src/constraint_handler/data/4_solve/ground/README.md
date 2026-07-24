@@ -30,9 +30,9 @@ ge_result/2.
 ### Output predicates
 
 _ge_assign/3.
-_se_assign/3.
+_se_assign/2.
 _se_value/2.
-_set_declare/2.
-_set_assign/3.
+_set_declare/1.
+_set_assign/2.
 _direct_implode/1.
 _warning/3.

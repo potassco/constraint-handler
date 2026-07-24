@@ -1,8 +1,8 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
-_se_assign(LBL,variable(X),E) :- _passed(compile,LBL,variable_define(X,E)).
+_se_assign(variable(X),E) :- _passed(compile,LBL,variable_define(X,E)).
 
 direct_query(E)  :- _expression(compile,LBL,DECL,E).
-direct_query(E)  :- _se_assign(LBL,X,E).
+direct_query(E)  :- _se_assign(X,E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 direct_query(SE) :- direct_query(T), SE=@pythonTupleElements(T).
 
@@ -13,7 +13,7 @@ _se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
-_se_value(variable(X),V) :- _se_assign(LBL,variable(X),E2), _se_value(E2,V).
+_se_value(variable(X),V) :- _se_assign(variable(X),E2), _se_value(E2,V).
 
 
 %%%%%%%%%%%%%%%%% tuples
@@ -80,8 +80,8 @@ _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
 
-_set_declare(_internal,E) :- _expression_eval_exec(E,valid(set(S))).
-_set_assign(_internal,E,VAL) :- _expression_eval_exec(E,valid(set(S))), VAL=@pythonListElements(S).
+_set_declare(E) :- _expression_eval_exec(E,valid(set(S))).
+_set_assign(E,VAL) :- _expression_eval_exec(E,valid(set(S))), VAL=@pythonListElements(S).
 
 
 %%%%%%%%%%%%%%%%% pythonExtract operator
@@ -113,5 +113,3 @@ _direct_implode(X) :- _direct_implode(E), _expression_tupleIndex(compile,E,IDX,X
 _direct_implodeTupleAux(E,N,()) :- _direct_implode(E), _expression_tupleLength(compile,E,N).
 _direct_implodeTupleAux(E,IDX,(V,L)) :- _direct_implodeTupleAux(E,IDX+1,L), _expression_tupleIndex(compile,E,IDX,X), _direct_imploded(X,V).
 _direct_imploded(E,TUPLE) :- _direct_implodeTupleAux(E,0,L), TUPLE=@pythonReflect(function,(),L).
-
-engine(_internal,compile).
