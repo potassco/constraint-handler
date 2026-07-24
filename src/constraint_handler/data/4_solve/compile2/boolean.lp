@@ -38,102 +38,160 @@ _rev(false, true).
 %%%%%%%%%%%%%%%%% conj disj limp
 
 % conj
-:-
+_conj_has_false(ExprList) :-
     _expression(compile2, operation(conj, ExprList)),
     _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg),
-    _se_value(Arg, val(bool, false)),
+    _se_value(Arg, val(bool, false)).
+
+_conj_has_bad(ExprList) :-
+    _expression(compile2, operation(conj, ExprList)),
+    _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg),
+    _se_value(Arg, bad).
+
+_conj_has_none(ExprList) :-
+    _expression(compile2, operation(conj, ExprList)),
+    _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg),
+    _se_value(Arg, val(none, none)).
+
+_conj_all_true(ExprList) :-
+    _expression(compile2, operation(conj, ExprList)),
+    not _conj_has_false(ExprList),
+    not _conj_has_none(ExprList),
+    not _conj_has_bad(ExprList).
+
+% false if false
+:-
+    _expression(compile2, operation(conj, ExprList)),
+    _conj_has_false(ExprList),
     not _se_value(operation(conj, ExprList), val(bool, false)).
 
+% true if all true
 :-
     _expression(compile2, operation(conj, ExprList)),
-    _se_value(Arg, val(bool, true)) : _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg);
+    _conj_all_true(ExprList),
     not _se_value(operation(conj, ExprList), val(bool, true)).
 
+% bad if not false and has bad
 :-
     _expression(compile2, operation(conj, ExprList)),
-    _se_value(operation(conj, ExprList), val(bool, true)),
-    _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg),
-    not _se_value(Arg, val(bool, true)).
-
-:-
-    _expression(compile2, operation(conj, ExprList)),
-    _expression_operationIndex(compile2, operation(conj, ExprList), _, Special),
-    _se_value(Special, bad),
-    #false : _se_value(Arg, val(bool, false)), _expression_operationIndex(compile2, operation(conj, ExprList), _, Arg);
+    _conj_has_bad(ExprList),
+    not _conj_has_false(ExprList),
     not _se_value(operation(conj, ExprList), bad).
 
-% disj
+% none if not false and not bad and has none
 :-
+    _expression(compile2, operation(conj, ExprList)),
+    _conj_has_none(ExprList),
+    not _conj_has_false(ExprList),
+    not _conj_has_bad(ExprList),
+    not _se_value(operation(conj, ExprList), val(none, none)).
+
+% disj
+_disj_has_true(ExprList) :-
     _expression(compile2, operation(disj, ExprList)),
     _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg),
-    _se_value(Arg, val(bool, true)),
+    _se_value(Arg, val(bool, true)).
+
+_disj_has_bad(ExprList) :-
+    _expression(compile2, operation(disj, ExprList)),
+    _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg),
+    _se_value(Arg, bad).
+
+_disj_has_none(ExprList) :-
+    _expression(compile2, operation(disj, ExprList)),
+    _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg),
+    _se_value(Arg, val(none, none)).
+
+_disj_all_false(ExprList) :-
+    _expression(compile2, operation(disj, ExprList)),
+    not _disj_has_true(ExprList),
+    not _disj_has_bad(ExprList),
+    not _disj_has_none(ExprList).
+
+% true if true
+:-
+    _expression(compile2, operation(disj, ExprList)),
+    _disj_has_true(ExprList),
     not _se_value(operation(disj, ExprList), val(bool, true)).
 
+% bad if not true and bad
 :-
     _expression(compile2, operation(disj, ExprList)),
-    _se_value(Arg, val(bool, false)) : _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg);
-    not _se_value(operation(disj, ExprList), val(bool, false)).
-
-:-
-    _expression(compile2, operation(disj, ExprList)),
-    _expression_operationIndex(compile2, operation(disj, ExprList), _, Special),
-    _se_value(Special, val(none, none)),
-    #false : _se_value(Arg, val(bool, true)), _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg);
-    not _se_value(operation(disj, ExprList), val(none, none)).
-
-:-
-    _expression(compile2, operation(disj, ExprList)),
-    _expression_operationIndex(compile2, operation(disj, ExprList), _, Special),
-    _se_value(Special, bad),
-    #false : _se_value(Arg, val(bool, true)), _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg);
-    #false : _se_value(Arg, val(none, none)), _expression_operationIndex(compile2, operation(disj, ExprList), _, Arg);
+    _disj_has_bad(ExprList),
+    not _disj_has_true(ExprList),
     not _se_value(operation(disj, ExprList), bad).
 
+% none if not true and not bad and none
+:-
+    _expression(compile2, operation(disj, ExprList)),
+    _disj_has_none(ExprList),
+    not _disj_has_true(ExprList),
+    not _disj_has_bad(ExprList),
+    not _se_value(operation(disj, ExprList), val(none, none)).
+
+% false if all false
+:-
+    _expression(compile2, operation(disj, ExprList)),
+    _disj_all_false(ExprList),
+    not _se_value(operation(disj, ExprList), val(bool, false)).
+
 % limp % implication
+_limp_true(E1, E2) :-
+    _expression(compile2, operation(limp, (E1, (E2, ())))),
+    _se_value(E1, val(bool, false)).
+
+_limp_true(E1, E2) :-
+    _expression(compile2, operation(limp, (E1, (E2, ())))),
+    _se_value(E2, val(bool, true)).
+
+_limp_false(E1, E2) :-
+    _expression(compile2, operation(limp, (E1, (E2, ())))),
+    _se_value(E1, val(bool, true)),
+    _se_value(E2, val(bool, false)).
+
+_limp_none(E1, E2) :-
+    _expression(compile2, operation(limp, (E1, (E2, ())))),
+    _se_value(E1, val(bool, true)),
+    _se_value(E2, val(none, none)).
+
+_limp_none(E1, E2) :-
+    _expression(compile2, operation(limp, (E1, (E2, ())))),
+    _se_value(E1, val(none, none)),
+    _se_value(E2, val(bool, false)).
+
+_limp_none(E1, E2) :-
+    _expression(compile2, operation(limp, (E1, (E2, ())))),
+    _se_value(E1, val(none, none)),
+    _se_value(E2, val(none, none)).
+
+_limp_bad(E1, E2) :-
+    _expression(compile2, operation(limp, (E1, (E2, ())))),
+    _se_value(E1, bad),
+    not _se_value(E2, val(bool, true)).
+
+_limp_bad(E1, E2) :-
+    _expression(compile2, operation(limp, (E1, (E2, ())))),
+    _se_value(E2, bad),
+    not _se_value(E1, val(bool, false)).
+
 :-
     _expression(compile2, operation(limp, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(bool, false)),
+    _limp_true(Expr1, Expr2),
     not _se_value(operation(limp, (Expr1, (Expr2, ()))), val(bool, true)).
 
 :-
     _expression(compile2, operation(limp, (Expr1, (Expr2, ())))),
-    _se_value(Expr2, val(bool, true)),
-    not _se_value(operation(limp, (Expr1, (Expr2, ()))), val(bool, true)).
-
-:-
-    _expression(compile2, operation(limp, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(bool, true)),
-    _se_value(Expr2, val(bool, false)),
+    _limp_false(Expr1, Expr2),
     not _se_value(operation(limp, (Expr1, (Expr2, ()))), val(bool, false)).
 
 :-
     _expression(compile2, operation(limp, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(bool, true)),
-    _se_value(Expr2, val(none, none)),
+    _limp_none(Expr1, Expr2),
     not _se_value(operation(limp, (Expr1, (Expr2, ()))), val(none, none)).
 
 :-
     _expression(compile2, operation(limp, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(none, none)),
-    _se_value(Expr2, val(bool, false)),
-    not _se_value(operation(limp, (Expr1, (Expr2, ()))), val(none, none)).
-
-:-
-    _expression(compile2, operation(limp, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(none, none)),
-    _se_value(Expr2, val(none, none)),
-    not _se_value(operation(limp, (Expr1, (Expr2, ()))), val(none, none)).
-
-:-
-    _expression(compile2, operation(limp, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, val(bool, true)),
-    _se_value(Expr2, bad),
-    not _se_value(operation(limp, (Expr1, (Expr2, ()))), bad).
-
-:-
-    _expression(compile2, operation(limp, (Expr1, (Expr2, ())))),
-    _se_value(Expr1, bad),
-    not _se_value(Expr2, val(bool, true)),
+    _limp_bad(Expr1, Expr2),
     not _se_value(operation(limp, (Expr1, (Expr2, ()))), bad).
 
 
@@ -144,10 +202,6 @@ _bool_has_bad(ExprList) :-
     _expression(compile2, operation((lxor;leqv), ExprList)),
     _expression_operationIndex(compile2, operation((lxor;leqv), ExprList), _, Arg),
     _se_value(Arg, bad).
-_bool_has_bad(ExprList) :-
-    _expression(compile2, operation((lxor;leqv), ExprList)),
-    _expression_operationIndex(compile2, operation((lxor;leqv), ExprList), _, Arg),
-    _se_value(Arg, val(none, none)).
 
 :-
     _expression(compile2, operation(OP, ExprList)),

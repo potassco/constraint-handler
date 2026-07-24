@@ -1,7 +1,4 @@
 evaluated(limp,(variable(x),(val(bool,false),())),val(bool,false))
-evaluated(limp,(variable(x),(val(bool,false),())),val(bool,true))
 evaluated(limp,(variable(x),(val(bool,false),())),bad)
-evaluated(limp,(variable(x),(val(none,none),())),val(bool,true))
-evaluated(limp,(variable(x),(val(none,none),())),val(bool,false))
 evaluated(limp,(variable(x),(val(none,none),())),bad)
 evaluated(limp,(variable(x),(bad,())),bad)

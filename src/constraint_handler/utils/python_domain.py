@@ -1234,32 +1234,6 @@ class Domain:
         return cls._bool_domain(values, is_bad=is_bad)
 
     @classmethod
-    def _strict_bool_binary(cls, left: Domain, right: Domain, fn) -> Domain:
-        """Apply a binary boolean operator where `none` is treated as a bad contributor."""
-        values: set[bool] = set()
-        is_bad = (
-            left.is_bad
-            or right.is_bad
-            or bool(
-                left.is_none
-                or left.strings
-                or left.symbols
-                or left.tuples
-                or left.sets
-                or right.is_none
-                or right.strings
-                or right.symbols
-                or right.tuples
-                or right.sets
-            )
-        )
-        for left_value, right_value in product(left.truth_values(), right.truth_values()):
-            if left_value is None or right_value is None:
-                continue
-            values.add(fn(left_value, right_value))
-        return cls._bool_domain(values, is_bad=is_bad)
-
-    @classmethod
     def _logic_unary(cls, domain: Domain, fn, *, operation_name: str) -> Domain:
         """Apply a unary logical operator to boolean values."""
         values: set[bool] = set()
@@ -1288,17 +1262,6 @@ class Domain:
         if left_value is None or right_value is None:
             return None
         return False
-
-    @classmethod
-    def _logic_limp(cls, left_value: object, right_value: object) -> object:
-        """Evaluate implication on the abstract boolean lattice."""
-        if left_value is False or left_value is None:
-            return True
-        if right_value is True:
-            return True
-        if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD:
-            return cls.LOGIC_BAD
-        return right_value
 
     @classmethod
     def op_abs(cls, domain: Domain) -> Domain:
@@ -1537,17 +1500,39 @@ class Domain:
     @classmethod
     def op_leqv(cls, left: Domain, right: Domain) -> Domain:
         """Compute the logical-equivalence domain."""
-        return cls._strict_bool_binary(left, right, lambda lhs, rhs: lhs == rhs)
+        results: set[object] = set()
+        for left_value, right_value in product(cls._logic_values(left), cls._logic_values(right)):
+            if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD:
+                results.add(cls.LOGIC_BAD)
+                continue
+            # For compile2 leqv parity, `none` contributes like non-false.
+            results.add((left_value is False) == (right_value is False))
+        return cls._logic_result_domain(results)
 
     @classmethod
     def op_limp(cls, left: Domain, right: Domain) -> Domain:
         """Compute the logical-implication domain."""
-        return cls._logic_result_domain(
-            {
-                cls._logic_limp(left_value, right_value)
-                for left_value, right_value in product(cls._logic_values(left), cls._logic_values(right))
-            }
-        )
+        results: set[object] = set()
+        for left_value, right_value in product(cls._logic_values(left), cls._logic_values(right)):
+            if left_value is False:
+                results.add(True)
+                continue
+            if right_value is True:
+                results.add(True)
+                continue
+            if left_value is True and right_value is False:
+                results.add(False)
+                continue
+            if (left_value is True and right_value is None) or (left_value is None and right_value in (False, None)):
+                results.add(None)
+                continue
+            if left_value is cls.LOGIC_BAD and right_value is not True:
+                results.add(cls.LOGIC_BAD)
+                continue
+            if right_value is cls.LOGIC_BAD and left_value is not False:
+                results.add(cls.LOGIC_BAD)
+                continue
+        return cls._logic_result_domain(results)
 
     @classmethod
     def op_lnot(cls, domain: Domain) -> Domain:
@@ -1557,7 +1542,14 @@ class Domain:
     @classmethod
     def op_lxor(cls, left: Domain, right: Domain) -> Domain:
         """Compute the logical-exclusive-or domain."""
-        return cls._strict_bool_binary(left, right, lambda lhs, rhs: lhs != rhs)
+        results: set[object] = set()
+        for left_value, right_value in product(cls._logic_values(left), cls._logic_values(right)):
+            if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD:
+                results.add(cls.LOGIC_BAD)
+                continue
+            # For compile2 lxor parity, `none` contributes like non-true.
+            results.add((left_value is True) != (right_value is True))
+        return cls._logic_result_domain(results)
 
     @classmethod
     def op_snot(cls, domain: Domain) -> Domain:

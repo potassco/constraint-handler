@@ -4,7 +4,7 @@ evaluate(conj,(val(bool,true),(bad,()))).
 evaluate(conj,(val(bool,false),(val(bool,true),()))).
 evaluate(conj,(val(bool,false),(val(none,none),()))).
 evaluate(conj,(val(bool,false),(bad,()))).
-evaluate(conj,(val(bool,none),(val(bool,true),()))).
+evaluate(conj,(val(none,none),(val(bool,true),()))).
 evaluate(conj,(val(none,none),(bad,()))).
 
 variable_declare(x,fromFacts).
