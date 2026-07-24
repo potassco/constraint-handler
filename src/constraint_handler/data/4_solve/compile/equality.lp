@@ -6,26 +6,32 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T,V)), 
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T,V)),
     _computeIdxType(E,1,T),
+    not _computeIdx(E,1,bad),
     not _computeIdx(E,1,val(T,V)), % TODO drop negation and suffer quadratic blow-up?
     _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,1,val(T,V)),
     _computeIdxType(E,0,T),
+    not _computeIdx(E,0,bad),
     not _computeIdx(E,0,val(T,V)),
     _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,neq), _computeIdx(E,0,val(T,V)),
     _computeIdxType(E,1,T),
+    not _computeIdx(E,1,bad),
     not _computeIdx(E,1,val(T,V)),
     _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,neq), _computeIdx(E,1,val(T,V)),
     _computeIdxType(E,0,T),
+    not _computeIdx(E,0,bad),
     not _computeIdx(E,0,val(T,V)),
     _type_extensionalEquality(T).
 
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,neq), _computeIdx(E,0,val(T,V)), _computeIdx(E,1,val(T,V)),
     _type_extensionalEquality(T).
+
+_computedIdx(E,bad) :- _computeIdx(E,(eq;neq)), _computeIdx(E,(0;1),bad).
 
 %%%%%%%%%%%%%%%%% tuple eq neq
 %%%% Compare tuple entries through expression equality, not structural symbol equality,
