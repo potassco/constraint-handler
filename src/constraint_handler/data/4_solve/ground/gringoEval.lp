@@ -28,7 +28,7 @@ _se_assign(variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T).
 %_se_assign(variable(X),val(T,V)) :- ge_value(X,val(T,V)).
 _se_value(variable(X),val(T,V)) :- ge_value(X,val(T,V)).
 _se_assign(variable(X),bad) :- ge_value(X,bad).
-_set_declare(variable(X)) :- ge_value(X,set(S)).
+_se_value(variable(X),ref(set,variable(X))) :- ge_value(X,set(S)).
 _set_assign(variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
 _se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).
 _se_value(val(T,V),val(T,V)) :- _expression(ground,val(T,V)).

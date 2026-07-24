@@ -65,7 +65,6 @@ _preference_expression/1.
 _preference_index/2.
 _preference_potentialAux/2.
 _preference_potentialScore/1.
-_set_declare/1.
 _set_eqMissingEntry/1.
 _set_subsetMissingEntry/1.
 _set_makeIndex/1.

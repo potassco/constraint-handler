@@ -77,8 +77,7 @@ _tupleComp/5.
 _tuple_pair/5.
 _tupleEqAux/3.
 _direct_lazy/1.
-_set_declare/2.
-_set_assign/3.
+_set_assign/2.
 _set_eqMissingEntry/1.
 _set_subsetMissingEntry/1.
 _set_makeIndex/1.

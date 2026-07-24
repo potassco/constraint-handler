@@ -80,7 +80,7 @@ _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
 
-_set_declare(E) :- _expression_eval_exec(E,valid(set(S))).
+_se_value(E,ref(set,E)) :- _expression_eval_exec(E,valid(set(S))).
 _set_assign(E,VAL) :- _expression_eval_exec(E,valid(set(S))), VAL=@pythonListElements(S).
 
 

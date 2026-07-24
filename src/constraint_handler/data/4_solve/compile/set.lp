@@ -1,5 +1,5 @@
 _set_assign(variable(X),E) :- _passed(compile,LBL,set_assign(X,E)).
-_set_declare(variable(X)) :- _passed(compile,LBL,variable_declare(X,set)).
+_se_value(variable(X),ref(set,variable(X))) :- _passed(compile,LBL,variable_declare(X,set)).
 
 direct_query(E) :- _set_assign(X,E).
 
@@ -10,8 +10,6 @@ _computedIdx(E,val(int,N)) :- _computeIdx(E,length), _computeIdx(E,0,ref(set,SET
     N = #count { V : _set_contains(SET,V) }.
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
-
-_se_value(EX,ref(set,EX)) :- _set_declare(EX).
 
 direct_query(operation(eq,(V1,(V2,())))) :-
     _set_assign(EX,E1), _se_value(E1,V1),
@@ -46,10 +44,10 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,set_notin), _computeIdx(E,0,V1),
 
 
 %%%%%%%%%%%%%%%%% set_make
-_set_declare(operation(set_make,L)) :- direct_query(operation(set_make,L)).
+_se_value(operation(set_make,L),ref(set,operation(set_make,L))) :- direct_query(operation(set_make,L)).
 _set_assign(operation(set_make,L),SE) :- direct_query(operation(set_make,L)), SE=@pythonListElements(L).
 
-_set_declare(set(L)) :- direct_query(set(L)).
+_se_value(set(L),ref(set,set(L))) :- direct_query(set(L)).
 _set_assign(set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% filter
@@ -59,7 +57,7 @@ _set_assign(set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
 %%% TODO
 
 %%%%%%%%%%%%%%%%% union inter diff
-_set_declare(operation(OP,L)) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
+_se_value(operation(OP,L),ref(set,operation(OP,L))) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
 _set_assign(operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
 direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;inter),(S1,(S2,())))),
