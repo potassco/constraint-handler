@@ -1,7 +1,7 @@
-_set_assign(LBL,variable(X),E) :- _passed(compile,LBL,set_assign(X,E)).
-_set_declare(LBL,variable(X)) :- _passed(compile,LBL,variable_declare(X,set)).
+_set_assign(variable(X),E) :- _passed(compile,LBL,set_assign(X,E)).
+_se_value(variable(X),ref(set,variable(X))) :- _passed(compile,LBL,variable_declare(X,set)).
 
-direct_query(E) :- _set_assign(NAME,X,E).
+direct_query(E) :- _set_assign(X,E).
 
 representation(set,intensional).
 
@@ -11,21 +11,19 @@ _computedIdx(E,val(int,N)) :- _computeIdx(E,length), _computeIdx(E,0,ref(set,SET
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
 
-_se_value(EX,ref(set,EX)) :- _set_declare(NAME,EX).
-
 direct_query(operation(eq,(V1,(V2,())))) :-
-    _set_assign(N1,EX,E1), _se_value(E1,V1),
-    _set_assign(N2,EX,E2), _se_value(E2,V2), V1 < V2.
+    _set_assign(EX,E1), _se_value(E1,V1),
+    _set_assign(EX,E2), _se_value(E2,V2), V1 < V2.
 _set_contains(EX,V1) :-
-    _set_assign(NAME,EX,E1), _se_value(E1,V1), %_se_value(EX,ref(set,ER)),
-    #false : _set_assign(N2,EX,E2), _se_value(E2,V2), _se_value(operation(eq,(V2,(V1,()))),val(bool,true)), V2 < V1.
+    _set_assign(EX,E1), _se_value(E1,V1), %_se_value(EX,ref(set,ER)),
+    #false : _set_assign(EX,E2), _se_value(E2,V2), _se_value(operation(eq,(V2,(V1,()))),val(bool,true)), V2 < V1.
 
-_set_assign(NAME,EX,S) :- _set_assign(NAME,EX,ref(set,S)).
+_set_assign(EX,S) :- _set_assign(EX,ref(set,S)).
 
 %%%%%%%%%%%%%%%%% set_baseDomain
 _passed(correction(setSymmetry,add),LBL,evaluate(set_isin,(E,(variable(X),())))) :- _passed(sugar,LBL,set_baseDomain(X,E)).
-{ _set_assign(LBL,variable(X),E) } :- _passed(compile,LBL,set_baseDomain(X,E)).
-:- _passed(compile,LBL,set_baseDomain(X,E)), evaluated(set_isin,(E,(variable(X),())),val(bool,true)), not _set_assign(LBL,variable(X),E).
+{ _set_assign(variable(X),E) } :- _passed(compile,LBL,set_baseDomain(X,E)).
+:- _passed(compile,LBL,set_baseDomain(X,E)), evaluated(set_isin,(E,(variable(X),())),val(bool,true)), not _set_assign(variable(X),E).
 
 %%%%%%%%%%%%%%%%% set_isin set_notin
 direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E,(set_isin;set_notin)), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
@@ -46,11 +44,11 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,set_notin), _computeIdx(E,0,V1),
 
 
 %%%%%%%%%%%%%%%%% set_make
-_set_declare(_internal,operation(set_make,L)) :- direct_query(operation(set_make,L)).
-_set_assign(_internal,operation(set_make,L),SE) :- direct_query(operation(set_make,L)), SE=@pythonListElements(L).
+_se_value(operation(set_make,L),ref(set,operation(set_make,L))) :- direct_query(operation(set_make,L)).
+_set_assign(operation(set_make,L),SE) :- direct_query(operation(set_make,L)), SE=@pythonListElements(L).
 
-_set_declare(_internal,set(L)) :- direct_query(set(L)).
-_set_assign(_internal,set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
+_se_value(set(L),ref(set,set(L))) :- direct_query(set(L)).
+_set_assign(set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% filter
 %%% TODO
@@ -59,8 +57,8 @@ _set_assign(_internal,set(L),SE) :- direct_query(set(L)), SE=@pythonListElements
 %%% TODO
 
 %%%%%%%%%%%%%%%%% union inter diff
-_set_declare(_internal,operation(OP,L)) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
-_set_assign(_internal,operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
+_se_value(operation(OP,L),ref(set,operation(OP,L))) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
+_set_assign(operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
 direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;inter),(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
@@ -68,13 +66,13 @@ direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;i
     _set_contains(R2,V2),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
-_set_assign(_internal,operation(inter,(S1,(S2,()))),VSMALL) :- direct_query(operation(inter,(S1,(S2,())))),
+_set_assign(operation(inter,(S1,(S2,()))),VSMALL) :- direct_query(operation(inter,(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
     _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
-_set_assign(_internal,operation(diff,(S1,(S2,()))),V1) :- direct_query(operation(diff,(S1,(S2,())))),
+_set_assign(operation(diff,(S1,(S2,()))),V1) :- direct_query(operation(diff,(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
     #false : _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),

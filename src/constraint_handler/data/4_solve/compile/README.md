@@ -23,7 +23,6 @@ preference_maximizeScore/0.
 ### Intermediate predicates
 
 _direct_lazy/1.
-_se_assign/3.
 _expression_pythonEval/2.
 _expression_dynamicTainted/1.
 _argument_value/2.
@@ -46,8 +45,6 @@ _int_mult/3.
 _tupleComp/5.
 _tuple_pair/5.
 _tupleEqAux/3.
-_multimap_declare/2.
-_multimap_assign/4.
 _multimap_add/3.
 _multimap_has/3.
 _multimap_representative/4.
@@ -65,7 +62,6 @@ _preference_expression/1.
 _preference_index/2.
 _preference_potentialAux/2.
 _preference_potentialScore/1.
-_set_declare/2.
 _set_eqMissingEntry/1.
 _set_subsetMissingEntry/1.
 _set_makeIndex/1.

@@ -619,7 +619,6 @@ propagator_xfail: set[str] = {
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "type/warning/python_unsupported_type",
-    "warning/variables",
     "unit/boolean_leqv",
     "unit/boolean_leqv_none_bug",
     "unit/boolean_lxor",

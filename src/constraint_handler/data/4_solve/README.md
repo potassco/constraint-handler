@@ -52,7 +52,6 @@ _direct_implode/1.
 _direct_imploded/2.
 _expression(compile,EXPR).
 _expression(ground,EXPR).
-_se_assign/3.
 _expression_pythonEval/2.
 _expression_eval_exec/2.
 _expression_dynamicTainted/1.
@@ -77,8 +76,7 @@ _tupleComp/5.
 _tuple_pair/5.
 _tupleEqAux/3.
 _direct_lazy/1.
-_set_declare/2.
-_set_assign/3.
+_set_assign/2.
 _set_eqMissingEntry/1.
 _set_subsetMissingEntry/1.
 _set_makeIndex/1.
@@ -88,8 +86,6 @@ _set_lastIndex/2.
 _set_implode/1.
 _set_as_list_aux/3.
 _set_imploded/2.
-_multimap_declare/2.
-_multimap_assign/4.
 _multimap_add/3.
 _multimap_has/3.
 _multimap_representative/4.
