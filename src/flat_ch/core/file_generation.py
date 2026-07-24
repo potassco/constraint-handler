@@ -3,6 +3,7 @@ from pathlib import Path
 
 from flat_ch.core.domain import FlatFact
 from flat_ch.core.evaluation.operators import Arity, Operator
+from flat_ch.core.serialization import FLOAT_REMAINDER_SCALE
 from flat_ch.core.types import Type
 
 HEADER_RULE = "%% ============================================================================="
@@ -111,6 +112,14 @@ def _generate_constants() -> list[str]:
     lines.extend(["", "%% --- Operator Constants ---"])
     for op in Operator:
         lines.append(f"#const _fch_op_{op.asp_name}_id = {op.value}.")
+
+    lines.extend(
+        [
+            "",
+            "%% --- Float Constants ---",
+            f"#const _fch_float_remainder_scale = {FLOAT_REMAINDER_SCALE}.",
+        ]
+    )
 
     return lines
 

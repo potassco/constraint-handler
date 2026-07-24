@@ -124,9 +124,9 @@ evaluated(OP, ARGS, val(TYPE, VALUE)) :-
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_int_id, VALUE),
 	TYPE = int.
 
-evaluated(OP, ARGS, val(float, float(VALUE))) :-
+evaluated(OP, ARGS, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
 	_fch_evaluate(OP, ARGS, EXPR_ID),
-	_fch_dynamic_expr_val(EXPR_ID, _fch_type_float_id, VALUE).
+	_fch_dynamic_expr_val(EXPR_ID, _fch_type_float_id, (INT_PART, REMAINDER)).
 
 evaluated(OP, ARGS, val(TYPE, VALUE)) :-
 	_fch_evaluate(OP, ARGS, EXPR_ID),
@@ -154,8 +154,8 @@ evaluated(OP, ARGS, bad) :-
 
 value(NAME, val(none, none)) :- value(NAME, none, none).
 value(NAME, val(int, VALUE)) :- value(NAME, int, VALUE).
-value(NAME, val(float, float(VALUE))) :-
-	value(NAME, float, VALUE).
+value(NAME, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
+	value(NAME, float, (INT_PART, REMAINDER)).
 
 value(NAME, val(string, VALUE)) :- value(NAME, string, VALUE).
 value(NAME, val(bool, VALUE)) :- value(NAME, bool, VALUE).
@@ -170,8 +170,8 @@ value((EXEC, VAR, out), none, none) :-
 
 set_value(NAME, val(none, none)) :- set_member(NAME, none, none).
 set_value(NAME, val(int, VALUE)) :- set_member(NAME, int, VALUE).
-set_value(NAME, val(float, float(VALUE))) :-
-	set_member(NAME, float, VALUE).
+set_value(NAME, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
+	set_member(NAME, float, (INT_PART, REMAINDER)).
 
 set_value(NAME, val(string, VALUE)) :- set_member(NAME, string, VALUE).
 set_value(NAME, val(bool, VALUE)) :- set_member(NAME, bool, VALUE).
@@ -184,10 +184,10 @@ set_value(NAME, val(int, VALUE)) :-
 	_fch_dynamic_var_def(NAME, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_set_id, SET_ID),
 	_fch_set_member(SET_ID, _fch_type_int_id, VALUE).
-set_value(NAME, val(float, float(VALUE))) :-
+set_value(NAME, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
 	_fch_dynamic_var_def(NAME, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_set_id, SET_ID),
-	_fch_set_member(SET_ID, _fch_type_float_id, VALUE).
+	_fch_set_member(SET_ID, _fch_type_float_id, (INT_PART, REMAINDER)).
 set_value(NAME, val(string, VALUE)) :-
 	_fch_dynamic_var_def(NAME, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_set_id, SET_ID),
@@ -256,7 +256,7 @@ optimize_value(LABEL, PRIORITY, val(int, TOTAL)) :-
 	},
 	TOTAL = @fch_unscale_int(SCALED_TOTAL, PRECISION).
 
-optimize_value(LABEL, PRIORITY, val(float, float(VALUE))) :-
+optimize_value(LABEL, PRIORITY, val(float, @fch_legacy_scaled_float(SCALED_TOTAL, PRECISION))) :-
 	_fch_enable_optimize_value_output,
 	_fch_optimize_value_is_float(LABEL, PRIORITY),
 	_fch_optimize_label(LABEL, _, PRIORITY),
@@ -264,5 +264,4 @@ optimize_value(LABEL, PRIORITY, val(float, float(VALUE))) :-
 	SCALED_TOTAL = #sum { SCALED, EXPR_ID :
 		_fch_optimize_label(LABEL, EXPR_ID, PRIORITY),
 		_fch_optimize_weight_by_expr(EXPR_ID, PRIORITY, SCALED)
-	},
-	VALUE = @fch_scaled_int_to_float(SCALED_TOTAL, PRECISION).
+	}.
