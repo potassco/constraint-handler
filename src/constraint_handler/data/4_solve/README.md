@@ -87,8 +87,6 @@ _set_lastIndex/2.
 _set_implode/1.
 _set_as_list_aux/3.
 _set_imploded/2.
-_multimap_declare/2.
-_multimap_assign/4.
 _multimap_add/3.
 _multimap_has/3.
 _multimap_representative/4.

@@ -1,12 +1,7 @@
-_multimap_declare(LBL,X) :- _passed(compile,LBL,variable_declare(X,multimap)).
-_multimap_assign(LBL,variable(X),EK,EV) :- _passed(compile,LBL,multimap_assign(X,EK,EV)).
-
-direct_query(EK;EV) :- _multimap_assign(CNAME,EX,EK,EV).
+_se_value(variable(X),val(multimap,variable(X))) :- _passed(compile,LBL,variable_declare(X,multimap)).
+_multimap_add(variable(X),EK,EV) :- _passed(compile,LBL,multimap_assign(X,EK,EV)).
 
 representation(multimap,intensional).
-
-_se_value(variable(X),val(multimap,variable(X))) :- _multimap_declare(CNAME,X), ER = ref(variable(X)).
-_multimap_add(ER,EK,EV) :- _multimap_assign(CNAME,EX,EK,EV), _se_value(EX,val(multimap,ER)).
 
 %%%%%%%%%%%%%%%%% pairstuples
 direct_query(E1;E2) :- direct_query((E1,E2)).

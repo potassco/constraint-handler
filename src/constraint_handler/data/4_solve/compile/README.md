@@ -46,8 +46,6 @@ _int_mult/3.
 _tupleComp/5.
 _tuple_pair/5.
 _tupleEqAux/3.
-_multimap_declare/2.
-_multimap_assign/4.
 _multimap_add/3.
 _multimap_has/3.
 _multimap_representative/4.
