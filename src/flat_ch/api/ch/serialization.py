@@ -5,7 +5,7 @@ from typing import Any
 from clingo import Function, Number, String, Symbol
 from clingo.symbol import SymbolType
 
-from flat_ch.core.serialization import BaseSerializer, normalize_float_str
+from flat_ch.core.serialization import BaseSerializer, float_parts_to_python, normalize_float_parts, normalize_float_str
 from flat_ch.core.types import Type
 
 
@@ -18,6 +18,11 @@ class CHSerializer(BaseSerializer):
         val_sym = args[1]
 
         if type_id == Type.FLOAT:
+            if val_sym.type == SymbolType.Function and val_sym.name == "float" and len(val_sym.arguments) >= 2:
+                int_part = val_sym.arguments[0]
+                remainder = val_sym.arguments[1]
+                if int_part.type == SymbolType.Number and remainder.type == SymbolType.Number:
+                    return type_id, float_parts_to_python(int_part.number, remainder.number)
             if val_sym.type == SymbolType.Function and val_sym.name == "float" and len(val_sym.arguments) == 1:
                 wrapped = val_sym.arguments[0]
                 if wrapped.type == SymbolType.Number:
@@ -31,7 +36,8 @@ class CHSerializer(BaseSerializer):
 
     def python_to_clingo(self, type_id: Type, value: Any) -> Symbol:
         if type_id == Type.FLOAT:
-            inner = Function("float", [String(normalize_float_str(value))])
+            int_part, remainder = normalize_float_parts(value)
+            inner = Function("float", [Number(int_part), Number(remainder)])
             return Function("", [Number(type_id.value), inner])
 
         return super().python_to_clingo(type_id, value)

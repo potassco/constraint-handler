@@ -6,7 +6,7 @@ from clingo.symbol import SymbolType
 
 from flat_ch.api.ch.registration import Registration
 from flat_ch.api.ch.serialization import CHSerializer
-from flat_ch.core.serialization import BaseSerializer
+from flat_ch.core.serialization import BaseSerializer, float_parts_to_python, normalize_float_parts, normalize_float_str
 from flat_ch.core.evaluation.evaluator import evaluate_operation
 from flat_ch.core.evaluation.python import PythonRegistry
 from flat_ch.core.flattener import Flattener
@@ -21,6 +21,8 @@ _DEBUG = os.environ.get("FCH_DEBUG", "").lower() in {"1", "true", "yes", "on"}
 
 
 def _float_symbol_to_python(value):
+    if value.type == SymbolType.Function and value.name == "float" and len(value.arguments) >= 2:
+        return value.arguments[0].number + (value.arguments[1].number / 1_000_000_000)
     if value.type == SymbolType.Function and value.name == "float" and len(value.arguments) == 1:
         inner = value.arguments[0]
         if inner.type == SymbolType.Number:
@@ -28,9 +30,34 @@ def _float_symbol_to_python(value):
         if inner.type == SymbolType.String:
             return float(inner.string)
         return float(str(inner))
+    if value.type == SymbolType.Function and len(value.arguments) >= 2:
+        return value.arguments[0].number + (value.arguments[1].number / 1_000_000_000)
     if value.type == SymbolType.Number:
         return float(value.number)
     return float(value.string)
+
+
+def _float_payload_symbol(value):
+    int_part, remainder = normalize_float_parts(value)
+    return Function("float", [Number(int_part), Number(remainder)])
+
+
+def _legacy_float_symbol(int_part, remainder):
+    value = float_parts_to_python(int_part, remainder)
+    return Function("float", [String(normalize_float_str(value))])
+
+
+def fch_legacy_float(int_part, remainder):
+    return _legacy_float_symbol(int_part.number, remainder.number)
+
+
+def _legacy_scaled_float_symbol(value, precision):
+    numeric = value / precision
+    return Function("float", [String(normalize_float_str(numeric))])
+
+
+def fch_legacy_scaled_float(value, precision):
+    return _legacy_scaled_float_symbol(value.number, precision.number)
 
 def fch_register(clingo_term):
     return _global_registry.register(clingo_term)
@@ -72,7 +99,7 @@ def fch_scaled_float_to_int(value, precision):
 
 def fch_scaled_int_to_float(value, precision):
     numeric = value.number / precision.number
-    return String(repr(numeric))
+    return _float_payload_symbol(numeric)
 
 
 def fch_unscale_int(value, precision):
