@@ -52,7 +52,6 @@ _direct_implode/1.
 _direct_imploded/2.
 _expression(compile,EXPR).
 _expression(ground,EXPR).
-_se_assign/3.
 _expression_pythonEval/2.
 _expression_eval_exec/2.
 _expression_dynamicTainted/1.

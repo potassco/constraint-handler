@@ -23,7 +23,6 @@ preference_maximizeScore/0.
 ### Intermediate predicates
 
 _direct_lazy/1.
-_se_assign/2.
 _expression_pythonEval/2.
 _expression_dynamicTainted/1.
 _argument_value/2.

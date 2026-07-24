@@ -1,8 +1,5 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
-_se_assign(variable(X),E) :- _passed(compile,LBL,variable_define(X,E)).
-
 direct_query(E)  :- _expression(compile,LBL,DECL,E).
-direct_query(E)  :- _se_assign(X,E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 direct_query(SE) :- direct_query(T), SE=@pythonTupleElements(T).
 
@@ -13,7 +10,7 @@ _se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
-_se_value(variable(X),V) :- _se_assign(variable(X),E2), _se_value(E2,V).
+_se_value(variable(X),V) :- _passed(compile,LBL,variable_define(X,E)), _se_value(E,V).
 
 
 %%%%%%%%%%%%%%%%% tuples
