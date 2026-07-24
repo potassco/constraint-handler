@@ -12,6 +12,12 @@ from flat_ch.core.types import Type
 
 _OPERATION_USAGE_COUNTER: Counter[tuple[str, ...]] = Counter()
 _OPERATION_USAGE_LOCK = Lock()
+_OPERATION_COUNTING_ENABLED = False
+
+
+def set_operation_counting_enabled(enabled: bool) -> None:
+    global _OPERATION_COUNTING_ENABLED
+    _OPERATION_COUNTING_ENABLED = enabled
 
 
 def reset_operation_usage_counts() -> None:
@@ -25,6 +31,8 @@ def get_operation_usage_counts() -> dict[tuple[str, ...], int]:
 
 
 def _record_operation_usage(operator: Operator, argument_types: list[Type]) -> None:
+    if not _OPERATION_COUNTING_ENABLED:
+        return
     key = (operator.asp_name, *(arg_type.name.lower() for arg_type in argument_types))
     with _OPERATION_USAGE_LOCK:
         _OPERATION_USAGE_COUNTER[key] += 1
