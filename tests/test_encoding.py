@@ -535,7 +535,6 @@ compile2_xfail: set[str] = {
     "unit/float_max",
     "unit/float_min",
     "unit/int_mult",
-    "unit/python_pythonExtract",  # currently extracts not only variables, unsupported in compile2 engine
     "unit/string_geq",
     "unit/string_gt",
     "unit/string_leq",
