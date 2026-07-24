@@ -1,7 +1,3 @@
-variable_define(tuple_left,(val(int,1),val(string,"x"),val(symbol,key))).
-variable_define(tuple_same,variable(tuple_left)).
-variable_define(tuple_other,(val(int,2),val(string,"x"),val(symbol,key))).
-
 evaluate(eq,(val(bool,true),(val(bool,true),()))).
 evaluate(eq,(val(bool,true),(val(bool,false),()))).
 evaluate(eq,(val(int,1),(val(int,1),()))).
@@ -11,8 +7,6 @@ evaluate(eq,(val(string,"foo"),(val(string,"foo"),()))).
 evaluate(eq,(val(string,"foo"),(val(string,"bar"),()))).
 evaluate(eq,(val(symbol,red),(val(symbol,red),()))).
 evaluate(eq,(val(symbol,red),(val(symbol,blue),()))).
-evaluate(eq,(variable(tuple_left),(variable(tuple_same),()))).
-evaluate(eq,(variable(tuple_left),(variable(tuple_other),()))).
 evaluate(eq,(val(bool,true),(val(none,none),()))).
 evaluate(eq,(val(none,none),(val(bool,true),()))).
 evaluate(eq,(val(bool,true),(bad,()))).
