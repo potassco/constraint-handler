@@ -1,5 +1,5 @@
 evaluated(conj,(val(bool,true),(val(bool,true),())),val(bool,true))
-evaluated(conj,(val(bool,none),(val(bool,true),())),val(none,none))
+evaluated(conj,(val(none,none),(val(bool,true),())),val(none,none))
 evaluated(conj,(val(bool,true),(val(none,none),())),val(none,none))
 evaluated(conj,(val(bool,false),(val(bool,true),())),val(bool,false))
 evaluated(conj,(val(bool,false),(val(none,none),())),val(bool,false))
