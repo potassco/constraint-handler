@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from decimal import Decimal
 from typing import Any, Protocol
 
 from clingo import Function, Number, String, Symbol
@@ -10,6 +11,7 @@ from flat_ch.core.types import Type
 
 _FLOAT_EPSILON = 1e-9
 _FLOAT_DECIMALS = 9
+FLOAT_REMAINDER_SCALE = 1_000_000_000
 
 _SYM_TRUE = Function("true", [])
 _SYM_FALSE = Function("false", [])
@@ -32,6 +34,20 @@ def normalize_float_str(value: float | int) -> str:
     if numeric == 0.0:
         numeric = 0.0
     return repr(numeric)
+
+
+def normalize_float_parts(value: float | int) -> tuple[int, int]:
+    """Returns canonical integer and scaled remainder parts for a float."""
+    normalized = normalize_float_str(value)
+    decimal_value = Decimal(normalized)
+    int_part = int(decimal_value)
+    remainder = int((decimal_value - Decimal(int_part)) * FLOAT_REMAINDER_SCALE)
+    return int_part, remainder
+
+
+def float_parts_to_python(int_part: int, remainder: int) -> float:
+    """Converts canonical integer and scaled remainder parts back into a float."""
+    return int_part + (remainder / FLOAT_REMAINDER_SCALE)
 
 
 def infer_python_type(value: Any) -> Type:
@@ -73,6 +89,16 @@ class BaseSerializer:
             case Type.FLOAT:
                 if val_sym.type == SymbolType.Number:
                     return type_id, float(val_sym.number)
+                if val_sym.type == SymbolType.Function and len(val_sym.arguments) >= 2:
+                    int_part_sym = val_sym.arguments[0]
+                    remainder_sym = val_sym.arguments[1]
+                    if int_part_sym.type == SymbolType.Number and remainder_sym.type == SymbolType.Number:
+                        return type_id, float_parts_to_python(int_part_sym.number, remainder_sym.number)
+                    first = val_sym.arguments[0]
+                    if first.type == SymbolType.Number:
+                        return type_id, float(first.number)
+                    if first.type == SymbolType.String:
+                        return type_id, float(first.string)
                 return type_id, float(val_sym.string)
             case Type.BOOL:
                 return type_id, _BOOL_MAP.get(val_sym.name, False)
@@ -95,7 +121,8 @@ class BaseSerializer:
             case Type.INT:
                 return Function("", [type_num_sym, Number(int(value))])
             case Type.FLOAT:
-                return Function("", [type_num_sym, String(normalize_float_str(value))])
+                int_part, remainder = normalize_float_parts(value)
+                return Function("", [type_num_sym, Function("", [Number(int_part), Number(remainder)])])
             case Type.FAIL | Type.STRING:
                 return Function("", [type_num_sym, String(str(value))])
             case Type.SET:

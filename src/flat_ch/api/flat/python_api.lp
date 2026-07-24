@@ -47,20 +47,25 @@ def fch_operation(operator_symbol, argument_tuple):
 def fch_py_operation(operation_symbol, argument_list):
     return _global_python_registry.execute(operation_symbol, argument_list)
 
+def _float_symbol_to_python(value):
+    if value.type == 5 and len(value.arguments) >= 2:
+        return value.arguments[0].number + (value.arguments[1].number / 1_000_000_000)
+    return float(value.string)
+
 def fch_integral_float_to_int(value):
-    numeric = float(value.string)
+    numeric = _float_symbol_to_python(value)
     rounded = round(numeric)
     if abs(numeric - rounded) <= 1e-9:
         return Number(rounded)
     return Number(0)
 
 def fch_float_is_integral(value):
-    numeric = float(value.string)
+    numeric = _float_symbol_to_python(value)
     rounded = round(numeric)
     return Function("true" if abs(numeric - rounded) <= 1e-9 else "false", [])
 
 def fch_scaled_float_to_int(value, precision):
-    numeric = float(value.string)
+    numeric = _float_symbol_to_python(value)
     return Number(int(numeric * precision.number // 1))
 
 def fch_ssa(clingo_term):
