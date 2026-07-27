@@ -732,7 +732,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         while len(self.nogood_queue) > 0:
             ng = self.nogood_queue.pop(0)
-            if not ctl.add_nogood(ng):
+            if not ctl.add_nogood(ng, lock=True):
                 return True
 
         return False
