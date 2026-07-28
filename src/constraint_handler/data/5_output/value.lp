@@ -6,3 +6,6 @@ warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not _warning_ignore(KIND).
 evaluated(OP,ARGS,V) :- _passed((compile;compile2;ground),LBL,evaluate(OP,ARGS)), _se_value(operation(OP,ARGS),V).
 
 :- _passed((compile;compile2;ground),LBL,ensure(E)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
+
+value(X,bad) :- _expression(compile,variable(X)), not _se_value(variable(X),_).
+evaluated(OP,ARGS,bad) :- _passed(compile,LBL,evaluate(OP,ARGS)), not _se_value(operation(OP,ARGS),_).
