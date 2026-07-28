@@ -476,13 +476,9 @@ compile2_xfail: set[str] = {
     "type/bool/with_none_unary",
     "type/checking/numeric",
     "type/multimap/operations",
-    "unit/bad_leqv",
-    "unit/bad_lxor",
     "unit/float_max",
     "unit/float_min",
     "unit/int_mult",
-    "unit/unary/boolean_leqv",
-    "unit/unary/boolean_lxor",
 }
 ground_skip: set[str] = {
     "core/python_set_bool_brave",
