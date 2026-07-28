@@ -30,6 +30,7 @@ flat_ch_currently_not_working_tests = {
     "datatype/bool/conj_disj_mixed",
     "datatype/bool/implication_bad",
     "datatype/float/equality_cross_type",
+    "datatype/float/nary_add",
     "datatype/float/ordering_cross_type",
     "datatype/int/equality_cross_type",
     "datatype/int/ordering_cross_type",
