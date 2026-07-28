@@ -1502,10 +1502,9 @@ class Domain:
         """Compute the logical-equivalence domain."""
         results: set[object] = set()
         for left_value, right_value in product(cls._logic_values(left), cls._logic_values(right)):
-            if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD:
+            if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD or left_value is None or right_value is None:
                 results.add(cls.LOGIC_BAD)
                 continue
-            # For compile2 leqv parity, `none` contributes like non-false.
             results.add((left_value is False) == (right_value is False))
         return cls._logic_result_domain(results)
 
@@ -1544,10 +1543,9 @@ class Domain:
         """Compute the logical-exclusive-or domain."""
         results: set[object] = set()
         for left_value, right_value in product(cls._logic_values(left), cls._logic_values(right)):
-            if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD:
+            if left_value is cls.LOGIC_BAD or right_value is cls.LOGIC_BAD or left_value is None or right_value is None:
                 results.add(cls.LOGIC_BAD)
                 continue
-            # For compile2 lxor parity, `none` contributes like non-true.
             results.add((left_value is True) != (right_value is True))
         return cls._logic_result_domain(results)
 
