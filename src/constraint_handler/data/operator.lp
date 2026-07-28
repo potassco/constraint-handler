@@ -36,7 +36,7 @@ operator_declare((leq;lt;geq;gt),(T,(T,())),bool) :- _type_extensionalOrder(T).
 % float
 intToFloatOperator(sqrt;cos;sin;tan;acos;asin;atan).
 floatUnOperator(abs;sqrt;cos;sin;tan;acos;asin;atan;minus;ceil;floor).
-floatFloatFloatOperator(add;mult;sub;float_div;pow;max;min).
+floatFloatFloatOperator(sub;float_div;pow;max;min).
 floatBinOperator(OP) :- floatFloatFloatOperator(OP).
 floatBinOperator(int_div;leq;lt;geq;gt).
 

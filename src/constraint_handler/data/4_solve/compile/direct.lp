@@ -82,11 +82,12 @@ _set_assign(E,VAL) :- _expression_eval_exec(E,valid(set(S))), VAL=@pythonListEle
 
 
 %%%%%%%%%%%%%%%%% pythonExtract operator
-_direct_implode(V) :- _computeIdx(E,pythonExtract(PSTMT,PEXPR)), _computeIdx(E,IDX,V).
-_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,pythonExtract(PSTMT,PEXPR),ARGS), _length(ARGS,IDX).
+_direct_resortToPython(operation(pythonExtract(PSTMT,PEXPR),ARGS)) :- _expression(compile,operation(pythonExtract(PSTMT,PEXPR),ARGS)).
+_direct_implode(V) :- _direct_resortToPython(E), _computeIdx(E,IDX,V).
+_direct_imploded_args_aux(E,N,()) :- _direct_resortToPython(E), _expression_operationLength(compile,E,N).
 _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L), _computeIdx(E,IDX,V),
     _direct_imploded(V,IMP).
-_expression_pythonEval(E,operation(pythonExtract(PSTMT,PEXPR),L)) :- _computeIdx(E,pythonExtract(PSTMT,PEXPR)), _direct_imploded_args_aux(E,0,L).
+_expression_pythonEval(E,operation(O,L)) :- _direct_resortToPython(E), _direct_imploded_args_aux(E,0,L), E=operation(O,ARGS).
 
 %%%%%%%%%%%%%%%%% bad
 %_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _expression_safe(operation(OP,ARGS)), not _operator_recoverable(OP).
