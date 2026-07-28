@@ -94,6 +94,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.errors: propagator_warning_t = []
 
         self.reasoning_mode: ReasoningMode = ReasoningMode.STANDARD
+        # Here we don't keep track of the third stage lit, however, it is important that it exists,
+        # as it is in that stage where we report the model of the reasoning mode!
+        # Stage 1: get reasoning mode atoms for clingo
+        # stage 2: get reasoning mode atoms for propagator
+        # stage 3: report results on first model found here
         self.reasoning_mode_stage_lits: dict[Literal[1, 2], int] = {1: -1, 2: -1}
         self.reasoning_stage: Literal[0, 1, 2] = 0
         # this is used for cautious reasoning
@@ -105,6 +110,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # TODO: Check that the above explanation is true!
         self.variable_lits: dict[VariableType, int] = {}
         self.previously_stage_2: bool = False
+        # It is important that we collect the nogoods for seen solutions as we get the solutions!
+        # since later, we wont hace access to the actual reasons for the values of the variables!
+        self.stage1_ngs: list[Iterable[int]] = []
 
         self.optimization_stage_lits: dict[Literal[1, 2, 3], int] = {1: -1, 2: -1, 3: -1}
         self.previously_opt_stage_2: bool = False
@@ -640,6 +648,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.python_model = old_model.union(self.python_model)
 
         if not ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]):
+            self.stage1_ngs.extend(self.get_reasoning_mode_nogoods(self.python_model, first_call=True))
             return False
 
         assert ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]), "stage 2 should be true!"
@@ -649,6 +658,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.previously_stage_2 = True
 
             # add nogoods for the stuff in the current model
+            self.nogood_queue.extend(self.stage1_ngs)
             self.nogood_queue.extend(self.get_reasoning_mode_nogoods(self.python_model, first_call=True))
 
             # add nogoods to ensure at least 1 var changes
