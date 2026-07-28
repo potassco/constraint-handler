@@ -331,3 +331,12 @@ _fch_template_python_binary(ID, _fch_op_concat_id, ((_fch_type_string_id, V1), (
     _fch_op_concat(ID, A1, A2),
     _fch_template_expr_val(A1, _fch_type_string_id, V1),
     _fch_template_expr_val(A2, _fch_type_string_id, V2).
+
+
+_fch_template_expr_val(ID, _fch_type_float_id, (V, 0)) :-
+    _fch_op_float_from_int(ID, A),
+    _fch_template_expr_val(A1, _fch_type_int_id, V).
+
+_fch_template_expr_val(ID, _fch_type_int_id, V) :-
+    _fch_op_int_from_float(ID, A),
+    _fch_template_expr_val(A1, _fch_type_float_id, (V, _)).
