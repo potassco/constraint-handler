@@ -8,5 +8,3 @@ bool_evaluate(operation(geq,(variable(prop),(val(int,3),())))).
 variable_declare(prop,prop,fromFacts).
 variable_declareOptional(prop).
 variable_domain(prop,val(int,5)).
-
-#show value/2.

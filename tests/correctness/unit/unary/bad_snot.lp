@@ -1,4 +1,3 @@
-
 evaluate(snot,(val(bool,false),())).
 evaluate(snot,(val(bool,true),())).
 evaluate(snot,(val(none,none),())).

@@ -1,0 +1,4 @@
+value(x,val(float,float("6.75")))
+value(y,val(float,float("5.75")))
+value(z,val(float,float("9.375")))
+value(t,val(float,float("6.25")))
