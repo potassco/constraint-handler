@@ -428,8 +428,6 @@ compile_xfail: set[str] = {
     "engine/request",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
-    "unit/bad_leqv",
-    "unit/bad_lxor",
     "unit/boolean_conj",
     "unit/boolean_disj",
     "unit/boolean_disj_none_bug",
@@ -439,8 +437,6 @@ compile_xfail: set[str] = {
     "unit/string_lt",
     "unit/tuple_eq",
     "unit/tuple_neq",
-    "unit/unary/boolean_leqv",
-    "unit/unary/boolean_lxor",
 }
 
 compile2_skip: set[str] = {
@@ -517,10 +513,6 @@ ground_xfail: set[str] = {
     "set/iterations",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
-    "unit/boolean_leqv",
-    "unit/boolean_leqv_none_bug",
-    "unit/boolean_lxor",
-    "unit/boolean_lxor_none_bug",
     "unit/set_diff",
     "unit/set_eq",
     "unit/set_inter",
@@ -529,8 +521,6 @@ ground_xfail: set[str] = {
     "unit/set_union",
     "unit/tuple_eq",
     "unit/tuple_neq",
-    "unit/unary/bad_leqv",
-    "unit/unary/bad_lxor",
     "unit/unary/set_length",
 }
 
@@ -553,12 +543,6 @@ propagator_xfail: set[str] = {
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "type/warning/python_unsupported_type",
-    "unit/boolean_leqv",
-    "unit/boolean_leqv_none_bug",
-    "unit/boolean_lxor",
-    "unit/boolean_lxor_none_bug",
-    "unit/unary/bad_leqv",
-    "unit/unary/bad_lxor",
 }
 
 propagator_true_skip: set[str] = propagator_skip | set()

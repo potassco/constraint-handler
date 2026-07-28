@@ -38,11 +38,11 @@ _computedIdx(E,bad) :- _computeIdx(E,limp), _computeIdx(E,0,bad), _computeIdx(E,
 
 %%%%%%%%%%%%%%%%% lxor leqv
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,lxor),
-    N = #count { IDX : _computeIdx(E,IDX,val(bool,true)) }, N \ 2 = 1.
+    N = #count { IDX : _computeIdx(E,IDX,val(bool,true)) }, N \ 2 = 1, #false : _expression_operationIndex(compile,E,IDX,A), _se_value(A,V), V!=val(bool,true), V!=val(bool,false).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E, lxor),
-    N = #count { IDX : _computeIdx(E,IDX,val(bool,true)) }, N \ 2 = 0.
+    N = #count { IDX : _computeIdx(E,IDX,val(bool,true)) }, N \ 2 = 0, #false : _expression_operationIndex(compile,E,IDX,A), _se_value(A,V), V!=val(bool,true), V!=val(bool,false).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,leqv),
-    N = #count { IDX : _computeIdx(E,IDX,val(bool,false)) }, N \ 2 = 0.
+    N = #count { IDX : _computeIdx(E,IDX,val(bool,false)) }, N \ 2 = 0, #false : _expression_operationIndex(compile,E,IDX,A), _se_value(A,V), V!=val(bool,true), V!=val(bool,false).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,leqv),
-    N = #count { IDX : _computeIdx(E,IDX,val(bool,false)) }, N \ 2 = 1.
+    N = #count { IDX : _computeIdx(E,IDX,val(bool,false)) }, N \ 2 = 1, #false : _expression_operationIndex(compile,E,IDX,A), _se_value(A,V), V!=val(bool,true), V!=val(bool,false).
