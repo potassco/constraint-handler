@@ -1,0 +1,2 @@
+evaluated(add,(variable(frontwheel),(variable(backwheel),())),val(int,11))
+evaluated(add,(variable(frontwheel),(variable(backwheel),())),val(int,31))

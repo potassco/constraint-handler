@@ -1,0 +1,3 @@
+value(frontwheel,val(int,20))
+value(frontwheel,val(int,21))
+value(frontwheel,val(int,22))

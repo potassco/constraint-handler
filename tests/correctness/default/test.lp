@@ -1,3 +1,5 @@
+default_mode(depends).
+
 variable_domain(x,val(int,4)).
 variable_default(x,val(int,1),val(bool,true)).
 
