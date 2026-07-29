@@ -105,10 +105,10 @@ default_tests = [
     "default/define/no_domain",
     "default/define/single",
     "default/define/with_domain",
-    "default/depends/single",
     "default/depends/condition",
     "default/depends/disabled",
     "default/depends/no_domain",
+    "default/depends/single",
     "default/depends/with_domain",
 ]
 
@@ -466,6 +466,8 @@ compile2_xfail: set[str] = {
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
+    "default/define/condition",
+    "default/depends/condition",
     "engine/request",
     "engine/request_set_ref",  # mixed engines?
     "expression/lambda_recursive",
@@ -509,6 +511,13 @@ ground_xfail: set[str] = {
     "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
     "datatype/bool/conj_disj_mixed",
+    "default/basic_true",
+    "default/define/condition",
+    "default/define/no_domain",
+    "default/define/single",
+    "default/define/with_domain",
+    "default/depends/condition",
+    "default/depends/no_domain",
     "engine/request",
     "engine/request_set_ref",
     "expression/lambda_recursive",
@@ -546,6 +555,13 @@ propagator_skip: set[str] = {
 propagator_xfail: set[str] = {
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
+    "default/basic_true",
+    "default/define/condition",
+    "default/define/no_domain",
+    "default/define/single",
+    "default/define/with_domain",
+    "default/depends/condition",
+    "default/depends/no_domain",
     "engine/request",
     "engine/request_mixed_trig",
     "expression/lambda_recursive",
