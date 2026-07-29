@@ -21,10 +21,11 @@ _se_value(variable(X),V) :- _passed(solve,LBL,variable_default(X,D,C)), _se_valu
 
 %%%%%% mode depends
 % Collect all variables that occur in ensure declarations.
-_default_ensureVariable(E,X)  :- _passed(solve,LBL,ensure(E)), _default_mode(depends), X=@pythonExpressionVariable(E).
+_default_ensureVariable(E,X) :- _passed(solve,LBL,ensure(E)), _default_mode(depends), X=@pythonExpressionVariable(E).
+_default_dependVariable(E,X) :- _default_ensureVariable(E,X), _passed(solve,LBL,variable_default(X,D,C)).
 
-_default_depends(X,X) :- _passed(solve,LBL,variable_default(X,D,C)), _default_mode(depends).
-_default_depends(X,Y) :- _default_ensureVariable(E,X), _default_ensureVariable(E,Y), X != Y.
+_default_depends(X,X) :- _default_dependVariable(E,X).
+_default_depends(X,Y) :- _default_dependVariable(E,X), _default_ensureVariable(E,Y), X != Y.
 
 -_default_apply(X,D,C) :- _passed(solve,LBL,variable_default(X,D,C)), _passed(solve,LBL',variable_define(X',E')),
                  _default_depends(X,X'),
