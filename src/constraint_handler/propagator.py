@@ -100,7 +100,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # stage 2: get reasoning mode atoms for propagator
         # stage 3: report results on first model found here
         self.reasoning_mode_stage_lits: dict[Literal[1, 2], int] = {1: -1, 2: -1}
-        self.reasoning_stage: Literal[0, 1, 2] = 0
+
         # this is used for cautious reasoning
         # for the first model, the set is assigned the first model
         # This is will hold the model which is then used to update the result
@@ -886,7 +886,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         ng: set[int] = self.get_reasons(var)
         if extra_literals:
             ng = ng.union(extra_literals)
-        prop_stop = ctl.add_nogood(ng)
+        prop_stop = ctl.add_nogood(ng, lock=True)
         if conflict and prop_stop:
             assert (
                 False
