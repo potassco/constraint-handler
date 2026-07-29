@@ -6,7 +6,7 @@ from clingo.symbol import SymbolType
 
 from flat_ch.api.ch.registration import Registration
 from flat_ch.api.ch.serialization import CHSerializer
-from flat_ch.core.serialization import BaseSerializer, float_parts_to_python, normalize_float_parts, normalize_float_str
+from flat_ch.core.serialization import BaseSerializer, float_parts_to_python, normalize_float_str
 from flat_ch.core.evaluation.evaluator import evaluate_operation
 from flat_ch.core.evaluation.python import PythonRegistry
 from flat_ch.core.flattener import Flattener
@@ -37,11 +37,6 @@ def _float_symbol_to_python(value):
     return float(value.string)
 
 
-def _float_payload_symbol(value):
-    int_part, remainder = normalize_float_parts(value)
-    return Function("float", [Number(int_part), Number(remainder)])
-
-
 def _legacy_float_symbol(int_part, remainder):
     value = float_parts_to_python(int_part, remainder)
     return Function("float", [String(normalize_float_str(value))])
@@ -50,14 +45,6 @@ def _legacy_float_symbol(int_part, remainder):
 def fch_legacy_float(int_part, remainder):
     return _legacy_float_symbol(int_part.number, remainder.number)
 
-
-def _legacy_scaled_float_symbol(value, precision):
-    numeric = value / precision
-    return Function("float", [String(normalize_float_str(numeric))])
-
-
-def fch_legacy_scaled_float(value, precision):
-    return _legacy_scaled_float_symbol(value.number, precision.number)
 
 def fch_register(clingo_term):
     return _global_registry.register(clingo_term)
@@ -78,30 +65,7 @@ def fch_py_operation(operation_symbol, argument_list):
     return _global_python_registry.execute(operation_symbol, argument_list)
 
 
-def fch_integral_float_to_int(value):
-    numeric = _float_symbol_to_python(value)
-    rounded = round(numeric)
-    if abs(numeric - rounded) <= 1e-9:
-        return Number(rounded)
-    return Number(0)
-
-
-def fch_float_is_integral(value):
-    numeric = _float_symbol_to_python(value)
-    rounded = round(numeric)
-    return Function("true" if abs(numeric - rounded) <= 1e-9 else "false", [])
-
-
 def fch_scaled_float_to_int(value, precision):
     numeric = _float_symbol_to_python(value)
     return Number(int(numeric * precision.number // 1))
-
-
-def fch_scaled_int_to_float(value, precision):
-    numeric = value.number / precision.number
-    return _float_payload_symbol(numeric)
-
-
-def fch_unscale_int(value, precision):
-    return Number(int(value.number / precision.number))
 #end.
