@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - introduce basic support for defaults, using the
+    `variable_default(LABEL,X,DEFAULT_EXPR,COND)` declarations.
 - - type equality and inequality between values of incompatible types to return
     `bool`
 - - introduce warning `correction/1`
