@@ -10,9 +10,25 @@ _OPTIMIZE_OUTPUT_FLAG = "_fch_enable_optimize_value_output"
 class PostProcessor:
     def __init__(self, control: clingo.Control) -> None:
         self._optimization_score = OptimizationScore(control)
+        self._cached_symbols: list[clingo.Symbol] | None = None
+        self._last_symbols: list[clingo.Symbol] | None = None
 
     def symbols(self, model: clingo.Model) -> list[clingo.Symbol]:
-        return self._optimization_score.symbols(model)
+        if self._cached_symbols is not None:
+            return self._cached_symbols
+
+        symbols = self._optimization_score.symbols(model)
+        if (
+            model.optimality_proven
+            and model.type in {clingo.ModelType.BraveConsequences, clingo.ModelType.CautiousConsequences}
+            and self._last_symbols is not None
+        ):
+            symbols = self._last_symbols.copy()
+
+        self._last_symbols = symbols.copy()
+        if model.optimality_proven:
+            self._cached_symbols = symbols.copy()
+        return symbols
 
 
 def _output_enabled(control: clingo.Control) -> bool:
