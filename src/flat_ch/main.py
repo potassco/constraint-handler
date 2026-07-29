@@ -9,6 +9,7 @@ import clingo.script
 
 from flat_ch.core.evaluation.python import set_default_globals
 from flat_ch.core.file_generation import generate_files
+from flat_ch.post_processing.post_processor import add_post_processor
 
 
 def _print_model(model: clingo.Model) -> None:
@@ -45,6 +46,9 @@ def add_to_control(control: clingo.Control, globals_map: Dict[str, Any], api: st
     generated_dir = core_pkg.joinpath("encodings/generated")
     for file in generated_dir.glob("*.lp"):
         control.load(str(file))
+
+    if api == "ch":
+        add_post_processor(control)
 
 
 def _run_file(target_file: Path, api_mode: str) -> int:
