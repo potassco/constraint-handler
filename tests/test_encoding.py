@@ -47,6 +47,8 @@ core_tests = [
     "core/optional_absent_string_comparison_evaluation",
     "core/python_set_bool_brave",
     "core/reasoning_modes",
+    "core/reasoning_modes_sets",
+    "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
@@ -447,6 +449,7 @@ compile2_skip: set[str] = {
 }
 compile2_xfail: set[str] = {
     "core/reasoning_modes",  # multimap
+    "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "engine/request",
     "engine/request_set_ref",  # mixed engines?
@@ -488,6 +491,7 @@ ground_skip: set[str] = {
 }
 ground_xfail: set[str] = {
     "core/reasoning_modes",
+    "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
     "datatype/bool/conj_disj_mixed",
     "engine/request",
@@ -525,6 +529,7 @@ propagator_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {
+    "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "engine/request",
     "engine/request_mixed_trig",
@@ -723,6 +728,8 @@ choice_statistics_xfail: set[str] = {
     "core/conditional_assign",
     "core/integrity",
     "core/reasoning_modes",
+    "core/reasoning_modes_sets",
+    "core/reasoning_modes_with_show",
     "datatype/bool/derived_relations",
     "datatype/bool/equivalence_bad",
     "datatype/bool/evaluate",
