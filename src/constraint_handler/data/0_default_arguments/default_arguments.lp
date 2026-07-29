@@ -22,6 +22,9 @@ _passed(defaultArgs,LBL,evaluate(OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 #defined variable_define/3.
 #defined variable_domain/2.
 #defined variable_domain/3.
+#defined variable_default/2.
+#defined variable_default/3.
+#defined variable_default/4.
 
 _defaultArgs_variableDeclared(X) :- variable_declare(X,E).
 _defaultArgs_variableDeclared(X) :- variable_declare(LBL,X,E).
@@ -33,6 +36,9 @@ _passed(defaultArgs,LBL,variable_declareOptional(X)) :- variable_declareOptional
 _passed(defaultArgs,_label_anonymous,variable_domain(X,E)) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(LBL,X,E).
+_passed(defaultArgs,_label_anonymous,variable_default(X,D,val(bool,true))) :- variable_default(X,D).
+_passed(defaultArgs,_label_anonymous,variable_default(X,D,C)) :- variable_default(X,D,C).
+_passed(defaultArgs,LBL,variable_default(X,D,C)) :- variable_default(LBL,X,D,C).
 
 _passed(defaultArgs,_label_anonymous,variable_define(X,E)) :- variable_define(X,E).
 _passed(defaultArgs,LBL,variable_define(X,E)) :- variable_define(LBL,X,E).

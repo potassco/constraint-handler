@@ -97,6 +97,7 @@ module_4_propagator = [
 module_4_solve = (
     [
         "4_solve/engine",
+        "4_solve/defaults",
         "4_solve/finiteDomain",
         "4_solve/optimize",
         "4_solve/preference",

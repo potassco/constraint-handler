@@ -1,0 +1,4 @@
+value(x,val(int,4))
+value(y,val(int,4))
+value(z,val(int,4))
+value(t,val(int,4))

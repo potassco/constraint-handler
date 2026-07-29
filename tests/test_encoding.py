@@ -98,6 +98,20 @@ datatype_tests = [
     "datatype/strings",
 ]
 
+default_tests = [
+    "default/basic_true",
+    "default/define/condition",
+    "default/define/disabled",
+    "default/define/no_domain",
+    "default/define/single",
+    "default/define/with_domain",
+    "default/depends/condition",
+    "default/depends/disabled",
+    "default/depends/no_domain",
+    "default/depends/single",
+    "default/depends/with_domain",
+]
+
 engine_tests = [
     "engine/request",
     "engine/request_interaction",
@@ -402,6 +416,7 @@ warning_tests = [
 base_tests = (
     core_tests
     + datatype_tests
+    + default_tests
     + engine_tests
     + error_tests
     + execution_tests
@@ -451,6 +466,8 @@ compile2_xfail: set[str] = {
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
+    "default/define/condition",
+    "default/depends/condition",
     "engine/request",
     "engine/request_set_ref",  # mixed engines?
     "expression/lambda_recursive",
@@ -494,6 +511,13 @@ ground_xfail: set[str] = {
     "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
     "datatype/bool/conj_disj_mixed",
+    "default/basic_true",
+    "default/define/condition",
+    "default/define/no_domain",
+    "default/define/single",
+    "default/define/with_domain",
+    "default/depends/condition",
+    "default/depends/no_domain",
     "engine/request",
     "engine/request_set_ref",
     "expression/lambda_recursive",
@@ -531,6 +555,13 @@ propagator_skip: set[str] = {
 propagator_xfail: set[str] = {
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
+    "default/basic_true",
+    "default/define/condition",
+    "default/define/no_domain",
+    "default/define/single",
+    "default/define/with_domain",
+    "default/depends/condition",
+    "default/depends/no_domain",
     "engine/request",
     "engine/request_mixed_trig",
     "expression/lambda_recursive",
@@ -598,6 +629,12 @@ choice_statistics_skip: set[str] = {
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
     "core/unprojected_optional_equality",
+    "default/define/condition",
+    "default/define/disabled",
+    "default/define/single",
+    "default/define/with_domain",
+    "default/depends/condition",
+    "default/depends/disabled",
     "execution/conditional_string_equality_single_model",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
@@ -808,7 +845,11 @@ def test_compile_statistics_have_zero_choices(name: str):
     assert statistics["solving"]["solvers"]["choices"] == 0.0
 
 
-tightness_statistics_skip: set[str] = {"core/python_set_bool_brave"}
+tightness_statistics_skip: set[str] = {
+    "core/python_set_bool_brave",
+    "default/define/single",
+    "default/define/with_domain",
+}
 tightness_statistics_xfail: set[str] = {
     "optimization/multimap_bool",
     "optimization/multimap_float",
