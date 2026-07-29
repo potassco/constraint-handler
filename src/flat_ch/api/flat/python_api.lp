@@ -8,14 +8,13 @@
 #script (python)
 import os
 
-from clingo import Function, Number
+from clingo import Number
 
 from flat_ch.api.flat.serialization import FCHSerializer
 from flat_ch.core.flattener import Flattener
 from flat_ch.core.evaluation.evaluator import evaluate_operation
 from flat_ch.api.flat.registration import Registration
 from flat_ch.core.registry import ProgramRegistry, native_static_result
-from flat_ch.core.ssa import SSA
 from flat_ch.core.evaluation.python import PythonRegistry
 _global_serializer = FCHSerializer()
 _global_python_registry = PythonRegistry()
@@ -29,7 +28,6 @@ This is loaded here in order to give each clingo control a separate flattener.
 """
 
 
-_global_ssa = SSA()
 def fch_register(clingo_term):
     return _global_registered_program.register(clingo_term)
 
@@ -52,29 +50,7 @@ def _float_symbol_to_python(value):
         return value.arguments[0].number + (value.arguments[1].number / 1_000_000_000)
     return float(value.string)
 
-def fch_integral_float_to_int(value):
-    numeric = _float_symbol_to_python(value)
-    rounded = round(numeric)
-    if abs(numeric - rounded) <= 1e-9:
-        return Number(rounded)
-    return Number(0)
-
-def fch_float_is_integral(value):
-    numeric = _float_symbol_to_python(value)
-    rounded = round(numeric)
-    return Function("true" if abs(numeric - rounded) <= 1e-9 else "false", [])
-
 def fch_scaled_float_to_int(value, precision):
     numeric = _float_symbol_to_python(value)
     return Number(int(numeric * precision.number // 1))
-
-def fch_ssa(clingo_term):
-    ssa_done = _global_ssa.apply(clingo_term)
-
-    flatten_done = [
-        fact
-        for term in ssa_done
-        for fact in _global_flattener.flatten(term)
-    ]
-    return flatten_done
 #end.
