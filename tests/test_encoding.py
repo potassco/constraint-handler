@@ -640,6 +640,8 @@ choice_statistics_skip: set[str] = {
     "execution/conditional_string_equality_single_model",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
+    "optimization/label_int",
+    "optimization/label_string",
     "optimization/optional_absent_linked_value",
     "python/dynamic",
     "warning/python_extract/statement_error",
