@@ -235,6 +235,10 @@ _fch_warning_ignore(KIND) :- warning_ignore(_, KIND).
 
 warning(variable(badValue), (), NAME) :- value(NAME, bad).
 
+warning(expression(pythonError), (), (python, EXPR_ID, MESSAGE)) :-
+	_fch_op_python_variadic(EXPR_ID, _),
+	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, pythonError(MESSAGE)).
+
 :- warning(KIND, INFO, MSG), _fch_warning_forbid(KIND), not _fch_warning_ignore(KIND).
 
 _fch_enable_optimize_value_output.

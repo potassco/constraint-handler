@@ -176,7 +176,7 @@ class Registration(BaseRegistration):
     def _handle_optimize_sum(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:
             self.reg.sequential_inputs.append(
-                OptimizeMaximizeSum(self.parse_expression(args[1]), args[2], args[3].number, self.to_str(args[0]))
+                OptimizeMaximizeSum(self.parse_expression(args[1]), args[2], args[3].number, args[0])
             )
 
     def _handle_optimize_precision(self, args: tuple[clingo.Symbol, ...]):

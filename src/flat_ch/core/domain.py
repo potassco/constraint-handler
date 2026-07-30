@@ -236,7 +236,7 @@ class OptimizeMaximizeSum:
     expression: Expression
     element: str | Symbol
     priority: int
-    label: str | None = None
+    label: str | Symbol | None = None
     kind: ProgramInputKind = ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM
 
 

@@ -540,7 +540,11 @@ class Flattener:
             case ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM:
                 expr_id, elem, prio, label = payload
                 elem_sym = elem if isinstance(elem, Symbol) else Function(elem, [])
-                label_sym = Function(label if label is not None else "_label_anonymous", [])
+                label_sym = (
+                    label
+                    if isinstance(label, Symbol)
+                    else String(label) if label is not None else Function("_label_anonymous", [])
+                )
                 self._emit_fact(
                     Function(
                         FlatFact.OPTIMIZE_SUM.value,

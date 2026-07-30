@@ -64,6 +64,8 @@ class SSA:
         state: dict[str, Expression] = {}
         self._assert_counter = itertools.count(0)
         self._execution_name = execution.name
+        self._public_outputs = {_identifier_name(output_var) for output_var in execution.outputs}
+        self._public_python_operations: list[IPythonOperation] = []
 
         for input_var in execution.inputs:
             input_sym = _make_exec_sym(self._execution_name, input_var, "in")
@@ -75,6 +77,19 @@ class SSA:
         except ValueError as e:
             print(f"Error during SSA transformation for `{self._execution_name}`: {e}")
             return []
+
+        live_roots = [state.get(_identifier_name(output_var), SSA._none_value()) for output_var in execution.outputs]
+        live_roots.extend(expr for key, expr in state.items() if key.startswith("_ssa"))
+        for python_operation in self._public_python_operations:
+            if any(self._contains_expression(root, python_operation) for root in live_roots):
+                continue
+            synthetic_expr = IPythonOperation(
+                code=python_operation.code,
+                arguments=python_operation.arguments,
+                outputs=("__python_effect",),
+            )
+            assert_key = f"_ssa_{self._execution_name}_python_{next(self._assert_counter)}"
+            state[assert_key] = IOperation(Operator.EQ, (synthetic_expr, self._none_value()))
 
         outputs: list[ProgramInput] = []
 
@@ -173,7 +188,7 @@ class SSA:
 
                 args_tuple = tuple(bound_inputs)
 
-                if not inferred_outputs:
+                if not any(var_name in self._public_outputs for var_name in inferred_outputs):
                     synthetic_expr = IPythonOperation(
                         code=python_string,
                         arguments=args_tuple,
@@ -190,10 +205,47 @@ class SSA:
                         outputs=(var_name,),
                     )
 
+                public_output = next(
+                    (var_name for var_name in inferred_outputs if var_name in self._public_outputs),
+                    None,
+                )
+                if public_output is not None:
+                    self._public_python_operations.append(state[public_output])
+
                 return state
 
             case _:
                 raise ValueError(f"Unknown statement kind: {statement.kind}")
+
+    @staticmethod
+    def _contains_expression(expression: Expression, target: Expression) -> bool:
+        if expression == target:
+            return True
+
+        match expression.kind:
+            case ExprKind.OPERATION:
+                expr_op: IOperation = expression  # type: ignore
+                return any(SSA._contains_expression(arg, target) for arg in expr_op.arguments)
+
+            case ExprKind.PYTHON_OPERATION:
+                expr_py_op: IPythonOperation = expression  # type: ignore
+                return any(SSA._contains_expression(arg.expression, target) for arg in expr_py_op.arguments)
+
+            case ExprKind.BIND:
+                expr_bind: IBind = expression  # type: ignore
+                return SSA._contains_expression(expr_bind.expression, target)
+
+            case ExprKind.PAIR:
+                expr_pair: IPair = expression  # type: ignore
+                return SSA._contains_expression(expr_pair.key, target) or SSA._contains_expression(
+                    expr_pair.value, target
+                )
+
+            case ExprKind.VARIABLE | ExprKind.VALUE:
+                return False
+
+            case _:
+                raise ValueError(f"Unknown expression kind: {expression.kind}")
 
     def _substitution(self, expression: Expression, state: dict[str, Expression]) -> Expression:
         match expression.kind:

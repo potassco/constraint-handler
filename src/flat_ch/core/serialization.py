@@ -104,7 +104,11 @@ class BaseSerializer:
                 return type_id, _BOOL_MAP.get(val_sym.name, False)
             case Type.SET:
                 return type_id, self._deserialize_set(val_sym)
-            case Type.FAIL | Type.STRING:
+            case Type.FAIL:
+                if val_sym.type == SymbolType.String:
+                    return type_id, val_sym.string
+                return type_id, val_sym
+            case Type.STRING:
                 return type_id, val_sym.string
             case _:
                 return type_id, val_sym.string
@@ -123,7 +127,10 @@ class BaseSerializer:
             case Type.FLOAT:
                 int_part, remainder = normalize_float_parts(value)
                 return Function("", [type_num_sym, Function("", [Number(int_part), Number(remainder)])])
-            case Type.FAIL | Type.STRING:
+            case Type.FAIL:
+                inner = value if isinstance(value, Symbol) else String(str(value))
+                return Function("", [type_num_sym, inner])
+            case Type.STRING:
                 return Function("", [type_num_sym, String(str(value))])
             case Type.SET:
                 return Function("", [type_num_sym, self._serialize_set(value)])

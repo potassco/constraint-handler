@@ -178,7 +178,11 @@ _fch_dynamic_expr_val(ID, TYPE_ID, VALUE) :-
 
 % It cannot be the case that some integrity fail was thrown from python.
 :- _fch_dynamic_expr_needed(ID),
-    _fch_dynamic_expr_val(ID, _fch_type_fail_id, _).
+    _fch_dynamic_expr_val(ID, _fch_type_fail_id, _),
+    not _fch_python_error(ID).
+
+_fch_python_error(ID) :-
+    _fch_dynamic_expr_val(ID, _fch_type_fail_id, pythonError(_)).
 
 % Undefined references are always fatal, even if they only occur on a branch
 % that would otherwise be skippable.

@@ -9,7 +9,7 @@ from threading import Lock
 from types import CodeType
 from typing import Any
 
-from clingo import Symbol
+from clingo import Function, String, Symbol
 from clingo.symbol import SymbolType
 
 try:
@@ -285,9 +285,9 @@ class PythonRegistry:
         try:
             exec(program.code, execution_scope)
         except _FAIL_INTEGRITY_EXCEPTIONS as error:
-            return Type.FAIL, str(error)
+            return Type.FAIL, Function("integrityError", [String(str(error))])
         except Exception as error:
-            return Type.FAIL, f"pythonError: {error}"
+            return Type.FAIL, Function("pythonError", [String(str(error))])
 
         result_value = execution_scope.get(program.target_output)
 
