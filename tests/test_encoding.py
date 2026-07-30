@@ -178,6 +178,8 @@ multimap_tests = [
 ]
 
 optimization_tests = [
+    "optimization/label_int",
+    "optimization/label_string",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",
