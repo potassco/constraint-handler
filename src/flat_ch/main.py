@@ -20,7 +20,11 @@ def _print_model(model: clingo.Model) -> None:
     print("\n".join(str(symbol) for symbol in shown_symbols))
 
 
-def add_to_control(control: clingo.Control, globals_map: Dict[str, Any], api: str) -> None:
+def add_to_control(
+    control: clingo.Control,
+    globals_map: Dict[str, Any],
+    api: str,
+) -> None:
     if api not in {"flat", "ch"}:
         raise ValueError(f"Unsupported api mode: {api}")
 

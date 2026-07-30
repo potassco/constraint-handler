@@ -7,8 +7,6 @@ from flat_ch.core.types import Type
 
 
 def _output_label(label: clingo.Symbol) -> clingo.Symbol:
-    if label.type == clingo.SymbolType.Function and not label.arguments:
-        return clingo.String(label.name)
     return label
 
 

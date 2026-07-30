@@ -5,7 +5,7 @@ import clingo
 import pytest
 
 import tests.utils.testing as chut
-from flat_ch.main import add_to_control
+from constraint_handler import add_to_control
 from tests.test_encoding import (
     base_tests,
     ctrl_options,
@@ -195,7 +195,7 @@ flat_ch_supported_non_core_tests = [name for name in flat_ch_supported_tests if 
 
 def solve_with_flat_ch(name: str, test, extra_args: list[str]):
     ctl = clingo.Control([*ctrl_options, *extra_args])
-    add_to_control(ctl, {}, api="ch")
+    add_to_control(ctl, {}, api="fch")
     if name.startswith("tests/correctness/optimization/"):
         ctl.add("base", [], "_fch_enable_optimize_value_output.")
 
