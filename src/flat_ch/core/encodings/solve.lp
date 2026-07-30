@@ -81,9 +81,6 @@ _fch_empty_var_domain(NAME) :-
     _fch_var_decl(NAME),
     not _fch_var_has_domain(NAME).
 
-:- _fch_empty_var_domain(NAME),
-    not _fch_inactive_execution_output(NAME).
-
 _fch_dynamic_expr_val(ID, _fch_type_none_id, none) :-
     _fch_expr_var(ID, NAME),
     _fch_inactive_execution_output(NAME).

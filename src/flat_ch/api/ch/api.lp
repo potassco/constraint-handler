@@ -239,6 +239,40 @@ warning(expression(pythonError), (), (python, EXPR_ID, MESSAGE)) :-
 	_fch_op_python_variadic(EXPR_ID, _),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, pythonError(MESSAGE)).
 
+warning(variable(emptyDomain), (), NAME) :-
+	_fch_empty_var_domain(NAME),
+	not _fch_inactive_execution_output(NAME).
+
 :- warning(KIND, INFO, MSG), _fch_warning_forbid(KIND), not _fch_warning_ignore(KIND).
+
+blabla(LABEL, PRIORITY) :-
+	_fch_optimize_label(LABEL, EXPR_ID, PRIORITY),
+	_fch_dynamic_expr_val(EXPR_ID, _fch_type_float_id, _).
+
+% _fch_optimize_value_is_float(LABEL, PRIORITY) :-
+% 	_fch_optimize_label(LABEL, _, PRIORITY),
+% 	_fch_optimize_precision_value(PRIORITY, PRECISION),
+% 	PRECISION != 1.
+
+% optimize_value(LABEL, PRIORITY, val(int, TOTAL)) :-
+% 	_fch_enable_optimize_value_output,
+% 	not _fch_optimize_value_is_float(LABEL, PRIORITY),
+% 	_fch_optimize_label(LABEL, _, PRIORITY),
+% 	_fch_optimize_precision_value(PRIORITY, PRECISION),
+% 	SCALED_TOTAL = #sum { SCALED, EXPR_ID :
+% 		_fch_optimize_label(LABEL, EXPR_ID, PRIORITY),
+% 		_fch_optimize_weight_by_expr(EXPR_ID, PRIORITY, SCALED)
+% 	},
+% 	TOTAL = @fch_unscale_int(SCALED_TOTAL, PRECISION).
+
+% optimize_value(LABEL, PRIORITY, val(float, @fch_legacy_scaled_float(SCALED_TOTAL, PRECISION))) :-
+% 	_fch_enable_optimize_value_output,
+% 	_fch_optimize_value_is_float(LABEL, PRIORITY),
+% 	_fch_optimize_label(LABEL, _, PRIORITY),
+% 	_fch_optimize_precision_value(PRIORITY, PRECISION),
+% 	SCALED_TOTAL = #sum { SCALED, EXPR_ID :
+% 		_fch_optimize_label(LABEL, EXPR_ID, PRIORITY),
+% 		_fch_optimize_weight_by_expr(EXPR_ID, PRIORITY, SCALED)
+% 	}.
 
 _fch_enable_optimize_value_output.
