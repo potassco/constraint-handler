@@ -1,0 +1,4 @@
+value(take(a),val(bool,true))
+value(take(c),val(bool,true))
+optimize_value(2,1,val(float,float("8.5")))
+optimize_value(1,1,val(float,float("0.75")))
