@@ -27,7 +27,9 @@ def solve_with_clingo_statistics(
 def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propagator"], check_mode: bool = False):
     name = "tests/correctness/" + name
     engine_prg = f"defaultEngine({engine})."
-    for test, extra_args in chut.build_expectations(name):
+    expectations = chut.build_expectations(name)
+    assert expectations, f"Missing expectations: {name}"
+    for test, extra_args in expectations:
         options = ctrl_options + extra_args
         solver = chut.Solver(options, engine_prg, files=[name + ".lp"], propagator_check_only=check_mode)
         solver.solve(test)

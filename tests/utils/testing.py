@@ -77,11 +77,11 @@ def build_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
     if test_noargs:
         tests.append((clintest.test.And(*test_noargs), []))
 
-    test_brave = (clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "brave"))
+    test_brave = [clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "brave")]
     if test_brave:
         tests.append((clintest.test.And(*test_brave), ["--enum-mode=brave"]))
 
-    test_cautious = (clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "cautious"))
+    test_cautious = [clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "cautious")]
     if test_cautious:
         tests.append((clintest.test.And(*test_cautious), ["--enum-mode=cautious"]))
 
