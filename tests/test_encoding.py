@@ -106,11 +106,16 @@ default_tests = [
     "default/define/disabled",
     "default/define/no_domain",
     "default/define/single",
+    "default/define/with_domain_bothdefined",
+    "default/define/with_domain_unsat",
     "default/define/with_domain",
     "default/depends/condition",
+    "default/depends/disabled_bydefine",
     "default/depends/disabled",
     "default/depends/no_domain",
     "default/depends/single",
+    "default/depends/with_domain_bothdefined",
+    "default/depends/with_domain_bydepends",
     "default/depends/with_domain",
 ]
 
@@ -636,9 +641,11 @@ choice_statistics_skip: set[str] = {
     "default/define/condition",
     "default/define/disabled",
     "default/define/single",
+    "default/define/with_domain_unsat",
     "default/define/with_domain",
     "default/depends/condition",
     "default/depends/disabled",
+    "default/depends/with_domain",
     "execution/conditional_string_equality_single_model",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
@@ -853,10 +860,10 @@ def test_compile_statistics_have_zero_choices(name: str):
 
 tightness_statistics_skip: set[str] = {
     "core/python_set_bool_brave",
-    "default/define/single",
-    "default/define/with_domain",
 }
 tightness_statistics_xfail: set[str] = {
+    "default/define/single",
+    "default/define/with_domain_unsat",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",
