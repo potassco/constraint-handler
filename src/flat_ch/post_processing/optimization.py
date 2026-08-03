@@ -51,7 +51,6 @@ class OptimizationScore:
                     break
 
         totals: dict[tuple[clingo.Symbol, clingo.Symbol], int] = {}
-        float_totals: set[tuple[clingo.Symbol, clingo.Symbol]] = set()
         int_type_sym = clingo.Number(Type.INT.value)
         bool_type_sym = clingo.Number(Type.BOOL.value)
         float_type_sym = clingo.Number(Type.FLOAT.value)
@@ -74,15 +73,13 @@ class OptimizationScore:
             else:
                 continue
             totals[key] = totals.get(key, 0) + weight
-            if type_id == float_type_sym:
-                float_totals.add(key)
 
         results: list[clingo.Symbol] = []
         for (label, priority), scaled_total in totals.items():
             precision = precisions.get(priority, 1)
             numeric = scaled_total / precision
 
-            if precision != 1 or (label, priority) in float_totals:
+            if precision != 1 or not numeric.is_integer():
                 value_type = clingo.Function("float", [])
                 payload = clingo.Function("float", [clingo.String(normalize_float_str(numeric))])
             else:
