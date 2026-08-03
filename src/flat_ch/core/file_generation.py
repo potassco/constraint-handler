@@ -261,20 +261,20 @@ def _generate_output():
         type_name = t.name.lower()
         const_name = f"_fch_type_{type_name}_id"
 
-        lines.append(f"value(NAME, {type_name}, VALUE) :- ")
-        lines.append(f"    _fch_static_expr_val(EXPR_ID, {const_name}, VALUE), ")
+        lines.append(f"value(NAME, {type_name}, VALUE) :-")
+        lines.append(f"    _fch_static_expr_val(EXPR_ID, {const_name}, VALUE),")
         lines.append(f"    _fch_var_def(NAME, EXPR_ID).\n")
 
-        lines.append(f"value(NAME, {type_name}, VALUE) :- ")
-        lines.append(f"    _fch_static_expr_val(EXPR_ID, {const_name}, VALUE), ")
+        lines.append(f"value(NAME, {type_name}, VALUE) :-")
+        lines.append(f"    _fch_static_expr_val(EXPR_ID, {const_name}, VALUE),")
         lines.append(f"    _fch_dynamic_var_def(NAME, EXPR_ID).\n")
 
-        lines.append(f"value(NAME, {type_name}, VALUE) :- ")
-        lines.append(f"    _fch_dynamic_expr_val(EXPR_ID, {const_name}, VALUE), ")
+        lines.append(f"value(NAME, {type_name}, VALUE) :-")
+        lines.append(f"    _fch_dynamic_expr_val(EXPR_ID, {const_name}, VALUE),")
         lines.append(f"    _fch_var_def(NAME, EXPR_ID).\n")
 
-        lines.append(f"value(NAME, {type_name}, VALUE) :- ")
-        lines.append(f"    _fch_dynamic_expr_val(EXPR_ID, {const_name}, VALUE), ")
+        lines.append(f"value(NAME, {type_name}, VALUE) :-")
+        lines.append(f"    _fch_dynamic_expr_val(EXPR_ID, {const_name}, VALUE),")
         lines.append(f"    _fch_dynamic_var_def(NAME, EXPR_ID).\n")
 
     lines.extend(
@@ -292,12 +292,14 @@ def _generate_output():
         type_name = t.name.lower()
         const_name = f"_fch_type_{type_name}_id"
 
-        lines.append(f"set_member(NAME, {type_name}, VAL) :- ")
-        lines.append(f"    _fch_set_decl(NAME), ")
+        lines.append(f"set_member(NAME, {type_name}, VAL) :-")
+        lines.append("    _fch_set_decl(NAME),")
         lines.append(f"    _fch_set_member(NAME, {const_name}, VAL).\n")
 
-        lines.append(f"set_member(VAR_NAME, {type_name}, VAL) :- ")
-        lines.append(f"    _fch_var_def(VAR_NAME, TARGET_ID), ")
+        lines.append(f"set_member(VAR_NAME, {type_name}, VAL) :-")
+        lines.append("    _fch_var_def(VAR_NAME, TARGET_ID),")
         lines.append(f"    _fch_set_member(TARGET_ID, {const_name}, VAL).\n")
+
+    lines.pop()
 
     return lines
