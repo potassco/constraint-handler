@@ -49,5 +49,3 @@ untracked
 *.fdb_latexmk
 *.fls
 *.log
-
-src/flat_ch/core/encodings/generated/
