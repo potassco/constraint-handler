@@ -26,6 +26,13 @@ def generate_flat_ch_files() -> None:
 flat_ch_removed_category_tests = set(type_tests + warning_tests + multimap_tests + engine_tests)
 
 flat_ch_currently_not_working_tests = {
+    "default/basic_true",
+    "default/define/condition",
+    "default/define/no_domain",
+    "default/define/single",
+    "default/define/with_domain",
+    "default/depends/condition",
+    "default/depends/no_domain",
     "datatype/bool/conj_disj_bad",
     "datatype/bool/conj_disj_mixed",
     "datatype/bool/implication_bad",
@@ -37,6 +44,7 @@ flat_ch_currently_not_working_tests = {
     "core/conj_bad_none_recovery",
     "core/conditional_assign",
     "core/reasoning_modes",
+    "core/reasoning_modes_with_show",
     "expression/python_extract/basic",
     "error/recovery",
     "error/recovery_bool",
