@@ -88,4 +88,4 @@ type_expression(E,top) :- _type_expression(E,top).
 
 %%%%%%%%%%%%%%%%% _expression_normal
 _type_normalizeQuery(EXPR) :- _phase_active(type_check), _expression(sugar,LBL,DECL,EXPR).
-_correction_expression(type_check,EXPR,bad) :-_type_normalizeQuery(EXPR), _type_warning(EXPR,inconsistent).
+_correction_expression(type_check,EXPR,bad) :- _parameter_value(type_substituteBad,true), _type_normalizeQuery(EXPR), _type_warning(EXPR,inconsistent).

@@ -40,3 +40,13 @@ _phase_default(wf_check,true).
 _phase_userRequest(PHASE) :- phase_request(PHASE,BOOL), _phase(PHASE).
 _phase_active(PHASE) :- _phase_default(PHASE,true), not _phase_userRequest(PHASE).
 _phase_active(PHASE) :- phase_request(PHASE,true).
+
+%%%%%%%%%%%%%%%%% parameters
+#defined parameter_request/2.
+
+_parameter(type_substituteBad).
+_parameter_default(type_substituteBad,true).
+
+_parameter_userRequest(PARAM) :- parameter_request(PARAM,BOOL), _parameter(PARAM).
+_parameter_value(PARAM,VAL) :- _parameter_default(PARAM,VAL), not _parameter_userRequest(PARAM).
+_parameter_value(PARAM,VAL) :- parameter_request(PARAM,VAL).

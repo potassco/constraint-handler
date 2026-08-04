@@ -11,3 +11,8 @@ _shared_value(E,V)    :- _passed((compile;compile2;ground),LBL,share_value(E)), 
 
 value(X,bad) :- _expression(compile,variable(X)), not _se_value(variable(X),_).
 evaluated(OP,ARGS,bad) :- _passed(compile,LBL,evaluate(OP,ARGS)), not _se_value(operation(OP,ARGS),_).
+
+type_variableD(X,T) :- _se_value(variable(X),val(T,V)), _passed(solve,LBL,variable_interface(X)).
+type_variableD(X,set) :- _se_value(variable(X),set), _passed(solve,LBL,variable_interface(X)).
+type_variableD(X,set) :- _se_value(variable(X),ref(set,R)), _passed(solve,LBL,variable_interface(X)).
+type_variableD(X,bot) :- value(X,bad), _passed(solve,LBL,variable_interface(X)).
