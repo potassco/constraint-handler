@@ -32,4 +32,14 @@ _passed(propagator,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _
 _passed((compile;compile2;ground;propagator;none),LBL,warning_forbid(W)) :- _passed(solve,LBL,warning_forbid(W)).
 _passed((compile;compile2;ground;propagator;none),LBL,warning_ignore(W)) :- _passed(solve,LBL,warning_ignore(W)).
 
-_optimize_component(LBL,E,ORIG,PREC,ID,PRIO) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,ORIG,PREC,ID,PRIO)), engine(LBL,ENG), _engine_supportOptimization(ENG).
+_optimize_component(LBL,E,ORIG,PREC,ID,PRIORITY) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,ORIG,PREC,ID,PRIORITY)), engine(LBL,ENG), _engine_supportOptimization(ENG).
+_passed(solve,LBL,share_value(E;O;P)) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,O,P,ID,PRIORITY)).
+
+_preference_expressionScore(E,K) :- _phase_active(solve), _passed(solve,LBL,preference_holds(E,K)), engine(LBL,(compile;compile2;ground)).
+_passed(solve,LBL,share_value(E)) :- _phase_active(solve), _passed(solve,LBL,preference_holds(E,K)).
+
+_evaluate(operation(OP,ARGS)) :- _phase_active(solve), _passed(solve,LBL,evaluate(OP,ARGS)), engine(LBL,(compile;compile2;ground)).
+_passed(solve,LBL,share_value(operation(OP,ARGS))) :- _phase_active(solve), _passed(solve,LBL,evaluate(OP,ARGS)).
+
+_passed(solve,LBL,share_value(E)) :- _phase_active(solve), _passed(solve,LBL,bool_evaluate(E)).
+_passed(solve,LBL,share_value(E)) :- _phase_active(solve), _passed(solve,LBL,ensure(E)), engine(LBL,(compile;compile2;ground)).

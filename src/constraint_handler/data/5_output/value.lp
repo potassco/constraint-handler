@@ -3,9 +3,11 @@ set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V), _passed
 value(X,V) :- _se_value(variable(X),V), V != set, _passed(solve,LBL,variable_interface(X)).
 warning(KIND,INFO,MSG) :- _warning(KIND,INFO,MSG), not _warning_ignore(KIND).
 
-evaluated(OP,ARGS,V) :- _passed((compile;compile2;ground),LBL,evaluate(OP,ARGS)), _se_value(operation(OP,ARGS),V).
+evaluated(OP,ARGS,V) :- _evaluate(operation(OP,ARGS)), _shared_value(operation(OP,ARGS),V).
 
-:- _passed((compile;compile2;ground),LBL,ensure(E)), not _se_value(E,val(bool,true)), not _se_value(E,bad).
+_shared_value(E,V)    :- _passed((compile;compile2;ground),LBL,share_value(E)), _se_value(E,V).
+
+:- _passed((compile;compile2;ground),LBL,ensure(E)), not _shared_value(E,val(bool,true)), not _shared_value(E,bad).
 
 value(X,bad) :- _expression(compile,variable(X)), not _se_value(variable(X),_).
 evaluated(OP,ARGS,bad) :- _passed(compile,LBL,evaluate(OP,ARGS)), not _se_value(operation(OP,ARGS),_).

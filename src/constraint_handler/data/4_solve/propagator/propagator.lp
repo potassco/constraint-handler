@@ -42,7 +42,7 @@ propagator_multimap_assign(LBL,X,K,V) :- _passed(propagator,LBL,multimap_assign(
 propagator_multimap_declare(LBL,X) :- _passed(propagator,LBL,variable_declare(X,multimap)).
 
 propagator_optimize_maximizeSum(LBL,E,ID,PRIO) :- _passed(propagator,LBL,optimize_component(E,ORIG,PREC,ID,PRIO)).
-propagator_share_value(LBL,(E;O;P)) :- _passed(propagator,LBL,optimize_component(E,O,P,ID,PRIORITY)).
+propagator_share_value(LBL,E) :- _passed(propagator,LBL,share_value(E)).
 
 propagator_warning_forbid(LBL,W) :- _passed(solve,LBL,warning_forbid(W)).
 propagator_warning_ignore(LBL,W) :- _passed(solve,LBL,warning_ignore(W)).

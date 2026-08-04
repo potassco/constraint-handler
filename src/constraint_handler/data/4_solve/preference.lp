@@ -3,8 +3,6 @@
 _warning(preference(unsupported),(),("multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
 
 
-_preference_expressionScore(E,K) :- _passed((compile;compile2;ground),LBL,preference_holds(E,K)).
-
 _preference_expression(E) :- _preference_expressionScore(E,K).
 
 _preference_index(E,0) :- _preference_expression(E), #count { F : _preference_expression(F), F < E } = 0.
@@ -15,7 +13,7 @@ _preference_potentialAux(0,0) :- preference_maximizeScore.
 _preference_potentialAux(IDX+1,W)   :- _preference_potentialAux(IDX,W), _preference_index(E,IDX).
 _preference_potentialAux(IDX+1,W+K) :- _preference_potentialAux(IDX,W), _preference_index(E,IDX), _preference_expressionScore(E, K), K > 0.
 _preference_potentialScore(W) :- _preference_potentialAux(IDX,W), not _preference_potentialAux(IDX+1,W).
-preference_score(W) :- preference_maximizeScore, W = #sum { K,E : _se_value(E,val(bool,true)),  _preference_expressionScore(E, K), K > 0 }.
+preference_score(W) :- preference_maximizeScore, W = #sum { K,E : _shared_value(E,val(bool,true)),  _preference_expressionScore(E,K), K > 0 }.
 
-#heuristic _se_value(E,val(bool,true)) : _preference_expressionScore(E,K). [1,true]
+#heuristic _shared_value(E,val(bool,true)) : _preference_expressionScore(E,K). [1,true]
 #heuristic preference_score(W) : _preference_potentialScore(W),W>0. [1+W,true]
