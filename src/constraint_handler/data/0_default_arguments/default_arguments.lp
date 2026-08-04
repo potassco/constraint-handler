@@ -13,6 +13,8 @@ _passed(defaultArgs,LBL,ensure(E)) :- ensure(LBL,E).
 _passed(defaultArgs,_label_anonymous,evaluate(OP,ARGS)) :- evaluate(OP,ARGS).
 _passed(defaultArgs,LBL,evaluate(OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
+_label(_label_anonymous).
+
 %%%%%% variable atoms
 #defined variable_declare/2.
 #defined variable_declare/3.

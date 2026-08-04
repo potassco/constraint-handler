@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%% expressions
 _correction_expressionCorrected(PHASE,E) :- _phase_active(PHASE), _correction_expression(PHASE,E,N).
 _correction_expressionOutput(PHASE,E,E) :- _phase_active(PHASE), _expression(sugar,E), not _correction_expressionCorrected(PHASE,E).
-_correction_expressionOutput(PHASE,E,N) :-  _correction_expression(PHASE,E,N).
+_correction_expressionOutput(PHASE,E,N) :- _phase_active(PHASE), _correction_expression(PHASE,E,N).
 
 %%%%%%%%%%%%%%%%% numbers
 _correction_numberCorrected(PHASE,E) :- _phase_active(PHASE), _correction_number(PHASE,E,N).
