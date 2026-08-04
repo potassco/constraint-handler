@@ -1,9 +1,4 @@
-_top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=bool_evaluate(E).
-_top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=ensure(E).
-_top_level_expression(operation(OP,ARGS)) :- _passed(compile2,LBL,DECL), DECL=evaluate(OP,ARGS).
-
-_top_level_expression(E;PREC) :- _passed(compile2,LBL,DECL), DECL=optimize_component(E,PREC,X,P).
-_top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=preference_holds(E,K).
+_top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=share_value(E).
 
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=variable_define(X,E).
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=variable_domain(X,E).

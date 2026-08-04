@@ -32,7 +32,7 @@ _passed(sugar,LBL,set_baseDomain(X,E)) :- _passed(defaultArgs,LBL,set_baseDomain
 
 
 %%%%%% optimize atoms
-_passed(sugar,LBL,optimize_component(EXPR,PREC,ID,PRIO)) :-
+_passed(sugar,LBL,optimize_component(EXPR,E,PREC,ID,PRIO)) :-
   _passed(defaultArgs,LBL,optimize_maximizeSum(E,ID,PRIO)),
   _passed(defaultArgs,LBL2,optimize_precision(PREC,PRIO)),
   EXPR=operation(floor,(operation(mult,(E,(PREC,()))),())).

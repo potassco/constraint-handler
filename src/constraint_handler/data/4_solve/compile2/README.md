@@ -17,13 +17,8 @@ _passed(compile2, LBL, variable_define(Var, Expr))  % Expr is assign to Var
 _passed(compile2, LBL, set_assign(Var, Expr)) % Expr is assigned to Var, but Var is a set
 
 
-%%% constraints
-_passed(compile2, LBL, ensure(Expr))
-_passed(compile2, LBL, bool_evaluate(Expr))
-%% what about _passed(compile2, LBL, evaluate())
-
-%%% preferences and optimize statements
-_passed(compile2,LBL,optimize_component(E,PREC,X,PRIO))
+%%% constraints, evaluate, preference, and optimize statements
+_passed(compile2,LBL,share_value(E))
 
 %%% ignore
 warning_ignore

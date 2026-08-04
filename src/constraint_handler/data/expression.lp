@@ -8,15 +8,15 @@ _expression(PHASE,LBL,DECL,(D;C)) :- _passed(PHASE,LBL,DECL), DECL=variable_defa
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_assign(X,E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_baseDomain(X,E).
 _expression(PHASE,LBL,DECL,(K;B)) :- _passed(PHASE,LBL,DECL), DECL=multimap_assign(X,K,B).
-_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,PREC,X,PRIO).
-_expression(PHASE,LBL,DECL,PREC) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,PREC,X,PRIO).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=share_value(E).
+_expression(PHASE,LBL,DECL,(E;O;P)) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,O,P,X,PRIORITY).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(E,K).
 
 _expression(PHASE,E) :- _expression(PHASE,LBL,DECL,E).
 _expression(PHASE,D) :- _expression(PHASE,operation(O,L)), D=@pythonListElements(L).
 _expression(PHASE,D) :- _expression(PHASE,T), D=@pythonTupleElements(T).
 
-_number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,PREC,X,PRIO).
+_number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,ORIG,PREC,X,PRIO).
 _number(PHASE,LBL,DECL,K) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(E,K).
 _number(PHASE,K) :- _number(PHASE,LBL,DECL,K).
 

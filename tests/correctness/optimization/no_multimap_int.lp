@@ -5,7 +5,7 @@ item(c,2,1).
 item(d,3,3).
 
 variable_declare(take(X),boolDomain) :- item(X,W,V).
-optimize_maximizeSum(EXPR,X) :- item(X,W,V), EXPR=operation(if,(variable(take(X)),(val(int,V),()))).
+optimize_maximizeSum(EXPR,X) :- item(X,W,V), EXPR=operation(ite,(variable(take(X)),(val(int,V),(val(int,0),())))).
 
 item_idx(IDX,X,W) :- item(X,W,V), IDX = #count { Y : item(Y,Z,V2), Y < X }.
 weight_list_aux(N,()) :- N = #count { Y : item(Y,Z,V) }.

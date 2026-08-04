@@ -21,11 +21,9 @@ class OptimizePostProcessingPropagator(clingo.Propagator):
     def init(self, init: clingo.PropagateInit) -> None:
         self.reset_optimize_value_symbols()
         self._optimize_symbols = [
-            symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_optimize_component", 5)
+            symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_optimize_component", 6)
         ]
-        optimize_exprs = {
-            expr for symbol in self._optimize_symbols for expr in (symbol.arguments[1], symbol.arguments[2])
-        }
+        optimize_exprs = {expr for symbol in self._optimize_symbols for expr in symbol.arguments[1:4]}
 
         self._value_symbols_by_expr.clear()
         for symbolic_atom in init.symbolic_atoms.by_signature("_shared_value", 2):
@@ -41,9 +39,8 @@ class OptimizePostProcessingPropagator(clingo.Propagator):
     def get_results(self, model) -> tuple[dict[clingo.Symbol, int | float], list[clingo.Symbol]]:
         values = {}
         for optimize_symbol in self._optimize_symbols:
-            _, value_expr, precision_expr, _, _ = optimize_symbol.arguments
-
-            for expr in (value_expr, precision_expr):
+            _, value_expr, original_expr, precision_expr, _, _ = optimize_symbol.arguments
+            for expr in (value_expr, original_expr, precision_expr):
                 if expr in values:
                     continue
                 for value_symbol in self._value_symbols_by_expr.get(expr, []):
@@ -54,7 +51,6 @@ class OptimizePostProcessingPropagator(clingo.Propagator):
                     if atom.name == "_shared_value" and len(atom.arguments) == 2:
                         if atom.arguments[0] == expr:
                             values[expr] = _to_number(atom.arguments[1])
-
         return values, self._optimize_symbols
 
 
@@ -69,6 +65,9 @@ def _to_number(value: clingo.Symbol) -> int | float:
         if value_type.match("float", 0):
             assert payload.type == clingo.SymbolType.Function and payload.match("float", 1)
             return float(payload.arguments[0].string)
+        if value_type.match("none", 0):
+            assert payload.type == clingo.SymbolType.Function and payload.match("none", 0)
+            return 0
     if value.name == "bad" and len(value.arguments) == 0:
         return 0
     raise NotImplementedError(f"unsupported optimize value type: {value}")
@@ -81,8 +80,9 @@ def _extend_optimize_values(
 
     results = []
     totals: dict[tuple[clingo.Symbol, clingo.Symbol], int | float] = {}
+    totals_real: dict[tuple[clingo.Symbol, clingo.Symbol], int | float] = {}
     for symbol in [] if optimize_results is None else optimize_results:
-        label, expr, precision_expr, _, priority = symbol.arguments
+        label, expr, original_expr, precision_expr, _, priority = symbol.arguments
 
         key = (label, priority)
         value = values.get(expr, 0)
@@ -98,13 +98,23 @@ def _extend_optimize_values(
                 )
             )
         amount = value / precision if precision != 1 else value
-
         totals[key] = totals.get(key, 0) + amount
+
+        if original_expr not in values:
+            results.append(
+                warning.Warning(warning.OtherError(), (), f"no value computed for {original_expr} used in optimization")
+            )
+        totals_real[key] = totals.get(key, 0) + values.get(original_expr, 0)
 
     for key, total in totals.items():
         label, priority = key
         cTotal, errors = evaluator.reducedExpr(total)
         results.append(atom.Optimize_value(label, priority, cTotal))
+        results.extend(errors)
+    for key, total in totals_real.items():
+        label, priority = key
+        cTotal, errors = evaluator.reducedExpr(total)
+        results.append(atom.Optimize_modelValue(label, priority, cTotal))
         results.extend(errors)
     return [myClorm.pytocl(atom) for atom in results]
 

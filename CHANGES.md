@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - introduce `optimize_modelValue(LABEL,PRIORITY,VALUE)` as distinct from the
+    `optimize_value/3` used in computations.
 - - introduce basic support for defaults, using the
     `variable_default(LABEL,X,DEFAULT_EXPR,COND)` declarations.
 - - type equality and inequality between values of incompatible types to return

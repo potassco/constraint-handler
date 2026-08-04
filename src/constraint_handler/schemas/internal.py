@@ -35,6 +35,7 @@ class _shared_value(NamedTuple):
 class _optimize_component(NamedTuple):
     label: expression.constant
     expr: expression.Expr
+    original: expression.Expr
     precision: clingo.Symbol
     id: expression.constant
     priority: expression.Expr | expression.constant
