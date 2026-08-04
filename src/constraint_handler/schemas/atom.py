@@ -131,10 +131,19 @@ class Optimize_precision(NamedTuple):
 type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
 
 
+class Optimize_modelValue(NamedTuple):
+    label: expression.constant
+    priority: expression.constant
+    total: expression.constant
+
+
 class Optimize_value(NamedTuple):
     label: expression.constant
     priority: expression.constant
     total: expression.constant
+
+
+type OptimizeResult = Optimize_modelValue | Optimize_value
 
 
 class Preference_maximizeScore(NamedTuple):
@@ -188,4 +197,4 @@ class Evaluated(NamedTuple):
 
 type MainAtom = Ensure | Evaluate
 type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
-type ResultAtom = Value | Evaluated | Set_value | Multimap_value | Preference_score | warning.Warning
+type ResultAtom = Value | Evaluated | Set_value | Multimap_value | OptimizeResult | Preference_score | warning.Warning

@@ -10,7 +10,7 @@ _passed(propagator,LBL,variable_interface/1).
 _passed(propagator,LBL,set_assign/2).
 _passed(propagator,LBL,set_baseDomain/2).
 _passed(propagator,LBL,multimap_assign/3).
-_passed(propagator,LBL,optimize_component/4).
+_passed(propagator,LBL,optimize_component/5).
 _passed(solve,LBL,warning_forbid/1).
 _passed(solve,LBL,warning_ignore/1).
 
