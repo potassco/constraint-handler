@@ -15,7 +15,7 @@ optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
   COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
   VALU = val(float,V),
-  EXPR = operation(if,(COND,(VALU,()))).
+  EXPR = operation(ite,(COND,(VALU,(val(int,0),())))).
 
 variable_define(carried,EXPR) :-
   EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),

@@ -31,14 +31,14 @@ optimize_maximizeSum(EXPR,X,1) :- item(X,W,V),
   ITEM = val(symbol,X),
   COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
   VALU = val(int,V),
-  EXPR = operation(if,(COND,(VALU,()))).
+  EXPR = operation(ite,(COND,(VALU,(val(int,0),())))).
 
 % Minimize weight with priority 0 (lower priority) by maximizing negative weight
 optimize_maximizeSum(EXPR,X) :- item(X,W,V),
   ITEM = val(symbol,X),
   COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
   WGHT = val(int,-W),
-  EXPR = operation(if,(COND,(WGHT,()))).
+  EXPR = operation(ite,(COND,(WGHT,(val(int,0),())))).
 
 % Capacity constraint
 variable_define(carried,EXPR) :-
