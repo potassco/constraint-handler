@@ -71,7 +71,7 @@ compile_benchmarks = [
             6.0,
         )
     ),
-    benchmark_param(PerformanceBenchmark("sum_chain_performance", "compile", 0.5)),
+    benchmark_param(PerformanceBenchmark("sum_chain", "compile", 0.5)),
     benchmark_param(
         PerformanceBenchmark(
             "bad_scaling_ground",
@@ -82,7 +82,7 @@ compile_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "repeated_constraints_performance",
+            "repeated_constraints",
             "compile",
             20.0,
             constants={"pair_count": 1000},
@@ -90,7 +90,7 @@ compile_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "large_int_domain_performance",
+            "large_int_domain",
             "compile",
             6.0,
             constants={"int_domain_size": 8000},  # uses an excessive amount of memory
@@ -98,7 +98,7 @@ compile_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "assignment_chain_performance",
+            "assignment_chain",
             "compile",
             5.0,
             constants={"chain_length": 200},
@@ -114,7 +114,7 @@ ground_benchmarks = [
             200.0,
         )
     ),
-    benchmark_param(PerformanceBenchmark("sum_chain_performance", "ground", 1.0)),
+    benchmark_param(PerformanceBenchmark("sum_chain", "ground", 1.0)),
     benchmark_param(
         PerformanceBenchmark(
             "bad_scaling_compile",
@@ -125,7 +125,7 @@ ground_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "repeated_constraints_performance",
+            "repeated_constraints",
             "ground",
             70.0,
             constants={"pair_count": 1000},
@@ -133,7 +133,7 @@ ground_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "large_int_domain_performance",
+            "large_int_domain",
             "ground",
             60.0,
             constants={"int_domain_size": 600},
@@ -141,7 +141,7 @@ ground_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "assignment_chain_performance",
+            "assignment_chain",
             "ground",
             6.0,
             constants={"chain_length": 200},
@@ -166,11 +166,11 @@ propagator_benchmarks = [
             check_mode=False,
         )
     ),
-    benchmark_param(PerformanceBenchmark("sum_chain_performance", "propagator", 1.5, check_mode=True)),
-    benchmark_param(PerformanceBenchmark("sum_chain_performance", "propagator", 1.5, check_mode=False)),
+    benchmark_param(PerformanceBenchmark("sum_chain", "propagator", 1.5, check_mode=True)),
+    benchmark_param(PerformanceBenchmark("sum_chain", "propagator", 1.5, check_mode=False)),
     benchmark_param(
         PerformanceBenchmark(
-            "repeated_constraints_performance",
+            "repeated_constraints",
             "propagator",
             170.0,
             check_mode=True,
@@ -179,7 +179,7 @@ propagator_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "repeated_constraints_performance",
+            "repeated_constraints",
             "propagator",
             100.0,
             check_mode=False,
@@ -188,7 +188,7 @@ propagator_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "large_int_domain_performance",
+            "large_int_domain",
             "propagator",
             300.0,
             check_mode=True,
@@ -198,7 +198,7 @@ propagator_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "large_int_domain_performance",
+            "large_int_domain",
             "propagator",
             300.0,
             check_mode=False,
@@ -208,7 +208,7 @@ propagator_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "assignment_chain_performance",
+            "assignment_chain",
             "propagator",
             5.0,
             check_mode=True,
@@ -217,7 +217,7 @@ propagator_benchmarks = [
     ),
     benchmark_param(
         PerformanceBenchmark(
-            "assignment_chain_performance",
+            "assignment_chain",
             "propagator",
             5.0,
             check_mode=False,
