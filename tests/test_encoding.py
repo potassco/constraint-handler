@@ -136,6 +136,7 @@ error_tests = [
 
 execution_tests = [
     "execution/assert",
+    "execution/bad_interface",
     "execution/change",
     "execution/conditional",
     "execution/conditional_assert",
@@ -592,6 +593,7 @@ propagator_xfail: set[str] = {
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "type/warning/python_unsupported_type",
+    "warning/bad_interface",
 }
 
 propagator_true_skip: set[str] = propagator_skip | set()
