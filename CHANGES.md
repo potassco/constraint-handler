@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - update the second argument of most warnings to be the label of a relevant
+    declaration
 - - introduce `optimize_modelValue(LABEL,PRIORITY,VALUE)` as distinct from the
     `optimize_value/3` used in computations.
 - - introduce basic support for defaults, using the

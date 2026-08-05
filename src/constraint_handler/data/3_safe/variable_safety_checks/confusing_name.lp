@@ -6,4 +6,4 @@ _variable_name(confusing(type),X)     :- _variable_strip(X,function,(none;bool;i
 _variable_name(confusing(operator),X) :- _variable_strip(X,function,S), _operator_declared(S).
 _variable_name(confusing(number),X)   :- _variable_strip(X,number,N).
 
-_warning(variable(confusingName),(),(X,REASON)) :- _variable_name(confusing(REASON),X).
+_warning(variable(confusingName),LBL,(X,REASON)) :- _variable_name(confusing(REASON),X), _passed(sugar,LBL,variable_declare(X,D)).

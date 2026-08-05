@@ -16,7 +16,7 @@ variable_declare(calar,fromList((val(string,"red"),(val(string,"green"),(val(str
 
 variable_define(e1,operation(ite,(variable(x),(variable(i),(variable(y),()))))).
 variable_define(e2,operation(ite,(variable(b),(variable(s),(variable(y),()))))).
-variable_define(e3,operation(ite,(variable(unk),(variable(s),(variable(y),()))))).
+variable_define(def3,e3,operation(ite,(variable(unk),(variable(s),(variable(y),()))))).
 
 type_query(operation(ite,(variable(i),(variable(i),(variable(i),()))))).
 type_query(operation(ite,(variable(b),(variable(i),(variable(i),()))))).

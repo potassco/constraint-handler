@@ -17,10 +17,10 @@ _passed(correction(multipleDeclarations,rem),LBL,DECL) :- _variable_multiple(LBL
 _passed(correction(multipleDeclarations,add),LBL,variable_declare(X,definition)) :- _variable_multiple(LBL,X).
 _passed(correction(multipleDeclarations,add),LBL,variable_define(X,bad)) :- _variable_multiple(LBL,X).
 
-_warning(variable(multipleDeclarations),(LBL0,(LBL1,())),(X,D0,D1)) :-
+_warning(variable(multipleDeclarations),(LBL0;LBL1),(X,D0,D1)) :-
   _variable_multipleDeclarations(LBL1,X,D1),
   _passed(defaultArgs,LBL0,variable_declare(X,D0)), (LBL0,D0) < (LBL1,D1).
 
-_warning(variable(multipleDefinitions),(LBL0,(LBL1,())),(X,E0,E1)) :-
+_warning(variable(multipleDefinitions),(LBL0;LBL1),(X,E0,E1)) :-
   _variable_multipleDefinitions(LBL1,X,E1),
   _passed(defaultArgs,LBL0,variable_define(X,E0)), (LBL0,E0) < (LBL1,E1).

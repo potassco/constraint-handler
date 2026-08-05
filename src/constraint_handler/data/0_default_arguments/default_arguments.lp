@@ -77,9 +77,9 @@ _passed(defaultArgs,LBL,set_baseDomain(X,V)) :- set_baseDomain(LBL,X,V).
 #defined execution_run/1.
 #defined execution_run/2.
 
-_passed(defaultArgs,_label_anonymous,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS).
+_passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS).
 _passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(LBL,NAME,STMT,INS,OUTS).
-_passed(defaultArgs,_label_anonymous,execution_run(NAME)) :- execution_run(NAME).
+_passed(defaultArgs,NAME,execution_run(NAME)) :- execution_run(NAME), _passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)).
 _passed(defaultArgs,LBL,execution_run(NAME)) :- execution_run(LBL,NAME).
 
 %%%%%% optimization atoms

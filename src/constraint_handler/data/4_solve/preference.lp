@@ -1,6 +1,6 @@
 #defined preference_maximizeScore/0.
 
-_warning(preference(unsupported),(),("multiple scores for the same expression",E,K,L)) :- _preference_expressionScore(E,K), _preference_expressionScore(E,L), K < L.
+_warning(preference(unsupported),LBL1,("multiple scores for the same expression",E,K1,K2)) :- _passed(sugar,LBL1,preference_holds(E,K1)), _passed(sugar,LBL2,preference_holds(E,K2)), K1 < K2.
 
 
 _preference_expression(E) :- _preference_expressionScore(E,K).

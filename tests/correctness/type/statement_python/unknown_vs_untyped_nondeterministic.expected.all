@@ -1,4 +1,4 @@
-warning(type(risky),(),variable(execution_output(py_nd_mix,"y")))
-warning(type(inconsistent),(),variable(output_add))
+warning(type(risky),py_nd_mix,variable(execution_output(py_nd_mix,"y")))
+warning(type(inconsistent),_label_anonymous,variable(output_add))
 type_variable(execution_output(py_nd_mix,"y"),int)
 type_variable(execution_output(py_nd_mix,"y"),bot)
