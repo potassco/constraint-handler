@@ -23,8 +23,7 @@ _variable_involve(sugar,LBL,X,DECL).
 
 ### Intermediate predicates
 
-_variable_declared/1.
-_variable_exists/2.
+_variable_declared/2.
 _variable_multipleDeclarations/3.
 _variable_multipleDefinitions/3.
 _variable_multiple/2.

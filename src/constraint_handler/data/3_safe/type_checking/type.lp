@@ -9,7 +9,7 @@ _type(bot;int;float;bool;string;symbol;none;set;multimap).
 _expression(type_check,operation(pythonExtract("",S),())) :- _expression(type_check,python(S)).
 _expression(type_check,EXPR) :- _phase_active(type_check), _expression(sugar,EXPR).
 _expression(type_check,EXPR) :- _phase_active(type_check), type_query(EXPR).
-_expression(type_check,variable(X)) :- _phase_active(type_check), _variable_exists(sugar,X).
+_expression(type_check,variable(X)) :- _phase_active(type_check), _variable(sugar,X).
 
 %%%%%%%%%%%%%%%%% type_variable
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_define(X,E)), _type_expression(E,T).
@@ -76,12 +76,13 @@ _type_warning(E,untyped) :- _type_expression(E,top).
 _type_warning(E,risky) :- _type_expression(E,bot), _type_expression(E,T), T!=bot.
 _type_warning(E,inconsistent) :- E!=bad, _expression(type_check,E), #false : _type_expression(E,T), T!=bot.
 
-_type_nonMinimal(variable(X),W) :- _type_warning(variable(X),W), _variable_internal(X).
+_type_nonMinimal(variable(X),W) :- _type_warning(variable(X),W).
 _type_nonMinimal(E,W) :- _expression_operationIndex(type_check,E,IDX,ARG), _type_warning(ARG,W).
 _type_nonMinimal(E,W) :- _expression_tupleIndex(type_check,E,IDX,ARG), _type_warning(ARG,W).
 
 _warning(type(W),(),E) :- _type_warning(E,W), not _type_nonMinimal(E,W).
-
+_warning(type(W),LBL,variable(X)) :- _type_warning(variable(X),W), not _variable_internal(X), _variable_involve(sugar,LBL,X,DECL).
+_warning(type(W),(),variable(X)) :- _type_warning(variable(X),W), not _variable_internal(X), #false: _variable_declared(X,D).
 
 type_expression(E,T) :- _type_expression(E,T), T != bot, not _type_expression(E,top).
 type_expression(E,top) :- _type_expression(E,top).

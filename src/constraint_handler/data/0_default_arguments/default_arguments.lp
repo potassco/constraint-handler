@@ -77,9 +77,9 @@ _passed(defaultArgs,LBL,set_baseDomain(X,V)) :- set_baseDomain(LBL,X,V).
 #defined execution_run/1.
 #defined execution_run/2.
 
-_passed(defaultArgs,_label_anonymous,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS).
+_passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS).
 _passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(LBL,NAME,STMT,INS,OUTS).
-_passed(defaultArgs,_label_anonymous,execution_run(NAME)) :- execution_run(NAME).
+_passed(defaultArgs,NAME,execution_run(NAME)) :- execution_run(NAME), _passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)).
 _passed(defaultArgs,LBL,execution_run(NAME)) :- execution_run(LBL,NAME).
 
 %%%%%% optimization atoms
@@ -125,7 +125,7 @@ _passed(defaultArgs,LBL,preference_variableValue(X,E,K)) :- preference_variableV
 #defined warning_ignore/1.
 #defined warning_ignore/2.
 
-_passed(defaultArgs,_label_anonymous,warning_forbid(KIND)) :- warning_forbid(KIND).
-_passed(defaultArgs,LBL,warning_forbid(KIND)) :- warning_forbid(LBL,KIND).
-_passed(defaultArgs,_label_anonymous,warning_ignore(KIND)) :- warning_ignore(KIND).
-_passed(defaultArgs,LBL,warning_ignore(KIND)) :- warning_ignore(LBL,KIND).
+_passed(defaultArgs,_label_anonymous,warning_forbid(KIND,_internal(all))) :- warning_forbid(KIND).
+_passed(defaultArgs,_label_anonymous,warning_forbid(KIND,LBL)) :- warning_forbid(KIND,LBL).
+_passed(defaultArgs,_label_anonymous,warning_ignore(KIND,_internal(all))) :- warning_ignore(KIND).
+_passed(defaultArgs,_label_anonymous,warning_ignore(KIND,LBL)) :- warning_ignore(KIND,LBL).

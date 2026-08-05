@@ -21,10 +21,12 @@ _number(PHASE,LBL,DECL,K) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(E,K)
 _number(PHASE,K) :- _number(PHASE,LBL,DECL,K).
 
 _variable(PHASE,X) :- _expression(PHASE,variable(X)).
-_variable(PHASE,X) :- _passed(PHASE,LBL,variable_domain(X,E)).
-_variable(PHASE,X) :- _passed(PHASE,LBL,set_assign(X,E)).
-_variable(PHASE,X) :- _passed(PHASE,LBL,set_baseDomain(X,E)).
-_variable(PHASE,X) :- _passed(PHASE,LBL,multimap_assign(X,K,B)).
+_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_define(X,E)).
+%_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_default(X,D,C)).
+_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_domain(X,E)).
+_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,set_assign(X,E)).
+_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,set_baseDomain(X,E)).
+_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,multimap_assign(X,K,B)).
 
 _isTuple(PHASE,E) :- _expression(PHASE,E), true=@pythonIsTuple(E).
 _isTuple(PHASE,E,N,ARGS) :- _isTuple(PHASE,E), (function,(),N,ARGS)=@pythonReify(E).

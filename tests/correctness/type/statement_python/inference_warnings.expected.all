@@ -1,2 +1,2 @@
-warning(type(inconsistent),(),variable(execution_output(py_warn,"y")))
-warning(type(inconsistent),(),variable(execution_output(py_obj,"y")))
+warning(type(inconsistent),py_warn,variable(execution_output(py_warn,"y")))
+warning(type(inconsistent),py_obj,variable(execution_output(py_obj,"y")))

@@ -114,6 +114,7 @@ module_5_output = [
     "5_output/bad_value",
     "5_output/bool_evaluate",
     "5_output/value",
+    "5_output/warning",
 ]
 
 t_modules = {

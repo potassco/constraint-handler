@@ -15,7 +15,7 @@ _statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)),
 
 
 
-_warning(statement(syntaxError),PRG,STMT) :- _statement_query(PRG,SCOPE,STMT), not _statement_wellformed(STMT).
+_warning(statement(syntaxError),LBL,STMT) :- _statement_query(PRG,SCOPE,STMT), not _statement_wellformed(STMT), _execution_declare(LBL,PRG,STMT2,INS,OUTS).
 %%% TODO: use a python check so that it takes place before SSA without reordering the phases
 
 

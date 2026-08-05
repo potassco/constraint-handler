@@ -1,0 +1,2 @@
+value(ok,val(bool,false))
+warning(variable(multipleDefinitions),d_b1,(b,val(bool,true),operation(lnot,(val(bool,false),()))))

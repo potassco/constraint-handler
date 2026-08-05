@@ -1,3 +1,3 @@
 warning(type(inconsistent),(),operation(pythonExtract("y=[1,2,3]","y"),()))
-warning(type(inconsistent),(),variable(execution_output(py_mix,"y")))
-warning(type(inconsistent),(),variable(output_add))
+warning(type(inconsistent),py_mix,variable(execution_output(py_mix,"y")))
+warning(type(inconsistent),_label_anonymous,variable(output_add))

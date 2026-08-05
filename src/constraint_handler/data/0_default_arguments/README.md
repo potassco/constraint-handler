@@ -49,5 +49,5 @@ _passed(defaultArgs,LBL,optimize_maximizeSum/3).
 _passed(defaultArgs,LBL,optimize_precision/2).
 _passed(defaultArgs,LBL,preference_holds/2).
 _passed(defaultArgs,LBL,preference_variableValue/3).
-_passed(defaultArgs,LBL,warning_forbid/1).
-_passed(defaultArgs,LBL,warning_ignore/1).
+_passed(defaultArgs,LBL,warning_forbid/2).
+_passed(defaultArgs,LBL,warning_ignore/2).

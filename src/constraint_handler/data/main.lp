@@ -16,11 +16,6 @@ _main_solverIdentifiers(L) :- _main_solverIdentifierAux(X,L), 0 = #count { Z : m
 
 representation((bool;int;string;float;symbol;none),extensional).
 
-%%%%%%%%%%%%%%%%% warnings
-_warning_forbid(KIND) :- _passed(sugar,LBL,warning_forbid(KIND)).
-_warning_ignore(KIND) :- _passed(sugar,LBL,warning_ignore(KIND)).
-:- _warning(KIND,INFO,MSG), _warning_forbid(KIND), not _warning_ignore(KIND).
-
 %%%%%%%%%%%%%%%%% phases
 #defined phase_request/2.
 
