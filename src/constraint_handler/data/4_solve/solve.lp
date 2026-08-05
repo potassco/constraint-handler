@@ -11,7 +11,7 @@ _variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=set_a
 _variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=set_baseDomain(X,D).
 _variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=multimap_assign(X,D,E).
 
-_solve_conflictVariable(X) :- _variable_exists(sugar,X),
+_solve_conflictVariable(X) :- _variable(sugar,X),
   1 < #count { LBL0,DECL : _passed(presolve,LBL0,DECL),
                DECL=(variable_define(X,E);variable_declare(X,(fromFacts;set;multimap))) }.
 

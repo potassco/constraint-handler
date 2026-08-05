@@ -19,7 +19,9 @@ representation((bool;int;string;float;symbol;none),extensional).
 %%%%%%%%%%%%%%%%% warnings
 _warning_forbid(KIND) :- _passed(sugar,LBL,warning_forbid(KIND)).
 _warning_ignore(KIND) :- _passed(sugar,LBL,warning_ignore(KIND)).
-:- _warning(KIND,INFO,MSG), _warning_forbid(KIND), not _warning_ignore(KIND).
+_warning_raised(KIND) :- _warning(KIND,INFO,MSG), not _warning_ignore(KIND).
+:- _warning_raised(KIND), _warning_forbid(KIND).
+warning_raised :- _warning_raised(KIND).
 
 %%%%%%%%%%%%%%%%% phases
 #defined phase_request/2.

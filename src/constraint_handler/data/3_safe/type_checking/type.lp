@@ -9,7 +9,7 @@ _type(bot;int;float;bool;string;symbol;none;set;multimap).
 _expression(type_check,operation(pythonExtract("",S),())) :- _expression(type_check,python(S)).
 _expression(type_check,EXPR) :- _phase_active(type_check), _expression(sugar,EXPR).
 _expression(type_check,EXPR) :- _phase_active(type_check), type_query(EXPR).
-_expression(type_check,variable(X)) :- _phase_active(type_check), _variable_exists(sugar,X).
+_expression(type_check,variable(X)) :- _phase_active(type_check), _variable(sugar,X).
 
 %%%%%%%%%%%%%%%%% type_variable
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_define(X,E)), _type_expression(E,T).

@@ -38,8 +38,7 @@ _type_operator/2.
 _type_variable/2.
 _type_variadicListAux/5.
 _variable_name/2.
-_variable_declared/1.
-_variable_exists/2.
+_variable_declared/2.
 _variable_query/2.
 _variable_safe/1.
 _variable_strip/3.

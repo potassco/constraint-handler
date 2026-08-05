@@ -25,12 +25,12 @@ variable_define(x0,val(int,0)).
 variable_define(x1,operation(if,(variable(cond),(val(int,1),())))).
 variable_define(y0,operation(default,(variable(x1),(variable(x0),())))).
 variable_define(z,operation(disj,
-                             (operation(eq, (variable(y0), (val(int,1),()))),
-                             (operation(eq, (variable(y0), (val(int,0),()))),())))).
+                           (operation(eq,(variable(y0),(val(int,1),()))),
+                           (operation(eq,(variable(y0),(val(int,0),()))),())))).
 
 variable_declare(a,fromFacts).
 variable_domain(a,(val(int,0..1);val(none,none))).
 evaluate(hasValue,(variable(a),())).
 evaluate(leqv,(operation(hasValue,(variable(a),())),
-             (operation(leq,(operation(default,(variable(a),(val(int,20),()))),(val(int,3),()))),
-             ()))).
+              (operation(leq,(operation(default,(variable(a),(val(int,20),()))),(val(int,3),()))),
+              ()))).

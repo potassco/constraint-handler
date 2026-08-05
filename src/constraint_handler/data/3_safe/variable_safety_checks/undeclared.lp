@@ -1,13 +1,17 @@
-_warning(variable(undeclared),(),X) :- _variable(sugar,X), not _variable_exists(sugar,X).
-_passed(correction(undeclared,add),_internal0,variable_declare(X,definition)) :- _variable(sugar,X), not _variable_exists(sugar,X).
-_passed(correction(undeclared,add),_internal0,variable_define(X,bad)) :- _variable(sugar,X), not _variable_exists(sugar,X).
+_variable_declared(X,D) :- _passed(sugar,LBL,variable_declare(X,D)).
 
-_variable_declared(X) :- _passed(defaultArgs,LBL,variable_declare(X,fromFacts)).
-_passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_domain(X,E)), not _variable_declared(X).
-_warning(variable(undeclared),(),X) :- _passed(defaultArgs,LBL,variable_domain(X,E)), not _variable_declared(X).
+_variable_declareRequired(LBL,X,definition) :- _passed(sugar,LBL,variable_define(X,E)), not _variable_declared(X,definition).
+_variable_declareRequired(LBL,X,fromFacts) :- _passed(sugar,LBL,variable_domain(X,E)), not _variable_declared(X,fromFacts).
+_variable_declareRequired(LBL,X,set) :- _passed(sugar,LBL,set_baseDomain(X,E)), not _variable_declared(X,set).
+_variable_declareRequired(LBL,X,set) :- _passed(sugar,LBL,set_assign(X,E)), not _variable_declared(X,set).
+_variable_declareRequired(LBL,X,multimap) :- _passed(sugar,LBL,multimap_assign(X,K,V)), not _variable_declared(X,multimap).
 
-_set_declared(X) :- _passed(defaultArgs,LBL,set_declare(X)).
-_passed(sugar,LBL,variable_declare(X,set)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)), not _set_declared(X).
-_passed(sugar,LBL,variable_declare(X,set)) :- _passed(defaultArgs,LBL,set_assign(X,E)), not _set_declared(X).
-_warning(variable(undeclared),(),X) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)), not _set_declared(X).
-_warning(variable(undeclared),(),X) :- _passed(defaultArgs,LBL,set_assign(X,E)), not _set_declared(X).
+_warning(variable(undeclared),LBL,(X,D)) :- _variable_declareRequired(LBL,X,D), not _variable_declared(X,D).
+_passed(correction(undeclared,add),LBL,variable_declare(X,D)) :- _variable_declareRequired(LBL,X,D), not _variable_declared(X,D).
+
+_warning(variable(undeclared),(),X) :- _variable(sugar,X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).
+_passed(correction(undeclared,add),_internal,(variable_declare(X,definition);variable_define(X,bad))) :- _variable(sugar,X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).
+
+%%%%%% interface variables
+_passed(sugar,LBL,variable_interface(X)) :- _variable_declareRequired(LBL,X,D), not _variable_declared(X,D), not _variable_internal(X).
+_passed(sugar,_internal,variable_interface(X)) :- _variable(sugar,X), not _variable_internal(X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).
