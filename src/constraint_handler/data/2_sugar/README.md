@@ -16,8 +16,8 @@ _passed(defaultArgs,LBL,optimize_precision/2).
 _passed(defaultArgs,LBL,optimize_maximizeSum/3).
 _passed(defaultArgs,LBL,preference_holds/2).
 _passed(defaultArgs,LBL,preference_variableValue/3).
-_passed(defaultArgs,LBL,warning_forbid/1).
-_passed(defaultArgs,LBL,warning_ignore/1).
+_passed(defaultArgs,LBL,warning_forbid/2).
+_passed(defaultArgs,LBL,warning_ignore/2).
 
 ### Intermediate predicates
 
@@ -38,7 +38,7 @@ _passed(sugar,LBL,set_assign/2).
 _passed(sugar,LBL,set_baseDomain/2).
 _passed(sugar,LBL,optimize_component(EXPR,ORIG,PRECISION,ID,PRIORITY)).
 _passed(sugar,LBL,preference_holds/2).
-_passed(sugar,LBL,warning_forbid/1).
-_passed(sugar,LBL,warning_ignore/1).
+_passed(sugar,LBL,warning_forbid/2).
+_passed(sugar,LBL,warning_ignore/2).
 _expression(sugar,val/2).
 _expression(sugar,operation/2).

@@ -125,7 +125,7 @@ _passed(defaultArgs,LBL,preference_variableValue(X,E,K)) :- preference_variableV
 #defined warning_ignore/1.
 #defined warning_ignore/2.
 
-_passed(defaultArgs,_label_anonymous,warning_forbid(KIND)) :- warning_forbid(KIND).
-_passed(defaultArgs,LBL,warning_forbid(KIND)) :- warning_forbid(LBL,KIND).
-_passed(defaultArgs,_label_anonymous,warning_ignore(KIND)) :- warning_ignore(KIND).
-_passed(defaultArgs,LBL,warning_ignore(KIND)) :- warning_ignore(LBL,KIND).
+_passed(defaultArgs,_label_anonymous,warning_forbid(KIND,_internal(all))) :- warning_forbid(KIND).
+_passed(defaultArgs,_label_anonymous,warning_forbid(KIND,LBL)) :- warning_forbid(KIND,LBL).
+_passed(defaultArgs,_label_anonymous,warning_ignore(KIND,_internal(all))) :- warning_ignore(KIND).
+_passed(defaultArgs,_label_anonymous,warning_ignore(KIND,LBL)) :- warning_ignore(KIND,LBL).

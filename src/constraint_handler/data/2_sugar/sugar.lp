@@ -51,8 +51,8 @@ _variable(sugar,X) :- _variable(ssa,X).
 
 
 %%%%%% warning atoms
-_passed(sugar,LBL,warning_forbid(KIND)) :- _passed(defaultArgs,LBL,warning_forbid(KIND)).
-_passed(sugar,LBL,warning_ignore(KIND)) :- _passed(defaultArgs,LBL,warning_ignore(KIND)).
+_passed(sugar,LBL,warning_forbid(KIND,TARGET)) :- _passed(defaultArgs,LBL,warning_forbid(KIND,TARGET)).
+_passed(sugar,LBL,warning_ignore(KIND,TARGET)) :- _passed(defaultArgs,LBL,warning_ignore(KIND,TARGET)).
 
 
 %%%%%% interface variables

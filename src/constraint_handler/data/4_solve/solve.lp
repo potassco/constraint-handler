@@ -23,14 +23,14 @@ _passed(solve,LBL,variable_define(X,bad)) :- _solve_firstLabel(X,LBL).
 
 :- _passed(solve,L1,variable_define(X,E1)), _passed(solve,L2,variable_define(X,E2)), (L1,E1)!=(L2,E2).
 
+_passed(skip,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), DECL=(warning_forbid(KIND,TGT);warning_ignore(KIND,TGT)).
+_passed(compile,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,compile), not _passed(skip,DECL).
+_passed(compile2,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,compile2), not _passed(skip,DECL).
+_passed(ground,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,ground), not _passed(skip,DECL).
+_passed(propagator,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,propagator), not _passed(skip,DECL).
 
-_passed(compile,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,compile), #false: DECL=warning_forbid(KIND); #false: DECL=warning_ignore(KIND).
-_passed(compile2,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,compile2), #false: DECL=warning_forbid(KIND); #false: DECL=warning_ignore(KIND).
-_passed(ground,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,ground), #false: DECL=warning_forbid(KIND); #false: DECL=warning_ignore(KIND).
-_passed(propagator,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,propagator), #false: DECL=warning_forbid(KIND); #false: DECL=warning_ignore(KIND).
-
-_passed((compile;compile2;ground;propagator;none),LBL,warning_forbid(W)) :- _passed(solve,LBL,warning_forbid(W)).
-_passed((compile;compile2;ground;propagator;none),LBL,warning_ignore(W)) :- _passed(solve,LBL,warning_ignore(W)).
+_passed((compile;compile2;ground;propagator;none),LBL,warning_forbid(W,TGT)) :- _passed(solve,LBL,warning_forbid(W,TGT)).
+_passed((compile;compile2;ground;propagator;none),LBL,warning_ignore(W,TGT)) :- _passed(solve,LBL,warning_ignore(W,TGT)).
 
 _optimize_component(LBL,E,ORIG,PREC,ID,PRIORITY) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,ORIG,PREC,ID,PRIORITY)), engine(LBL,ENG), _engine_supportOptimization(ENG).
 _passed(solve,LBL,share_value(E;O;P)) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,O,P,ID,PRIORITY)).
