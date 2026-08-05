@@ -408,7 +408,10 @@ warning_tests = [
     "warning/bad",
     "warning/bad_interface",
     "warning/fake_forbid",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
     "warning/ignore",
+    "warning/ignore_labeled",
     "warning/python_extract/statement_error",
     "warning/python_extract/undeclared_variable",
     "warning/statement/control",
@@ -663,6 +666,7 @@ choice_statistics_skip: set[str] = {
     "optimization/label_string",
     "optimization/optional_absent_linked_value",
     "python/dynamic",
+    "warning/forbid_labeled_match",
     "warning/python_extract/statement_error",
     "unit/bad_add",
     "unit/bad_concat",
@@ -870,6 +874,7 @@ def test_compile_statistics_have_zero_choices(name: str):
 
 tightness_statistics_skip: set[str] = {
     "core/python_set_bool_brave",
+    "warning/forbid_labeled_match",
 }
 tightness_statistics_xfail: set[str] = {
     "default/define/single",
