@@ -2,7 +2,8 @@
 
 _phase_active(wf_check).
 _expression(sugar,EXPR).
-_passed(sugar,LBL,DECL).
+_expression(sugar,LBL,DECL,EXPR).
+_number(sugar,N).
 _passed(defaultArgs,LBL,execution_declare/4).
 _statement_wellformed/1.
 
@@ -10,10 +11,9 @@ _statement_wellformed/1.
 
 _expression_wfQuery/1.
 _expression_wellformed/1.
-_illformed/1. _illformed/2.
 
 ### Output predicates
 
-_passed(correction(wf_check,rem),LBL,DECL).
-_passed(correction(wf_check,add),LBL,DECL).
+_correction_expression(wf_check,EXPR,bad).
+_correction_number(wf_check,N,0).
 _warning/3.

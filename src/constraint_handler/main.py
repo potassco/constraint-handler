@@ -38,20 +38,17 @@ m4_variable_safety_checks = [
     "4_analysis/variable_safety_checks/undeclared",
 ]
 
-m4_analysis = (
-    [
-        "4_analysis/domain",
-        "4_analysis/bad/safe",
-        "4_analysis/float_normalize/float_normalize",
-        "4_analysis/type_checking/type",
-        "4_analysis/wf_check/wf_check",
-    ]
-    + m4_variable_safety_checks
-)
+m4_analysis = [
+    "4_analysis/domain",
+    "4_analysis/bad/safe",
+    "4_analysis/float_normalize/float_normalize",
+    "4_analysis/type_checking/type",
+    "4_analysis/wf_check/wf_check",
+] + m4_variable_safety_checks
 
 m5_presolve = [
-        "5_presolve/engine",
-        "5_presolve/solve",
+    "5_presolve/engine",
+    "5_presolve/solve",
 ]
 
 m6_datatype = [

@@ -29,13 +29,39 @@ Expr = val(Type, Value)
 Expr = variable(Name)
 Expr = bad
 Expr = (Expr1, Expr2, Expr3, ...)
-ExprList = (Expr1, (Expr2, (Expr3, ....))))
+ExprList = (Expr1, (Expr2, (Expr3, ...., ())))
 
 operation(add, (1, (42, operation(mult, 3))))
 
+### Input predicates
 
-### outputs
-_se_value(Expr, Value)
-_se_value(Expr, set) % if Expr evaluates to a set
-_set_contains(Expr, Value)  % if Expr evaluates to a set, these values are in the set, no nested sets
-bool_evaluated(Expr, Value) % true of false for bool_evaluate Expressions ( or bad )
+_passed(compile2,LBL,DECL).
+_expression_operationIndex(compile2,EXPR,IDX,ARG).
+_expression_operationLength(compile2,EXPR,N).
+_expression_tupleIndex(compile2,EXPR,IDX,ARG).
+_expression_tupleLength(compile2,EXPR,N).
+_type_dynamic(compile2,EXPR,T).
+_main_solverIdentifiers/1.
+
+### Intermediate predicates
+
+_expression(compile2,EXPR).
+_expression_badArgument/1.
+_expression_is_value/1.
+_float_eq_value/2.
+_float_has_zero/1.
+_non_integer_operation/1.
+_python_evaluation_input/4.
+_python_evaluation_result/2.
+_se_domain/2.
+_se_is_set/1.
+_set_bad/1.
+_set_choice_contains/2.
+_set_choice_value/2.
+_top_level_expression/1.
+var_has_domain/1.
+
+### Output predicates
+
+_se_value/2.
+_set_contains/2.

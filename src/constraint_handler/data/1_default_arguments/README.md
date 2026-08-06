@@ -28,6 +28,7 @@ _defaultArgs_variableDeclared/1.
 _defaultArgs_optimizePrecision/1.
 _defaultArgs_precisionProj/0. _defaultArgs_precisionProj/1.
 _defaultArgs_optimize_priority/1.
+_label/1.
 
 ### Output predicates
 
@@ -39,6 +40,7 @@ _passed(defaultArgs,LBL,variable_declareOptional/1).
 _passed(defaultArgs,LBL,variable_define/2).
 _passed(defaultArgs,LBL,variable_default/3).
 _passed(defaultArgs,LBL,variable_domain/2).
+_passed(defaultArgs,LBL,multimap_declare/1).
 _passed(defaultArgs,LBL,multimap_assign/3).
 _passed(defaultArgs,LBL,set_declare/1).
 _passed(defaultArgs,LBL,set_assign/2).

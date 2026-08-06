@@ -24,6 +24,8 @@ _variable_involve(sugar,LBL,X,DECL).
 ### Intermediate predicates
 
 _variable_declared/2.
+_variable_declareRequired/3.
+_variable_hasDomain/2.
 _variable_multipleDeclarations/3.
 _variable_multipleDefinitions/3.
 _variable_multiple/2.
@@ -37,5 +39,5 @@ _variable_strip/3.
 _passed(correction(REASON,add),LBL,variable_declare/2).
 _passed(correction(REASON,add),LBL,variable_define/2).
 _passed(correction(REASON,rem),LBL,DECL).
-_passed(sugar,LBL,variable_declare/2).
+_passed(sugar,LBL,variable_interface/1).
 _warning/3.

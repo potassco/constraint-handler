@@ -2,6 +2,7 @@
 
 _passed(defaultArgs,LBL,execution_declare/4).
 _passed(defaultArgs,LBL,execution_run/1).
+_main_solverIdentifiers/1.
 
 ### Intermediate predicates
 
@@ -31,10 +32,10 @@ _expression_contextualized/3.
 _expression_contextualizedListAux/4.
 _expression_querySSA/3.
 _expression_sequenceHelper/2.
+_expression_sequenceHelperisTuple/2.
 _length/3.
 _expression_index/4.
 _expression_isTuple/4.
-_main_solverIdentifiers/1.
 
 ### Output predicates
 

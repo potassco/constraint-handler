@@ -40,8 +40,10 @@ _direct_imploded_args_aux/3.
 _expression_eval_exec/2.
 _expression(compile,EXPR).
 _direct_implodeTupleAux/3.
+_direct_tupleValuesAux/3.
 _int_add/3.
 _int_mult/3.
+_isTuple/2. _isTuple/4.
 _tupleComp/5.
 _tuple_pair/5.
 _tupleEqAux/3.
@@ -71,7 +73,6 @@ _set_lastIndex/2.
 _set_implode/1.
 _set_as_list_aux/3.
 _set_imploded/2.
-representation(set,intensional). representation(multimap,intensional).
 
 ### Output predicates
 
