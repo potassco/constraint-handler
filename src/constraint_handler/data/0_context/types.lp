@@ -16,4 +16,3 @@ _type_extensionalEquality(symbol).
 %%%%%%%%%%%%%%%%% leq lt geq gt
 _type_extensionalOrder(int).
 _type_extensionalOrder(symbol).
-
