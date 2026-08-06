@@ -12,10 +12,6 @@ _main_solverIdentifierAux(Y,(Y,L)) :- _main_solverIdentifierAux(X,L), main_solve
 _main_solverIdentifiers(L) :- _main_solverIdentifierAux(X,L), 0 = #count { Z : main_solverIdentifier(Z), X < Z }.
 
 
-% needed for brave reasoning?
-
-representation((bool;int;string;float;symbol;none),extensional).
-
 %%%%%%%%%%%%%%%%% phases
 #defined phase_request/2.
 

@@ -7,6 +7,7 @@ variable_declare/2. variable_declare/3.
 variable_declareOptional/1. variable_declareOptional/2.
 variable_define/2. variable_define/3.
 variable_domain/2. variable_domain/3.
+variable_default/2. variable_default/3. variable_default/4.
 multimap_declare/1. multimap_declare/2.
 multimap_assign/3. multimap_assign/4.
 set_declare/1. set_declare/2.
@@ -25,6 +26,11 @@ requestEngine/2.
 defaultEngine/1.
 main_solverIdentifier/1.
 phase_request/2.
+parameter_request/2.
+
+### Intermediate predicates
+
+None.
 
 ### Output predicates
 

@@ -10,111 +10,109 @@ import constraint_handler.propagator as propagator
 
 module_main = [
     "main",
-    "operator",
-    "pythonHelper",
-    "pythonInterface",
-    "pythonOther",
     "template/variable_involve",
 ]
 
-module_0_default_arguments = [
-    "0_default_arguments/default_arguments",
+m0_context = [
+    "0_context/operator",
+    "0_context/python_externals",
+    "0_context/types",
 ]
 
-module_1_single_static_assignment = [
-    "1_single_static_assignment/statement",
+m1_default_arguments = [
+    "1_default_arguments/default_arguments",
 ]
 
-module_2_sugar = [
-    "2_sugar/sugar",
+m2_single_static_assignment = [
+    "2_single_static_assignment/statement",
 ]
 
-module_3_simplify = [
-    "3_domain/domain",
+m3_sugar = [
+    "3_sugar/sugar",
 ]
 
-module_3_variable_safety_checks = [
-    "3_safe/variable_safety_checks/confusing_name",
-    "3_safe/variable_safety_checks/empty_domain",
-    "3_safe/variable_safety_checks/multiple_declarations",
-    "3_safe/variable_safety_checks/reserved_name",
-    "3_safe/variable_safety_checks/undeclared",
+m4_variable_safety_checks = [
+    "4_analysis/variable_safety_checks/confusing_name",
+    "4_analysis/variable_safety_checks/empty_domain",
+    "4_analysis/variable_safety_checks/multiple_declarations",
+    "4_analysis/variable_safety_checks/reserved_name",
+    "4_analysis/variable_safety_checks/undeclared",
 ]
 
-module_3_safe = (
+m4_analysis = [
+    "4_analysis/domain",
+    "4_analysis/bad/safe",
+    "4_analysis/float_normalize/float_normalize",
+    "4_analysis/type_checking/type",
+    "4_analysis/wf_check/wf_check",
+] + m4_variable_safety_checks
+
+m5_presolve = [
+    "5_presolve/dispatch",
+    "5_presolve/engine",
+    "5_presolve/presolve",
+]
+
+m6_datatype = [
+    "6_solve/compile/bool",
+    "6_solve/compile/cast",
+    "6_solve/compile/conditionals",
+    "6_solve/compile/equality",
+    "6_solve/compile/float",
+    "6_solve/compile/int",
+    "6_solve/compile/multimap",
+    "6_solve/compile/set",
+    "6_solve/compile/string",
+]
+
+m6_compile = [
+    "6_solve/compile/direct",
+]
+
+m6_compile2 = [
+    "6_solve/compile2/bad",
+    "6_solve/compile2/boolean",
+    "6_solve/compile2/domain",
+    "6_solve/compile2/equality",
+    "6_solve/compile2/float",
+    "6_solve/compile2/int",
+    "6_solve/compile2/none",
+    "6_solve/compile2/python",
+    "6_solve/compile2/set",
+    "6_solve/compile2/string",
+    "6_solve/compile2/symbol",
+    "6_solve/compile2/tuple",
+    "6_solve/compile2/value",
+    "6_solve/compile2/variables",
+]
+
+m6_ground = [
+    "6_solve/ground/gringoEval",
+]
+
+m6_propagator = [
+    "6_solve/propagator/propagator",
+]
+
+m6_solve = (
     [
-        "3_safe/bad/safe",
-        "3_safe/float_normalize/float_normalize",
-        "3_safe/type_checking/type",
-        "3_safe/wf_check/wf_check",
+        "6_solve/defaults",
+        "6_solve/finiteDomain",
+        "6_solve/optimize",
+        "6_solve/preference",
     ]
-    + module_3_simplify
-    + module_3_variable_safety_checks
+    + m6_datatype
+    + m6_compile
+    + m6_ground
+    + m6_propagator
+    + m6_compile2
 )
 
-module_4_datatype = [
-    "4_solve/compile/bool",
-    "4_solve/compile/cast",
-    "4_solve/compile/conditionals",
-    "4_solve/compile/equality",
-    "4_solve/compile/float",
-    "4_solve/compile/int",
-    "4_solve/compile/multimap",
-    "4_solve/compile/set",
-    "4_solve/compile/string",
-    "4_solve/compile/symbol",
-]
-
-module_4_compile = [
-    "4_solve/compile/direct",
-]
-
-module_4_compile2 = [
-    "4_solve/compile2/bad",
-    "4_solve/compile2/boolean",
-    "4_solve/compile2/domain",
-    "4_solve/compile2/equality",
-    "4_solve/compile2/float",
-    "4_solve/compile2/int",
-    "4_solve/compile2/none",
-    "4_solve/compile2/python",
-    "4_solve/compile2/set",
-    "4_solve/compile2/string",
-    "4_solve/compile2/symbol",
-    "4_solve/compile2/tuple",
-    "4_solve/compile2/value",
-    "4_solve/compile2/variables",
-]
-
-module_4_ground = [
-    "4_solve/ground/gringoEval",
-]
-
-module_4_propagator = [
-    "4_solve/propagator/propagator",
-]
-
-module_4_solve = (
-    [
-        "4_solve/engine",
-        "4_solve/defaults",
-        "4_solve/finiteDomain",
-        "4_solve/optimize",
-        "4_solve/preference",
-        "4_solve/solve",
-    ]
-    + module_4_datatype
-    + module_4_compile
-    + module_4_ground
-    + module_4_propagator
-    + module_4_compile2
-)
-
-module_5_output = [
-    "5_output/bad_value",
-    "5_output/bool_evaluate",
-    "5_output/value",
-    "5_output/warning",
+m7_output = [
+    "7_output/bad_value",
+    "7_output/bool_evaluate",
+    "7_output/value",
+    "7_output/warning",
 ]
 
 t_modules = {
@@ -123,15 +121,15 @@ t_modules = {
 }
 modules = (
     module_main
-    + module_0_default_arguments
-    + module_1_single_static_assignment
-    + module_2_sugar
-    + module_3_safe
-    + module_4_solve
-    + module_5_output
+    + m0_context
+    + m1_default_arguments
+    + m2_single_static_assignment
+    + m3_sugar
+    + m4_analysis
+    + m5_presolve
+    + m6_solve
+    + m7_output
 )
-# modules = extra_modules + core_modules
-# modules = core_modules
 
 python_enabled = False
 
@@ -149,7 +147,7 @@ def add_to_control(
         ctrl.load(str(file))
     for file_name, map in t_modules.items():
         kw, sub = map
-        data = files("constraint_handler.data").joinpath(f"{file_name}.lp").read_text()
+        data = files("constraint_handler.data.template").joinpath(f"{file_name}.lp").read_text()
         for phase in sub:
             ndata = str(data).replace(kw, phase)
             ctrl.add(ndata)

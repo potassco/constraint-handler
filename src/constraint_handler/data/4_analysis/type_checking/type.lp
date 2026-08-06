@@ -1,0 +1,86 @@
+#defined type_query/1.
+#defined _never/0.
+_passed(type_check,LBL,DECL) :- _passed(type_check,LBL,DECL), _never.
+
+%%%%%%%%%%%%%%%%% expression
+_expression(type_check,operation(pythonExtract("",S),())) :- _expression(type_check,python(S)).
+_expression(type_check,EXPR) :- _phase_active(type_check), _expression(sugar,EXPR).
+_expression(type_check,EXPR) :- _phase_active(type_check), type_query(EXPR).
+_expression(type_check,variable(X)) :- _phase_active(type_check), _variable(sugar,X).
+
+%%%%%%%%%%%%%%%%% type_variable
+_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_define(X,E)), _type_expression(E,T).
+_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_domain(X,E)), _type_expression(E,T).
+_type_variable(X,set) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,set)).
+_type_variable(X,multimap) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,multimap)).
+type_variable(X,T) :- _type_variable(X,T).
+
+%%%%%%%%%%%%%%%%% _type_expression
+_type_expression(bad,bot) :- _phase_active(type_check).
+_type_expression(variable(X),T) :- _expression(type_check,variable(X)), _type_variable(X,T).
+_type_expression(val(T,V),T) :- _expression(type_check,val(T,V)).
+_type_expression(python(S),T) :- _expression(type_check,python(S)), _type_expression(operation(pythonExtract("",S),()),T).
+_type_expression(operation(O,ARGS),T) :- _expression(type_check,operation(O,ARGS)), operator_declare(O,TS,T), _type_expressions(ARGS,TS).
+_type_expression(operation(O,ARGS),bot) :- _expression(type_check,operation(O,ARGS)), not _operator_variadic(O), not _operator_pythonExtract(O), _type_expressions(ARGS,TS), #false: operator_declare(O,TS,T).
+_type_expression(operation(O,ARGS),bot) :- _expression(type_check,operation(O,ARGS)), _operator_variadic(O), _expression_operationIndex(type_check,operation(O,ARGS),IDX,ARG), _type_expression(ARG,T), not _operator_variadicAccepts(O,T).
+_type_expression(operation(O,ARGS),top) :- _expression(type_check,operation(O,ARGS)), _type_expression(O,top).
+_type_expression(E,top) :- _expression(type_check,E), _expression_operationIndex(type_check,E,IDX,ARG), _type_expression(ARG,top).
+_type_expression((H,T),(TH,TT)) :- _expression(type_check,(H,T)), _type_expression(H,TH), _type_expression(T,TT). %TODO general tuples
+
+_expression_sequence(type_check,ARGS) :- _expression(type_check,operation(OP,ARGS)).
+
+_type_expressionsArgT(S,IDX,T) :- _expression_sequenceIndex(type_check,S,IDX,ARG), _type_expression(ARG,T).
+_type_expressionsAux(S,N,()) :- _expression_sequenceLength(type_check,S,N).
+_type_expressionsAux(S,IDX,(T,TS)) :- _type_expressionsAux(S,IDX+1,TS), _type_expressionsArgT(S,IDX,T).
+_type_expressions(S,TS) :- _type_expressionsAux(S,0,TS).
+
+% TODO lambdas
+_type_expression(lambda(ARGS,E),top) :- _expression(type_check,lambda(ARGS,E)).
+
+
+
+%%%%%%%%%%%%%%%%% variadic operators
+% - All valid elements get assigned their respective rank (from the declaration).
+% - If the number of elements with a rank is equal to the number of arguments,
+%   then all arguments were valid.
+% - If all elements were valid, the result with the highest rank will be picked as the return type
+
+_expression_sequence(type_check,TS) :- _type_expressions(ES,TS).
+
+_type_variadicListAux(OP,TS,N,NT,1) :- _expression(type_check,operation(OP,ARGS)), _type_expressions(ARGS,TS), _expression_sequenceLength(type_check,TS,N), _operator_variadicEmptyReturns(OP,NT).
+_type_variadicListAux(OP,TS,IDX,IT,IR) :- _type_variadicListAux(OP,TS,IDX+1,NT,NR), _expression_sequenceIndex(type_check,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR > NR.
+_type_variadicListAux(OP,TS,IDX,NT,NR) :- _type_variadicListAux(OP,TS,IDX+1,NT,NR), _expression_sequenceIndex(type_check,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR <= NR.
+_type_expression(operation(OP,ARGS),T) :- _type_variadicListAux(OP,TS,0,T,R), _expression(type_check,operation(OP,ARGS)), _type_expressions(ARGS,TS).
+
+
+%%%%%%%%%%%%%%%%% pythonExtract
+_operator_pythonExtract(OP) :- _expression(type_check,operation(OP,ARGS)), OP=pythonExtract(STMT,EXPR).
+
+_type_pythonExtractArgs(ARGS) :- _expression(type_check,operation(pythonExtract(STMT,EXPR),ARGS)).
+_type_pythonExtractAux(ARGS,N,()) :- _type_pythonExtractArgs(ARGS), _expression_sequenceLength(type_check,ARGS,N).
+_type_pythonExtractAux(ARGS,IDX,((X,T),L)) :- _type_pythonExtractAux(ARGS,IDX+1,L), _expression_sequenceIndex(type_check,ARGS,IDX,(val(string,X),EXPR)), _type_expression(EXPR,T).
+_type_pythonExtract(STMT,EXPR,ARGS,TS,IDS) :- _expression(type_check,operation(pythonExtract(STMT,EXPR),ARGS)), _type_pythonExtractAux(ARGS,0,TS), _main_solverIdentifiers(IDS).
+_type_pythonTypeExtractResult(operation(pythonExtract(STMT,EXPR),ARGS),T) :- _type_pythonExtract(STMT,EXPR,ARGS,TS,IDS), T=@pythonTypeExtract(STMT,EXPR,TS,IDS).
+_type_expression(E,T) :- _type_pythonTypeExtractResult(E,valid(T)).
+_warning(KIND,(),MSG) :- _type_pythonTypeExtractResult(E,error(KIND,MSG)).
+
+
+%%%%%%%%%%%%%%%%% warnings
+_type_warning(E,untyped) :- _type_expression(E,top).
+_type_warning(E,risky) :- _type_expression(E,bot), _type_expression(E,T), T!=bot.
+_type_warning(E,inconsistent) :- E!=bad, _expression(type_check,E), #false : _type_expression(E,T), T!=bot.
+
+_type_nonMinimal(variable(X),W) :- _type_warning(variable(X),W).
+_type_nonMinimal(E,W) :- _expression_operationIndex(type_check,E,IDX,ARG), _type_warning(ARG,W).
+_type_nonMinimal(E,W) :- _expression_tupleIndex(type_check,E,IDX,ARG), _type_warning(ARG,W).
+
+_warning(type(W),(),E) :- _type_warning(E,W), not _type_nonMinimal(E,W).
+_warning(type(W),LBL,variable(X)) :- _type_warning(variable(X),W), not _variable_internal(X), _variable_involve(sugar,LBL,X,DECL).
+_warning(type(W),(),variable(X)) :- _type_warning(variable(X),W), not _variable_internal(X), #false: _variable_declared(X,D).
+
+type_expression(E,T) :- _type_expression(E,T), T != bot, not _type_expression(E,top).
+type_expression(E,top) :- _type_expression(E,top).
+
+%%%%%%%%%%%%%%%%% _expression_normal
+_type_normalizeQuery(EXPR) :- _phase_active(type_check), _expression(sugar,LBL,DECL,EXPR).
+_correction_expression(type_check,EXPR,bad) :- _parameter_value(type_substituteBad,true), _type_normalizeQuery(EXPR), _type_warning(EXPR,inconsistent).
