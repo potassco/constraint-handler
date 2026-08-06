@@ -17,13 +17,13 @@ _direct_resortToPython(operation(mult,(ARG1,(ARG2,REST)))) :-
     _expression(compile,operation(mult,(ARG1,(ARG2,REST)))),
     _computeIdx(operation(mult,(ARG1,(ARG2,REST))),IDX,val(float,V)).
 
+_operator_needsPython(OP,float) :- operator_declare(OP,(float,()),T).
+_operator_needsPython(OP,int) :- operator_declare(OP,(int,()),float).
+_operator_needsPython(OP,T1,T2) :- operator_declare(OP,(T1,(T2,())),T), (T1;T2)=float, OP!=eq, OP!=neq.
+_operator_needsPython(OP,T1,T2) :- operator_declare(OP,(T1,(T2,())),T), (T1;T2)=float, (T1;T2)=(int;float), OP=(eq;neq).
 
-_expression_pythonEval(E,operation(OP,(val(int,V),()))) :- _computeIdx(E,OP), intToFloatOperator(OP), _computeIdx(E,0,val(int,V)).
-_expression_pythonEval(E,operation(OP,(val(float,V),()))) :- _computeIdx(E,OP), floatUnOperator(OP), _computeIdx(E,0,val(float,V)).
-_expression_pythonEval(E,operation(OP,(val(T1,V1),(val(T2,V2),())))) :- _computeIdx(E,OP), floatBinOperator(OP), _computeIdx(E,0,val(T1,V1)), _computeIdx(E,1,val(T2,V2)),
-    (T1;T2)=float, T1=(float;int), T2=(float;int).
-_expression_pythonEval(E,operation(OP,(val(T1,V1),(val(T2,V2),())))) :- _computeIdx(E,OP), OP=(eq;neq), _computeIdx(E,0,val(T1,V1)), _computeIdx(E,1,val(T2,V2)),
-    T1=(float;int), T2=(float;int), T1 != T2.
+_expression_pythonEval(E,operation(OP,(val(T,V),()))) :- _computeIdx(E,OP), _operator_needsPython(OP,T), _computeIdx(E,0,val(T,V)).
+_expression_pythonEval(E,operation(OP,(val(T1,V1),(val(T2,V2),())))) :- _computeIdx(E,OP), _operator_needsPython(OP,T1,T2), _computeIdx(E,0,val(T1,V1)), _computeIdx(E,1,val(T2,V2)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(float,V)), _computeIdx(E,1,val(float,V)).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(float,_)), _computeIdx(E,1,val(float,V)), not _computeIdx(E,0,val(float,V)).

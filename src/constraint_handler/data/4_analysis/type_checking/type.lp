@@ -2,9 +2,6 @@
 #defined _never/0.
 _passed(type_check,LBL,DECL) :- _passed(type_check,LBL,DECL), _never.
 
-%%%%%%%%%%%%%%%%% type
-_type(bot;int;float;bool;string;symbol;none;set;multimap).
-
 %%%%%%%%%%%%%%%%% expression
 _expression(type_check,operation(pythonExtract("",S),())) :- _expression(type_check,python(S)).
 _expression(type_check,EXPR) :- _phase_active(type_check), _expression(sugar,EXPR).
@@ -50,9 +47,6 @@ _type_expression(lambda(ARGS,E),top) :- _expression(type_check,lambda(ARGS,E)).
 
 _expression_sequence(type_check,TS) :- _type_expressions(ES,TS).
 
-_operator_variadic(OP) :- operator_declare_variadic(OP,T,RT,N).
-_operator_variadicAccepts(OP,T) :- operator_declare_variadic(OP,T,RT,1).
-_operator_variadicEmptyReturns(OP,RT) :- operator_declare_variadic(OP,T,RT,1).
 _type_variadicListAux(OP,TS,N,NT,1) :- _expression(type_check,operation(OP,ARGS)), _type_expressions(ARGS,TS), _expression_sequenceLength(type_check,TS,N), _operator_variadicEmptyReturns(OP,NT).
 _type_variadicListAux(OP,TS,IDX,IT,IR) :- _type_variadicListAux(OP,TS,IDX+1,NT,NR), _expression_sequenceIndex(type_check,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR > NR.
 _type_variadicListAux(OP,TS,IDX,NT,NR) :- _type_variadicListAux(OP,TS,IDX+1,NT,NR), _expression_sequenceIndex(type_check,TS,IDX,T), operator_declare_variadic(OP,T,IT,IR), IR <= NR.

@@ -9,9 +9,13 @@ _variable_internal(X).
 _variable_involve(defaultArgs,LBL,X,DECL).
 _variable_involve(sugar,LBL,X,DECL).
 _main_solverIdentifiers/1.
+_operator_variadic/1.
+_operator_variadicAccepts/2.
+_operator_variadicEmptyReturns/2.
 _parameter_value/2.
 _phase_active/1.
 _number(sugar,N).
+_type/1.
 type_query/1.
 operator_declare/3.
 operator_declare_variadic/4.
@@ -44,7 +48,6 @@ _operator_recoverable/1.
 _operator_safe/1.
 _operator_unsafe/1.
 _safe_bad/1.
-_type/1.
 _type_expressions/2.
 _type_expressionsArgT/3.
 _type_expressionsAux/3.
@@ -71,8 +74,6 @@ _variable_name/2.
 _variable_query/2.
 _variable_safe/1.
 _variable_strip/3.
-operator_variadic/2.
-type_expressionTyped/1.
 type_variable/2.
 
 ### Output predicates

@@ -1,6 +1,3 @@
-%%%%%%%%%%%%%%%%% eq neq
-_type_extensionalEquality(bool).
-
 %%%%%%%%%%%%%%%%% lnot, snot, wnot
 _computedIdx(E,val(bool,true))  :- _computeIdx(E,(lnot;snot;wnot)), _computeIdx(E,0,val(bool,false)).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,(lnot;snot;wnot)), _computeIdx(E,0,val(bool,true)).

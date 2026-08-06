@@ -44,12 +44,6 @@ _computedIdx(E,val(int,V)) :- _computeIdx(E,(ceil;floor)), _computeIdx(E,0,val(i
 _computedIdx(E,val(int,-V))  :- _computeIdx(E,minus), _computeIdx(E,0,val(int,V)).
 %%%_computedIdx(E,val(int,0)) :- _computeIdx(E,(ceil;floor)), _computeIdx(E,0,val(none,none)).
 
-%%%%%%%%%%%%%%%%% eq neq
-_type_extensionalEquality(int).
-
-%%%%%%%%%%%%%%%%% leq lt geq gt
-_type_extensionalOrder(int).
-
 %%%%%%%%%%%%%%%%% max min
 _computedIdx(E,val(int,V2)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
 _computedIdx(E,val(int,V1)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.

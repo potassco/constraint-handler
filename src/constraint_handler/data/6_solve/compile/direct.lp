@@ -99,7 +99,7 @@ _se_value(bad,bad).
 %_direct_imploded(bad,bad).
 
 %%%%%%%%%%%%%%%%% implode
-_direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), representation(T,extensional).
+_direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), _type_representation(T,extensional).
 
 _direct_imploded(variable(X),V) :- _direct_implode(variable(X)), _se_value(variable(X),V).
 _direct_implode(V) :- _direct_implode(variable(X)), _se_value(variable(X),V).

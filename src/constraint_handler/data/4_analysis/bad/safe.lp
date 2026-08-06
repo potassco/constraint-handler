@@ -9,8 +9,6 @@ _expression_safe(EXPR) :- _expression_safeQuery(EXPR), true=@pythonIsTuple(EXPR)
 
 % TODO: for operations, check that the operator is safe?
 
-_operator_unsafe(int_div;float_div).
-
 %_variable_unsafe((),X) :- _passed(sugar,variable_define(LBL,X,E)), not _expression_safe((),E).
 %_variable_unsafe((),X) :- _passed(sugar,variable_domain(LBL,X,E)), not _expression_safe((),E).
 %_variable_safe(SCOPE,X) :- _variable_query(safe,X), not _variable_unsafe(SCOPE,X).

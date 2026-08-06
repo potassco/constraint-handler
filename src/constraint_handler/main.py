@@ -16,6 +16,7 @@ module_main = [
 m0_context = [
     "0_context/operator",
     "0_context/python_externals",
+    "0_context/types",
 ]
 
 m1_default_arguments = [
@@ -61,7 +62,6 @@ m6_datatype = [
     "6_solve/compile/multimap",
     "6_solve/compile/set",
     "6_solve/compile/string",
-    "6_solve/compile/symbol",
 ]
 
 m6_compile = [

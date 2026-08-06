@@ -8,7 +8,11 @@ _expression(sugar,EXPR).
 _expression_operationIndex(sugar,EXPR,IDX,ARG).
 _expression_operationLength(sugar,EXPR,N).
 _main_solverIdentifiers/1.
+_operator_variadic/1.
+_operator_variadicAccepts/2.
+_operator_variadicEmptyReturns/2.
 _parameter_value/2.
+_type/1.
 _variable(sugar,X).
 _variable_declared/2.
 _variable_involve(sugar,LBL,X,DECL).
@@ -24,10 +28,6 @@ _expression_sequence(type_check,EXPR).
 _expression_sequenceIndex(type_check,EXPR,IDX,ARG).
 _expression_sequenceLength(type_check,EXPR,N).
 _operator_pythonExtract/1.
-_operator_variadic/1.
-_operator_variadicAccepts/2.
-_operator_variadicEmptyReturns/2.
-_type/1.
 _type_expression/2.
 _type_expressions/2.
 _type_expressionsArgT/3.

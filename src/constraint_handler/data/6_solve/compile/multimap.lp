@@ -1,8 +1,6 @@
 _se_value(variable(X),ref(multimap,variable(X))) :- _passed(compile,LBL,variable_declare(X,multimap)).
 _multimap_add(variable(X),EK,EV) :- _passed(compile,LBL,multimap_assign(X,EK,EV)).
 
-representation(multimap,intensional).
-
 %%%%%%%%%%%%%%%%% pairstuples
 direct_query(E1;E2) :- direct_query((E1,E2)).
 
