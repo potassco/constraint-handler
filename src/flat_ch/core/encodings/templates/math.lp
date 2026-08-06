@@ -48,6 +48,10 @@ _fch_template_expr_val(ID, _fch_type_int_id, V1 / V2) :-
     _fch_template_expr_val(A2, _fch_type_int_id, V2),
     V2 != 0.
 
+_fch_template_expr_val(ID, _fch_type_fail_id, division_by_zero) :-
+    _fch_op_int_div(ID, _, A2),
+    _fch_template_expr_val(A2, _fch_type_int_id, 0).
+
 % Binary Power
 _fch_template_expr_val(ID, _fch_type_int_id, V1 ** V2) :-
     _fch_op_pow(ID, A1, A2),
