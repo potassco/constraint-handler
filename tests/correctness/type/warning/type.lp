@@ -12,7 +12,8 @@ variable_define(z,operation(ite,(variable(b),(variable(i),(variable(y),()))))).
 
 variable_declare(color,fromFacts).
 variable_domain(color,val(symbol,(red;green;blue))).
-variable_declare(calar,fromList((val(string,"red"),(val(string,"green"),(val(string,"blue"),()))))).
+variable_declare(calar,fromFacts).
+variable_domain(calar,val(string,("red";"green";"blue"))).
 
 variable_define(e1,operation(ite,(variable(x),(variable(i),(variable(y),()))))).
 variable_define(e2,operation(ite,(variable(b),(variable(s),(variable(y),()))))).

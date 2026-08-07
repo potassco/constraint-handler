@@ -10,10 +10,9 @@ _passed(sugar,LBL,variable_define(X,E)) :- _passed(defaultArgs,LBL,variable_defi
 
 
 %%%%%% variable fromFacts atoms
-_passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(boolDomain;fromFacts;fromList(L)).
+_passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(boolDomain;fromFacts).
 _passed(sugar,LBL,variable_declare(X,D)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(set;multimap).
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
-_passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_declare(X,fromList(L))), E=@pythonListElements(L).
 _passed(sugar,LBL,variable_domain(X,val(bool,(false;true)))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
 _passed(sugar,LBL,variable_default(X,D,C)) :- _passed(defaultArgs,LBL,variable_default(X,D,C)).

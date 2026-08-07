@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - drop support for `variable_declare(X,fromList(L))`, the replacement being
+    `variable_domain(X,E)` for element of `L` `E`
 - - drop support for `variable_declareOptional(X)`, the replacement being
     `variable_domain(X,val(none,none))`
 - - rename defaultEngine to engine_default and requestEngine to engine_request
