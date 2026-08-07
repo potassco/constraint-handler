@@ -1,15 +1,18 @@
+#defined engine_default/1.
+#defined engine_request/2.
+
 %%%%%%%%%%%%%%%%% engines
 _engine_supportOptimization(compile;compile2;ground;propagator).
-_main_engine(compile;compile2;ground;propagator;none).
+_engine(compile;compile2;ground;propagator;none).
 
-_main_defaultEngine(ENG) :- defaultEngine(ENG), _main_engine(ENG).
-_main_defaultEngineProvided :- defaultEngine(ENG), _main_engine(ENG).
-_main_defaultEngine(compile) :- not _main_defaultEngineProvided.
+_engine_default(ENG) :- engine_default(ENG), _engine(ENG).
+_engine_defaultProvided :- engine_default(ENG), _engine(ENG).
+_engine_default(compile) :- not _engine_defaultProvided.
 
 _label(LBL) :- _label(LBL,DECL).
-_main_requestedEngine(LBL) :- requestEngine(LBL,ENG), _main_engine(ENG).
-engine(LBL,ENG) :- requestEngine(LBL,ENG), _main_engine(ENG).
-engine(LBL,ENG) :- _main_defaultEngine(ENG), not _main_requestedEngine(LBL), _label(LBL).
+_engine_userRequest(LBL) :- engine_request(LBL,ENG), _engine(ENG).
+_engine(LBL,ENG) :- engine_request(LBL,ENG), _engine(ENG).
+_engine(LBL,ENG) :- _engine_default(ENG), not _engine_userRequest(LBL), _label(LBL).
 
 %%%%%%%%%%%%%%%%% collect labels
 _label(LBL,DECL) :- _passed(solve,LBL,DECL).

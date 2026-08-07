@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - rename defaultEngine to engine_default and requestEngine to engine_request
 - - update interface predicates warning_forbid/2 and warning_ignore/2 so that
     the second argument refers to the warning being forbidden or ignored
 - - update the second argument of most warnings to be the label of a relevant

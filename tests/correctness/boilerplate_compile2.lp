@@ -1,3 +1,5 @@
+engine_default(compile2).
+
 #script (python)
 import constraint_handler
 
@@ -6,5 +8,3 @@ def main(ctrl):
     ctrl.ground()
     ctrl.solve()
 #end.
-
-defaultEngine(compile2).
