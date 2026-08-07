@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - drop support for `variable_declareOptional(X)`, the replacement being
+    `variable_domain(X,val(none,none))`
 - - rename defaultEngine to engine_default and requestEngine to engine_request
 - - update interface predicates warning_forbid/2 and warning_ignore/2 so that
     the second argument refers to the warning being forbidden or ignored

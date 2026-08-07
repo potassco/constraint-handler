@@ -11,7 +11,7 @@ variable_domain(b,val(symbol,(red;green;blue))).
 
 variable_declare(p,fromList((R,(G,(B,()))))) :-
   R=val(symbol,red), G=val(symbol,green), B=val(symbol,blue).
-variable_declareOptional(p).
+variable_domain(p,val(none,none)).
 
 ensure(operation(eq,(variable(b),(val(symbol,blue),())))).
 ensure(operation(neq,(variable(r),(variable(g),())))).

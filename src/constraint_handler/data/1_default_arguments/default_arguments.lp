@@ -18,8 +18,6 @@ _label(_label_anonymous).
 %%%%%% variable atoms
 #defined variable_declare/2.
 #defined variable_declare/3.
-#defined variable_declareOptional/1.
-#defined variable_declareOptional/2.
 #defined variable_define/2.
 #defined variable_define/3.
 #defined variable_domain/2.
@@ -32,9 +30,6 @@ _defaultArgs_variableDeclared(X) :- variable_declare(X,E).
 _defaultArgs_variableDeclared(X) :- variable_declare(LBL,X,E).
 _passed(defaultArgs,_label_anonymous,variable_declare(X,E)) :- variable_declare(X,E).
 _passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(LBL,X,D).
-_passed(defaultArgs,_label_anonymous,variable_declareOptional(X)) :- variable_declareOptional(X), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_declareOptional(X)) :- variable_declareOptional(X), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_declareOptional(X)) :- variable_declareOptional(LBL,X).
 _passed(defaultArgs,_label_anonymous,variable_domain(X,E)) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(LBL,X,E).

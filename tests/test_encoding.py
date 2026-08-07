@@ -14,7 +14,7 @@ def solve_with_clingo_statistics(
 ) -> dict:
     ctl = clingo.Control(["--stats=2"])
     constraint_handler.add_to_control(ctl)
-    ctl.add(f"defaultEngine({engine}).")
+    ctl.add(f"engine_default({engine}).")
     ctl.load(f"tests/correctness/{name}.lp")
     ctl.ground()
 

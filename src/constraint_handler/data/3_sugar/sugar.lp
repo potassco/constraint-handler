@@ -15,7 +15,6 @@ _passed(sugar,LBL,variable_declare(X,D)) :- _passed(defaultArgs,LBL,variable_dec
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_declare(X,fromList(L))), E=@pythonListElements(L).
 _passed(sugar,LBL,variable_domain(X,val(bool,(false;true)))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
-_passed(sugar,LBL,variable_domain(X,val(none,none))) :- _passed(defaultArgs,LBL,variable_declareOptional(X)).
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
 _passed(sugar,LBL,variable_default(X,D,C)) :- _passed(defaultArgs,LBL,variable_default(X,D,C)).
 

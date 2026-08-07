@@ -1,7 +1,7 @@
 % Compile can realize the absent branch for p and chk.result, while compile2
 % currently only realizes the present branch.
 
-variable_declareOptional(execution_input(((((),"r"),"u"),"chk"),"result")).
+variable_domain(execution_input(((((),"r"),"u"),"chk"),"result"),val(none,none)).
 
 execution_run(((((),"r"),"u"),"pos"),((((),"r"),"u"),"pos")).
 execution_run(((((),"r"),"u"),"chk"),((((),"r"),"u"),"chk")).

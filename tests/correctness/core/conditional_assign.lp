@@ -20,7 +20,7 @@
 %%% hasValue(a)==true     hasValue(a)==false
 
 variable_declare(cond,boolDomain).
-variable_declareOptional(cond).
+variable_domain(cond,val(none,none)).
 variable_define(x0,val(int,0)).
 variable_define(x1,operation(if,(variable(cond),(val(int,1),())))).
 variable_define(y0,operation(default,(variable(x1),(variable(x0),())))).

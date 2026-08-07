@@ -43,7 +43,7 @@ def run_benchmark_program(benchmark_case: PerformanceBenchmark) -> None:
 
     ctl = clingo.Control(benchmark_options)
     constraint_handler.add_to_control(ctl, propagator_check_only=benchmark_case.check_mode)
-    ctl.add(f"defaultEngine({benchmark_case.engine}).")
+    ctl.add(f"engine_default({benchmark_case.engine}).")
     ctl.load(os.fspath(benchmark_case.program_path))
     ctl.ground()
     ctl.solve()
