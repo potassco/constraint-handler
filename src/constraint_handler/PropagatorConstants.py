@@ -55,7 +55,7 @@ REASONING_MODE_PROGRAM = f"""
 OPTIMIZATION_STAGE_ATOM: Literal["__opt_stage__"] = "__opt_stage__"
 OPTIMIZATION_HELPER_PROGRAM = f"""
 % Optimization helper atoms
-1{{{OPTIMIZATION_STAGE_ATOM}(1;2)}} 1 :- propagator_optimize_maximizeSum(CNAME,_,_,_), engine(CNAME, propagator).
+1{{{OPTIMIZATION_STAGE_ATOM}(1;2)}} 1 :- propagator_optimize_maximizeSum(CNAME,_,_,_), _engine(CNAME, propagator).
 #heuristic {OPTIMIZATION_STAGE_ATOM}(1). [990,true]
 
 % #show {OPTIMIZATION_STAGE_ATOM}/3.

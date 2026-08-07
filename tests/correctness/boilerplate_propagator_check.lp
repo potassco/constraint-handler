@@ -1,4 +1,4 @@
-defaultEngine(propagator).
+engine_default(propagator).
 
 #script (python)
 import constraint_handler

@@ -1,4 +1,4 @@
-defaultEngine(ground).
+engine_default(ground).
 
 #script (python)
 import constraint_handler
