@@ -1,6 +1,4 @@
-warning(variable(emptyDomain),d_a,a)
 warning(variable(emptyDomain),d_b,b)
-warning(variable(multipleDeclarations),d_t,(t,fromList((val(symbol,green),(val(symbol,blue),()))),fromList((val(symbol,red),()))))
 warning(variable(multipleDeclarations),d_u,(u,boolDomain,fromFacts))
 warning(variable(multipleDeclarations),d_v1,(v,fromFacts,fromFacts))
 warning(variable(multipleDeclarations),d_v2,(v,fromFacts,fromFacts))
