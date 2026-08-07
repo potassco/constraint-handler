@@ -1,20 +1,20 @@
-_optimize_component(LBL,E,ORIG,PREC,ID,PRIORITY) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,ORIG,PREC,ID,PRIORITY)), engine(LBL,ENG), _engine_supportOptimization(ENG).
+_optimize_component(LBL,E,ORIG,PREC,ID,PRIORITY) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,ORIG,PREC,ID,PRIORITY)), _engine(LBL,ENG), _engine_supportOptimization(ENG).
 _passed(solve,LBL,share_value(E;O;P)) :- _phase_active(solve), _passed(solve,LBL,optimize_component(E,O,P,ID,PRIORITY)).
 
-_preference_expressionScore(E,K) :- _phase_active(solve), _passed(solve,LBL,preference_holds(E,K)), engine(LBL,(compile;compile2;ground)).
+_preference_expressionScore(E,K) :- _phase_active(solve), _passed(solve,LBL,preference_holds(E,K)), _engine(LBL,(compile;compile2;ground)).
 _passed(solve,LBL,share_value(E)) :- _phase_active(solve), _passed(solve,LBL,preference_holds(E,K)).
 
-_evaluate(operation(OP,ARGS)) :- _phase_active(solve), _passed(solve,LBL,evaluate(OP,ARGS)), engine(LBL,(compile;compile2;ground)).
+_evaluate(operation(OP,ARGS)) :- _phase_active(solve), _passed(solve,LBL,evaluate(OP,ARGS)), _engine(LBL,(compile;compile2;ground)).
 _passed(solve,LBL,share_value(operation(OP,ARGS))) :- _phase_active(solve), _passed(solve,LBL,evaluate(OP,ARGS)).
 
 _passed(solve,LBL,share_value(E)) :- _phase_active(solve), _passed(solve,LBL,bool_evaluate(E)).
-_passed(solve,LBL,share_value(E)) :- _phase_active(solve), _passed(solve,LBL,ensure(E)), engine(LBL,(compile;compile2;ground)).
+_passed(solve,LBL,share_value(E)) :- _phase_active(solve), _passed(solve,LBL,ensure(E)), _engine(LBL,(compile;compile2;ground)).
 
 _passed(skip,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), DECL=(warning_forbid(KIND,TGT);warning_ignore(KIND,TGT)).
-_passed(compile,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,compile), not _passed(skip,DECL).
-_passed(compile2,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,compile2), not _passed(skip,DECL).
-_passed(ground,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,ground), not _passed(skip,DECL).
-_passed(propagator,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), engine(LBL,propagator), not _passed(skip,DECL).
+_passed(compile,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), _engine(LBL,compile), not _passed(skip,DECL).
+_passed(compile2,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), _engine(LBL,compile2), not _passed(skip,DECL).
+_passed(ground,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), _engine(LBL,ground), not _passed(skip,DECL).
+_passed(propagator,LBL,DECL) :- _phase_active(solve), _passed(solve,LBL,DECL), _label(LBL,DECL), _engine(LBL,propagator), not _passed(skip,DECL).
 
 _passed((compile;compile2;ground;propagator;none),LBL,warning_forbid(W,TGT)) :- _passed(solve,LBL,warning_forbid(W,TGT)).
 _passed((compile;compile2;ground;propagator;none),LBL,warning_ignore(W,TGT)) :- _passed(solve,LBL,warning_ignore(W,TGT)).

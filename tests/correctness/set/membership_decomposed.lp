@@ -2,7 +2,7 @@
 
 variable_declare(x,fromFacts).
 variable_domain(x,val(string,"X")).
-variable_declareOptional(x).
+variable_domain(x,val(none,none)).
 
 variable_define(pool,operation(set_make,(val(string,"X"),(val(string,"Y"),())))).
 variable_define(set_in,operation(set_isin,(variable(x),(variable(pool),())))).

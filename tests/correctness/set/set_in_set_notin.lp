@@ -10,7 +10,7 @@ evaluate(set_notin,(val(string,"Z"),(variable(pool),()))).
 evaluate(set_isin,(val(none,none),(variable(pool),()))).
 evaluate(set_notin,(val(none,none),(variable(empty),()))).
 
-set_declare(nd).
+variable_declare(nd,set).
 set_baseDomain(nd,val(int,1..2)).
 set_assign(nd,val(int,1)).
 

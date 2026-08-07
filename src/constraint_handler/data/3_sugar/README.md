@@ -6,11 +6,8 @@ _passed(defaultArgs,LBL,evaluate/2).
 _passed(defaultArgs,LBL,variable_declare/2).
 _passed(defaultArgs,LBL,variable_define/2).
 _passed(defaultArgs,LBL,variable_domain/2).
-_passed(defaultArgs,LBL,variable_declareOptional/1).
 _passed(defaultArgs,LBL,variable_default/3).
-_passed(defaultArgs,LBL,multimap_declare/1).
 _passed(defaultArgs,LBL,multimap_assign/3).
-_passed(defaultArgs,LBL,set_declare/1).
 _passed(defaultArgs,LBL,set_assign/2).
 _passed(defaultArgs,LBL,set_baseDomain/2).
 _passed(defaultArgs,LBL,optimize_precision/2).

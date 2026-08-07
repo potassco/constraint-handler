@@ -5,11 +5,11 @@ variable_define(with_zero,operation(set_make,(val(int,0),(val(int,0),(val(none,n
 variable_define(len_empty,operation(length,(variable(empty),()))).
 variable_define(len_with_zero,operation(length,(variable(with_zero),()))).
 
-set_declare(single_zero).
+variable_declare(single_zero,set).
 set_baseDomain(single_zero,val(int,0)).
 set_assign(single_zero,val(int,0)).
 
-set_declare(nondeterministic).
+variable_declare(nondeterministic,set).
 set_baseDomain(nondeterministic,val(int,0..1)).
 
 evaluate(length,(variable(single_zero),())).

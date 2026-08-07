@@ -9,7 +9,7 @@ variable_define(with_empty,operation(inter,(variable(a),(variable(empty),())))).
 variable_define(len_ab,operation(length,(variable(ab),()))).
 variable_define(len_with_empty,operation(length,(variable(with_empty),()))).
 
-set_declare(nd).
+variable_declare(nd,set).
 set_baseDomain(nd,val(int,2..4)).
 set_assign(nd,val(int,2)).
 variable_define(with_nd,operation(inter,(variable(a),(variable(nd),())))).

@@ -1,6 +1,6 @@
 % Simple nondeterministic declared set regression.
 
-set_declare(s).
+variable_declare(s,set).
 set_baseDomain(s,val(int,1..2)).
 set_assign(s,val(int,1)).
 

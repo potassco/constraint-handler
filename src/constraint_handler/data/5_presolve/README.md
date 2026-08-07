@@ -5,22 +5,21 @@ _passed(correction(REASON,add),LBL,DECL).
 _passed(correction(REASON,rem),LBL,DECL).
 _phase_active(solve).
 _variable(sugar,X).
-defaultEngine/1.
-requestEngine/2.
+engine_default/1.
+engine_request/2.
 
 ### Intermediate predicates
 
 _engine_supportOptimization/1.
 _label/1. _label/2.
-_main_defaultEngine/1.
-_main_defaultEngineProvided/0.
-_main_engine/1.
-_main_requestedEngine/1.
+_engine_default/1.
+_engine_defaultProvided/0.
+_engine/1. _engine/2.
+_engine_userRequest/1.
 _preference_expressionScore/2.
 _solve_conflictVariable/1.
 _solve_firstLabel/2.
 _variable_involve(presolve,LBL,X,DECL).
-engine/2.
 _passed(presolve,LBL,DECL).
 _passed(skip,DECL).
 _passed(solve,LBL,DECL).

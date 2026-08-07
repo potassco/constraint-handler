@@ -20,7 +20,7 @@ ensure(operation(eq,(variable(c),(val(bool,true),())))).
 variable_declare(s1,set).
 {set_assign(s1,val(int,1..2))}.
 
-set_declare(s2).
+variable_declare(s2,set).
 set_assign(s2,val(int,1)).
 {set_assign(s2,val(int,2))}.
 {set_assign(s2,variable(a))}.
