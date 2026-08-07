@@ -5,8 +5,8 @@ _passed(correction(REASON,add),LBL,DECL).
 _passed(correction(REASON,rem),LBL,DECL).
 _phase_active(solve).
 _variable(sugar,X).
-engine_defaultE/1.
-engine_requestE/2.
+engine_default/1.
+engine_request/2.
 
 ### Intermediate predicates
 

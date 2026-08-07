@@ -12,10 +12,10 @@ execution_run(c,c).
 
 variable_declare(x,x,fromFacts).
 variable_declare(y,y,fromFacts).
-variable_declareOptional(y).
+variable_domain(y,val(none,none)).
 variable_declare(execution_input(c,"x"),execution_input(c,"x"),fromFacts).
 variable_declare(execution_input(c,"y"),execution_input(c,"y"),fromFacts).
-variable_declareOptional(execution_input(c,"y")).
+variable_domain(execution_input(c,"y"),val(none,none)).
 
 variable_domain(x,val(int,0)).
 variable_domain(x,val(int,1)).

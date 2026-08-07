@@ -8,9 +8,7 @@ optimize_maximizeSum(operation(add,(operation(mult,(variable(opt),(val(int,6),()
 optimize_precision(val(int,1),1).
 
 variable_declare(opt,opt,fromFacts).
-variable_declareOptional(opt).
+variable_domain(opt,val(none,none)).
 variable_declare(present,present,boolDomain).
 variable_define(input,input,val(int,2)).
 variable_domain(opt,val(int,2)).
-
-#show value/2.

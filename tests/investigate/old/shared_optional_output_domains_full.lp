@@ -10,9 +10,9 @@ ensure(operation(eq,(variable(b),(operation(eq,(variable(a),(val(string,"l"),())
 ensure(operation(eq,(variable(c),(operation(eq,(variable(a),(val(string,"r"),()))),())))).
 
 variable_declare(d,fromFacts).
-variable_declareOptional(d).
+variable_domain(d,val(none,none)).
 variable_declare(e,fromFacts).
-variable_declareOptional(e).
+variable_domain(e,val(none,none)).
 variable_declare(f,fromFacts).
 
 ensure(operation(eq,(operation(hasValue,(variable(d),())),(variable(b),())))).
