@@ -1110,7 +1110,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         var_declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_declare)
         var_defines = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_define)
         var_domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_domain)
-        myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_declareOptional)
 
         from_facts_literals: dict[Symbol, int] = {}
         for (name, symbol_var, domain), _literal in var_declares.items():

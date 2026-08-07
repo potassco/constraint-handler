@@ -12,7 +12,7 @@ ensure(operation(set_isin,(val(int,1),(variable(s),())))).
 set_assign(s,val(int,(2;4))).
 
 
-set_declare(s2).
+variable_declare(s2,set).
 set_baseDomain(s2,val(int,1..3)).
 ensure(operation(set_isin,(val(int,1),(variable(s2),())))).
 set_assign(s2,val(int,(2;4))).

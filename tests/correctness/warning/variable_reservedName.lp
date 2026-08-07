@@ -12,8 +12,8 @@ execution_declare(itsbad,assign(a,val(int,2)),(x,(y,(z,()))),(a,())).
 variable_declare(execution_output(itsbad,x),boolDomain).
 variable_define(execution_output(itsbad,y),val(int,3)).
 variable_declare(d_z,execution_output(itsbad,z),boolDomain).
-set_declare(execution_output(itsbad,t)).
-multimap_declare(execution_output(itsbad,u)).
+variable_declare(execution_output(itsbad,t),set).
+variable_declare(execution_output(itsbad,u),multimap).
 variable_define(execution_output(itsbad,a),val(int,1)).
 variable_define(execution_output(itsbad,b),val(int,1)).
 

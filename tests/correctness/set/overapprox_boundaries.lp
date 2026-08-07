@@ -1,9 +1,9 @@
 % Regression: thresholded set overapproximations must stay within operation-specific candidate atoms.
 
-set_declare(left).
+variable_declare(left,set).
 set_baseDomain(left,val(int,1..8)).
 
-set_declare(right).
+variable_declare(right,set).
 set_baseDomain(right,val(int,5..12)).
 
 variable_define(union_lr,operation(union,(variable(left),(variable(right),())))).

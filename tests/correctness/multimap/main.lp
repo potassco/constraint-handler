@@ -58,7 +58,7 @@ multimap_assign(cities,val(string,"france"),val(string,"brest")).
 multimap_assign(cities,val(string,"usa"),val(string,"paris")).
 multimap_assign(cities,val(string,"belarus"),val(string,"brest")).
 
-multimap_declare(properDivisors).
+variable_declare(properDivisors,multimap).
 multimap_assign(properDivisors,val(int,4),operation(set_make,(val(int,1),(val(int,2), ())))).
 multimap_assign(properDivisors,val(int,5),variable(div5)).
 variable_define(div5,operation(set_make,(val(int,1),()))).
@@ -68,7 +68,7 @@ set_assign(div6,val(int,1)).
 set_assign(div6,val(int,2)).
 set_assign(div6,val(int,3)).
 multimap_assign(properDivisors,val(int,4),variable(div4)).
-set_declare(div4).
+variable_declare(div4,set).
 set_assign(div4,val(int,1)).
 set_assign(div4,val(int,2)).
 

@@ -1,4 +1,4 @@
-multimap_declare(my_multimap).
+variable_declare(my_multimap,multimap).
 multimap_assign(my_multimap, val(symbol,some_key),val(int,(1;2;3))).
 
 execution_declare(exec_internal, STMT, (), (internal_out,())) :-

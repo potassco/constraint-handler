@@ -19,12 +19,10 @@ _passed(sugar,LBL,variable_default(X,D,C)) :- _passed(defaultArgs,LBL,variable_d
 
 
 %%%%%% multimap atoms
-_passed(sugar,LBL,variable_declare(X,multimap)) :- _passed(defaultArgs,LBL,multimap_declare(X)).
 _passed(sugar,LBL,multimap_assign(X,EKEY,EVAL)) :- _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)).
 
 
 %%%%%% set atoms
-_passed(sugar,LBL,variable_declare(X,set)) :- _passed(defaultArgs,LBL,set_declare(X)).
 _passed(sugar,LBL,set_assign(X,E)) :- _passed(defaultArgs,LBL,set_assign(X,E)).
 _passed(sugar,LBL,set_baseDomain(X,E)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)).
 

@@ -7,7 +7,7 @@ variable_define(len_deterministic,operation(length,(variable(deterministic),()))
 
 evaluate(eq,(variable(deterministic),(operation(set_make,(val(none,none),(val(int,2),(val(int,1),())))),()))).
 
-set_declare(source).
+variable_declare(source,set).
 set_baseDomain(source,val(int,1..2)).
 set_assign(source,val(int,1)).
 variable_define(nondeterministic,operation(set_make,(operation(length,(variable(source),())),(val(int,9),())))).

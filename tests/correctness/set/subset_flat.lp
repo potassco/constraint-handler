@@ -9,7 +9,7 @@ evaluate(subset,(variable(b),(variable(a),()))).
 evaluate(subset,(variable(empty),(variable(a),()))).
 evaluate(subset,(variable(a),(variable(empty),()))).
 
-set_declare(nd).
+variable_declare(nd,set).
 set_baseDomain(nd,val(int,1..3)).
 set_assign(nd,val(int,(1;2))).
 

@@ -5,9 +5,7 @@ engine_request/2.
 engine_default/1.
 ensure/1. ensure/2.
 evaluate/2. evaluate/3.
-multimap_declare/1. multimap_declare/2.
 multimap_assign/3. multimap_assign/4.
-set_declare/1. set_declare/2.
 set_assign/2. set_assign/3.
 set_baseDomain/2. set_baseDomain/3.
 execution_declare/4. execution_declare/5.
