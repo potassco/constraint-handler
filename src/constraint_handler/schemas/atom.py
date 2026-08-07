@@ -36,12 +36,7 @@ class Variable_domain(NamedTuple):
     value: expression.Expr
 
 
-class Variable_declareOptional(NamedTuple):
-    label: expression.constant
-    name: expression.constant
-
-
-type VariableAtom = Variable_declare | Variable_define | Variable_domain | Variable_declareOptional
+type VariableAtom = Variable_declare | Variable_define | Variable_domain
 
 
 class Bool_evaluate(NamedTuple):
@@ -52,11 +47,6 @@ class Bool_evaluate(NamedTuple):
 class Bool_evaluated(NamedTuple):
     expr: expression.Expr
     value: expression.ReducedExpr
-
-
-class Set_declare(NamedTuple):
-    label: expression.constant
-    name: expression.constant
 
 
 class Set_assign(NamedTuple):
@@ -76,12 +66,7 @@ class Set_value(NamedTuple):
     elt: expression.ReducedExpr
 
 
-type SetAtom = Set_declare | Set_assign | Set_baseDomain
-
-
-class Multimap_declare(NamedTuple):
-    label: expression.constant
-    name: expression.constant
+type SetAtom = Set_assign | Set_baseDomain
 
 
 class Multimap_assign(NamedTuple):
@@ -97,7 +82,7 @@ class Multimap_value(NamedTuple):
     cst: expression.ReducedExpr
 
 
-type MultimapAtom = Multimap_declare | Multimap_assign
+type MultimapAtom = Multimap_assign
 
 
 class Execution_declare(NamedTuple):

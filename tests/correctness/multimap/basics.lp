@@ -34,7 +34,7 @@ variable_define(m1, operation(multimap_make,
                            ((val(string,"b"), val(int,2)),
                            ((val(string,"b"), val(int,3)),()))))).
 
-multimap_declare(m2).
+variable_declare(m2,multimap).
 multimap_assign(m2,val(string,"a"),val(int,4)).
 multimap_assign(m2,val(string,"b"),val(int,5)).
 multimap_assign(m2,val(string,"b"),val(int,6)).

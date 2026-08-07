@@ -1,6 +1,6 @@
 phase_request(type_check,true).
 
-set_declare(xset,xset).
+variable_declare(xset,xset,set).
 variable_define(execution_input(prg,"x"),variable(xset)).
 
 execution_declare(prg,statement_python("result = set(x) == set([])"),("x",()),("result",())).

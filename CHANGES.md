@@ -2,22 +2,25 @@
 
 ## Ongoing
 
+- - drop support for `set_declare(X)`, the replacement being
+    `variable_declare(X,set)`, same for multimap.
 - - drop support for `variable_declare(X,fromList(L))`, the replacement being
     `variable_domain(X,E)` for element of `L` `E`
 - - drop support for `variable_declareOptional(X)`, the replacement being
     `variable_domain(X,val(none,none))`
-- - rename defaultEngine to engine_default and requestEngine to engine_request
-- - update interface predicates warning_forbid/2 and warning_ignore/2 so that
-    the second argument refers to the warning being forbidden or ignored
+- - rename `defaultEngine` to `engine_default` and `requestEngine` to
+    `engine_request`
+- - update interface predicates `warning_forbid/2` and `warning_ignore/2` so
+    that the second argument refers to the warning being forbidden or ignored
 - - update the second argument of most warnings to be the label of a relevant
     declaration
-- - introduce `optimize_modelValue(LABEL,PRIORITY,VALUE)` as distinct from the
-    `optimize_value/3` used in computations.
-- - introduce basic support for defaults, using the
-    `variable_default(LABEL,X,DEFAULT_EXPR,COND)` declarations.
+- introduce `optimize_modelValue(LABEL,PRIORITY,VALUE)` as distinct from the
+  `optimize_value/3` used in computations.
+- introduce basic support for defaults, using the
+  `variable_default(LABEL,X,DEFAULT_EXPR,COND)` declarations.
 - - type equality and inequality between values of incompatible types to return
     `bool`
-- - introduce warning `correction/1`
+- introduce warning `correction/1`
 - - introduce corrections from the type_check phase
 - - implement rudimentary type inferrence support for `statement_python` and
     `pythonExtract/2`

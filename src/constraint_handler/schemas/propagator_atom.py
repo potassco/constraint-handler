@@ -15,7 +15,6 @@ Value = atom.Value
 
 BoolDomain = domain.BoolDomain
 FromFacts = domain.FromFacts
-FromList = domain.FromList
 
 
 class Propagator_variable_declare(atom.Variable_declare):
@@ -30,10 +29,6 @@ class Propagator_variable_domain(atom.Variable_domain):
     pass
 
 
-class Propagator_variable_declareOptional(atom.Variable_declareOptional):
-    pass
-
-
 class Propagator_ensure(atom.Ensure):
     pass
 
@@ -42,8 +37,9 @@ class Propagator_bool_evaluate(atom.Bool_evaluate):
     pass
 
 
-class Propagator_set_declare(atom.Set_declare):
-    pass
+class Propagator_set_declare(NamedTuple):
+    label: expression.constant
+    name: expression.constant
 
 
 class Propagator_set_assign(atom.Set_assign):
@@ -54,8 +50,9 @@ class Propagator_set_baseDomain(atom.Set_baseDomain):
     pass
 
 
-class Propagator_multimap_declare(atom.Multimap_declare):
-    pass
+class Propagator_multimap_declare(NamedTuple):
+    label: expression.constant
+    name: expression.constant
 
 
 class Propagator_multimap_assign(atom.Multimap_assign):

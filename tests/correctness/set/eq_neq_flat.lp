@@ -11,7 +11,7 @@ evaluate(neq,(variable(empty),(operation(set_make,()),()))).
 evaluate(eq,(variable(s1),(val(int,1),()))).
 evaluate(neq,(val(int,1),(variable(s1),()))).
 
-set_declare(nd).
+variable_declare(nd,set).
 set_baseDomain(nd,val(int,1..2)).
 set_assign(nd,val(int,1)).
 variable_define(fixed,operation(set_make,(val(int,1),()))).

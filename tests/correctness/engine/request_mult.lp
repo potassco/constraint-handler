@@ -9,7 +9,7 @@ engine_request(assign_as_s, ground).
 
 
 %%% (set,set) -> set
-set_declare(assign_sss_s1,sss_s1).
+variable_declare(assign_sss_s1,sss_s1,set).
 set_assign(assign_sss_s1,sss_s1,val(int,1)).
 set_assign(assign_sss_s1,sss_s1,val(int,2)).
 variable_declare(assign_sss_s2,sss_s2,set).

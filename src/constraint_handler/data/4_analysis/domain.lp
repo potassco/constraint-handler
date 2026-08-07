@@ -33,5 +33,5 @@ _expression_setDomain(EXPR,X,N+1,(V,L)) :- _expression_setDomain(EXPR,X,N,L), _e
 _expression_setDomain(EXPR,X,N+1,L) :- _expression_setDomain(EXPR,X,N,L), _expression_setExprIndex(EXPR,X,N,baseDomain,E).
 _expression_domain(EXPR,set(L)) :- _expression_setDomain(EXPR,X,N,L), _expression_setExprIndex(EXPR,X,N,baseDomain,#sup).
 
-%_expression_setdomain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,set_declare(LBL,X)), _passed(sugar,set_assign(LBL2,X,E)), _expression_domain2(E,V).
-%_expression_setdomain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,set_declare(LBL,X)), _passed(sugar,set_baseDomain(LBL2,X,E)), _expression_domain2(E,V).
+%_expression_setdomain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_declare(X,set)), _passed(sugar,set_assign(LBL2,X,E)), _expression_domain2(E,V).
+%_expression_setdomain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_declare(X,set)), _passed(sugar,set_baseDomain(LBL2,X,E)), _expression_domain2(E,V).

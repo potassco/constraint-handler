@@ -7,9 +7,7 @@ variable_declare/2. variable_declare/3.
 variable_define/2. variable_define/3.
 variable_domain/2. variable_domain/3.
 variable_default/2. variable_default/3. variable_default/4.
-multimap_declare/1. multimap_declare/2.
 multimap_assign/3. multimap_assign/4.
-set_declare/1. set_declare/2.
 set_assign/2. set_assign/3.
 set_baseDomain/2. set_baseDomain/3.
 execution_declare/4. execution_declare/5.
@@ -38,9 +36,7 @@ _passed(defaultArgs,LBL,variable_declare/2).
 _passed(defaultArgs,LBL,variable_define/2).
 _passed(defaultArgs,LBL,variable_default/3).
 _passed(defaultArgs,LBL,variable_domain/2).
-_passed(defaultArgs,LBL,multimap_declare/1).
 _passed(defaultArgs,LBL,multimap_assign/3).
-_passed(defaultArgs,LBL,set_declare/1).
 _passed(defaultArgs,LBL,set_assign/2).
 _passed(defaultArgs,LBL,set_baseDomain/2).
 _passed(defaultArgs,LBL,execution_declare/4).
