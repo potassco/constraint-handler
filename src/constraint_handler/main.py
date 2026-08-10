@@ -15,6 +15,7 @@ module_main = [
 
 m0_context = [
     "0_context/operator",
+    "0_context/phase",
     "0_context/python_externals",
     "0_context/types",
 ]
