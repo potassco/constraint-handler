@@ -21,6 +21,7 @@ from constraint_handler.PropagatorConstants import (
     OPTIMIZATION_HELPER_PROGRAM,
     OPTIMIZATION_STAGE_ATOM,
     OTHER_ENGINE_VAR_NAME,
+    PROPAGATOR_CHECK_MODE_ATOM,
     REASONING_MODE_PROGRAM,
     REASONING_STAGE_ATOM,
     EvaluationResult,
@@ -68,7 +69,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         python_model: Stores the python-level model for output.
     """
 
-    def __init__(self, check_only: bool = False):
+    def __init__(self):
         """
         Initialize the propagator.
 
@@ -89,7 +90,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.environment: myClorm.ImmutableList[expression.constant] = myClorm.ImmutableList()
 
-        self.check_only = check_only
+        self.check_only = False
 
         self.errors: propagator_warning_t = []
 
@@ -122,6 +123,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.forbidden_warnings: dict[warning.Kind, int] = {}
         self.ignored_warnings: dict[warning.Kind, tuple[int, bool]] = {}
+
+        self.watches: set[int] = set()
 
     def get_configuration(self, ctl: clingo.Control):
         """
@@ -188,9 +191,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.environment = {}
         self.errors.clear()
 
-        if self.check_only:
-            init.check_mode = clingo.PropagatorCheckMode.Total
-            self.propagate = lambda control, changes: None  # type: ignore[assignment]
+        init.check_mode = clingo.PropagatorCheckMode.Total
+
+        if PROPAGATOR_CHECK_MODE_ATOM in init.symbolic_atoms:
+            self.check_only = True
 
         self.get_solver_identifier(init)
 
@@ -216,6 +220,28 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # self.apply_preprocessing(valuations, init)
 
         self.evaluations.init(list(self.symbol2var.get_variables()))
+
+        self.add_watches_to_ctl(init)
+
+    def add_watch(self, lit: int) -> None:
+        """
+        Add a watch literal to the set of watched literals if check_only is disabled
+
+        Args:
+            lit: Literal to watch.
+        """
+        if not self.check_only:
+            self.watches.add(lit)
+
+    def add_watches_to_ctl(self, ctl: clingo.PropagateInit) -> None:
+        """
+        Register all watch literals
+
+        Args:
+            ctl: Clingo PropagateInit object.
+        """
+        for lit in self.watches:
+            ctl.add_watch(lit)
 
     def preprocess(self, cycles: int = -1) -> dict[Symbol, set[Any]]:
         """
@@ -513,7 +539,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.optimization_stage_lits[stage] = lit  # ty:ignore[invalid-assignment]
 
                 if stage == 2:
-                    ctl.add_watch(lit)
+                    self.add_watch(lit)
 
     def set_optimization_check_strength(self, strength: Literal["lt", "le"]) -> None:
         """
@@ -571,7 +597,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # backtracking due to nogoods in queue
             return
 
+        if self.check_only:
+            # Since there are no watches, undo is never called
+            # Hence, we undo stuff here
+            # This is probably severly inefficient as we re-evaluate everything every time
+            # maybe there is a way to do this more efficiently?
+            self.symbol2var.reset(0)
+            self.optimization_sum.reset(0)
+
         to_evaluate: dict[VariableType, set[int] | None] = {var: None for var in self.symbol2var.get_variables()}
+
         backtrack = self.evaluated_solver_assignment(control, to_evaluate)
 
         if backtrack:
@@ -1034,8 +1069,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     # TODO: make a difference for sets and multimaps,
                     # currently, Ref is only implemented for sets so we do nothing for multimaps here
                     self.symbol2var.add_variable(_name, SetVariable(OTHER_ENGINE_VAR_NAME, _name, _literal))
-                    ctl.add_watch(_literal)
-                    ctl.add_watch(-_literal)
+                    self.add_watch(_literal)
+                    self.add_watch(-_literal)
                     continue
                 # If the value references something else, or it is not a reference,
                 # we make a normal variable and add the value to it,
@@ -1046,8 +1081,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             variable.add_value(expr, _literal, _literal)
 
-            ctl.add_watch(_literal)
-            ctl.add_watch(-_literal)
+            self.add_watch(_literal)
+            self.add_watch(-_literal)
 
         for (name, val_set), _literal in set_value_atoms.items():
             if not isinstance(name, expression.Variable):
@@ -1069,8 +1104,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             expr: expression.Expr = val_set.expr if isinstance(val_set, internal.Ref) else val_set
 
             set_variable.add_value(expr, _literal)
-            ctl.add_watch(_literal)
-            ctl.add_watch(-_literal)
+            self.add_watch(_literal)
+            self.add_watch(-_literal)
 
         for (name, key, val), _literal in multimap_value_atoms.items():
             if name not in self.symbol2var:
@@ -1087,8 +1122,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             multimap_variable.add_value(key, val, _literal)
 
-            ctl.add_watch(_literal)
-            ctl.add_watch(-_literal)
+            self.add_watch(_literal)
+            self.add_watch(-_literal)
 
     def get_variable_interface(self, ctl: clingo.PropagateInit):
 
@@ -1121,8 +1156,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             variable: Variable = cast(Variable, self.symbol2var.get_variable(symbol_var, getattr(Variable, "__name__")))
 
-            ctl.add_watch(_literal)
-            ctl.add_watch(-_literal)
+            self.add_watch(_literal)
+            self.add_watch(-_literal)
 
             self.literal2var.setdefault(_literal, []).append(variable)
 
@@ -1147,8 +1182,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 Variable, self.symbol2var.get_variable(symbol_var, getattr(Variable, "__name__"))
             )
             define_variable.add_value(expr, _literal, _literal)
-            ctl.add_watch(_literal)
-            ctl.add_watch(-_literal)
+            self.add_watch(_literal)
+            self.add_watch(-_literal)
 
             self.literal2var.setdefault(_literal, []).append(define_variable)
             # here we dont add a nogood since its the same literal
@@ -1163,8 +1198,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # literal = ctl.add_literal(freeze=True)
             domain_literal = from_facts_literals[symbol_var]
             domain_variable.add_value(domain_expr, _literal, domain_literal)
-            ctl.add_watch(_literal)
-            ctl.add_watch(-_literal)
+            self.add_watch(_literal)
+            self.add_watch(-_literal)
 
             ctl.add_clause([-_literal, domain_literal])
             # literal defining the domain should also be included, not just the variable declaration literal!
@@ -1188,8 +1223,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         ensures = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_ensure)
         for (name, expr), literal in ensures.items():
             ensure_var: EnsureVariable = EnsureVariable(name, expr, literal)
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
+            self.add_watch(literal)
+            self.add_watch(-literal)
             self.literal2var.setdefault(literal, []).append(ensure_var)
             # Var name is given here so it works well with the rest of the system
             # It should do nothing and also should never appear in any assignments!!
@@ -1241,15 +1276,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             for (bexpr, value), b_literal in bool_evaluated_atoms.items():
                 if bexpr == expr:
                     b_vals[value] = b_literal
-                    ctl.add_watch(b_literal)
-                    ctl.add_watch(-b_literal)
+                    self.add_watch(b_literal)
+                    self.add_watch(-b_literal)
 
             bool_var = BoolEvaluateVariable(
                 label, expr, literal, b_vals[true_val], b_vals[false_val], b_vals[expression.Bad.bad]
             )
 
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
+            self.add_watch(literal)
+            self.add_watch(-literal)
             self.literal2var.setdefault(literal, []).append(bool_var)
             # Var name is given here so it works well with the rest of the system
             # It should do nothing and also should never appear in any assignments!!
@@ -1298,8 +1333,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.symbol2var.add_variable(symbol_var, variable)
             self.literal2var.setdefault(literal, []).append(variable)
 
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
+            self.add_watch(literal)
+            self.add_watch(-literal)
 
         assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_assign)
         for (name, symbol_var, expr), literal in assigns.items():
@@ -1312,8 +1347,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             setvar.add_value(expr, literal)
             self.literal2var.setdefault(literal, []).append(setvar)
 
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
+            self.add_watch(literal)
+            self.add_watch(-literal)
 
         domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_baseDomain)
         for (name, symbol_var, domain_expr), _literal in domains.items():
@@ -1326,8 +1361,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             setvar.add_value(domain_expr, _literal)
             self.literal2var.setdefault(_literal, []).append(setvar)
 
-            ctl.add_watch(_literal)
-            ctl.add_watch(-_literal)
+            self.add_watch(_literal)
+            self.add_watch(-_literal)
 
     def get_multimap_declarations(self, ctl: clingo.PropagateInit):
         """
@@ -1344,8 +1379,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.symbol2var.add_variable(symbol_var, variable)
             self.literal2var.setdefault(literal, []).append(variable)
 
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
+            self.add_watch(literal)
+            self.add_watch(-literal)
 
         assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_multimap_assign)
         for (name, symbol_var, key_expr, expr), literal in assigns.items():
@@ -1358,8 +1393,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             dictvar.add_value(key_expr, expr, literal)
             self.literal2var.setdefault(literal, []).append(dictvar)
 
-            ctl.add_watch(literal)
-            ctl.add_watch(-literal)
+            self.add_watch(literal)
+            self.add_watch(-literal)
 
     def get_forbidden_warnings(self, ctl: clingo.PropagateInit) -> None:
         """
