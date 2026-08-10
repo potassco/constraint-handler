@@ -11,7 +11,7 @@ from clintest.outcome import Outcome
 from clintest.quantifier import All, Any, Exact, Finished, First, Last, Quantifier
 
 import constraint_handler
-from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM
+from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM, PROPAGATOR_CHECK_MODE_STR
 
 
 def atoms_from_file(file_name):
@@ -168,7 +168,7 @@ class Solver(clintest.solver.Solver):
 
         constraint_handler.add_to_control(ctl)
         if self.__propagator_check_only:
-            ctl.add("base", [], "propagator_check_only.")
+            ctl.add("base", [], PROPAGATOR_CHECK_MODE_STR + ".")
         ctl.add(self.__program)
 
         for file_name in self.__files:

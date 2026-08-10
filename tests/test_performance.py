@@ -7,6 +7,7 @@ import clingo
 import pytest
 
 import constraint_handler
+from src.constraint_handler.PropagatorConstants import PROPAGATOR_CHECK_MODE_STR
 
 ctrl_options = ["1000", "--heuristic=Domain"]
 Engine = Literal["compile", "ground", "propagator"]
@@ -45,7 +46,7 @@ def run_benchmark_program(benchmark_case: PerformanceBenchmark) -> None:
     constraint_handler.add_to_control(ctl)
     ctl.add(f"defaultEngine({benchmark_case.engine}).")
     if benchmark_case.engine == "propagator" and benchmark_case.check_mode:
-        ctl.add("propagator_check_only.")
+        ctl.add(PROPAGATOR_CHECK_MODE_STR + ".")
     ctl.load(os.fspath(benchmark_case.program_path))
     ctl.ground()
     ctl.solve()

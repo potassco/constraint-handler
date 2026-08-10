@@ -1,7 +1,7 @@
 import enum
 from typing import Any, Literal
 
-from clingo import Symbol
+from clingo import Function, Symbol
 
 from constraint_handler.schemas.warning import Warning
 
@@ -12,6 +12,9 @@ DEFAULT_DECISION_LEVEL: Literal[-1] = -1
 ENSURE_VAR_NAME: Literal["__ensure__"] = "__ensure__"
 
 OTHER_ENGINE_VAR_NAME: Literal["__other_engine_var__"] = "__other_engine_var__"
+
+PROPAGATOR_CHECK_MODE_STR: Literal["__propagator_check_only__"] = "__propagator_check_only__"
+PROPAGATOR_CHECK_MODE_ATOM: Symbol = Function(PROPAGATOR_CHECK_MODE_STR, [], True)
 
 
 # enum for value_not_set, assignment_is_false, and value_is_none

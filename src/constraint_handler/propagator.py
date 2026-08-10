@@ -21,6 +21,7 @@ from constraint_handler.PropagatorConstants import (
     OPTIMIZATION_HELPER_PROGRAM,
     OPTIMIZATION_STAGE_ATOM,
     OTHER_ENGINE_VAR_NAME,
+    PROPAGATOR_CHECK_MODE_ATOM,
     REASONING_MODE_PROGRAM,
     REASONING_STAGE_ATOM,
     EvaluationResult,
@@ -192,9 +193,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         init.check_mode = clingo.PropagatorCheckMode.Total
 
-        check_only_atom = clingo.Function("propagator_check_only", [])
-
-        if check_only_atom in init.symbolic_atoms:
+        if PROPAGATOR_CHECK_MODE_ATOM in init.symbolic_atoms:
             print("check_only mode enabled, propagator will not propagate, only check")
             self.check_only = True
 
