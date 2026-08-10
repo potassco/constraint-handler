@@ -71,7 +71,7 @@
 
 <set-operator> ::=
 ~\alt <eq-operator> | `union' | `inter' | `diff' | `subset' | `set_make'
-\alt `set_isin' | `set_notin' | `length' | `set_fold'
+\alt `set_isin' | `set_notin' | `cardinality' | `set_fold'
 
 <string-operator> ::= <eq-operator> | `concat' | `length'
 
@@ -109,26 +109,21 @@
 \subsection{Building facts and declarations}
 
 \begin{grammar}
-<domain> ::= `definition' | `boolDomain' | `fromFacts' | `fromList' `(' <expression-list> `)' | `set' | `multimap'
+<domain> ::= `definition' | `boolDomain' | `fromFacts' | `set' | `multimap'
 
 <variable-atom> ::=
 ~\alt `variable_declare' `(' <term> `,' <domain> `)'
 \alt `variable_declare' `(' <term> `,' <term> `,' <domain> `)'
-\alt `variable_declareOptional' `(' <term> `)'
 \alt `variable_define' `(' <term> `,' <expression> `)'
 \alt `variable_define' `(' <term> `,' <term> `,' <expression> `)'
 \alt `variable_domain' `(' <term> `,' <expression> `)'
 
 <multimap-atom> ::=
-~\alt `multimap_declare' `(' <term> `)'
-\alt `multimap_declare' `(' <term> `,' <term> `)'
-\alt `multimap_assign' `(' <term> `,' <expression> `,' <expression> `)'
+~\alt `multimap_assign' `(' <term> `,' <expression> `,' <expression> `)'
 \alt `multimap_assign' `(' <term> `,' <term> `,' <expression> `,' <expression> `)'
 
 <set-atom> ::=
-~\alt `set_declare' `(' <term> `)'
-\alt `set_declare' `(' <term> `,' <term> `)'
-\alt `set_assign' `(' <term> `,' <expression> `)'
+~\alt `set_assign' `(' <term> `,' <expression> `)'
 \alt `set_assign' `(' <term> `,' <term> `,' <expression> `)'
 \alt `set_baseDomain' `(' <term> `,' <expression> `)'
 \alt `set_baseDomain' `(' <term> `,' <term> `,' <expression> `)'

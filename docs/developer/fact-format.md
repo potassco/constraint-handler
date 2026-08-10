@@ -70,7 +70,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <set-operator> ::=
     | <eq-operator> | "union" | "inter" | "diff" | "subset" | "set_make"
-    | "set_isin" | "set_notin" | "length" | "set_fold"
+    | "set_isin" | "set_notin" | "cardinality" | "set_fold"
 
 <string-operator> ::= <eq-operator> | "concat" | "length"
 
@@ -105,25 +105,20 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 ## Building Facts and Declarations
 ```ebnf
-<domain> ::= "definition" | "boolDomain" | "fromFacts" | "fromList" "(" <expression-list> ")" | "set" | "multimap"
+<domain> ::= "definition" | "boolDomain" | "fromFacts" | "set" | "multimap"
 
 <variable-atom> ::=
     | "variable_declare" "(" <term> "," <domain> ")"
     | "variable_declare" "(" <term> "," <term> "," <domain> ")"
-    | "variable_declareOptional" "(" <term> ")"
     | "variable_define" "(" <term> "," <expression> ")"
     | "variable_define" "(" <term> "," <term> "," <expression> ")"
     | "variable_domain" "(" <term> "," <expression> ")"
 
 <multimap-atom> ::=
-    | "multimap_declare" "(" <term> ")"
-    | "multimap_declare" "(" <term> "," <term> ")"
     | "multimap_assign" "(" <term> "," <expression> "," <expression> ")"
     | "multimap_assign" "(" <term> "," <term> "," <expression> "," <expression> ")"
 
 <set-atom> ::=
-    | "set_declare" "(" <term> ")"
-    | "set_declare" "(" <term> "," <term> ")"
     | "set_assign" "(" <term> "," <expression> ")"
     | "set_assign" "(" <term> "," <term> "," <expression> ")"
     | "set_baseDomain" "(" <term> "," <expression> ")"
