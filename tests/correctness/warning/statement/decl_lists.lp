@@ -1,3 +1,5 @@
+phase_request(statement_wellformedCheck,true).
+
 execution_declare(malformed_decl_inputs_not_list,
 	noop,
 	bad_inputs,

@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - allow control over statement wellformedness checks with
+    `phase_request(statement_wellformedCheck,BOOL)`
 - - drop support for `set_declare(X)`, the replacement being
     `variable_declare(X,set)`, same for multimap.
 - - drop support for `variable_declare(X,fromList(L))`, the replacement being
