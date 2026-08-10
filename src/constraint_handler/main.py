@@ -134,9 +134,7 @@ modules = (
 python_enabled = False
 
 
-def add_to_control(
-    ctrl: clingo.Control, propagator_check_only: bool = False, environment=None, _environment_ids=dict()
-):
+def add_to_control(ctrl: clingo.Control, environment=None, _environment_ids=dict()):
     """Adds encoding logic to the provided Control instance. The environment argumennt specifies the locals used in the python statements and expressions."""
     global python_enabled
     if not python_enabled:
@@ -160,11 +158,11 @@ def add_to_control(
             evaluator._solver_environment[idx] = environment
             _environment_ids[eid] = idx
         ctrl.add(f"main_solverIdentifier({idx}).")
-    setup_propagator(ctrl, propagator_check_only)
+    setup_propagator(ctrl)
 
 
-def setup_propagator(ctrl: clingo.Control, check_only: bool = False):
-    prop = propagator.ConstraintHandlerPropagator(check_only)
+def setup_propagator(ctrl: clingo.Control):
+    prop = propagator.ConstraintHandlerPropagator()
     post_prop = post_processor.OptimizePostProcessingPropagator()
 
     ctrl.register_propagator(prop)
