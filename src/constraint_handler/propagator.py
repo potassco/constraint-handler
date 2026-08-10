@@ -194,7 +194,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         init.check_mode = clingo.PropagatorCheckMode.Total
 
         if PROPAGATOR_CHECK_MODE_ATOM in init.symbolic_atoms:
-            print("check_only mode enabled, propagator will not propagate, only check")
             self.check_only = True
 
         self.get_solver_identifier(init)
