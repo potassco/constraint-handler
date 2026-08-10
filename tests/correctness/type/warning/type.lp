@@ -22,4 +22,4 @@ variable_define(def3,e3,operation(ite,(variable(unk),(variable(s),(variable(y),(
 type_query(operation(ite,(variable(i),(variable(i),(variable(i),()))))).
 type_query(operation(ite,(variable(b),(variable(i),(variable(i),()))))).
 
-evaluate(eq,(val(bool,true),(val(float,float(14)),()))).
+evaluate(eq,(val(bool,true),(val(float,float("14.0")),()))).

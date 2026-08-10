@@ -19,14 +19,18 @@ _warning(statement(syntaxError),LBL,STMT) :- _statement_query(PRG,SCOPE,STMT), n
 %%% TODO: use a python check so that it takes place before SSA without reordering the phases
 
 
+%%%%%% statement atoms
+_warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _phase_active(wf_check), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)),
+    #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS).
+%%% TODO add bad for all exec outs
 
 
 
 
 
 _execution_declare(LBL,PRG,STMT,INS,OUTS) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)).
-_execution_input_var(PRG,X) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(INS).
-_execution_outputVar(PRG,X,execution_output(PRG,X)) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(OUTS).
+_execution_inputVar(LBL,PRG,X,execution_input(PRG,X)) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(INS).
+_execution_outputVar(LBL,PRG,X,execution_output(PRG,X)) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(OUTS).
 
 
 
@@ -172,14 +176,14 @@ _execution_ou_proj(PRG,X) :- _statement_latest((PRG,()),X,EX).
 
 _execution_isRunning(PRG) :- _execution_declare(LBL1,PRG,STMT,INS,OUTS), _passed(defaultArgs,LBL,execution_run(PRG)).
 
-_statement_introduce(LBL,EX,V) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
-_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_ou_proj(PRG,X).
-_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_isRunning(PRG).
+_statement_introduce(LBL,EX,V) :- _execution_outputVar(LBL,PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
+_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(LBL,PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_ou_proj(PRG,X).
+_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(LBL,PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_isRunning(PRG).
 
 _passed(ssa,LBL,variable_define(X,E)) :- _statement_introduce(LBL,X,E).
 _passed(ssa,LBL,variable_declare(X,definition)) :- _statement_introduce(LBL,X,E).
 _passed(ssa,LBL,ensure(E)) :- _statement_ensure(LBL,E).
-_variable(ssa,execution_input(PRG,X)) :- _execution_input_var(PRG,X).
+_variable(ssa,EX) :- _execution_inputVar(LBL,PRG,X,EX).
 
 %%%%%%%%%%%%%%%%% sequence helpers
 _length(defaultArgs,operation(O,ARGS),N) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), N=@pythonListLength(ARGS).

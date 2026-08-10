@@ -11,7 +11,3 @@ _passed(correction(undeclared,add),LBL,variable_declare(X,D)) :- _variable_decla
 
 _warning(variable(undeclared),(),X) :- _variable(sugar,X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).
 _passed(correction(undeclared,add),_internal,(variable_declare(X,definition);variable_define(X,bad))) :- _variable(sugar,X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).
-
-%%%%%% interface variables
-_passed(sugar,LBL,variable_interface(X)) :- _variable_declareRequired(LBL,X,D), not _variable_declared(X,D), not _variable_internal(X).
-_passed(sugar,_internal,variable_interface(X)) :- _variable(sugar,X), not _variable_internal(X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).

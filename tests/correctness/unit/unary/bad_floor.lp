@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 
 evaluate(floor,(val(int,2),())).
 evaluate(floor,(val(none,none),())).

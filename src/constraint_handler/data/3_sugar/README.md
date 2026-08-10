@@ -28,6 +28,7 @@ _variable_execution_outputVar/1.
 _passed(sugar,LBL,bool_evaluate/1).
 _passed(sugar,LBL,ensure/1).
 _passed(sugar,LBL,evaluate/2).
+_passed(sugar,LBL,share_value(E)).
 _passed(sugar,LBL,variable_declare/2).
 _passed(sugar,LBL,variable_define/2).
 _passed(sugar,LBL,variable_default/3).
@@ -40,8 +41,5 @@ _passed(sugar,LBL,optimize_component/5).
 _passed(sugar,LBL,preference_holds/2).
 _passed(sugar,LBL,warning_forbid/2).
 _passed(sugar,LBL,warning_ignore/2).
-_passed(internal_declaration,LBL,variable_declare/2).
-_passed(internal_declaration,LBL,variable_define/2).
-_passed(internal_declaration,LBL,ensure/1).
+_passed(internal_declaration,LBL,DECL).
 _variable(sugar,VAR).
-_variable_internal/1.

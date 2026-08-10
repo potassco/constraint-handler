@@ -8,7 +8,8 @@ _shared_value(E,V)    :- _passed((compile;compile2;ground),LBL,share_value(E)), 
 
 :- _passed((compile;compile2;ground),LBL,ensure(E)), not _shared_value(E,val(bool,true)), not _shared_value(E,bad).
 
-value(X,bad) :- _expression(compile,variable(X)), not _se_value(variable(X),_).
+_se_value1(variable(X)) :- _se_value(variable(X),V), _passed(compile,LBL,variable_interface(X)).
+value(X,bad) :- _expression(compile,variable(X)), not _se_value1(variable(X)).
 evaluated(OP,ARGS,bad) :- _passed(compile,LBL,evaluate(OP,ARGS)), not _se_value(operation(OP,ARGS),_).
 
 type_variableD(X,T) :- _se_value(variable(X),val(T,V)), _passed(solve,LBL,variable_interface(X)).

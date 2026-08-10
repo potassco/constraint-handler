@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(abs,(val(int,-3),())).
 evaluate(abs,(val(int,2),())).
 evaluate(abs,(val(none,none),())).

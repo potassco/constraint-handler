@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 
 evaluate(float_div,(val(int,4),(val(int,2),()))).
 evaluate(float_div,(val(int,4),(val(none,none),()))).

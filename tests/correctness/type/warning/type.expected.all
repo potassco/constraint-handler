@@ -11,7 +11,6 @@ warning(type(inconsistent),(),operation(ite,(variable(x),(variable(i),(variable(
 warning(type(inconsistent),_label_anonymous,variable(e1))
 type_variable(e2,int)
 type_variable(e2,string)
-warning(type(inconsistent),(),variable(unk))
 warning(type(inconsistent),(),operation(ite,(variable(i),(variable(i),(variable(i),())))))
 warning(type(inconsistent),def3,variable(e3))
-type_expression(operation(eq,(val(bool,true),(val(float,float(14)),()))),bool)
+type_expression(operation(eq,(val(bool,true),(val(float,float("14.0")),()))),bool)

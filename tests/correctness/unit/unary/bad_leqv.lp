@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 
 evaluate(leqv,(val(bool,true),())).
 evaluate(leqv,(val(none,none),())).

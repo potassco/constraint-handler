@@ -4,7 +4,6 @@ _passed(defaultArgs,LBL,DECL).
 _passed(sugar,LBL,DECL).
 _expression(sugar,EXPR).
 _variable(sugar,VAR).
-_statement_wellformed/1.
 _variable_internal(X).
 _variable_involve(defaultArgs,LBL,X,DECL).
 _variable_involve(sugar,LBL,X,DECL).

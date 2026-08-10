@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 
 evaluate(neq,(val(int,1),(val(int,1),()))).
 evaluate(neq,(val(int,1),(val(int,2),()))).

@@ -4,6 +4,7 @@ _phase_active(type_check).
 _passed(sugar,LBL,variable_declare/2).
 _passed(sugar,LBL,variable_define/2).
 _passed(sugar,LBL,variable_domain/2).
+_passed(sugar,LBL,variable_interface(X)).
 _expression(sugar,EXPR).
 _expression_operationIndex(sugar,EXPR,IDX,ARG).
 _expression_operationLength(sugar,EXPR,N).
@@ -15,8 +16,6 @@ _parameter_value/2.
 _type/1.
 _variable(sugar,X).
 _variable_declared/2.
-_variable_involve(sugar,LBL,X,DECL).
-_variable_internal(X).
 operator_declare/3.
 operator_declare_variadic/4.
 type_query/1.

@@ -26,8 +26,3 @@ _warning(expression(syntaxError),(),EXPR) :- _phase_active(wf_check), _expressio
 _correction_expression(wf_check,EXPR,bad) :- _phase_active(wf_check), _expression(sugar,LBL,DECL,EXPR), not _expression_wellformed(EXPR).
 
 _correction_number(wf_check,N,0) :- _phase_active(wf_check), _number(sugar,N), #false: (number,_,_,_)=@pythonReify(N).
-
-%%%%%% statement atoms
-_warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _phase_active(wf_check), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)),
-    #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS).
-%%% TODO add bad for all exec outs

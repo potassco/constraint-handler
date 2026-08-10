@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 
 evaluate(wnot,(val(bool,false),())).
 evaluate(wnot,(val(bool,true),())).

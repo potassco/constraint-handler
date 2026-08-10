@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(max,(val(int,2),(val(int,3),()))).
 evaluate(max,(val(int,3),(val(int,2),()))).
 evaluate(max,(val(int,2),(val(none,none),()))).

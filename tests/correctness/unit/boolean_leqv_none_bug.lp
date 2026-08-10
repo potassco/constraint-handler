@@ -1,5 +1,5 @@
 % compile2 currently goes UNSAT for leqv with none-valued operands.
-
+phase_request(constantFolding,false).
 
 variable_declare(x,fromFacts).
 variable_domain(x,val(bool,true)).

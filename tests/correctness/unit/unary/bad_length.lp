@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 
 evaluate(length,(val(string,"ab"),())).
 evaluate(length,(val(none,none),())).

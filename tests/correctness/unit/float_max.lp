@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(max,(val(float,float("1.5")),(val(int,2),()))).
 evaluate(max,(val(float,float("1.5")),(val(none,none),()))).
 evaluate(max,(val(float,float("1.5")),(bad,()))).
