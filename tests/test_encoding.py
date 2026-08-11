@@ -55,6 +55,7 @@ core_tests = [
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
     "core/unprojected_optional_equality",
+    "core/set_to_variable",
 ]
 
 datatype_tests = [
