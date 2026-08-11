@@ -49,5 +49,3 @@ _computedIdx(E,val(int,V2)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)),
 _computedIdx(E,val(int,V1)) :- _computeIdx(E,max), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
 _computedIdx(E,val(int,V2)) :- _computeIdx(E,min), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 > V2.
 _computedIdx(E,val(int,V1)) :- _computeIdx(E,min), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)), V1 <= V2.
-
-_expression_pythonEval(E,operation(float_div,(val(int,V1),(val(int,V2),())))) :- _computeIdx(E,float_div), _computeIdx(E,0,val(int,V1)), _computeIdx(E,1,val(int,V2)).
