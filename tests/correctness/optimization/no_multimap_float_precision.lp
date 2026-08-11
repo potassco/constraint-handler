@@ -1,9 +1,9 @@
 capacity(6).
-item(a,4,float("5")).
+item(a,4,float("5.0")).
 item(b,3,float("3.12")).
 item(c,3,float("3.11")).
 item(d,3,float("3.1")).
-item(e,3,float("3")).
+item(e,3,float("3.0")).
 
 optimize_precision(val(int,10)).
 

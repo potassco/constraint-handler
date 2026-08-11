@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(eq,(val(float,float("2.5")),(val(float,float("2.5")),()))).
 evaluate(eq,(val(int,2),(val(float,float("2.0")),()))).
 evaluate(eq,(val(none,none),(val(none,none),()))).

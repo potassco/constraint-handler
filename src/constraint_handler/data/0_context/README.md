@@ -1,6 +1,6 @@
 ### Input predicates
 
-None.
+phase_request/2.
 
 ### Intermediate predicates
 

@@ -1,3 +1,5 @@
+phase_request(statement_wellformedCheck,true).
+
 execution_declare(control_lists_ok,
 	noop,
 	(inp,()),

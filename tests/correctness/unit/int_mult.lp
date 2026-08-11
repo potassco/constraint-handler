@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(mult,(val(int,-3),(val(int,2),(val(bool,true),())))).
 evaluate(mult,(val(int,2),(val(bool,false),()))).
 evaluate(mult,(val(int,0),(bad,()))).

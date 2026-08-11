@@ -15,6 +15,7 @@ module_main = [
 
 m0_context = [
     "0_context/operator",
+    "0_context/phase",
     "0_context/python_externals",
     "0_context/types",
 ]
@@ -25,6 +26,7 @@ m1_default_arguments = [
 
 m2_single_static_assignment = [
     "2_single_static_assignment/statement",
+    "2_single_static_assignment/statement_wellformedCheck",
 ]
 
 m3_sugar = [
@@ -117,6 +119,7 @@ m7_output = [
 
 t_modules = {
     "expression": ("PHASE", ["sugar", "type_check", "compile", "compile2"]),
+    "expression_sequence": ("PHASE", ["defaultArgs", "sugar", "type_check", "compile", "compile2"]),
     "correction": ("PHASE", ["constantFolding", "float_normalize", "safe", "type_check", "wf_check"]),
 }
 modules = (

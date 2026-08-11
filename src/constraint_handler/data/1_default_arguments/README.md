@@ -4,13 +4,10 @@ bool_evaluate/1. bool_evaluate/2.
 ensure/1. ensure/2.
 evaluate/2. evaluate/3.
 variable_declare/2. variable_declare/3.
-variable_declareOptional/1. variable_declareOptional/2.
 variable_define/2. variable_define/3.
 variable_domain/2. variable_domain/3.
 variable_default/2. variable_default/3. variable_default/4.
-multimap_declare/1. multimap_declare/2.
 multimap_assign/3. multimap_assign/4.
-set_declare/1. set_declare/2.
 set_assign/2. set_assign/3.
 set_baseDomain/2. set_baseDomain/3.
 execution_declare/4. execution_declare/5.
@@ -36,13 +33,10 @@ _passed(defaultArgs,LBL,bool_evaluate/1).
 _passed(defaultArgs,LBL,ensure/1).
 _passed(defaultArgs,LBL,evaluate/2).
 _passed(defaultArgs,LBL,variable_declare/2).
-_passed(defaultArgs,LBL,variable_declareOptional/1).
 _passed(defaultArgs,LBL,variable_define/2).
 _passed(defaultArgs,LBL,variable_default/3).
 _passed(defaultArgs,LBL,variable_domain/2).
-_passed(defaultArgs,LBL,multimap_declare/1).
 _passed(defaultArgs,LBL,multimap_assign/3).
-_passed(defaultArgs,LBL,set_declare/1).
 _passed(defaultArgs,LBL,set_assign/2).
 _passed(defaultArgs,LBL,set_baseDomain/2).
 _passed(defaultArgs,LBL,execution_declare/4).

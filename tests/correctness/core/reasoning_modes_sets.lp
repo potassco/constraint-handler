@@ -1,4 +1,4 @@
-set_declare(s).
+variable_declare(s,set).
 set_baseDomain(s,s,val(int,(1..4))).
 
 ensure(operation(set_isin,(val(int,1),(variable(s),())))).

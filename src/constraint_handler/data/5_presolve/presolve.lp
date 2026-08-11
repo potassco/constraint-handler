@@ -15,10 +15,8 @@ _solve_conflictVariable(X) :- _variable(sugar,X),
   1 < #count { LBL0,DECL : _passed(presolve,LBL0,DECL),
                DECL=(variable_define(X,E);variable_declare(X,(fromFacts;set;multimap))) }.
 
-_passed(solve,LBL,DECL) :- _passed(presolve,LBL,DECL), #false : _variable_involve(presolve,LBL,X,DECL), _solve_conflictVariable(X).
+_passed(solve,LBL,DECL) :- _phase_active(solve), _passed(presolve,LBL,DECL), #false : _variable_involve(presolve,LBL,X,DECL), _solve_conflictVariable(X).
 
 _solve_firstLabel(X,LBL) :-_solve_conflictVariable(X), _variable_involve(presolve,LBL,X,DECL), 0 = #count { LBL2 : _variable_involve(presolve,LBL2,X,DECL2), LBL2 < LBL }.
-_passed(solve,LBL,variable_declare(X,definition)) :- _solve_firstLabel(X,LBL).
-_passed(solve,LBL,variable_define(X,bad)) :- _solve_firstLabel(X,LBL).
-
-%:- _passed(solve,L1,variable_define(X,E1)), _passed(solve,L2,variable_define(X,E2)), (L1,E1)!=(L2,E2).
+_passed(solve,LBL,variable_declare(X,definition)) :- _phase_active(solve), _solve_firstLabel(X,LBL).
+_passed(solve,LBL,variable_define(X,bad)) :- _phase_active(solve), _solve_firstLabel(X,LBL).

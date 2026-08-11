@@ -1,4 +1,5 @@
 % Make sure a set can be assigned directly to a new variable.
-set_declare(x).
+variable_declare(x,set).
 set_assign(x,val(string,"a")).
-variable_define(y, variable(x)).
+variable_declare(y,definition).
+variable_define(y,variable(x)).

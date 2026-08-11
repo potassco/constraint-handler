@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 
 evaluate(lxor,(val(bool,true),())).
 evaluate(lxor,(val(none,none),())).

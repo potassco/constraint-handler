@@ -3,7 +3,6 @@
 
 %%% 3 equivalent ways to assign x/y to z and reject models where z is <= 1.5
 
-_label(myprog(1..3)).
 %%% version 1
 %%% using fact format
 execution_declare(myprog(1),seq2(assign("z",operation(float_div,(variable("x"),(variable("y"),())))),assert(operation(lt,(val(float,float("1.5")),(variable("z"),()))))),("x",("y",())),("z",())) :- active_version(1).

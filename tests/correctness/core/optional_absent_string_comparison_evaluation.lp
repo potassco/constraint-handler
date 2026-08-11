@@ -5,5 +5,5 @@ evaluate(eq,(variable(prop),(val(string,"compact"),()))).
 evaluate(neq,(variable(prop),(val(string,"compact"),()))).
 
 variable_declare(prop,prop,fromFacts).
-variable_declareOptional(prop).
+variable_domain(prop,val(none,none)).
 variable_domain(prop,val(string,"wrapped")).

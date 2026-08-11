@@ -9,15 +9,20 @@ _correction_numberOutput(PHASE,E,E) :- _phase_active(PHASE), _number(sugar,E), n
 _correction_numberOutput(PHASE,E,N) :- _phase_active(PHASE), _correction_number(PHASE,E,N).
 
 %%%%%%%%%%%%%%%%% corrections
+_correction_proposed(PHASE,LBL,share_value(E),share_value(NE)) :-
+  _passed(sugar,LBL,share_value(E)),
+  _correction_expressionOutput(PHASE,E,NE).
 _correction_proposed(PHASE,LBL,bool_evaluate(E),bool_evaluate(NE)) :-
   _passed(sugar,LBL,bool_evaluate(E)),
   _correction_expressionOutput(PHASE,E,NE).
 _correction_proposed(PHASE,LBL,ensure(E),ensure(NE)) :-
   _passed(sugar,LBL,ensure(E)),
   _correction_expressionOutput(PHASE,E,NE).
-_correction_proposed(PHASE,LBL,evaluate(OP,ARGS),evaluate(NOP,NARGS)) :-
-  _passed(sugar,LBL,evaluate(OP,ARGS)),
-  _correction_expressionOutput(PHASE,operation(OP,ARGS),operation(NOP,NARGS)). % TODO: do better
+%_correction_proposed(PHASE,LBL,evaluate(OP,ARGS),evaluate(NOP,NARGS)) :-
+%  _passed(sugar,LBL,evaluate(OP,ARGS)),
+%  _correction_expressionOutput(PHASE,operation(OP,ARGS),operation(NOP,NARGS)). % TODO: do better
+_correction_proposed(PHASE,LBL,evaluate(OP,ARGS),evaluate(OP,ARGS)) :-
+  _passed(sugar,LBL,evaluate(OP,ARGS)). % TODO: do better
 _correction_proposed(PHASE,LBL,variable_define(X,E),variable_define(X,NE)) :-
   _passed(sugar,LBL,variable_define(X,E)),
   _correction_expressionOutput(PHASE,E,NE).

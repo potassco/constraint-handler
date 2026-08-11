@@ -6,11 +6,10 @@ _main_solverIdentifiers/1.
 
 ### Intermediate predicates
 
-_execution_declare/5.
-_execution_input_var/2.
+_execution_inputVar/4.
 _execution_isRunning/1.
 _execution_ou_proj/2.
-_execution_outputVar/3.
+_execution_outputVar/4.
 _statement_query/3.
 _statement_querySSA/4.
 _statement_changed/2.
@@ -27,21 +26,23 @@ _statement_pythonInputMap/2.
 _statement_pythonInputMapAux/3.
 _statement_pythonVarsResult/3.
 _statement_scoped/3.
+_expression(defaultArgs,E).
 _expression_context/4.
 _expression_contextualized/3.
-_expression_contextualizedListAux/4.
+_expression_contextualizedOperationAux/4.
+_expression_contextualizedTupleAux/4.
 _expression_querySSA/3.
-_expression_sequenceHelper/2.
-_expression_sequenceHelperisTuple/2.
-_length/3.
-_expression_index/4.
-_expression_isTuple/4.
+_expression_operationIndex/4.
+_expression_operationLength/3.
+_expression_tupleIndex/4.
+_expression_tupleLength/3.
 
 ### Output predicates
 
+_execution_inputVar(LBL,PRG,X,execution_input(PRG,X)).
+_execution_outputVar(LBL,PRG,X,execution_output(PRG,X)).
 _passed(ssa,LBL,variable_define/2).
 _passed(ssa,LBL,variable_declare/2).
 _passed(ssa,LBL,ensure/1).
 _variable(ssa,execution_input/2).
-_statement_wellformed/1.
 _warning/3.

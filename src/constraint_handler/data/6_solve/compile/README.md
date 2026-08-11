@@ -15,7 +15,6 @@ _type_extensionalEquality/1.
 _type_extensionalOrder/1.
 _type_representation/2.
 type_expression/2.
-engine(LBL,compile).
 
 ### Intermediate predicates
 

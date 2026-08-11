@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(leq,(val(int,2),(val(int,3),()))).
 evaluate(leq,(val(int,3),(val(int,2),()))).
 evaluate(leq,(val(int,2),(val(int,2),()))).

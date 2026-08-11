@@ -1,3 +1,5 @@
+phase_request(statement_wellformedCheck,true).
+
 execution_declare(malformed_stmt_unknown,broken_statement,(),()).
 
 execution_declare(malformed_stmt_assign,

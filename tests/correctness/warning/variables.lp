@@ -7,17 +7,11 @@ variable_domain(itsfine2,val(symbol,red)).
 variable_domain(itsfine2,val(symbol,black)).
 
 %%% raises warning(variable(emptyDomain),(d_a,()),a) and warning(variable(emptyDomain),(d_b,()),b)
-variable_declare(d_a,a,fromList(())).
 variable_declare(d_b,b,fromFacts).
-
-%%% raises warning(variable(multipleDeclarations),(d_t,(d_t,())),(t,fromList((val(symbol,green),(val(symbol,blue),()))),fromList((val(symbol,red),()))))
-variable_declare(d_t,t,fromList((val(symbol,red),()))).
-variable_declare(d_t,t,fromList((val(symbol,green),(val(symbol,blue),())))).
 
 %%% raises warning(variable(multipleDeclarations),(d_u,(_u,())),(u,boolDomain,fromFacts))
 variable_declare(d_u,u,fromFacts).
 variable_declare(d_u,u,boolDomain).
-variable_declare(d_u,u,fromList((val(symbol,red),()))).
 
 %%% raises warning(variable(multipleDeclarations),(d_v1,(d_v2,())),(v,fromFacts,fromFacts))
 variable_declare(d_v1,v,fromFacts).
@@ -29,7 +23,6 @@ variable_domain(v,val(symbol,green)).
 variable_declare(d_w1,w,fromFacts).
 variable_declare(d_w2,w,fromFacts).
 variable_declare(d_w3,w,boolDomain).
-variable_declare(d_w4,w,fromList((val(symbol,blue),()))).
 
 %%% raises warning(variable(multipleDefinitions),(d_x,(f_x,())),(x,operation(lnot,(variable(itsfine),())),operation(snot,(variable(itsfine),()))))
 variable_define(d_x,x,operation(lnot,(variable(itsfine),()))).

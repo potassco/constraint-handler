@@ -19,8 +19,8 @@ variable_define(cap2,cap2,variable(cap1)).
 variable_define(curd2,curd2,operation(length,(variable(cup2),()))).
 variable_define(card2,card2,operation(length,(variable(cap2),()))).
 
-% requestEngine(sma0, ground).
-requestEngine(odd0, compile).
-requestEngine(cap2, propagator).
-requestEngine(curd2, propagator).
-requestEngine(card2, propagator).
+% engine_request(sma0, ground).
+engine_request(odd0, compile).
+engine_request(cap2, propagator).
+engine_request(curd2, propagator).
+engine_request(card2, propagator).

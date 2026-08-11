@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 
 evaluate(add,(val(int,1),(val(int,2),()))).
 

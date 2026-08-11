@@ -13,13 +13,9 @@ _passed(defaultArgs,LBL,ensure(E)) :- ensure(LBL,E).
 _passed(defaultArgs,_label_anonymous,evaluate(OP,ARGS)) :- evaluate(OP,ARGS).
 _passed(defaultArgs,LBL,evaluate(OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
-_label(_label_anonymous).
-
 %%%%%% variable atoms
 #defined variable_declare/2.
 #defined variable_declare/3.
-#defined variable_declareOptional/1.
-#defined variable_declareOptional/2.
 #defined variable_define/2.
 #defined variable_define/3.
 #defined variable_domain/2.
@@ -32,9 +28,6 @@ _defaultArgs_variableDeclared(X) :- variable_declare(X,E).
 _defaultArgs_variableDeclared(X) :- variable_declare(LBL,X,E).
 _passed(defaultArgs,_label_anonymous,variable_declare(X,E)) :- variable_declare(X,E).
 _passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(LBL,X,D).
-_passed(defaultArgs,_label_anonymous,variable_declareOptional(X)) :- variable_declareOptional(X), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_declareOptional(X)) :- variable_declareOptional(X), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_declareOptional(X)) :- variable_declareOptional(LBL,X).
 _passed(defaultArgs,_label_anonymous,variable_domain(X,E)) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(LBL,X,E).
@@ -46,26 +39,18 @@ _passed(defaultArgs,_label_anonymous,variable_define(X,E)) :- variable_define(X,
 _passed(defaultArgs,LBL,variable_define(X,E)) :- variable_define(LBL,X,E).
 
 %%%%%% multimap atoms
-#defined multimap_declare/1.
-#defined multimap_declare/2.
 #defined multimap_assign/3.
 #defined multimap_assign/4.
 
-_passed(defaultArgs,_label_anonymous,multimap_declare(X)) :- multimap_declare(X).
-_passed(defaultArgs,LBL,multimap_declare(X)) :- multimap_declare(LBL,X).
 _passed(defaultArgs,_label_anonymous,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(X,EKEY,EVAL).
 _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(LBL,X,EKEY,EVAL).
 
 %%%%% set atoms
-#defined set_declare/1.
-#defined set_declare/2.
 #defined set_assign/2.
 #defined set_assign/3.
 #defined set_baseDomain/2.
 #defined set_baseDomain/3.
 
-_passed(defaultArgs,_label_anonymous,set_declare(X)) :- set_declare(X).
-_passed(defaultArgs,LBL,set_declare(X)) :- set_declare(LBL,X).
 _passed(defaultArgs,_label_anonymous,set_assign(X,E)) :- set_assign(X,E).
 _passed(defaultArgs,LBL,set_assign(X,E)) :- set_assign(LBL,X,E).
 _passed(defaultArgs,_label_anonymous,set_baseDomain(X,V)) :- set_baseDomain(X,V).

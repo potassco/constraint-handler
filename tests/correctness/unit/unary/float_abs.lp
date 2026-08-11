@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(abs,(val(float,float("-1.5")),())).
 evaluate(abs,(val(none,none),())).
 evaluate(abs,(bad,())).

@@ -8,7 +8,7 @@ ensure(operation(limp,(val(bool,true),(operation(eq,(variable(execution_input(p,
 execution_run(p).
 execution_run(q).
 
-set_declare(a,a).
+variable_declare(a,a,set).
 variable_domain(b,val(int,2)).
 variable_domain(b,val(int,1)).
 variable_domain(execution_input(p,"a"),variable(a)).

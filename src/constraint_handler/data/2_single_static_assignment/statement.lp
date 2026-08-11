@@ -1,38 +1,12 @@
-%%%%%%%%%%%%%%%%% _statement_query,
-_statement_query(PRG,(PRG,()),STMT) :- _execution_declare(LBL,PRG,STMT,INS,OUTS).
-_statement_query(PRG,SCOPE,STM1) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)).
-_statement_query(PRG,SCOPE,STM2) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)).
-_statement_query(PRG,SCOPE,THEN) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)).
-_statement_query(PRG,SCOPE,ELSE) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)).
-
-%%%%%%%%%%%%%%%%% _statement_wellformed
-_statement_wellformed(seq2(STM1,STM2)) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)), _statement_wellformed(STM1), _statement_wellformed(STM2).
-_statement_wellformed(noop) :- _statement_query(PRG,SCOPE,noop).
-_statement_wellformed(statement_python(STR)) :- _statement_query(PRG,SCOPE,statement_python(STR)), (string,_,_,_)=@pythonReify(STR).
-_statement_wellformed(if(EXPR,THEN,ELSE)) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)), true=@pythonIsExpr(EXPR), _statement_wellformed(THEN), _statement_wellformed(ELSE).
-_statement_wellformed(assign(X,EXPR)) :- _statement_query(PRG,SCOPE,assign(X,EXPR)), true=@pythonIsExpr(EXPR).
-_statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)), true=@pythonIsExpr(EXPR).
-
-
-
-_warning(statement(syntaxError),LBL,STMT) :- _statement_query(PRG,SCOPE,STMT), not _statement_wellformed(STMT), _execution_declare(LBL,PRG,STMT2,INS,OUTS).
-%%% TODO: use a python check so that it takes place before SSA without reordering the phases
-
-
-
-
-
-
-
 _execution_declare(LBL,PRG,STMT,INS,OUTS) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)).
-_execution_input_var(PRG,X) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(INS).
-_execution_outputVar(PRG,X,execution_output(PRG,X)) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(OUTS).
+_execution_inputVar(LBL,PRG,X,execution_input(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), X=@pythonListElements(INS).
+_execution_outputVar(LBL,PRG,X,execution_output(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), X=@pythonListElements(OUTS).
 
 
 
 
 
-_statement_querySSA(LBL,PRG,(PRG,()),STMT) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_wellformed(STMT).
+_statement_querySSA(LBL,PRG,(PRG,()),STMT) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)).
 
 _statement_querySSA(LBL,PRG,(t,SCOPE),THEN) :- _statement_querySSA(LBL,PRG,SCOPE,if(E,THEN,ELSE)).
 _statement_querySSA(LBL,PRG,(e,SCOPE),ELSE) :- _statement_querySSA(LBL,PRG,SCOPE,if(E,THEN,ELSE)).
@@ -42,11 +16,12 @@ _statement_querySSA(LBL,PRG,(r,SCOPE),STM2) :- _statement_querySSA(LBL,PRG,SCOPE
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)).
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)).
 _expression_querySSA(PRG,SCOPE,E) :- _statement_querySSA(LBL,PRG,SCOPE,if(E,THEN,ELSE)).
-_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,operation(O,ARGS)), D=@pythonListElements(ARGS).
-_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_isTuple(defaultArgs,E,N,ARGS), D=@pythonListElements(ARGS).
+_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_operationIndex(defaultArgs,E,IDX,D).
+_expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _expression_tupleIndex(defaultArgs,E,IDX,D).
 % TODO: tuple, set
 
-_expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
+%_expression_sequenceHelper(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
+_expression(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
 
 _statement_pythonVarsResult(PRG,SCOPE,R) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _main_solverIdentifiers(ID), R=@pythonStatementVariables(CODE,(),ID).
 _warning(KIND,PRG,MSG) :- _statement_pythonVarsResult(PRG,SCOPE,error(KIND,MSG)).
@@ -61,7 +36,7 @@ _statement_changed(statement_python(CODE),X) :- _statement_querySSA(LBL,PRG,SCOP
 
 %%%%% statement_context
 
-_statement_context((PRG,()),X,variable(execution_input(PRG,X))) :- _execution_declare(LBL,PRG,STMT,INS,OUTS), X=@pythonListElements(INS).
+_statement_context((PRG,()),X,variable(execution_input(PRG,X))) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), X=@pythonListElements(INS).
 
 
 _statement_context((l,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_context(SCOPE,X,XS).
@@ -82,16 +57,22 @@ _expression_contextualized(SCOPE,variable(X),XS) :- _expression_querySSA(PRG,SCO
 %TODO other vars!
 _statement_hasContext(SCOPE,X) :- _statement_context(SCOPE,X,XS).
 _expression_contextualized(SCOPE,variable(X),variable(execution_input(PRG,X))) :- _expression_querySSA(PRG,SCOPE,variable(X)), not _statement_hasContext(SCOPE,X).
-_expression_contextualizedListAux(SCOPE,E,N,()) :- _expression_querySSA(PRG,SCOPE,E), _length(defaultArgs,E,N).
-_expression_contextualizedListAux(SCOPE,E,IDX,(DC,L)) :- _expression_querySSA(PRG,SCOPE,E), _expression_contextualizedListAux(SCOPE,E,IDX+1,L),
-   _expression_index(defaultArgs,E,IDX,D), _expression_contextualized(SCOPE,D,DC).
-_expression_contextualized(SCOPE,operation(O,ARGS),operation(O,L)) :- _expression_contextualizedListAux(SCOPE,operation(O,ARGS),0,L).
-_expression_contextualized(SCOPE,E,@pythonReflect(function,(),L)) :- _expression_contextualizedListAux(SCOPE,E,0,L), _expression_isTuple(defaultArgs,E,N,ARGS).
+
+_expression_contextualizedOperationAux(SCOPE,E,N,()) :- _expression_querySSA(PRG,SCOPE,E), _expression_operationLength(defaultArgs,E,N).
+_expression_contextualizedOperationAux(SCOPE,E,IDX,(DC,L)) :- _expression_querySSA(PRG,SCOPE,E), _expression_contextualizedOperationAux(SCOPE,E,IDX+1,L),
+    _expression_operationIndex(defaultArgs,E,IDX,D), _expression_contextualized(SCOPE,D,DC).
+_expression_contextualized(SCOPE,operation(O,ARGS),operation(O,L)) :- _expression_contextualizedOperationAux(SCOPE,operation(O,ARGS),0,L).
+
+_expression_contextualizedTupleAux(SCOPE,E,N,()) :- _expression_querySSA(PRG,SCOPE,E), _expression_tupleLength(defaultArgs,E,N).
+_expression_contextualizedTupleAux(SCOPE,E,IDX,(DC,L)) :- _expression_querySSA(PRG,SCOPE,E),
+    _expression_contextualizedTupleAux(SCOPE,E,IDX+1,L),
+    _expression_tupleIndex(defaultArgs,E,IDX,D), _expression_contextualized(SCOPE,D,DC).
+_expression_contextualized(SCOPE,E,@pythonReflect(function,(),L)) :- _expression_contextualizedTupleAux(SCOPE,E,0,L).
 
 % TODO: operators
 
 %%%%% statement_condition
-_statement_condition((PRG,()),()) :- _execution_declare(LBL,PRG,STMT,INS,OUTS).
+_statement_condition((PRG,()),()) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)).
 _statement_condition((l,SCOPE),ES) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_condition(SCOPE,ES).
 _statement_condition((r,SCOPE),ES) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_condition(SCOPE,ES).
 _statement_condition((t,SCOPE),(E,ES)) :- _statement_querySSA(LBL,PRG,SCOPE,if(COND,THEN,ELSE)), _expression_contextualized(SCOPE,COND,E), _statement_condition(SCOPE,ES).
@@ -170,23 +151,13 @@ _statement_ensure(LBL,ASSR) :- _statement_querySSA(LBL,PRG,SCOPE,statement_pytho
 %%% TODO: add bad / error handling
 _execution_ou_proj(PRG,X) :- _statement_latest((PRG,()),X,EX).
 
-_execution_isRunning(PRG) :- _execution_declare(LBL1,PRG,STMT,INS,OUTS), _passed(defaultArgs,LBL,execution_run(PRG)).
+_execution_isRunning(PRG) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), _passed(defaultArgs,LBL1,execution_run(PRG)).
 
-_statement_introduce(LBL,EX,V) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
-_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_ou_proj(PRG,X).
-_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(PRG,X,EX), _execution_declare(LBL,PRG,STMT,INS,OUTS), not _execution_isRunning(PRG).
+_statement_introduce(LBL,EX,V) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), _statement_latest((PRG,()),X,V), _execution_isRunning(PRG).
+_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), not _execution_ou_proj(PRG,X).
+_statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), not _execution_isRunning(PRG).
 
 _passed(ssa,LBL,variable_define(X,E)) :- _statement_introduce(LBL,X,E).
 _passed(ssa,LBL,variable_declare(X,definition)) :- _statement_introduce(LBL,X,E).
 _passed(ssa,LBL,ensure(E)) :- _statement_ensure(LBL,E).
-_variable(ssa,execution_input(PRG,X)) :- _execution_input_var(PRG,X).
-
-%%%%%%%%%%%%%%%%% sequence helpers
-_length(defaultArgs,operation(O,ARGS),N) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), N=@pythonListLength(ARGS).
-_expression_index(defaultArgs,operation(O,ARGS),IDX,X) :- _expression_sequenceHelper(defaultArgs,operation(O,ARGS)), (IDX,X)=@pythonEnumerateElements(ARGS).
-
-_expression_sequenceHelperisTuple(defaultArgs,E) :- _expression_sequenceHelper(defaultArgs,E), true=@pythonIsTuple(E).
-_expression_isTuple(defaultArgs,E,N,ARGS) :- _expression_sequenceHelperisTuple(defaultArgs,E), (function,(),N,ARGS)=@pythonReify(E).
-
-_length(defaultArgs,E,N) :- _expression_sequenceHelper(defaultArgs,E), _expression_isTuple(defaultArgs,E,N,ARGS).
-_expression_index(defaultArgs,E,IDX,X) :- _expression_sequenceHelper(defaultArgs,E), _expression_isTuple(defaultArgs,E,N,ARGS), (IDX,X)=@pythonEnumerateElements(ARGS).
+_variable(ssa,EX) :- _execution_inputVar(LBL,PRG,X,EX).

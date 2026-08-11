@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 variable_define(small,operation(set_make,(val(int,1),(val(none,none),())))).
 variable_define(big,operation(set_make,(val(int,1),(val(int,2),(val(none,none),()))))).
 variable_define(empty,operation(set_make,())).

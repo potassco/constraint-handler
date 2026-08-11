@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 variable_define(tuple_plain,(val(int,1),val(string,"x"),val(symbol,key))).
 variable_define(tuple_plain_same,variable(tuple_plain)).
 variable_define(tuple_diff,(val(int,2),val(string,"x"),val(symbol,key))).

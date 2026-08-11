@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(floor,(val(float,float("2.5")),())).
 evaluate(floor,(val(none,none),())).
 evaluate(floor,(bad,())).

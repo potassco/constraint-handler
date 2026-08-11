@@ -44,8 +44,8 @@ propagator_multimap_declare(LBL,X) :- _passed(propagator,LBL,variable_declare(X,
 propagator_optimize_maximizeSum(LBL,E,ID,PRIO) :- _passed(propagator,LBL,optimize_component(E,ORIG,PREC,ID,PRIO)).
 propagator_share_value(LBL,E) :- _passed(propagator,LBL,share_value(E)).
 
-propagator_warning_forbid(LBL,W) :- _passed(solve,LBL,warning_forbid(W,_internal(all))).
-propagator_warning_ignore(LBL,W) :- _passed(solve,LBL,warning_ignore(W,_internal(all))).
+propagator_warning_forbid(LBL,W) :- _passed(propagator,LBL,warning_forbid(W,_internal(all))).
+propagator_warning_ignore(LBL,W) :- _passed(propagator,LBL,warning_ignore(W,_internal(all))).
 
 
 propagator_variable_interface(LBL,X) :- _passed(propagator,LBL,variable_interface(X)).

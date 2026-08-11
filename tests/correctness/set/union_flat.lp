@@ -11,7 +11,7 @@ variable_define(len_ab,operation(length,(variable(ab),()))).
 variable_define(len_empty_union,operation(length,(variable(empty_union),()))).
 evaluate(eq,(variable(with_empty),(variable(ab),()))).
 
-set_declare(nd).
+variable_declare(nd,set).
 set_baseDomain(nd,val(int,4..5)).
 set_assign(nd,val(int,4)).
 variable_define(with_nd,operation(union,(variable(a),(variable(nd),())))).

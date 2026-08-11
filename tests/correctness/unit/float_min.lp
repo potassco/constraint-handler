@@ -1,3 +1,5 @@
+phase_request(constantFolding,false).
+
 evaluate(min,(val(float,float("2.5")),(val(int,2),()))).
 evaluate(min,(val(float,float("2.5")),(val(none,none),()))).
 evaluate(min,(val(float,float("2.5")),(bad,()))).

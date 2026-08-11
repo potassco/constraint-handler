@@ -1,3 +1,4 @@
+phase_request(constantFolding,false).
 evaluate(conj,(val(bool,true),(val(bool,true),()))).
 evaluate(conj,(val(bool,true),(val(none,none),()))).
 evaluate(conj,(val(bool,true),(bad,()))).
