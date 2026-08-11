@@ -1,20 +1,14 @@
 import operator
 import sys
+from collections.abc import Iterable, Sequence
 from itertools import product
-from typing import Any, Iterable, Literal, Sequence, cast
+from typing import Any, Literal, cast
 
 import clingo
 from clingo import Symbol
 
-import constraint_handler.evaluator as evaluator
-import constraint_handler.multimap as multimap
-import constraint_handler.myClorm as myClorm
-import constraint_handler.schemas.atom as atom
-import constraint_handler.schemas.expression as expression
-import constraint_handler.schemas.internal as internal
 import constraint_handler.schemas.propagator_atom as prop_atom
-import constraint_handler.schemas.type_ as type_
-import constraint_handler.schemas.warning as warning
+from constraint_handler import evaluator, multimap, myClorm
 from constraint_handler.PropagatorConstants import (
     OPTIMIZATION_HELPER_PROGRAM,
     OPTIMIZATION_STAGE_ATOM,
@@ -41,6 +35,7 @@ from constraint_handler.PropagatorVariables import (
     VariableManager,
     VariableType,
 )
+from constraint_handler.schemas import atom, expression, internal, type_, warning
 
 
 class ConstraintHandlerPropagator(clingo.Propagator):

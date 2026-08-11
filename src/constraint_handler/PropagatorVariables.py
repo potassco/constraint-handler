@@ -1,17 +1,12 @@
-from __future__ import annotations
-
 import sys
 from abc import abstractmethod
+from collections.abc import Iterable
 from itertools import product
-from typing import Any, Iterable, Protocol
+from typing import Any, Protocol
 
 import clingo
 
-import constraint_handler.evaluator as evaluator
-import constraint_handler.multimap as multimap
-import constraint_handler.myClorm as myClorm
-import constraint_handler.schemas.expression as expression
-import constraint_handler.schemas.warning as warning
+from constraint_handler import evaluator, multimap, myClorm
 from constraint_handler.PropagatorConstants import (
     DEFAULT_DECISION_LEVEL,
     EvaluationResult,
@@ -19,6 +14,7 @@ from constraint_handler.PropagatorConstants import (
     evaluations_type,
     propagator_warning_t,
 )
+from constraint_handler.schemas import expression, warning
 
 
 def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warning.Warning | None:
