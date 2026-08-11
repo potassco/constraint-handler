@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import operator
 import sys
 from itertools import product
@@ -121,6 +119,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.optimal_models_found: int = 0
         self.nogood_queue: list[Iterable[int]] = []
 
+        self.var_ranks: dict[Symbol, int] = {}
+
         self.forbidden_warnings: dict[warning.Kind, int] = {}
         self.ignored_warnings: dict[warning.Kind, tuple[int, bool]] = {}
 
@@ -215,7 +215,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_forbidden_warnings(init)
 
+        self.get_variable_ranks()
+
         # valuations = self.preprocess()
+        # self.ensure_pairs_dict = self.ensure_pairs(valuations)
 
         # self.apply_preprocessing(valuations, init)
 
@@ -242,6 +245,76 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         for lit in self.watches:
             ctl.add_watch(lit)
+            
+    def get_variable_ranks(self) -> None:
+        """
+        Variable get a rank based on rank of dependencies
+        """
+
+        # loop over vars and get the ones without deps, those have rank 0
+        # loop again and get vars with satisfied deps based on known ranks
+        # those get rank +1
+        known_vars = set()
+        changed = True
+        rank = 0
+        while changed:
+            changed = False
+            for var in self.symbol2var.keys():  # noqa: SIM118
+                if var in known_vars:
+                    continue
+                if self.symbol2var.get_dependencies(var).issubset(known_vars):
+                    self.var_ranks[var] = rank
+                    changed = True
+                    known_vars.add(var)
+
+            rank += 1
+
+    def ensure_pairs(
+        self, valuations: dict[Symbol, set[Any]]
+    ) -> dict[EnsureVariable, dict[Symbol, dict[Any, set[Any]]]]:
+        """
+        Return a dictionary mapping ensure to a list of dicts X
+
+        Only works with ensure with 2 variables
+
+        A dict X maps a symbol, that is a variable used in the ensure, to a dict of possible values for that variable
+        and the possible values for the other variable in the ensure that can work with the first variable's value.
+        E.g. d["ensure_1"] = {
+            "var1": {
+                1: [2,3],
+                2: [3,4]
+            },
+            "var2": {
+                2: [1],
+                3: [1,2],
+                4: [2]
+            }
+        }
+        """
+
+        # TODO: parts of this are very similar to check_ensure. Maybe make the similar parts into a function?
+        ensure_pairs = {}
+        for ensure_var in self.symbol2var.get_variables_by_type(getattr(EnsureVariable, "__name__")):
+            ensure_var = cast(EnsureVariable, ensure_var)
+            if len(ensure_var.vars()) != 2:
+                continue
+
+            ensure_pairs[ensure_var] = {var: {} for var in ensure_var.vars()}
+
+            for var in ensure_var.vars():
+                if var not in valuations:
+                    assert False, f"Variable {var} not in valuations, but is used in ensure {ensure_var}"
+
+            deps: list[Symbol] = list(ensure_var.vars())
+            dep1, dep2 = deps[0], deps[1]
+            for values in product(*(valuations[dep1], valuations[dep2])):
+                eval_dict = dict(zip(deps, values))
+                success = ensure_var.simple_evaluate(eval_dict, self.environment)
+                if success:
+                    ensure_pairs[ensure_var][dep1].setdefault(eval_dict[dep1], set()).add(eval_dict[dep2])
+                    ensure_pairs[ensure_var][dep2].setdefault(eval_dict[dep2], set()).add(eval_dict[dep1])
+
+        return ensure_pairs
 
     def preprocess(self, cycles: int = -1) -> dict[Symbol, set[Any]]:
         """
@@ -598,6 +671,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return
 
         if self.check_only:
+<<<<<<< HEAD
             # Since there are no watches, undo is never called
             # Hence, we undo stuff here
             # This is probably severly inefficient as we re-evaluate everything every time
@@ -608,10 +682,19 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         to_evaluate: dict[VariableType, set[int] | None] = {var: None for var in self.symbol2var.get_variables()}
 
         backtrack = self.evaluated_solver_assignment(control, to_evaluate)
+=======
+            to_evaluate: dict[VariableType, set[int] | None] = {}
+            for var in self.symbol2var.get_variables():
+                if var.get_value() == ValueStatus.NOT_SET:
+                    # print("var checking in check: ", var)
+                    to_evaluate[var] = None
+>>>>>>> 99d4445d (Improve performance when evaluating assignments during propagation)
 
-        if backtrack:
-            # backtracking due to conflicts in evaluation of variables
-            return
+            backtrack = self.evaluated_solver_assignment(control, to_evaluate)
+
+            if backtrack:
+                # backtracking due to conflicts in evaluation of variables
+                return
 
         # If not backtracking, check optimization sums
         backtrack = self.evaluate_optimization_sum(control)
@@ -717,7 +800,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             return self.add_nogoods_from_queue(ctl)
 
-    def get_reasoning_mode_nogoods(self, variables: set[prop_atom.ResultAtom], first_call: bool) -> list[Iterable[int]]:
+    def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom], first_call: bool) -> list[Iterable[int]]:
         """
         Create nogoods used to drive brave/cautious reasoning.
 
@@ -945,18 +1028,43 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             bool: True if propagation should stop (conflict/forbidden warning),
             False otherwise.
         """
-        while len(to_evaluate) > 0:
-            var, expr_lits = to_evaluate.popitem()
 
-            result = self.evaluate_variable(ctl, var, expr_lits)
-            if result is None:
-                # variable had issue, stop propagation!
-                return True
-            elif result:
-                # variable changed, evaluate parents
-                for parent in var.parents:
-                    if parent not in to_evaluate:
-                        to_evaluate[parent] = None
+        if len(to_evaluate) == 0:
+            return False
+
+        assert len(to_evaluate) > 0, "to_evaluate should not be empty"
+
+        eval_by_rank: dict[int, set[VariableType]] = {}
+        for v in to_evaluate:
+            eval_by_rank.setdefault(self.var_ranks[v.var], set()).add(v)
+
+        rank = 0
+        max_rank = max(eval_by_rank.keys())
+
+        while rank <= max_rank:
+            if rank not in eval_by_rank:
+                rank += 1
+                continue
+
+            while len(eval_by_rank[rank]) > 0:
+                var = eval_by_rank[rank].pop()
+                # print(f"var: {var}")
+                result = self.evaluate_variable(ctl, var, to_evaluate.get(var, None))
+                if result is None:
+                    # variable had issue, stop propagation!
+                    return True
+                elif result:
+                    # variable changed, evaluate parents
+                    for parent in var.parents:
+                        parent_rank = self.var_ranks[parent.var]
+                        if parent_rank not in eval_by_rank:
+                            eval_by_rank.setdefault(parent_rank, set())
+                            max_rank = max(max_rank, parent_rank)
+
+                        if parent not in eval_by_rank[parent_rank] and parent.get_value() == ValueStatus.NOT_SET:
+                            eval_by_rank[parent_rank].add(parent)
+            rank += 1
+
         return False
 
     def evaluate_variable(
@@ -1626,8 +1734,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self,
         var: Symbol,
         final_value: (
-            bool | int | float | str | Symbol | tuple[Any, ...] | expression.Bad.bad
-        ),  # ty:ignore[unresolved-attribute]
+            bool | float | str | Symbol | tuple[Any, ...]
+        ),  # expression.Bad.bad should be in the types but it is crashing when I add it.
     ):
         """
         Add atoms for a variable (bool/int/float/string/symbol) to the python model.

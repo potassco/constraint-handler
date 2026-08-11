@@ -1263,12 +1263,11 @@ class Variable:
                 changed |= value.evaluate(evaluations, ctl, env)
         else:
             for lit in expr_lits:
-                if lit in self.domain_literals:
-                    continue
                 if lit < 0:
                     continue
-                assert lit in self.lit2expr, f"Literal {lit} not found in variable {self.name}"
-                changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
+
+                if lit in self.lit2expr:
+                    changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
 
         if not changed:
             return EvaluationResult.NOT_CHANGED
