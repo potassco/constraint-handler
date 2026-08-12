@@ -12,7 +12,7 @@ variable_define(c_union,operation(union,(variable(v_set),(variable(v_set),()))))
 variable_define(c_inter,operation(inter,(variable(v_set),(variable(v_set),())))).
 variable_define(c_diff,operation(diff,(variable(v_set),(variable(v_set),())))).
 variable_define(c_subset,operation(subset,(variable(v_set),(variable(v_set),())))).
-variable_define(c_length,operation(length,(variable(v_set),()))).
+variable_define(c_cardinality,operation(cardinality,(variable(v_set),()))).
 variable_define(c_isin,operation(set_isin,(variable(v_int),(variable(v_set),())))).
 variable_define(c_notin,operation(set_notin,(variable(v_int),(variable(v_set),())))).
 variable_define(c_make,operation(set_make,(variable(v_int),(variable(v_int),(variable(v_int),()))))).

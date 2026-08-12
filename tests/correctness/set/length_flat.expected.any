@@ -1,2 +1,2 @@
-evaluated(length,(variable(nondeterministic),()),val(int,1))
-evaluated(length,(variable(nondeterministic),()),val(int,2))
+evaluated(cardinality,(variable(nondeterministic),()),val(int,1))
+evaluated(cardinality,(variable(nondeterministic),()),val(int,2))

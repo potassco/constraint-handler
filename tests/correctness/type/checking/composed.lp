@@ -11,7 +11,7 @@ variable_domain(v_symbol,val(symbol,some_symbol)).
 
 variable_define(c_multimap_make_empty,operation(multimap_make,())).
 
-variable_define(c_length_find_multimap_make,operation(length,(SET,()))) :-
+variable_define(c_length_find_multimap_make,operation(cardinality,(SET,()))) :-
     SET = operation(find,(KEY,(MAP,()))),
     MAP = operation(multimap_make,(ITEM1,(ITEM2,(ITEM3,())))),
     KEY = variable(v_string),

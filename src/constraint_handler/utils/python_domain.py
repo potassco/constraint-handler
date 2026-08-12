@@ -954,7 +954,9 @@ class Domain:
         """Dispatch one operator name to the matching domain transfer function."""
         spec = cls.operation_spec(operation)
         method = getattr(cls, spec.method_name, None)
+        print("0812 hello", spec.method_name)
         if method is None:
+            print("0812 hello")
             raise NotImplementedError(cls.operation_name(operation))
         return cls._apply_spec(spec, domains)
 
@@ -1595,14 +1597,31 @@ class Domain:
 
     @classmethod
     def op_length(cls, domain: Domain) -> Domain:
-        """Compute lengths for strings, tuples, and concrete sets."""
+        """Compute lengths for strings and tuples."""
         lengths = {len(value) for value in domain.strings}
         lengths.update(len(value) for value in domain.tuples)
+        has_invalid_values = bool(
+            domain.bools or domain.ints or domain.floats or domain.is_none or domain.symbols or domain.possible_subsets
+        )
+        return cls(is_bad=domain.is_bad or has_invalid_values, ints=frozenset(lengths))
+
+    @classmethod
+    def op_cardinality(cls, domain: Domain) -> Domain:
+        """Compute cardinality of concrete sets."""
+        lengths = set()
         if domain.possible_subsets is None or len(domain.possible_subsets) > cls.THRESHOLD_ITERATIONS_GENERAL:
             lengths.update(range(len(domain.domain_atoms) + 1))
         else:
             lengths.update(len(value) for value in domain.possible_subsets)
-        has_invalid_values = bool(domain.bools or domain.ints or domain.floats or domain.is_none or domain.symbols)
+        has_invalid_values = bool(
+            domain.bools
+            or domain.ints
+            or domain.floats
+            or domain.is_none
+            or domain.strings
+            or domain.symbols
+            or domain.tuples
+        )
         return cls(is_bad=domain.is_bad or has_invalid_values, ints=frozenset(lengths))
 
     @classmethod

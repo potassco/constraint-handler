@@ -1,2 +1,2 @@
-evaluated(length,(operation(set_make,(variable(x),())),()),val(int,1))
-evaluated(length,(operation(set_make,(variable(x),())),()),bad)
+evaluated(cardinality,(operation(set_make,(variable(x),())),()),val(int,1))
+evaluated(cardinality,(operation(set_make,(variable(x),())),()),bad)

@@ -1,6 +1,7 @@
 
 _bad_is_bad(add; sub; int_div; float_div; eq; neq; leq; lt; geq; gt; max; min;
     lnot; wnot; snot; lxor; leqv; hasValue; abs; ceil; floor; minus;
+    cardinality;
     length; concat).
     %% set_fold and implode?
 

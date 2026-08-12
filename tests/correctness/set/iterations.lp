@@ -26,7 +26,7 @@ set_assign(squares, SQ) :-
     SQ = operation(mult,(EX,(EX,()))),
     EX = val(T,X).
 
-variable_define(csquares, operation(length,(variable(squares),()))).
+variable_define(csquares, operation(cardinality,(variable(squares),()))).
 
 variable_declare(isquares,set).
 set_assign(isquares, SQ) :-
@@ -34,6 +34,6 @@ set_assign(isquares, SQ) :-
     SQ = operation(mult,(EX,(EX,()))),
     EX = val(int,X).
 
-evaluate(length,(variable(isquares),())).
+evaluate(cardinality,(variable(isquares),())).
 evaluate(set_fold,(val(function,add),(variable(isquares),(val(int,0),())))).
 evaluate(set_fold,(val(function,mult),(variable(isquares),(val(int,1),())))).

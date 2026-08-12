@@ -68,7 +68,7 @@ operator_declare((eq;neq),(multimap,(multimap,())),bool).
 operator_declare(multimap_isin,(T1,(multimap,())),bool) :- _type(T1).
 
 %%%%%%%%%%%%%%%%% set
-operator_declare(length,(set,()),int).
+operator_declare(cardinality,(set,()),int).
 operator_declare((set_isin;set_notin),(T1,(set,())),bool) :- _type(T1).
 operator_declare_variadic(set_make,T,set,1) :- _type(T).
 operator_declare(diff,(set,(set,())),set).

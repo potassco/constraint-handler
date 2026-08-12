@@ -34,7 +34,7 @@ ArithmeticOperator = common.PPEnum(
 LogicOperator = common.PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 
 SetOperator = common.PPEnum(
-    "SetOperator", ["set_make", "set_isin", "set_notin", "union", "inter", "diff", "subset", "set_fold"]
+    "SetOperator", ["cardinality", "set_make", "set_isin", "set_notin", "union", "inter", "diff", "subset", "set_fold"]
 )
 
 MultimapOperator = common.PPEnum(
