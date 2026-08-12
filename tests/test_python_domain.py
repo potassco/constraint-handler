@@ -416,10 +416,13 @@ def test_apply_length_marks_invalid_scalar_inputs_bad_but_keeps_valid_lengths() 
 
     assert Domain.apply(expression.StringOperator.length, domain) == Domain(is_bad=True, ints=frozenset({3, 4}))
 
+
 def test_apply_length_marks_invalid_scalar_inputs_bad_but_keeps_valid_cardinality() -> None:
     domain = build_domain("abcd", frozenset({1, 2}), (1, 2, 3), 9, None)
 
-    assert Domain.apply(expression.operators.SetOperator.cardinality, domain) == Domain(is_bad=True, ints=frozenset({2}))
+    assert Domain.apply(expression.operators.SetOperator.cardinality, domain) == Domain(
+        is_bad=True, ints=frozenset({2})
+    )
 
 
 def test_apply_set_operations_use_complete_sets_and_nonset_values_mark_bad() -> None:
