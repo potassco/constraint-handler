@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - introduce `variable_declare(X,open)`
 - - rename set operator `length` to `cardinality`
 - - allow control over statement wellformedness checks with
     `phase_request(statement_wellformedCheck,BOOL)`

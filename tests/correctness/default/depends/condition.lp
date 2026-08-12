@@ -2,6 +2,9 @@
 % The default for frontwheel is active only when backwheel == 1.
 default_mode(depends).
 
+variable_declare(frontwheel,open).
+variable_declare(backwheel,open).
+
 variable_domain(frontwheel,val(int,10)).
 variable_domain(frontwheel,val(int,20)).
 variable_domain(frontwheel,val(int,30)).

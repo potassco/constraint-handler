@@ -1,3 +1,8 @@
+variable_declare(x,open).
+variable_declare(y,open).
+variable_declare(z,open).
+variable_declare(t,open).
+
 variable_define(x,val(int,4)).
 
 variable_default(y,variable(x),val(bool,true)).

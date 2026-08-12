@@ -1,6 +1,9 @@
 % Variant: single default on frontwheel that is coupled to backwheel via ensure.
 default_mode(define).
 
+variable_declare(frontwheel,open).
+variable_declare(backwheel,open).
+
 variable_domain(frontwheel,val(int,20)).
 variable_domain(frontwheel,val(int,21)).
 variable_domain(frontwheel,val(int,22)).

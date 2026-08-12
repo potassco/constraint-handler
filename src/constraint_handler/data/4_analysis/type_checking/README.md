@@ -15,7 +15,6 @@ _operator_variadicEmptyReturns/2.
 _parameter_value/2.
 _type/1.
 _variable(sugar,X).
-_variable_declared/2.
 operator_declare/3.
 operator_declare_variadic/4.
 type_query/1.

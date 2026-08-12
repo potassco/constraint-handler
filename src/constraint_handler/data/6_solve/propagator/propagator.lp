@@ -3,7 +3,8 @@ propagator_ensure(LBL,E) :- _passed(propagator,LBL,ensure(E)).
 propagator_evaluate(LBL,O,E) :- _passed(propagator,LBL,evaluate(O,E)).
 
 
-propagator_variable_declare(CNAME,X,fromFacts) :- _passed(propagator,CNAME,variable_declare(X,fromFacts)).
+propagator_variable_declare(LBL,X,fromFacts) :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
+propagator_variable_declare(LBL,X,open) :- _passed(propagator,LBL,variable_declare(X,open)).
 
 1 {propagator_variable_domain(CNAME,X, D) : _passed(propagator,CNAME,variable_domain(X,D))} 1 :- _passed(propagator,CNAME,variable_declare(X,fromFacts)).
 
