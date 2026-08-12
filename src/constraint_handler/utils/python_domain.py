@@ -954,9 +954,7 @@ class Domain:
         """Dispatch one operator name to the matching domain transfer function."""
         spec = cls.operation_spec(operation)
         method = getattr(cls, spec.method_name, None)
-        print("0812 hello", spec.method_name)
         if method is None:
-            print("0812 hello")
             raise NotImplementedError(cls.operation_name(operation))
         return cls._apply_spec(spec, domains)
 
