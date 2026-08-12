@@ -14,7 +14,7 @@ variable_domain(x,bad).
 variable_define(bad_set,operation(set_make,(bad,()))).
 
 evaluate(eq,(operation(inter,(variable(a),(variable(b),()))),(operation(set_make,(val(int,2),(val(none,none),()))),()))).
-evaluate(length,(operation(inter,(variable(a),(variable(empty),()))),())).
-evaluate(length,(operation(inter,(variable(a),(variable(bad_set),()))),())).
-evaluate(length,(operation(inter,(variable(x),(variable(b),()))),())).
-evaluate(length,(operation(inter,(variable(x),(variable(bad_set),()))),())).
+evaluate(cardinality,(operation(inter,(variable(a),(variable(empty),()))),())).
+evaluate(cardinality,(operation(inter,(variable(a),(variable(bad_set),()))),())).
+evaluate(cardinality,(operation(inter,(variable(x),(variable(b),()))),())).
+evaluate(cardinality,(operation(inter,(variable(x),(variable(bad_set),()))),())).

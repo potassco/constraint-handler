@@ -47,7 +47,7 @@ variable_define(x,operation(set_make,
                                   (variable(v),
                                   (operation(set_make,(val(bool,true),())),()))))))).
 
-variable_define(cx, operation(length,(variable(x),()))).
+variable_define(cx, operation(cardinality,(variable(x),()))).
 
 variable_declare(d,set).
 set_assign(d,operation(add,(val(int,1),(val(int,3),())))).
@@ -55,7 +55,7 @@ set_assign(d,variable(s)).
 set_assign(d,operation(add,(val(int,2),(val(int,2),())))).
 set_assign(d,operation(set_make,(val(bool,true),(val(float,float("89.1")),())))).
 
-variable_define(cd,operation(length,(variable(d),()))).
+variable_define(cd,operation(cardinality,(variable(d),()))).
 
 evaluate(set_notin,(val(bool,true),(variable(d),()))).
 evaluate(set_notin,(val(bool,true),(variable(x),()))).

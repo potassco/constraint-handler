@@ -17,6 +17,20 @@ def fold(f, s, start):
 
 def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
     match o:
+        case operators.SetOperator.cardinality:
+            if len(args) != 1:
+                return atom.EvalResult(
+                    common.Bad.bad,
+                    (
+                        (
+                            warning.Expression(warning.ExpressionWarning.syntaxError),
+                            str(errors.incorrect_arity_error(o, 1, len(args))),
+                        ),
+                    ),
+                )
+            if args[0] == common.Bad.bad:
+                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
+            return atom.EvalResult(len(args[0]), NO_ERRORS)
         case operators.SetOperator.set_make:
             return atom.EvalResult(frozenset(args), NO_ERRORS)
         case operators.SetOperator.set_isin:
@@ -30,7 +44,7 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                         ),
                     ),
                 )
-            if args[1] == common.Bad.bad:
+            if common.Bad.bad in args:
                 return atom.EvalResult(common.Bad.bad, NO_ERRORS)
             return atom.EvalResult(args[0] in args[1], NO_ERRORS)
         case operators.SetOperator.set_notin:

@@ -33,17 +33,19 @@ _set_has_nonset_input(operation(diff, (Expr1, (Expr2, ())))) :-
     _expression(compile2, operation(diff, (Expr1, (Expr2, ())))),
     not _se_value(Expr2, set).
 
-%%%%%%%%%%%%%%%%% length
+%%%%%%%%%%%%%%%%% cardinality
 % bad if not set input
 _set_bad(operation(length, (Expr, ()))) :-  _expression(compile2, operation(length, (Expr, ()))),
-    not _se_value(Expr, set),
     not _type_dynamic(compile2,Expr,string). % weird
+
+_set_bad(operation(cardinality, (Expr, ()))) :-  _expression(compile2, operation(cardinality, (Expr, ()))),
+    not _se_value(Expr, set).
 %% can be optimized using chaining if you know the domain
-:-  _expression(compile2, operation(length, (Expr, ()))),
-    not _set_bad(operation(length, (Expr, ()))),
+:-  _expression(compile2, operation(cardinality, (Expr, ()))),
+    not _set_bad(operation(cardinality, (Expr, ()))),
     _se_value(Expr, set),
     N = #count { Val : _set_contains(Expr, Val) },
-    not _se_value(operation(length, (Expr, ())), val(int, N)).
+    not _se_value(operation(cardinality, (Expr, ())), val(int, N)).
 
 %%%%%%%%%%%%%%%%% set_isin set_notin
 %%% we assume that none can be in the set

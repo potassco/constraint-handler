@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - rename set operator `length` to `cardinality`
 - - allow control over statement wellformedness checks with
     `phase_request(statement_wellformedCheck,BOOL)`
 - - drop support for `set_declare(X)`, the replacement being

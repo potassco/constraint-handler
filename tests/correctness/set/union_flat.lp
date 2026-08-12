@@ -7,8 +7,8 @@ variable_define(empty,operation(set_make,())).
 variable_define(ab,operation(union,(variable(a),(variable(b),())))).
 variable_define(with_empty,operation(union,(variable(a),(variable(empty),(variable(b),()))))).
 variable_define(empty_union,operation(union,(variable(empty),(variable(empty),())))).
-variable_define(len_ab,operation(length,(variable(ab),()))).
-variable_define(len_empty_union,operation(length,(variable(empty_union),()))).
+variable_define(len_ab,operation(cardinality,(variable(ab),()))).
+variable_define(len_empty_union,operation(cardinality,(variable(empty_union),()))).
 evaluate(eq,(variable(with_empty),(variable(ab),()))).
 
 variable_declare(nd,set).

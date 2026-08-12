@@ -9,3 +9,7 @@ variable_domain(x,val(string,"ab")).
 variable_domain(x,val(none,none)).
 variable_domain(x,bad).
 evaluate(length,(variable(x),())).
+
+#show value/2.
+%#show _se_value/2.
+#show evaluated/3.

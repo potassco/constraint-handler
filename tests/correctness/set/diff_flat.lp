@@ -7,8 +7,8 @@ variable_define(empty,operation(set_make,())).
 variable_define(ab,operation(diff,(variable(a),(variable(b),())))).
 variable_define(a_empty,operation(diff,(variable(a),(variable(empty),())))).
 variable_define(empty_a,operation(diff,(variable(empty),(variable(a),())))).
-variable_define(len_ab,operation(length,(variable(ab),()))).
-variable_define(len_empty_a,operation(length,(variable(empty_a),()))).
+variable_define(len_ab,operation(cardinality,(variable(ab),()))).
+variable_define(len_empty_a,operation(cardinality,(variable(empty_a),()))).
 
 variable_declare(nd,set).
 set_baseDomain(nd,val(int,2..3)).

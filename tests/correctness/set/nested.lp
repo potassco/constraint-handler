@@ -70,7 +70,7 @@ variable_define(n, operation(disj, (N12,(N2U,(NUI,(E14,())))))) :-
     N2U = operation(neq,(variable(s2),(variable(u),()))),
     NUI = operation(neq,(variable(u),(variable(i),()))),
     E14 = operation(eq,(variable(s1),(variable(s4),()))).
-variable_define(lsa, operation(length,(variable(sa),()))).
-variable_define(lsu, operation(length,(variable(su),()))).
-variable_define(lsi, operation(length,(variable(si),()))).
-variable_define(lse, operation(length,(variable(se),()))).
+variable_define(lsa, operation(cardinality,(variable(sa),()))).
+variable_define(lsu, operation(cardinality,(variable(su),()))).
+variable_define(lsi, operation(cardinality,(variable(si),()))).
+variable_define(lse, operation(cardinality,(variable(se),()))).

@@ -41,12 +41,12 @@ variable_define(duv,operation(diff,
                                   (variable(u),
                                   (variable(v),())))).
 
-variable_define(cduv,operation(length,(variable(duv),()))).
-variable_define(cu,operation(length,(variable(u),()))).
+variable_define(cduv,operation(cardinality,(variable(duv),()))).
+variable_define(cu,operation(cardinality,(variable(u),()))).
 
 variable_define(w,operation(set_make,
-                                  (operation(length,(variable(u),())),
-                                  (operation(add,(operation(length,(variable(v),())),(val(int,1),()))),
+                                  (operation(cardinality,(variable(u),())),
+                                  (operation(add,(operation(cardinality,(variable(v),())),(val(int,1),()))),
                                   (operation(set_isin,(variable(b),(variable(v),()))),
                                   (operation(set_notin,(val(bool,true),
                                                        (variable(u),()))),())))))).

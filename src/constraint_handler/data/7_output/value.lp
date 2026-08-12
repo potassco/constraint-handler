@@ -5,6 +5,7 @@ value(X,V) :- _se_value(variable(X),V), V != set, _passed(solve,LBL,variable_int
 evaluated(OP,ARGS,V) :- _evaluate(operation(OP,ARGS)), _shared_value(operation(OP,ARGS),V).
 
 _shared_value(E,V)    :- _passed((compile;compile2;ground),LBL,share_value(E)), _se_value(E,V).
+%_shared_value(E,V)    :- _passed(share,LBL,share_value(E)), _se_value(E,V).
 
 :- _passed((compile;compile2;ground),LBL,ensure(E)), not _shared_value(E,val(bool,true)), not _shared_value(E,bad).
 

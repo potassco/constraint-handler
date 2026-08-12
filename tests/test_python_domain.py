@@ -365,7 +365,7 @@ def test_apply_matches_evaluator_for_comparison_and_logic_operators(
     ("operation", "domains"),
     [
         (expression.StringOperator.concat, (build_domain("a", "b"), build_domain("", "z"))),
-        (expression.StringOperator.length, (build_domain("abc", (), frozenset({1, 2})),)),
+        (expression.StringOperator.length, (build_domain("abc"),)),
         (expression.ConditionalOperator.default, (build_domain(None, 1), build_domain(2, 3))),
         (expression.ConditionalOperator.hasValue, (build_domain(None, 1, frozenset({2})),)),
     ],
@@ -380,6 +380,7 @@ def test_apply_matches_evaluator_for_string_and_conditional_operators(
 @pytest.mark.parametrize(
     ("operation", "domains"),
     [
+        (operators.SetOperator.cardinality, (build_domain(frozenset(), frozenset({1, 2})),)),
         (operators.SetOperator.set_make, (build_domain(1, 2), build_domain("x"))),
         (operators.SetOperator.set_isin, (build_domain(1, 2), build_domain(frozenset({1}), frozenset({2, 3})))),
         (operators.SetOperator.set_notin, (build_domain(1, 2), build_domain(frozenset({1}), frozenset({2, 3})))),
@@ -413,7 +414,15 @@ def test_apply_tracks_numeric_corner_cases_and_type_mismatches() -> None:
 def test_apply_length_marks_invalid_scalar_inputs_bad_but_keeps_valid_lengths() -> None:
     domain = build_domain("abcd", frozenset({1, 2}), (1, 2, 3), 9, None)
 
-    assert Domain.apply(expression.StringOperator.length, domain) == Domain(is_bad=True, ints=frozenset({2, 3, 4}))
+    assert Domain.apply(expression.StringOperator.length, domain) == Domain(is_bad=True, ints=frozenset({3, 4}))
+
+
+def test_apply_length_marks_invalid_scalar_inputs_bad_but_keeps_valid_cardinality() -> None:
+    domain = build_domain("abcd", frozenset({1, 2}), (1, 2, 3), 9, None)
+
+    assert Domain.apply(expression.operators.SetOperator.cardinality, domain) == Domain(
+        is_bad=True, ints=frozenset({2})
+    )
 
 
 def test_apply_set_operations_use_complete_sets_and_nonset_values_mark_bad() -> None:
@@ -475,7 +484,7 @@ def test_apply_ordered_comparisons_use_extrema_shortcuts_without_changing_result
 def test_apply_length_coarsens_large_symbolic_set_domains_by_cardinality_range() -> None:
     domain = Domain.all_subsets(*range(8))
 
-    assert Domain.apply(expression.StringOperator.length, domain) == Domain(ints=frozenset(range(9)))
+    assert Domain.apply(expression.operators.SetOperator.cardinality, domain) == Domain(ints=frozenset(range(9)))
 
 
 def test_apply_set_operations_use_threshold_fallbacks_for_large_symbolic_domains() -> None:

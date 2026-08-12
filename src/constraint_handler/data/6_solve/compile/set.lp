@@ -3,8 +3,8 @@ _se_value(variable(X),ref(set,variable(X))) :- _passed(compile,LBL,variable_decl
 
 direct_query(E) :- _set_assign(X,E).
 
-%%%%%%%%%%%%%%%%% length
-_computedIdx(E,val(int,N)) :- _computeIdx(E,length), _computeIdx(E,0,ref(set,SET)),
+%%%%%%%%%%%%%%%%% cardinality
+_computedIdx(E,val(int,N)) :- _computeIdx(E,cardinality), _computeIdx(E,0,ref(set,SET)),
     N = #count { V : _set_contains(SET,V) }.
 
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
