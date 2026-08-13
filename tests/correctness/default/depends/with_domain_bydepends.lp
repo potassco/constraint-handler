@@ -1,6 +1,9 @@
 % Variant: default value for backwheel matches its explicit definition.
 default_mode(depends).
 
+variable_declare(frontwheel,open).
+variable_declare(backwheel,open).
+
 variable_domain(frontwheel,val(int,20)).
 variable_domain(frontwheel,val(int,21)).
 variable_domain(frontwheel,val(int,22)).

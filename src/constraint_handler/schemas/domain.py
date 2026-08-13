@@ -15,6 +15,10 @@ class BoolDomain(NamedTuple):
     pass
 
 
+class Open(NamedTuple):
+    pass
+
+
 class Set(NamedTuple):
     pass
 
@@ -23,4 +27,4 @@ class Multimap(NamedTuple):
     pass
 
 
-type Domain = Definition | BoolDomain | FromFacts | Set | Multimap
+type Domain = Definition | BoolDomain | FromFacts | Open | Set | Multimap
