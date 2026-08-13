@@ -29,8 +29,6 @@ _preference_expression/1.
 _preference_index/2.
 _preference_potentialAux/2.
 _preference_potentialScore/1.
-_finiteDomain_element/3.
-_finiteDomain_variable/2.
 _variable_guess/2.
 _variable_hasDomain/1.
 _variable_indexedDomain/3.

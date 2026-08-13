@@ -41,6 +41,5 @@ _default_hasDefault(X) :- _default_applies(X,D).
 
 _se_value(variable(X),V) :- _passed((compile;ground),LBL,variable_default(X,D,C)), _default_applies(X,D), _se_value(D,V).
 
-1 { _se_value(variable(X),V) : _passed(compile,LBLE,variable_domain(X,E)), _se_value(E,V);
-    _ge_assign(X,V) : _passed(ground,LBLE,variable_domain(X,E)), _se_value(E,V)  } 1 :-
+1 { _se_value(variable(X),V) : _passed((compile;ground),LBLE,variable_domain(X,E)), _se_value(E,V) } 1 :-
    _passed((compile;ground),LBL,variable_declare(X,open)), not _default_hasDefault(X), not _default_hasOverride(X).
