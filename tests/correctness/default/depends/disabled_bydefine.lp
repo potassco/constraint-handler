@@ -11,5 +11,3 @@ variable_domain(frontwheel,val(int,22)).
 variable_default(frontwheel,val(int,21),val(bool,true)).
 
 variable_define(frontwheel,val(int,20)).
-
-#show -_default_apply/3.
