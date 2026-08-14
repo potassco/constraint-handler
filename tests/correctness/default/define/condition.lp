@@ -5,11 +5,11 @@ default_mode(define).
 variable_declare(frontwheel,open).
 variable_declare(backwheel,open).
 
-variable_domain(frontwheel,val(int,10)).
-variable_domain(frontwheel,val(int,20)).
-variable_domain(frontwheel,val(int,30)).
+variable_default(frontwheel,val(int,10)).
+variable_default(frontwheel,val(int,20)).
+variable_default(frontwheel,val(int,30)).
 
-variable_default(frontwheel,val(int,20),operation(eq,(variable(backwheel),(val(int,1),())))).
+variable_default(frontwheel,val(int,20),operation(eq,(variable(backwheel),(val(int,1),()))),2).
 
 evaluate(add,(variable(frontwheel),(variable(backwheel),()))).
 
