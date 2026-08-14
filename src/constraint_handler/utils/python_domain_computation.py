@@ -486,6 +486,7 @@ class DomainComputation:
 
     VARIABLE_SOURCE_NAMES: ClassVar[frozenset[str]] = frozenset(
         {
+            "variable_assign",
             "variable_define",
             "variable_domain",
             "set_assign",
@@ -689,7 +690,7 @@ class DomainComputation:
             if not cls.is_function(expr, arity=2) or expr.name not in cls.VARIABLE_SOURCE_NAMES:
                 continue
             var, source_expr = expr.arguments
-            if expr.name in {"variable_define", "variable_domain"}:
+            if expr.name in {"variable_assign", "variable_define", "variable_domain"}:
                 variable_sources.setdefault(var, []).append(source_expr)
                 continue
             bucket = set_sources.setdefault(var, {"set_assign": [], "set_baseDomain": []})

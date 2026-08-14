@@ -12,4 +12,4 @@ variable_default(frontwheel,val(int,21),val(bool,true)).
 
 ensure(operation(eq,(variable(frontwheel),(variable(backwheel),())))).
 
-variable_define(backwheel,val(int,20)).
+variable_assign(backwheel,val(int,20)).

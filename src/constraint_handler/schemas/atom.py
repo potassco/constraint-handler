@@ -30,13 +30,21 @@ class Variable_define(NamedTuple):
     value: expression.Expr
 
 
+class Variable_default(NamedTuple):
+    label: expression.constant
+    name: expression.constant
+    value: expression.Expr
+    condition: expression.Expr
+    priority: expression.constant
+
+
 class Variable_domain(NamedTuple):
     label: expression.constant
     name: expression.constant
     value: expression.Expr
 
 
-type VariableAtom = Variable_declare | Variable_define | Variable_domain
+type VariableAtom = Variable_declare | Variable_define | Variable_default | Variable_domain
 
 
 class Bool_evaluate(NamedTuple):
@@ -105,12 +113,12 @@ class Optimize_maximizeSum(NamedTuple):
     label: expression.constant
     value: expression.Expr
     id: expression.constant
-    priority: expression.Expr | expression.constant
+    priority: expression.constant
 
 
 class Optimize_precision(NamedTuple):
     value: expression.Expr
-    priority: expression.Expr
+    priority: expression.constant
 
 
 type OptimizeAtom = Optimize_maximizeSum | Optimize_precision

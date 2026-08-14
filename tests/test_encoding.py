@@ -480,14 +480,7 @@ compile2_xfail: set[str] = {
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
-    "default/basic_true",
-    "default/define/condition",
-    "default/define/no_domain",
-    "default/define/single",
     "default/define/with_domain",
-    "default/define/with_domain_unsat",
-    "default/depends/condition",
-    "default/depends/no_domain",
     "default/depends/with_domain",
     "engine/request",
     "engine/request_set_ref",  # mixed engines?

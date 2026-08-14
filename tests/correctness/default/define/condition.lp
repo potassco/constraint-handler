@@ -13,4 +13,4 @@ variable_default(frontwheel,val(int,20),operation(eq,(variable(backwheel),(val(i
 
 evaluate(add,(variable(frontwheel),(variable(backwheel),()))).
 
-1 { variable_define(backwheel,val(int,(1;2))) } 1.
+1 { variable_assign(backwheel,val(int,(1;2))) } 1.

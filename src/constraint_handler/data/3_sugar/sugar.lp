@@ -26,11 +26,13 @@ _sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_define(X,E)).
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
 _sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
 
-%%%%%% variable default
-_passed(sugar,LBL,variable_default(X,D,C)) :- _passed(defaultArgs,LBL,variable_default(X,D,C)).
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_default(X,D,C)).
+%%%%%% variable assign
+_passed(sugar,LBL,variable_assign(X,E)) :- _passed(defaultArgs,LBL,variable_assign(X,E)).
+_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_assign(X,E)).
 
-%%%%%% variable default atoms
+%%%%%% variable default
+_passed(sugar,LBL,variable_default(X,D,C,P)) :- _passed(defaultArgs,LBL,variable_default(X,D,C,P)).
+_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_default(X,D,C,P)).
 
 
 %%%%%% multimap atoms
