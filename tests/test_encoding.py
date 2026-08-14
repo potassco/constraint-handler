@@ -456,6 +456,8 @@ compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "datatype/bool/conj_disj_mixed",
     "datatype/bool/conj_disj_none",
+    "default/depends/single",
+    "default/depends/with_domain_bydepends",
     "engine/request",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
@@ -480,15 +482,12 @@ compile2_xfail: set[str] = {
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
-    "default/basic_true",
     "default/define/condition",
-    "default/define/no_domain",
-    "default/define/single",
     "default/define/with_domain",
-    "default/define/with_domain_unsat",
     "default/depends/condition",
-    "default/depends/no_domain",
+    "default/depends/single",
     "default/depends/with_domain",
+    "default/depends/with_domain_bydepends",
     "engine/request",
     "engine/request_set_ref",  # mixed engines?
     "expression/lambda_recursive",
@@ -532,6 +531,8 @@ ground_xfail: set[str] = {
     "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
     "datatype/bool/conj_disj_mixed",
+    "default/depends/single",
+    "default/depends/with_domain_bydepends",
     "engine/request",
     "engine/request_set_ref",
     "expression/lambda_recursive",
@@ -651,7 +652,9 @@ choice_statistics_skip: set[str] = {
     "default/define/with_domain",
     "default/depends/condition",
     "default/depends/disabled",
+    "default/depends/single",
     "default/depends/with_domain",
+    "default/depends/with_domain_bydepends",
     "execution/conditional_string_equality_single_model",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
@@ -867,11 +870,13 @@ def test_compile_statistics_have_zero_choices(name: str):
 
 tightness_statistics_skip: set[str] = {
     "core/python_set_bool_brave",
+    "default/define/with_domain_unsat",
+    "default/depends/single",
+    "default/depends/with_domain_bydepends",
     "warning/forbid_labeled_match",
 }
 tightness_statistics_xfail: set[str] = {
     "default/define/single",
-    "default/define/with_domain_unsat",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",

@@ -29,6 +29,8 @@ active(CNAME,X,N-1) :- active(CNAME,X,N), N > 0.
 
 propagator_ensure(CNAME,operation(neq,(variable(X),(E,())))) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
 
+propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_assign(X,E)).
+%%propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_default(X,E,C,P)). %% TODO
 propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_define(X,E)).
 
 propagator_set_declare(CNAME,X) :- _passed(propagator,CNAME,variable_declare(X,set)).

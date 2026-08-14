@@ -13,31 +13,46 @@ _passed(defaultArgs,LBL,ensure(E)) :- ensure(LBL,E).
 _passed(defaultArgs,_label_anonymous,evaluate(OP,ARGS)) :- evaluate(OP,ARGS).
 _passed(defaultArgs,LBL,evaluate(OP,ARGS)) :- evaluate(LBL,OP,ARGS).
 
-%%%%%% variable atoms
+%%%%%% variable declare
 #defined variable_declare/2.
 #defined variable_declare/3.
-#defined variable_define/2.
-#defined variable_define/3.
-#defined variable_domain/2.
-#defined variable_domain/3.
-#defined variable_default/2.
-#defined variable_default/3.
-#defined variable_default/4.
 
 _defaultArgs_variableDeclared(X) :- variable_declare(X,E).
 _defaultArgs_variableDeclared(X) :- variable_declare(LBL,X,E).
 _passed(defaultArgs,_label_anonymous,variable_declare(X,E)) :- variable_declare(X,E).
 _passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(LBL,X,D).
 
+%%%%%% variable fromFacts
+#defined variable_domain/2.
+#defined variable_domain/3.
+
 _passed(defaultArgs,_label_anonymous,variable_domain(X,E)) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(LBL,X,E).
 
-_passed(defaultArgs,_label_anonymous,variable_default(X,E,val(bool,true))) :- variable_default(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,_label_anonymous,variable_default(X,E,C)) :- variable_default(X,E,C), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_default(X,E,val(bool,true))) :- variable_default(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_default(X,E,C)) :- variable_default(X,E,C), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_default(X,D,C)) :- variable_default(LBL,X,D,C).
+%%%%%% variable open
+#defined variable_assign/2.
+#defined variable_assign/3.
+#defined variable_default/2.
+#defined variable_default/3.
+#defined variable_default/4.
+#defined variable_default/5.
+
+_passed(defaultArgs,_label_anonymous,variable_default(X,E,val(bool,true),0)) :- variable_default(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_default(X,E,val(bool,true),0)) :- variable_default(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,_label_anonymous,variable_default(X,E,C,0)) :- variable_default(X,E,C), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_default(X,E,C,0)) :- variable_default(X,E,C), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,_label_anonymous,variable_default(X,E,C,P)) :- variable_default(X,E,C,P), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(X,E,C,P), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(LBL,X,E,C,P).
+
+_passed(defaultArgs,_label_anonymous,variable_assign(X,E)) :- variable_assign(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(LBL,X,E).
+
+%%%%%% variable definition
+#defined variable_define/2.
+#defined variable_define/3.
 
 _passed(defaultArgs,_label_anonymous,variable_define(X,E)) :- variable_define(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_define(X,E)) :- variable_define(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
