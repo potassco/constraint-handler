@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from abc import abstractmethod
 from collections.abc import Iterable
@@ -365,6 +367,9 @@ class VariableValue:
                 return False
 
         self.value, errors = evaluator.evaluate_expr(self.expr, env, evaluations.evaluations)
+        if isinstance(self.value, set):
+            self.value = frozenset(self.value)
+        # TODO: do the conversion of dicts to multimap.Multimap here also
 
         # TODO: delete this part when pandas df bug is fixed
         if getattr(self.value, "to_dict", False) and callable(getattr(self.value, "to_dict", False)):

@@ -580,7 +580,6 @@ propagator_xfail: set[str] = {
     "engine/request",
     "engine/request_mixed_trig",
     "expression/lambda_recursive",
-    "expression/python_extract/set_output",
     "multimap/main",
     "optimization/preferences",
     "python/set_output",
