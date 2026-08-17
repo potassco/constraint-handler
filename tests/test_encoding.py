@@ -465,10 +465,6 @@ compile_xfail: set[str] = {
     "unit/boolean_conj",
     "unit/boolean_disj",
     "unit/boolean_disj_none_bug",
-    "unit/string_geq",
-    "unit/string_gt",
-    "unit/string_leq",
-    "unit/string_lt",
     "unit/tuple_eq",
     "unit/tuple_neq",
 }
