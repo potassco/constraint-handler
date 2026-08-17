@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%% generic eq neq
-_computeIdxType(E,IDX,T) :- _computeIdx(E,IDX,val(T,_)).
+_computeIdxType(E,IDX,T) :- _computeIdx(E,IDX,val(T,V)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(T,V)), _computeIdx(E,1,val(T,V)),
     _type_extensionalEquality(T).
