@@ -1,3 +1,0 @@
-evaluated(leqv,(variable(x),(val(bool,false),())),val(bool,true))
-evaluated(leqv,(variable(x),(val(bool,false),())),val(bool,false))
-evaluated(leqv,(variable(x),(val(bool,false),())),bad)

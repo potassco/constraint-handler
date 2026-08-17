@@ -1,0 +1,2 @@
+evaluated(conj,(variable(x),(val(bool,false),())),val(bool,false))
+evaluated(disj,(variable(x),(val(bool,true),())),val(bool,true))

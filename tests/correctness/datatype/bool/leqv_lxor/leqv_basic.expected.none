@@ -1,0 +1,8 @@
+evaluated(leqv,(val(bool,true),(val(bool,true),())),val(bool,false))
+evaluated(leqv,(val(bool,true),(val(bool,true),())),bad)
+evaluated(leqv,(val(bool,false),(val(bool,true),())),val(bool,true))
+evaluated(leqv,(val(bool,false),(val(bool,true),())),bad)
+evaluated(leqv,(val(bool,true),(val(bool,false),())),val(bool,true))
+evaluated(leqv,(val(bool,true),(val(bool,false),())),bad)
+evaluated(leqv,(val(bool,false),(val(bool,false),())),val(bool,false))
+evaluated(leqv,(val(bool,false),(val(bool,false),())),bad)

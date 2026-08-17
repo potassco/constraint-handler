@@ -1,0 +1,9 @@
+evaluated(lxor,(val(bool,false),(val(bool,false),())),val(bool,true))
+evaluated(lxor,(val(bool,false),(val(bool,true),())),val(bool,false))
+evaluated(lxor,(val(bool,true),(val(bool,false),())),val(bool,false))
+evaluated(lxor,(val(bool,true),(val(bool,true),())),val(bool,true))
+
+evaluated(lxor,(val(bool,false),(val(bool,false),())),bad)
+evaluated(lxor,(val(bool,false),(val(bool,true),())),bad)
+evaluated(lxor,(val(bool,true),(val(bool,false),())),bad)
+evaluated(lxor,(val(bool,true),(val(bool,true),())),bad)
