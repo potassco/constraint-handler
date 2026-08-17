@@ -263,7 +263,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     changed = True
                     new_vars.add(var)
 
-            known_vars.union(new_vars)
+            known_vars.update(new_vars)
             rank += 1
 
     def ensure_pairs(
