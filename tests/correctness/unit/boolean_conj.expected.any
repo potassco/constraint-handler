@@ -1,6 +1,0 @@
-evaluated(conj,(variable(x),(val(bool,true),())),val(bool,true))
-evaluated(conj,(variable(x),(val(bool,true),())),val(none,none))
-evaluated(conj,(variable(x),(val(bool,true),())),bad)
-evaluated(conj,(variable(x),(val(none,none),())),val(none,none))
-evaluated(conj,(variable(x),(val(none,none),())),bad)
-evaluated(conj,(variable(x),(bad,())),bad)
