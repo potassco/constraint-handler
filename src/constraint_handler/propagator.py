@@ -243,7 +243,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             
     def get_variable_ranks(self) -> None:
         """
-        Variable get a rank based on rank of dependencies
+        Variables get a rank based on rank of dependencies
         """
 
         # loop over vars and get the ones without deps, those have rank 0
@@ -254,14 +254,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         rank = 0
         while changed:
             changed = False
+            new_vars = set()
             for var in self.symbol2var.keys():  # noqa: SIM118
                 if var in known_vars:
                     continue
                 if self.symbol2var.get_dependencies(var).issubset(known_vars):
                     self.var_ranks[var] = rank
                     changed = True
-                    known_vars.add(var)
+                    new_vars.add(var)
 
+            known_vars.union(new_vars)
             rank += 1
 
     def ensure_pairs(

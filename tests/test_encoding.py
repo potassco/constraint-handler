@@ -582,7 +582,6 @@ propagator_xfail: set[str] = {
     "expression/lambda_recursive",
     "multimap/main",
     "optimization/preferences",
-    "python/set_output",
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
