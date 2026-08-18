@@ -11,6 +11,9 @@ evaluate(lxor,(val(none,none),(val(bool,true),()))).
 evaluate(lxor,(val(none,none),(val(bool,false),()))).
 evaluate(lxor,(val(none,none),(val(none,none),()))).
 
+evaluate(leqv,(val(none,none),())).
+evaluate(lxor,(val(none,none),())).
+
 variable_declare(x,fromFacts).
 variable_domain(x,val(bool,true)).
 variable_domain(x,val(bool,false)).
