@@ -1,0 +1,8 @@
+evaluated(geq,(val(none,none),(val(string,"ab"),())),bad)
+evaluated(geq,(val(string,"aa"),(val(none,none),())),bad)
+evaluated(gt,(val(none,none),(val(string,"ab"),())),bad)
+evaluated(gt,(val(string,"aa"),(val(none,none),())),bad)
+evaluated(leq,(val(none,none),(val(string,"ab"),())),bad)
+evaluated(leq,(val(string,"aa"),(val(none,none),())),bad)
+evaluated(lt,(val(none,none),(val(string,"ab"),())),bad)
+evaluated(lt,(val(string,"aa"),(val(none,none),())),bad)

@@ -1,0 +1,4 @@
+evaluated(geq,(variable(x),(bad,())),bad)
+evaluated(gt,(variable(x),(bad,())),bad)
+evaluated(leq,(variable(x),(bad,())),bad)
+evaluated(gt,(variable(x),(bad,())),bad)

@@ -1,4 +1,0 @@
-evaluated(leq,(variable(x),(val(string,"aa"),())),val(bool,false))
-evaluated(leq,(variable(x),(val(string,"aa"),())),bad)
-evaluated(leq,(variable(x),(val(none,none),())),bad)
-evaluated(leq,(variable(x),(bad,())),bad)
