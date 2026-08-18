@@ -1,3 +1,0 @@
-evaluated(if,(variable(x),(val(int,1),())),val(int,1))
-evaluated(if,(variable(x),(val(int,1),())),bad)
-evaluated(if,(variable(x),(val(int,1),())),val(none,none))
