@@ -106,15 +106,19 @@ datatype_tests = [
     "datatype/int/nary_addition",
     "datatype/int/ordering_cross_type",
     "datatype/int/power",
-    "datatype/strings",
+    "datatype/string/mixed",
+    "datatype/string/length/bad",
+    "datatype/string/length/basic",
+    "datatype/string/length/none",
+    "datatype/string/length/variable",
     "datatype/string/order/bad",
-    "datatype/string/string_concat",
     "datatype/string/order/geq",
     "datatype/string/order/gt",
     "datatype/string/order/leq",
     "datatype/string/order/lt",
     "datatype/string/order/none",
     "datatype/string/order/variable",
+    "datatype/string/string_concat",
 ]
 
 default_tests = [
@@ -369,7 +373,6 @@ unit_tests = [
     "unit/unary/bad_ceil",
     "unit/unary/bad_floor",
     "unit/unary/bad_hasValue",
-    "unit/unary/bad_length",
     "unit/unary/bad_leqv",
     "unit/unary/bad_lnot",
     "unit/unary/bad_lxor",
@@ -395,7 +398,6 @@ unit_tests = [
     "unit/unary/int_minus",
     "unit/unary/int_mult",
     "unit/unary/set_length",
-    "unit/unary/string_length",
 ]
 
 variable_tests = [
@@ -645,8 +647,11 @@ choice_statistics_skip: set[str] = {
     "datatype/bool/leqv_lxor/none",
     "datatype/bool/leqv_lxor/variable",
     "datatype/int/nary_addition",
-    "datatype/string/string_concat",
+    "datatype/string/length/bad",
+    "datatype/string/length/variable",
     "datatype/string/order/variable",
+    "datatype/string/mixed",
+    "datatype/string/string_concat",
     "default/define/condition",
     "default/define/disabled",
     "default/define/single",
@@ -784,7 +789,6 @@ choice_statistics_xfail: set[str] = {
     "datatype/bool/equivalence_bad",
     "datatype/bool/evaluate",
     "datatype/bool/implication_bad",
-    "datatype/strings",
     "error/recovery_ensure",
     "execution/assert",
     "execution/change",
