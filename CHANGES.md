@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+## v0.0.4
+
 - - introduce `variable_declare(X,open)`, `variable_assign(X,E)`, and
     `variable_default(X,E,C,P)`
 - - rename set operator `length` to `cardinality`
