@@ -1,3 +1,0 @@
-evaluated(lxor,(val(bool,true),()),val(bool,true))
-evaluated(lxor,(val(none,none),()),bad)
-evaluated(lxor,(bad,()),bad)

@@ -1,3 +1,0 @@
-evaluated(leqv,(val(bool,true),()),val(bool,true))
-evaluated(leqv,(val(none,none),()),bad)
-evaluated(leqv,(bad,()),bad)
