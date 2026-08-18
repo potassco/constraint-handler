@@ -1,0 +1,4 @@
+evaluated(geq,(val(string,"aa"),(bad,())),bad)
+evaluated(gt,(val(string,"aa"),(bad,())),bad)
+evaluated(leq,(val(string,"aa"),(bad,())),bad)
+evaluated(lt,(val(string,"aa"),(bad,())),bad)
