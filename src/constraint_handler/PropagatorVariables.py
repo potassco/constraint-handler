@@ -367,12 +367,15 @@ class VariableValue:
                 return False
 
         self.value, errors = evaluator.evaluate_expr(self.expr, env, evaluations.evaluations)
+        # TODO: do the conversion of dicts to multimap.Multimap here also
         if isinstance(self.value, set):
             self.value = frozenset(self.value)
-        # TODO: do the conversion of dicts to multimap.Multimap here also
+        elif callable(getattr(self.value, "item", False)):
+            # convert numpy types to python types
+            self.value = self.value.item()
 
         # TODO: delete this part when pandas df bug is fixed
-        if getattr(self.value, "to_dict", False) and callable(getattr(self.value, "to_dict", False)):
+        elif getattr(self.value, "to_dict", False) and callable(getattr(self.value, "to_dict", False)):
             self.value = self.value.to_dict()
 
         for error, msg in errors:
