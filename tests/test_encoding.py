@@ -116,6 +116,10 @@ datatype_tests = [
     "datatype/int/ordering_cross_type",
     "datatype/int/power",
     "datatype/string/mixed",
+    "datatype/string/concat/bad",
+    "datatype/string/concat/basic",
+    "datatype/string/concat/none",
+    "datatype/string/concat/variable",
     "datatype/string/length/bad",
     "datatype/string/length/basic",
     "datatype/string/length/none",
@@ -127,7 +131,6 @@ datatype_tests = [
     "datatype/string/order/lt",
     "datatype/string/order/none",
     "datatype/string/order/variable",
-    "datatype/string/string_concat",
 ]
 
 default_tests = [
@@ -643,11 +646,11 @@ choice_statistics_skip: set[str] = {
     "datatype/conditional/if/variable",
     "datatype/conditional/orElse/variable",
     "datatype/int/nary_addition",
+    "datatype/string/concat/variable",
     "datatype/string/length/bad",
     "datatype/string/length/variable",
     "datatype/string/order/variable",
     "datatype/string/mixed",
-    "datatype/string/string_concat",
     "default/define/condition",
     "default/define/disabled",
     "default/define/single",
