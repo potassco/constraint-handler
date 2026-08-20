@@ -15,3 +15,6 @@ evaluated(eq,(operation(float_div,(val(int,6),(val(int,2),()))),(val(float,float
 evaluated(eq,(operation(float_div,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),())),val(bool,true))
 evaluated(eq,(val(int,1),(val(float,float("1.0")),())),val(bool,true))
 evaluated(neq,(val(int,1),(val(float,float("1.0")),())),val(bool,false))
+evaluated(eq,(operation(minus,(val(int,-8),())),(val(int,8),())),val(bool,true))
+evaluated(neq,(operation(minus,(val(int,2),())),(val(int,2),())),val(bool,true))
+evaluated(neq,(operation(minus,(operation(minus,(val(int,2),())),())),(val(int,2),())),val(bool,false))

@@ -23,3 +23,6 @@ evaluate(eq,(operation(float_div,(val(int,6),(val(int,2),()))),(val(float,float(
 evaluate(eq,(operation(float_div,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),()))).
 evaluate(eq,(val(int,1),(val(float,float("1.0")),()))).
 evaluate(neq,(val(int,1),(val(float,float("1.0")),()))).
+evaluate(eq,(operation(minus,(val(int,-8),())),(val(int,8),()))).
+evaluate(neq,(operation(minus,(val(int,2),())),(val(int,2),()))).
+evaluate(neq,(operation(minus,(operation(minus,(val(int,2),())),())),(val(int,2),()))).

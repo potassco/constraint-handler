@@ -1,0 +1,2 @@
+evaluated(minus,(val(none,none),()),val(int,0))
+evaluated(minus,(val(none,none),()),val(none,none))
