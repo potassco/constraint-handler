@@ -1,0 +1,4 @@
+evaluated(add,(val(float,float("1.5")),(val(none,none),())),val(float,float("1.5")))
+evaluated(add,(val(float,float("1.5")),(val(none,none),())),val(none,none))
+evaluated(add,(val(none,none),(val(float,float("1.5")),())),val(float,float("1.5")))
+evaluated(add,(val(none,none),(val(float,float("1.5")),())),val(none,none))
