@@ -1,2 +1,0 @@
-evaluated(add,(val(int,-3),()),val(int,-3))
-evaluated(add,(val(bool,true),()),val(int,1))

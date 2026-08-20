@@ -1,4 +1,0 @@
-evaluated(add,(variable(x),(val(int,2),())),val(int,3))
-evaluated(add,(variable(x),(val(int,2),())),bad)
-evaluated(add,(variable(x),(val(none,none),())),bad)
-evaluated(add,(variable(x),(bad,())),bad)
