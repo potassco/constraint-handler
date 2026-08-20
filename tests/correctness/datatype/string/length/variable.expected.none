@@ -1,0 +1,5 @@
+evaluated(length,(variable(x),()),val(int,3))
+evaluated(length,(variable(x),()),val(int,4))
+evaluated(length,(variable(y),()),val(int,0))
+evaluated(length,(variable(y),()),val(int,2))
+evaluated(length,(variable(y),()),bad)

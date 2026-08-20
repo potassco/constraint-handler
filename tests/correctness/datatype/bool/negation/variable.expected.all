@@ -1,0 +1,2 @@
+evaluated(wnot,(variable(y),()),val(bool,true))
+evaluated(snot,(variable(z),()),val(bool,false))

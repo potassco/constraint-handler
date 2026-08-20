@@ -1,0 +1,8 @@
+evaluated(leqv,(val(bool,true),(bad,())),bad)
+evaluated(leqv,(val(bool,false),(bad,())),bad)
+evaluated(leqv,(bad,(bad,())),bad)
+evaluated(leqv,(bad,()),bad)
+evaluated(lxor,(val(bool,true),(bad,())),bad)
+evaluated(lxor,(val(bool,false),(bad,())),bad)
+evaluated(lxor,(bad,(bad,())),bad)
+evaluated(lxor,(bad,()),bad)

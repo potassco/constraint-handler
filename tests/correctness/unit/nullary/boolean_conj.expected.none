@@ -1,3 +1,0 @@
-evaluated(conj,(),val(bool,false))
-evaluated(conj,(),val(none,none))
-evaluated(conj,(),bad)
