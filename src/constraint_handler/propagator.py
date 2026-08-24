@@ -1,14 +1,20 @@
 import operator
 import sys
-from collections.abc import Iterable, Sequence
 from itertools import product
-from typing import Any, Literal, cast
+from typing import Any, Iterable, Literal, Sequence, cast
 
 import clingo
 from clingo import Symbol
 
+import constraint_handler.evaluator as evaluator
+import constraint_handler.multimap as multimap
+import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.internal as internal
 import constraint_handler.schemas.propagator_atom as prop_atom
-from constraint_handler import evaluator, multimap, myClorm
+import constraint_handler.schemas.type_ as type_
+import constraint_handler.schemas.warning as warning
 from constraint_handler.PropagatorConstants import (
     OPTIMIZATION_HELPER_PROGRAM,
     OPTIMIZATION_STAGE_ATOM,
@@ -35,7 +41,6 @@ from constraint_handler.PropagatorVariables import (
     VariableManager,
     VariableType,
 )
-from constraint_handler.schemas import atom, expression, internal, type_, warning
 
 
 class ConstraintHandlerPropagator(clingo.Propagator):
@@ -240,10 +245,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         for lit in self.watches:
             ctl.add_watch(lit)
-            
+
     def get_variable_ranks(self) -> None:
         """
-        Variables get a rank based on rank of dependencies
+        Variable get a rank based on rank of dependencies
         """
 
         # loop over vars and get the ones without deps, those have rank 0
@@ -254,16 +259,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         rank = 0
         while changed:
             changed = False
-            new_vars = set()
             for var in self.symbol2var.keys():  # noqa: SIM118
                 if var in known_vars:
                     continue
                 if self.symbol2var.get_dependencies(var).issubset(known_vars):
                     self.var_ranks[var] = rank
                     changed = True
-                    new_vars.add(var)
+                    known_vars.add(var)
 
-            known_vars.update(new_vars)
             rank += 1
 
     def ensure_pairs(
@@ -668,7 +671,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return
 
         if self.check_only:
-<<<<<<< HEAD
             # Since there are no watches, undo is never called
             # Hence, we undo stuff here
             # This is probably severly inefficient as we re-evaluate everything every time
@@ -676,16 +678,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.symbol2var.reset(0)
             self.optimization_sum.reset(0)
 
-        to_evaluate: dict[VariableType, set[int] | None] = {var: None for var in self.symbol2var.get_variables()}
-
-        backtrack = self.evaluated_solver_assignment(control, to_evaluate)
-=======
             to_evaluate: dict[VariableType, set[int] | None] = {}
             for var in self.symbol2var.get_variables():
                 if var.get_value() == ValueStatus.NOT_SET:
                     # print("var checking in check: ", var)
                     to_evaluate[var] = None
->>>>>>> 99d4445d (Improve performance when evaluating assignments during propagation)
 
             backtrack = self.evaluated_solver_assignment(control, to_evaluate)
 
