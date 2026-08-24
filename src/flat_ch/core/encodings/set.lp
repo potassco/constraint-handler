@@ -63,9 +63,9 @@ _fch_set_member(OP_ID, TYPE, VAL) :-
     not _fch_static_set_make_arg(EXPR_ID),
     _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL).
 
-% `length` of a set evaluates to its total size.
+% `cardinality` of a set evaluates to its total size.
 _fch_dynamic_expr_val(OP_ID, _fch_type_int_id, SIZE) :-
-    _fch_op_length(OP_ID, A1),
+    _fch_op_cardinality(OP_ID, A1),
     _fch_dynamic_expr_val(A1, _fch_type_set_id, SET_NAME),
     _fch_set_size(SET_NAME, SIZE).
 

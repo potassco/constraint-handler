@@ -59,6 +59,7 @@
 #const _fch_op_concat_id = 43.
 #const _fch_op_float_from_int_id = 44.
 #const _fch_op_int_from_float_id = 45.
+#const _fch_op_cardinality_id = 46.
 
 %% --- Float Constants ---
 #const _fch_float_remainder_scale = 1000000000.
