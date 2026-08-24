@@ -149,11 +149,12 @@ def _build_fch_environment(environment):
     return merged_environment
 
 
-def add_to_control(ctrl: clingo.Control,
-   
+def add_to_control(
+    ctrl: clingo.Control,
     environment=None,
     _environment_ids=dict(),
-    api: str = "ch",):
+    api: str = "ch",
+):
     """Adds encoding logic to the provided Control instance. The environment argumennt specifies the locals used in the python statements and expressions."""
     if api == "fch":
         flat_main.add_to_control(ctrl, _build_fch_environment(environment), api="ch")

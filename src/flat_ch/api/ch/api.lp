@@ -177,6 +177,10 @@ set_value(NAME, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
 set_value(NAME, val(string, VALUE)) :- set_member(NAME, string, VALUE).
 set_value(NAME, val(bool, VALUE)) :- set_member(NAME, bool, VALUE).
 
+set_value(NAME, VALUE) :-
+	_fch_var_direct_alias(NAME, TARGET_NAME),
+	set_value(TARGET_NAME, VALUE).
+
 set_value(NAME, val(none, none)) :-
 	_fch_dynamic_var_def(NAME, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_set_id, SET_ID),
