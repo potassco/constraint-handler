@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import clingo
 
-from flat_ch.core.serialization import normalize_float_str
+from flat_ch.core.serialization import FLOAT_REMAINDER_SCALE, normalize_float_str
 from flat_ch.core.types import Type
 
 
@@ -68,7 +68,7 @@ class OptimizationScore:
                 weight = precision if value.name == "true" else 0
             elif type_id == float_type_sym:
                 int_part, remainder = value.arguments
-                numeric = int_part.number + remainder.number / 1_000_000_000
+                numeric = int_part.number + remainder.number / FLOAT_REMAINDER_SCALE
                 weight = int(numeric * precision // 1)
             else:
                 continue
