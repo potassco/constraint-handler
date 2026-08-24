@@ -6,7 +6,12 @@ from clingo.symbol import SymbolType
 
 from flat_ch.api.ch.registration import Registration
 from flat_ch.api.ch.serialization import CHSerializer
-from flat_ch.core.serialization import BaseSerializer, float_parts_to_python, normalize_float_str
+from flat_ch.core.serialization import (
+    FLOAT_REMAINDER_SCALE,
+    BaseSerializer,
+    float_parts_to_python,
+    normalize_float_str,
+)
 from flat_ch.core.evaluation.evaluator import evaluate_operation
 from flat_ch.core.evaluation.python import PythonRegistry
 from flat_ch.core.flattener import Flattener
@@ -22,7 +27,7 @@ _DEBUG = os.environ.get("FCH_DEBUG", "").lower() in {"1", "true", "yes", "on"}
 
 def _float_symbol_to_python(value):
     if value.type == SymbolType.Function and value.name == "float" and len(value.arguments) >= 2:
-        return value.arguments[0].number + (value.arguments[1].number / 1_000_000_000)
+        return value.arguments[0].number + (value.arguments[1].number / FLOAT_REMAINDER_SCALE)
     if value.type == SymbolType.Function and value.name == "float" and len(value.arguments) == 1:
         inner = value.arguments[0]
         if inner.type == SymbolType.Number:
@@ -31,7 +36,7 @@ def _float_symbol_to_python(value):
             return float(inner.string)
         return float(str(inner))
     if value.type == SymbolType.Function and len(value.arguments) >= 2:
-        return value.arguments[0].number + (value.arguments[1].number / 1_000_000_000)
+        return value.arguments[0].number + (value.arguments[1].number / FLOAT_REMAINDER_SCALE)
     if value.type == SymbolType.Number:
         return float(value.number)
     return float(value.string)

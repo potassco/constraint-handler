@@ -16,6 +16,7 @@ from flat_ch.core.evaluation.evaluator import evaluate_operation
 from flat_ch.api.flat.registration import Registration
 from flat_ch.core.registry import ProgramRegistry, native_static_result
 from flat_ch.core.evaluation.python import PythonRegistry
+from flat_ch.core.serialization import FLOAT_REMAINDER_SCALE
 _global_serializer = FCHSerializer()
 _global_python_registry = PythonRegistry()
 _global_flattener = Flattener(_global_python_registry, _global_serializer, constant_folding=False)
@@ -47,7 +48,7 @@ def fch_py_operation(operation_symbol, argument_list):
 
 def _float_symbol_to_python(value):
     if value.type == 5 and len(value.arguments) >= 2:
-        return value.arguments[0].number + (value.arguments[1].number / 1_000_000_000)
+        return value.arguments[0].number + (value.arguments[1].number / FLOAT_REMAINDER_SCALE)
     return float(value.string)
 
 def fch_scaled_float_to_int(value, precision):
