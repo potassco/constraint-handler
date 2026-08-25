@@ -587,7 +587,6 @@ propagator_xfail: set[str] = {
     "set/selfref",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
-    "type/warning/python_unsupported_type",
     "warning/bad_interface",
 }
 
