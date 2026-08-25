@@ -1050,7 +1050,18 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 elif result:
                     # variable changed, evaluate parents
                     for parent in var.parents:
-                        parent_rank = self.var_ranks[parent.var]
+                        try:
+                            parent_rank = self.var_ranks[parent.var]
+                        except KeyError:
+                            # parent is not a variable we know about, skip it
+                            # TODO: this is relevant for multi engine solving
+                            # if a variable is a set that is defined from some operation then the _se_value
+                            # is just the operation, which means that the vars that are parents are still used in the propagator even when they should not be
+                            # so, when those variables get a value, the variable is attempted to be added here
+                            # but it is not in the propagator since it does not have parents itself
+                            # How to fix this?
+                            print("var does not exist!?!", parent.var)
+                            continue
                         if parent_rank not in eval_by_rank:
                             eval_by_rank.setdefault(parent_rank, set())
                             max_rank = max(max_rank, parent_rank)
@@ -1112,7 +1123,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         if seen is None:
             seen = set()
-        reasons = var.literals
+        reasons = var.active_literals
         for dvar in var.vars():
             if dvar not in self.symbol2var:
                 continue
@@ -1173,9 +1184,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     self.symbol2var.add_variable(_name, SetVariable(OTHER_ENGINE_VAR_NAME, _name, _literal))
                     self.add_watch(_literal)
                     self.add_watch(-_literal)
+                    self.literal2var.setdefault(_literal, []).append(
+                        self.symbol2var.get_variable(_name, getattr(SetVariable, "__name__"))
+                    )
                     continue
                 # If the value references something else, or it is not a reference,
                 # we make a normal variable and add the value to it,
+                # TODO: Check that this is done ONCE per variable!
+                # make a test with multiple values of other engines variables
                 self.symbol2var.add_variable(_name, Variable(OTHER_ENGINE_VAR_NAME, _name))
 
             variable: Variable = cast(Variable, self.symbol2var.get_variable(_name, getattr(Variable, "__name__")))
@@ -1185,6 +1201,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.add_watch(_literal)
             self.add_watch(-_literal)
+            self.literal2var.setdefault(_literal, []).append(
+                self.symbol2var.get_variable(_name, getattr(Variable, "__name__"))
+            )
 
         for (name, val_set), _literal in set_value_atoms.items():
             if not isinstance(name, expression.Variable):
@@ -1208,6 +1227,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             set_variable.add_value(expr, _literal)
             self.add_watch(_literal)
             self.add_watch(-_literal)
+            self.literal2var.setdefault(_literal, []).append(
+                self.symbol2var.get_variable(_name, getattr(SetVariable, "__name__"))
+            )
 
         for (name, key, val), _literal in multimap_value_atoms.items():
             if name not in self.symbol2var:
@@ -1226,6 +1248,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.add_watch(_literal)
             self.add_watch(-_literal)
+            self.literal2var.setdefault(_literal, []).append(
+                self.symbol2var.get_variable(name, getattr(DictVariable, "__name__"))
+            )
 
     def get_variable_interface(self, ctl: clingo.PropagateInit):
 
@@ -1553,6 +1578,20 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for var in useless_other_engine_vars:
             # Variable is an compile/ground engine variable with no parents, removing it since it is useless for us
             self.symbol2var.delete_variable(var.var)
+
+            # Now we delete this variable from the literal2var mapping
+            for lit in var.literals:
+                if lit in self.literal2var:
+                    # Should not fail
+                    self.literal2var[lit].remove(var)
+            for expr in var.expressions:
+                for lit in expr.literals:
+                    if lit in self.literal2var:
+                        try:
+                            # might already be removed if lit is the same as other expr or the domain lit
+                            self.literal2var[lit].remove(var)
+                        except ValueError:
+                            pass
 
     def update_python_model(self):
         """
