@@ -1,0 +1,4 @@
+evaluated(abs,(variable(x),()),val(float,float("1.5")))
+evaluated(abs,(variable(x),()),val(float,float("3.7")))
+evaluated(abs,(variable(x),()),val(float,float("4.0")))
+evaluated(abs,(variable(x),()),bad)

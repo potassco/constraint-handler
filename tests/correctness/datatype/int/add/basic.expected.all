@@ -1,2 +1,4 @@
+evaluated(add,(val(int,2),(val(int,3),())),val(int,5))
+evaluated(add,(val(int,5),(val(int,5),())),val(int,10))
 evaluated(add,(val(int,2),(val(bool,true),())),val(int,3))
 evaluated(add,(val(int,2),(val(bool,false),())),val(int,2))

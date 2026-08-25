@@ -1,0 +1,7 @@
+evaluated(mult,(),val(int,1))
+evaluated(mult,(val(int,-3),()),val(int,-3))
+evaluated(mult,(val(bool,true),()),val(int,1))
+evaluated(mult,(val(bool,false),()),val(int,0))
+evaluated(mult,(val(int,3),(val(int,2),(val(int,4),()))),val(int,24))
+evaluated(mult,(val(int,10),(val(int,2),(val(int,10),(val(int,10),())))),val(int,2000))
+evaluated(mult,(val(int,-3),(val(int,2),(val(bool,true),()))),val(int,-6))

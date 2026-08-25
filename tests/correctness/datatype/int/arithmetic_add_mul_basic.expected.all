@@ -1,6 +1,0 @@
-value(x,val(int,20))
-evaluated(mult,(),val(int,1))
-evaluated(mult,(variable(ten),()),val(int,10))
-evaluated(mult,(variable(two),(variable(ten),())),val(int,20))
-evaluated(mult,(variable(ten),(variable(two),())),val(int,20))
-evaluated(mult,(variable(ten),(variable(two),(variable(two),(variable(ten),())))),val(int,400))

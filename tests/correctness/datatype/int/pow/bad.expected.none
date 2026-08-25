@@ -1,0 +1,2 @@
+evaluated(pow,(val(int,2),(bad,())),val(int,1))
+evaluated(pow,(bad,(val(int,3),())),val(int,1))

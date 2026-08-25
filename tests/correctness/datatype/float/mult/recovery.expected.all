@@ -1,0 +1,2 @@
+evaluated(mult,(val(float,float("0.0")),(bad,())),val(float,float("0.0")))
+evaluated(mult,(bad,(val(float,float("0.0")),())),val(float,float("0.0")))

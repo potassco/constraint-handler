@@ -1,2 +1,0 @@
-evaluated(abs,(variable(x),()),val(float,float("1.5")))
-evaluated(abs,(variable(x),()),bad)

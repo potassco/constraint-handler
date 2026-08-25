@@ -1,0 +1,4 @@
+evaluated(pow,(val(float,float("2.5")),(bad,())),val(int,1))
+evaluated(pow,(bad,(val(float,float("3.1")),())),val(int,1))
+evaluated(pow,(val(float,float("2.5")),(bad,())),val(float,float("1.0")))
+evaluated(pow,(bad,(val(float,float("3.1")),())),val(float,float("1.0")))
