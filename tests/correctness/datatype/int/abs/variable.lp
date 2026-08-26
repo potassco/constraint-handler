@@ -1,11 +1,5 @@
 phase_request(constantFolding,false).
 
-evaluate(abs,(val(int,-3),())).
-evaluate(abs,(val(int,2),())).
-evaluate(abs,(val(none,none),())).
-evaluate(abs,(bad,())).
-
-
 variable_declare(x,fromFacts).
 variable_domain(x,val(int,-3)).
 variable_domain(x,val(int,2)).
