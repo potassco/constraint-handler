@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import sys
 from abc import abstractmethod
+from collections.abc import Iterable
 from itertools import product
-from typing import Any, Iterable, Protocol
+from typing import Any, Protocol
 
 import clingo
 
-import constraint_handler.evaluator as evaluator
-import constraint_handler.multimap as multimap
-import constraint_handler.myClorm as myClorm
-import constraint_handler.schemas.expression as expression
-import constraint_handler.schemas.warning as warning
+from constraint_handler import evaluator, multimap, myClorm
 from constraint_handler.PropagatorConstants import (
     DEFAULT_DECISION_LEVEL,
     EvaluationResult,
@@ -19,6 +16,7 @@ from constraint_handler.PropagatorConstants import (
     evaluations_type,
     propagator_warning_t,
 )
+from constraint_handler.schemas import expression, warning
 
 
 def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warning.Warning | None:
@@ -64,6 +62,10 @@ class VariableType(Protocol):
     @property
     @abstractmethod
     def literals(self) -> set[int]: ...
+
+    @property
+    @abstractmethod
+    def active_literals(self) -> set[int]: ...
 
     @property
     @abstractmethod
@@ -370,9 +372,16 @@ class VariableValue:
 
         self.value, errors = evaluator.evaluate_expr(self.expr, env, evaluations.evaluations)
 
-        # TODO: delete this part when pandas df bug is fixed
-        if getattr(self.value, "to_dict", False) and callable(getattr(self.value, "to_dict", False)):
-            self.value = self.value.to_dict()
+        if isinstance(self.value, set):
+            self.value = frozenset(self.value)
+        elif isinstance(self.value, (multimap.Multimap, dict)):
+            pass
+        else:
+            res, err = evaluator.reducedExpr(self.value)
+            if res == expression.Bad.bad:
+                self.value = expression.Bad.bad
+                for error, msg in err:
+                    self.errors.append(warning.Warning(error, (), repr(msg)))
 
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
@@ -413,6 +422,16 @@ class VariableValue:
 
     @property
     def literals(self) -> set[int]:
+        """
+        Return the literal associated with this expression
+
+        Returns:
+            set[int]: A singleton set containing the literal
+        """
+        return {self.literal}
+
+    @property
+    def active_literals(self) -> set[int]:
         """
         Return the literal that represents the current value.
 
@@ -702,10 +721,7 @@ class EnsureVariable:
             dict[clingo.Symbol, set[Any]]: A dictionary mapping the variable's symbolic representation to a set of values that result in either True or Bad.
         """
         res = evaluator.evaluate_expr(self.expression.expr, env, evaluations)[0]
-        if res is True or res == expression.Bad.bad:
-            return True
-
-        return False
+        return bool(res is True or res == expression.Bad.bad)
 
     def asses_dependencies_values(
         self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]
@@ -802,12 +818,22 @@ class EnsureVariable:
     @property
     def literals(self) -> set[int]:
         """
+        Return the literal associated with this expression
+
+        Returns:
+            set[int]: A singleton set containing the literal
+        """
+        return self.expression.literals
+
+    @property
+    def active_literals(self) -> set[int]:
+        """
         Return signed literals that give the current value of the ensure variable.
 
         Returns:
             set[int]: Set of signed literals.
         """
-        return self.expression.literals
+        return self.expression.active_literals
 
     def reset(self, dl: int) -> None:
         """
@@ -992,14 +1018,14 @@ class BoolEvaluateVariable:
         self.expression.reset(dl)
 
     @property
-    def literals(self) -> set[int]:
+    def active_literals(self) -> set[int]:
         """
         Return signed literals that give the current value of the boolean evaluation variable.
 
         Returns:
             set[int]: Set of signed literals.
         """
-        return self.expression.literals
+        return self.expression.active_literals
 
     @property
     def decision_level(self) -> int:
@@ -1263,12 +1289,11 @@ class Variable:
                 changed |= value.evaluate(evaluations, ctl, env)
         else:
             for lit in expr_lits:
-                if lit in self.domain_literals:
-                    continue
                 if lit < 0:
                     continue
-                assert lit in self.lit2expr, f"Literal {lit} not found in variable {self.name}"
-                changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
+
+                if lit in self.lit2expr:
+                    changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
 
         if not changed:
             return EvaluationResult.NOT_CHANGED
@@ -1332,18 +1357,43 @@ class Variable:
         ]
         return vals
 
+    def get_literals(self, active):
+        """
+        Return the literal associated with this expression
+
+        Args:
+            active: Whether to return active (signed) literals that give this variable its value or all literals.
+
+        Returns:
+            set[int]: A singleton set containing the literal
+        """
+        lits: set[int] = set()
+        for value in self.expressions:
+            if active:
+                lits.update(value.active_literals)
+            else:
+                lits.update(value.literals)
+        return lits
+
     @property
     def literals(self) -> set[int]:
+        """
+        Return the literal associated with this expression
+
+        Returns:
+            set[int]: A singleton set containing the literal
+        """
+        return self.get_literals(active=False)
+
+    @property
+    def active_literals(self) -> set[int]:
         """
         Return signed literals implied by all candidate values.
 
         Returns:
             set[int]: Set of signed literals.
         """
-        lits = set()
-        for value in self.expressions:
-            lits.update(value.literals)
-        return lits
+        return self.get_literals(active=True)
 
     def reset(self, dl: int) -> None:
         """
@@ -1444,18 +1494,43 @@ class SetVariableValue:
             errors.extend(var_value.get_errors())
         return errors
 
+    def get_literals(self, active: bool) -> set[int]:
+        """
+        Return the literals associated with the set elements.
+
+        Args:
+            active: Whether to return active (signed) literals that give this variable its value or all literals.
+
+        Returns:
+            set[int]: Set of literals.
+        """
+        lits: set[int] = set()
+        for value in self.expressions:
+            if active:
+                lits.update(value.active_literals)
+            else:
+                lits.update(value.literals)
+        return lits
+
     @property
     def literals(self) -> set[int]:
+        """
+        Return the literal associated with this expression
+
+        Returns:
+            set[int]: A singleton set containing the literal
+        """
+        return self.get_literals(active=False)
+
+    @property
+    def active_literals(self) -> set[int]:
         """
         Return signed literals implied by currently evaluated set elements.
 
         Returns:
             set[int]: Set of signed literals.
         """
-        lits = set()
-        for value in self.expressions:
-            lits.update(value.literals)
-        return lits
+        return self.get_literals(active=True)
 
     def get_value(self) -> ValueStatus | frozenset[Any]:
         """
@@ -1624,8 +1699,33 @@ class SetVariable:
 
         return errors
 
+    def get_literals(self, active: bool) -> set[int]:
+        """
+        Return the literals associated with the set variable.
+
+        Args:
+            active: Whether to return active (signed) literals that give this variable its value or all literals.
+
+        Returns:
+            set[int]: Set of literals.
+        """
+        lits = self.set_expressions.get_literals(active)
+        return lits
+
     @property
     def literals(self) -> set[int]:
+        """
+        Return the literal associated with this expression
+
+        Returns:
+            set[int]: A singleton set containing the literal
+        """
+        lits = self.get_literals(active=False)
+        lits.add(self.literal)
+        return lits
+
+    @property
+    def active_literals(self) -> set[int]:
         """
         Return literals relevant for this variable's current state.
 
@@ -1635,7 +1735,7 @@ class SetVariable:
         Returns:
             set[int]: Set of literals.
         """
-        lits = self.set_expressions.literals
+        lits = self.get_literals(active=True)
         if self.assigned is not None:
             if self.assigned:
                 lits.add(self.literal)
@@ -1973,8 +2073,41 @@ class DictVariable:
 
         return errors + self.errors
 
+    def get_literals(self, active: bool) -> set[int]:
+        """
+        Return the literals associated with the dict variable.
+
+        Args:
+            active: Whether to return active (signed) literals that give this variable its value or all literals.
+
+        Returns:
+            set[int]: Set of literals.
+        """
+        lits = set()
+        for key, value in self.dict_expressions.items():
+            if active:
+                lits.update(value.active_literals)
+                lits.update(key.active_literals)
+            else:
+                lits.update(value.literals)
+                lits.update(key.literals)
+
+        return lits
+
     @property
     def literals(self) -> set[int]:
+        """
+        Return the literal associated with this expression
+
+        Returns:
+            set[int]: A singleton set containing the literal
+        """
+        lits = self.get_literals(active=False)
+        lits.add(self.literal)
+        return lits
+
+    @property
+    def active_literals(self) -> set[int]:
         """
         Return literals relevant for this variable's current state.
 
@@ -1984,10 +2117,7 @@ class DictVariable:
         Returns:
             set[int]: Set of literals.
         """
-        lits = set()
-        for key, value in self.dict_expressions.items():
-            lits.update(value.literals)
-            lits.update(key.literals)
+        lits = self.get_literals(active=True)
 
         if self.assigned is not None:
             if self.assigned:
@@ -2294,18 +2424,43 @@ class OptimizationSum:
         """
         self.opt_expressions.append((var, VariableValue(expr, lit)))
 
-    @property
-    def literals(self) -> set[int]:
+    def get_literals(self, active: bool) -> set[int]:
         """
-        Get all literals associated with the optimization sum that gave it its current value.
+        Get all literals associated with the optimization sum.
+
+        Args:
+            active: Whether to return active (signed) literals that give this variable its value or all literals.
 
         Returns:
             set[int]: Set of literals.
         """
         lits = set()
         for var, expr in self.opt_expressions:
-            lits.update(expr.literals)
+            if active:
+                lits.update(expr.active_literals)
+            else:
+                lits.update(expr.literals)
         return lits
+
+    @property
+    def literals(self) -> set[int]:
+        """
+        Get all literals associated with the optimization sum.
+
+        Returns:
+            set[int]: Set of literals.
+        """
+        return self.get_literals(active=False)
+
+    @property
+    def active_literals(self) -> set[int]:
+        """
+        Get all literals associated with the optimization sum that gave it its current value.
+
+        Returns:
+            set[int]: Set of literals.
+        """
+        return self.get_literals(active=True)
 
     def discern_value(self) -> int | float:
         """
@@ -2552,10 +2707,20 @@ class OptimizationHandler:
     @property
     def literals(self) -> set[int]:
         """
-        returns the empty set since the optimization sums do not have literals directly associated with them.
+        Returns the empty set since the optimization sums do not have literals directly associated with them.
 
         Returns:
-            empty set: set()
+            set[int]: Empty set.
+        """
+        return set()
+
+    @property
+    def active_literals(self) -> set[int]:
+        """
+        Returns the empty set since the optimization sums do not have literals directly associated with them.
+
+        Returns:
+            set[int]: Empty set.
         """
         return set()
 

@@ -580,16 +580,13 @@ propagator_xfail: set[str] = {
     "engine/request",
     "engine/request_mixed_trig",
     "expression/lambda_recursive",
-    "expression/python_extract/set_output",
     "multimap/main",
     "optimization/preferences",
-    "python/set_output",
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
-    "type/warning/python_unsupported_type",
     "warning/bad_interface",
 }
 
