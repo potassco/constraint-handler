@@ -1190,8 +1190,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     continue
                 # If the value references something else, or it is not a reference,
                 # we make a normal variable and add the value to it,
-                # TODO: Check that this is done ONCE per variable!
-                # make a test with multiple values of other engines variables
                 self.symbol2var.add_variable(_name, Variable(OTHER_ENGINE_VAR_NAME, _name))
 
             variable: Variable = cast(Variable, self.symbol2var.get_variable(_name, getattr(Variable, "__name__")))
