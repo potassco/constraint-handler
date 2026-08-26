@@ -51,7 +51,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | <eq-operator> | "conj" | "disj" | "leqv"
     | "limp" | "lnot" | "lxor" | "snot" | "wnot"
 
-<conditional-operator> ::= "if" | "default" | "ite" | "hasValue"
+<conditional-operator> ::= "if" | "getOrElse" | "ite" | "hasValue"
 
 <float-operator> ::=
     | <comp-operator> | "sqrt" | "cos" | "sin" | "tan"

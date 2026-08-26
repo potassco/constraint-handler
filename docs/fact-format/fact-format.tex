@@ -52,7 +52,7 @@
 ~\alt <eq-operator> | `conj' | `disj' | `leqv'
 \alt `limp' | `lnot' | `lxor' | `snot' | `wnot'
 
-<conditional-operator> ::= `if' | `default' | `ite' | `hasValue'
+<conditional-operator> ::= `if' | `getOrElse' | `ite' | `hasValue'
 
 <float-operator> ::=
 ~\alt <comp-operator> | `sqrt' | `cos' | `sin' | `tan'
@@ -259,12 +259,12 @@ ensure(operation(eq,
                 ()))))
 \end{verbatim}
 
-\paragraph{default function}
+\paragraph{getOrElse function}
 
 \begin{verbatim}
 variable_define(x0,val(int,0)).
 variable_define(x1,operation(if,(variable(cond),(val(int,1),())))).
-variable_define(y0,operation(default,(variable(x0),(variable(x1),())))).
+variable_define(y0,operation(getOrElse,(variable(x0),(variable(x1),())))).
 \end{verbatim}
 
 

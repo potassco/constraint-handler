@@ -38,9 +38,9 @@ _se_value(operation(if,(E1,(E2,()))),val(none,none)) :- direct_query(operation(i
 _se_value(operation(if,(E1,(E2,()))),val(none,none)) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,val(none,none)).
 _se_value(operation(if,(E1,(E2,()))),bad) :- direct_query(operation(if,(E1,(E2,())))), _se_value(E1,bad).
 
-%%%%%%%%%%%%%%%%% default
-_se_value(operation(default,(E1,TL)),V) :- direct_query(operation(default,(E1,TL))), _se_value(E1,V), V!=val(none,none).
-_se_value(operation(default,(E1,(E2,()))),V) :- direct_query(operation(default,(E1,(E2,())))), _se_value(E1,val(none,none)), _se_value(E2,V).
+%%%%%%%%%%%%%%%%% getOrElse
+_se_value(operation(getOrElse,(E1,TL)),V) :- direct_query(operation(getOrElse,(E1,TL))), _se_value(E1,V), V!=val(none,none).
+_se_value(operation(getOrElse,(E1,(E2,()))),V) :- direct_query(operation(getOrElse,(E1,(E2,())))), _se_value(E1,val(none,none)), _se_value(E2,V).
 
 %%%%%%%%%%%%%%%%% hasValue
 _se_value(operation(hasValue,(E1,())),val(bool,true))  :- direct_query(operation(hasValue,(E1,()))), _se_value(E1,V), V != val(none,none), V !=bad.

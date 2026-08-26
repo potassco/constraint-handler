@@ -187,7 +187,7 @@ def eq_operator(o, lval, rval):
 
 def conditional_operator(o, args):
     match o:
-        case ConditionalOperator.default:
+        case ConditionalOperator.getOrElse:
             return atom.EvalResult(args[0] if args[0] is not None else args[1], NO_ERRORS)
         case ConditionalOperator.IF:
             if args[0] is expression.Bad.bad:
@@ -336,7 +336,7 @@ def expr(expr_, globals_id, locals_env):
                 operators.LogicOperator.limp,
                 operators.LogicOperator.ite,
                 ConditionalOperator.IF,
-                ConditionalOperator.default,
+                ConditionalOperator.getOrElse,
                 operators.ArithmeticOperator.pow,
             ]
 

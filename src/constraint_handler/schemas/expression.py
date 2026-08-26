@@ -19,9 +19,9 @@ OtherOperator = common.PPEnum("OtherOperator", ["max", "min", "length"])
 Bad = common.Bad
 
 
-# ConditionalOperator = PPEnum("ConditionalOperator", ["default", "if"])
+# ConditionalOperator = PPEnum("ConditionalOperator", ["getOrElse", "if"])
 class ConditionalOperator(Enum):
-    default = "default"
+    getOrElse = "getOrElse"
     IF = "if"
     hasValue = "hasValue"
 

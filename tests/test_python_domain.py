@@ -366,7 +366,7 @@ def test_apply_matches_evaluator_for_comparison_and_logic_operators(
     [
         (expression.StringOperator.concat, (build_domain("a", "b"), build_domain("", "z"))),
         (expression.StringOperator.length, (build_domain("abc"),)),
-        (expression.ConditionalOperator.default, (build_domain(None, 1), build_domain(2, 3))),
+        (expression.ConditionalOperator.getOrElse, (build_domain(None, 1), build_domain(2, 3))),
         (expression.ConditionalOperator.hasValue, (build_domain(None, 1, frozenset({2})),)),
     ],
 )
@@ -444,7 +444,7 @@ def test_apply_if_default_and_hasvalue_cover_none_bad_and_false_cases() -> None:
         is_none=True,
     )
     assert Domain.apply(
-        expression.ConditionalOperator.default, build_domain(None, 1), build_domain(2, 3)
+        expression.ConditionalOperator.getOrElse, build_domain(None, 1), build_domain(2, 3)
     ) == build_domain(1, 2, 3)
     assert Domain.apply(expression.ConditionalOperator.hasValue, build_domain(None, 1, frozenset())) == Domain.booleans(
         True, False

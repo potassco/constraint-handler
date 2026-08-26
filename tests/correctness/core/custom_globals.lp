@@ -7,7 +7,7 @@ execution_run(flooring).
 
 variable_define(yep,operation(python("myths.floor"),(val(float,float("3.333")),()))).
 
-variable_define(nope,operation(default,(operation(python("math.floor"),(val(float,float("3.333")),())),(val(int,5),())))).
+variable_define(nope,operation(getOrElse,(operation(python("math.floor"),(val(float,float("3.333")),())),(val(int,5),())))).
 
 main_solverIdentifier(3).
 

@@ -19,9 +19,9 @@ operator_declare(limp,(bool,(bool,())),bool).
 _operator_recoverable(limp).
 
 %%%%%%%%%%%%%%%%% conditionals
-_operator_recoverable(default).
-operator_declare(default,(T1,(T2,())),T1) :- _type(T1), _type(T2), T1 != none.
-operator_declare(default,(none,(T,())),T) :- _type(T).
+_operator_recoverable(getOrElse).
+operator_declare(getOrElse,(T1,(T2,())),T1) :- _type(T1), _type(T2), T1 != none.
+operator_declare(getOrElse,(none,(T,())),T) :- _type(T).
 operator_declare(hasValue,(T,()),bool) :- _type(T).
 _operator_recoverable(if).
 operator_declare(if,(bool,(T,())),T) :- _type(T).

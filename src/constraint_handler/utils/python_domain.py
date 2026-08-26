@@ -1668,7 +1668,7 @@ class Domain:
         )
 
     @classmethod
-    def op_default(cls, primary: Domain, fallback: Domain) -> Domain:
+    def op_getOrElse(cls, primary: Domain, fallback: Domain) -> Domain:
         """Return the primary domain, falling back when it is only none-like."""
         if not primary.is_none:
             return replace(primary, is_none=False)
