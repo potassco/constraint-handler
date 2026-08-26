@@ -1,0 +1,8 @@
+evaluated(ceil,(variable(x),()),val(int,2))
+evaluated(ceil,(variable(x),()),val(int,3))
+evaluated(ceil,(variable(x),()),val(int,7))
+evaluated(ceil,(variable(x),()),bad)
+evaluated(floor,(variable(x),()),val(int,1))
+evaluated(floor,(variable(x),()),val(int,2))
+evaluated(floor,(variable(x),()),val(int,7))
+evaluated(floor,(variable(x),()),bad)

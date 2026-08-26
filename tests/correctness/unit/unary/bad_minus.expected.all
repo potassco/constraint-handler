@@ -1,3 +1,0 @@
-evaluated(minus,(val(int,2),()),val(int,-2))
-evaluated(minus,(val(none,none),()),bad)
-evaluated(minus,(bad,()),bad)

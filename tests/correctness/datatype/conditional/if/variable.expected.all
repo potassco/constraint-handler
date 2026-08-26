@@ -1,0 +1,2 @@
+evaluated(if,(val(bool,false),(variable(x),())),val(none,none))
+evaluated(if,(val(none,none),(variable(x),())),val(none,none))

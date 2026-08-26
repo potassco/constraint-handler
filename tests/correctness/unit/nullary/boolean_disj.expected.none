@@ -1,3 +1,0 @@
-evaluated(disj,(),val(bool,true))
-evaluated(disj,(),val(none,none))
-evaluated(disj,(),bad)

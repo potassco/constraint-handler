@@ -1,0 +1,8 @@
+evaluated(add,(variable(x),(val(int,3),())),val(int,5))
+evaluated(add,(variable(x),(val(int,3),())),val(int,8))
+evaluated(add,(variable(x),(val(int,3),())),bad)
+evaluated(add,(variable(x),(val(none,none),())),bad)
+evaluated(add,(variable(x),(bad,())),bad)
+evaluated(add,(variable(x),(val(int,7),())),val(int,9))
+evaluated(add,(variable(x),(val(int,7),())),val(int,12))
+evaluated(add,(variable(x),(val(int,7),())),bad)

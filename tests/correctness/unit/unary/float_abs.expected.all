@@ -1,3 +1,0 @@
-evaluated(abs,(val(float,float("-1.5")),()),val(float,float("1.5")))
-evaluated(abs,(val(none,none),()),bad)
-evaluated(abs,(bad,()),bad)

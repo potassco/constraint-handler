@@ -55,6 +55,7 @@ operator_declare((eq;neq),(float,(float,())),bool).
 operator_declare_variadic((add;mult),bool,int,1).
 operator_declare_variadic((add;mult),int,int,1).
 operator_declare_variadic((add;mult),bool,int,1).
+_operator_recoverable(mult).
 operator_declare((sub;pow),(int,(int,())),int).
 _operator_recoverable(pow).
 operator_declare(int_div,((int;float),((int;float),())),int).

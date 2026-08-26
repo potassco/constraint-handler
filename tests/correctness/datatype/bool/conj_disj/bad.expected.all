@@ -1,0 +1,7 @@
+value(lt_bad,bad)
+value(conj_bt,bad)
+value(conj_tb,bad)
+value(disj_bf,bad)
+value(disj_fb,bad)
+evaluated(conj,(val(bool,true),(bad,())),bad)
+evaluated(disj,(val(bool,false),(bad,())),bad)

@@ -1,2 +1,0 @@
-evaluated(add,(),bad)
-evaluated(add,(),val(float,float("0.0")))

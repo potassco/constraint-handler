@@ -1,0 +1,8 @@
+evaluated(abs,(val(float,float("-1.5")),()),bad)
+evaluated(abs,(val(float,float("-1.5")),()),val(float,float("0.0")))
+evaluated(abs,(val(float,float("-1.5")),()),val(float,float("-1.5")))
+evaluated(abs,(val(float,float("2.5")),()),bad)
+evaluated(abs,(val(float,float("3.0")),()),bad)
+evaluated(abs,(val(float,float("3.0")),()),val(int,3))
+evaluated(abs,(val(float,float("-5.0")),()),val(float,float("-5.0")))
+evaluated(abs,(val(float,float("-5.0")),()),val(int,5))

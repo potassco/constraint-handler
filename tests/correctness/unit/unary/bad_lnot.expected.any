@@ -1,4 +1,0 @@
-evaluated(lnot,(variable(x),()),val(bool,true))
-evaluated(lnot,(variable(x),()),val(bool,false))
-evaluated(lnot,(variable(x),()),val(none,none))
-evaluated(lnot,(variable(x),()),bad)

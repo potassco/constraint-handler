@@ -1,0 +1,2 @@
+evaluated(ceil,(val(int,2),()),bad)
+evaluated(floor,(val(int,2),()),bad)

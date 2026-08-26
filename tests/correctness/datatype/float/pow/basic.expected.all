@@ -1,0 +1,1 @@
+evaluated(pow,(val(float,float("0.25")),(val(float,float("4.0")),())),val(float,float("0.00390625")))

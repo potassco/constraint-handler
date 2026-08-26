@@ -1,0 +1,9 @@
+variable_declare(x,fromFacts).
+variable_domain(x,val(bool,true)).
+variable_domain(x,val(bool,false)).
+variable_domain(x,val(none,none)).
+variable_domain(x,bad).
+evaluate(if,(variable(x),(val(int,1),()))).
+evaluate(if,(val(bool,true),(variable(x),()))).
+evaluate(if,(val(bool,false),(variable(x),()))).
+evaluate(if,(val(none,none),(variable(x),()))).

@@ -1,0 +1,6 @@
+evaluated(ceil,(val(int,0),()),val(int,0))
+evaluated(floor,(val(int,0),()),val(int,0))
+evaluated(ceil,(val(int,2),()),val(int,2))
+evaluated(floor,(val(int,2),()),val(int,2))
+evaluated(ceil,(val(int,-3),()),val(int,-3))
+evaluated(floor,(val(int,-3),()),val(int,-3))

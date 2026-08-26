@@ -1,3 +1,0 @@
-evaluated(length,(val(string,"ab"),()),val(int,2))
-evaluated(length,(val(none,none),()),bad)
-evaluated(length,(bad,()),bad)

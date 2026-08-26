@@ -1,0 +1,6 @@
+evaluated(ceil,(bad,()),val(int,0))
+evaluated(floor,(bad,()),val(int,0))
+evaluated(ceil,(bad,()),val(float,float("0.0")))
+evaluated(floor,(bad,()),val(float,float("0.0")))
+evaluated(ceil,(bad,()),val(none,none))
+evaluated(floor,(bad,()),val(none,none))
