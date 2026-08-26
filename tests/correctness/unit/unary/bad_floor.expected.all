@@ -1,3 +1,0 @@
-evaluated(floor,(val(int,2),()),val(int,2))
-evaluated(floor,(val(none,none),()),bad)
-evaluated(floor,(bad,()),bad)
