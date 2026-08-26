@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - rename conditional operator `default` to `getOrElse`
+
 ## v0.0.4
 
 - - introduce `variable_declare(X,open)`, `variable_assign(X,E)`, and

@@ -13,7 +13,7 @@ variable_define(if_bad,operation(if,(variable(lt_bad),(val(int,1),())))).
 variable_define(if_bad_also,operation(if,(val(bool,true),(variable(lt_bad),())))).
 variable_define(if_recovered,operation(if,(val(bool,false),(variable(lt_bad),())))).
 
-% Operator `default` is recoverable if the default value is bad but not taken.
-variable_define(default_bad,operation(default,(variable(lt_bad),(val(int,1),())))).
-variable_define(default_bad_also,operation(default,(val(none,none),(variable(lt_bad),())))).
-variable_define(default_recovered,operation(default,(val(int,1),(variable(lt_bad),())))).
+% Operator `getOrElse` is recoverable if the fallback value is bad but not taken.
+variable_define(default_bad,operation(getOrElse,(variable(lt_bad),(val(int,1),())))).
+variable_define(default_bad_also,operation(getOrElse,(val(none,none),(variable(lt_bad),())))).
+variable_define(default_recovered,operation(getOrElse,(val(int,1),(variable(lt_bad),())))).

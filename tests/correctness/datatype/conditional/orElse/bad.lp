@@ -1,2 +1,2 @@
-evaluate(default,(bad,(val(int,2),()))).
-evaluate(default,(val(none,none),(bad,()))).
+evaluate(getOrElse,(bad,(val(int,2),()))).
+evaluate(getOrElse,(val(none,none),(bad,()))).

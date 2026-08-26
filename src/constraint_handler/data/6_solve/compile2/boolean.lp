@@ -295,18 +295,18 @@ _set_contains(operation(if,(E1,(E2,()))), Val) :-
     _se_value(E1, val(bool, true)),
     _set_contains(E2, Val).
 
-%%%%%%%%%%%%%%%%%% default
+%%%%%%%%%%%%%%%%%% getOrElse
 :-
-    _expression(compile2, operation(default,(E1,E2))),
+    _expression(compile2, operation(getOrElse,(E1,E2))),
     _se_value(E1, Value),
     Value != val(none, none),
-    not _se_value(operation(default,(E1,E2)), Value).
+    not _se_value(operation(getOrElse,(E1,E2)), Value).
 
 :-
-    _expression(compile2, operation(default,(E1,(E2,())))),
+    _expression(compile2, operation(getOrElse,(E1,(E2,())))),
     _se_value(E1, val(none, none)),
     _se_value(E2, Value),
-    not _se_value(operation(default,(E1,(E2,()))), Value).
+    not _se_value(operation(getOrElse,(E1,(E2,()))), Value).
 
 %%%%%%%%%%%%%%%%%% hasValue
 :-

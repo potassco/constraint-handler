@@ -79,7 +79,7 @@ LINKS = {
     # Conditionals
     "If": "reference/conditionals.md#if",
     "Ite": "reference/conditionals.md#ite",
-    "Default": "reference/conditionals.md#default",
+    "GetOrElse": "reference/conditionals.md#getorelse",
     "HasValue": "reference/conditionals.md#hasvalue",
     # Optimization
     "Optimization": "reference/optimization.md",

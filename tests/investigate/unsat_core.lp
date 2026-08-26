@@ -13,12 +13,12 @@
 %%% usc_d(1): d(1) = true
 %%% usc_d(2): d(2) = true
 %%% usc_dd: dd = d(1) | d(2)
-%%% usc_de: ensure default(\lnot dd, true)
+%%% usc_de: ensure getOrElse(\lnot dd, true)
 
 %%% usc_ba: b(1) = true
 %%% usc_ba: b(2) = true
 %%% usc_bd: bd = b(1) | b(2)
-%%% usc_be: ensure default(\lnot bd, true)
+%%% usc_be: ensure getOrElse(\lnot bd, true)
 
 %%% usc_e1: e1 = guess true or false
 %%% usc_e2: e2 = guess true or false
@@ -46,14 +46,14 @@ ensure(operation(lnot,(variable(c2),()))).
 variable_define(d(1),val(bool,true)).
 variable_define(d(2),val(bool,true)).
 variable_define(dd,operation(disj,(variable(d(1)),(variable(d(2)),())))).
-ensure(operation(default,
+ensure(operation(getOrElse,
                        (operation(lnot,(variable(dd),())),
                        (val(bool,true),())))).
 
 variable_define(b(1),val(bool,true)).
 variable_define(b(2),val(bool,true)).
 variable_define(bd,operation(disj,(variable(b(1)),(variable(b(2)),())))).
-ensure(operation(default,
+ensure(operation(getOrElse,
                        (operation(lnot,(variable(bd),())),
                        (val(bool,true),())))).
 

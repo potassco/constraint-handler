@@ -77,17 +77,17 @@ The `ite` operator expands on the `if` operator by allowing to specify an altern
 
 ---
 
-## Default
+## GetOrElse
 
-The `default` operator is used to provide a fallback value if the first [Expression] is undefined (e.g. evaluates to [`none`]).
+The `getOrElse` operator is used to provide a fallback value if the first [Expression] is undefined (e.g. evaluates to [`none`]).
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `default` | Default | (A | [none], B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
+| `getOrElse` | GetOrElse | (A | [none], B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
 
 !!! Example
     ```prolog
-    variable_define(z, operation(default, (val(int, 2),(val(int,5),())))).
+    variable_define(z, operation(getOrElse, (val(int, 2),(val(int,5),())))).
     ```
     Here, because the value is defined, `z` will be assigned the value `2`.
 
@@ -99,7 +99,7 @@ The `default` operator is used to provide a fallback value if the first [Express
     However:
 
     ```prolog
-    variable_define(z, operation(default, (val(none, none),(val(int,5),())))).
+    variable_define(z, operation(getOrElse, (val(none, none),(val(int,5),())))).
     ```
 
     Here, since the first value is [none], `z` will be assigned the value `5`.
