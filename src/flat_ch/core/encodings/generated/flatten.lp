@@ -162,3 +162,4 @@ _fch_op_int_from_float(ID, ARG_1_ID) :- _fch_flat(op_int_from_float(ID, ARG_1_ID
 _fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_int_from_float(ID, ARG_1_ID).
 _fch_op_cardinality(ID, ARG_1_ID) :- _fch_flat(op_cardinality(ID, ARG_1_ID)).
 _fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_cardinality(ID, ARG_1_ID).
+_fch_op_default(ID, ARG_1_ID, ARG_2_ID) :- _fch_flat(op_default(ID, ARG_1_ID, ARG_2_ID)).

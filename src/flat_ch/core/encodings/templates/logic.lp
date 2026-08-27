@@ -12,6 +12,20 @@ _fch_template_expr_val(ID, _fch_type_bool_id, true) :-
     VALUE_TYPE != _fch_type_none_id.
 
 % =============================================================================
+% DEFAULT
+% =============================================================================
+
+_fch_template_expr_val(ID, TYPE, VALUE) :-
+    _fch_op_default(ID, FIRST_ID, _),
+    _fch_template_expr_val(FIRST_ID, TYPE, VALUE),
+    TYPE != _fch_type_none_id.
+
+_fch_template_expr_val(ID, TYPE, VALUE) :-
+    _fch_op_default(ID, FIRST_ID, SECOND_ID),
+    _fch_template_expr_val(FIRST_ID, _fch_type_none_id, none),
+    _fch_template_expr_val(SECOND_ID, TYPE, VALUE).
+
+% =============================================================================
 % IF
 % =============================================================================
 

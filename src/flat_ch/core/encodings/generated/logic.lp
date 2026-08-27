@@ -22,6 +22,20 @@ _fch_static_expr_val(ID, _fch_type_bool_id, true) :-
     VALUE_TYPE != _fch_type_none_id.
 
 % =============================================================================
+% DEFAULT
+% =============================================================================
+
+_fch_static_expr_val(ID, TYPE, VALUE) :-
+    _fch_op_default(ID, FIRST_ID, _),
+    _fch_static_expr_val(FIRST_ID, TYPE, VALUE),
+    TYPE != _fch_type_none_id.
+
+_fch_static_expr_val(ID, TYPE, VALUE) :-
+    _fch_op_default(ID, FIRST_ID, SECOND_ID),
+    _fch_static_expr_val(FIRST_ID, _fch_type_none_id, none),
+    _fch_static_expr_val(SECOND_ID, TYPE, VALUE).
+
+% =============================================================================
 % IF
 % =============================================================================
 
@@ -367,6 +381,20 @@ _fch_dynamic_expr_val(ID, _fch_type_bool_id, true) :-
     _fch_op_hasValue(ID, A1),
     _fch_dynamic_expr_val(A1, VALUE_TYPE, _),
     VALUE_TYPE != _fch_type_none_id.
+
+% =============================================================================
+% DEFAULT
+% =============================================================================
+
+_fch_dynamic_expr_val(ID, TYPE, VALUE) :-
+    _fch_op_default(ID, FIRST_ID, _),
+    _fch_dynamic_expr_val(FIRST_ID, TYPE, VALUE),
+    TYPE != _fch_type_none_id.
+
+_fch_dynamic_expr_val(ID, TYPE, VALUE) :-
+    _fch_op_default(ID, FIRST_ID, SECOND_ID),
+    _fch_dynamic_expr_val(FIRST_ID, _fch_type_none_id, none),
+    _fch_dynamic_expr_val(SECOND_ID, TYPE, VALUE).
 
 % =============================================================================
 % IF

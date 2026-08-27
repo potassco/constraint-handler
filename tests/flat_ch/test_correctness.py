@@ -94,7 +94,6 @@ flat_ch_currently_not_working_tests = {
     "unit/bad_mult",
     "unit/bad_sub",
     "unit/boolean_conj",
-    "unit/boolean_default",
     "unit/boolean_disj",
     "unit/boolean_disj_none_bug",
     "unit/boolean_ite",
