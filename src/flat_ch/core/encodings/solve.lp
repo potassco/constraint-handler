@@ -136,6 +136,15 @@ _fch_dynamic_expr_needed(EXPR_ID) :-
     _fch_expr_var(ID, NAME),
     _fch_var_def(NAME, EXPR_ID).
 
+_fch_dynamic_expr_needed(FIRST_ID) :-
+    _fch_dynamic_expr_needed(ID),
+    _fch_op_default(ID, FIRST_ID, _).
+
+_fch_dynamic_expr_needed(SECOND_ID) :-
+    _fch_dynamic_expr_needed(ID),
+    _fch_op_default(ID, FIRST_ID, SECOND_ID),
+    _fch_dynamic_expr_val(FIRST_ID, _fch_type_none_id, none).
+
 _fch_dynamic_expr_needed(CONDITION_ID) :-
     _fch_dynamic_expr_needed(ID),
     _fch_op_if(ID, CONDITION_ID, _).

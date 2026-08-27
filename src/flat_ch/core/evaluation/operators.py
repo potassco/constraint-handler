@@ -57,6 +57,7 @@ class Operator(IntEnum):
     FLOAT_FROM_INT = auto()
     INT_FROM_FLOAT = auto()
     CARDINALITY = auto()
+    DEFAULT = auto()
 
     @property
     def allowed_arities(self) -> Arity:
@@ -88,6 +89,7 @@ _OPERATOR_ARITY_MASKS = {
     Operator.FLOAT_FROM_INT: Arity.UNARY,
     Operator.INT_FROM_FLOAT: Arity.UNARY,
     # Binary Only
+    Operator.DEFAULT: Arity.BINARY,
     Operator.POW: Arity.BINARY,
     Operator.CONCAT: Arity.BINARY,
     # Ternary Only
