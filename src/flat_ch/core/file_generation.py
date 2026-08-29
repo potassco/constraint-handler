@@ -208,7 +208,7 @@ def _generate_flatten() -> list[str]:
 
     lines.extend(["", "%% OPERATIONS"])
 
-    lazy_ops = {"default", "if", "ite"}
+    lazy_ops = {"getOrElse", "if", "ite"}
 
     for op in Operator:
         op_name = op.asp_name
