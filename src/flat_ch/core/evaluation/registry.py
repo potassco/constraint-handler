@@ -2,7 +2,7 @@ import typing
 
 from flat_ch.core.evaluation.comparison import handle_eq, handle_geq, handle_gt, handle_leq, handle_lt, handle_neq
 from flat_ch.core.evaluation.logic import (
-    handle_default,
+    handle_get_or_else,
     handle_hasvalue,
     handle_if,
     handle_ite,
@@ -36,7 +36,7 @@ from flat_ch.core.types import Type
 OperatorHandler = typing.Callable[[list[tuple[Type, typing.Any]]], tuple[Type, typing.Any]]
 
 OPERATOR_HANDLERS: dict[Operator, OperatorHandler] = {
-    Operator.DEFAULT: handle_default,
+    Operator.GET_OR_ELSE: handle_get_or_else,
     Operator.HASVALUE: handle_hasvalue,
     Operator.IF: handle_if,
     Operator.ITE: handle_ite,

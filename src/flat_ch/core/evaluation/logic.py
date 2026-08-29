@@ -8,7 +8,7 @@ def handle_hasvalue(arguments: list[tuple[Type, typing.Any]]) -> tuple[Type, typ
     return Type.BOOL, arg_type != Type.NONE
 
 
-def handle_default(arguments: list[tuple[Type, typing.Any]]) -> tuple[Type, typing.Any]:
+def handle_get_or_else(arguments: list[tuple[Type, typing.Any]]) -> tuple[Type, typing.Any]:
     first_type, first_value = arguments[0]
     if first_type != Type.NONE:
         return first_type, first_value

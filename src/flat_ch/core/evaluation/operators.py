@@ -57,7 +57,7 @@ class Operator(IntEnum):
     FLOAT_FROM_INT = auto()
     INT_FROM_FLOAT = auto()
     CARDINALITY = auto()
-    DEFAULT = auto()
+    GET_OR_ELSE = auto()
 
     @property
     def allowed_arities(self) -> Arity:
@@ -69,6 +69,8 @@ class Operator(IntEnum):
         """Returns the exact string identifier used in ASP schema predicates."""
         if self == Operator.HASVALUE:
             return "hasValue"
+        if self == Operator.GET_OR_ELSE:
+            return "getOrElse"
         return self.name.lower()
 
 
@@ -89,7 +91,7 @@ _OPERATOR_ARITY_MASKS = {
     Operator.FLOAT_FROM_INT: Arity.UNARY,
     Operator.INT_FROM_FLOAT: Arity.UNARY,
     # Binary Only
-    Operator.DEFAULT: Arity.BINARY,
+    Operator.GET_OR_ELSE: Arity.BINARY,
     Operator.POW: Arity.BINARY,
     Operator.CONCAT: Arity.BINARY,
     # Ternary Only
