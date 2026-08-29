@@ -18,9 +18,6 @@ _fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_define(LABEL, NAME, E
 _fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_domain(NAME, EXPR).
 _fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_domain(LABEL, NAME, EXPR).
 
-#defined variable_declareOptional/1.
-_fch_input(variable_domain(_fch_label, NAME, val(none, none))) :- variable_declareOptional(NAME).
-
 #defined ensure/1.
 #defined ensure/2.
 _fch_input(ensure(__anonymous, EXPR)) :- ensure(EXPR).

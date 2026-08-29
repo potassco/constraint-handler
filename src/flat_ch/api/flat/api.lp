@@ -64,16 +64,6 @@ Args:
 #defined variable_domain/2.
 _fch_input(variable_domain(NAME, EXPR))  :- variable_domain(NAME, EXPR).
 
-%*! variable_declareOptional(Name)
-
-Shortcut for `variable_domain(Name, val(none, none))`.
-
-Args:
- - Name: The unique identifier for the target variable.
-*%
-#defined variable_declareOptional/1.
-_fch_input(variable_domain(NAME, val(none, none))) :- variable_declareOptional(NAME).
-
 %*! ensure(Expression)
 
 Defines an anonymous boolean constraint that must be satisfied for the solution to be valid.
