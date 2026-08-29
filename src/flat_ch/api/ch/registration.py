@@ -47,7 +47,6 @@ class Registration(BaseRegistration):
         self._expression_cache: dict[clingo.Symbol, Expression] = {}
 
         self._dispatch_decl = {
-            "variable_declareOptional": self._handle_declareOptional,
             UserInput.DECLARE.value: self._handle_declare,
             UserInput.DOMAIN.value: self._handle_domain,
             UserInput.DEFINE.value: self._handle_define,
@@ -92,11 +91,6 @@ class Registration(BaseRegistration):
             raise ValueError(f"Invalid fact format: {term}")
 
         return clingo.Number(0)
-
-    def _handle_declareOptional(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 1:
-            var_sym = self._lower_variable_symbol(args[0])
-            self.reg.update_var(var_sym, (IValue(Type.NONE, None),))
 
     def _handle_declare(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 3:
