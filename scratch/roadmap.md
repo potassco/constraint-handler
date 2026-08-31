@@ -46,3 +46,36 @@ Encoding:
  - undefined behavior on erroneous input + warning/error
  - no recovery paths from erroneous input
  - to enable independent constraint handling in a propagator, static domain computation is needed
+
+
+### Dominik's goals / Ideas
+
+#### Usability, Maintainability and Collaboration
+- simple but expressive input language (Philipp's seems like a good start)
+- clear separation between stages (preprocessing, grounding, solving, postprocessing)
+- clear modularization for separate engines
+- clear responsibilities/features (is the CH responsible for SSA? Does it do error correction/recovery or just error reporting?)
+- simplify feature set for now (focus on clients)
+- developer documentation and guidelines
+- since the clear separation of stages likely means this will become a normal Clingo application: add CLI usage to use it `ch some_file.lp` or to only run certain options (only check, only preprocessing, up to ground)
+
+#### Correctness
+- clearly documented semantics for all supported features, including undefined behavior
+- well structured tests for all features, including corner cases, error handling and integration tests
+- larger/complex tests similar to real-world examples
+
+#### Performance
+- eventual (but not initial) support for different engines suitable for different problems (normal, propagator,...)
+- performance benchmarks for different engines and problem types
+- keep suite compatible with Clingo 6 for advanced profiling and easy future upgrade
+- clear boundaries between ASP and Python
+
+#### Engineering
+- keep (internal) encodings flat/unnested
+- interning with IDs for potential easier/performant dispatching/identification
+- clear internal representations to minimize type conversions
+- Clingo types only at the boundary between ASP and Python (this makes Clingo 6 integration simple)
+- minimize Python calls (guarding, moving more to ASP, ...)
+- minimize clingo attribute accesses (create code that makes certain assumptions possible)
+- better float representation, make limits clear
+- try to specialize (and use templating/ file generation if necessary) if generalization becomes performance bottleneck
