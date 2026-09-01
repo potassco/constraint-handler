@@ -22,30 +22,10 @@ bool_evaluate(operation(leq,(operation(mult,(variable(x),(variable(y),()))),(val
 bool_evaluate(operation(disj,(operation(leq,(variable(x),(val(int,2),()))),(operation(leq,(variable(y),(val(int,2),()))),())))).
 
 %%% x<=4 and y<=4
-bool_evaluate(operation(conj,
-   (operation(leq,(variable(x),(val(int,4),()))),
-   (operation(leq,(variable(y),(val(int,4),()))),())))).
+bool_evaluate(operation(conj,(operation(leq,(variable(x),(val(int,4),()))),(operation(leq,(variable(y),(val(int,4),()))),())))).
 
 %%% x>=3 and y>=3
-bool_evaluate(operation(conj,
-   (operation(geq,(variable(x),(val(int,3),()))),
-   (operation(geq,(variable(y),(val(int,3),()))),())))).
+bool_evaluate(operation(conj,(operation(geq,(variable(x),(val(int,3),()))),(operation(geq,(variable(y),(val(int,3),()))),())))).
 
 %%% x<=2 and y<=2
-bool_evaluate(operation(conj,
-   (operation(leq,(variable(x),(val(int,2),()))),
-   (operation(leq,(variable(y),(val(int,2),()))),())))).
-
-
-
-
-
-
-
-
-
-%%% "math.sqrt(a) => 1" using x as inport "a"
-bool_evaluate(operation(pythonExtract("","math.sqrt(a) > 3"),((val(string,"a"),variable(x)),()))).
-
-%bool_evaluate(operation(leq,(operation(mult,(variable(x),(variable(x),()))),(val(int,9),())))).
-
+bool_evaluate(operation(conj,(operation(leq,(variable(x),(val(int,2),()))),(operation(leq,(variable(y),(val(int,2),()))),())))).
