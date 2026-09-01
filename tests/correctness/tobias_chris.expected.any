@@ -1,0 +1,3 @@
+bool_evaluated(operation(eq,(variable(y),(val(int,3),()))),val(bool,true))
+bool_evaluated(operation(conj,(operation(leq,(variable(x),(val(int,2),()))),(operation(leq,(variable(y),(val(int,2),()))),()))),val(bool,true))
+bool_evaluated(operation(conj,(operation(leq,(variable(x),(val(int,2),()))),(operation(leq,(variable(y),(val(int,2),()))),()))),val(bool,false))

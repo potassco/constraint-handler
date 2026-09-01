@@ -463,6 +463,7 @@ base_tests = (
     + unit_tests
     + variable_tests
     + warning_tests
+    + ["tobias_chris"]
 )
 
 other_tests = [

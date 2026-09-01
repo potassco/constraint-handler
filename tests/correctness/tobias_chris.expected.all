@@ -1,0 +1,7 @@
+bool_evaluated(operation(leq,(variable(x),(val(int,4),()))),val(bool,true))
+bool_evaluated(operation(leq,(operation(mult,(variable(x),(variable(y),()))),(val(int,8),()))),val(bool,true))
+bool_evaluated(operation(disj,(operation(leq,(variable(x),(val(int,2),()))),(operation(leq,(variable(y),(val(int,2),()))),()))),val(bool,true))
+bool_evaluated(operation(conj,(operation(leq,(variable(x),(val(int,4),()))),(operation(leq,(variable(y),(val(int,4),()))),()))),val(bool,true))
+bool_evaluated(operation(conj,(operation(leq,(variable(x),(val(int,4),()))),(operation(leq,(variable(y),(val(int,4),()))),()))),val(bool,false))
+bool_evaluated(operation(conj,(operation(leq,(variable(x),(val(int,2),()))),(operation(leq,(variable(y),(val(int,2),()))),()))),val(bool,true))
+bool_evaluated(operation(conj,(operation(geq,(variable(x),(val(int,3),()))),(operation(geq,(variable(y),(val(int,3),()))),()))),val(bool,false))
