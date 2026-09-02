@@ -2,11 +2,21 @@
 Test cases for main library functions.
 """
 
+from dataclasses import dataclass
 from typing import Iterator, Set
 
 from clingo import Control, Symbol
 
 import constraint_handler
+
+
+@dataclass(frozen=True)
+class NonTrivialResult:
+    value: int
+
+
+def make_nontrivial_result() -> NonTrivialResult:
+    return NonTrivialResult(value=39)
 
 
 def test_add_ctrl():
@@ -22,6 +32,36 @@ def test_add_ctrl():
     for model in solve_handle:
         solution = {fact.__str__() for fact in model.symbols(shown=True, theory=True)}
         assert solution == {"value(x,val(int,20))", "value(y,val(int,30))"}
+
+
+def test_python_fallback_allows_nontrivial_temporary_object():
+    ctrl = Control(["0"])
+    constraint_handler.add_to_control(ctrl, environment={"make_nontrivial_result": make_nontrivial_result})
+    ctrl.add(
+        """
+        execution_declare(
+            example,
+            statement_python("temporary = make_nontrivial_result()\\nresult = int(temporary.value)"),
+            (),
+            ("result",())
+        ).
+        execution_run(example).
+        """
+    )
+
+    ctrl.ground()
+
+    with ctrl.solve(yield_=True) as solve_handle:
+        results = [
+            str(symbol)
+            for model in solve_handle
+            for symbol in model.symbols(atoms=True)
+            if symbol.match("value", 2) and str(symbol.arguments[0]) == 'execution_output(example,"result")'
+        ]
+    assert results == ['value(execution_output(example,"result"),val(int,39))']
+
+    warnings = [atom.symbol for atom in ctrl.symbolic_atoms.by_signature("warning", 3)]
+    assert warnings == []
 
 
 def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
