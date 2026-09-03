@@ -66,6 +66,35 @@ individual cases directly.
 The default `nox -s test` session excludes `performance` tests so the normal
 test matrix stays practical.
 
+## Expectation Fixtures
+
+Encoding tests pair a program named `[name].lp` with optional expectation files
+named `[name].expected.<suffix>`. Each nonblank line in an atom expectation
+file is one complete Clingo term. Whitespace inside a term is allowed, but
+multiple terms must be written on separate lines.
+
+```text
+value(x, val(int, 12))
+value(y,val(int,13))
+```
+
+The supported suffixes are:
+
+- `all`, `any`, `first`, and `last`: atom must occur in every, any, first, or
+  last model respectively.
+- `none`: atom must occur in no model; it does not assert that the program is
+  unsatisfiable.
+- `brave` and `cautious`: atom must occur in the final model with the matching
+  enumeration mode.
+- `optall`, `optany`, and `optnone`: atom must occur in every, any, or no
+  optimal model respectively.
+- `stats`: one `key=value` entry per line. `models=<count>` asserts the exact
+  number of models.
+
+`all`, `none`, `first`, `last`, `optall`, and `optnone` implicitly also require
+at least one model unless an `any`, `brave`, `cautious`, or `optany`
+expectation is present.
+
 [editable]: https://setuptools.pypa.io/en/latest/userguide/development_mode.html
 [nox]: https://nox.thea.codes/en/stable/index.html
 [pipx]: https://pypa.github.io/pipx/

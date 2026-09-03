@@ -176,14 +176,25 @@ tests/
 
 ### Testing Patterns
 
-Tests use clintest library for ASP testing. Test files in tests/example/ follow
-this pattern:
+Tests use clintest library for ASP testing. Test files under tests/correctness/
+pair `[name].lp` with `[name].expected.*` files. Each nonblank line in an atom
+expectation file is one complete Clingo term; terms may contain whitespace but
+must not share a line.
 
 - `[name].lp`: Test input
 - `[name].expected.all`: Expected atoms in all models
 - `[name].expected.any`: Expected atoms in any model
 - `[name].expected.first`: Expected atoms in first model
-- `[name].expected.none`: Expect no models (UNSAT)
+- `[name].expected.last`: Expected atoms in last model
+- `[name].expected.none`: Atoms absent from all models
+- `[name].expected.brave` and `.cautious`: Expected atoms in the matching
+  enumeration mode
+- `[name].expected.optall`, `.optany`, and `.optnone`: Expectations over
+  optimal models
+- `[name].expected.stats`: `key=value` entries; `models=<count>` asserts the
+  exact model count
+
+See DEVELOPMENT.md for the complete expectation-fixture contract.
 
 ### Editable Installs
 
