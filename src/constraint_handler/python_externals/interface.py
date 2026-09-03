@@ -57,7 +57,7 @@ def pythonEnumerateVariables(clExpr):
 
 @cache
 def pythonBetaReduction(clExpr, clVars, clArgs):
-    pVars = myClorm.cltopy(clVars, list)
+    pVars = myClorm.cltopy(clVars, list[expression.constant])
     pArgs = myClorm.cltopy(clArgs, list[expression.ReducedExpr])
     pExpr = myClorm.cltopy(clExpr, expression.Expr)
     if len(pVars) != len(pArgs):
