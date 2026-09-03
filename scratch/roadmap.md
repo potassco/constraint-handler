@@ -53,6 +53,7 @@ ctl.solve(....) whatever
 Why `Declare` and `Assign` and maybe `Var` etc... are python objects to describe the input of the problem, we have functions like `preprocess`, `type_annotate`, `diagnose`, `problem_representation` that take these objects and analyse, annotate, modify them etc...
 The function `problem_representation` could transform the python objects into ASP facts, and also append the ch ASP encoding, both things together can be used by any solver in any way. The user should have agency about the solving process. Everything else should be hidden inside the functions.
 *This is just a hypothesis, not sure if this will work*
+*This would also mean that its not that easy to use an encoding to produce ch input, but maybe a python function*
 
 Preprocessing:
 
