@@ -14,11 +14,10 @@ import constraint_handler
 from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM, PROPAGATOR_CHECK_MODE_STR
 
 
-def atoms_from_file(file_name):
+def atoms_from_file(file_name: str) -> list[clingo.Symbol]:
     try:
         with open(file_name, "r", encoding="utf-8") as file_handle:
-            contents = file_handle.read().split()
-            return [clingo.symbol.parse_term(atom) for atom in contents]
+            return [clingo.symbol.parse_term(line) for raw_line in file_handle if (line := raw_line.strip())]
     except FileNotFoundError:
         return []
 
