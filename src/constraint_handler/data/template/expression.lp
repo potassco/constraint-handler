@@ -25,7 +25,7 @@ _number(PHASE,K) :- _number(PHASE,LBL,DECL,K).
 _variable(PHASE,X) :- _expression(PHASE,variable(X)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_define(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_assign(X,E)).
-%_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_default(X,D,C,P)).
+_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_default(X,D,C,P)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_domain(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,set_assign(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,set_baseDomain(X,E)).
