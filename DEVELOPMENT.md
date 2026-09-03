@@ -69,9 +69,13 @@ test matrix stays practical.
 ## Expectation Fixtures
 
 Encoding tests pair a program named `[name].lp` with optional expectation files
-named `[name].expected.<suffix>`. Each nonblank line in an atom expectation
-file is one complete Clingo term. Whitespace inside a term is allowed, but
-multiple terms must be written on separate lines.
+named `[name].expected.<suffix>`. Each nonblank line in an expectation file is
+one complete Clingo atom. Whitespace inside an atom is allowed, but distinct
+atoms must be written on separate lines.
+
+The fixture is run only when its name is listed in the appropriate category in
+`tests/test_encoding.py`; add new fixtures there as well as creating their
+`.lp` and `.expected.*` files.
 
 ```text
 value(x, val(int, 12))

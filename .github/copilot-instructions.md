@@ -177,11 +177,13 @@ tests/
 ### Testing Patterns
 
 Tests use clintest library for ASP testing. Test files under tests/correctness/
-pair `[name].lp` with `[name].expected.*` files. Each nonblank line in an atom
-expectation file is one complete Clingo term; terms may contain whitespace but
+pair `[name].lp` with `[name].expected.*` files. Each nonblank line in an
+expectation file is one complete Clingo atom; atoms may contain whitespace but
 must not share a line.
 
-- `[name].lp`: Test input
+Add each new fixture name to the appropriate category list in
+tests/test_encoding.py; unlisted fixtures are not run.
+
 - `[name].expected.all`: Expected atoms in all models
 - `[name].expected.any`: Expected atoms in any model
 - `[name].expected.first`: Expected atoms in first model
