@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- update .expected test format to be one atom per line
 - - rename conditional operator `default` to `getOrElse`
 
 ## v0.0.4
