@@ -42,12 +42,26 @@ def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warni
     )
 
 
+def is_evaluation_possible(var: VariableType) -> bool:
+    """
+    Check whether evaluation is possible for this variable.
+    It does this by checking the count of evaluated expressions against the total expressions count.
+    Returns:
+        bool: True if evaluation is possible, False otherwise.
+    """
+    if var.expressions_evaluated_counter > var.expressions_count:
+        raise RuntimeError("Expressions evaluated counter exceeds expressions count.")
+    return var.expressions_evaluated_counter == var.expressions_count
+
+
 class VariableType(Protocol):
     """
     Protocol for variable types used in the propagator. Defines the required interface for variables.
     """
 
     name: str
+    expressions_count: int
+    expressions_evaluated_counter: int
 
     @property
     @abstractmethod
@@ -407,7 +421,7 @@ class VariableValue:
         """
         return evaluator.collectVars(self.expr)
 
-    def reset(self, dl: int):
+    def reset(self, dl: int) -> bool:
         """
         Reset based on decision level.
 
@@ -419,6 +433,8 @@ class VariableValue:
             self.decision_level = DEFAULT_DECISION_LEVEL
             self.assigned = None
             self.errors = []
+            return True
+        return False
 
     @property
     def literals(self) -> set[int]:
@@ -683,6 +699,8 @@ class EnsureVariable:
 
         self.var = clingo.Function(EnsureVariable.__var, [clingo.Number(EnsureVariable.__c)])
         EnsureVariable.__c += 1
+        self.expressions_count: int = 1
+        self.expressions_evaluated_counter: int = 0
 
     @property
     def parents(self) -> list[VariableType]:
@@ -908,6 +926,9 @@ class BoolEvaluateVariable:
         self.var = clingo.Function(BoolEvaluateVariable.__var, [clingo.Number(BoolEvaluateVariable.__c)])
         BoolEvaluateVariable.__c += 1
 
+        self.expressions_count: int = 1
+        self.expressions_evaluated_counter: int = 0
+
     @property
     def expressions(self) -> set[VariableValue]:
         """
@@ -1107,6 +1128,9 @@ class Variable:
         self.is_user_variable: bool = is_user_variable
         self.decision_level: int = DEFAULT_DECISION_LEVEL
 
+        self.expressions_count: int = 0
+        self.expressions_evaluated_counter: int = 0
+
         # literals for atoms that can define a domain
         # (variable_define, variable_declare, variable_optinal)
         self.domain_literals: set[int] = set()
@@ -1125,6 +1149,7 @@ class Variable:
         value = VariableValue(expr, value_lit)
         self.lit2expr[value_lit] = value
         self.expressions.add(value)
+        self.expressions_count += 1
         self.domain_literals.add(domain_lit)
 
     def get_value(self) -> Any:
@@ -1299,8 +1324,8 @@ class Variable:
                 if lit in self.lit2expr:
                     changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
 
-        if not changed:
-            return EvaluationResult.NOT_CHANGED
+        # if not changed:
+        #     return EvaluationResult.NOT_CHANGED
 
         # if some value changed, we need to discern the new value
         val = self.get_values()
@@ -1329,10 +1354,10 @@ class Variable:
                 # if no domain lit is true, then we can treat it as false
                 val = [ValueStatus.ASSIGNMENT_IS_FALSE]
 
-        # elif len(val) == 1:
-        # if val[0] == self.value:
-        #     # same value as before
-        #     return EvaluationResult.NOT_CHANGED
+        elif len(val) == 1:
+            if val[0] == self.value:
+                # same value as before
+                return EvaluationResult.NOT_CHANGED
 
         self.decision_level = ctl.assignment.decision_level
         self.value = val[0]
@@ -1538,8 +1563,8 @@ class SetVariableValue:
 
     def get_value(self) -> ValueStatus | frozenset[Any]:
         """
-        If there is an unassigned value, return None.
-        Otherwise return the set of assigned values without the None values.
+        If there is an unassigned value, return ValueStatus.NOT_SET.
+        Otherwise return the set of assigned values.
         """
         if self.has_unassigned():
             return ValueStatus.NOT_SET
@@ -1649,6 +1674,9 @@ class SetVariable:
         self.assigned: bool | None = None  # Truth value of the set declaration
         self.decision_level: int = DEFAULT_DECISION_LEVEL  # decision level of the set declaration
 
+        self.expressions_count: int = 0
+        self.expressions_evaluated_counter: int = 0
+
         self.possible_values: set[frozenset[Any]] = set()  # possible values for the set variable
         self.expr2values: dict[VariableValue, set[Any]] = {}  # mapping from VariableValue to possible values
         self.is_preprocessed = False  # whether the variable has been preprocessed
@@ -1685,6 +1713,7 @@ class SetVariable:
             lit: Literal for the corresponding `set_assign/3` atom.
         """
         self.set_expressions.add_value(arg, lit)
+        self.expressions_count += 1
 
     def get_errors(self) -> propagator_warning_t:
         """
@@ -1749,8 +1778,7 @@ class SetVariable:
 
     def get_value(self) -> ValueStatus | frozenset[Any]:
         """
-        If there is an unassigned value, return None.
-        Otherwise return the set of assigned values without the None values.
+        See SetVariableValue.get_value
         """
         return self.value
 
@@ -1800,7 +1828,7 @@ class SetVariable:
             evaluations = dict(zip(deps, values))
 
             for var_value in self.set_expressions.expressions:
-                val, errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
+                val, _errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
                 expr_values[var_value].add(val)
 
         for possible_val in product(*(expr_values[var_value] for var_value in self.set_expressions.expressions)):
@@ -1838,7 +1866,7 @@ class SetVariable:
                 if var_value.literal != 1:
                     expr_values.setdefault(var_value, set()).add(ValueStatus.ASSIGNMENT_IS_FALSE)
 
-                val, errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
+                val, _errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
                 expr_values.setdefault(var_value, set()).add(val)
             for possible_val in product(*(expr_values[var_value] for var_value in self.set_expressions.expressions)):
                 possible_val_set = set(possible_val)
@@ -2010,6 +2038,9 @@ class DictVariable:
         self.assigned: bool | None = None
         self.decision_level: int = DEFAULT_DECISION_LEVEL
 
+        self.expressions_count: int = 0
+        self.expressions_evaluated_counter: int = 0
+
         self.possible_values: set[dict[Any, frozenset[Any]]] = set()
         self.key_expr2values: dict[VariableValue, set[Any]] = {}
         self.val_expr2values: dict[VariableValue, set[Any]] = {}
@@ -2047,7 +2078,9 @@ class DictVariable:
         key_val = VariableValue(key, 1)
         if key_val not in self.dict_expressions:
             self.dict_expressions[key_val] = SetVariableValue()
+            self.expressions_count += 1
         self.dict_expressions[key_val].add_value(expr, lit)
+        self.expressions_count += 1
 
     def has_domain(self) -> bool:
         """
@@ -2415,7 +2448,7 @@ class OptimizationSum:
         Returns:
             set[VariableValue]: Set of expressions in the optimization sum.
         """
-        return set(expr for _, expr in self.opt_expressions)
+        return {expr for _, expr in self.opt_expressions}
 
     def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int) -> None:
         """

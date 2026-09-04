@@ -40,6 +40,8 @@ from constraint_handler.PropagatorVariables import (
     Variable,
     VariableManager,
     VariableType,
+    VariableValue,
+    is_evaluation_possible,
 )
 
 
@@ -77,6 +79,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.symbol2var: VariableManager = VariableManager()
         self.literal2var: dict[int, list[VariableType]] = {}
         self.evaluations: Evaluations = Evaluations()
+
+        self.expr2var: dict[VariableValue, set[VariableType]] = {}
+        self.lit2expr: dict[int, set[VariableValue]] = {}
 
         self.evaluatevars: list[EvaluateVariable] = []
 
@@ -120,6 +125,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.nogood_queue: list[Iterable[int]] = []
 
         self.var_ranks: dict[Symbol, int] = {}
+        self.var_ranks_expr: dict[VariableValue, int] = {}
 
         self.forbidden_warnings: dict[warning.Kind, int] = {}
         self.ignored_warnings: dict[warning.Kind, tuple[int, bool]] = {}
@@ -217,6 +223,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_variable_ranks()
 
+        for var in self.symbol2var.get_variables():
+            for expr in var.expressions:
+                self.expr2var.setdefault(expr, set()).add(var)
+                self.lit2expr.setdefault(expr.literal, set()).add(expr)
+
         # valuations = self.preprocess()
         # self.ensure_pairs_dict = self.ensure_pairs(valuations)
 
@@ -268,6 +279,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     known_vars.add(var)
 
             rank += 1
+
+        for expr in self.expr2var:
+            self.var_ranks_expr[expr] = max((self.var_ranks[var] for var in expr.vars()), default=0)
 
     def ensure_pairs(
         self, valuations: dict[Symbol, set[Any]]
@@ -900,6 +914,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return
 
         to_evaluate: dict[VariableType, set[int] | None] = {}
+        to_evaluate_expressions: dict[VariableValue, set[int] | None] = {}
         for rlit in changes:
             lit = abs(rlit)
             if lit in self.literal2var:
@@ -911,7 +926,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.set_optimization_check_strength("le")
                 print("Now in optimization stage 2, looking for equal or better solutions")
 
-        backtrack = self.evaluated_solver_assignment(control, to_evaluate)
+            if lit in self.expr2var:
+                for expr in self.lit2expr[lit]:
+                    to_evaluate_expressions.setdefault(expr, set()).add(rlit)
+
+        backtrack = self.evaluated_solver_assignment(control, to_evaluate, to_evaluate_expressions)
         if backtrack:
             # backtracking due to conflicts in evaluation of variables
             return
@@ -1007,7 +1026,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         return not prop_stop
 
     def evaluated_solver_assignment(
-        self, ctl: clingo.PropagateControl, to_evaluate: dict[VariableType, set[int] | None]
+        self,
+        ctl: clingo.PropagateControl,
+        to_evaluate: dict[VariableType, set[int] | None],
+        to_evaluate_expressions: dict[VariableValue, set[int] | None],
     ) -> bool:
         """
         Evaluate a set of variables under the current solver assignment.
@@ -1023,51 +1045,64 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             False otherwise.
         """
 
-        if len(to_evaluate) == 0:
+        if len(to_evaluate) == 0 and len(to_evaluate_expressions) == 0:
             return False
 
-        assert len(to_evaluate) > 0, "to_evaluate should not be empty"
+        assert (
+            len(to_evaluate) > 0 or len(to_evaluate_expressions) > 0
+        ), "to_evaluate and to_evaluate_expressions should not both be empty"
 
         eval_by_rank: dict[int, set[VariableType]] = {}
+        eval_by_rank_expr: dict[int, set[VariableValue]] = {}
         for v in to_evaluate:
             eval_by_rank.setdefault(self.var_ranks[v.var], set()).add(v)
+        for expr in to_evaluate_expressions:
+            eval_by_rank_expr.setdefault(self.var_ranks_expr[expr], set()).add(expr)
 
         rank = 0
-        max_rank = max(eval_by_rank.keys())
+        max_rank = max(max(eval_by_rank.keys(), default=0), max(eval_by_rank_expr.keys(), default=0))
 
         while rank <= max_rank:
-            if rank not in eval_by_rank:
-                rank += 1
-                continue
+            self.evaluations.update_evaluations(self.symbol2var.get_variables())
+            if rank in eval_by_rank_expr:
+                while len(eval_by_rank_expr[rank]) > 0:
+                    expr = eval_by_rank_expr[rank].pop()
+                    expr_result: bool = expr.evaluate(self.evaluations, ctl, self.environment)
+                    if expr_result:
+                        for var in self.expr2var[expr]:
+                            var.expressions_evaluated_counter += 1
+                            if is_evaluation_possible(var):
+                                eval_by_rank.setdefault(self.var_ranks[var.var], set()).add(var)
 
-            while len(eval_by_rank[rank]) > 0:
-                var = eval_by_rank[rank].pop()
-                # print(f"var: {var}")
-                result = self.evaluate_variable(ctl, var, to_evaluate.get(var, None))
-                if result is None:
-                    # variable had issue, stop propagation!
-                    return True
-                elif result:
-                    # variable changed, evaluate parents
-                    for parent in var.parents:
-                        try:
-                            parent_rank = self.var_ranks[parent.var]
-                        except KeyError:
-                            # parent is not a variable we know about, skip it
-                            # TODO: this is relevant for multi engine solving
-                            # if a variable is a set that is defined from some operation then the _se_value
-                            # is just the operation, which means that the vars that are parents are still used in the propagator even when they should not be
-                            # so, when those variables get a value, the variable is attempted to be added here
-                            # but it is not in the propagator since it does not have parents itself
-                            # How to fix this?
-                            print("var does not exist!?!", parent.var)
-                            continue
-                        if parent_rank not in eval_by_rank:
-                            eval_by_rank.setdefault(parent_rank, set())
-                            max_rank = max(max_rank, parent_rank)
+            if rank in eval_by_rank:
+                while len(eval_by_rank[rank]) > 0:
+                    var = eval_by_rank[rank].pop()
+                    # print(f"var: {var}")
+                    result = self.evaluate_variable(ctl, var, to_evaluate.get(var, None))
+                    if result is None:
+                        # variable had issue, stop propagation!
+                        return True
+                    elif result:
+                        # variable changed, evaluate parents
+                        for parent in var.parents:
+                            try:
+                                parent_rank = self.var_ranks[parent.var]
+                            except KeyError:
+                                # parent is not a variable we know about, skip it
+                                # TODO: this is relevant for multi engine solving
+                                # if a variable is a set that is defined from some operation then the _se_value
+                                # is just the operation, which means that the vars that are parents are still used in the propagator even when they should not be
+                                # so, when those variables get a value, the variable is attempted to be added here
+                                # but it is not in the propagator since it does not have parents itself
+                                # How to fix this?
+                                print("var does not exist!?!", parent.var)
+                                continue
+                            if parent_rank not in eval_by_rank:
+                                eval_by_rank.setdefault(parent_rank, set())
+                                max_rank = max(max_rank, parent_rank)
 
-                        if parent not in eval_by_rank[parent_rank] and parent.get_value() == ValueStatus.NOT_SET:
-                            eval_by_rank[parent_rank].add(parent)
+                            if parent not in eval_by_rank[parent_rank] and parent.get_value() == ValueStatus.NOT_SET:
+                                eval_by_rank[parent_rank].add(parent)
             rank += 1
 
         return False
@@ -1146,6 +1181,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             assignment: Current assignment after backtracking.
             changes: Literals undone by clingo.
         """
+        for expr in self.expr2var:
+            if expr.reset(assignment.decision_level):
+                for var in self.expr2var[expr]:
+                    var.expressions_evaluated_counter -= 1
+
         self.symbol2var.reset(assignment.decision_level)
 
         self.optimization_sum.reset(assignment.decision_level)
@@ -1283,6 +1323,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(_literal)
             self.add_watch(-_literal)
 
+            # TODO: make sure we dont need this literal being watched for Variables
             self.literal2var.setdefault(_literal, []).append(variable)
 
             if isinstance(domain, prop_atom.FromFacts):
@@ -1309,6 +1350,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(_literal)
             self.add_watch(-_literal)
 
+            # TODO: make sure we dont need this literal being watched for Variables
             self.literal2var.setdefault(_literal, []).append(define_variable)
             # here we dont add a nogood since its the same literal
 
