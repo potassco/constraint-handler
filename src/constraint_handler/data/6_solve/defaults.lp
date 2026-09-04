@@ -12,6 +12,7 @@ _default_mode(define) :- not _default_modeProvided.
   _se_value(C,val(bool,false)).
 
 -_default_apply(X,D,C,P) :- _passed(solve,LBL,variable_default(X,D,C,P)), _default_apply(X,D',C',P'), D != D', P<=P'.
+%%%% TODO: consider alternative `-_default_apply(X,D,C,P) :- _passed(solve,LBL,variable_default(X,D,C,P)), 1{_default_apply(X,D',C',P') : D != D', P<=P'}.` it creates less rules but requires aggregates. Should be mostly the same, something to benchmarked.
 _default_apply(X,D,C,P) :- _passed(solve,LBL,variable_default(X,D,C,P)), not -_default_apply(X,D,C,P).
 
 %%%%%% mode basic
@@ -31,7 +32,7 @@ _default_ensureVariable(E,X) :- _passed(solve,LBL,ensure(E)), _default_mode(depe
 _default_dependVariable(E,X) :- _default_ensureVariable(E,X), _passed(solve,LBL,variable_declare(X,open)).
 
 _default_connect(X,Y) :- _default_dependVariable(E,X), _default_ensureVariable(E,Y), X != Y.
-_default_connect(X,X) :- _passed(solve,LBL,variable_declare(X,open)).
+_default_connect(X,X) :- _passed(solve,LBL,variable_declare(X,open)), _default_mode(depends).
 
 -_default_apply(X,D,C,P) :-
   _passed(solve,LBL,variable_default(X,D,C,P)),
@@ -43,9 +44,9 @@ _default_connect(X,X) :- _passed(solve,LBL,variable_declare(X,open)).
 %%%%%% guessing
 _se_value(variable(X),V) :- _passed((compile;compile2;ground),LBL,variable_assign(X,E)), _se_value(E,V).
 
-_se_value(variable(X),V) :- _passed((compile;compile2;ground),LBL,variable_default(X,E,C,P)), _se_value(E,V), not -_default_apply(X,E,C,P).
+_se_value(variable(X),V) :- _passed((compile;compile2;ground),LBL,variable_default(X,E,C,P)), _se_value(E,V), _default_apply(X,E,C,P).
 
-0 { _se_value(variable(X),V) : _passed(solve,LBL1,variable_domain(X,E)), _se_value(E,V) } 1 :-
+{ _se_value(variable(X),V) : _passed(solve,LBL1,variable_domain(X,E)), _se_value(E,V) } 1 :-
   _passed((compile;compile2;ground),LBL,variable_declare(X,open)).
 
 :- _passed((compile;compile2;ground),LBL,variable_declare(X,open)), 1 != { _se_value(variable(X),V) }. % TODO change 1 != to 1 >
