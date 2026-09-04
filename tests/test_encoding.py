@@ -261,6 +261,7 @@ expression_tests = [
     "expression/python_multi_args",
     "expression/tuple",
     "expression/tuple_arity_mismatch",
+    "expression/tuple_extra",
     "expression/tuple_nested",
 ]
 
