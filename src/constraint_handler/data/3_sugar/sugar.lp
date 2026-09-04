@@ -30,6 +30,10 @@ _sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
 _passed(sugar,LBL,variable_assign(X,E)) :- _passed(defaultArgs,LBL,variable_assign(X,E)).
 _sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_assign(X,E)).
 
+%%%%%% variable choice
+_passed(sugar,LBL,variable_choice(X,E)) :- _passed(defaultArgs,LBL,variable_choice(X,E)).
+_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_choice(X,E)).
+
 %%%%%% variable default
 _passed(sugar,LBL,variable_default(X,D,C,P)) :- _passed(defaultArgs,LBL,variable_default(X,D,C,P)).
 _sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_default(X,D,C,P)).

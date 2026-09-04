@@ -1,6 +1,6 @@
 default_mode(depends).
 
-variable_domain(x,val(int,4)).
+variable_choice(x,val(int,4)).
 variable_default(x,val(int,1),val(bool,true)).
 
 variable_define(y,val(int,4)).

@@ -33,6 +33,8 @@ _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(LBL,X,E).
 %%%%%% variable open
 #defined variable_assign/2.
 #defined variable_assign/3.
+#defined variable_choice/2.
+#defined variable_choice/3.
 #defined variable_default/2.
 #defined variable_default/3.
 #defined variable_default/4.
@@ -49,6 +51,10 @@ _passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(LBL,X,E,C
 _passed(defaultArgs,_label_anonymous,variable_assign(X,E)) :- variable_assign(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
 _passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(LBL,X,E).
+
+_passed(defaultArgs,_label_anonymous,variable_choice(X,E)) :- variable_choice(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(LBL,X,E).
 
 %%%%%% variable definition
 #defined variable_define/2.

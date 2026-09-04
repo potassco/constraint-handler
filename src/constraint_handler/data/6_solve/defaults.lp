@@ -46,7 +46,7 @@ _se_value(variable(X),V) :- _passed((compile;compile2;ground),LBL,variable_assig
 
 _se_value(variable(X),V) :- _passed((compile;compile2;ground),LBL,variable_default(X,E,C,P)), _se_value(E,V), _default_apply(X,E,C,P).
 
-{ _se_value(variable(X),V) : _passed(solve,LBL1,variable_domain(X,E)), _se_value(E,V) } 1 :-
+{ _se_value(variable(X),V) : _passed(solve,LBL1,variable_choice(X,E)), _se_value(E,V) } 1 :-
   _passed((compile;compile2;ground),LBL,variable_declare(X,open)).
 
 :- _passed((compile;compile2;ground),LBL,variable_declare(X,open)), 1 != { _se_value(variable(X),V) }. % TODO change 1 != to 1 >

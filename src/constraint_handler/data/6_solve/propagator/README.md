@@ -3,9 +3,12 @@
 _passed(propagator,LBL,bool_evaluate/1).
 _passed(propagator,LBL,ensure/1).
 _passed(propagator,LBL,evaluate/2).
+_passed(propagator,LBL,variable_assign/2).
+_passed(propagator,LBL,variable_choice/2).
 _passed(propagator,LBL,variable_declare/2).
-_passed(propagator,LBL,variable_domain/2).
+_passed(propagator,LBL,variable_default/4).
 _passed(propagator,LBL,variable_define/2).
+_passed(propagator,LBL,variable_domain/2).
 _passed(propagator,LBL,variable_interface/1).
 _passed(propagator,LBL,set_assign/2).
 _passed(propagator,LBL,set_baseDomain/2).

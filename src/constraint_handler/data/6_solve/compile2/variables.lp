@@ -1,3 +1,7 @@
+_passed(compile2,CNAME,variable_define(X,E)) :- _passed(compile2,CNAME,variable_assign(X,E)).
+_passed(compile2,CNAME,variable_domain(X,E)) :- _passed(compile2,CNAME,variable_choice(X,E)).
+%% TODO: temporary hack
+
 _expression_is_value(val(Type, Value)) :- _expression(compile2, val(Type, Value)).
 _expression_is_value(bad) :- _expression(compile2, bad).
 

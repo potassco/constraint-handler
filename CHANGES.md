@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - rename `variable_domain` to `variable_choice` for open variables.
+
 ## v0.0.5
 
 - update .expected test format to be one atom per line

@@ -14,7 +14,13 @@ _expression_safe(EXPR) :- _expression_safeQuery(EXPR), true=@pythonIsTuple(EXPR)
 %_variable_safe(SCOPE,X) :- _variable_query(safe,X), not _variable_unsafe(SCOPE,X).
 %_variable_unsafe(SCOPE,X) :- _passed(sugar,variable_define(X,E)), not _expression_safe((),E).
 
-_variable_safe(X) :- _variable_query(safe,X), _expression_safe(E) : _passed(sugar,LBL,variable_define(X,E)); _expression_safe(E) : _passed(sugar,LBL,variable_domain(X,E)).
+_variable_safe(X) :- _variable_query(safe,X),
+  _expression_safe(E) : _passed(sugar,LBL,variable_assign(X,E));
+  _expression_safe(E) : _passed(sugar,LBL,variable_choice(X,E));
+  _expression_safe(E) : _passed(sugar,LBL,variable_default(X,E,C,P));
+  _expression_safe(C) : _passed(sugar,LBL,variable_default(X,E,C,P));
+  _expression_safe(E) : _passed(sugar,LBL,variable_define(X,E));
+  _expression_safe(E) : _passed(sugar,LBL,variable_domain(X,E)).
 _variable_query(safe,X) :- _variable(sugar,X).
 
 
