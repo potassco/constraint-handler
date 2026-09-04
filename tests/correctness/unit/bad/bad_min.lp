@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(min,(val(int,1),(val(int,2),()))).
 evaluate(min,(val(int,1),(val(none,none),()))).
 evaluate(min,(val(int,1),(bad,()))).

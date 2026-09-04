@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 variable_declare(x,fromFacts).
 variable_domain(x,val(float,float("-1.5"))).
 variable_domain(x,val(float,float("3.7"))).

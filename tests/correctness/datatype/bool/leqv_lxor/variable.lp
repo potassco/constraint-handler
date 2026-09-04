@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 variable_declare(x,fromFacts).
 variable_domain(x,val(bool,false)).
 variable_domain(x,val(bool,true)).

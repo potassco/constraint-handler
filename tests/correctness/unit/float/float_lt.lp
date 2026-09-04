@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(lt,(val(float,float("1.5")),(val(int,2),()))).
 evaluate(lt,(val(float,float("2.5")),(val(int,2),()))).
 evaluate(lt,(val(float,float("1.5")),(val(none,none),()))).

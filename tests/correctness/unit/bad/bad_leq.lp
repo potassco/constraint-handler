@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(leq,(val(int,1),(val(int,2),()))).
 evaluate(leq,(val(int,2),(val(int,1),()))).
 evaluate(leq,(val(none,none),(val(int,2),()))).

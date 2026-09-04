@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(gt,(val(int,2),(val(float,float("1.5")),()))).
 evaluate(gt,(val(int,2),(val(float,float("2.5")),()))).
 evaluate(gt,(val(float,float("1.5")),(val(none,none),()))).

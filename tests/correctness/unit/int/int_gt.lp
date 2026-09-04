@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(gt,(val(int,3),(val(int,2),()))).
 evaluate(gt,(val(int,2),(val(int,3),()))).
 evaluate(gt,(val(int,2),(val(int,2),()))).

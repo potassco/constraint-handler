@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 variable_define(x,val(int,20)).
 variable_define(two,val(int,2)).
 variable_define(ten,val(int,10)).

@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(add,()).
 variable_define(two,val(int,2)).
 variable_define(ten,val(int,10)).

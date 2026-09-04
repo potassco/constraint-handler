@@ -1,6 +1,4 @@
 %%% bad-aware boolean equivalence checks
-phase_request(constantFolding,false).
-
 variable_declare(x,fromFacts).
 variable_domain(x,val(bool,(true;false))).
 

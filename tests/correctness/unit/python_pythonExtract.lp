@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(pythonExtract("tmp=lhs*rhs\nres=tmp+rhs","res"),((val(string,"lhs"),val(int,3)),((val(string,"rhs"),val(int,4)),()))).
 evaluate(pythonExtract("tmp=raw","tmp"),((val(string,"raw"),val(int,3)),())).
 evaluate(pythonExtract("tmp=raw","tmp"),((val(string,"raw"),val(none,none)),())).

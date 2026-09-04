@@ -1,7 +1,5 @@
 %%% binary conjunction/disjunction with none involved
 
-phase_request(constantFolding,false).
-
 evaluate(conj,(val(bool,false),(val(none,none),()))).
 evaluate(conj,(val(none,none),(val(bool,false),()))).
 evaluate(conj,(val(bool,true),(val(none,none),()))).

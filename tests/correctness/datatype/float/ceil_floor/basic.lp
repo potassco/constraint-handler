@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(ceil,(val(float,float("0.0")),())).
 evaluate(floor,(val(float,float("0.0")),())).
 evaluate(ceil,(val(float,float("1.5")),())).

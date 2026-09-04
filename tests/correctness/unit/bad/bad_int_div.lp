@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(int_div,(val(int,4),(val(int,2),()))).
 evaluate(int_div,(val(int,4),(val(none,none),()))).
 evaluate(int_div,(val(int,4),(bad,()))).

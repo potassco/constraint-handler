@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(hasValue,(val(bool,false),())).
 evaluate(hasValue,(val(bool,true),())).
 evaluate(hasValue,(val(none,none),())).

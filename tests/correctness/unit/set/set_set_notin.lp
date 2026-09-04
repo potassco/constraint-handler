@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 variable_define(pool,operation(set_make,(val(int,1),(val(int,3),(val(none,none),()))))).
 
 

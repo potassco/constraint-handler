@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 evaluate(length,(bad,())).
 
 variable_declare(x,fromFacts).
