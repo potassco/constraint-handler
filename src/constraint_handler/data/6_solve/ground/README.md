@@ -3,9 +3,12 @@
 _passed(ground,LBL,bool_evaluate/1).
 _passed(ground,LBL,ensure/1).
 _passed(ground,LBL,evaluate/2).
+_passed(ground,LBL,variable_assign/4).
+_passed(ground,LBL,variable_choice/4).
+_passed(ground,LBL,variable_declare/2).
+_passed(ground,LBL,variable_default/4).
 _passed(ground,LBL,variable_define/2).
 _passed(ground,LBL,variable_domain/2).
-_passed(ground,LBL,variable_declare/2).
 _passed(ground,LBL,set_assign/2).
 _passed(ground,LBL,set_baseDomain/2).
 _direct_imploded/2.

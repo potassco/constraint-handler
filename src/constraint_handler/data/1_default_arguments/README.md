@@ -3,6 +3,8 @@
 bool_evaluate/1. bool_evaluate/2.
 ensure/1. ensure/2.
 evaluate/2. evaluate/3.
+variable_assign/2. variable_assign/3.
+variable_choice/2. variable_choice/3.
 variable_declare/2. variable_declare/3.
 variable_define/2. variable_define/3.
 variable_domain/2. variable_domain/3.

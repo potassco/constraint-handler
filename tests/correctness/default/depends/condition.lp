@@ -5,9 +5,9 @@ default_mode(depends).
 variable_declare(frontwheel,open).
 variable_declare(backwheel,open).
 
-variable_default(frontwheel,val(int,10)).
-variable_default(frontwheel,val(int,20)).
-variable_default(frontwheel,val(int,30)).
+variable_choice(frontwheel,val(int,10)).
+variable_choice(frontwheel,val(int,20)).
+variable_choice(frontwheel,val(int,30)).
 
 variable_default(frontwheel,val(int,20),operation(eq,(variable(backwheel),(val(int,1),()))),1).
 

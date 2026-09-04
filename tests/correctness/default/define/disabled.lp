@@ -3,8 +3,8 @@ default_mode(define).
 
 variable_declare(frontwheel,open).
 
-variable_default(frontwheel,val(int,20)).
-variable_default(frontwheel,val(int,21)).
-variable_default(frontwheel,val(int,22)).
+variable_choice(frontwheel,val(int,20)).
+variable_choice(frontwheel,val(int,21)).
+variable_choice(frontwheel,val(int,22)).
 
 variable_default(frontwheel,val(int,21),val(bool,false),2).

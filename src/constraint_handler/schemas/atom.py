@@ -18,6 +18,12 @@ class EvalResult(NamedTuple):
     errors: tuple[tuple[warning.Kind, str], ...]
 
 
+class Variable_choice(NamedTuple):
+    label: expression.constant
+    name: expression.constant
+    value: expression.Expr
+
+
 class Variable_declare(NamedTuple):
     label: expression.constant
     name: expression.constant

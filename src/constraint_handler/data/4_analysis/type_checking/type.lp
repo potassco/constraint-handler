@@ -10,6 +10,7 @@ _expression(type_check,variable(X)) :- _phase_active(type_check), _variable(suga
 
 %%%%%%%%%%%%%%%%% type_variable
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_assign(X,E)), _type_expression(E,T).
+_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_choice(X,E)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_default(X,E,C,P)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_define(X,E)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_domain(X,E)), _type_expression(E,T).

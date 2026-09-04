@@ -30,7 +30,10 @@ active(CNAME,X,N-1) :- active(CNAME,X,N), N > 0.
 propagator_ensure(CNAME,operation(neq,(variable(X),(E,())))) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
 
 propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_assign(X,E)).
-%%propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_default(X,E,C,P)). %% TODO
+_passed(propagator,CNAME,variable_domain(X,E)) :- _passed(propagator,CNAME,variable_choice(X,E)).
+%propagator_variable_assign(CNAME,X,E) :- _passed(propagator,CNAME,variable_assign(X,E)).
+%propagator_variable_choice(CNAME,X,E) :- _passed(propagator,CNAME,variable_choice(X,E)).
+%propagator_variable_default(CNAME,X,E,C,P) :- _passed(propagator,CNAME,variable_default(X,E,C,P)). %% TODO: temporary hack
 propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_define(X,E)).
 
 propagator_set_declare(CNAME,X) :- _passed(propagator,CNAME,variable_declare(X,set)).
