@@ -1382,14 +1382,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Bool_evaluated)
         for (_, op, args), literal in evaluate_atoms.items():
             var = EvaluateVariable(op, args, literal)
-            if literal != 1:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Propagator(),
-                        (var,),
-                        f"Evaluate atom {op} with args {args} is not a fact!",
-                    )
-                )
             self.evaluatevars.append(var)
 
         true_val = expression.Val(type_.BaseType.bool, True)  # ty:ignore[unresolved-attribute]
@@ -1622,6 +1614,17 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for eval_var in self.evaluatevars:
             self.handle_on_model_warning(eval_var.get_errors())
             final_value = eval_var.get_value()
+            if final_value is ValueStatus.NOT_SET:
+                self.handle_on_model_warning(
+                    [
+                        warning.Warning(
+                            warning.Propagator(), (str(eval_var),), "Evaluate variable has no value set in on_model!"
+                        )
+                    ]
+                )
+                continue
+            elif final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
+                continue
             pyVal, errors = evaluator.reducedExpr(final_value)
             pyAtom = atom.Evaluated(
                 eval_var.op,
