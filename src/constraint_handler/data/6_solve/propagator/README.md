@@ -27,7 +27,7 @@ active/3.
 
 propagator_bool_evaluate/2.
 propagator_ensure/2.
-propagator_evaluate/3.
+propagator_evaluate/4.
 propagator_variable_declare/3.
 propagator_variable_domain/3.
 propagator_variable_define/3.

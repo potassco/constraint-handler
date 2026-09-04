@@ -1,8 +1,8 @@
 _optimize_component(LBL,E,ORIG,PREC,ID,PRIORITY) :- _passed(solve,LBL,optimize_component(E,ORIG,PREC,ID,PRIORITY)), _engine(LBL,ENG), _engine_supportOptimization(ENG).
 
-_preference_expressionScore(E,K) :- _passed(solve,LBL,preference_holds(E,K)), _engine(LBL,(compile;compile2;ground)).
+_preference_expressionScore(E,K) :- _passed(solve,LBL,preference_holds(E,K)), _engine(LBL,ENG), _engine_grounding(ENG).
 
-_evaluate(operation(OP,ARGS)) :- _passed(solve,LBL,evaluate(OP,ARGS)), _engine(LBL,(compile;compile2;ground)).
+_evaluate(REF,E) :- _passed(solve,LBL,evaluate(REF,E)), _engine(LBL,ENG), _engine_grounding(ENG).
 
 _passed(skip,bla) :- _never.
 _passed(compile,LBL,DECL) :- _passed(solve,LBL,DECL), _label(LBL,DECL), _engine(LBL,compile), not _passed(skip,DECL).

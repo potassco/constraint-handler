@@ -80,8 +80,10 @@ class Propagator_execution_run(atom.Execution_run):
     pass
 
 
-class Propagator_evaluate(atom.Evaluate):
-    pass
+class Propagator_evaluate(NamedTuple):
+    label: expression.constant
+    ref: expression.Expr
+    expr: expression.Expr
 
 
 class Propagator_warning_forbid(warning.Warning_forbid):

@@ -1380,8 +1380,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_evaluate)
         bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_bool_evaluate)
         bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Bool_evaluated)
-        for (_, op, args), literal in evaluate_atoms.items():
-            var = EvaluateVariable(op, args, literal)
+        for (_, ref, expr), literal in evaluate_atoms.items():
+            var = EvaluateVariable(ref, expr, literal)
             self.evaluatevars.append(var)
 
         true_val = expression.Val(type_.BaseType.bool, True)  # ty:ignore[unresolved-attribute]
@@ -1627,8 +1627,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 continue
             pyVal, errors = evaluator.reducedExpr(final_value)
             pyAtom = atom.Evaluated(
-                eval_var.op,
-                eval_var.args,
+                eval_var.ref.op,
+                eval_var.ref.args,
                 pyVal,
             )
             self.python_model.add(pyAtom)

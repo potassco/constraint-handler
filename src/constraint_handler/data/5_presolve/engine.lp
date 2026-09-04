@@ -4,6 +4,7 @@
 %%%%%%%%%%%%%%%%% engines
 _engine_supportOptimization(compile;compile2;ground;propagator).
 _engine(compile;compile2;ground;propagator;none).
+_engine_grounding(compile;compile2;ground).
 
 _engine_default(ENG) :- engine_default(ENG), _engine(ENG).
 _engine_defaultProvided :- engine_default(ENG), _engine(ENG).

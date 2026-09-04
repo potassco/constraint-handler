@@ -29,7 +29,7 @@ _variable_execution_outputVar/1.
 
 _passed(sugar,LBL,bool_evaluate/1).
 _passed(sugar,LBL,ensure/1).
-_passed(sugar,LBL,evaluate/2).
+_passed(sugar,LBL,evaluate/1).
 _passed(sugar,LBL,share_value(E)).
 _passed(sugar,LBL,variable_assign/2).
 _passed(sugar,LBL,variable_choice/2).

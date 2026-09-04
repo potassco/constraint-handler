@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
+%%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3
 direct_query(E)  :- _expression(compile,LBL,DECL,E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 direct_query(SE) :- direct_query(T), SE=@pythonTupleElements(T).

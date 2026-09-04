@@ -26,6 +26,7 @@ _passed(solve,LBL,DECL).
 
 ### Output predicates
 
+_engine_grounding/1.
 _evaluate/1.
 _optimize_component/6.
 _passed(compile,LBL,DECL).

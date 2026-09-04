@@ -1,6 +1,6 @@
 propagator_bool_evaluate(LBL,E) :- _passed(propagator,LBL,bool_evaluate(E)).
 propagator_ensure(LBL,E) :- _passed(propagator,LBL,ensure(E)).
-propagator_evaluate(LBL,O,E) :- _passed(propagator,LBL,evaluate(O,E)).
+propagator_evaluate(LBL,REF,EXPR) :- _passed(propagator,LBL,evaluate(REF,EXPR)).
 
 
 propagator_variable_declare(LBL,X,fromFacts) :- _passed(propagator,LBL,variable_declare(X,fromFacts)).

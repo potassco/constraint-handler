@@ -6,11 +6,11 @@ _passed(sugar,LBL,ensure(E)) :- _passed(defaultArgs,LBL,ensure(E)).
 _passed(sugar,LBL,share_value(E)) :- _passed(defaultArgs,LBL,ensure(E)).
 _passed(sugar,LBL,share_value(E)) :- _passed(ssa,LBL,ensure(E)).
 
-_passed(sugar,LBL,evaluate(OP,ARGS)) :- _passed(defaultArgs,LBL,evaluate(OP,ARGS)).
-_passed(sugar,LBL,share_value(operation(OP,ARGS))) :- _passed(defaultArgs,LBL,evaluate(OP,ARGS)).
+_passed(sugar,LBL,evaluate(E,E)) :- _passed(defaultArgs,LBL,evaluate(E)).
+_passed(sugar,LBL,share_value(E)) :- _passed(defaultArgs,LBL,evaluate(E)).
 
 
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_declare(X,(boolDomain;definition;fromFacts;set;multimap))).
+_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_declare(X,(boolDomain;definition;fromFacts;open;set;multimap))).
 
 %%%%%% variable fromFacts atoms
 _passed(sugar,LBL,variable_declare(X,D)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(definition;fromFacts;open;set;multimap).
