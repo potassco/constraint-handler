@@ -1,1 +1,1 @@
-evaluate(add,(val(int,2),(bad,()))).
+evaluate(operation(add,(val(int,2),(bad,())))).

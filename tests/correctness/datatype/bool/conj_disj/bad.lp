@@ -8,5 +8,5 @@ variable_define(conj_tb,operation(conj,(val(bool,true),(variable(lt_bad),())))).
 variable_define(disj_bf,operation(disj,(variable(lt_bad),(val(bool,false),())))).
 variable_define(disj_fb,operation(disj,(val(bool,false),(variable(lt_bad),())))).
 
-evaluate(conj,(val(bool,true),(bad,()))).
-evaluate(disj,(val(bool,false),(bad,()))).
+evaluate(operation(conj,(val(bool,true),(bad,())))).
+evaluate(operation(disj,(val(bool,false),(bad,())))).

@@ -1,2 +1,2 @@
-evaluated(if,(val(bool,false),(bad,())),bad)
-evaluated(if,(val(none,none),(bad,())),bad)
+evaluated(operation(if,(val(bool,false),(bad,()))),bad)
+evaluated(operation(if,(val(none,none),(bad,()))),bad)

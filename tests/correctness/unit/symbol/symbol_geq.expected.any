@@ -1,4 +1,4 @@
-evaluated(geq,(variable(x),(val(symbol,a),())),val(bool,true))
-evaluated(geq,(variable(x),(val(symbol,a),())),bad)
-evaluated(geq,(variable(x),(val(none,none),())),bad)
-evaluated(geq,(variable(x),(bad,())),bad)
+evaluated(operation(geq,(variable(x),(val(symbol,a),()))),val(bool,true))
+evaluated(operation(geq,(variable(x),(val(symbol,a),()))),bad)
+evaluated(operation(geq,(variable(x),(val(none,none),()))),bad)
+evaluated(operation(geq,(variable(x),(bad,()))),bad)

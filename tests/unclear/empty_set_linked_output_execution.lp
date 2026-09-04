@@ -9,14 +9,14 @@ execution_run(e,e).
 execution_declare(e,e,assign("y",operation(set_make,())),(),("y",())).
 
 bool_evaluate(variable(a)).
-evaluate(hasValue,(variable(execution_output(e,"y")),())).
-evaluate(conj,(variable(a),(operation(hasValue,(variable(execution_output(e,"y")),())),()))).
-evaluate(length,(variable(b),())).
-evaluate(length,(variable(execution_output(e,"y")),())).
-evaluate(subset,(variable(execution_output(e,"y")),(variable(b),()))).
-evaluate(subset,(variable(b),(variable(execution_output(e,"y")),()))).
-evaluate(eq,(variable(b),(operation(set_make,()),()))).
-evaluate(eq,(variable(execution_output(e,"y")),(operation(set_make,()),()))).
+evaluate(operation(hasValue,(variable(execution_output(e,"y")),()))).
+evaluate(operation(conj,(variable(a),(operation(hasValue,(variable(execution_output(e,"y")),())),())))).
+evaluate(operation(length,(variable(b),()))).
+evaluate(operation(length,(variable(execution_output(e,"y")),()))).
+evaluate(operation(subset,(variable(execution_output(e,"y")),(variable(b),())))).
+evaluate(operation(subset,(variable(b),(variable(execution_output(e,"y")),())))).
+evaluate(operation(eq,(variable(b),(operation(set_make,()),())))).
+evaluate(operation(eq,(variable(execution_output(e,"y")),(operation(set_make,()),())))).
 
 % First failing probe under compile2; enabling it makes this debug case UNSAT.
 % evaluate(eq,(variable(execution_output(e,"y")),(variable(b),()))).

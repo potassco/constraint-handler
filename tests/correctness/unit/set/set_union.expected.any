@@ -1,4 +1,4 @@
-evaluated(cardinality,(operation(union,(variable(x),(variable(b),()))),()),val(int,3))
-evaluated(cardinality,(operation(union,(variable(x),(variable(b),()))),()),val(int,2))
-evaluated(cardinality,(operation(union,(variable(x),(variable(b),()))),()),bad)
-evaluated(cardinality,(operation(union,(variable(x),(variable(bad_set),()))),()),bad)
+evaluated(operation(cardinality,(operation(union,(variable(x),(variable(b),()))),())),val(int,3))
+evaluated(operation(cardinality,(operation(union,(variable(x),(variable(b),()))),())),val(int,2))
+evaluated(operation(cardinality,(operation(union,(variable(x),(variable(b),()))),())),bad)
+evaluated(operation(cardinality,(operation(union,(variable(x),(variable(bad_set),()))),())),bad)

@@ -1,1 +1,1 @@
-evaluated(pythonExtract("tmp=2","tmp"),(),val(int,2))
+evaluated(operation(pythonExtract("tmp=2","tmp"),()),val(int,2))

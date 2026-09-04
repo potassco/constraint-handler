@@ -1,1 +1,1 @@
-evaluate(minus,(val(none,none),())).
+evaluate(operation(minus,(val(none,none),()))).

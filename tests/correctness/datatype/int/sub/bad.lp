@@ -1,3 +1,3 @@
-evaluate(sub,(val(int,2),(bad,()))).
-evaluate(sub,(bad,(val(int,3),()))).
-evaluate(sub,(bad,(bad,()))).
+evaluate(operation(sub,(val(int,2),(bad,())))).
+evaluate(operation(sub,(bad,(val(int,3),())))).
+evaluate(operation(sub,(bad,(bad,())))).

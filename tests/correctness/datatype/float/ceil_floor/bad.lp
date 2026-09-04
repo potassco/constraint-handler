@@ -1,2 +1,2 @@
-evaluate(ceil,(bad,())).
-evaluate(floor,(bad,())).
+evaluate(operation(ceil,(bad,()))).
+evaluate(operation(floor,(bad,()))).

@@ -1,4 +1,4 @@
-evaluated(leq,(variable(x),(val(symbol,a),())),val(bool,false))
-evaluated(leq,(variable(x),(val(symbol,a),())),bad)
-evaluated(leq,(variable(x),(val(none,none),())),bad)
-evaluated(leq,(variable(x),(bad,())),bad)
+evaluated(operation(leq,(variable(x),(val(symbol,a),()))),val(bool,false))
+evaluated(operation(leq,(variable(x),(val(symbol,a),()))),bad)
+evaluated(operation(leq,(variable(x),(val(none,none),()))),bad)
+evaluated(operation(leq,(variable(x),(bad,()))),bad)

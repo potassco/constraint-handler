@@ -1,1 +1,1 @@
-evaluated(sub,(val(float,float("2.5")),(bad,())),val(float,float("2.5")))
+evaluated(operation(sub,(val(float,float("2.5")),(bad,()))),val(float,float("2.5")))

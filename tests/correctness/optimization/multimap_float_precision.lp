@@ -29,8 +29,8 @@ variable_define(carried,EXPR) :-
 
 ensure(operation(leq,(variable(carried),(val(int,C),())))) :- capacity(C).
 
-evaluate(multimap_isin,(val(symbol,a),(variable(taken),()))).
-evaluate(multimap_isin,(val(symbol,b),(variable(taken),()))).
-evaluate(multimap_isin,(val(symbol,c),(variable(taken),()))).
-evaluate(multimap_isin,(val(symbol,d),(variable(taken),()))).
-evaluate(multimap_isin,(val(symbol,e),(variable(taken),()))).
+evaluate(operation(multimap_isin,(val(symbol,a),(variable(taken),())))).
+evaluate(operation(multimap_isin,(val(symbol,b),(variable(taken),())))).
+evaluate(operation(multimap_isin,(val(symbol,c),(variable(taken),())))).
+evaluate(operation(multimap_isin,(val(symbol,d),(variable(taken),())))).
+evaluate(operation(multimap_isin,(val(symbol,e),(variable(taken),())))).

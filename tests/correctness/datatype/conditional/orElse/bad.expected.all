@@ -1,2 +1,2 @@
-evaluated(getOrElse,(bad,(val(int,2),())),bad)
-evaluated(getOrElse,(val(none,none),(bad,())),bad)
+evaluated(operation(getOrElse,(bad,(val(int,2),()))),bad)
+evaluated(operation(getOrElse,(val(none,none),(bad,()))),bad)

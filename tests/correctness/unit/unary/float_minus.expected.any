@@ -1,2 +1,2 @@
-evaluated(minus,(variable(x),()),val(float,float("-1.5")))
-evaluated(minus,(variable(x),()),bad)
+evaluated(operation(minus,(variable(x),())),val(float,float("-1.5")))
+evaluated(operation(minus,(variable(x),())),bad)

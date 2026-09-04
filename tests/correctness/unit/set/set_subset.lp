@@ -11,9 +11,9 @@ variable_domain(x,bad).
 
 variable_define(bad_set,operation(set_make,(bad,()))).
 
-evaluate(subset,(variable(small),(variable(big),()))).
-evaluate(subset,(variable(big),(variable(small),()))).
-evaluate(subset,(variable(empty),(variable(big),()))).
-evaluate(subset,(variable(small),(variable(bad_set),()))).
-evaluate(subset,(variable(x),(variable(big),()))).
-evaluate(subset,(variable(x),(variable(bad_set),()))).
+evaluate(operation(subset,(variable(small),(variable(big),())))).
+evaluate(operation(subset,(variable(big),(variable(small),())))).
+evaluate(operation(subset,(variable(empty),(variable(big),())))).
+evaluate(operation(subset,(variable(small),(variable(bad_set),())))).
+evaluate(operation(subset,(variable(x),(variable(big),())))).
+evaluate(operation(subset,(variable(x),(variable(bad_set),())))).

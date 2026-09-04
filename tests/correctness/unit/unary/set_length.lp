@@ -6,8 +6,8 @@ variable_declare(x,fromFacts).
 variable_domain(x,variable(empty)).
 variable_domain(x,variable(values)).
 variable_domain(x,bad).
-evaluate(cardinality,(variable(x),())).
+evaluate(operation(cardinality,(variable(x),()))).
 
-evaluate(cardinality,(variable(empty),())).
-evaluate(cardinality,(variable(values),())).
-evaluate(cardinality,(bad,())).
+evaluate(operation(cardinality,(variable(empty),()))).
+evaluate(operation(cardinality,(variable(values),()))).
+evaluate(operation(cardinality,(bad,()))).

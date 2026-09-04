@@ -1,2 +1,2 @@
-evaluated(ceil,(val(none,none),()),bad)
-evaluated(floor,(val(none,none),()),bad)
+evaluated(operation(ceil,(val(none,none),())),bad)
+evaluated(operation(floor,(val(none,none),())),bad)

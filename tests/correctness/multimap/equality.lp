@@ -57,13 +57,13 @@ variable_define(e,operation(multimap_make,
                      ((operation(set_make,(val(int,1),(val(int,2),()))), operation(set_make,(val(int,2),(val(int,4),())))),
                      ()))).
 
-evaluate(eq,(variable(a),(variable(b),()))).
-evaluate(eq,(variable(a),(variable(c),()))).
-evaluate(eq,(variable(a),(variable(d),()))).
-evaluate(eq,(variable(a),(variable(e),()))).
-evaluate(neq,(variable(a),(variable(b),()))).
-evaluate(neq,(variable(a),(variable(c),()))).
-evaluate(neq,(variable(a),(variable(d),()))).
-evaluate(neq,(variable(a),(variable(e),()))).
-evaluate(neq,(variable(d),(variable(e),()))).
-evaluate(neq,(variable(e),(variable(d),()))).
+evaluate(operation(eq,(variable(a),(variable(b),())))).
+evaluate(operation(eq,(variable(a),(variable(c),())))).
+evaluate(operation(eq,(variable(a),(variable(d),())))).
+evaluate(operation(eq,(variable(a),(variable(e),())))).
+evaluate(operation(neq,(variable(a),(variable(b),())))).
+evaluate(operation(neq,(variable(a),(variable(c),())))).
+evaluate(operation(neq,(variable(a),(variable(d),())))).
+evaluate(operation(neq,(variable(a),(variable(e),())))).
+evaluate(operation(neq,(variable(d),(variable(e),())))).
+evaluate(operation(neq,(variable(e),(variable(d),())))).

@@ -11,8 +11,8 @@ variable_domain(x,bad).
 
 variable_define(bad_set,operation(set_make,(bad,()))).
 
-evaluate(eq,(operation(union,(variable(a),(variable(b),(variable(empty),())))),(operation(set_make,(val(int,1),(val(int,2),(val(none,none),())))),()))).
-evaluate(cardinality,(operation(union,(variable(a),(variable(b),(variable(empty),())))),())).
-evaluate(cardinality,(operation(union,(variable(a),(variable(bad_set),()))),())).
-evaluate(cardinality,(operation(union,(variable(x),(variable(b),()))),())).
-evaluate(cardinality,(operation(union,(variable(x),(variable(bad_set),()))),())).
+evaluate(operation(eq,(operation(union,(variable(a),(variable(b),(variable(empty),())))),(operation(set_make,(val(int,1),(val(int,2),(val(none,none),())))),())))).
+evaluate(operation(cardinality,(operation(union,(variable(a),(variable(b),(variable(empty),())))),()))).
+evaluate(operation(cardinality,(operation(union,(variable(a),(variable(bad_set),()))),()))).
+evaluate(operation(cardinality,(operation(union,(variable(x),(variable(b),()))),()))).
+evaluate(operation(cardinality,(operation(union,(variable(x),(variable(bad_set),()))),()))).

@@ -20,4 +20,4 @@ set_baseDomain(a,a,val(string,"x")).
 execution_declare(p,statement_python("c = set(a) == set([])"),("a",()),("c",())).
 execution_declare(q,assert(operation(eq,(variable("c"),(operation(eq,(variable("b"),(val(int,1),()))),())))),("b",("c",())),()).
 
-evaluate(eq,(variable(b),(val(int,2),()))).
+evaluate(operation(eq,(variable(b),(val(int,2),())))).

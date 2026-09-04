@@ -1,1 +1,1 @@
-evaluate(snot,(bad,())).
+evaluate(operation(snot,(bad,()))).

@@ -13,9 +13,9 @@ variable_domain(execution_input(snippet,x),val(none,none)).
 
 execution_run(snippet).
 
-evaluate(leqv,
+evaluate(operation(leqv,
   (operation(eq,(variable(execution_output(snippet,y)),(val(int,5),()))),
-  (operation(eq,(variable(execution_input(snippet,x)),(val(bool,false),()))),()))).
+  (operation(eq,(variable(execution_input(snippet,x)),(val(bool,false),()))),())))).
 
 #show value/2.
 #show evaluated/3.

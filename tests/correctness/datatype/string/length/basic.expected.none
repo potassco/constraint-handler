@@ -1,4 +1,4 @@
-evaluated(length,(val(string,"ab"),()),val(int,0))
-evaluated(length,(val(string,"ab"),()),bad)
-evaluated(length,(val(string,""),()),val(int,2))
-evaluated(length,(val(string,""),()),bad)
+evaluated(operation(length,(val(string,"ab"),())),val(int,0))
+evaluated(operation(length,(val(string,"ab"),())),bad)
+evaluated(operation(length,(val(string,""),())),val(int,2))
+evaluated(operation(length,(val(string,""),())),bad)

@@ -1,1 +1,1 @@
-evaluate(minus,(bad,())).
+evaluate(operation(minus,(bad,()))).

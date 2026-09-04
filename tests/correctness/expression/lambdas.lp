@@ -52,11 +52,11 @@ variable_define(isSquare,lambda((shape,()),ISSQ)) :-
   SREC = operation(conj,(RECT,(operation(eq,(WIDT,(HEIG,()))),()))),
   ISSQ = operation(disj,(SQUA,(SREC,()))).
 
-evaluate(variable(isSquare),(variable(a),())).
-evaluate(variable(isSquare),(variable(b),())).
-evaluate(variable(isSquare),(variable(c),())).
-evaluate(variable(isSquare),(variable(d),())).
-evaluate(variable(isSquare),(variable(e),())).
+evaluate(operation(variable(isSquare),(variable(a),()))).
+evaluate(operation(variable(isSquare),(variable(b),()))).
+evaluate(operation(variable(isSquare),(variable(c),()))).
+evaluate(operation(variable(isSquare),(variable(d),()))).
+evaluate(operation(variable(isSquare),(variable(e),()))).
 
 variable_define(nb_squares2,E) :-
   E    = operation(set_fold,(LAMB,(SET,(START,())))),

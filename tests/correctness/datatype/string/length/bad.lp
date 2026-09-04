@@ -1,6 +1,6 @@
-evaluate(length,(bad,())).
+evaluate(operation(length,(bad,()))).
 
 variable_declare(x,fromFacts).
 variable_domain(x,val(string,"ab")).
 variable_domain(x,bad).
-evaluate(length,(variable(x),())).
+evaluate(operation(length,(variable(x),()))).

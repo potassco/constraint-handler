@@ -21,7 +21,7 @@ variable_define(((((),"r"),"u"),"p"),(((((),"r"),"u"),"p")),operation(if,(variab
 execution_declare(((((),"r"),"u"),"pos"),((((),"r"),"u"),"pos"),if(variable(run),assign("result",operation(eq,(variable("p"),(operation(set_make,(val(string,"Back"),())),())))),noop),(run,("p",())),("result",())).
 execution_declare(((((),"r"),"u"),"chk"),((((),"r"),"u"),"chk"),if(variable(run),if(operation(lnot,(operation(lnot,(variable("result"),())),())),assert(val(bool,false)),noop),noop),(run,("result",())),()).
 
-evaluate(lnot,(operation(lnot,(variable(execution_input(((((),"r"),"u"),"chk"),"result")),())),())).
-evaluate(hasValue,(variable(((((),"r"),"u"),"p")),())).
+evaluate(operation(lnot,(operation(lnot,(variable(execution_input(((((),"r"),"u"),"chk"),"result")),())),()))).
+evaluate(operation(hasValue,(variable(((((),"r"),"u"),"p")),()))).
 
 #show evaluated/3.

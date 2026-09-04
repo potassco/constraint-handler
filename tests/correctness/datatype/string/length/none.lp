@@ -1,1 +1,1 @@
-evaluate(length,(val(none,none),())).
+evaluate(operation(length,(val(none,none),()))).

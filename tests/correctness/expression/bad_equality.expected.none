@@ -1,4 +1,4 @@
-evaluated(eq,(variable(x),(bad,())),val(bool,true))
-evaluated(eq,(bad,(variable(y),())),val(bool,true))
-evaluated(eq,(variable(x),(bad,())),val(bool,false))
-evaluated(eq,(bad,(variable(y),())),val(bool,false))
+evaluated(operation(eq,(variable(x),(bad,()))),val(bool,true))
+evaluated(operation(eq,(bad,(variable(y),()))),val(bool,true))
+evaluated(operation(eq,(variable(x),(bad,()))),val(bool,false))
+evaluated(operation(eq,(bad,(variable(y),()))),val(bool,false))

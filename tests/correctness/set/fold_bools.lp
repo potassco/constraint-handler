@@ -5,5 +5,5 @@ set_assign(bools(t),val(bool,true)).
 set_assign(bools(f),val(bool,false)).
 set_assign(bools(b),val(bool,(true;false))).
 
-evaluate(set_fold,(val(function,conj),(variable(bools(e;t;f;b)),(val(bool,true),())))).
-evaluate(set_fold,(val(function,disj),(variable(bools(e;t;f;b)),(val(bool,false),())))).
+evaluate(operation(set_fold,(val(function,conj),(variable(bools(e;t;f;b)),(val(bool,true),()))))).
+evaluate(operation(set_fold,(val(function,disj),(variable(bools(e;t;f;b)),(val(bool,false),()))))).

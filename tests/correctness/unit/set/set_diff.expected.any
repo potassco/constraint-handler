@@ -1,4 +1,4 @@
-evaluated(cardinality,(operation(diff,(variable(x),(variable(b),()))),()),val(int,2))
-evaluated(cardinality,(operation(diff,(variable(x),(variable(b),()))),()),val(int,0))
-evaluated(cardinality,(operation(diff,(variable(x),(variable(b),()))),()),bad)
-evaluated(cardinality,(operation(diff,(variable(x),(variable(bad_set),()))),()),bad)
+evaluated(operation(cardinality,(operation(diff,(variable(x),(variable(b),()))),())),val(int,2))
+evaluated(operation(cardinality,(operation(diff,(variable(x),(variable(b),()))),())),val(int,0))
+evaluated(operation(cardinality,(operation(diff,(variable(x),(variable(b),()))),())),bad)
+evaluated(operation(cardinality,(operation(diff,(variable(x),(variable(bad_set),()))),())),bad)

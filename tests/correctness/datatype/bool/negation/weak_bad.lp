@@ -1,1 +1,1 @@
-evaluate(wnot,(bad,())).
+evaluate(operation(wnot,(bad,()))).

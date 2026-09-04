@@ -67,22 +67,22 @@ variable_define(m2a,operation(find,(val(string,"a"),(variable(m2),())))).
 variable_define(m2b,operation(find,(val(string,"b"),(variable(m2),())))).
 variable_define(m2c,operation(find,(val(string,"c"),(variable(m2),())))).
 
-evaluate(eq,(variable(m1a),(operation(set_make,(val(int,1),())),()))).
-evaluate(eq,(variable(m1b),(operation(set_make,(val(int,2),(val(int,3),()))),()))).
-evaluate(eq,(variable(m1c),(operation(set_make,(())),()))).
-evaluate(eq,(variable(m2a),(operation(set_make,(val(int,4),())),()))).
-evaluate(eq,(variable(m2b),(operation(set_make,(val(int,5),(val(int,6),()))),()))).
-evaluate(eq,(variable(m2c),(operation(set_make,()),()))).
-evaluate(eq,(variable(in5),(operation(set_make,(val(string,"c"),())),()))).
-evaluate(eq,(variable(inc),(operation(set_make,(val(int,6),())),()))).
-evaluate(eq,(variable(in6),(operation(set_make,()),()))).
+evaluate(operation(eq,(variable(m1a),(operation(set_make,(val(int,1),())),())))).
+evaluate(operation(eq,(variable(m1b),(operation(set_make,(val(int,2),(val(int,3),()))),())))).
+evaluate(operation(eq,(variable(m1c),(operation(set_make,(())),())))).
+evaluate(operation(eq,(variable(m2a),(operation(set_make,(val(int,4),())),())))).
+evaluate(operation(eq,(variable(m2b),(operation(set_make,(val(int,5),(val(int,6),()))),())))).
+evaluate(operation(eq,(variable(m2c),(operation(set_make,()),())))).
+evaluate(operation(eq,(variable(in5),(operation(set_make,(val(string,"c"),())),())))).
+evaluate(operation(eq,(variable(inc),(operation(set_make,(val(int,6),())),())))).
+evaluate(operation(eq,(variable(in6),(operation(set_make,()),())))).
 
-evaluate(multimap_isin,(val(string,"a"),(variable(m1),()))).
-evaluate(multimap_isin,(val(string,"c"),(variable(m1),()))).
-evaluate(multimap_isin,(val(int,1),(variable(m1),()))).
-evaluate(multimap_isin,(val(string,"a"),(variable(m2),()))).
-evaluate(multimap_isin,(val(string,"c"),(variable(m2),()))).
-evaluate(multimap_isin,(val(int,4),(variable(m2),()))).
+evaluate(operation(multimap_isin,(val(string,"a"),(variable(m1),())))).
+evaluate(operation(multimap_isin,(val(string,"c"),(variable(m1),())))).
+evaluate(operation(multimap_isin,(val(int,1),(variable(m1),())))).
+evaluate(operation(multimap_isin,(val(string,"a"),(variable(m2),())))).
+evaluate(operation(multimap_isin,(val(string,"c"),(variable(m2),())))).
+evaluate(operation(multimap_isin,(val(int,4),(variable(m2),())))).
 
 variable_define(multimap_isin5,operation(multimap_isin,(val(int,5),(MAP,())))) :-
   MAP = operation(multimap_make,
@@ -93,6 +93,6 @@ variable_define(multimap_isin6,operation(multimap_isin,(val(int,6),(MAP,())))) :
                            ((val(int,5), val(string,"c")),
                            ((val(string,"c"), val(int,6)),()))).
 
-evaluate(neq,(variable(m1),(variable(m2),()))).
-evaluate(eq,(variable(m2),(variable(m3),()))).
-evaluate(eq,(variable(m3),(variable(m1),()))).
+evaluate(operation(neq,(variable(m1),(variable(m2),())))).
+evaluate(operation(eq,(variable(m2),(variable(m3),())))).
+evaluate(operation(eq,(variable(m3),(variable(m1),())))).

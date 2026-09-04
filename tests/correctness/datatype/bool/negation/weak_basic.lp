@@ -1,2 +1,2 @@
-evaluate(wnot,(val(bool,true),())).
-evaluate(wnot,(val(bool,false),())).
+evaluate(operation(wnot,(val(bool,true),()))).
+evaluate(operation(wnot,(val(bool,false),()))).

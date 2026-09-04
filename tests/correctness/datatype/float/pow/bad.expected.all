@@ -1,2 +1,2 @@
-evaluated(pow,(val(float,float("2.5")),(bad,())),bad)
-evaluated(pow,(bad,(val(float,float("3.1")),())),bad)
+evaluated(operation(pow,(val(float,float("2.5")),(bad,()))),bad)
+evaluated(operation(pow,(bad,(val(float,float("3.1")),()))),bad)

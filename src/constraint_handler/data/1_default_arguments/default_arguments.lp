@@ -10,8 +10,8 @@ _passed(defaultArgs,_label_anonymous,bool_evaluate(E)) :- bool_evaluate(E).
 _passed(defaultArgs,LBL,bool_evaluate(E)) :- bool_evaluate(LBL,E).
 _passed(defaultArgs,_label_anonymous,ensure(E)) :- ensure(E).
 _passed(defaultArgs,LBL,ensure(E)) :- ensure(LBL,E).
-_passed(defaultArgs,_label_anonymous,evaluate(operation(OP,ARGS))) :- evaluate(OP,ARGS).
-_passed(defaultArgs,LBL,evaluate(operation(OP,ARGS))) :- evaluate(LBL,OP,ARGS).
+_passed(defaultArgs,_label_anonymous,evaluate(E)) :- evaluate(E).
+_passed(defaultArgs,LBL,evaluate(E)) :- evaluate(LBL,E).
 
 %%%%%% variable declare
 #defined variable_declare/2.

@@ -1,2 +1,2 @@
-evaluated(mult,(val(float,float("2.5")),(val(none,none),())),val(none,none))
-evaluated(mult,(val(none,none),(val(float,float("1.5")),())),val(none,none))
+evaluated(operation(mult,(val(float,float("2.5")),(val(none,none),()))),val(none,none))
+evaluated(operation(mult,(val(none,none),(val(float,float("1.5")),()))),val(none,none))

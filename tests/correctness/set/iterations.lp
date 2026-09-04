@@ -11,7 +11,7 @@
 %%% set_fold(*,isquares,1) = 0
 
 variable_declare(empty,set).
-evaluate(set_fold,(val(function,add),(variable(empty),(val(int,0),())))).
+evaluate(operation(set_fold,(val(function,add),(variable(empty),(val(int,0),()))))).
 
 variable_define(numbers, operation(set_make,
                                     (val(float,float("-2.0")),
@@ -34,6 +34,6 @@ set_assign(isquares, SQ) :-
     SQ = operation(mult,(EX,(EX,()))),
     EX = val(int,X).
 
-evaluate(cardinality,(variable(isquares),())).
-evaluate(set_fold,(val(function,add),(variable(isquares),(val(int,0),())))).
-evaluate(set_fold,(val(function,mult),(variable(isquares),(val(int,1),())))).
+evaluate(operation(cardinality,(variable(isquares),()))).
+evaluate(operation(set_fold,(val(function,add),(variable(isquares),(val(int,0),()))))).
+evaluate(operation(set_fold,(val(function,mult),(variable(isquares),(val(int,1),()))))).

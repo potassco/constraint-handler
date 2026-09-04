@@ -1,3 +1,3 @@
-evaluated(subset,(variable(x),(variable(big),())),val(bool,true))
-evaluated(subset,(variable(x),(variable(big),())),bad)
-evaluated(subset,(variable(x),(variable(bad_set),())),bad)
+evaluated(operation(subset,(variable(x),(variable(big),()))),val(bool,true))
+evaluated(operation(subset,(variable(x),(variable(big),()))),bad)
+evaluated(operation(subset,(variable(x),(variable(bad_set),()))),bad)

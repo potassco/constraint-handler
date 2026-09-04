@@ -11,11 +11,11 @@ execution_declare(absolut,STMT,(x,()),(y,())) :-
 variable_declare(execution_input(absolut,x),fromFacts).
 variable_domain(execution_input(absolut,x),val(int,(-2;0;2))).
 execution_run(absolut).
-evaluate(geq,(variable(execution_output(absolut,y)),(val(int,0),()))).
-evaluate(eq,
+evaluate(operation(geq,(variable(execution_output(absolut,y)),(val(int,0),())))).
+evaluate(operation(eq,
         (operation(mult,
                   (variable(execution_output(absolut,y)),
                   (variable(execution_output(absolut,y)),()))),
         (operation(mult,
                   (variable(execution_input(absolut,x)),
-                  (variable(execution_input(absolut,x)),()))),()))).
+                  (variable(execution_input(absolut,x)),()))),())))).

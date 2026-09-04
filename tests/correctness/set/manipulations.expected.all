@@ -4,8 +4,8 @@ value(cx,val(int,3))
 set_value(d,val(int,4))
 value(cd,val(int,2))
 
-evaluated(set_notin,(val(bool,true),(variable(d),())),val(bool,true))
-evaluated(set_notin,(val(bool,true),(variable(x),())),val(bool,true))
+evaluated(operation(set_notin,(val(bool,true),(variable(d),()))),val(bool,true))
+evaluated(operation(set_notin,(val(bool,true),(variable(x),()))),val(bool,true))
 
 value(eqx3,val(bool,true))
 value(nqx3,val(bool,false))

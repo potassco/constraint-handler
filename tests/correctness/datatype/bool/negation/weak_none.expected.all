@@ -1,1 +1,1 @@
-evaluated(wnot,(val(none,none),()),val(bool,true))
+evaluated(operation(wnot,(val(none,none),())),val(bool,true))

@@ -27,8 +27,8 @@ set_value(w,val(bool,true))
 set_value(w,val(int,2))
 set_value(w,val(int,5))
 
-evaluated(set_isin,(val(bool,true),(variable(t),())),val(bool,true))
-evaluated(set_isin,(val(int,17),(variable(t),())),val(bool,false))
+evaluated(operation(set_isin,(val(bool,true),(variable(t),()))),val(bool,true))
+evaluated(operation(set_isin,(val(int,17),(variable(t),()))),val(bool,false))
 
 value(tsubu,val(bool,true))
 value(tsubv,val(bool,false))

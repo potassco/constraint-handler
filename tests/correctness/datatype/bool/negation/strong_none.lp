@@ -1,1 +1,1 @@
-evaluate(snot,(val(none,none),())).
+evaluate(operation(snot,(val(none,none),()))).

@@ -1,8 +1,8 @@
-evaluate(leqv,(val(bool,true),(bad,()))).
-evaluate(leqv,(val(bool,false),(bad,()))).
-evaluate(leqv,(bad,(bad,()))).
-evaluate(leqv,(bad,())).
-evaluate(lxor,(val(bool,true),(bad,()))).
-evaluate(lxor,(val(bool,false),(bad,()))).
-evaluate(lxor,(bad,(bad,()))).
-evaluate(lxor,(bad,())).
+evaluate(operation(leqv,(val(bool,true),(bad,())))).
+evaluate(operation(leqv,(val(bool,false),(bad,())))).
+evaluate(operation(leqv,(bad,(bad,())))).
+evaluate(operation(leqv,(bad,()))).
+evaluate(operation(lxor,(val(bool,true),(bad,())))).
+evaluate(operation(lxor,(val(bool,false),(bad,())))).
+evaluate(operation(lxor,(bad,(bad,())))).
+evaluate(operation(lxor,(bad,()))).

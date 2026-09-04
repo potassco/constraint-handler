@@ -5,8 +5,8 @@ value(X,V) :- _se_value(variable(X),V), V != set, _passed(solve,LBL,variable_int
 _shared_value(E,V)    :- _passed(ENG,LBL,share_value(E)), _se_value(E,V), _engine_grounding(ENG).
 %_shared_value(E,V)    :- _passed(share,LBL,share_value(E)), _se_value(E,V).
 
-evaluated(OP,ARGS,V) :- _evaluate(REF,E), _shared_value(E,V), REF=operation(OP,ARGS).
-evaluated(OP,ARGS,bad) :- _evaluate(REF,E), REF=operation(OP,ARGS), #false: _shared_value(E,V).
+evaluated(REF,V) :- _evaluate(REF,E), _shared_value(E,V).
+evaluated(REF,bad) :- _evaluate(REF,E), #false: _shared_value(E,V).
 
 :- _passed(ENG,LBL,ensure(E)), not _shared_value(E,val(bool,true)), not _shared_value(E,bad), _engine_grounding(ENG).
 

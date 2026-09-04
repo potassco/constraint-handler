@@ -5,7 +5,7 @@ variable_define(deterministic,operation(set_make,(val(int,1),(val(int,2),(val(in
 variable_define(len_empty,operation(cardinality,(variable(empty),()))).
 variable_define(len_deterministic,operation(cardinality,(variable(deterministic),()))).
 
-evaluate(eq,(variable(deterministic),(operation(set_make,(val(none,none),(val(int,2),(val(int,1),())))),()))).
+evaluate(operation(eq,(variable(deterministic),(operation(set_make,(val(none,none),(val(int,2),(val(int,1),())))),())))).
 
 variable_declare(source,set).
 set_baseDomain(source,val(int,1..2)).

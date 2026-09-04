@@ -6,23 +6,23 @@
 %%% 6/2==3.0  5/2==2.5
 %%% 1==1.0    not 1!=1.0
 
-evaluate(eq,(val(int,12),(val(int,12),()))).
-evaluate(neq,(val(int,20),(val(int,20),()))).
-evaluate(eq,(val(int,-8),(val(int,8),()))).
-evaluate(leq,(val(int,2),(val(int,10),()))).
-evaluate(lt,(val(int,2),(val(int,10),()))).
-evaluate(geq,(val(int,2),(val(int,10),()))).
-evaluate(gt,(val(int,2),(val(int,10),()))).
-evaluate(leq,(val(int,12),(val(int,12),()))).
-evaluate(lt,(val(int,12),(val(int,12),()))).
-evaluate(geq,(val(int,12),(val(int,12),()))).
-evaluate(gt,(val(int,12),(val(int,12),()))).
-evaluate(eq,(operation(int_div,(val(int,6),(val(int,2),()))),(val(int,3),()))).
-evaluate(eq,(operation(int_div,(val(int,5),(val(int,2),()))),(val(int,2),()))).
-evaluate(eq,(operation(float_div,(val(int,6),(val(int,2),()))),(val(float,float("3.0")),()))).
-evaluate(eq,(operation(float_div,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),()))).
-evaluate(eq,(val(int,1),(val(float,float("1.0")),()))).
-evaluate(neq,(val(int,1),(val(float,float("1.0")),()))).
-evaluate(eq,(operation(minus,(val(int,-8),())),(val(int,8),()))).
-evaluate(neq,(operation(minus,(val(int,2),())),(val(int,2),()))).
-evaluate(neq,(operation(minus,(operation(minus,(val(int,2),())),())),(val(int,2),()))).
+evaluate(operation(eq,(val(int,12),(val(int,12),())))).
+evaluate(operation(neq,(val(int,20),(val(int,20),())))).
+evaluate(operation(eq,(val(int,-8),(val(int,8),())))).
+evaluate(operation(leq,(val(int,2),(val(int,10),())))).
+evaluate(operation(lt,(val(int,2),(val(int,10),())))).
+evaluate(operation(geq,(val(int,2),(val(int,10),())))).
+evaluate(operation(gt,(val(int,2),(val(int,10),())))).
+evaluate(operation(leq,(val(int,12),(val(int,12),())))).
+evaluate(operation(lt,(val(int,12),(val(int,12),())))).
+evaluate(operation(geq,(val(int,12),(val(int,12),())))).
+evaluate(operation(gt,(val(int,12),(val(int,12),())))).
+evaluate(operation(eq,(operation(int_div,(val(int,6),(val(int,2),()))),(val(int,3),())))).
+evaluate(operation(eq,(operation(int_div,(val(int,5),(val(int,2),()))),(val(int,2),())))).
+evaluate(operation(eq,(operation(float_div,(val(int,6),(val(int,2),()))),(val(float,float("3.0")),())))).
+evaluate(operation(eq,(operation(float_div,(val(int,5),(val(int,2),()))),(val(float,float("2.5")),())))).
+evaluate(operation(eq,(val(int,1),(val(float,float("1.0")),())))).
+evaluate(operation(neq,(val(int,1),(val(float,float("1.0")),())))).
+evaluate(operation(eq,(operation(minus,(val(int,-8),())),(val(int,8),())))).
+evaluate(operation(neq,(operation(minus,(val(int,2),())),(val(int,2),())))).
+evaluate(operation(neq,(operation(minus,(operation(minus,(val(int,2),())),())),(val(int,2),())))).

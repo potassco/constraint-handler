@@ -1,4 +1,4 @@
-evaluated(hasValue,(val(bool,false),()),val(bool,true))
-evaluated(hasValue,(val(bool,true),()),val(bool,true))
-evaluated(hasValue,(val(none,none),()),val(bool,false))
-evaluated(hasValue,(bad,()),bad)
+evaluated(operation(hasValue,(val(bool,false),())),val(bool,true))
+evaluated(operation(hasValue,(val(bool,true),())),val(bool,true))
+evaluated(operation(hasValue,(val(none,none),())),val(bool,false))
+evaluated(operation(hasValue,(bad,())),bad)

@@ -51,8 +51,8 @@ variable_define(w,operation(set_make,
                                   (operation(set_notin,(val(bool,true),
                                                        (variable(u),()))),())))))).
 
-evaluate(set_isin,(val(bool,true),(variable(t),()))).
-evaluate(set_isin,(val(int,17),(variable(t),()))).
+evaluate(operation(set_isin,(val(bool,true),(variable(t),())))).
+evaluate(operation(set_isin,(val(int,17),(variable(t),())))).
 
 
 variable_define(tsubu,operation(subset,(variable(t),(variable(u),())))).

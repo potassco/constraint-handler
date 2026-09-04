@@ -1627,8 +1627,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 continue
             pyVal, errors = evaluator.reducedExpr(final_value)
             pyAtom = atom.Evaluated(
-                eval_var.ref.op,
-                eval_var.ref.args,
+                eval_var.ref,
                 pyVal,
             )
             self.python_model.add(pyAtom)

@@ -1,2 +1,2 @@
-evaluated(max,(variable(x),(variable(y),())),val(float,float("5.0")))
-evaluated(min,(variable(x),(variable(y),())),val(float,float("2.5")))
+evaluated(operation(max,(variable(x),(variable(y),()))),val(float,float("5.0")))
+evaluated(operation(min,(variable(x),(variable(y),()))),val(float,float("2.5")))

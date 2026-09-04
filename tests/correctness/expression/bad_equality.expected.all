@@ -1,2 +1,2 @@
-evaluated(eq,(variable(x),(bad,())),bad)
-evaluated(eq,(bad,(variable(y),())),bad)
+evaluated(operation(eq,(variable(x),(bad,()))),bad)
+evaluated(operation(eq,(bad,(variable(y),()))),bad)
