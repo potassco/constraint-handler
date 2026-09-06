@@ -67,7 +67,6 @@ _tupleEqAux/3.
 
 _passed(correction(REASON,add),LBL,DECL).
 direct_query/1.
-evaluated/3.
 _se_value/2.
 _set_assign/3.
 _set_contains/2.

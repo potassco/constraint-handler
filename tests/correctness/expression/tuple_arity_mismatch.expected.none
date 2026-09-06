@@ -1,2 +1,2 @@
-evaluated(eq,(variable(short),(variable(long),())),val(bool,true))
-evaluated(neq,(variable(short),(variable(long),())),val(bool,false))
+evaluated(operation(eq,(variable(short),(variable(long),()))),val(bool,true))
+evaluated(operation(neq,(variable(short),(variable(long),()))),val(bool,false))

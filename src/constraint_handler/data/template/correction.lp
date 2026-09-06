@@ -14,15 +14,13 @@ _correction_proposed(PHASE,LBL,share_value(E),share_value(NE)) :-
   _correction_expressionOutput(PHASE,E,NE).
 _correction_proposed(PHASE,LBL,bool_evaluate(E),bool_evaluate(NE)) :-
   _passed(sugar,LBL,bool_evaluate(E)),
-  _correction_expressionOutput(PHASE,E,NE).
+  _correction_expressionOutput(PHASE,E,NE). % TODO: do better, use REF
 _correction_proposed(PHASE,LBL,ensure(E),ensure(NE)) :-
   _passed(sugar,LBL,ensure(E)),
   _correction_expressionOutput(PHASE,E,NE).
-%_correction_proposed(PHASE,LBL,evaluate(OP,ARGS),evaluate(NOP,NARGS)) :-
-%  _passed(sugar,LBL,evaluate(OP,ARGS)),
-%  _correction_expressionOutput(PHASE,operation(OP,ARGS),operation(NOP,NARGS)). % TODO: do better
-_correction_proposed(PHASE,LBL,evaluate(OP,ARGS),evaluate(OP,ARGS)) :-
-  _passed(sugar,LBL,evaluate(OP,ARGS)). % TODO: do better
+_correction_proposed(PHASE,LBL,evaluate(REF,E),evaluate(REF,NE)) :-
+  _passed(sugar,LBL,evaluate(REF,E)),
+  _correction_expressionOutput(PHASE,E,NE).
 _correction_proposed(PHASE,LBL,variable_assign(X,E),variable_assign(X,NE)) :-
   _passed(sugar,LBL,variable_assign(X,E)),
   _correction_expressionOutput(PHASE,E,NE).

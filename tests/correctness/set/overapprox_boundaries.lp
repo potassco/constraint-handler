@@ -10,4 +10,4 @@ variable_define(union_lr,operation(union,(variable(left),(variable(right),()))))
 variable_define(inter_lr,operation(inter,(variable(left),(variable(right),())))).
 variable_define(diff_lr,operation(diff,(variable(left),(variable(right),())))).
 
-evaluate(subset,(variable(left),(variable(right),()))).
+evaluate(operation(subset,(variable(left),(variable(right),())))).

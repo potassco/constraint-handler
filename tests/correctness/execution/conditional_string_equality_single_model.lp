@@ -23,27 +23,27 @@ variable_domain(execution_input(flagger, mode), val(string, ("a"; "b"))).
 
 execution_run(flagger).
 
-evaluate(
+evaluate(operation(
     leqv,
     (
         variable(execution_output(flagger, "__condition_holds__")),
         (operation(eq, (variable(execution_input(flagger, mode)), (val(string, "a"), ()))), ())
     )
-).
-evaluate(
+)).
+evaluate(operation(
     leqv,
     (
         variable(execution_output(flagger, "result")),
         (variable(execution_output(flagger, "__condition_holds__")), ())
     )
-).
-evaluate(
+)).
+evaluate(operation(
     lxor,
     (
         variable(execution_output(flagger, "result")),
         (variable(execution_output(flagger, "other")), ())
     )
-).
+)).
 
 #show value/2.
 #show evaluated/3.

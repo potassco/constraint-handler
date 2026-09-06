@@ -57,8 +57,8 @@ set_assign(d,operation(set_make,(val(bool,true),(val(float,float("89.1")),()))))
 
 variable_define(cd,operation(cardinality,(variable(d),()))).
 
-evaluate(set_notin,(val(bool,true),(variable(d),()))).
-evaluate(set_notin,(val(bool,true),(variable(x),()))).
+evaluate(operation(set_notin,(val(bool,true),(variable(d),())))).
+evaluate(operation(set_notin,(val(bool,true),(variable(x),())))).
 
 %%% eqx = x == { 3, { true }, { 10, 2, 3, true, 89.1 } } = true
 %%% nqx = x == { 3, { true }, { 10, 2, 4, true, 89.1 } } = false

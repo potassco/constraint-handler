@@ -1,6 +1,6 @@
 variable_declare(x,boolDomain).
 variable_define(y,operation(lnot,(variable(x),()))).
-evaluate(neq,(variable(x),(variable(y),()))).
+evaluate(operation(neq,(variable(x),(variable(y),())))).
 
 variable_declare(r,fromFacts).
 variable_domain(r,R) :-

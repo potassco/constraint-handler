@@ -1,4 +1,4 @@
-evaluated(gt,(variable(x),(val(int,2),())),val(bool,true))
-evaluated(gt,(variable(x),(val(int,2),())),bad)
-evaluated(gt,(variable(x),(val(none,none),())),bad)
-evaluated(gt,(variable(x),(bad,())),bad)
+evaluated(operation(gt,(variable(x),(val(int,2),()))),val(bool,true))
+evaluated(operation(gt,(variable(x),(val(int,2),()))),bad)
+evaluated(operation(gt,(variable(x),(val(none,none),()))),bad)
+evaluated(operation(gt,(variable(x),(bad,()))),bad)

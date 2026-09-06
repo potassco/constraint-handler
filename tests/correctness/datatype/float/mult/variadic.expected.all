@@ -1,2 +1,2 @@
-evaluated(mult,(),val(int,1))
-evaluated(mult,(val(float,float("2.5")),()),val(float,float("2.5")))
+evaluated(operation(mult,()),val(int,1))
+evaluated(operation(mult,(val(float,float("2.5")),())),val(float,float("2.5")))

@@ -1,2 +1,2 @@
-evaluate(snot,(val(bool,true),())).
-evaluate(snot,(val(bool,false),())).
+evaluate(operation(snot,(val(bool,true),()))).
+evaluate(operation(snot,(val(bool,false),()))).

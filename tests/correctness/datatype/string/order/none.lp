@@ -1,8 +1,8 @@
-evaluate(geq,(val(none,none),(val(string,"ab"),()))).
-evaluate(geq,(val(string,"aa"),(val(none,none),()))).
-evaluate(gt,(val(none,none),(val(string,"ab"),()))).
-evaluate(gt,(val(string,"aa"),(val(none,none),()))).
-evaluate(leq,(val(none,none),(val(string,"ab"),()))).
-evaluate(leq,(val(string,"aa"),(val(none,none),()))).
-evaluate(lt,(val(none,none),(val(string,"ab"),()))).
-evaluate(lt,(val(string,"aa"),(val(none,none),()))).
+evaluate(operation(geq,(val(none,none),(val(string,"ab"),())))).
+evaluate(operation(geq,(val(string,"aa"),(val(none,none),())))).
+evaluate(operation(gt,(val(none,none),(val(string,"ab"),())))).
+evaluate(operation(gt,(val(string,"aa"),(val(none,none),())))).
+evaluate(operation(leq,(val(none,none),(val(string,"ab"),())))).
+evaluate(operation(leq,(val(string,"aa"),(val(none,none),())))).
+evaluate(operation(lt,(val(none,none),(val(string,"ab"),())))).
+evaluate(operation(lt,(val(string,"aa"),(val(none,none),())))).

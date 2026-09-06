@@ -1,1 +1,1 @@
-evaluated(python("int"),(variable(y),()),val(int,2))
+evaluated(operation(python("int"),(variable(y),())),val(int,2))

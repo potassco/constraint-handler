@@ -5,7 +5,7 @@ _expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_domain(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
 
-%%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3 evaluate/2
+%%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3
 _ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E)).
 
 _ge_set_assign(LBL,X,E) :- _passed(ground,LBL,set_assign(X,E)).

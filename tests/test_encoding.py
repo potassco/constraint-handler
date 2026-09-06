@@ -261,6 +261,7 @@ expression_tests = [
     "expression/python_multi_args",
     "expression/tuple",
     "expression/tuple_arity_mismatch",
+    "expression/tuple_extra",
     "expression/tuple_nested",
 ]
 
@@ -480,6 +481,7 @@ compile_xfail: set[str] = {
     "datatype/float/mult/recovery",
     "datatype/float/pow/mixed",
     "engine/request",
+    "expression/tuple_extra",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "unit/tuple_eq",
@@ -548,6 +550,7 @@ ground_xfail: set[str] = {
     "expression/lambda_recursive",
     "expression/lambda_zero_args",
     "expression/lambdas",
+    "expression/tuple_extra",
     "multimap/basics",
     "multimap/equality",
     "multimap/executions",

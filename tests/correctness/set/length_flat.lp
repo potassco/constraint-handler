@@ -12,8 +12,8 @@ set_assign(single_zero,val(int,0)).
 variable_declare(nondeterministic,set).
 set_baseDomain(nondeterministic,val(int,0..1)).
 
-evaluate(cardinality,(variable(single_zero),())).
-evaluate(cardinality,(variable(nondeterministic),())).
+evaluate(operation(cardinality,(variable(single_zero),()))).
+evaluate(operation(cardinality,(variable(nondeterministic),()))).
 variable_define(from_declared,operation(set_make,(operation(cardinality,(variable(single_zero),())),(val(int,0),())))).
 variable_define(len_from_declared,operation(cardinality,(variable(from_declared),()))).
 
@@ -22,4 +22,4 @@ variable_domain(bad_choice,bad).
 variable_define(bad_set,operation(set_make,(variable(bad_choice),()))).
 variable_define(len_bad_set,operation(cardinality,(variable(bad_set),()))).
 
-evaluate(cardinality,(variable(bad_choice),())).
+evaluate(operation(cardinality,(variable(bad_choice),()))).

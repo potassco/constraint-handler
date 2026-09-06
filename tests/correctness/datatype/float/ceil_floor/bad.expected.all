@@ -1,2 +1,2 @@
-evaluated(ceil,(bad,()),bad)
-evaluated(floor,(bad,()),bad)
+evaluated(operation(ceil,(bad,())),bad)
+evaluated(operation(floor,(bad,())),bad)

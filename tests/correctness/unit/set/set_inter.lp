@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 variable_define(a,operation(set_make,(val(int,1),(val(int,2),(val(none,none),()))))).
 variable_define(b,operation(set_make,(val(int,2),(val(int,3),(val(none,none),()))))).
 variable_define(empty,operation(set_make,())).
@@ -13,8 +11,8 @@ variable_domain(x,bad).
 
 variable_define(bad_set,operation(set_make,(bad,()))).
 
-evaluate(eq,(operation(inter,(variable(a),(variable(b),()))),(operation(set_make,(val(int,2),(val(none,none),()))),()))).
-evaluate(cardinality,(operation(inter,(variable(a),(variable(empty),()))),())).
-evaluate(cardinality,(operation(inter,(variable(a),(variable(bad_set),()))),())).
-evaluate(cardinality,(operation(inter,(variable(x),(variable(b),()))),())).
-evaluate(cardinality,(operation(inter,(variable(x),(variable(bad_set),()))),())).
+evaluate(operation(eq,(operation(inter,(variable(a),(variable(b),()))),(operation(set_make,(val(int,2),(val(none,none),()))),())))).
+evaluate(operation(cardinality,(operation(inter,(variable(a),(variable(empty),()))),()))).
+evaluate(operation(cardinality,(operation(inter,(variable(a),(variable(bad_set),()))),()))).
+evaluate(operation(cardinality,(operation(inter,(variable(x),(variable(b),()))),()))).
+evaluate(operation(cardinality,(operation(inter,(variable(x),(variable(bad_set),()))),()))).

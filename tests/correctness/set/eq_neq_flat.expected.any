@@ -1,4 +1,4 @@
-evaluated(eq,(variable(nd),(variable(fixed),())),val(bool,true))
-evaluated(eq,(variable(nd),(variable(fixed),())),val(bool,false))
-evaluated(neq,(variable(nd),(variable(fixed),())),val(bool,true))
-evaluated(neq,(variable(nd),(variable(fixed),())),val(bool,false))
+evaluated(operation(eq,(variable(nd),(variable(fixed),()))),val(bool,true))
+evaluated(operation(eq,(variable(nd),(variable(fixed),()))),val(bool,false))
+evaluated(operation(neq,(variable(nd),(variable(fixed),()))),val(bool,true))
+evaluated(operation(neq,(variable(nd),(variable(fixed),()))),val(bool,false))

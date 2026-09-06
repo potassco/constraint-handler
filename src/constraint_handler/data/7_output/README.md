@@ -1,9 +1,8 @@
 ### Input predicates
 
 _expression(compile,variable/1).
-_evaluate/1.
+_evaluate/2.
 _passed(compile,LBL,bool_evaluate/1).
-_passed(compile,LBL,evaluate/2).
 _passed(compile,LBL,ensure/1).
 _passed(compile,LBL,share_value/1).
 _passed(compile2,LBL,bool_evaluate/1).

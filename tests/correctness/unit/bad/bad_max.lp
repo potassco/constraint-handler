@@ -1,13 +1,11 @@
-phase_request(constantFolding,false).
-
-evaluate(max,(val(int,1),(val(int,2),()))).
-evaluate(max,(val(int,1),(val(none,none),()))).
-evaluate(max,(val(int,1),(bad,()))).
+evaluate(operation(max,(val(int,1),(val(int,2),())))).
+evaluate(operation(max,(val(int,1),(val(none,none),())))).
+evaluate(operation(max,(val(int,1),(bad,())))).
 
 variable_declare(x,fromFacts).
 variable_domain(x,val(int,1)).
 variable_domain(x,val(none,none)).
 variable_domain(x,bad).
-evaluate(max,(variable(x),(val(int,2),()))).
-evaluate(max,(variable(x),(val(none,none),()))).
-evaluate(max,(variable(x),(bad,()))).
+evaluate(operation(max,(variable(x),(val(int,2),())))).
+evaluate(operation(max,(variable(x),(val(none,none),())))).
+evaluate(operation(max,(variable(x),(bad,())))).

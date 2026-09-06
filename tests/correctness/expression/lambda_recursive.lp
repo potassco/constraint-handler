@@ -7,4 +7,4 @@ variable_define(myfactorial,lambda((n,()),EXP)) :-
   EQ1 = operation(leq,(VAR,(ONE,()))),
   EXP = operation(ite,(EQ1,(ONE,(PRO,())))).
 
-evaluate(variable(myfactorial),(val(int,5),())).
+evaluate(operation(variable(myfactorial),(val(int,5),()))).

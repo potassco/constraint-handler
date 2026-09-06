@@ -1,1 +1,1 @@
-evaluated(conj,(variable(lt_bad),(val(none,none),())),bad)
+evaluated(operation(conj,(variable(lt_bad),(val(none,none),()))),bad)

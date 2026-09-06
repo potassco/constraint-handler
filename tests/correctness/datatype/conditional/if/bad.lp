@@ -1,3 +1,3 @@
-evaluate(if,(val(bool,true),(bad,()))).
-evaluate(if,(bad,(val(int,1),()))).
-evaluate(if,(bad,(bad,()))).
+evaluate(operation(if,(val(bool,true),(bad,())))).
+evaluate(operation(if,(bad,(val(int,1),())))).
+evaluate(operation(if,(bad,(bad,())))).

@@ -1,1 +1,1 @@
-evaluated(concat,(val(string,"c"),(variable(y),())),bad)
+evaluated(operation(concat,(val(string,"c"),(variable(y),()))),bad)

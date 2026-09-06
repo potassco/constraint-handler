@@ -4,4 +4,4 @@
 
 variable_define(y,val(float,float("2.5"))).
 
-evaluate(python("int"),(variable(y),())).
+evaluate(operation(python("int"),(variable(y),()))).

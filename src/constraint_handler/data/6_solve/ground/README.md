@@ -1,8 +1,6 @@
 ### Input predicates
 
-_passed(ground,LBL,bool_evaluate/1).
 _passed(ground,LBL,ensure/1).
-_passed(ground,LBL,evaluate/2).
 _passed(ground,LBL,variable_assign/4).
 _passed(ground,LBL,variable_choice/4).
 _passed(ground,LBL,variable_declare/2).

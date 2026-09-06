@@ -1,1 +1,1 @@
-evaluated(minus,(bad,()),bad)
+evaluated(operation(minus,(bad,())),bad)

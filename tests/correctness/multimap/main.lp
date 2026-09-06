@@ -86,35 +86,35 @@ multimap_assign(properDivisors2,val(int,6),val(int,1)).
 multimap_assign(properDivisors2,val(int,6),val(int,2)).
 multimap_assign(properDivisors2,val(int,6),val(int,3)).
 
-evaluate(countKeys,(variable(capitals),())).
-evaluate(countKeys,(variable(properDivisors),())).
-evaluate(countKeys,(variable(properDivisors2),())).
-evaluate(countKeys,(variable(sums),())).
+evaluate(operation(countKeys,(variable(capitals),()))).
+evaluate(operation(countKeys,(variable(properDivisors),()))).
+evaluate(operation(countKeys,(variable(properDivisors2),()))).
+evaluate(operation(countKeys,(variable(sums),()))).
 
-evaluate(countEntries,(variable(capitals),())).
-evaluate(countEntries,(variable(properDivisors),())).
-evaluate(countEntries,(variable(properDivisors2),())).
-evaluate(countEntries,(variable(sums),())).
+evaluate(operation(countEntries,(variable(capitals),()))).
+evaluate(operation(countEntries,(variable(properDivisors),()))).
+evaluate(operation(countEntries,(variable(properDivisors2),()))).
+evaluate(operation(countEntries,(variable(sums),()))).
 
-evaluate(sumIntEntries,(variable(capitals),())).
-evaluate(sumIntEntries,(variable(properDivisors),())).
-evaluate(sumIntEntries,(variable(properDivisors2),())).
-evaluate(sumIntEntries,(variable(sums),())).
+evaluate(operation(sumIntEntries,(variable(capitals),()))).
+evaluate(operation(sumIntEntries,(variable(properDivisors),()))).
+evaluate(operation(sumIntEntries,(variable(properDivisors2),()))).
+evaluate(operation(sumIntEntries,(variable(sums),()))).
 
-evaluate(maxEntries,(variable(cities),())).
-evaluate(minEntries,(variable(cities),())).
-evaluate(maxEntries,(variable(properDivisors2),())).
-evaluate(minEntries,(variable(properDivisors2),())).
+evaluate(operation(maxEntries,(variable(cities),()))).
+evaluate(operation(minEntries,(variable(cities),()))).
+evaluate(operation(maxEntries,(variable(properDivisors2),()))).
+evaluate(operation(minEntries,(variable(properDivisors2),()))).
 
 
-evaluate(multimap_fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),())))).
+evaluate(operation(multimap_fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),()))))).
 _computedIdx(E,val(int,VA*VB)) :- _computeIdx(E,myproduct), _computeIdx(E,0,val(int,VA)), _computeIdx(E,1,val(int,VB)).
 
-evaluate(multimap_fold,(val(function,snoc),(variable(properDivisors2),(val(symbol,()),())))).
+evaluate(operation(multimap_fold,(val(function,snoc),(variable(properDivisors2),(val(symbol,()),()))))).
 _computedIdx(E,val(TN,VN)) :- _computeIdx(E,snoc), _computeIdx(E,0,val(TA,VA)), _computeIdx(E,1,val(TB,VB)),
     TN=TB,
     VN=(VB, VA).
 
 
 variable_declare(empty,multimap).
-evaluate(multimap_fold,(val(function,plus),(variable(empty),(val(int,0),())))).
+evaluate(operation(multimap_fold,(val(function,plus),(variable(empty),(val(int,0),()))))).

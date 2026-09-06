@@ -9,7 +9,7 @@ variable_define(with_empty,operation(union,(variable(a),(variable(empty),(variab
 variable_define(empty_union,operation(union,(variable(empty),(variable(empty),())))).
 variable_define(len_ab,operation(cardinality,(variable(ab),()))).
 variable_define(len_empty_union,operation(cardinality,(variable(empty_union),()))).
-evaluate(eq,(variable(with_empty),(variable(ab),()))).
+evaluate(operation(eq,(variable(with_empty),(variable(ab),())))).
 
 variable_declare(nd,set).
 set_baseDomain(nd,val(int,4..5)).

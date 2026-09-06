@@ -1,4 +1,2 @@
-phase_request(constantFolding,false).
-
-evaluate(ceil,(bad,())).
-evaluate(floor,(bad,())).
+evaluate(operation(ceil,(bad,()))).
+evaluate(operation(floor,(bad,()))).

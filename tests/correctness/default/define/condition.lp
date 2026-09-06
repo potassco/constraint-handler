@@ -11,6 +11,6 @@ variable_choice(frontwheel,val(int,30)).
 
 variable_default(frontwheel,val(int,20),operation(eq,(variable(backwheel),(val(int,1),()))),2).
 
-evaluate(add,(variable(frontwheel),(variable(backwheel),()))).
+evaluate(operation(add,(variable(frontwheel),(variable(backwheel),())))).
 
 1 { variable_assign(backwheel,val(int,(1;2))) } 1.

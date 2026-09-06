@@ -1,2 +1,2 @@
-evaluated(abs,(bad,()),val(int,0))
-evaluated(abs,(bad,()),val(none,none))
+evaluated(operation(abs,(bad,())),val(int,0))
+evaluated(operation(abs,(bad,())),val(none,none))

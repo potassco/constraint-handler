@@ -184,13 +184,11 @@ class Value(NamedTuple):
 
 class Evaluate(NamedTuple):
     label: expression.constant
-    operator: expression.Operator | expression.Variable
-    args: myClorm.ImmutableList[expression.Expr]
+    expr: expression.Expr
 
 
 class Evaluated(NamedTuple):
-    name: expression.Operator
-    expr: myClorm.ImmutableList[expression.Expr]
+    expr: expression.Expr
     value: expression.ReducedExpr
 
 

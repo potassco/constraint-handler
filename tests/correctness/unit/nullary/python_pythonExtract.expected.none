@@ -1,2 +1,2 @@
-evaluated(pythonExtract("tmp=2","tmp"),(),bad)
-evaluated(pythonExtract("tmp=2","tmp"),(),val(none,none))
+evaluated(operation(pythonExtract("tmp=2","tmp"),()),bad)
+evaluated(operation(pythonExtract("tmp=2","tmp"),()),val(none,none))

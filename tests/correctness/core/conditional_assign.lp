@@ -30,7 +30,7 @@ variable_define(z,operation(disj,
 
 variable_declare(a,fromFacts).
 variable_domain(a,(val(int,0..1);val(none,none))).
-evaluate(hasValue,(variable(a),())).
-evaluate(leqv,(operation(hasValue,(variable(a),())),
+evaluate(operation(hasValue,(variable(a),()))).
+evaluate(operation(leqv,(operation(hasValue,(variable(a),())),
               (operation(leq,(operation(getOrElse,(variable(a),(val(int,20),()))),(val(int,3),()))),
-              ()))).
+              ())))).

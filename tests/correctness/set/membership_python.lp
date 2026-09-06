@@ -29,14 +29,14 @@ variable_define(py_not2,variable(execution_output(py_membership2,"py_not"))).
 
 execution_run(py_membership2).
 
-evaluate(set_isin,(variable(x),(variable(pool),()))).
-evaluate(set_notin,(variable(x),(variable(pool),()))).
-evaluate(eq,
+evaluate(operation(set_isin,(variable(x),(variable(pool),())))).
+evaluate(operation(set_notin,(variable(x),(variable(pool),())))).
+evaluate(operation(eq,
 	(operation(set_isin,(variable(x),(variable(pool),()))),
-	(variable(py_in),()))).
-evaluate(eq,
+	(variable(py_in),())))).
+evaluate(operation(eq,
 	(operation(set_notin,(variable(x),(variable(pool),()))),
-	(variable(py_not),()))).
+	(variable(py_not),())))).
 
-evaluate(eq,(variable(py_in),(variable(py_in2),()))).
-evaluate(eq,(variable(py_not),(variable(py_not2),()))).
+evaluate(operation(eq,(variable(py_in),(variable(py_in2),())))).
+evaluate(operation(eq,(variable(py_not),(variable(py_not2),())))).

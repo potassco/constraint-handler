@@ -1,1 +1,1 @@
-evaluated(leqv,(bad,(operation(eq,(variable(x),(val(bool,false),()))),())),bad)
+evaluated(operation(leqv,(bad,(operation(eq,(variable(x),(val(bool,false),()))),()))),bad)

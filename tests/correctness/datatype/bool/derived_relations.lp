@@ -16,11 +16,11 @@ variable_define(f,
 variable_define(t,operation(lxor,(variable(x),(variable(y),())))).
 variable_define(z,operation(ite,(variable(x),(variable(y),(operation(lnot,(variable(y),())),()))))).
 
-evaluate(limp,(variable(f),(operation(lnot,(variable(x),())),()))).
-evaluate(leqv,(variable(f),(operation(conj,(operation(lnot,(variable(x),())),(variable(y),()))),()))).
-evaluate(leqv,(val(bool,true),(val(bool,false),(val(bool,false),())))).
-evaluate(leqv,(val(bool,true),(val(bool,true),(val(bool,false),())))).
-evaluate(eq,(variable(z),(operation(leqv,(variable(x),(variable(y),()))),()))).
-evaluate(neq,(variable(z),(variable(t),()))).
-evaluate(limp,(variable(f),(operation(lnot,(variable(y),())),()))).
-evaluate(conj,(operation(limp,(variable(f),(operation(lnot,(variable(y),())),()))),(variable(f),()))).
+evaluate(operation(limp,(variable(f),(operation(lnot,(variable(x),())),())))).
+evaluate(operation(leqv,(variable(f),(operation(conj,(operation(lnot,(variable(x),())),(variable(y),()))),())))).
+evaluate(operation(leqv,(val(bool,true),(val(bool,false),(val(bool,false),()))))).
+evaluate(operation(leqv,(val(bool,true),(val(bool,true),(val(bool,false),()))))).
+evaluate(operation(eq,(variable(z),(operation(leqv,(variable(x),(variable(y),()))),())))).
+evaluate(operation(neq,(variable(z),(variable(t),())))).
+evaluate(operation(limp,(variable(f),(operation(lnot,(variable(y),())),())))).
+evaluate(operation(conj,(operation(limp,(variable(f),(operation(lnot,(variable(y),())),()))),(variable(f),())))).

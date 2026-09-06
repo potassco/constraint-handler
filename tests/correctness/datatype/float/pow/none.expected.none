@@ -1,1 +1,1 @@
-evaluated(pow,(val(float,float("2.5")),(val(none,none),())),val(none,none))
+evaluated(operation(pow,(val(float,float("2.5")),(val(none,none),()))),val(none,none))

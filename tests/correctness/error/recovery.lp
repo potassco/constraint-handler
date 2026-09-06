@@ -6,7 +6,7 @@ variable_define(div_bad,operation(int_div,(val(int,6),(variable(six_minus_six),(
 variable_define(mult_bad,operation(mult,(variable(div_bad),(val(int,2),())))).
 
 % Make sure bad also works with evaluate
-evaluate(lt,(variable(mult_bad),(val(int,2),()))).
+evaluate(operation(lt,(variable(mult_bad),(val(int,2),())))).
 
 % Operator `pow` is recoverable when exponent is 0.
 variable_define(pow_bad,operation(pow,(variable(div_bad),(val(int,3),())))).

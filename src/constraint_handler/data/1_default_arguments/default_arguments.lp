@@ -2,16 +2,16 @@
 #defined bool_evaluate/2.
 #defined ensure/1.
 #defined ensure/2.
+#defined evaluate/1.
 #defined evaluate/2.
-#defined evaluate/3.
 
 %%%%%%%%%%%%%%%%% labels are optional
 _passed(defaultArgs,_label_anonymous,bool_evaluate(E)) :- bool_evaluate(E).
 _passed(defaultArgs,LBL,bool_evaluate(E)) :- bool_evaluate(LBL,E).
 _passed(defaultArgs,_label_anonymous,ensure(E)) :- ensure(E).
 _passed(defaultArgs,LBL,ensure(E)) :- ensure(LBL,E).
-_passed(defaultArgs,_label_anonymous,evaluate(OP,ARGS)) :- evaluate(OP,ARGS).
-_passed(defaultArgs,LBL,evaluate(OP,ARGS)) :- evaluate(LBL,OP,ARGS).
+_passed(defaultArgs,_label_anonymous,evaluate(E)) :- evaluate(E).
+_passed(defaultArgs,LBL,evaluate(E)) :- evaluate(LBL,E).
 
 %%%%%% variable declare
 #defined variable_declare/2.

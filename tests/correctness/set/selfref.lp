@@ -95,32 +95,32 @@ set_assign(os,EX) :-
     set_value(es,val(int,X-1)).
 
 %%% any:
-evaluate(eq,(variable(a),(variable(b),()))).
-evaluate(eq,(variable(a),(variable(c),()))).
-evaluate(eq,(variable(b),(variable(c),()))).
-evaluate(eq,(variable(es),(variable(even),()))).
-evaluate(eq,(variable(os),(variable(odd),()))).
+evaluate(operation(eq,(variable(a),(variable(b),())))).
+evaluate(operation(eq,(variable(a),(variable(c),())))).
+evaluate(operation(eq,(variable(b),(variable(c),())))).
+evaluate(operation(eq,(variable(es),(variable(even),())))).
+evaluate(operation(eq,(variable(os),(variable(odd),())))).
 
 %%% all:
-evaluate(eq,(variable(a),(variable(a),()))).
-evaluate(eq,(variable(e),(variable(a),()))).
-evaluate(leqv,
+evaluate(operation(eq,(variable(a),(variable(a),())))).
+evaluate(operation(eq,(variable(e),(variable(a),())))).
+evaluate(operation(leqv,
     (operation(eq,(variable(a),(variable(b),()))),
-    (operation(eq,(variable(b),(variable(a),()))),()))).
-evaluate(limp,
+    (operation(eq,(variable(b),(variable(a),()))),())))).
+evaluate(operation(limp,
     (operation(conj,
         (operation(eq,(variable(a),(variable(b),()))),
         (operation(eq,(variable(a),(variable(c),()))),()))),
-    (operation(eq,(variable(b),(variable(c),()))),()))).
-evaluate(leqv,
+    (operation(eq,(variable(b),(variable(c),()))),())))).
+evaluate(operation(leqv,
     (operation(eq,(variable(d),(variable(a),()))),
-    (operation(eq,(variable(b),(variable(a),()))),()))).
-evaluate(subset,(variable(a),(variable(d),()))).
-evaluate(subset,(variable(f),(variable(g),()))).
-evaluate(subset,(variable(f),(variable(h),()))).
-evaluate(set_notin,(val(int,6),(variable(odd),()))).
-evaluate(set_isin,(val(int,7),(variable(odd),()))).
+    (operation(eq,(variable(b),(variable(a),()))),())))).
+evaluate(operation(subset,(variable(a),(variable(d),())))).
+evaluate(operation(subset,(variable(f),(variable(g),())))).
+evaluate(operation(subset,(variable(f),(variable(h),())))).
+evaluate(operation(set_notin,(val(int,6),(variable(odd),())))).
+evaluate(operation(set_isin,(val(int,7),(variable(odd),())))).
 %%% even==doubles cap nb
-evaluate(eq,
+evaluate(operation(eq,
     (variable(even),
-    (operation(inter,(variable(doubles),(variable(nb),()))),()))).
+    (operation(inter,(variable(doubles),(variable(nb),()))),())))).

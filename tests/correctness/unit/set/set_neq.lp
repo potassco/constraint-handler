@@ -1,5 +1,3 @@
-phase_request(constantFolding,false).
-
 variable_define(left,operation(set_make,(val(int,1),(val(none,none),())))).
 variable_define(same,operation(set_make,(val(none,none),(val(int,1),(val(int,1),()))))).
 variable_define(right,operation(set_make,(val(int,1),(val(int,2),(val(none,none),()))))).
@@ -14,12 +12,12 @@ variable_domain(x,bad).
 
 variable_define(bad_set,operation(set_make,(bad,()))).
 
-evaluate(neq,(variable(left),(variable(same),()))).
-evaluate(neq,(variable(left),(variable(right),()))).
-evaluate(neq,(variable(empty),(operation(set_make,()),()))).
-evaluate(neq,(variable(left),(val(none,none),()))).
-evaluate(neq,(bad,(variable(left),()))).
-evaluate(neq,(variable(left),(variable(bad_set),()))).
-evaluate(neq,(variable(x),(variable(right),()))).
-evaluate(neq,(variable(x),(val(none,none),()))).
-evaluate(neq,(variable(x),(bad,()))).
+evaluate(operation(neq,(variable(left),(variable(same),())))).
+evaluate(operation(neq,(variable(left),(variable(right),())))).
+evaluate(operation(neq,(variable(empty),(operation(set_make,()),())))).
+evaluate(operation(neq,(variable(left),(val(none,none),())))).
+evaluate(operation(neq,(bad,(variable(left),())))).
+evaluate(operation(neq,(variable(left),(variable(bad_set),())))).
+evaluate(operation(neq,(variable(x),(variable(right),())))).
+evaluate(operation(neq,(variable(x),(val(none,none),())))).
+evaluate(operation(neq,(variable(x),(bad,())))).

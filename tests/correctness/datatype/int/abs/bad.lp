@@ -1,3 +1,1 @@
-phase_request(constantFolding,false).
-
-evaluate(abs,(bad,())).
+evaluate(operation(abs,(bad,()))).

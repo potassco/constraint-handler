@@ -1,4 +1,4 @@
-evaluated(eq,(variable(prop),(val(string,"compact"),())),val(bool,false))
-evaluated(hasValue,(variable(prop),()),val(bool,false))
-evaluated(neq,(variable(prop),(val(string,"compact"),())),val(bool,true))
+evaluated(operation(eq,(variable(prop),(val(string,"compact"),()))),val(bool,false))
+evaluated(operation(hasValue,(variable(prop),())),val(bool,false))
+evaluated(operation(neq,(variable(prop),(val(string,"compact"),()))),val(bool,true))
 value(prop,val(none,none))

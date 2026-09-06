@@ -1,2 +1,2 @@
-evaluated(add,(val(float,float("1.5")),(val(float,float("2.0")),())),bad)
-evaluated(add,(val(float,float("1.5")),(val(float,float("2.0")),())),val(int,3))
+evaluated(operation(add,(val(float,float("1.5")),(val(float,float("2.0")),()))),bad)
+evaluated(operation(add,(val(float,float("1.5")),(val(float,float("2.0")),()))),val(int,3))

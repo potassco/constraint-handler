@@ -2,6 +2,10 @@
 
 ## Ongoing
 
+## v0.0.6
+
+- - update `evaluate(LBL,OP,ARGS)` to be `evaluate(LBL,operation(OP,ARGS))`,
+    same for `evaluate/2` and `evaluated/3`
 - - rename `variable_domain` to `variable_choice` for open variables.
 
 ## v0.0.5

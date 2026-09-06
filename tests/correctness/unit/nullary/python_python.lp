@@ -1,2 +1,1 @@
-
-evaluate(python("2"),()).
+evaluate(operation(python("2"),())).

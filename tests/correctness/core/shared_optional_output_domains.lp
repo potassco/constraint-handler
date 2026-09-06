@@ -19,4 +19,4 @@ execution_declare(q,if(variable(run),assign("y",val(float,float("2.2"))),noop),(
 execution_run(p).
 execution_run(q).
 
-evaluate(disj,(operation(eq,(variable(f),(val(float,float("1.1")),()))),(operation(eq,(variable(f),(val(float,float("2.2")),()))),()))).
+evaluate(operation(disj,(operation(eq,(variable(f),(val(float,float("1.1")),()))),(operation(eq,(variable(f),(val(float,float("2.2")),()))),())))).

@@ -1,4 +1,4 @@
-evaluated(disj,(operation(eq,(variable(compound),(val(string,"takeover"),()))),(operation(eq,(variable(compound),(val(string,"overtake"),()))),())),val(bool,true))
+evaluated(operation(disj,(operation(eq,(variable(compound),(val(string,"takeover"),()))),(operation(eq,(variable(compound),(val(string,"overtake"),()))),()))),val(bool,true))
 value(x0,val(symbol,red))
 value(y1,val(symbol,red))
 value(x2,val(symbol,red))

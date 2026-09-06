@@ -19,4 +19,4 @@ variable_define(gz,variable(execution_output(myfun,z))).
 
 variable_define(same,operation(eq,(variable(gx),(variable(gy),())))).
 
-evaluate(neq,(variable(gx),(variable(gy),()))).
+evaluate(operation(neq,(variable(gx),(variable(gy),())))).

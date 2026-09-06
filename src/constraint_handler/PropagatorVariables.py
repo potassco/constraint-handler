@@ -466,24 +466,23 @@ class EvaluateVariable:
     Represents an evaluate atom defined by an operator and arguments of the operator.
 
     Attributes:
-        op: The operator for the expression.
-        args: List of argument expressions.
+        ref: User-facing reference.
         value: The current value of the evaluation.
         literal: The associated literal.
         errors: List of warnings or errors encountered during evaluation.
     """
 
-    def __init__(self, op: expression.Operator, args: list[expression.Expr], literal: int = -1):
+    def __init__(self, ref: expression.constant, expr: expression.Expr, literal: int = -1):
         """
         Initialize an EvaluateVariable.
 
         Args:
-            op: Operator to apply.
-            args: Operands for the operator.
+            ref: User-facing reference.
+            expr: Expression to evaluate.
             literal: Literal controlling whether this operation is active.
         """
-        self.op: expression.Operator = op
-        self.args: list[expression.Expr] = args
+        self.ref: expression.constant = ref
+        self.expr: expression.Expr = expr
         self.value: Any = ValueStatus.NOT_SET
         self.literal: int = literal
 
@@ -508,7 +507,7 @@ class EvaluateVariable:
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             return False
 
-        value, errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations.evaluations)
+        value, errors = evaluator.evaluate_expr(self.expr, env, evaluations.evaluations)
         self.value = value
         for error, msg in errors:
             self.errors.append(warning.Warning(error, (), repr(msg)))
@@ -527,7 +526,7 @@ class EvaluateVariable:
         Returns:
             clingo.Symbol: A symbolic representation of this variable.
         """
-        return myClorm.pytocl(expression.Operation(self.op, self.args))
+        return myClorm.pytocl(self.expr)
 
     def get_value(self) -> Any:
         """
@@ -550,13 +549,13 @@ class EvaluateVariable:
     def __eq__(self, other) -> bool:
         if not isinstance(other, EvaluateVariable):
             return False
-        return self.op == other.op and self.args == other.args and self.literal == other.literal
+        return self.ref == other.ref and self.expr == other.expr and self.literal == other.literal
 
     def __hash__(self) -> int:
-        return hash((str(self.op), str(self.args), self.literal))
+        return hash((str(self.ref), str(self.expr), self.literal))
 
     def __str__(self) -> str:
-        return f"EvaluateVariable({self.op}, {self.args})"
+        return f"EvaluateVariable({self.ref}, {self.expr})"
 
     def __repr__(self) -> str:
         return self.__str__()

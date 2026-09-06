@@ -16,7 +16,7 @@ execution_declare(c,c,if(operation(lnot,(operation(eq,(variable("a"),(val(bool,t
 execution_run(d,d).
 execution_declare(d,d,assign("b",operation(set_make,())),(),("b",())).
 
-evaluate(eq,(variable(a),(val(bool,true),()))).
-evaluate(hasValue,(variable(b),())).
-evaluate(eq,(variable(b),(operation(set_make,()),()))).
-evaluate(eq,(variable(execution_output(d,"b")),(operation(set_make,()),()))).
+evaluate(operation(eq,(variable(a),(val(bool,true),())))).
+evaluate(operation(hasValue,(variable(b),()))).
+evaluate(operation(eq,(variable(b),(operation(set_make,()),())))).
+evaluate(operation(eq,(variable(execution_output(d,"b")),(operation(set_make,()),())))).

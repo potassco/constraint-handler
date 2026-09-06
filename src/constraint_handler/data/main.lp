@@ -21,4 +21,4 @@ _parameter_value(PARAM,VAL) :- _parameter_default(PARAM,VAL), not _parameter_use
 _parameter_value(PARAM,VAL) :- parameter_request(PARAM,VAL).
 
 %%%%%%%%%%%%%%%%% version
-version("0.0.4").
+version("0.0.6").
