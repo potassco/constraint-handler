@@ -44,6 +44,7 @@ core_tests = [
     "core/custom_globals",
     "core/empty_set_execution",
     "core/empty_variadics",
+    "core/evaluate_dynamic",
     "core/integrity",
     "core/optional_absent_comparison_evaluation",
     "core/optional_absent_string_comparison_evaluation",
@@ -647,6 +648,7 @@ def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "pro
 choice_statistics_skip: set[str] = {
     "core/boolean_shortcut_optional_presence",
     "core/empty_set_execution",
+    "core/evaluate_dynamic",
     "core/optional_set_empty_execution",
     "core/python_set_bool_brave",
     "core/set_interface_value_marker",

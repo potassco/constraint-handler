@@ -1,0 +1,5 @@
+evaluated(lnot,(variable(x),()),val(bool,true))
+evaluated(lnot,(variable(x),()),bad)
+evaluated(snot,(variable(x),()),val(bool,false))
+evaluated(snot,(variable(x),()),val(bool,true))
+evaluated(snot,(variable(x),()),bad)
