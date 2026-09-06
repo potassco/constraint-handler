@@ -501,8 +501,13 @@ class EvaluateVariable:
         Returns:
             bool: True if the value has changed, False otherwise.
         """
-        if not ctl.assignment.is_true(self.literal):
+        if ctl.assignment.value(self.literal) is None:
             return False
+
+        if ctl.assignment.is_false(self.literal):
+            self.value = ValueStatus.ASSIGNMENT_IS_FALSE
+            return False
+
         value, errors = evaluator.evaluate_expr(expression.Operation(self.op, self.args), env, evaluations.evaluations)
         self.value = value
         for error, msg in errors:
