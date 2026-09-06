@@ -1,1 +1,1 @@
-evaluated(lnot,(variable(x),()),val(bool,false))
+evaluated(operation(lnot,(variable(x),())),val(bool,false))
