@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import typing
+from dataclasses import dataclass, field
 
 import clingo
 import pytest
@@ -9,11 +10,60 @@ import constraint_handler.myClorm as myClorm
 from constraint_handler.schemas.expression import ConditionalOperator
 
 T = typing.TypeVar("T")
+U = typing.TypeVar("U")
 
 
 class SampleRecord(typing.NamedTuple):
     count: int
     label: str
+
+
+class GenericNamedTuple(typing.NamedTuple, typing.Generic[T, U]):
+    first: T
+    second: U
+
+
+class CustomRecord:
+    count: int
+    label: str
+
+    def __init__(self, count, label):
+        self.count = count
+        self.label = label
+
+
+@dataclass(frozen=True)
+class SampleDataclass:
+    count: int
+    label: str
+
+
+@dataclass
+class GenericDataclass(typing.Generic[T]):
+    value: T
+
+
+@dataclass(frozen=True)
+class MultiGenericDataclass(typing.Generic[T, U]):
+    first: T
+    second: T
+    third: U
+    label: str
+
+
+@dataclass
+class DataclassWithName:
+    name: str
+
+
+@dataclass
+class DataclassWithDerivedField:
+    count: int
+    label: str
+    display: str = field(init=False)
+
+    def __post_init__(self):
+        self.display = f"{self.label}:{self.count}"
 
 
 class HookedTuple(tuple, typing.Generic[T]):
@@ -65,6 +115,18 @@ def test_pytocl_namedtuple_uses_predicate_name_and_fields():
     assert myClorm.pytocl(record) == clingo.Function("sampleRecord", [clingo.Number(3), clingo.String("tag")])
 
 
+def test_pytocl_dataclass_uses_predicate_name_and_init_fields():
+    record = DataclassWithDerivedField(3, "tag")
+
+    assert myClorm.pytocl(record) == clingo.Function(
+        "dataclassWithDerivedField", [clingo.Number(3), clingo.String("tag")]
+    )
+
+
+def test_pytocl_dataclass_uses_class_name_when_it_has_a_name_field():
+    assert myClorm.pytocl(DataclassWithName("tag")) == clingo.Function("dataclassWithName", [clingo.String("tag")])
+
+
 def test_pytocl_list_encodes_nested_cons_shape():
     assert myClorm.pytocl([1, 2]) == clingo.Function(
         "",
@@ -110,6 +172,67 @@ def test_cltopy_typed_namedtuple_decodes_symbol():
     assert myClorm.cltopy(symbol, SampleRecord) == SampleRecord(4, "item")
 
 
+def test_cltopy_typed_generic_namedtuple_decodes_symbol():
+    symbol = clingo.Function("genericNamedTuple", [clingo.Number(4), clingo.String("item")])
+
+    assert myClorm.cltopy(symbol, GenericNamedTuple[int, str]) == GenericNamedTuple(4, "item")
+
+
+def test_cltopy_typed_custom_class_decodes_symbol():
+    symbol = clingo.Function("customRecord", [clingo.Number(4), clingo.String("item")])
+
+    value = myClorm.cltopy(symbol, CustomRecord)
+
+    assert value.count == 4
+    assert value.label == "item"
+
+
+def test_cltopy_typed_dataclass_decodes_symbol():
+    symbol = clingo.Function("sampleDataclass", [clingo.Number(4), clingo.String("item")])
+
+    assert myClorm.cltopy(symbol, SampleDataclass) == SampleDataclass(4, "item")
+
+
+def test_cltopy_typed_generic_dataclass_decodes_symbol():
+    symbol = clingo.Function("genericDataclass", [clingo.Number(4)])
+
+    assert myClorm.cltopy(symbol, GenericDataclass[int]) == GenericDataclass(4)
+
+
+def test_cltopy_typed_multi_generic_dataclass_decodes_symbol():
+    symbol = clingo.Function(
+        "multiGenericDataclass",
+        [clingo.Number(4), clingo.Number(5), clingo.String("item"), clingo.String("tag")],
+    )
+
+    assert myClorm.cltopy(symbol, MultiGenericDataclass[int, str]) == MultiGenericDataclass(4, 5, "item", "tag")
+
+
+def test_pytocl_typed_multi_generic_dataclass_encodes_symbol():
+    value = MultiGenericDataclass(4, 5, "item", "tag")
+
+    assert myClorm.pytocl(value, MultiGenericDataclass[int, str]) == clingo.Function(
+        "multiGenericDataclass",
+        [clingo.Number(4), clingo.Number(5), clingo.String("item"), clingo.String("tag")],
+    )
+
+
+def test_cltopy_dataclass_reconstructs_derived_fields():
+    symbol = clingo.Function("dataclassWithDerivedField", [clingo.Number(4), clingo.String("item")])
+
+    assert myClorm.cltopy(symbol, DataclassWithDerivedField) == DataclassWithDerivedField(4, "item")
+
+
+def test_find_in_model_decodes_dataclass_atoms():
+    symbol = clingo.Function("sampleDataclass", [clingo.Number(4), clingo.String("item")])
+
+    class Model:
+        def symbols(self, **_):
+            return [symbol]
+
+    assert myClorm.findInModel(Model(), SampleDataclass) == {symbol: SampleDataclass(4, "item")}
+
+
 def test_cltopy_typed_list_and_tuple():
     assert myClorm.cltopy(myClorm.pytocl([1, 2]), list[int]) == myClorm.ImmutableList([1, 2])
     assert myClorm.cltopy(
@@ -128,6 +251,13 @@ def test_cltopy_namedtuple_failure_raises_failed_instantiation():
 
     with pytest.raises(myClorm.FailedInstantiationExn):
         myClorm.cltopy(symbol, SampleRecord)
+
+
+def test_cltopy_dataclass_failure_raises_failed_instantiation():
+    symbol = clingo.Function("differentRecord", [clingo.Number(1), clingo.String("x")])
+
+    with pytest.raises(myClorm.FailedInstantiationExn):
+        myClorm.cltopy(symbol, SampleDataclass)
 
 
 def test_pytocl_typing_union_target_is_supported():
