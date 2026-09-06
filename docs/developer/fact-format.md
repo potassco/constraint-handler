@@ -105,11 +105,18 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 ## Building Facts and Declarations
 ```ebnf
-<domain> ::= "definition" | "boolDomain" | "fromFacts" | "set" | "multimap"
+<domain> ::= "definition" | "boolDomain" | "fromFacts" | "open" | "set" | "multimap"
 
 <variable-atom> ::=
+    | "variable_assign" "(" <term> "," <expression> ")"
+    | "variable_assign" "(" <term> "," <term> "," <expression> ")"
+    | "variable_choice" "(" <term> "," <expression> ")"
+    | "variable_choice" "(" <term> "," <term> "," <expression> ")"
     | "variable_declare" "(" <term> "," <domain> ")"
     | "variable_declare" "(" <term> "," <term> "," <domain> ")"
+    | "variable_default" "(" <term> "," <expression> ")"
+    | ...
+    | "variable_default" "(" <term> "," <term> "," <expression> "," <expression> "," <int> ")"
     | "variable_define" "(" <term> "," <expression> ")"
     | "variable_define" "(" <term> "," <term> "," <expression> ")"
     | "variable_domain" "(" <term> "," <expression> ")"
@@ -157,8 +164,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "ensure" "(" <term> "," <expression> ")"
     | "bool_evaluate" "(" <expression> ")"
     | "bool_evaluate" "(" <term> "," <expression> ")"
-    | "evaluate" "(" <operator> "," <expression-list> ")"
-    | "evaluate" "(" <term> "," <operator> "," <expression-list> ")"
+    | "evaluate" "(" <expression> ")"
+    | "evaluate" "(" <term> "," <expression> ")"
     | <variable-atom>
     | <multimap-atom>
     | <set-atom>
