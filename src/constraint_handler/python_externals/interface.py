@@ -34,6 +34,12 @@ def pythonIsExpr(clE):
 @cache
 def pythonNormalExpr(clE : clingo.Symbol):
     reserved = ["operation","val","variable","bad"]
+    if clE.type == clingo.SymbolType.Number:
+        return clingo.Function("val", [clingo.Function("int"), clE])
+    if clE.type == clingo.SymbolType.String:
+        return clingo.Function("val", [clingo.Function("string"), clE])
+    if clE.type == clingo.SymbolType.Function and clE.name == "float" and len(clE.arguments) == 1:
+        return clingo.Function("val", [clingo.Function("float"), clE])
     if clE.type == clingo.SymbolType.Function and clE.name == "":
         return clingo.Tuple_([pythonNormalExpr(arg) for arg in clE.arguments])
     if clE.type == clingo.SymbolType.Function and clE.name == "operation" and len(clE.arguments) == 2:
@@ -41,7 +47,7 @@ def pythonNormalExpr(clE : clingo.Symbol):
             args = myClorm.unnest(clE.arguments[1])
             return clingo.Function("operation", [clE.arguments[0], myClorm.nest([pythonNormalExpr(arg) for arg in args])])
         except myClorm.FailedInstantiationExn:
-            pass
+            return myClorm.pytocl(expression.Bad.bad)
     if clE.type == clingo.SymbolType.Function and clE.name not in reserved:
         op = clingo.Function(clE.name)
         args = [pythonNormalExpr(arg) for arg in clE.arguments]

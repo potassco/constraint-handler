@@ -18,3 +18,10 @@ variable_define(set_union,union(set_make(val(int,1),val(int,2)),set_make(val(int
 variable_define(set_union_size,cardinality(variable(set_union))).
 variable_define(tuple_computed,(add(val(int,2),val(int,3)),concat(val(string,"tuple"),val(string,"-value")),cardinality(set_make(val(int,1),val(int,2))))).
 variable_define(tuple_equal,eq((add(val(int,2),val(int,3)),concat(val(string,"tuple"),val(string,"-value"))),(val(int,5),val(string,"tuple-value")))).
+variable_define(literal_int,42).
+variable_define(literal_float,float("3.5")).
+variable_define(literal_string,"literal").
+variable_define(literal_sum,add(1,2,3)).
+variable_define(literal_float_sum,add(float("1.5"),2)).
+variable_define(literal_concat,concat("literal","-string")).
+variable_define(literal_set,set_make(1,float("2.5"),"three")).
