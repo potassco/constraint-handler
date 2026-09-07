@@ -28,5 +28,4 @@ variable_define(literal_set,set_make(1,float("2.5"),"three")).
 
 variable_define(f,float(1)).
 variable_define(literal_bool,true).
-variable_define(literal_bad,bad).
 variable_define(literal_symbol,marker).

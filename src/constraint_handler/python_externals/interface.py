@@ -33,7 +33,7 @@ def pythonIsExpr(clE):
 
 @cache
 def pythonNormalExpr(clE: clingo.Symbol):
-    reserved = ["operation", "val", "variable", "bad", "python", "pythonExtract"]
+    reserved = ["bad", "lambda", "operation", "python", "pythonExtract", "val", "variable"]
     bad = clingo.Function("bad")
     if clE.type == clingo.SymbolType.Number:
         return clingo.Function("val", [clingo.Function("int"), clE])
@@ -57,6 +57,8 @@ def pythonNormalExpr(clE: clingo.Symbol):
         return clE
     if clE.name == "":
         return clingo.Tuple_([pythonNormalExpr(arg) for arg in clE.arguments])
+    if clE.name == "lambda" and len(clE.arguments) == 2:
+        return clingo.Function("lambda", [clE.arguments[0], pythonNormalExpr(clE.arguments[1])])
     if clE.name == "operation" and len(clE.arguments) == 2:
         try:
             args = myClorm.unnest(clE.arguments[1])
