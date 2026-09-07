@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - introduce experimental alternative syntax.
+
 ## v0.0.6
 
 - - update `evaluate(LBL,OP,ARGS)` to be `evaluate(LBL,operation(OP,ARGS))`,

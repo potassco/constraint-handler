@@ -2,7 +2,7 @@ phase_request(wf_check,false).
 variable_define(x,add(val(int,3),val(int,7))).
 
 variable_define(y,mult(ite(eq(variable(x),val(int,3)),val(int,7),val(int,20)))).
-variable_define(add0,add()).
+variable_define(add0,operation(add,())).
 variable_define(mult1,mult(val(int,6))).
 variable_define(sum4,add(val(int,1),val(int,2),val(int,3),val(int,4))).
 variable_define(nested,add(mult(val(int,2),val(int,3)),add(val(int,4),val(int,5)))).
@@ -25,3 +25,8 @@ variable_define(literal_sum,add(1,2,3)).
 variable_define(literal_float_sum,add(float("1.5"),2)).
 variable_define(literal_concat,concat("literal","-string")).
 variable_define(literal_set,set_make(1,float("2.5"),"three")).
+
+variable_define(f,float(1)).
+variable_define(literal_bool,true).
+variable_define(literal_bad,bad).
+variable_define(literal_symbol,marker).
