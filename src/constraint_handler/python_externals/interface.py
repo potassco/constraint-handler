@@ -22,8 +22,30 @@ def pythonIsExpr(clE):
         return myClorm.pytocl(False)
 
 
+#@cache
+#def pythonNormalExpr(clE):
+#    try:
+#        pE = myClorm.cltopy(clE, expression.Expr)
+#        return myClorm.pytocl(pE)
+#    except myClorm.FailedInstantiationExn:
+#        return myClorm.pytocl(expression.Bad.bad)
+
+
 @cache
-def pythonNormalExpr(clE):
+def pythonNormalExpr(clE : clingo.Symbol):
+    reserved = ["operation","val","variable","bad"]
+    if clE.type == clingo.SymbolType.Function and clE.name == "":
+        return clingo.Tuple_([pythonNormalExpr(arg) for arg in clE.arguments])
+    if clE.type == clingo.SymbolType.Function and clE.name == "operation" and len(clE.arguments) == 2:
+        try:
+            args = myClorm.unnest(clE.arguments[1])
+            return clingo.Function("operation", [clE.arguments[0], myClorm.nest([pythonNormalExpr(arg) for arg in args])])
+        except myClorm.FailedInstantiationExn:
+            pass
+    if clE.type == clingo.SymbolType.Function and clE.name not in reserved:
+        op = clingo.Function(clE.name)
+        args = [pythonNormalExpr(arg) for arg in clE.arguments]
+        return clingo.Function("operation",[op,myClorm.pytocl(args,list[clingo.Symbol])])
     try:
         pE = myClorm.cltopy(clE, expression.Expr)
         return myClorm.pytocl(pE)

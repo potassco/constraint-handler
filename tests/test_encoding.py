@@ -243,6 +243,7 @@ execution_tests = [
 ]
 
 expression_tests = [
+    "expression/alternative_syntax",
     "expression/bad_equality",
     "expression/lambda_recursive",
     "expression/lambda_zero_args",
