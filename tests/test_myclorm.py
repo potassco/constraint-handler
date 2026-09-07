@@ -151,6 +151,8 @@ def test_pytocl_list_encodes_nested_cons_shape():
 def test_immutablelist_is_immutable_sequence():
     value = myClorm.ImmutableList([1, 2])
 
+    assert repr(value) == "ImmutableList([1, 2])"
+
     with pytest.raises(AttributeError):
         value.append(3)
 

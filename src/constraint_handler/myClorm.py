@@ -1,3 +1,5 @@
+"""Convert Python values and typed records to and from Clingo symbols."""
+
 import dataclasses
 import enum
 import itertools
@@ -39,6 +41,9 @@ def unnest(symb, cons="", nil=""):
 class ImmutableList(tuple):
     def __new__(cls, values=()):
         return super().__new__(cls, values)
+
+    def __repr__(self):
+        return f"{type(self).__name__}({list(self)!r})"
 
     @classmethod
     def pytocl(cls, value, target_args=()):
@@ -140,30 +145,39 @@ def _resolve_custom_converter(target, name, value):
     return _NO_CUSTOM_CONVERTER
 
 
-def pytocl(v, dtarget=None):
-    if dtarget is None:
-        dtarget = type(v)
+def pytocl(v, target_type=None):
+    """Encode a Python value as a Clingo symbol.
 
-    if dtarget is int:
+    Dataclasses, NamedTuples, and annotated classes use their lower-camel-case
+    class name as the predicate name. ``target_type`` selects a type or union.
+
+    >>> symbol = pytocl([1, "two", 3])
+    >>> print(symbol)
+    (1,("two",(3,())))
+    """
+    if target_type is None:
+        target_type = type(v)
+
+    if target_type is int:
         return clingo.Number(v)
-    if dtarget is bool:
+    if target_type is bool:
         return clingo.Function("true" if v else "false", [])
-    if dtarget is str:
+    if target_type is str:
         return clingo.String(v)
-    if dtarget is float:
+    if target_type is float:
         return clingo.Function("float", [clingo.String(str(v))])
-    if dtarget is types.NoneType or dtarget is type(None):
+    if target_type is types.NoneType or target_type is type(None):
         return clingo.Function("none", [])
-    if dtarget is list:
+    if target_type is list:
         return nest([pytocl(e) for e in v])
-    if dtarget is tuple:
+    if target_type is tuple:
         return clingo.Function("", [pytocl(e) for e in v])
-    if dtarget is set or dtarget is frozenset:
+    if target_type is set or target_type is frozenset:
         return clingo.Function("set", [nest(sorted([pytocl(e) for e in v]))])
-    if dtarget is clingo.Symbol:
+    if target_type is clingo.Symbol:
         return v
 
-    rows = _union_rows(dtarget)
+    rows = _union_rows(target_type)
     for target in rows:
         target = _resolve_type_alias(target)
         target_class = _cached_get_origin(target) or target
@@ -208,7 +222,7 @@ def pytocl(v, dtarget=None):
             name = _get_record_predicate_name(target_class)
             field_types = _cached_get_type_hints(target_class)
             return clingo.Function(name, [pytocl(getattr(v, name), field) for name, field in field_types.items()])
-    raise FailedInstantiationExn(f"'{v}' is not of type {dtarget}")
+    raise FailedInstantiationExn(f"'{v}' is not of type {target_type}")
 
 
 def cltopyNoTarget(func: clingo.Symbol) -> object:
@@ -246,9 +260,15 @@ def cltopyNoTarget(func: clingo.Symbol) -> object:
 
 
 @cache
-def cltopy(func, dtarget=typing.Any):
-    dtarget = _resolve_type_alias(dtarget)
-    rows = _union_rows(dtarget)
+def cltopy(func, target_type=typing.Any):
+    """Decode a Clingo symbol as ``target_type`` or one of its union members.
+
+    >>> symbol = clingo.symbol.parse_term('(1,("two",(3,())))')
+    >>> cltopy(symbol, list[int | str])
+    ImmutableList([1, 'two', 3])
+    """
+    target_type = _resolve_type_alias(target_type)
+    rows = _union_rows(target_type)
     for target in rows:
         target = _resolve_type_alias(target)
         target_class = _cached_get_origin(target) or target  # unsubscripted_target
@@ -364,13 +384,14 @@ def cltopy(func, dtarget=typing.Any):
             raise FailedInstantiationExn(f"'{func}' is not of type '{target}'")
         except FailedInstantiationExn:
             pass
-    raise FailedInstantiationExn(f"'{func}' is not of type {dtarget}")
+    raise FailedInstantiationExn(f"'{func}' is not of type {target_type}")
 
 
 def findInModel(
-    model: clingo.Model, dtarget: typing.Any = typing.Any, atoms: bool = True, theory: bool = True
+    model: clingo.Model, target_type: typing.Any = typing.Any, atoms: bool = True, theory: bool = True
 ) -> dict[clingo.Symbol, typing.Any]:
-    rows = _union_rows(dtarget)
+    """Return model symbols that decode as ``target_type``."""
+    rows = _union_rows(target_type)
     result = dict()
     for target in rows:
         for symb in model.symbols(atoms=atoms, theory=theory):
@@ -383,9 +404,9 @@ def findInModel(
 
 
 def _find_in_control(
-    ctl: clingo.Control | clingo.propagator.PropagateInit, dtarget: typing.Any
+    ctl: clingo.Control | clingo.propagator.PropagateInit, target_type: typing.Any
 ) -> typing.Iterator[tuple[clingo.SymbolicAtom, typing.Any]]:
-    rows = _union_rows(dtarget)
+    rows = _union_rows(target_type)
     if typing.Any in rows:
         for atom in ctl.symbolic_atoms:
             yield atom, atom.symbol
@@ -399,13 +420,15 @@ def _find_in_control(
                         pass
 
 
-def findInControl(ctl: clingo.Control, dtarget: typing.Any) -> dict[clingo.SymbolicAtom, typing.Any]:
-    return dict(_find_in_control(ctl, dtarget))
+def findInControl(ctl: clingo.Control, target_type: typing.Any) -> dict[clingo.SymbolicAtom, typing.Any]:
+    """Return control atoms that decode as ``target_type``."""
+    return dict(_find_in_control(ctl, target_type))
 
 
-def findInPropagateInit(ctl: clingo.propagator.PropagateInit, dtarget: typing.Any) -> dict[typing.Any, int]:
+def findInPropagateInit(ctl: clingo.propagator.PropagateInit, target_type: typing.Any) -> dict[typing.Any, int]:
+    """Return decoded propagator atoms mapped to their solver literals."""
     result = dict()
-    for atom, value in _find_in_control(ctl, dtarget):
+    for atom, value in _find_in_control(ctl, target_type):
         literal = ctl.solver_literal(atom.literal)
         if literal != -1:
             result[value] = literal
