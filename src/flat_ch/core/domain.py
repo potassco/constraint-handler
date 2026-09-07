@@ -72,7 +72,7 @@ _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.EXPRESSION_VALUE: ("ID", "TYPE_ID", "VALUE"),
     FlatFact.EXPRESSION_VARIABLE: ("ID", "NAME"),
     FlatFact.ENSURE: ("NAME", "EXPR_ID"),
-    FlatFact.EVALUATE: ("OP", "ARGS", "EXPR_ID"),
+    FlatFact.EVALUATE: ("EXPR", "EXPR_ID"),
     FlatFact.BOOL_EVALUATE: ("EXPR", "EXPR_ID"),
     FlatFact.SET: ("NAME",),
     FlatFact.SET_BASE_DOMAIN: ("NAME", "EXPR_ID"),
@@ -196,9 +196,8 @@ class EnsureConstraint:
 @dataclass(frozen=True, slots=True)
 class EvaluateInput:
     label: str | None
-    operator: OperationKind
-    arguments: tuple[Expression, ...]
-    original_argument_tuple: Symbol | None = None
+    expression: Expression
+    original_expression: Symbol | None = None
     registration_id: int | None = None
     kind: ProgramInputKind = ProgramInputKind.EVALUATE_INPUT
 

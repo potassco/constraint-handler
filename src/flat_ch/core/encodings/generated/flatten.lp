@@ -16,8 +16,8 @@ _fch_var_dom(NAME, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_dom(ID, NAM
 _fch_var_dom(NAME, EXPR_ID) :- _fch_flat(var_dom(NAME, EXPR_ID)).
 _fch_ensure(NAME, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(ensure(ID, NAME, EXPR_ID)).
 _fch_ensure(NAME, EXPR_ID) :- _fch_flat(ensure(NAME, EXPR_ID)).
-_fch_evaluate(OP, ARGS, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(evaluate(ID, OP, ARGS, EXPR_ID)).
-_fch_evaluate(OP, ARGS, EXPR_ID) :- _fch_flat(evaluate(OP, ARGS, EXPR_ID)).
+_fch_evaluate(EXPR, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(evaluate(ID, EXPR, EXPR_ID)).
+_fch_evaluate(EXPR, EXPR_ID) :- _fch_flat(evaluate(EXPR, EXPR_ID)).
 _fch_bool_evaluate(EXPR, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(bool_evaluate(ID, EXPR, EXPR_ID)).
 _fch_bool_evaluate(EXPR, EXPR_ID) :- _fch_flat(bool_evaluate(EXPR, EXPR_ID)).
 _fch_set_decl(NAME) :- _fch_flat(set_decl(NAME)).

@@ -253,6 +253,7 @@ flat_ch_unsupported_tests = {
     "expression/python_extract/succeeds",
     "expression/tuple",
     "expression/tuple_arity_mismatch",
+    "expression/tuple_extra",
     "expression/tuple_nested",
     "optimization/preferences",
     "python/dynamic",

@@ -125,18 +125,13 @@ class Flattener:
 
             case ProgramInputKind.EVALUATE_INPUT:
                 ev: EvaluateInput = node  # type: ignore
-                op_expr = IOperation(ev.operator, ev.arguments)
-                res_expr_id = self._intern_expr(op_expr)
-
-                op_name = ev.operator.asp_name if isinstance(ev.operator, Operator) else str(ev.operator)
-
-                orig_args_tuple = ev.original_argument_tuple
-                if orig_args_tuple is None:
-                    orig_args = tuple(self._to_raw_expr_symbol(arg) for arg in ev.arguments)
-                    orig_args_tuple = self._symbols_to_clingo_tuple(orig_args)
+                expr_id = self._intern_expr(ev.expression)
+                orig_symbol = ev.original_expression
+                if orig_symbol is None:
+                    orig_symbol = self._to_raw_expr_symbol(ev.expression)
 
                 self.interned_program.append(
-                    (ProgramInputKind.EVALUATE_INPUT, (op_name, orig_args_tuple, res_expr_id, ev.registration_id))
+                    (ProgramInputKind.EVALUATE_INPUT, (orig_symbol, expr_id, ev.registration_id))
                 )
 
             case ProgramInputKind.PYTHON_EVALUATE_INPUT:
@@ -514,9 +509,9 @@ class Flattener:
                 self._emit_fact(Function(fact_name, fact_args))
 
             case ProgramInputKind.EVALUATE_INPUT:
-                op_name, args_tuple, res_expr_id, registration_id = payload
+                orig_symbol, expr_id, registration_id = payload
                 fact_name = FlatFact.EVALUATE.value
-                fact_args = [Function(op_name, []), args_tuple, Number(res_expr_id)]
+                fact_args = [orig_symbol, Number(expr_id)]
                 if registration_id is not None:
                     fact_args.insert(0, Number(registration_id))
                 self._emit_fact(Function(fact_name, fact_args))

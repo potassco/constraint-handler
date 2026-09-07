@@ -23,10 +23,10 @@ _fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_domain(LABEL, NAME, E
 _fch_input(ensure(__anonymous, EXPR)) :- ensure(EXPR).
 _fch_input(ensure(LABEL, EXPR)) :- ensure(LABEL, EXPR).
 
+#defined evaluate/1.
 #defined evaluate/2.
-#defined evaluate/3.
-_fch_input(evaluate(_fch_label, OP, ARGS)) :- evaluate(OP, ARGS).
-_fch_input(evaluate(LABEL, OP, ARGS)) :- evaluate(LABEL, OP, ARGS).
+_fch_input(evaluate(_fch_label, EXPR)) :- evaluate(EXPR).
+_fch_input(evaluate(LABEL, EXPR)) :- evaluate(LABEL, EXPR).
 
 #defined bool_evaluate/1.
 #defined bool_evaluate/2.
@@ -112,42 +112,42 @@ bool_evaluated(EXPR, bad) :-
 	_fch_bool_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
 
-evaluated(OP, ARGS, val(TYPE, VALUE)) :-
-	_fch_evaluate(OP, ARGS, EXPR_ID),
+evaluated(EXPR, val(TYPE, VALUE)) :-
+	_fch_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_none_id, VALUE),
 	TYPE = none.
 
-evaluated(OP, ARGS, val(TYPE, VALUE)) :-
-	_fch_evaluate(OP, ARGS, EXPR_ID),
+evaluated(EXPR, val(TYPE, VALUE)) :-
+	_fch_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_int_id, VALUE),
 	TYPE = int.
 
-evaluated(OP, ARGS, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
-	_fch_evaluate(OP, ARGS, EXPR_ID),
+evaluated(EXPR, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
+	_fch_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_float_id, (INT_PART, REMAINDER)).
 
-evaluated(OP, ARGS, val(TYPE, VALUE)) :-
-	_fch_evaluate(OP, ARGS, EXPR_ID),
+evaluated(EXPR, val(TYPE, VALUE)) :-
+	_fch_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_string_id, VALUE),
 	TYPE = string.
 
-evaluated(OP, ARGS, val(TYPE, VALUE)) :-
-	_fch_evaluate(OP, ARGS, EXPR_ID),
+evaluated(EXPR, val(TYPE, VALUE)) :-
+	_fch_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_bool_id, VALUE),
 	TYPE = bool.
 
-evaluated(OP, ARGS, val(TYPE, VALUE)) :-
-	_fch_evaluate(OP, ARGS, EXPR_ID),
+evaluated(EXPR, val(TYPE, VALUE)) :-
+	_fch_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_set_id, VALUE),
 	TYPE = set.
 
-evaluated(OP, ARGS, val(TYPE, VALUE)) :-
-	_fch_evaluate(OP, ARGS, EXPR_ID),
+evaluated(EXPR, val(TYPE, VALUE)) :-
+	_fch_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_dict_id, VALUE),
 	TYPE = dict.
 
-evaluated(OP, ARGS, bad) :-
-	_fch_evaluate(OP, ARGS, EXPR_ID),
+evaluated(EXPR, bad) :-
+	_fch_evaluate(EXPR, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
 
 value(NAME, val(none, none)) :- value(NAME, none, none).

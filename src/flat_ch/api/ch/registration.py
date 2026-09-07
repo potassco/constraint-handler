@@ -126,38 +126,20 @@ class Registration(BaseRegistration):
             )
 
     def _handle_evaluate(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 3:
+        if len(args) == 2:
             label = self.to_str(args[0])
-            original_argument_tuple = args[2]
-            unwound_exprs = tuple(self.parse_expression(s) for s in self.unnest(original_argument_tuple))
-            python_code = parse_python_operator(args[1])
-            reg_id = self.reg.current_registration_id
-
-            if python_code is not None:
-                bound_args = tuple(IBind(f"_fch_arg_{idx}", expr) for idx, expr in enumerate(unwound_exprs, start=1))
-                self.reg.sequential_inputs.append(
-                    PythonEvaluateInput(
-                        label=label,
-                        code=python_code,
-                        arguments=bound_args,
-                        original_argument_tuple=original_argument_tuple,
-                        registration_id=reg_id,
-                    )
+            self.reg.sequential_inputs.append(
+                EvaluateInput(
+                    label,
+                    self.parse_expression(args[1]),
+                    original_expression=args[1],
+                    registration_id=self.reg.current_registration_id,
                 )
-            else:
-                self.reg.sequential_inputs.append(
-                    EvaluateInput(
-                        label,
-                        parse_operator(args[1]),
-                        self._normalize_operation_arguments(args[1], unwound_exprs),
-                        original_argument_tuple=original_argument_tuple,
-                        registration_id=reg_id,
-                    )
-                )
+            )
 
     def _handle_bool_evaluate(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 2:
-            label = None if args[0] == args[1] else self.to_str(args[0])
+            label = self.to_str(args[0])
             self.reg.sequential_inputs.append(
                 BoolEvaluateInput(
                     label,
