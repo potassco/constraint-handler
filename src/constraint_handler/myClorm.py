@@ -83,9 +83,35 @@ def _cached_get_type_hints(target):
     return typing.get_type_hints(target)
 
 
+def _substitute_typevars(target, typevars):
+    if target in typevars:
+        return typevars[target]
+    origin = _cached_get_origin(target)
+    args = _cached_get_args(target)
+    if not args:
+        return target
+    args = tuple(_substitute_typevars(arg, typevars) for arg in args)
+    if origin in (typing.Union, types.UnionType):
+        return typing.Union[args]
+    return origin[args]
+
+
 @cache
 def _get_record_predicate_name(target):
     return predicatedefn_default_predicate_name(target.__name__)
+
+
+def _get_signatures(target):
+    target_class = _cached_get_origin(target) or target
+    if dataclasses.is_dataclass(target_class):
+        arity = sum(field.init for field in dataclasses.fields(target_class))
+    elif getattr(target_class, "_fields", None) is not None:
+        arity = len(target_class._fields)
+    elif isinstance(target_class, type):
+        arity = len(_cached_get_type_hints(target_class))
+    else:
+        raise ValueError("not sure what to do with target", target)
+    return ((_get_record_predicate_name(target_class), arity),)
 
 
 @cache
@@ -244,7 +270,7 @@ def cltopy(func, dtarget=typing.Any):
                     if name == func.name and len(fields) == len(func.arguments):
                         args = {
                             field.name: cltopy(
-                                symb, typevars.get(targets.get(field.name), targets.get(field.name, typing.Any))
+                                symb, _substitute_typevars(targets.get(field.name, typing.Any), typevars)
                             )
                             for symb, field in zip(func.arguments, fields)
                         }
@@ -259,7 +285,7 @@ def cltopy(func, dtarget=typing.Any):
                     typevars = dict(zip(getattr(target_class, "__parameters__", ()), _cached_get_args(target)))
                     if name == func.name and len(target_class._fields) == len(func.arguments):
                         args = (
-                            cltopy(symb, typevars.get(targets.get(field), targets.get(field, typing.Any)))
+                            cltopy(symb, _substitute_typevars(targets.get(field, typing.Any), typevars))
                             for symb, field in zip(func.arguments, target_class._fields)
                         )
                         return target_class(*args)
@@ -335,9 +361,14 @@ def cltopy(func, dtarget=typing.Any):
                         return result
                 elif func.type == clingo.SymbolType.Function:
                     name = _get_record_predicate_name(target_class)
-                    args = _cached_get_type_hints(target_class).values()
+                    args = _cached_get_type_hints(target_class)
                     if name == func.name and len(args) == len(func.arguments):
-                        return target_class(*(cltopy(symb, field) for symb, field in zip(func.arguments, args)))
+                        return target_class(
+                            **{
+                                field: cltopy(symb, target)
+                                for symb, (field, target) in zip(func.arguments, args.items())
+                            }
+                        )
             raise FailedInstantiationExn(f"'{func}' is not of type '{target}'")
         except FailedInstantiationExn:
             pass
@@ -357,60 +388,29 @@ def findInModel(model, dtarget=typing.Any, atoms=True, theory=True):
     return result
 
 
-def findInControl(ctl, dtarget=typing.Any):
+def _find_in_control(ctl, dtarget):
     rows = _union_rows(dtarget)
-    result = dict()
+    if typing.Any in rows:
+        for atom in ctl.symbolic_atoms:
+            yield atom, atom.symbol
     for target in rows:
-        target_class = _cached_get_origin(target) or target
-        if target == typing.Any:
-            for atom in ctl.symbolic_atoms:
-                result[atom] = cltopy(atom.symbol)
-        elif dataclasses.is_dataclass(target_class):
-            name = _get_record_predicate_name(target_class)
-            arity = sum(field.init for field in dataclasses.fields(target_class))
-            for atom in ctl.symbolic_atoms.by_signature(name, arity):
-                try:
-                    result[atom] = cltopy(atom.symbol, target)
-                except FailedInstantiationExn:
-                    pass
-        elif getattr(target_class, "_fields", None) is not None:
-            name = _get_record_predicate_name(target_class)
-            arity = len(target_class._fields)
-            for atom in ctl.symbolic_atoms.by_signature(name, arity):
-                try:
-                    result[atom] = cltopy(atom.symbol, target)
-                except FailedInstantiationExn:
-                    pass
-        else:
-            raise ValueError("findInControl: not sure what to do with target", target)
-    return result
+        if target != typing.Any:
+            for name, arity in _get_signatures(target):
+                for atom in ctl.symbolic_atoms.by_signature(name, arity):
+                    try:
+                        yield atom, cltopy(atom.symbol, target)
+                    except FailedInstantiationExn:
+                        pass
+
+
+def findInControl(ctl, dtarget):
+    return dict(_find_in_control(ctl, dtarget))
 
 
 def findInPropagateInit(ctl, dtarget):
-    rows = _union_rows(dtarget)
     result = dict()
-    for target in rows:
-        target_class = _cached_get_origin(target) or target
-        if dataclasses.is_dataclass(target_class):
-            name = _get_record_predicate_name(target_class)
-            arity = sum(field.init for field in dataclasses.fields(target_class))
-            for atom in ctl.symbolic_atoms.by_signature(name, arity):
-                try:
-                    if ctl.solver_literal(atom.literal) == -1:
-                        continue
-                    result[cltopy(atom.symbol, target)] = ctl.solver_literal(atom.literal)
-                except FailedInstantiationExn:
-                    pass
-        elif getattr(target_class, "_fields", None) is not None:
-            name = _get_record_predicate_name(target_class)
-            arity = len(target_class._fields)
-            for atom in ctl.symbolic_atoms.by_signature(name, arity):
-                try:
-                    if ctl.solver_literal(atom.literal) == -1:
-                        continue
-                    result[cltopy(atom.symbol, target)] = ctl.solver_literal(atom.literal)
-                except FailedInstantiationExn:
-                    pass
-        else:
-            raise ValueError("findInControl: not sure what to do with target", target)
+    for atom, value in _find_in_control(ctl, dtarget):
+        literal = ctl.solver_literal(atom.literal)
+        if literal != -1:
+            result[value] = literal
     return result
