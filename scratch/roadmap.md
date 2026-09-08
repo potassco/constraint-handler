@@ -188,3 +188,6 @@ Encoding:
   expression normalization)
 - integration in asp: dynamic variables and constraints
 - bound propagation / local consistency
+
+### Chris's goals
+- add projection under brave & cautious reasoning (for performance increase of tdl query execution)
