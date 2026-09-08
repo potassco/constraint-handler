@@ -36,7 +36,15 @@ API:
 
 - clean separation between preprocessing, grounding constraints, solving,
   postprocessing
-- How can we provide an API that allows for having maybe python objects, assignments, expressions as input, and still use the ch versatile and transparent with regard to optimization, brave/cautious reasoning, incremental solving etc... Are ASP Facts a good way to represent input for the ch? Maybe a python representation of a "program" -> collection of assignments and declarations etc... is good to be able to be preprocessed, analyzed, annotated, etc... Finally this representation could be translated to ASP facts and the CH encoding
+- How can we provide an API that allows for having maybe python objects,
+  assignments, expressions as input, and still use the ch versatile and
+  transparent with regard to optimization, brave/cautious reasoning,
+  incremental solving etc... Are ASP Facts a good way to represent input for
+  the ch? Maybe a python representation of a "program" -> collection of
+  assignments and declarations etc... is good to be able to be preprocessed,
+  analyzed, annotated, etc... Finally this representation could be translated
+  to ASP facts and the CH encoding
+
 ```
 input = [
    Declare("x", 5),
@@ -50,10 +58,17 @@ warnings = diagnose(type_annotated_innput)
 ctl.add(problem_representation(type_annotated_input))
 ctl.solve(....) whatever
 ```
-Why `Declare` and `Assign` and maybe `Var` etc... are python objects to describe the input of the problem, we have functions like `preprocess`, `type_annotate`, `diagnose`, `problem_representation` that take these objects and analyse, annotate, modify them etc...
-The function `problem_representation` could transform the python objects into ASP facts, and also append the ch ASP encoding, both things together can be used by any solver in any way. The user should have agency about the solving process. Everything else should be hidden inside the functions.
-*This is just a hypothesis, not sure if this will work*
-*This would also mean that its not that easy to use an encoding to produce ch input, but maybe a python function*
+
+Why `Declare` and `Assign` and maybe `Var` etc... are python objects to
+describe the input of the problem, we have functions like `preprocess`,
+`type_annotate`, `diagnose`, `problem_representation` that take these objects
+and analyse, annotate, modify them etc... The function `problem_representation`
+could transform the python objects into ASP facts, and also append the ch ASP
+encoding, both things together can be used by any solver in any way. The user
+should have agency about the solving process. Everything else should be hidden
+inside the functions. *This is just a hypothesis, not sure if this will work*
+*This would also mean that its not that easy to use an encoding to produce ch
+input, but maybe a python function*
 
 Preprocessing:
 
@@ -126,3 +141,50 @@ Encoding:
 - better float representation, make limits clear
 - try to specialize (and use templating/ file generation if necessary) if
   generalization becomes performance bottleneck
+
+### Abdallah's goals
+
+- support both kinds of generalization of brave/cautious reasoning
+- reasonably easy human input format
+- small core language
+- possible extensions with feature modules
+- possible extensions with datatype modules with a uniform mechanism
+- possibility for user to specify post-processing in asp
+- integration with clingo / compatibility with other tools (ie, not a
+  standalone app)
+- availability of additional info (types, domains, warnings, ...)
+- possibility for user to express query that don't visibly change the
+  statespace (ei, evaluated != value)
+- easy to define and to identify fragments of varying levels of complexity, in
+  particular for P, NP, decidable (where input size is based on the size of
+  ground CH instance)
+- good theoretical performance of solving implementation (no unnecessary
+  blow-ups)
+- practical performance tiered by features (ie, a mode/solver/engine supporting
+  the core language very fast, a solver supporting a rich set of feature fairly
+  fast, a proof-of-concept implementation for exotic/very experimental
+  development)
+- datatype modules for bool, float, int, string, symbol, set, map/dict/table,
+  multimap(.), tuple, list/sequence(?), alternative float representations (like
+  dyadic rationals or like current FCH),
+- support for conservative partial model computation (error recovery)
+- user-defined operators/functions
+- python fallback operators/expressions
+- maybe statements and executions? not sure
+- possibility to extend with additional theory solving, e.g. LP/MIP
+- support for user propagator
+- enumeration of solutions
+- compatiblity/support for solving assumptions, unsat core computation,
+  explanation
+- compatiblity with multi-shot approaches
+- support for knowledge elaboration
+- support for iterating over collections such as sets, maps, sequences (-> some
+  higher-order function support)
+- sound and decidable static type system
+- static type inference (maybe partial?)
+- dynamic type checking
+- possibility to run various static analyzes without solving
+- framework for developer-supplied transformations (e.g., constant folding,
+  expression normalization)
+- integration in asp: dynamic variables and constraints
+- bound propagation / local consistency
