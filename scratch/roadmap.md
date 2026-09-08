@@ -36,6 +36,7 @@ API:
 
 - clean separation between preprocessing, grounding constraints, solving,
   postprocessing
+- If we have an external SSA mechanism, then static type checking would make much more sense/can be done, as every variable is only assigned once and can not change their type. So SSA on python code could then allow for type annotation and translation
 - How can we provide an API that allows for having maybe python objects,
   assignments, expressions as input, and still use the ch versatile and
   transparent with regard to optimization, brave/cautious reasoning,
