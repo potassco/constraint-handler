@@ -144,50 +144,61 @@ Encoding:
 
 ### Abdallah's goals
 
-- support both kinds of generalization of brave/cautious reasoning
+### Conceptual
+
+- easy to define and to identify fragments of varying levels of complexity, in
+  particular for P, NP, decidable (where input size is based on the size of
+  ground CH instance)
+- sound and decidable static type system
+
+### Implementation
+
 - reasonably easy human input format
-- small core language
-- possible extensions with feature modules
+- possible extensions with feature modules (optimization, defaults, finite
+  domains, ...)
 - possible extensions with datatype modules with a uniform mechanism
-- possibility for user to specify post-processing in asp
 - integration with clingo / compatibility with other tools (ie, not a
   standalone app)
 - availability of additional info (types, domains, warnings, ...)
 - possibility for user to express query that don't visibly change the
   statespace (ei, evaluated != value)
-- easy to define and to identify fragments of varying levels of complexity, in
-  particular for P, NP, decidable (where input size is based on the size of
-  ground CH instance)
-- good theoretical performance of solving implementation (no unnecessary
-  blow-ups)
 - practical performance tiered by features (ie, a mode/solver/engine supporting
   the core language very fast, a solver supporting a rich set of feature fairly
   fast, a proof-of-concept implementation for exotic/very experimental
   development)
 - datatype modules for bool, float, int, string, symbol, set, map/dict/table,
-  multimap(.), tuple, list/sequence(?), alternative float representations (like
+  multimap(?), tuple, list/sequence(?), alternative float representations (like
   dyadic rationals or like current FCH),
-- support for conservative partial model computation (error recovery)
 - user-defined operators/functions
 - python fallback operators/expressions
+- support for user propagator
+- support for iterating over collections such as sets, maps, sequences (-> some
+  higher-order function support)
+- dynamic type checking
+- possibility to run various static analyzes without solving
+- framework for developer-supplied transformations (e.g., constant folding,
+  expression normalization)
+
+### Both
+
+- small core language
+- support both kinds of generalization of brave/cautious reasoning
+- possibility for user to specify post-processing in asp
+- good theoretical performance of solving implementation (no unnecessary
+  blow-ups)
+- support for conservative partial model computation (error recovery)
 - maybe statements and executions? not sure
 - possibility to extend with additional theory solving, e.g. LP/MIP
-- support for user propagator
 - enumeration of solutions
 - compatiblity/support for solving assumptions, unsat core computation,
   explanation
 - compatiblity with multi-shot approaches
 - support for knowledge elaboration
-- support for iterating over collections such as sets, maps, sequences (-> some
-  higher-order function support)
-- sound and decidable static type system
 - static type inference (maybe partial?)
-- dynamic type checking
-- possibility to run various static analyzes without solving
-- framework for developer-supplied transformations (e.g., constant folding,
-  expression normalization)
 - integration in asp: dynamic variables and constraints
 - bound propagation / local consistency
 
 ### Chris's goals
-- add projection under brave & cautious reasoning (for performance increase of tdl query execution)
+
+- add projection under brave & cautious reasoning (for performance increase of
+  user testing query execution)
