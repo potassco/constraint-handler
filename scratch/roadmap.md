@@ -203,3 +203,23 @@ Encoding:
 
 - add projection under brave & cautious reasoning (for performance increase of
   user testing query execution)
+
+### Phil's goals
+
+- clear semantic principles
+  - What are our fundamental constituents?
+    - singletons, sets, multimaps ect
+  - What constitutes a value?
+  - ASP-ish! (fits very well with CH uniqueness)
+- Language guided by the principles
+- Implementation guided by the principles
+- Keep CH uniqueness
+  - Huge variety of constructs and datatypes
+  - Search space as small as possible
+  - Force me to consider values
+- Clean up language
+  - identify core 
+  - naming
+  - structure 
+  - shorten terms or linearize
+
