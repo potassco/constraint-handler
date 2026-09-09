@@ -7,6 +7,8 @@ import clingo
 import pytest
 
 import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.statement as statement
 from constraint_handler.schemas.expression import ConditionalOperator
 
 T = typing.TypeVar("T")
@@ -103,6 +105,15 @@ class NoneReturningConverter:
     @classmethod
     def cltopy(cls, func, target_args=()):
         return None
+
+
+class RecursiveRecord(typing.NamedTuple):
+    value: int
+    child: "RecursiveValue | None"
+
+
+type RecursiveValue = RecursiveRecord | None
+type RecursiveList = int | list[RecursiveList]
 
 
 @pytest.mark.parametrize(
@@ -325,6 +336,63 @@ def test_cltopy_typed_annotated_decodes_symbol():
 @pytest.mark.xfail(strict=True, reason="Annotated union members are not decoded")
 def test_cltopy_typed_annotated_union_member_decodes_symbol():
     assert myClorm.cltopy(clingo.Number(4), typing.Annotated[int, "metadata"] | str) == 4
+
+
+def test_cltopy_recursive_expr_decodes_deep_values():
+    symbol = clingo.Function("variable", [clingo.Number(4)])
+    assert myClorm.cltopy(symbol, expression.Expr) == expression.Variable(4)
+    assert myClorm.pytocl(expression.Variable(4), expression.Expr) == symbol
+
+    for _ in range(2_000):
+        symbol = clingo.Function("operation", [clingo.Function("add", []), myClorm.nest([symbol])])
+
+    decoded = myClorm.cltopy(symbol, expression.Expr)
+    for _ in range(2_000):
+        assert isinstance(decoded, expression.Operation)
+        decoded = decoded.args[0]
+    assert decoded == expression.Variable(4)
+
+
+def test_cltopy_recursive_decodes_deep_record_and_statement():
+    symbol = clingo.Function("none", [])
+    for value in range(2_000):
+        symbol = clingo.Function("recursiveRecord", [clingo.Number(value), symbol])
+
+    decoded = myClorm.cltopy(symbol, RecursiveValue)
+    for value in reversed(range(2_000)):
+        assert decoded.value == value
+        decoded = decoded.child
+    assert decoded is None
+
+    symbol = clingo.Number(1)
+    for _ in range(2_000):
+        symbol = myClorm.nest([symbol])
+
+    decoded = myClorm.cltopy(symbol, RecursiveList)
+    for _ in range(2_000):
+        assert isinstance(decoded, myClorm.ImmutableList)
+        decoded = decoded[0]
+    assert decoded == 1
+
+    symbol = clingo.Function("noop", [])
+    for _ in range(2_000):
+        symbol = clingo.Function("seq2", [clingo.Function("noop", []), symbol])
+
+    decoded = myClorm.cltopy(symbol, statement.Stmt)
+    for _ in range(2_000):
+        assert isinstance(decoded, statement.Seq2)
+        decoded = decoded.snd
+    assert decoded == statement.Noop()
+
+
+def test_cltopy_caches_subterms():
+    child = clingo.Function("variable", [clingo.Number(1)])
+    symbol = clingo.Function("operation", [clingo.Function("add", []), myClorm.nest([child])])
+
+    myClorm._cltopy_cache.clear()
+    myClorm.cltopy(symbol, expression.Expr)
+
+    assert (child, expression.Expr) in myClorm._cltopy_cache
 
 
 @pytest.mark.xfail(strict=True, reason="Literal targets are not decoded")
