@@ -318,14 +318,22 @@ def test_cltopy_typed_union_accepts_pep604_union():
     assert myClorm.cltopy(clingo.String("v"), int | str) == "v"
 
 
-@pytest.mark.xfail(strict=True, reason="Annotated targets are not decoded")
 def test_cltopy_typed_annotated_decodes_symbol():
     assert myClorm.cltopy(clingo.Number(4), typing.Annotated[int, "metadata"]) == 4
+
+
+@pytest.mark.xfail(strict=True, reason="Annotated union members are not decoded")
+def test_cltopy_typed_annotated_union_member_decodes_symbol():
+    assert myClorm.cltopy(clingo.Number(4), typing.Annotated[int, "metadata"] | str) == 4
 
 
 @pytest.mark.xfail(strict=True, reason="Literal targets are not decoded")
 def test_cltopy_typed_literal_decodes_symbol():
     assert myClorm.cltopy(clingo.Number(4), typing.Literal[4]) == 4
+
+
+def test_pytocl_typed_annotated_encodes_value():
+    assert myClorm.pytocl(4, typing.Annotated[int, "metadata"]) == clingo.Number(4)
 
 
 def test_cltopy_namedtuple_failure_raises_failed_instantiation():

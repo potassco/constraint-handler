@@ -134,6 +134,8 @@ def _get_signatures(target):
 @cache
 def _union_rows(target):
     target = _resolve_type_alias(target)
+    while _cached_get_origin(target) is typing.Annotated:
+        target = _resolve_type_alias(_cached_get_args(target)[0])
     origin = _cached_get_origin(target)
     if origin in (typing.Union, types.UnionType):
         return tuple(_resolve_type_alias(member) for member in _cached_get_args(target))
