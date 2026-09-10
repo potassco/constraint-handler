@@ -10,8 +10,7 @@ import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 
-
-LABEL_ANONYMOUS : expression.constant = clingo.Function("_label_anonymous")
+LABEL_ANONYMOUS: expression.constant = clingo.Function("_label_anonymous")
 
 
 class FailIntegrity(NamedTuple):
