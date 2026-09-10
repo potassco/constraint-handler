@@ -19,43 +19,43 @@ class EvalResult(NamedTuple):
 
 
 class Variable_choice(NamedTuple):
-    label: expression.constant
     name: expression.constant
     value: expression.Expr
+    label: expression.constant
 
 
 class Variable_declare(NamedTuple):
-    label: expression.constant
     name: expression.constant
     domain: domain.Domain
+    label: expression.constant
 
 
 class Variable_define(NamedTuple):
-    label: expression.constant
     name: expression.constant
     value: expression.Expr
+    label: expression.constant
 
 
 class Variable_default(NamedTuple):
-    label: expression.constant
     name: expression.constant
     value: expression.Expr
     condition: expression.Expr
     priority: expression.constant
+    label: expression.constant
 
 
 class Variable_domain(NamedTuple):
-    label: expression.constant
     name: expression.constant
     value: expression.Expr
+    label: expression.constant
 
 
 type VariableAtom = Variable_declare | Variable_define | Variable_default | Variable_domain
 
 
 class Bool_evaluate(NamedTuple):
-    label: expression.constant
     expr: expression.Expr
+    label: expression.constant
 
 
 class Bool_evaluated(NamedTuple):
@@ -64,15 +64,15 @@ class Bool_evaluated(NamedTuple):
 
 
 class Set_assign(NamedTuple):
-    label: expression.constant
     name: expression.constant
     member: expression.Expr
+    label: expression.constant
 
 
 class Set_baseDomain(NamedTuple):
-    label: expression.constant
     name: expression.constant
     value: expression.Expr
+    label: expression.constant
 
 
 class Set_value(NamedTuple):
@@ -84,10 +84,10 @@ type SetAtom = Set_assign | Set_baseDomain
 
 
 class Multimap_assign(NamedTuple):
-    label: expression.constant
     name: expression.constant
     key: expression.Expr
     val: expression.Expr
+    label: expression.constant
 
 
 class Multimap_value(NamedTuple):
@@ -100,26 +100,26 @@ type MultimapAtom = Multimap_assign
 
 
 class Execution_declare(NamedTuple):
-    label: expression.constant
     name: expression.constant
     body: statement.Stmt
     inputs_vars: myClorm.ImmutableList[expression.constant]
     outputs_vars: myClorm.ImmutableList[expression.constant]
+    label: expression.constant
 
 
 class Execution_run(NamedTuple):
-    label: expression.constant
     name: expression.constant
+    label: expression.constant
 
 
 type ExecutionAtom = Execution_declare | Execution_run
 
 
 class Optimize_maximizeSum(NamedTuple):
-    label: expression.constant
     value: expression.Expr
     id: expression.constant
     priority: expression.constant
+    label: expression.constant
 
 
 class Optimize_precision(NamedTuple):
@@ -150,16 +150,16 @@ class Preference_maximizeScore(NamedTuple):
 
 
 class Preference_holds(NamedTuple):
-    label: expression.constant
     value: expression.Expr
     factor: int
+    label: expression.constant
 
 
 class Preference_variableValue(NamedTuple):
-    label: expression.constant
     variable: expression.constant
     value: expression.Expr
     factor: int
+    label: expression.constant
 
 
 type PreferenceAtom = Preference_maximizeScore | Preference_holds | Preference_variableValue
@@ -170,8 +170,8 @@ class Preference_score(NamedTuple):
 
 
 class Ensure(NamedTuple):
-    label: expression.constant
     expr: expression.Expr
+    label: expression.constant
 
 
 class Value(NamedTuple):
@@ -183,8 +183,8 @@ class Value(NamedTuple):
 
 
 class Evaluate(NamedTuple):
-    label: expression.constant
     expr: expression.Expr
+    label: expression.constant
 
 
 class Evaluated(NamedTuple):

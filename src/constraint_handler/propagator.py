@@ -1254,7 +1254,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         user_var_names = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_interface)
 
-        for (_, id), _ in user_var_names.items():
+        for (id, _), _ in user_var_names.items():
             self.symbol2var.add_user_variable_name(id)
 
     def get_variables(self, ctl: clingo.PropagateInit):
@@ -1272,7 +1272,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         var_domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_domain)
 
         from_facts_literals: dict[Symbol, int] = {}
-        for (name, symbol_var, domain), _literal in var_declares.items():
+        for (symbol_var, domain, name), _literal in var_declares.items():
             if not self.symbol2var.has_var_type(symbol_var, getattr(Variable, "__name__")):
                 self.symbol2var.add_variable(
                     symbol_var, Variable(name, symbol_var, symbol_var in self.symbol2var.user_variable_names)
@@ -1297,7 +1297,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     )
                 )
 
-        for (name, symbol_var, expr), _literal in var_defines.items():
+        for (symbol_var, expr, name), _literal in var_defines.items():
             if not self.symbol2var.has_var_type(symbol_var, getattr(Variable, "__name__")):
                 define_variable = Variable(name, symbol_var, symbol_var in self.symbol2var.user_variable_names)
                 self.symbol2var.add_variable(symbol_var, define_variable)
@@ -1312,7 +1312,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.literal2var.setdefault(_literal, []).append(define_variable)
             # here we dont add a nogood since its the same literal
 
-        for (name, symbol_var, domain_expr), _literal in var_domains.items():
+        for (symbol_var, domain_expr, name), _literal in var_domains.items():
             # These values are assigned the "from_facts" domain literal for the given variable
             if not self.symbol2var.has_var_type(symbol_var, getattr(Variable, "__name__")):
                 continue
@@ -1345,7 +1345,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         ensures = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_ensure)
-        for (name, expr), literal in ensures.items():
+        for (expr, name), literal in ensures.items():
             ensure_var: EnsureVariable = EnsureVariable(name, expr, literal)
             self.add_watch(literal)
             self.add_watch(-literal)
@@ -1363,7 +1363,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         shared_values = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_share_value)
-        for (name, expr), literal in shared_values.items():
+        for (expr, name), literal in shared_values.items():
             shared_value_var: SharedValue = SharedValue(expr, literal)
 
             self.shared_values.append(shared_value_var)
@@ -1380,14 +1380,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_evaluate)
         bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_bool_evaluate)
         bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Bool_evaluated)
-        for (_, ref, expr), literal in evaluate_atoms.items():
+        for (ref, expr, _), literal in evaluate_atoms.items():
             var = EvaluateVariable(ref, expr, literal)
             self.evaluatevars.append(var)
 
         true_val = expression.Val(type_.BaseType.bool, True)  # ty:ignore[unresolved-attribute]
         false_val = expression.Val(type_.BaseType.bool, False)  # ty:ignore[unresolved-attribute]
 
-        for (label, expr), literal in bool_evaluate_atoms.items():
+        for (expr, label), literal in bool_evaluate_atoms.items():
             b_vals = {}
             for (bexpr, value), b_literal in bool_evaluated_atoms.items():
                 if bexpr == expr:
@@ -1427,7 +1427,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         maxSums = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_optimize_maximizeSum)
 
-        for (_, expr, symbol, priority), literal in maxSums.items():
+        for (expr, symbol, priority, _), literal in maxSums.items():
             self.using_optimization = True
             self.optimization_sum.add_value(symbol, expr, literal, priority)
 
@@ -1442,7 +1442,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_declare)
-        for (name, symbol_var), literal in declares.items():
+        for (symbol_var, name), literal in declares.items():
             variable = SetVariable(
                 name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
             )
@@ -1453,7 +1453,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(-literal)
 
         assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_assign)
-        for (name, symbol_var, expr), literal in assigns.items():
+        for (symbol_var, expr, name), literal in assigns.items():
             try:
                 setvar: SetVariable = cast(
                     SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
@@ -1467,7 +1467,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(-literal)
 
         domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_baseDomain)
-        for (name, symbol_var, domain_expr), _literal in domains.items():
+        for (symbol_var, domain_expr, name), _literal in domains.items():
             try:
                 setvar: SetVariable = cast(
                     SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
@@ -1488,7 +1488,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ctl: Clingo PropagateInit object.
         """
         declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_multimap_declare)
-        for (name, symbol_var), literal in declares.items():
+        for (symbol_var, name), literal in declares.items():
             variable = DictVariable(
                 name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
             )
@@ -1499,7 +1499,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(-literal)
 
         assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_multimap_assign)
-        for (name, symbol_var, key_expr, expr), literal in assigns.items():
+        for (symbol_var, key_expr, expr, name), literal in assigns.items():
             try:
                 dictvar: DictVariable = cast(
                     DictVariable, self.symbol2var.get_variable(symbol_var, getattr(DictVariable, "__name__"))
@@ -1523,10 +1523,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         forbidden_warnings = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_warning_forbid)
         ignored_warnings = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_warning_ignore)
 
-        for (name, error), literal in forbidden_warnings.items():
+        for (error, name), literal in forbidden_warnings.items():
             self.forbidden_warnings[error] = literal
 
-        for (name, error), literal in ignored_warnings.items():
+        for (error, name), literal in ignored_warnings.items():
             # Initially, set to False, and only set to True if the warning is actually observed
             # The actual value is set in the check function
             self.ignored_warnings[error] = literal, False

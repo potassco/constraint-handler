@@ -74,10 +74,10 @@ class Warning(typing.NamedTuple):
 
 
 class Warning_forbid(typing.NamedTuple):
-    label: typing.Any  # expression.constant
     symbol: Kind
+    label: typing.Any  # expression.constant
 
 
 class Warning_ignore(typing.NamedTuple):
-    label: typing.Any  # expression.constant
     symbol: Kind
+    label: typing.Any  # expression.constant
