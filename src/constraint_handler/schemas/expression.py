@@ -98,3 +98,7 @@ class Lambda(typing.NamedTuple):
 
 type ReducedExpr = Bad | Val | Ref | frozenset[ReducedExpr] | tuple[ReducedExpr, ...]  # TODO handle Lambda
 type Expr = Bad | Variable | Operation | Python | Val | Ref | Lambda | frozenset[Expr] | tuple[Expr, ...]
+
+
+TRUE: typing.Final = Val(type_m.BaseType.bool, True)
+FALSE: typing.Final = Val(type_m.BaseType.bool, False)
