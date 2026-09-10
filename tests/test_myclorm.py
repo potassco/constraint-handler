@@ -7,7 +7,7 @@ import clingo
 import pytest
 
 import constraint_handler.myClorm as myClorm
-from constraint_handler.schemas.expression import ConditionalOperator
+from constraint_handler.schemas.operators import ConditionalOperator
 
 T = typing.TypeVar("T")
 U = typing.TypeVar("U")

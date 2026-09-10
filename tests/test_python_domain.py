@@ -334,12 +334,12 @@ def test_apply_matches_evaluator_for_numeric_operators(operation: object, domain
         (operators.ArithmeticOperator.lt, (build_domain(1, 2), build_domain(2, 3))),
         (operators.ArithmeticOperator.geq, (build_domain(2, 3), build_domain(1, 2))),
         (operators.ArithmeticOperator.gt, (build_domain(2, 3), build_domain(1, 2))),
-        (expression.EqOperator.eq, (build_domain(1, 2), build_domain(2, 3))),
-        (expression.EqOperator.eq, (build_domain(None), build_domain(None, 1))),
-        (expression.EqOperator.neq, (build_domain("x", "y"), build_domain("y", "z"))),
+        (operators.ComparisonOperator.eq, (build_domain(1, 2), build_domain(2, 3))),
+        (operators.ComparisonOperator.eq, (build_domain(None), build_domain(None, 1))),
+        (operators.ComparisonOperator.neq, (build_domain("x", "y"), build_domain("y", "z"))),
         (operators.LogicOperator.conj, (build_domain(True, False, None), build_domain(True, None))),
         (operators.LogicOperator.disj, (build_domain(True, False, None), build_domain(False, None))),
-        (operators.LogicOperator.ite, (build_domain(True, False, None), build_domain(1, 2), build_domain(3, 4))),
+        (operators.ConditionalOperator.ite, (build_domain(True, False, None), build_domain(1, 2), build_domain(3, 4))),
         (
             operators.LogicOperator.leqv,
             (build_domain(True, False, None), build_domain(True, False, expression.Bad.bad)),
@@ -364,10 +364,10 @@ def test_apply_matches_evaluator_for_comparison_and_logic_operators(
 @pytest.mark.parametrize(
     ("operation", "domains"),
     [
-        (expression.StringOperator.concat, (build_domain("a", "b"), build_domain("", "z"))),
-        (expression.StringOperator.length, (build_domain("abc"),)),
-        (expression.ConditionalOperator.getOrElse, (build_domain(None, 1), build_domain(2, 3))),
-        (expression.ConditionalOperator.hasValue, (build_domain(None, 1, frozenset({2})),)),
+        (operators.StringOperator.concat, (build_domain("a", "b"), build_domain("", "z"))),
+        (operators.StringOperator.length, (build_domain("abc"),)),
+        (operators.ConditionalOperator.getOrElse, (build_domain(None, 1), build_domain(2, 3))),
+        (operators.ConditionalOperator.hasValue, (build_domain(None, 1, frozenset({2})),)),
     ],
 )
 def test_apply_matches_evaluator_for_string_and_conditional_operators(
@@ -414,7 +414,7 @@ def test_apply_tracks_numeric_corner_cases_and_type_mismatches() -> None:
 def test_apply_length_marks_invalid_scalar_inputs_bad_but_keeps_valid_lengths() -> None:
     domain = build_domain("abcd", frozenset({1, 2}), (1, 2, 3), 9, None)
 
-    assert Domain.apply(expression.StringOperator.length, domain) == Domain(is_bad=True, ints=frozenset({3, 4}))
+    assert Domain.apply(operators.StringOperator.length, domain) == Domain(is_bad=True, ints=frozenset({3, 4}))
 
 
 def test_apply_length_marks_invalid_scalar_inputs_bad_but_keeps_valid_cardinality() -> None:
@@ -439,34 +439,34 @@ def test_apply_set_operations_use_complete_sets_and_nonset_values_mark_bad() -> 
 
 
 def test_apply_if_default_and_hasvalue_cover_none_bad_and_false_cases() -> None:
-    assert Domain.apply(expression.ConditionalOperator.IF, build_domain(True, False, None), build_domain(7)) == Domain(
+    assert Domain.apply(operators.ConditionalOperator.IF, build_domain(True, False, None), build_domain(7)) == Domain(
         ints=frozenset({7}),
         is_none=True,
     )
     assert Domain.apply(
-        expression.ConditionalOperator.getOrElse, build_domain(None, 1), build_domain(2, 3)
+        operators.ConditionalOperator.getOrElse, build_domain(None, 1), build_domain(2, 3)
     ) == build_domain(1, 2, 3)
-    assert Domain.apply(expression.ConditionalOperator.hasValue, build_domain(None, 1, frozenset())) == Domain.booleans(
+    assert Domain.apply(operators.ConditionalOperator.hasValue, build_domain(None, 1, frozenset())) == Domain.booleans(
         True, False
     )
-    assert Domain.apply(expression.ConditionalOperator.hasValue, Domain.bad()) == Domain(is_bad=True)
+    assert Domain.apply(operators.ConditionalOperator.hasValue, Domain.bad()) == Domain(is_bad=True)
 
 
 def test_apply_max_and_min_follow_evaluator_cross_product_semantics() -> None:
     left = build_domain(1, 5)
     right = build_domain(2, 3)
 
-    assert Domain.apply(expression.OtherOperator.max, left, right) == expected_domain_from_evaluator(
-        expression.OtherOperator.max, left, right
+    assert Domain.apply(operators.ComparisonOperator.max, left, right) == expected_domain_from_evaluator(
+        operators.ComparisonOperator.max, left, right
     )
-    assert Domain.apply(expression.OtherOperator.min, left, right) == expected_domain_from_evaluator(
-        expression.OtherOperator.min, left, right
+    assert Domain.apply(operators.ComparisonOperator.min, left, right) == expected_domain_from_evaluator(
+        operators.ComparisonOperator.min, left, right
     )
 
 
 def test_apply_max_and_min_reject_non_numeric_domains() -> None:
-    assert Domain.apply(expression.OtherOperator.max, build_domain("x"), build_domain(2)) == Domain.bad()
-    assert Domain.apply(expression.OtherOperator.min, build_domain(True), build_domain(2)) == Domain.bad()
+    assert Domain.apply(operators.ComparisonOperator.max, build_domain("x"), build_domain(2)) == Domain.bad()
+    assert Domain.apply(operators.ComparisonOperator.min, build_domain(True), build_domain(2)) == Domain.bad()
 
 
 def test_apply_ordered_comparisons_use_extrema_shortcuts_without_changing_results() -> None:

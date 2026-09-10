@@ -9,21 +9,29 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "bool" | "float" | "int" | "none" | "string" | "symbol"
     | "function" | "set" | "multimap"
 
+<term> ::= <int> | <string> | <symbol>
+
+<terms> ::= <term> | <term> "," <terms>
+
+<term-list> ::= "(" ")" | "(" <term> "," <term-list> ")"
+
 <bool> ::= "true" | "false"
 
 <int> ::= any integer literal
 
 <string> ::= any string literal (enclosed in quotes)
 
+<float> ::= "float" "(" <int> ")" | "float" "(" <string> ")"
+
 <name> ::= any suitable string
-
-<term> ::= <int> | <string> | <symbol>
-
-<terms> ::= <term> | <term> "," <terms>
 
 <symbol> ::= <name> | <name> "(" <terms> ")"
 
-<term-list> ::= "(" ")" | "(" <term> "," <term-list> ")"
+<label> ::= <term>
+
+<variable> ::= <term>
+
+<variable-list> ::= "(" ")" | "(" <variable> "," <variable-list> ")"
 ```
 
 ## Building Expression Terms
@@ -80,7 +88,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <expression> ::=
     | <val>
-    | "variable" "(" <term> ")"
+    | "variable" "(" <variable> ")"
     | "operation" "(" <operator> "," <expression-list> ")"
     | <lambda-expr>
     | "python" "(" <string> ")"
@@ -95,7 +103,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 ```ebnf
 <statement> ::=
     | "assert" "(" <expression> ")"
-    | "assign" "(" <term> "," <expression> ")"
+    | "assign" "(" <variable> "," <expression> ")"
     | "if" "(" <expression> "," <statement> "," <statement> ")"
     | "noop"
     | "statement_python" "(" <string> ")"
@@ -108,39 +116,40 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 <domain> ::= "definition" | "boolDomain" | "fromFacts" | "open" | "set" | "multimap"
 
 <variable-atom> ::=
-    | "variable_assign" "(" <term> "," <expression> ")"
-    | "variable_assign" "(" <term> "," <term> "," <expression> ")"
-    | "variable_choice" "(" <term> "," <expression> ")"
-    | "variable_choice" "(" <term> "," <term> "," <expression> ")"
-    | "variable_declare" "(" <term> "," <domain> ")"
-    | "variable_declare" "(" <term> "," <term> "," <domain> ")"
-    | "variable_default" "(" <term> "," <expression> ")"
+    | "variable_assign" "(" <variable> "," <expression> ")"
+    | "variable_assign" "(" <variable> "," <expression> "," <label> ")"
+    | "variable_choice" "(" <variable> "," <expression> ")"
+    | "variable_choice" "(" <variable> "," <expression> "," <label> ")"
+    | "variable_declare" "(" <variable> "," <domain> ")"
+    | "variable_declare" "(" <variable> "," <domain> "," <label> ")"
+    | "variable_default" "(" <variable> "," <expression> ")"
     | ...
-    | "variable_default" "(" <term> "," <term> "," <expression> "," <expression> "," <int> ")"
-    | "variable_define" "(" <term> "," <expression> ")"
-    | "variable_define" "(" <term> "," <term> "," <expression> ")"
-    | "variable_domain" "(" <term> "," <expression> ")"
+    | "variable_default" "(" <variable> "," <expression> "," <expression> "," <int> "," <label> ")"
+    | "variable_define" "(" <variable> "," <expression> ")"
+    | "variable_define" "(" <variable> "," <expression> "," <label> ")"
+    | "variable_domain" "(" <variable> "," <expression> ")"
+    | "variable_domain" "(" <variable> "," <expression> "," <label> ")"
 
 <multimap-atom> ::=
-    | "multimap_assign" "(" <term> "," <expression> "," <expression> ")"
-    | "multimap_assign" "(" <term> "," <term> "," <expression> "," <expression> ")"
+    | "multimap_assign" "(" <variable> "," <expression> "," <expression> ")"
+    | "multimap_assign" "(" <variable> "," <expression> "," <expression> "," <label> ")"
 
 <set-atom> ::=
-    | "set_assign" "(" <term> "," <expression> ")"
-    | "set_assign" "(" <term> "," <term> "," <expression> ")"
-    | "set_baseDomain" "(" <term> "," <expression> ")"
-    | "set_baseDomain" "(" <term> "," <term> "," <expression> ")"
+    | "set_assign" "(" <variable> "," <expression> ")"
+    | "set_assign" "(" <variable> "," <expression> "," <label> ")"
+    | "set_baseDomain" "(" <variable> "," <expression> ")"
+    | "set_baseDomain" "(" <variable> "," <expression> "," <label> ")"
 
 <execution-atom> ::=
-    | "execution_declare" "(" <term> "," <statement> "," <term-list> "," <term-list> ")"
-    | "execution_declare" "(" <term> "," <term> "," <statement> "," <term-list> "," <term-list> ")"
+    | "execution_declare" "(" <term> "," <statement> "," <variable-list> "," <variable-list> ")"
+    | "execution_declare" "(" <term> "," <statement> "," <variable-list> "," <variable-list> "," <label> ")"
     | "execution_run" "(" <term> ")"
-    | "execution_run" "(" <term> "," <term> ")"
+    | "execution_run" "(" <term> "," <label> ")"
 
 <optimize-atom> ::=
     | "optimize_maximizeSum" "(" <expression> "," <term> ")"
     | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> ")"
-    | "optimize_maximizeSum" "(" <term> "," <expression> "," <term> "," <expression> ")"
+    | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> "," <label> ")"
     | "optimize_precision" "(" <expression> ")"
     | "optimize_precision" "(" <expression> "," <expression> ")"
 
@@ -148,10 +157,10 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "preference_maximizeScore"
     | "preference_holds" "(" <expression> ")"
     | "preference_holds" "(" <expression> "," <int> ")"
-    | "preference_holds" "(" <term> "," <expression> "," <int> ")"
-    | "preference_variableValue" "(" <term> "," <expression> ")"
-    | "preference_variableValue" "(" <term> "," <expression> "," <int> ")"
-    | "preference_variableValue" "(" <term> "," <term> "," <expression> "," <int> ")"
+    | "preference_holds" "(" <expression> "," <int> "," <label> ")"
+    | "preference_variableValue" "(" <variable> "," <expression> ")"
+    | "preference_variableValue" "(" <variable> "," <expression> "," <int> ")"
+    | "preference_variableValue" "(" <variable> "," <expression> "," <int> "," <label> ")"
 
 <warning-control-atom> ::=
     | "warning_forbid" "(" <term> ")"
@@ -161,11 +170,11 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <atom> ::=
     | "ensure" "(" <expression> ")"
-    | "ensure" "(" <term> "," <expression> ")"
+    | "ensure" "(" <expression> "," <label> ")"
     | "bool_evaluate" "(" <expression> ")"
-    | "bool_evaluate" "(" <term> "," <expression> ")"
+    | "bool_evaluate" "(" <expression> "," <label> ")"
     | "evaluate" "(" <expression> ")"
-    | "evaluate" "(" <term> "," <expression> ")"
+    | "evaluate" "(" <expression> "," <label> ")"
     | <variable-atom>
     | <multimap-atom>
     | <set-atom>
@@ -212,10 +221,10 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "variable" "(" <variable-warning> ")"
 
 <atom> ::=
-    | "value" "(" <term> "," <val> ")"
+    | "value" "(" <variable> "," <val> ")"
     | "evaluated" "(" <operator> "," <expression-list>  "," <val> ")"
-    | "set_value" "(" <term> "," <val> ")"
-    | "multimap_value" "(" <term> "," <val> "," <val> ")"
+    | "set_value" "(" <variable> "," <val> ")"
+    | "multimap_value" "(" <variable> "," <val> "," <val> ")"
     | "preference_score" "(" <int> ")"
     | "warning" "(" <warning-symbol> "," <term-list> "," <term> ")"
 ```

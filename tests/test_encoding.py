@@ -243,6 +243,8 @@ execution_tests = [
 ]
 
 expression_tests = [
+    "expression/alternative_syntax/core",
+    "expression/alternative_syntax/lambda",
     "expression/bad_equality",
     "expression/lambda_recursive",
     "expression/lambda_zero_args",
@@ -505,6 +507,7 @@ compile2_xfail: set[str] = {
     "engine/request",
     "engine/request_set_ref",  # mixed engines?
     "expression/lambda_recursive",
+    "expression/alternative_syntax/lambda",
     "expression/lambda_zero_args",
     "expression/lambdas",
     "expression/python_extract/basic",
@@ -548,6 +551,7 @@ ground_xfail: set[str] = {
     "engine/request",
     "engine/request_set_ref",
     "expression/lambda_recursive",
+    "expression/alternative_syntax/lambda",
     "expression/lambda_zero_args",
     "expression/lambdas",
     "expression/tuple_extra",

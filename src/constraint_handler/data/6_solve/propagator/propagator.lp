@@ -1,12 +1,12 @@
-propagator_bool_evaluate(LBL,E) :- _passed(propagator,LBL,bool_evaluate(E)).
-propagator_ensure(LBL,E) :- _passed(propagator,LBL,ensure(E)).
-propagator_evaluate(LBL,REF,EXPR) :- _passed(propagator,LBL,evaluate(REF,EXPR)).
+propagator_bool_evaluate(E,LBL) :- _passed(propagator,LBL,bool_evaluate(E)).
+propagator_ensure(E,LBL) :- _passed(propagator,LBL,ensure(E)).
+propagator_evaluate(REF,EXPR,LBL) :- _passed(propagator,LBL,evaluate(REF,EXPR)).
 
 
-propagator_variable_declare(LBL,X,fromFacts) :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
-propagator_variable_declare(LBL,X,open) :- _passed(propagator,LBL,variable_declare(X,open)).
+propagator_variable_declare(X,fromFacts,LBL) :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
+propagator_variable_declare(X,open,LBL) :- _passed(propagator,LBL,variable_declare(X,open)).
 
-1 {propagator_variable_domain(CNAME,X, D) : _passed(propagator,CNAME,variable_domain(X,D))} 1 :- _passed(propagator,CNAME,variable_declare(X,fromFacts)).
+1 {propagator_variable_domain(X,D,LBL) : _passed(propagator,LBL,variable_domain(X,D))} 1 :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
 
 #script (python)
 
@@ -24,34 +24,34 @@ def order(X,E):
 
 order(CNAME,X,E,IDX) :- _passed(propagator,CNAME,variable_domain(X,E)), IDX = @order((propagator,X),E).
 
-active(CNAME,X,IDX-1) :- order(CNAME,X,E,IDX), propagator_variable_domain(CNAME,X,E), IDX > 0.
+active(CNAME,X,IDX-1) :- order(CNAME,X,E,IDX), propagator_variable_domain(X,E,CNAME), IDX > 0.
 active(CNAME,X,N-1) :- active(CNAME,X,N), N > 0.
 
-propagator_ensure(CNAME,operation(neq,(variable(X),(E,())))) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
+propagator_ensure(operation(neq,(variable(X),(E,()))),CNAME) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
 
-propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_assign(X,E)).
-_passed(propagator,CNAME,variable_domain(X,E)) :- _passed(propagator,CNAME,variable_choice(X,E)).
-%propagator_variable_assign(CNAME,X,E) :- _passed(propagator,CNAME,variable_assign(X,E)).
-%propagator_variable_choice(CNAME,X,E) :- _passed(propagator,CNAME,variable_choice(X,E)).
-%propagator_variable_default(CNAME,X,E,C,P) :- _passed(propagator,CNAME,variable_default(X,E,C,P)). %% TODO: temporary hack
-propagator_variable_define(CNAME,X,E) :- _passed(propagator,CNAME,variable_define(X,E)).
+propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_assign(X,E)).
+%_passed(propagator,CNAME,variable_domain(X,E)) :- _passed(propagator,CNAME,variable_choice(X,E)).
+%propagator_variable_assign(X,E,CNAME) :- _passed(propagator,CNAME,variable_assign(X,E)).
+%propagator_variable_choice(X,E,CNAME) :- _passed(propagator,CNAME,variable_choice(X,E)).
+%propagator_variable_default(X,E,C,P,CNAME) :- _passed(propagator,CNAME,variable_default(X,E,C,P)). %% TODO: temporary hack
+propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_define(X,E)).
 
-propagator_set_declare(CNAME,X) :- _passed(propagator,CNAME,variable_declare(X,set)).
-propagator_set_assign(CNAME,X,E) :- _passed(propagator,CNAME,set_assign(X,E)).
+propagator_set_declare(X,CNAME) :- _passed(propagator,CNAME,variable_declare(X,set)).
+propagator_set_assign(X,E,CNAME) :- _passed(propagator,CNAME,set_assign(X,E)).
 
-{propagator_set_baseDomain(CNAME1,X,E) : _passed(propagator,CNAME1,set_baseDomain(X,E))} :- propagator_set_declare(CNAME2,X).
+{propagator_set_baseDomain(X,E,CNAME1) : _passed(propagator,CNAME1,set_baseDomain(X,E))} :- propagator_set_declare(X,CNAME2).
 
 % ensure that value of expr is not in set if not chosen
-propagator_ensure(CNAME,operation(set_notin,(E,(variable(X),())))) :- _passed(propagator,CNAME,set_baseDomain(X,E)), not propagator_set_baseDomain(CNAME,X,E).
+propagator_ensure(operation(set_notin,(E,(variable(X),()))),CNAME) :- _passed(propagator,CNAME,set_baseDomain(X,E)), not propagator_set_baseDomain(X,E,CNAME).
 
-propagator_multimap_assign(LBL,X,K,V) :- _passed(propagator,LBL,multimap_assign(X,K,V)).
-propagator_multimap_declare(LBL,X) :- _passed(propagator,LBL,variable_declare(X,multimap)).
+propagator_multimap_assign(X,K,V,LBL) :- _passed(propagator,LBL,multimap_assign(X,K,V)).
+propagator_multimap_declare(X,LBL) :- _passed(propagator,LBL,variable_declare(X,multimap)).
 
-propagator_optimize_maximizeSum(LBL,E,ID,PRIO) :- _passed(propagator,LBL,optimize_component(E,ORIG,PREC,ID,PRIO)).
-propagator_share_value(LBL,E) :- _passed(propagator,LBL,share_value(E)).
+propagator_optimize_maximizeSum(E,ID,PRIO,LBL) :- _passed(propagator,LBL,optimize_component(E,ORIG,PREC,ID,PRIO)).
+propagator_share_value(E,LBL) :- _passed(propagator,LBL,share_value(E)).
 
-propagator_warning_forbid(LBL,W) :- _passed(propagator,LBL,warning_forbid(W,_internal(all))).
-propagator_warning_ignore(LBL,W) :- _passed(propagator,LBL,warning_ignore(W,_internal(all))).
+propagator_warning_forbid(W,LBL) :- _passed(propagator,LBL,warning_forbid(W,_internal(all))).
+propagator_warning_ignore(W,LBL) :- _passed(propagator,LBL,warning_ignore(W,_internal(all))).
 
 
-propagator_variable_interface(LBL,X) :- _passed(propagator,LBL,variable_interface(X)).
+propagator_variable_interface(X,LBL) :- _passed(propagator,LBL,variable_interface(X)).

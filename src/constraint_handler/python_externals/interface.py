@@ -22,13 +22,62 @@ def pythonIsExpr(clE):
         return myClorm.pytocl(False)
 
 
+# @cache
+# def pythonNormalExpr(clE):
+#    try:
+#        pE = myClorm.cltopy(clE, expression.Expr)
+#        return myClorm.pytocl(pE)
+#    except myClorm.FailedInstantiationExn:
+#        return myClorm.pytocl(expression.Bad.bad)
+
+
 @cache
-def pythonNormalExpr(clE):
+def pythonNormalExpr(clE: clingo.Symbol):
+    reserved = ["bad", "lambda", "operation", "python", "pythonExtract", "val", "variable"]
+    bad = clingo.Function("bad")
+    if clE.type == clingo.SymbolType.Number:
+        return clingo.Function("val", [clingo.Function("int"), clE])
+    if clE.type == clingo.SymbolType.String:
+        return clingo.Function("val", [clingo.Function("string"), clE])
+    if clE.type in [clingo.SymbolType.Infimum, clingo.SymbolType.Supremum]:
+        return bad
+
+    assert clE.type == clingo.SymbolType.Function
+
+    if clE.name == "float" and len(clE.arguments) == 1:
+        arg = clE.arguments[0]
+        try:
+            value = str(float(arg.string if arg.type == clingo.SymbolType.String else arg.number))
+        except (RuntimeError, ValueError):
+            return bad
+        return clingo.Function("val", [clingo.Function("float"), clingo.Function("float", [clingo.String(value)])])
+    if clE.name in ["true", "false"] and len(clE.arguments) == 0:
+        return clingo.Function("val", [clingo.Function("bool"), clE])
+    if clE.name == "bad" and len(clE.arguments) == 0:
+        return clE
+    if clE.name == "":
+        return clingo.Tuple_([pythonNormalExpr(arg) for arg in clE.arguments])
+    if clE.name == "lambda" and len(clE.arguments) == 2:
+        return clingo.Function("lambda", [clE.arguments[0], pythonNormalExpr(clE.arguments[1])])
+    if clE.name == "operation" and len(clE.arguments) == 2:
+        try:
+            args = myClorm.unnest(clE.arguments[1])
+            return clingo.Function(
+                "operation", [clE.arguments[0], myClorm.nest([pythonNormalExpr(arg) for arg in args])]
+            )
+        except myClorm.FailedInstantiationExn:
+            return bad
+    if len(clE.arguments) == 0:
+        return clingo.Function("val", [clingo.Function("symbol"), clE])
+    if clE.name not in reserved:
+        op = clingo.Function(clE.name)
+        args = [pythonNormalExpr(arg) for arg in clE.arguments]
+        return clingo.Function("operation", [op, myClorm.nest(args)])
     try:
         pE = myClorm.cltopy(clE, expression.Expr)
         return myClorm.pytocl(pE)
     except myClorm.FailedInstantiationExn:
-        return myClorm.pytocl(expression.Bad.bad)
+        return bad
 
 
 @cache

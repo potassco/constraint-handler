@@ -19,6 +19,7 @@
     * [Error Handling](reference/error_handling.md)
 * Developer Reference
     * [Type Checking](developer/type_checking.md)
+    * [Operator Evaluation](developer/operator_evaluation.md)
     * [Fact Format](developer/fact-format.md)
     * [Python API](developer/python_api/)
 * Community

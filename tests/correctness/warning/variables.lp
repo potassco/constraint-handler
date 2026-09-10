@@ -1,41 +1,41 @@
 %%% doesn't raise anything
-variable_declare(d_i,itsfine,boolDomain).
-variable_declare(d_i,itsfine,boolDomain).
+variable_declare(itsfine,boolDomain,d_i).
+variable_declare(itsfine,boolDomain,d_i).
 
-variable_declare(d_i2,itsfine2,fromFacts).
+variable_declare(itsfine2,fromFacts,d_i2).
 variable_domain(itsfine2,val(symbol,red)).
 variable_domain(itsfine2,val(symbol,black)).
 
 %%% raises warning(variable(emptyDomain),(d_a,()),a) and warning(variable(emptyDomain),(d_b,()),b)
-variable_declare(d_b,b,fromFacts).
+variable_declare(b,fromFacts,d_b).
 
 %%% raises warning(variable(multipleDeclarations),(d_u,(_u,())),(u,boolDomain,fromFacts))
-variable_declare(d_u,u,fromFacts).
-variable_declare(d_u,u,boolDomain).
+variable_declare(u,fromFacts,d_u).
+variable_declare(u,boolDomain,d_u).
 
 %%% raises warning(variable(multipleDeclarations),(d_v1,(d_v2,())),(v,fromFacts,fromFacts))
-variable_declare(d_v1,v,fromFacts).
-variable_declare(d_v2,v,fromFacts).
-variable_declare(d_v3,v,fromFacts).
+variable_declare(v,fromFacts,d_v1).
+variable_declare(v,fromFacts,d_v2).
+variable_declare(v,fromFacts,d_v3).
 variable_domain(v,val(symbol,green)).
 
 %%% raises warning(variable(multipleDeclarations),(d_w1,(d_w2,())),(w,fromFacts,fromFacts))
-variable_declare(d_w1,w,fromFacts).
-variable_declare(d_w2,w,fromFacts).
-variable_declare(d_w3,w,boolDomain).
+variable_declare(w,fromFacts,d_w1).
+variable_declare(w,fromFacts,d_w2).
+variable_declare(w,boolDomain,d_w3).
 
 %%% raises warning(variable(multipleDefinitions),(d_x,(f_x,())),(x,operation(lnot,(variable(itsfine),())),operation(snot,(variable(itsfine),()))))
-variable_define(d_x,x,operation(lnot,(variable(itsfine),()))).
-variable_define(d_x,x,operation(snot,(variable(itsfine),()))).
-variable_define(d_x,x,operation(wnot,(variable(itsfine),()))).
+variable_define(x,operation(lnot,(variable(itsfine),())),d_x).
+variable_define(x,operation(snot,(variable(itsfine),())),d_x).
+variable_define(x,operation(wnot,(variable(itsfine),())),d_x).
 
 %%% raises warning(variable(multipleDefinitions),(d_y1,(d_y2,())),(y,variable(itsfine),variable(itsfine)))
-variable_define(d_y1,y,variable(itsfine)).
-variable_define(d_y2,y,variable(itsfine)).
-variable_define(d_y3,y,variable(itsfine)).
+variable_define(y,variable(itsfine),d_y1).
+variable_define(y,variable(itsfine),d_y2).
+variable_define(y,variable(itsfine),d_y3).
 
 %%% raises warning(variable(multipleDefinitions),(d_z1,(d_z2,())),(z,variable(itsfine),operation(lnot,(variable(itsfine),()))))
-variable_define(d_z1,z,variable(itsfine)).
-variable_define(d_z2,z,operation(lnot,(variable(itsfine),()))).
-variable_define(d_z3,z,operation(snot,(variable(itsfine),()))).
-variable_define(d_z4,z,operation(wnot,(variable(itsfine),()))).
+variable_define(z,variable(itsfine),d_z1).
+variable_define(z,operation(lnot,(variable(itsfine),())),d_z2).
+variable_define(z,operation(snot,(variable(itsfine),())),d_z3).
+variable_define(z,operation(wnot,(variable(itsfine),())),d_z4).

@@ -1,6 +1,19 @@
 from __future__ import annotations
 
+from enum import Enum
+
 import constraint_handler.utils.common as common
+
+ComparisonOperator = common.PPEnum("ComparisonOperator", ["eq", "neq", "max", "min"])
+StringOperator = common.PPEnum("StringOperator", ["concat", "length"])
+
+
+class ConditionalOperator(Enum):
+    getOrElse = "getOrElse"
+    IF = "if"
+    ite = "ite"
+    hasValue = "hasValue"
+
 
 ArithmeticOperator = common.PPEnum(
     "ArithmeticOperator",
@@ -31,7 +44,7 @@ ArithmeticOperator = common.PPEnum(
     ],
 )
 
-LogicOperator = common.PPEnum("LogicOperator", ["conj", "disj", "ite", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
+LogicOperator = common.PPEnum("LogicOperator", ["conj", "disj", "leqv", "limp", "lnot", "lxor", "snot", "wnot"])
 
 SetOperator = common.PPEnum(
     "SetOperator", ["cardinality", "set_make", "set_isin", "set_notin", "union", "inter", "diff", "subset", "set_fold"]

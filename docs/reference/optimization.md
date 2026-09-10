@@ -13,7 +13,7 @@ The predicate is available in the following forms:
 ```prolog
 optimize_maximizeSum(Expression, Id).
 optimize_maximizeSum(Expression, Id, Priority).
-optimize_maximizeSum(Label, Expression, Id, Priority).
+optimize_maximizeSum(Expression, Id, Priority, Label).
 ```
 
 The shorter forms are shorthands. The `optimize_maximizeSum/2` form uses priority `0`, and the `optimize_maximizeSum/3` form uses an anonymous [Label].
@@ -28,7 +28,7 @@ optimize_maximizeSum(Expression, Id, Priority)
 | `Id` | Identifier for one optimization contribution. For a single aggregate value, a fixed identifier like `total` is sufficient. For multiple contributions, this is typically the item or variable identifier. |
 | `Priority` | The priority level for this optimization criterion. Higher priorities are optimized first. |
 
-If you need to address a specific optimization declaration via [requestEngine] or want it to appear with an explicit label in warnings, use the `optimize_maximizeSum/4` form with a leading [Label].
+If you need to address a specific optimization declaration via [requestEngine] or want it to appear with an explicit label in warnings, use the `optimize_maximizeSum/4` form with a trailing [Label].
 
 ### Output
 

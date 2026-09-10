@@ -7,20 +7,20 @@
 
 %%%%%%%%%%%%%%%%% labels are optional
 _passed(defaultArgs,_label_anonymous,bool_evaluate(E)) :- bool_evaluate(E).
-_passed(defaultArgs,LBL,bool_evaluate(E)) :- bool_evaluate(LBL,E).
+_passed(defaultArgs,LBL,bool_evaluate(E)) :- bool_evaluate(E,LBL).
 _passed(defaultArgs,_label_anonymous,ensure(E)) :- ensure(E).
-_passed(defaultArgs,LBL,ensure(E)) :- ensure(LBL,E).
+_passed(defaultArgs,LBL,ensure(E)) :- ensure(E,LBL).
 _passed(defaultArgs,_label_anonymous,evaluate(E)) :- evaluate(E).
-_passed(defaultArgs,LBL,evaluate(E)) :- evaluate(LBL,E).
+_passed(defaultArgs,LBL,evaluate(E)) :- evaluate(E,LBL).
 
 %%%%%% variable declare
 #defined variable_declare/2.
 #defined variable_declare/3.
 
 _defaultArgs_variableDeclared(X) :- variable_declare(X,E).
-_defaultArgs_variableDeclared(X) :- variable_declare(LBL,X,E).
+_defaultArgs_variableDeclared(X) :- variable_declare(X,E,LBL).
 _passed(defaultArgs,_label_anonymous,variable_declare(X,E)) :- variable_declare(X,E).
-_passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(LBL,X,D).
+_passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(X,D,LBL).
 
 %%%%%% variable fromFacts
 #defined variable_domain/2.
@@ -28,7 +28,7 @@ _passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(LBL,X,D).
 
 _passed(defaultArgs,_label_anonymous,variable_domain(X,E)) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(LBL,X,E).
+_passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E,LBL).
 
 %%%%%% variable open
 #defined variable_assign/2.
@@ -46,15 +46,15 @@ _passed(defaultArgs,_label_anonymous,variable_default(X,E,C,0)) :- variable_defa
 _passed(defaultArgs,LBL,variable_default(X,E,C,0)) :- variable_default(X,E,C), _passed(defaultArgs,LBL,variable_declare(X,D)).
 _passed(defaultArgs,_label_anonymous,variable_default(X,E,C,P)) :- variable_default(X,E,C,P), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(X,E,C,P), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(LBL,X,E,C,P).
+_passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(X,E,C,P,LBL).
 
 _passed(defaultArgs,_label_anonymous,variable_assign(X,E)) :- variable_assign(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(LBL,X,E).
+_passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E,LBL).
 
 _passed(defaultArgs,_label_anonymous,variable_choice(X,E)) :- variable_choice(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(LBL,X,E).
+_passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E,LBL).
 
 %%%%%% variable definition
 #defined variable_define/2.
@@ -62,14 +62,14 @@ _passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(LBL,X,E).
 
 _passed(defaultArgs,_label_anonymous,variable_define(X,E)) :- variable_define(X,E), not _defaultArgs_variableDeclared(X).
 _passed(defaultArgs,LBL,variable_define(X,E)) :- variable_define(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_define(X,E)) :- variable_define(LBL,X,E).
+_passed(defaultArgs,LBL,variable_define(X,E)) :- variable_define(X,E,LBL).
 
 %%%%%% multimap atoms
 #defined multimap_assign/3.
 #defined multimap_assign/4.
 
 _passed(defaultArgs,_label_anonymous,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(X,EKEY,EVAL).
-_passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(LBL,X,EKEY,EVAL).
+_passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(X,EKEY,EVAL,LBL).
 
 %%%%% set atoms
 #defined set_assign/2.
@@ -78,9 +78,9 @@ _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(LBL,X,E
 #defined set_baseDomain/3.
 
 _passed(defaultArgs,_label_anonymous,set_assign(X,E)) :- set_assign(X,E).
-_passed(defaultArgs,LBL,set_assign(X,E)) :- set_assign(LBL,X,E).
+_passed(defaultArgs,LBL,set_assign(X,E)) :- set_assign(X,E,LBL).
 _passed(defaultArgs,_label_anonymous,set_baseDomain(X,V)) :- set_baseDomain(X,V).
-_passed(defaultArgs,LBL,set_baseDomain(X,V)) :- set_baseDomain(LBL,X,V).
+_passed(defaultArgs,LBL,set_baseDomain(X,V)) :- set_baseDomain(X,V,LBL).
 
 %%%%%% statement atoms
 #defined execution_declare/4.
@@ -89,20 +89,22 @@ _passed(defaultArgs,LBL,set_baseDomain(X,V)) :- set_baseDomain(LBL,X,V).
 #defined execution_run/2.
 
 _passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS).
-_passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(LBL,NAME,STMT,INS,OUTS).
+_passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS,LBL).
 _passed(defaultArgs,NAME,execution_run(NAME)) :- execution_run(NAME), _passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)).
-_passed(defaultArgs,LBL,execution_run(NAME)) :- execution_run(LBL,NAME).
+_passed(defaultArgs,LBL,execution_run(NAME)) :- execution_run(NAME,LBL).
 
 %%%%%% optimization atoms
 #defined optimize_precision/1.
 #defined optimize_precision/2.
+#defined optimize_maximizeSum/1.
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
 
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,0,0)) :- optimize_maximizeSum(E).
 _passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,0)) :- optimize_maximizeSum(E,X).
 _passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(E,X,P).
-_passed(defaultArgs,LBL,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(LBL,E,X,P).
+_passed(defaultArgs,LBL,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(E,X,P,LBL).
 
 % 4-parameter version with explicit priority
 % Precision for specific priority (priority is last argument)
@@ -125,10 +127,10 @@ _passed(defaultArgs,_label_anonymous,optimize_precision(PREC,PRIO)) :- _defaultA
 #defined preference_variableValue/2.
 _passed(defaultArgs,_label_anonymous,preference_holds(E,1)) :- preference_holds(E).
 _passed(defaultArgs,_label_anonymous,preference_holds(E,K)) :- preference_holds(E,K).
-_passed(defaultArgs,LBL,preference_holds(E,K)) :- preference_holds(LBL,E,K).
+_passed(defaultArgs,LBL,preference_holds(E,K)) :- preference_holds(E,K,LBL).
 _passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,1)) :- preference_variableValue(X,E).
 _passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,K)) :- preference_variableValue(X,E,K).
-_passed(defaultArgs,LBL,preference_variableValue(X,E,K)) :- preference_variableValue(LBL,X,E,K).
+_passed(defaultArgs,LBL,preference_variableValue(X,E,K)) :- preference_variableValue(X,E,K,LBL).
 
 %%%%%% warning atoms
 #defined warning_forbid/1.

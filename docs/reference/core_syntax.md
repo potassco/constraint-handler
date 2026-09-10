@@ -58,7 +58,7 @@ Lists are represented as recursive tuples. More precisely, a list is either the 
     ```
 
 ### Labels
-[Declarations] marked with the banner **[Label Support]**{.badge .label-support } support an optional leading argument called a **Label**.
+[Declarations] marked with the banner **[Label Support]**{.badge .label-support } support an optional trailing argument called a **Label**.
 
 - If you **omit** the label, the system will use an anonymous label internally.
 - If you **provide** a label, it can be used for engine selection via [requestEngine] and can identify the source of warnings that refer to declaration labels (see [warning]).
@@ -75,7 +75,7 @@ In other words: if you do not use `requestEngine/2` and you do not rely on label
     The equivalent form with an explicit label:
 
     ```prolog
-    variable_define(my_label, x, val(int, 42)).
+    variable_define(x, val(int, 42), my_label).
     ```
 
 ---

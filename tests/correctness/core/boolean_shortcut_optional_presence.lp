@@ -3,25 +3,25 @@
 
 variable_domain(execution_input(((((),"r"),"u"),"chk"),"result"),val(none,none)).
 
-execution_run(((((),"r"),"u"),"pos"),((((),"r"),"u"),"pos")).
-execution_run(((((),"r"),"u"),"chk"),((((),"r"),"u"),"chk")).
+execution_run(rupos).
+execution_run(((((),"r"),"u"),"chk")).
 
-variable_declare(((((),"r"),"u"),"p"),s0(((((),"r"),"u"),"p")),set).
-set_baseDomain(((((),"r"),"u"),"p"),s0(((((),"r"),"u"),"p")),val(string,"Back")).
+variable_declare(s0(rup),set).
+set_baseDomain(s0(rup),val(string,"Back")).
 
-variable_domain(execution_input(((((),"r"),"u"),"pos"),"p"),variable(((((),"r"),"u"),"p"))).
-variable_domain(execution_input(((((),"r"),"u"),"chk"),"result"),variable(execution_output(((((),"r"),"u"),"pos"),"result"))).
+variable_domain(execution_input(rupos,"p"),variable(rup)).
+variable_domain(execution_input(((((),"r"),"u"),"chk"),"result"),variable(execution_output(rupos,"result"))).
 
-variable_declare((((),"r"),"s"),(((),"r"),"s"),boolDomain).
+variable_declare((((),"r"),"s"),boolDomain).
 
-variable_define(((((),"r"),"u"),"pos"),execution_input(((((),"r"),"u"),"pos"),run),variable((((),"r"),"s"))).
-variable_define(((((),"r"),"u"),"chk"),execution_input(((((),"r"),"u"),"chk"),run),variable((((),"r"),"s"))).
-variable_define(((((),"r"),"u"),"p"),(((((),"r"),"u"),"p")),operation(if,(variable((((),"r"),"s")),(variable(s0(((((),"r"),"u"),"p"))),())))).
+variable_define(execution_input(rupos,run),variable((((),"r"),"s"))).
+variable_define(execution_input(((((),"r"),"u"),"chk"),run),variable((((),"r"),"s"))).
+variable_define(rup,operation(if,(variable((((),"r"),"s")),(variable(s0(rup)),())))).
 
-execution_declare(((((),"r"),"u"),"pos"),((((),"r"),"u"),"pos"),if(variable(run),assign("result",operation(eq,(variable("p"),(operation(set_make,(val(string,"Back"),())),())))),noop),(run,("p",())),("result",())).
-execution_declare(((((),"r"),"u"),"chk"),((((),"r"),"u"),"chk"),if(variable(run),if(operation(lnot,(operation(lnot,(variable("result"),())),())),assert(val(bool,false)),noop),noop),(run,("result",())),()).
+execution_declare(rupos,if(variable(run),assign("result",operation(eq,(variable("p"),(operation(set_make,(val(string,"Back"),())),())))),noop),(run,("p",())),("result",())).
+execution_declare(((((),"r"),"u"),"chk"),if(variable(run),if(operation(lnot,(operation(lnot,(variable("result"),())),())),assert(val(bool,false)),noop),noop),(run,("result",())),()).
 
 evaluate(operation(lnot,(operation(lnot,(variable(execution_input(((((),"r"),"u"),"chk"),"result")),())),()))).
-evaluate(operation(hasValue,(variable(((((),"r"),"u"),"p")),()))).
+evaluate(operation(hasValue,(variable(rup),()))).
 
 #show evaluated/3.
