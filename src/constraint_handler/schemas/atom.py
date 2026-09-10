@@ -121,8 +121,8 @@ type ExecutionAtom = Execution_declare | Execution_run
 
 class Optimize_maximizeSum(NamedTuple):
     value: expression.Expr
-    id: expression.constant
-    priority: expression.constant
+    id: expression.constant = 0
+    priority: expression.constant = 0
     label: expression.constant = LABEL_ANONYMOUS
 
 
@@ -137,13 +137,13 @@ type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
 class Optimize_modelValue(NamedTuple):
     label: expression.constant
     priority: expression.constant
-    total: expression.constant
+    total: expression.ReducedExpr
 
 
 class Optimize_value(NamedTuple):
     label: expression.constant
     priority: expression.constant
-    total: expression.constant
+    total: expression.ReducedExpr
 
 
 type OptimizeResult = Optimize_modelValue | Optimize_value

@@ -96,10 +96,12 @@ _passed(defaultArgs,LBL,execution_run(NAME)) :- execution_run(NAME,LBL).
 %%%%%% optimization atoms
 #defined optimize_precision/1.
 #defined optimize_precision/2.
+#defined optimize_maximizeSum/1.
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
 
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,0,0)) :- optimize_maximizeSum(E).
 _passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,0)) :- optimize_maximizeSum(E,X).
 _passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(E,X,P).
 _passed(defaultArgs,LBL,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(E,X,P,LBL).
