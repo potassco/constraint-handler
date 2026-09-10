@@ -77,11 +77,12 @@ def test_optimization():
     with ctrl.solve(yield_=True) as solve_handle:
         for model in solve_handle:
             pass
+        results = constraint_handler.find_values(model).values()
 
     best_assignment = {}
     opt_value = {}
     actual_value = {}
-    for x in constraint_handler.find_values(model).values():
+    for x in results:
         match x:
             case atom.Value():
                 best_assignment[x.name] = x.val.value
