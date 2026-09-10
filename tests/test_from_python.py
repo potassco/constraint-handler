@@ -1,12 +1,10 @@
 import clingo
 
 import constraint_handler
-import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.atom as atom
 from constraint_handler.schemas.atom import (
     Ensure,
     Optimize_maximizeSum,
-    Optimize_modelValue,
-    Optimize_value,
     Value,
     Variable_declare,
     Variable_define,
@@ -19,19 +17,19 @@ from constraint_handler.schemas.type_ import BaseType
 
 
 def test_det():
-    x = [Variable_define("x", Val(BaseType.int, 5))]
-    y = [Variable_define("y", Variable("x"))]
-    z = [Variable_define("z", Operation(ArithmeticOperator.add, [Variable("x"), Variable("y")]))]
-    instances = x + y + z
-    program = "".join(f"{myClorm.pytocl(instance)}." for instance in instances)
+    input = [
+        Variable_define("x", Val(BaseType.int, 5)),
+        Variable_define("y", Variable("x")),
+        Variable_define("z", Operation(ArithmeticOperator.add, [Variable("x"), Variable("y")])),
+    ]
 
     ctrl = clingo.Control()
     constraint_handler.add_to_control(ctrl)
-    ctrl.add(program)
+    constraint_handler.add_declarations(ctrl, input)
     ctrl.ground()
     with ctrl.solve(yield_=True) as solve_handle:
         model = solve_handle.model()
-        values = set(myClorm.findInModel(model, Value).values())
+        values = set(constraint_handler.find_values(model).values())
 
     assert values == {
         Value("x", Val(BaseType.int, 5)),
@@ -41,23 +39,21 @@ def test_det():
 
 
 def test_nondet():
-    x = [Variable_declare("x", FromFacts)] + [Variable_domain("x", Val(BaseType.int, value)) for value in range(5)]
-    y = [
-        Variable_define(
-            "y",
-            Operation(ArithmeticOperator.add, [Variable("x"), Val(BaseType.int, 3)]),
-        )
-    ]
-    ensure = [Ensure(Operation(ComparisonOperator.neq, [Variable("y"), Val(BaseType.int, 6)]))]
-    instances = x + y + ensure
-    program = "".join(f"{myClorm.pytocl(instance)}." for instance in instances)
+    xdeclare = Variable_declare("x", FromFacts)
+    xdomain = [Variable_domain("x", Val(BaseType.int, value)) for value in range(5)]
+    ydefine = Variable_define(
+        "y",
+        Operation(ArithmeticOperator.add, [Variable("x"), Val(BaseType.int, 3)]),
+    )
+    ensure = Ensure(Operation(ComparisonOperator.neq, [Variable("y"), Val(BaseType.int, 6)]))
+    instance = [xdeclare, ydefine, ensure] + xdomain
 
     ctrl = clingo.Control("0")
     constraint_handler.add_to_control(ctrl)
-    ctrl.add(program)
+    constraint_handler.add_declarations(ctrl, instance)
     ctrl.ground()
     with ctrl.solve(yield_=True) as solve_handle:
-        models = {frozenset(myClorm.findInModel(model, Value).values()) for model in solve_handle}
+        models = {frozenset(constraint_handler.find_values(model).values()) for model in solve_handle}
 
     assert models == {
         frozenset({Value("x", Val(BaseType.int, 0)), Value("y", Val(BaseType.int, 3))}),
@@ -68,27 +64,32 @@ def test_nondet():
 
 
 def test_optimization():
-    x = [Variable_declare("x", FromFacts)] + [Variable_domain("x", Val(BaseType.int, value)) for value in range(5)]
-    y = [
-        Variable_define("y", Val(BaseType.float, 3.14)),
-    ]
-    opti = [Optimize_maximizeSum(Operation(ArithmeticOperator.add, [Variable("x"), Variable("y")]), label="price")]
-    instances = x + y + opti
-    program = "".join(f"{myClorm.pytocl(instance)}." for instance in instances)
+    xdeclar = Variable_declare("x", FromFacts)
+    xdomain = [Variable_domain("x", Val(BaseType.int, value)) for value in range(5)]
+    ydefine = Variable_define("y", Val(BaseType.float, 3.25))
+    optimiz = Optimize_maximizeSum(Operation(ArithmeticOperator.add, [Variable("x"), Variable("y")]), label="price")
+    instance = [xdeclar, ydefine, optimiz] + xdomain
 
     ctrl = clingo.Control("0")
     constraint_handler.add_to_control(ctrl)
-    ctrl.add(program)
+    constraint_handler.add_declarations(ctrl, instance)
     ctrl.ground()
     with ctrl.solve(yield_=True) as solve_handle:
         for model in solve_handle:
             pass
-            # print(myClorm.findInModel(model, Value).values())
-    best_assignment = {x.name: x.val.value for x in myClorm.findInModel(model, Value).values()}
-    print(myClorm.findInModel(model, Optimize_value).values())
-    opt_value = {x.label: x.total.value for x in myClorm.findInModel(model, Optimize_value).values()}
-    actual_value = {x.label: x.total.value for x in myClorm.findInModel(model, Optimize_modelValue).values()}
 
-    assert best_assignment == {"x": 4, "y": 3.14}
+    best_assignment = {}
+    opt_value = {}
+    actual_value = {}
+    for x in constraint_handler.find_values(model).values():
+        match x:
+            case atom.Value():
+                best_assignment[x.name] = x.val.value
+            case atom.Optimize_value():
+                opt_value[x.label] = x.total.value
+            case atom.Optimize_modelValue():
+                actual_value[x.label] = x.total.value
+
+    assert best_assignment == {"x": 4, "y": 3.25}
     assert opt_value == {"price": 7}
-    assert actual_value == {"price": 7.140000000000001}
+    assert actual_value == {"price": 7.25}

@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- add `find_values` and `add_declarations` to API
 - - update `variable_declare(LBL,X,D)` to be `variable_declare(X,D,LBL)` and do
     the same for other input predicates,
 - - introduce experimental alternative syntax.

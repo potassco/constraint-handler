@@ -5,8 +5,10 @@ import clingo
 import clingo.script
 
 import constraint_handler.evaluator as evaluator
+import constraint_handler.myClorm as myClorm
 import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
+import constraint_handler.schemas.atom as atom
 
 module_main = [
     "main",
@@ -208,3 +210,12 @@ def set_globals(environment=None):
 
 def add_to_globals(environment):
     evaluator._shared_environment.update(environment)
+
+
+def add_declarations(ctrl: clingo.Control, declarations):
+    for declaration in declarations:
+        ctrl.add(f"{myClorm.pytocl(declaration)}.")
+
+
+def find_values(model: clingo.Model):
+    return myClorm.findInModel(model, atom.ResultAtom)
