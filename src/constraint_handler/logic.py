@@ -29,13 +29,6 @@ def evaluate_operator(o, args) -> atom.EvalResult:
             if None in args:
                 return atom.EvalResult(None, NO_ERRORS)
             return atom.EvalResult(False, NO_ERRORS)
-        case operators.LogicOperator.ite:
-            assert len(args) == 3
-            if args[0] is None:
-                return atom.EvalResult(None, NO_ERRORS)
-            if args[0] is common.Bad.bad:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(args[1] if args[0] else args[2], NO_ERRORS)
         case operators.LogicOperator.leqv:
             if None in args:
                 return atom.EvalResult(common.Bad.bad, NO_ERRORS)

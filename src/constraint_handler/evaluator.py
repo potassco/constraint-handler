@@ -6,6 +6,8 @@ from functools import cache
 import clingo
 
 import constraint_handler.arithmetic as arithmetic
+import constraint_handler.comparison as comparison
+import constraint_handler.conditional as conditional
 import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
@@ -16,13 +18,8 @@ import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 import constraint_handler.set as myset
 import constraint_handler.solver_environment as solver_environment
+import constraint_handler.string as string
 import constraint_handler.utils.python_statement_analysis as python_analysis
-from constraint_handler.schemas.expression import (
-    ConditionalOperator,
-    EqOperator,
-    OtherOperator,
-    StringOperator,
-)
 from constraint_handler.schemas.type_ import BaseType
 
 _shared_environment = {
@@ -33,6 +30,15 @@ _solver_environment = dict()
 
 
 NO_ERRORS: tuple[tuple[warning.Kind, str], ...] = ()
+RECOVERABLE_OPERATORS = (
+    operators.LogicOperator.conj,
+    operators.LogicOperator.disj,
+    operators.LogicOperator.limp,
+    operators.ConditionalOperator.ite,
+    operators.ConditionalOperator.IF,
+    operators.ConditionalOperator.getOrElse,
+    operators.ArithmeticOperator.pow,
+)
 
 
 def exprs(eargs, globals_id, locals_env):
@@ -149,61 +155,6 @@ def reducedExpr(v):
         return (expression.Bad.bad, ((warn, repr(exn)),))
 
 
-def string_operator(o, args):
-    match o:
-        case StringOperator.length:
-            if len(args) != 1:
-                return atom.EvalResult(
-                    expression.Bad.bad,
-                    (
-                        (
-                            warning.Expression(warning.ExpressionWarning.syntaxError),
-                            f"len takes one argument ({len(args)} were given)",
-                        ),
-                    ),
-                )
-            return atom.EvalResult(len(args[0]), NO_ERRORS)
-        case StringOperator.concat:
-            return atom.EvalResult("".join(args), NO_ERRORS)
-        case _:
-            return atom.EvalResult(
-                expression.Bad.bad,
-                ((warning.Expression(warning.ExpressionWarning.notImplemented), f"string operator {o}"),),
-            )
-
-
-def eq_operator(o, lval, rval):
-    match o:
-        case EqOperator.eq:
-            return atom.EvalResult(lval == rval, NO_ERRORS)
-        case EqOperator.neq:
-            return atom.EvalResult(lval != rval, NO_ERRORS)
-        case _:
-            return atom.EvalResult(
-                expression.Bad.bad,
-                ((warning.Expression(warning.ExpressionWarning.notImplemented), f"equality operator {o}"),),
-            )
-
-
-def conditional_operator(o, args):
-    match o:
-        case ConditionalOperator.getOrElse:
-            return atom.EvalResult(args[0] if args[0] is not None else args[1], NO_ERRORS)
-        case ConditionalOperator.IF:
-            if args[0] is expression.Bad.bad:
-                return atom.EvalResult(expression.Bad.bad, NO_ERRORS)
-            if args[0] is True:
-                return atom.EvalResult(args[1], NO_ERRORS)
-            return atom.EvalResult(None, NO_ERRORS)
-        case ConditionalOperator.hasValue:
-            return atom.EvalResult(args[0] is not None, NO_ERRORS)
-        case _:
-            return atom.EvalResult(
-                expression.Bad.bad,
-                ((warning.Expression(warning.ExpressionWarning.notImplemented), f"conditional operator {o}"),),
-            )
-
-
 def python_operator(fn, args, globals_id, locals_env):
     try:
         globals_ = get_environment(globals_id)
@@ -281,18 +232,8 @@ def operator(o, args: tuple, globals_id, locals_env):
             for var, value in zip(vars, args):
                 nested_locals[var] = value
             return expr(expr_body, globals_id, nested_locals)
-        case EqOperator():
-            if len(args) != 2:
-                return atom.EvalResult(
-                    expression.Bad.bad,
-                    (
-                        (
-                            warning.Expression(warning.ExpressionWarning.syntaxError),
-                            f"eq takes two arguments, not {args}",
-                        ),
-                    ),
-                )
-            return eq_operator(o, args[0], args[1])
+        case operators.ComparisonOperator():
+            return comparison.evaluate_operator(o, args)
         case operators.ArithmeticOperator():
             # iargs = (0 if arg is False or arg is None else 1 if arg is True else arg for arg in args)
             # return arithmetic.evaluate_operator(o, list(iargs))
@@ -303,16 +244,10 @@ def operator(o, args: tuple, globals_id, locals_env):
             return multimap.evaluate_operator(o, args, apply_operator=apply_nested_operator)
         case operators.SetOperator():
             return myset.evaluate_operator(o, args, apply_operator=apply_nested_operator)
-        case StringOperator():
-            return string_operator(o, args)
-        case ConditionalOperator():
-            return conditional_operator(o, args)
-        case OtherOperator.max:
-            assert len(args)  # TODO
-            return atom.EvalResult(max(args), NO_ERRORS)
-        case OtherOperator.min:
-            assert len(args)
-            return atom.EvalResult(min(args), NO_ERRORS)
+        case operators.StringOperator():
+            return string.evaluate_operator(o, args)
+        case operators.ConditionalOperator():
+            return conditional.evaluate_operator(o, args)
         case _:
             if callable(o):
                 return atom.EvalResult(o(*args), NO_ERRORS)
@@ -330,17 +265,7 @@ def expr(expr_, globals_id, locals_env):
             op_result = expr(eo, globals_id, locals_env)
             o = op_result.value
 
-            recoverable = [
-                operators.LogicOperator.conj,
-                operators.LogicOperator.disj,
-                operators.LogicOperator.limp,
-                operators.LogicOperator.ite,
-                ConditionalOperator.IF,
-                ConditionalOperator.getOrElse,
-                operators.ArithmeticOperator.pow,
-            ]
-
-            if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in recoverable):
+            if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in RECOVERABLE_OPERATORS):
                 return atom.EvalResult(expression.Bad.bad, op_result.errors + args_errors)
 
             applied = operator(o, args, globals_id, locals_env)

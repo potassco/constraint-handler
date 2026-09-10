@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import types
 import typing
-from enum import Enum
 
 import clingo
 
@@ -11,19 +10,7 @@ import constraint_handler.schemas.operators as operators
 import constraint_handler.schemas.type_ as type_m
 import constraint_handler.utils.common as common
 
-EqOperator = common.PPEnum("EqOperator", ["eq", "neq"])
-StringOperator = common.PPEnum("StringOperator", ["concat", "length"])
-OtherOperator = common.PPEnum("OtherOperator", ["max", "min", "length"])
-
-
 Bad = common.Bad
-
-
-# ConditionalOperator = PPEnum("ConditionalOperator", ["getOrElse", "if"])
-class ConditionalOperator(Enum):
-    getOrElse = "getOrElse"
-    IF = "if"
-    hasValue = "hasValue"
 
 
 class CustomOperator(typing.NamedTuple):
@@ -41,13 +28,12 @@ class PythonExtract(typing.NamedTuple):
 
 Operator = (
     operators.ArithmeticOperator
-    | EqOperator
+    | operators.ComparisonOperator
     | operators.LogicOperator
-    | StringOperator
+    | operators.StringOperator
     | operators.MultimapOperator
     | operators.SetOperator
-    | OtherOperator
-    | ConditionalOperator
+    | operators.ConditionalOperator
     | Python
     | PythonExtract
 )
