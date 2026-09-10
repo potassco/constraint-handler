@@ -13,8 +13,8 @@ def test_add_ctrl():
     ctrl = Control("0")
     constraint_handler.add_to_control(ctrl)
     ctrl.add("""
-    variable_define(assign_x,x,val(int,20)).
-    variable_define(assign_y,y,operation(add,(variable(x),(val(int,10),())))).
+    variable_define(x,val(int,20)).
+    variable_define(y,operation(add,(variable(x),(val(int,10),()))),assign_y).
     #show value/2.
     """)
     ctrl.ground()
@@ -48,8 +48,8 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
 
 def test_prop():
     constraint_expr = """
-    variable_define(assign_bike_frame_size, bike_frame_size, val(int,26)).
-    variable_define(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(string,"Mountain"), (val(string,"Road"), ()))))).
+    variable_define(bike_frame_size,val(int,26),assign_bike_frame_size).
+    variable_define(bike_frame_type,operation(ite,(operation(eq,(variable(bike_frame_size),(val(int,26),()))),(val(string,"Mountain"),(val(string,"Road"), ())))),assign_bike_frame_type).
     #show value/2.
     """
 
@@ -62,8 +62,8 @@ def test_prop():
 
 def test_noprop():
     constraint_expr = """
-    variable_define(assign_bike_frame_size, bike_frame_size, val(int,26)).
-    variable_define(assign_bike_frame_type, bike_frame_type, operation(ite, (operation(eq, (variable(bike_frame_size), (val(int,26), ()))), (val(string,"Mountain"), (val(string,"Road"), ()))))).
+    variable_define(bike_frame_size,val(int,26),assign_bike_frame_size).
+    variable_define(bike_frame_type,operation(ite,(operation(eq,(variable(bike_frame_size),(val(int,26),()))),(val(string,"Mountain"),(val(string,"Road"),())))), assign_bike_frame_type).
     #show value/2.
     """
 
@@ -76,8 +76,8 @@ def test_noprop():
 
 def test_add():
     constraint_expr = """
-    variable_define(assign_x, x, val(int,20)).
-    variable_define(assign_y, y, operation(add, (variable(x), (val(int,10), ())))).
+    variable_define(x,val(int,20),assign_x).
+    variable_define(y,operation(add,(variable(x),(val(int,10),()))),assign_y).
     #show value/2.
     """
 

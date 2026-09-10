@@ -1,4 +1,4 @@
-set_baseDomain(bd,s,val(int,1)).
+set_baseDomain(s,val(int,1),bd).
 
 ensure(
 	operation(set_isin,

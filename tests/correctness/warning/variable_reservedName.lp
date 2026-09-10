@@ -1,7 +1,7 @@
 %%% doesn't raise anything
 variable_declare(execution_input(itsfine,x),boolDomain).
 variable_define(execution_input(itsfine,y),val(int,3)).
-variable_declare(d_z,execution_input(itsfine,z),boolDomain).
+variable_declare(execution_input(itsfine,z),boolDomain,d_z).
 variable_define((istfine,a),val(int,3)).
 variable_define(a,val(int,3)).
 execution_declare(itsfine,assign(a,val(int,2)),(x,(y,(z,()))),(a,())).
@@ -11,7 +11,7 @@ execution_declare(itsbad,assign(a,val(int,2)),(x,(y,(z,()))),(a,())).
 
 variable_declare(execution_output(itsbad,x),boolDomain).
 variable_define(execution_output(itsbad,y),val(int,3)).
-variable_declare(d_z,execution_output(itsbad,z),boolDomain).
+variable_declare(execution_output(itsbad,z),boolDomain,d_z).
 variable_declare(execution_output(itsbad,t),set).
 variable_declare(execution_output(itsbad,u),multimap).
 variable_define(execution_output(itsbad,a),val(int,1)).
@@ -23,7 +23,7 @@ execution_run(alsobad).
 
 variable_declare(execution_output(alsobad,x),boolDomain).
 variable_define(execution_output(alsobad,y),val(int,3)).
-variable_declare(d_z,execution_output(alsobad,z),boolDomain).
+variable_declare(execution_output(alsobad,z),boolDomain,d_z).
 variable_declare(execution_output(alsobad,t),set).
 variable_declare(execution_output(alsobad,u),multimap).
 variable_define(execution_output(alsobad,a),val(int,1)).

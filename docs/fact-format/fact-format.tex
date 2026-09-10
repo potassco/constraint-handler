@@ -7,21 +7,29 @@
 ~\alt `bool' | `float' | `int' | `none' | `string' | `symbol'
 \alt `function' | `set' | `multimap'
 
+<term> ::= <int> | <string> | <symbol>
+
+<terms> ::= <term> | <term> `,' <terms>
+
+<term-list> ::= `(' `)' | `(' <term> `,' <term-list> `)'
+
 <bool> ::= `true' | `false'
 
 <int> ::= any integer literal
 
 <string> ::= any string literal (enclosed in quotes)
 
+<float> ::= `float' `(' <int> `)' | `float' `(' <string> `)'
+
 <name> ::= any suitable string
-
-<term> ::= <int> | <string> | <symbol>
-
-<terms> ::= <term> | <term> `,' <terms>
 
 <symbol> ::= <name> | <name> `(' <terms> `)'
 
-<term-list> ::= `(' `)' | `(' <term> `,' <term-list> `)'
+<label> ::= <term>
+
+<variable> ::= <term>
+
+<variable-list> ::= `(' `)' | `(' <variable> `,' <variable-list> `)'
 
 %<constant> ::= `bool' `(' <bool> `)' \alt `int' `(' <int> `)' \alt `float' `(' <string> `)' \alt `string `(' <string> `)' \alt `symbol `(' <term> `)'
 
@@ -81,7 +89,7 @@
 
 <expression> ::=
 ~\alt <val>
-\alt `variable' `(' <term> `)'
+\alt `variable' `(' <variable> `)'
 \alt `operation' `(' <operator> `,' <expression-list> `)'
 \alt <lambda-expr>
 \alt `python' `(' <string> `)'
@@ -98,7 +106,7 @@
 \begin{grammar}
 <statement> ::=
 ~\alt `assert' `(' <expression> `)'
-\alt `assign' `(' <term> `,' <expression> `)'
+\alt `assign' `(' <variable> `,' <expression> `)'
 \alt `if' `(' <expression> `,' <statement> `,' <statement> `)'
 \alt `noop'
 \alt `statement_python' `(' <string> `)'
@@ -112,39 +120,40 @@
 <domain> ::= `definition' | `boolDomain' | `fromFacts' | `open' | `set' | `multimap'
 
 <variable-atom> ::=
-~\alt `variable_assign' `(' <term> `,' <expression> `)'
-\alt `variable_assign' `(' <term> `,' <term> `,' <expression> `)'
-\alt `variable_choice' `(' <term> `,' <expression> `)'
-\alt `variable_choice' `(' <term> `,' <term> `,' <expression> `)'
-\alt `variable_declare' `(' <term> `,' <domain> `)'
-\alt `variable_declare' `(' <term> `,' <term> `,' <domain> `)'
-\alt `variable_default' `(' <term> `,' <expression> `)'
+~\alt `variable_assign' `(' <variable> `,' <expression> `)'
+\alt `variable_assign' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `variable_choice' `(' <variable> `,' <expression> `)'
+\alt `variable_choice' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `variable_declare' `(' <variable> `,' <domain> `)'
+\alt `variable_declare' `(' <variable> `,' <domain> `,' <label> `)'
+\alt `variable_default' `(' <variable> `,' <expression> `)'
 \alt ...
-\alt `variable_default' `(' <term> `,' <term> `,' <expression> `,' <expression> `,' <int> `)'
-\alt `variable_define' `(' <term> `,' <expression> `)'
-\alt `variable_define' `(' <term> `,' <term> `,' <expression> `)'
-\alt `variable_domain' `(' <term> `,' <expression> `)'
+\alt `variable_default' `(' <variable> `,' <expression> `,' <expression> `,' <int> `,' <label> `)'
+\alt `variable_define' `(' <variable> `,' <expression> `)'
+\alt `variable_define' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `variable_domain' `(' <variable> `,' <expression> `)'
+\alt `variable_domain' `(' <variable> `,' <expression> `,' <label> `)'
 
 <multimap-atom> ::=
-~\alt `multimap_assign' `(' <term> `,' <expression> `,' <expression> `)'
-\alt `multimap_assign' `(' <term> `,' <term> `,' <expression> `,' <expression> `)'
+~\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `,' <label> `)'
 
 <set-atom> ::=
-~\alt `set_assign' `(' <term> `,' <expression> `)'
-\alt `set_assign' `(' <term> `,' <term> `,' <expression> `)'
-\alt `set_baseDomain' `(' <term> `,' <expression> `)'
-\alt `set_baseDomain' `(' <term> `,' <term> `,' <expression> `)'
+~\alt `set_assign' `(' <variable> `,' <expression> `)'
+\alt `set_assign' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `set_baseDomain' `(' <variable> `,' <expression> `)'
+\alt `set_baseDomain' `(' <variable> `,' <expression> `,' <label> `)'
 
 <execution-atom> ::=
-~\alt `execution_declare' `(' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
-\alt `execution_declare' `(' <term> `,' <term> `,' <statement> `,' <term-list> `,' <term-list> `)'
+~\alt `execution_declare' `(' <term> `,' <statement> `,' <variable-list> `,' <variable-list> `)'
+\alt `execution_declare' `(' <term> `,' <statement> `,' <variable-list> `,' <variable-list> `,' <label> `)'
 \alt `execution_run' `(' <term> `)'
-\alt `execution_run' `(' <term> `,' <term> `)'
+\alt `execution_run' `(' <term> `,' <label> `)'
 
 <optimize-atom> ::=
 ~\alt `optimize_maximizeSum' `(' <expression> `,' <term> `)'
 \alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `)'
-\alt `optimize_maximizeSum' `(' <term> `,' <expression> `,' <term> `,' <expression> `)'
+\alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `,' <label> `)'
 \alt `optimize_precision' `(' <expression>  `)'
 \alt `optimize_precision' `(' <expression> `,' <expression> `)'
 
@@ -152,10 +161,10 @@
 ~\alt `preference_maximizeScore'
 \alt `preference_holds' `(' <expression> `)'
 \alt `preference_holds' `(' <expression> `,' <int> `)'
-\alt `preference_holds' `(' <term> `,' <expression> `,' <int> `)'
-\alt `preference_variableValue' `(' <term> `,' <expression> `)'
-\alt `preference_variableValue' `(' <term> `,' <expression> `,' <int> `)'
-\alt `preference_variableValue' `(' <term> `,' <term> `,' <expression> `,' <int> `)'
+\alt `preference_holds' `(' <expression> `,' <int> `,' <label> `)'
+\alt `preference_variableValue' `(' <variable> `,' <expression> `)'
+\alt `preference_variableValue' `(' <variable> `,' <expression> `,' <int> `)'
+\alt `preference_variableValue' `(' <variable> `,' <expression> `,' <int> `,' <label> `)'
 
 <warning-control-atom> ::=
 ~\alt `warning_forbid' `(' <term> `)'
@@ -165,11 +174,11 @@
 
 <atom> ::=
 ~\alt `ensure' `(' <expression> `)'
-\alt `ensure' `(' <term> `,' <expression> `)'
+\alt `ensure' `(' <expression> `,' <label> `)'
 \alt `bool_evaluate' `(' <expression> `)'
-\alt `bool_evaluate' `(' <term> `,' <expression> `)'
+\alt `bool_evaluate' `(' <expression> `,' <label> `)'
 \alt `evaluate' `(' <expression> `)'
-\alt `evaluate' `(' <term> `,' <expression> `)'
+\alt `evaluate' `(' <expression> `,' <label> `)'
 \alt <variable-atom>
 \alt <multimap-atom>
 \alt <set-atom>
@@ -217,10 +226,10 @@
 \alt `variable' `(' <variable-warning> `)'
 
 <atom> ::=
-~\alt `value' `(' <term> `,' <val> `)'
+~\alt `value' `(' <variable> `,' <val> `)'
 \alt `evaluated' `(' <operator> `,' <expression-list>  `,' <val> `)'
-\alt `set_value' `(' <term> `,' <val> `)'
-\alt `multimap_value' `(' <term> `,' <val> `,' <val> `)'
+\alt `set_value' `(' <variable> `,' <val> `)'
+\alt `multimap_value' `(' <variable> `,' <val> `,' <val> `)'
 \alt `preference_score' `(' <int> `)'
 \alt `warning' `(' <warning-symbol> `,' <term-list> `,' <term> `)'
 \end{grammar}
