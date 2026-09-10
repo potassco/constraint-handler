@@ -30,6 +30,7 @@ class StatementKind(IntEnum):
 class ProgramInputKind(IntEnum):
     VARIABLE_DECLARE = auto()
     VARIABLE_DEFINE = auto()
+    VARIABLE_DEFAULT = auto()
     ENSURE_CONSTRAINT = auto()
     EVALUATE_INPUT = auto()
     PYTHON_EVALUATE_INPUT = auto()
@@ -49,6 +50,7 @@ class FlatFact(str, Enum):
     VARIABLE_DEFINE = "var_def"
     VARIABLE_DECLARE = "var_decl"
     VARIABLE_DOMAIN = "var_dom"
+    VARIABLE_DEFAULT = "var_default"
     ENSURE = "ensure"
     EVALUATE = "evaluate"
     BOOL_EVALUATE = "bool_evaluate"
@@ -72,6 +74,7 @@ _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.EXPRESSION_VALUE: ("ID", "TYPE_ID", "VALUE"),
     FlatFact.EXPRESSION_VARIABLE: ("ID", "NAME"),
     FlatFact.ENSURE: ("NAME", "EXPR_ID"),
+    FlatFact.VARIABLE_DEFAULT: ("NAME", "EXPR_ID", "COND_EXPR_ID", "PRIORITY"),
     FlatFact.EVALUATE: ("EXPR", "EXPR_ID"),
     FlatFact.BOOL_EVALUATE: ("EXPR", "EXPR_ID"),
     FlatFact.SET: ("NAME",),
@@ -194,6 +197,16 @@ class EnsureConstraint:
 
 
 @dataclass(frozen=True, slots=True)
+class VariableDefault:
+    name: str | Symbol
+    default_expr: Expression
+    condition_expr: Expression
+    priority: int
+    registration_id: int | None = None
+    kind: ProgramInputKind = ProgramInputKind.VARIABLE_DEFAULT
+
+
+@dataclass(frozen=True, slots=True)
 class EvaluateInput:
     label: str | None
     expression: Expression
@@ -266,6 +279,7 @@ class ExecutionRun:
 ProgramInput: TypeAlias = (
     IVariableDeclare
     | IVariableDefine
+    | VariableDefault
     | EnsureConstraint
     | EvaluateInput
     | PythonEvaluateInput

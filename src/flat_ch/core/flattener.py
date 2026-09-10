@@ -28,6 +28,7 @@ from flat_ch.core.domain import (
     ProgramInput,
     ProgramInputKind,
     PythonEvaluateInput,
+    VariableDefault,
 )
 from flat_ch.core.evaluation.operators import Arity, Operator
 from flat_ch.core.evaluation.python import PythonRegistry
@@ -121,6 +122,17 @@ class Flattener:
                 label_str = ens.label if ens.label else "__anonymous"
                 self.interned_program.append(
                     (ProgramInputKind.ENSURE_CONSTRAINT, (label_str, expr_id, ens.registration_id))
+                )
+
+            case ProgramInputKind.VARIABLE_DEFAULT:
+                vdef: VariableDefault = node  # type: ignore
+                default_expr_id = self._intern_expr(vdef.default_expr)
+                cond_expr_id = self._intern_expr(vdef.condition_expr)
+                self.interned_program.append(
+                    (
+                        ProgramInputKind.VARIABLE_DEFAULT,
+                        (vdef.name, default_expr_id, cond_expr_id, vdef.priority, vdef.registration_id),
+                    )
                 )
 
             case ProgramInputKind.EVALUATE_INPUT:
@@ -504,6 +516,15 @@ class Flattener:
                 label_str, expr_id, registration_id = payload
                 fact_name = FlatFact.ENSURE.value
                 fact_args = [Function(label_str, []), Number(expr_id)]
+                if registration_id is not None:
+                    fact_args.insert(0, Number(registration_id))
+                self._emit_fact(Function(fact_name, fact_args))
+
+            case ProgramInputKind.VARIABLE_DEFAULT:
+                name, default_expr_id, cond_expr_id, priority, registration_id = payload
+                var_sym = name if isinstance(name, Symbol) else Function(name, [])
+                fact_name = FlatFact.VARIABLE_DEFAULT.value
+                fact_args = [var_sym, Number(default_expr_id), Number(cond_expr_id), Number(priority)]
                 if registration_id is not None:
                     fact_args.insert(0, Number(registration_id))
                 self._emit_fact(Function(fact_name, fact_args))

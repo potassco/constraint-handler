@@ -18,6 +18,27 @@ _fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_define(LABEL, NAME, E
 _fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_domain(NAME, EXPR).
 _fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_domain(LABEL, NAME, EXPR).
 
+% variable_choice is a domain-population alias, just like in CH's own compile2/propagator engines.
+#defined variable_choice/2.
+#defined variable_choice/3.
+_fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_choice(NAME, EXPR).
+_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_choice(LABEL, NAME, EXPR).
+
+% variable_assign forces a value, exactly like variable_define.
+#defined variable_assign/2.
+#defined variable_assign/3.
+_fch_input(variable_define(_fch_label, NAME, EXPR)) :- variable_assign(NAME, EXPR).
+_fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_assign(LABEL, NAME, EXPR).
+
+#defined variable_default/2.
+#defined variable_default/3.
+#defined variable_default/4.
+#defined variable_default/5.
+_fch_input(variable_default(_fch_label, NAME, DEFAULT, val(bool, true), 0)) :- variable_default(NAME, DEFAULT).
+_fch_input(variable_default(_fch_label, NAME, DEFAULT, CONDITION, 0)) :- variable_default(NAME, DEFAULT, CONDITION).
+_fch_input(variable_default(_fch_label, NAME, DEFAULT, CONDITION, PRIORITY)) :- variable_default(NAME, DEFAULT, CONDITION, PRIORITY).
+_fch_input(variable_default(LABEL, NAME, DEFAULT, CONDITION, PRIORITY)) :- variable_default(LABEL, NAME, DEFAULT, CONDITION, PRIORITY).
+
 #defined ensure/1.
 #defined ensure/2.
 _fch_input(ensure(__anonymous, EXPR)) :- ensure(EXPR).
@@ -92,6 +113,62 @@ _fch_optimize_label(LABEL, EXPR_ID, PRIORITY) :- _fch_flat(optimize_label(LABEL,
 % ?????
 %
 
+%
+% variable_default / default_mode.
+%
+% Only "define" (the default) and "depends" modes have suppression semantics implemented,
+% matching what CH's own default tests exercise. "basic" and "none" are accepted as valid
+% mode values but currently behave like "define" without the own-assignment suppression.
+%
+#defined default_mode/1.
+_fch_default_possible_mode(basic;define;depends;none).
+_fch_default_mode_provided :- default_mode(MODE), _fch_default_possible_mode(MODE).
+_fch_default_mode(MODE) :- default_mode(MODE), _fch_default_possible_mode(MODE).
+_fch_default_mode(define) :- not _fch_default_mode_provided.
+
+% A default is suppressed once its condition is known to be false.
+_fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
+    _fch_var_default(NAME, DEFAULT_ID, COND_ID, PRIORITY),
+    _fch_dynamic_expr_val(COND_ID, _fch_type_bool_id, false).
+
+% mode define: a default is suppressed by a direct assignment/definition of the same variable.
+_fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
+    _fch_var_default(NAME, DEFAULT_ID, COND_ID, PRIORITY),
+    _fch_var_def(NAME, _),
+    _fch_default_mode(define).
+
+% mode depends: a default is suppressed if any variable sharing an ensure constraint
+% with it (transitively, including itself) is already forced to a value.
+_fch_default_expr_var(EXPR_ID, VAR_NAME) :- _fch_expr_var(EXPR_ID, VAR_NAME).
+_fch_default_expr_var(EXPR_ID, VAR_NAME) :-
+    _fch_op_strict_child(EXPR_ID, CHILD_ID),
+    _fch_default_expr_var(CHILD_ID, VAR_NAME).
+
+_fch_default_ensure_var(ENSURE_EXPR_ID, VAR_NAME) :-
+    _fch_ensure(_, ENSURE_EXPR_ID),
+    _fch_default_expr_var(ENSURE_EXPR_ID, VAR_NAME),
+    _fch_default_mode(depends).
+
+_fch_default_connect(X, Y) :-
+    _fch_default_ensure_var(ENSURE_EXPR_ID, X),
+    _fch_default_ensure_var(ENSURE_EXPR_ID, Y),
+    _fch_var_decl(X),
+    X != Y.
+
+_fch_default_connect(X, X) :- _fch_var_decl(X), _fch_default_mode(depends).
+
+_fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
+    _fch_var_default(NAME, DEFAULT_ID, COND_ID, PRIORITY),
+    _fch_default_connect(NAME, CONNECTED),
+    _fch_var_def(CONNECTED, _),
+    _fch_default_mode(depends).
+
+_fch_default_apply(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
+    _fch_var_default(NAME, DEFAULT_ID, COND_ID, PRIORITY),
+	not _fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY).
+
+% A variable subject to an applying default is defined by the default expression.
+_fch_dynamic_var_def(NAME, DEFAULT_ID) :- _fch_default_apply(NAME, DEFAULT_ID, _, _).
 
 %
 % CH-facing output compatibility.

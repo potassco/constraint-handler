@@ -33,9 +33,31 @@ _fch_dynamic_expr_val(ID, TYPE, VAL) :-
 
 % For each declared variable we pick exactly one expression from its domain to define it.
 % This must also happen for variables that are only observed via public output.
+% Variables with a declared default (see variable_default) get a soft (0-or-1) choice instead,
+% since the default may supply the value; variables that are already forced via _fch_var_def
+% (e.g. variable_assign) skip domain choice entirely.
 1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID)}1 :-
     _fch_var_decl(NAME),
-    _fch_var_dom(NAME, _).
+    _fch_var_dom(NAME, _),
+    not _fch_var_def(NAME, _),
+    not _fch_var_has_default(NAME).
+
+{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID)}1 :-
+    _fch_var_decl(NAME),
+    _fch_var_dom(NAME, _),
+    not _fch_var_def(NAME, _),
+    _fch_var_has_default(NAME).
+
+_fch_var_has_default(NAME) :- _fch_var_default(NAME, _, _, _).
+
+% A variable with a declared default must resolve to exactly one distinct value, whether
+% it comes from a direct assignment/definition, the (now optional) domain choice, or an
+% applying default.
+:- _fch_var_has_default(NAME),
+    #count{
+        TYPE, VAL : _fch_var_def(NAME, EXPR_ID), _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL);
+        TYPE, VAL : _fch_dynamic_var_def(NAME, EXPR_ID), _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL)
+    } != 1.
 
 _fch_dynamic_var_def_val(NAME, EXPR_ID, TYPE, VAL) :-
     _fch_dynamic_var_def(NAME, EXPR_ID),
@@ -76,10 +98,13 @@ _fch_inactive_execution_output((EXEC, VAR, out)) :-
 
 _fch_var_has_domain(NAME) :- _fch_var_dom(NAME, _).
 
-% Declared variables without any domain entries are treated as invalid inputs.
+% Declared variables without any domain entries are treated as invalid inputs,
+% unless a declared default or a direct assignment/definition can supply their value instead.
 _fch_empty_var_domain(NAME) :-
     _fch_var_decl(NAME),
-    not _fch_var_has_domain(NAME).
+    not _fch_var_has_domain(NAME),
+    not _fch_var_has_default(NAME),
+    not _fch_var_def(NAME, _).
 
 _fch_dynamic_expr_val(ID, _fch_type_none_id, none) :-
     _fch_expr_var(ID, NAME),

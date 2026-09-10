@@ -7,6 +7,7 @@ class UserInput(str, Enum):
     DEFINE = "variable_define"
     DECLARE = "variable_declare"
     DOMAIN = "variable_domain"
+    DEFAULT = "variable_default"
     VALUE = "val"
     VARIABLE = "variable"
     OPERATION = "operation"

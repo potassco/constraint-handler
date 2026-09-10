@@ -29,6 +29,7 @@ from flat_ch.core.domain import (
     OptimizePrecision,
     PythonEvaluateInput,
     Type,
+    VariableDefault,
 )
 from flat_ch.core.evaluation.operators import Operator
 from flat_ch.core.serialization import SerializerProtocol
@@ -50,6 +51,7 @@ class Registration(BaseRegistration):
             UserInput.DECLARE.value: self._handle_declare,
             UserInput.DOMAIN.value: self._handle_domain,
             UserInput.DEFINE.value: self._handle_define,
+            UserInput.DEFAULT.value: self._handle_variable_default,
             UserInput.ENSURE.value: self._handle_ensure,
             UserInput.EVALUATE.value: self._handle_evaluate,
             UserInput.BOOL_EVALUATE.value: self._handle_bool_evaluate,
@@ -103,6 +105,8 @@ class Registration(BaseRegistration):
                 self.reg.update_var(var_sym, (IValue(Type.BOOL, True), IValue(Type.BOOL, False)))
             elif domain_kind == "fromFacts":
                 self.reg.update_var(var_sym, ())
+            elif domain_kind == "open":
+                self.reg.update_var(var_sym, ())
             elif domain_kind == "fromList":
                 unnested = tuple(self.parse_expression(s) for s in self.unnest(args[2].arguments[0]))
                 self.reg.update_var(var_sym, unnested)
@@ -117,6 +121,19 @@ class Registration(BaseRegistration):
             var_sym = self._lower_variable_symbol(args[1])
             self.reg.sequential_inputs.append(
                 IVariableDefine(var_sym, self.parse_expression(args[2]), self.reg.current_registration_id)
+            )
+
+    def _handle_variable_default(self, args: tuple[clingo.Symbol, ...]):
+        if len(args) == 5:
+            var_sym = self._lower_variable_symbol(args[1])
+            self.reg.sequential_inputs.append(
+                VariableDefault(
+                    var_sym,
+                    self.parse_expression(args[2]),
+                    self.parse_expression(args[3]),
+                    args[4].number,
+                    registration_id=self.reg.current_registration_id,
+                )
             )
 
     def _handle_ensure(self, args: tuple[clingo.Symbol, ...]):
