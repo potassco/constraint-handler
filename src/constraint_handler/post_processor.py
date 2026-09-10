@@ -104,7 +104,7 @@ def _extend_optimize_values(
             results.append(
                 warning.Warning(warning.OtherError(), (), f"no value computed for {original_expr} used in optimization")
             )
-        totals_real[key] = totals.get(key, 0) + values.get(original_expr, 0)
+        totals_real[key] = totals_real.get(key, 0) + values.get(original_expr, 0)
 
     for key, total in totals.items():
         label, priority = key
