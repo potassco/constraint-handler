@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+## v0.0.7
+
 - add the flat constraint handler (FCH) to `constraint_handler` and expose it
   through the new `api="fch"` argument of `add_to_control`, while keeping the
   existing CH API as the default.
