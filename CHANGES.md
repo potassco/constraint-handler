@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+- add the flat constraint handler (FCH) to `constraint_handler` and expose it
+  through the new `api="fch"` argument of `add_to_control`, while keeping the
+  existing CH API as the default.
 - add `find_values` and `add_declarations` to API
 - - update `variable_declare(LBL,X,D)` to be `variable_declare(X,D,LBL)` and do
     the same for other input predicates,
