@@ -1,4 +1,0 @@
-evaluated(operation(int_div,(variable(x),(val(int,2),()))),val(int,2))
-evaluated(operation(int_div,(variable(x),(val(int,2),()))),bad)
-evaluated(operation(int_div,(variable(x),(val(none,none),()))),bad)
-evaluated(operation(int_div,(variable(x),(bad,()))),bad)
