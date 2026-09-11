@@ -5,8 +5,12 @@ import mkdocs_gen_files
 nav = mkdocs_gen_files.Nav()
 
 for path in sorted(pathlib.Path("src").glob("**/*.py")):
-    module_path = path.relative_to("src").with_suffix("")
-    doc_path = path.relative_to("src").with_suffix(".md")
+    source_path = path.relative_to("src")
+    if source_path.parts[0] == "flat_ch":
+        continue
+
+    module_path = source_path.with_suffix("")
+    doc_path = source_path.with_suffix(".md")
     full_doc_path = pathlib.Path("developer/python_api", doc_path)
 
     parts = list(module_path.parts)
