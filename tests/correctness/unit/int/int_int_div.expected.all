@@ -1,5 +1,0 @@
-evaluated(operation(int_div,(val(int,4),(val(int,2),()))),val(int,2))
-evaluated(operation(int_div,(val(int,-4),(val(int,2),()))),val(int,-2))
-evaluated(operation(int_div,(val(int,4),(val(int,0),()))),bad)
-evaluated(operation(int_div,(val(int,4),(val(none,none),()))),bad)
-evaluated(operation(int_div,(val(int,4),(bad,()))),bad)

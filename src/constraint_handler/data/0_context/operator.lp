@@ -46,7 +46,7 @@ operator_declare(OP,((int;float),()),float) :- OP=(sqrt;cos;sin;tan;acos;asin;at
 operator_declare((abs;minus),(float,()),float).
 operator_declare(ceil,(float,()),int).
 operator_declare(floor,(float,()),int).
-operator_declare(OP,(T1,(T2,())),float) :- T1=(int;float), T2=(int;float), (T1,T2) != (int,int), OP=(sub;float_div;pow;max;min).
+operator_declare(OP,(T1,(T2,())),float) :- T1=(int;float), T2=(int;float), (T1,T2) != (int,int), OP=(sub;float_div;mod;pow;max;min).
 operator_declare(float_div,(int,(int,())),float).
 operator_declare((leq;lt;geq;gt),(T1,(T2,())),bool) :- T1=(int;float), T2=(int;float), (T1,T2) != (int,int).
 operator_declare((eq;neq),(float,(float,())),bool).
@@ -59,6 +59,7 @@ _operator_recoverable(mult).
 operator_declare((sub;pow),(int,(int,())),int).
 _operator_recoverable(pow).
 operator_declare(int_div,((int;float),((int;float),())),int).
+operator_declare(mod,(int,(int,())),int).
 operator_declare((abs;ceil;floor;minus),(int,()),int).
 
 %%%%%%%%%%%%%%%%% multimap

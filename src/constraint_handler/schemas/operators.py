@@ -27,6 +27,7 @@ ArithmeticOperator = common.PPEnum(
         "asin",
         "atan",
         "minus",
+        "mod",
         "floor",
         "ceil",
         "add",

@@ -1,6 +1,6 @@
 _float_operation(ExprList) :-
-    _expression(compile2, operation((add;mult;sub;pow;abs;ceil;floor;minus;int_div;eq;neq;leq;lt;geq;gt;max;min), ExprList)),
-    _expression_operationIndex(compile2, operation((add;mult;sub;pow;abs;ceil;floor;minus;int_div;eq;neq;leq;lt;geq;gt;max;min), ExprList), _, Arg),
+    _expression(compile2, operation((add;mult;sub;pow;abs;ceil;floor;minus;int_div;mod;eq;neq;leq;lt;geq;gt;max;min), ExprList)),
+    _expression_operationIndex(compile2, operation((add;mult;sub;pow;abs;ceil;floor;minus;int_div;mod;eq;neq;leq;lt;geq;gt;max;min), ExprList), _, Arg),
     _type_dynamic(compile2,Arg,float).
 %%% Abdallah: works also on only ints but is float
 _float_operation(ExprList) :- _expression(compile2, operation(float_div, ExprList)).
@@ -86,7 +86,7 @@ _float_mul(mult, ExprList, Idx, @pythonFloatBinary(mult, Val, ListVal)) :-
 
 %%%%%%%%%%%%%%%%% binary operations
 
-_binary_float_operation(sub;pow;float_div;int_div;leq;lt;geq;gt;max;min).
+_binary_float_operation(sub;pow;float_div;int_div;mod;leq;lt;geq;gt;max;min).
 
 _float_eq_used_expression(Expr) :-
     _expression(compile2, operation((eq;neq), (Expr, (OtherExpr, ())))).

@@ -75,6 +75,10 @@ def pythonFloatBinary(operator, val1, val2):
             if value2 == 0.0:
                 return clingo.Function("bad", [])
             return _to_val("float", value1 / value2)
+        case "mod":
+            if value2 == 0.0:
+                return clingo.Function("bad", [])
+            return _to_val("float", value1 % value2)
         case "sub":
             return _to_val("float", value1 - value2)
         case "pow":

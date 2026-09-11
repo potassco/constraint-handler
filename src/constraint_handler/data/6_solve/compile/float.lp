@@ -18,7 +18,7 @@ _direct_resortToPython(operation(mult,(ARG1,(ARG2,REST)))) :-
     _computeIdx(operation(mult,(ARG1,(ARG2,REST))),IDX,val(float,V)).
 
 _operator_forFloat(abs;acos;asin;atan;ceil;cos;floor;minus;sin;sqrt;tan).
-_operator_forFloat(float_div;int_div;float_div;geq;gt;leq;lt;max;min;pow;sub).
+_operator_forFloat(float_div;int_div;float_div;mod;geq;gt;leq;lt;max;min;pow;sub).
 _operator_needsPython(OP,float) :- operator_declare(OP,(float,()),T), _operator_forFloat(OP).
 _operator_needsPython(OP,int) :- operator_declare(OP,(int,()),float), _operator_forFloat(OP).
 _operator_needsPython(OP,T1,T2) :- operator_declare(OP,(T1,(T2,())),T), (T1;T2)=float, _operator_forFloat(OP).

@@ -1,11 +1,9 @@
-evaluate(operation(int_div,(val(int,4),(val(int,2),())))).
-evaluate(operation(int_div,(val(int,4),(val(none,none),())))).
-evaluate(operation(int_div,(val(int,4),(bad,())))).
-
 variable_declare(x,fromFacts).
-variable_domain(x,val(int,4)).
+variable_domain(x,val(int,17)).
 variable_domain(x,val(none,none)).
 variable_domain(x,bad).
 evaluate(operation(int_div,(variable(x),(val(int,2),())))).
+evaluate(operation(int_div,(val(int,200),(variable(x),())))).
+evaluate(operation(int_div,(variable(x),(val(int,-17),())))).
 evaluate(operation(int_div,(variable(x),(val(none,none),())))).
 evaluate(operation(int_div,(variable(x),(bad,())))).

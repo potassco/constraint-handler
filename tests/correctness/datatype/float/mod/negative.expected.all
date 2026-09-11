@@ -1,0 +1,7 @@
+evaluated(operation(mod,(val(float,float("-250.5")),(val(int,17),()))),val(float,float("4.5")))
+evaluated(operation(mod,(val(int,200),(val(float,float("-17.0")),()))),val(float,float("-4.0")))
+evaluated(operation(mod,(val(float,float("-250.5")),(val(float,float("-31.25")),()))),val(float,float("-0.5")))
+evaluated(operation(mod,(val(float,float("10.0")),(val(float,float("3.0")),()))),val(float,float("1.0")))
+evaluated(operation(mod,(val(float,float("10.0")),(val(float,float("-3.0")),()))),val(float,float("-2.0")))
+evaluated(operation(mod,(val(float,float("-10.0")),(val(float,float("3.0")),()))),val(float,float("2.0")))
+evaluated(operation(mod,(val(float,float("-10.0")),(val(float,float("-3.0")),()))),val(float,float("-1.0")))

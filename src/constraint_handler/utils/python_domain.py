@@ -1329,6 +1329,11 @@ class Domain:
         return cls._map_numbers_binary(left, right, lambda lhs, rhs: lhs - rhs)
 
     @classmethod
+    def op_mod(cls, left: Domain, right: Domain) -> Domain:
+        """Compute the modulo domain."""
+        return cls._map_numbers_binary(left, right, lambda lhs, rhs: lhs % rhs)
+
+    @classmethod
     def op_mult(cls, left: Domain, right: Domain) -> Domain:
         """Compute the multiplication domain."""
         return cls._map_arithmetic_binary(left, right, lambda lhs, rhs: lhs * rhs)
