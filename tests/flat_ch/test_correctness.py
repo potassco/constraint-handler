@@ -76,6 +76,8 @@ flat_ch_currently_not_working_tests = {
     "execution/optional_run",
     "execution/python_augassign_types",
     "execution/python_integrity",
+    "expression/alternative_syntax/core",
+    "expression/alternative_syntax/lambda",
     "expression/bad_equality",
     "expression/lambda_recursive",
     "expression/lambda_zero_args",

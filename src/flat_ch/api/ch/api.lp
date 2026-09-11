@@ -6,29 +6,29 @@
 #defined variable_declare/2.
 #defined variable_declare/3.
 _fch_input(variable_declare(_fch_label, NAME, DOMAIN)) :- variable_declare(NAME, DOMAIN).
-_fch_input(variable_declare(LABEL, NAME, DOMAIN)) :- variable_declare(LABEL, NAME, DOMAIN).
+_fch_input(variable_declare(LABEL, NAME, DOMAIN)) :- variable_declare(NAME, DOMAIN, LABEL).
 
 #defined variable_define/2.
 #defined variable_define/3.
 _fch_input(variable_define(_fch_label, NAME, EXPR)) :- variable_define(NAME, EXPR).
-_fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_define(LABEL, NAME, EXPR).
+_fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_define(NAME, EXPR, LABEL).
 
 #defined variable_domain/2.
 #defined variable_domain/3.
 _fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_domain(NAME, EXPR).
-_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_domain(LABEL, NAME, EXPR).
+_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_domain(NAME, EXPR, LABEL).
 
 % variable_choice is a domain-population alias, just like in CH's own compile2/propagator engines.
 #defined variable_choice/2.
 #defined variable_choice/3.
 _fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_choice(NAME, EXPR).
-_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_choice(LABEL, NAME, EXPR).
+_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_choice(NAME, EXPR, LABEL).
 
 % variable_assign forces a value, exactly like variable_define.
 #defined variable_assign/2.
 #defined variable_assign/3.
 _fch_input(variable_define(_fch_label, NAME, EXPR)) :- variable_assign(NAME, EXPR).
-_fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_assign(LABEL, NAME, EXPR).
+_fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_assign(NAME, EXPR, LABEL).
 
 #defined variable_default/2.
 #defined variable_default/3.
@@ -37,44 +37,44 @@ _fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_assign(LABEL, NAME, E
 _fch_input(variable_default(_fch_label, NAME, DEFAULT, val(bool, true), 0)) :- variable_default(NAME, DEFAULT).
 _fch_input(variable_default(_fch_label, NAME, DEFAULT, CONDITION, 0)) :- variable_default(NAME, DEFAULT, CONDITION).
 _fch_input(variable_default(_fch_label, NAME, DEFAULT, CONDITION, PRIORITY)) :- variable_default(NAME, DEFAULT, CONDITION, PRIORITY).
-_fch_input(variable_default(LABEL, NAME, DEFAULT, CONDITION, PRIORITY)) :- variable_default(LABEL, NAME, DEFAULT, CONDITION, PRIORITY).
+_fch_input(variable_default(LABEL, NAME, DEFAULT, CONDITION, PRIORITY)) :- variable_default(NAME, DEFAULT, CONDITION, PRIORITY, LABEL).
 
 #defined ensure/1.
 #defined ensure/2.
 _fch_input(ensure(__anonymous, EXPR)) :- ensure(EXPR).
-_fch_input(ensure(LABEL, EXPR)) :- ensure(LABEL, EXPR).
+_fch_input(ensure(LABEL, EXPR)) :- ensure(EXPR, LABEL).
 
 #defined evaluate/1.
 #defined evaluate/2.
 _fch_input(evaluate(_fch_label, EXPR)) :- evaluate(EXPR).
-_fch_input(evaluate(LABEL, EXPR)) :- evaluate(LABEL, EXPR).
+_fch_input(evaluate(LABEL, EXPR)) :- evaluate(EXPR, LABEL).
 
 #defined bool_evaluate/1.
 #defined bool_evaluate/2.
 _fch_input(bool_evaluate(_fch_label, EXPR)) :- bool_evaluate(EXPR).
-_fch_input(bool_evaluate(LABEL, EXPR)) :- bool_evaluate(LABEL, EXPR).
+_fch_input(bool_evaluate(LABEL, EXPR)) :- bool_evaluate(EXPR, LABEL).
 
 #defined set_declare/1.
 #defined set_declare/2.
 _fch_input(set_declare(_fch_label, NAME)) :- set_declare(NAME).
-_fch_input(set_declare(LABEL, NAME)) :- set_declare(LABEL, NAME).
+_fch_input(set_declare(LABEL, NAME)) :- set_declare(NAME, LABEL).
 
 #defined set_baseDomain/2.
 #defined set_baseDomain/3.
 _fch_input(set_baseDomain(_fch_label, NAME, EXPR)) :- set_baseDomain(NAME, EXPR).
-_fch_input(set_baseDomain(LABEL, NAME, EXPR)) :- set_baseDomain(LABEL, NAME, EXPR).
+_fch_input(set_baseDomain(LABEL, NAME, EXPR)) :- set_baseDomain(NAME, EXPR, LABEL).
 
 #defined set_assign/2.
 #defined set_assign/3.
 _fch_input(set_assign(_fch_label, NAME, EXPR)) :- set_assign(NAME, EXPR).
-_fch_input(set_assign(LABEL, NAME, EXPR)) :- set_assign(LABEL, NAME, EXPR).
+_fch_input(set_assign(LABEL, NAME, EXPR)) :- set_assign(NAME, EXPR, LABEL).
 
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
 _fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, 0)) :- optimize_maximizeSum(EXPR, ELEMENT).
 _fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, PRIORITY)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY).
-_fch_input(optimize_maximizeSum(LABEL, EXPR, ELEMENT, PRIORITY)) :- optimize_maximizeSum(LABEL, EXPR, ELEMENT, PRIORITY).
+_fch_input(optimize_maximizeSum(LABEL, EXPR, ELEMENT, PRIORITY)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY, LABEL).
 
 #defined optimize_precision/1.
 #defined optimize_precision/2.
@@ -84,23 +84,23 @@ _fch_input(optimize_precision(EXPR, all)) :- optimize_precision(EXPR).
 #defined execution_declare/4.
 #defined execution_declare/5.
 _fch_input(execution_declare(_fch_label, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
-_fch_input(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT).
+_fch_input(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL).
 
-_fch_execution_decl_meta(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT).
+_fch_execution_decl_meta(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL).
 
 #defined execution_run/1.
 #defined execution_run/2.
 _fch_input(execution_run(_fch_label, NAME)) :- execution_run(NAME).
-_fch_input(execution_run(LABEL, NAME)) :- execution_run(LABEL, NAME).
+_fch_input(execution_run(LABEL, NAME)) :- execution_run(NAME, LABEL).
 
 
 %
 % ?????
 %
 _fch_execution_run(NAME) :- execution_run(NAME).
-_fch_execution_run(NAME) :- execution_run(_, NAME).
+_fch_execution_run(NAME) :- execution_run(NAME, _).
 _fch_ssa(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :-
-	execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT),
+	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL),
 	_fch_execution_run(NAME).
 
 

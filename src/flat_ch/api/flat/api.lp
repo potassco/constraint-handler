@@ -105,7 +105,7 @@ Args:
  - Expression: A boolean expression whose result should be materialized as a public helper atom.
 *%
 #defined bool_evaluate/2.
-_fch_input(bool_evaluate(EXPR, EXPR))    :- bool_evaluate(_, EXPR).
+_fch_input(bool_evaluate(EXPR, EXPR))    :- bool_evaluate(EXPR, _).
 
 %*! set_declare(SetName)
 
