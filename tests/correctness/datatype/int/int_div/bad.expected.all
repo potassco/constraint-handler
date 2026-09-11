@@ -1,0 +1,4 @@
+evaluated(operation(int_div,(val(int,200),(val(int,0),()))),bad)
+evaluated(operation(int_div,(val(int,200),(bad,()))),bad)
+evaluated(operation(int_div,(bad,(val(int,17),()))),bad)
+evaluated(operation(int_div,(bad,(bad,()))),bad)

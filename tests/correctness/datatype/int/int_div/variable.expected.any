@@ -1,0 +1,7 @@
+evaluated(operation(int_div,(variable(x),(val(int,2),()))),val(int,8))
+evaluated(operation(int_div,(variable(x),(val(int,2),()))),bad)
+evaluated(operation(int_div,(val(int,200),(variable(x),()))),val(int,11))
+evaluated(operation(int_div,(val(int,200),(variable(x),()))),bad)
+evaluated(operation(int_div,(variable(x),(val(int,-17),()))),val(int,-1))
+evaluated(operation(int_div,(variable(x),(val(none,none),()))),bad)
+evaluated(operation(int_div,(variable(x),(bad,()))),bad)
