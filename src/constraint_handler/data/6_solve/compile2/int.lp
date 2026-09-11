@@ -138,6 +138,24 @@ _warning(expression(zeroDivisionError),(),(int_div,(Expr1, (Expr2, ())))) :-
     _expression(compile2, operation(int_div, (Expr1, (Expr2, ())))),
     _se_value(Expr2, val(int, 0)).
 
+%%%%%%%%%%%%%%%%% mod
+
+:-
+    _expression(compile2, operation(mod, (Expr1, (Expr2, ())))),
+    _se_value(Expr1, val(int, V0)),
+    _se_value(Expr2, val(int, V1)),
+    V1 != 0,
+    not _se_value(operation(mod, (Expr1, (Expr2, ()))), val(int, V0 \ V1)).
+
+:-
+    _expression(compile2, operation(mod, (Expr1, (Expr2, ())))),
+    _se_value(Expr2, val(int, 0)),
+    not _se_value(operation(mod, (Expr1, (Expr2, ()))), bad).
+
+_warning(expression(zeroDivisionError),(),(mod,(Expr1, (Expr2, ())))) :-
+    _expression(compile2, operation(mod, (Expr1, (Expr2, ())))),
+    _se_value(Expr2, val(int, 0)).
+
 %%%%%%%%%%%%%%%%% abs
 
 :-

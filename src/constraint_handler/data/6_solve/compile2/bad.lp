@@ -1,11 +1,11 @@
 
-_bad_is_bad(add; sub; int_div; float_div; eq; neq; leq; lt; geq; gt; max; min;
+_bad_is_bad(add; sub; int_div; float_div; mod; eq; neq; leq; lt; geq; gt; max; min;
     lnot; wnot; snot; lxor; leqv; hasValue; abs; ceil; floor; minus;
     cardinality;
     length; concat).
     %% set_fold and implode?
 
-_bad_on_none_arithmetic(add; mult; sub; int_div; float_div; abs; ceil; floor; minus; max; min; concat).
+_bad_on_none_arithmetic(add; mult; sub; int_div; float_div; mod; abs; ceil; floor; minus; max; min; concat).
 _bad_on_none_ordered_comparison(leq; lt; geq; gt).
 
 :-

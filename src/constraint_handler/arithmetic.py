@@ -64,6 +64,13 @@ def evaluate_operator(o, args) -> atom.EvalResult:
                         ((warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}/{rval}"),),
                     )
                 return atom.EvalResult(lval / rval, NO_ERRORS)
+            case operators.ArithmeticOperator.mod:
+                if rval == 0:
+                    return atom.EvalResult(
+                        common.Bad.bad,
+                        ((warning.Expression(warning.ExpressionWarning.zeroDivisionError), f"{lval}%{rval}"),),
+                    )
+                return atom.EvalResult(lval % rval, NO_ERRORS)
             case operators.ArithmeticOperator.pow:
                 if rval == 0:
                     return atom.EvalResult(1, NO_ERRORS)

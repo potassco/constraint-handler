@@ -1,0 +1,2 @@
+evaluated(operation(mod,(val(float,float("2.5")),(val(none,none),()))),bad)
+evaluated(operation(mod,(val(none,none),(val(float,float("2.5")),()))),bad)
