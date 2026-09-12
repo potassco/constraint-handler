@@ -2,6 +2,7 @@
 direct_query(E)  :- _expression(compile,LBL,DECL,E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
 direct_query(SE) :- direct_query(T), SE=@pythonTupleElements(T).
+_expression(compile,E) :- direct_query(E).
 
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
 _se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
@@ -43,16 +44,12 @@ _direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP
 %_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _direct_bad_operation(OP,ARGS).
 _direct_queryArgsValues(operation(EOP,ARGS),OP,ARGS) :- direct_query(operation(EOP,ARGS)), _se_value(EOP,val(function,OP)).
 _computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
-_direct_compArg(ARGS,IDX,ARG) :- _direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS).
-_computeIdx(E,IDX,V) :-_direct_queryArgsValues(E,OP,ARGS), _direct_compArg(ARGS,IDX,ARG), _se_value(ARG,V).
-%_computeIdx(E,IDX,V) :-_direct_queryArgsValues(E,OP,ARGS), (IDX,ARG)=@pythonEnumerateElements(ARGS), _se_value(ARG,V).
+_computeIdx(E,IDX,V) :- _direct_queryArgsValues(E,OP,ARGS), _expression_operationIndex(compile,E,IDX,ARG), _se_value(ARG,V).
 _se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
 
-%%% TODO lenght/2 is bad
 %%%%%%%%%%%%%%%%% lambda application
 _direct_needs_args_list(E,ARGS) :- _direct_queryArgsValues(E,lambda(LARGS,SUB),ARGS).
-_length(ARGS,LEN) :- _direct_queryArgsValues(E,OP,ARGS), LEN=@pythonListLength(ARGS).
-_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E,ARGS), _length(ARGS,IDX).
+_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E,ARGS), _expression_operationLength(compile,E,IDX).
 _direct_args_list_aux(E,IDX,(V,VS)) :- _direct_needs_args_list(E,ARGS), _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
 _direct_args_list(E,VS) :- _direct_needs_args_list(E,ARGS), _direct_args_list_aux(E,0,VS).
 
@@ -65,7 +62,7 @@ _computedIdx(E,VO) :- _lambda_aux(E,RED), _se_value(RED,VO).
 
 %%%%%%%%%%%%%%%%% python operator
 _direct_implode(V) :- _computeIdx(E,python(STR)), _computeIdx(E,IDX,V).
-_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(STR),ARGS), _length(ARGS,IDX).
+_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(STR),ARGS), _expression_operationLength(compile,E,IDX).
 _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L), _computeIdx(E,IDX,V),
     _direct_imploded(V,IMP).
 

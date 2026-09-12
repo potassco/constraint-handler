@@ -493,7 +493,6 @@ compile_xfail: set[str] = {
     "datatype/float/pow/mixed",
     "datatype/int/int_div/negative",
     "engine/request",
-    "expression/lambda/deeper",
     "expression/tuple_extra",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
