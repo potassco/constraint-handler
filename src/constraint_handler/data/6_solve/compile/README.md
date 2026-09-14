@@ -24,7 +24,6 @@ _argument_value/2.
 _direct_queryArgsValues/3.
 _computeIdx/2. _computeIdx/3.
 _computedIdx/2.
-_direct_compArg/3.
 _direct_args_list_aux/3.
 _direct_args_list/2.
 _direct_implode/1.
@@ -39,7 +38,6 @@ _int_add/3.
 _int_mult/3.
 _isTuple/2. _isTuple/4.
 _lambda_aux/2.
-_length/2.
 _multimap_add/3.
 _multimap_has/3.
 _multimap_representative/4.

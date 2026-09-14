@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%% add mult
-_int_add(operation(add,ARGS),LEN,val(int,0)) :- _computeIdx(operation(add,ARGS),add), _length(ARGS,LEN), LEN <= 2.
+_int_add(operation(add,ARGS),LEN,val(int,0)) :- _computeIdx(operation(add,ARGS),add), _expression_operationLength(compile,operation(add,ARGS),LEN), LEN <= 2.
 _int_add(E,IDX,val(int,VO+V)) :- _int_add(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(int,V)).
 _int_add(E,IDX,val(int,VO+1)) :- _int_add(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(bool,true)).
 _int_add(E,IDX,val(int,VO))   :- _int_add(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(bool,false)).
@@ -7,7 +7,7 @@ _int_add(E,IDX,val(int,VO))   :- _int_add(E,IDX+1,val(int,VO)), _computeIdx(E,ID
 _computedIdx(E,V)  :- _int_add(E,0,V).
 _computedIdx(operation(add,ARGS),val(int,N)) :-
     _computeIdx(operation(add,ARGS),add),
-    _length(ARGS,LEN), LEN > 2,
+    _expression_operationLength(compile,operation(add,ARGS),LEN), LEN > 2,
     %%% LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val((bool;int;none),V)) },
     LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val((bool;int),V)) }, %%% ensures there are no floats
     N = #sum { V,IDX : _computeIdx(operation(add,ARGS),IDX,val(int,V));
@@ -18,7 +18,7 @@ _computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(int,0))
 _computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(bool,false)).
 %%%_computedIdx(E,val(int,0)) :- _computeIdx(E,mult), _computeIdx(E,IDX,val(none,none)).
 
-_int_mult(operation(mult,ARGS),LEN,val(int,1)) :- _computeIdx(operation(mult,ARGS),mult), _length(ARGS,LEN).
+_int_mult(operation(mult,ARGS),LEN,val(int,1)) :- _computeIdx(operation(mult,ARGS),mult), _expression_operationLength(compile,operation(mult,ARGS),LEN).
 _int_mult(E,IDX,val(int,VO*V)) :- _int_mult(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(int,V)).
 _int_mult(E,IDX,val(int,VO))   :- _int_mult(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(bool,true)).
 _int_mult(E,IDX,val(int,0))    :- _int_mult(E,IDX+1,val(int,VO)), _computeIdx(E,IDX,val(bool,false)).

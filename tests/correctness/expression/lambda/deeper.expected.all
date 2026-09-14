@@ -1,0 +1,5 @@
+value(x,val(int,9))
+value(z2,val(float,float("5.5")))
+value(y,val(float,float("4.5")))
+value(z,val(float,float("4.5")))
+value(y2,val(float,float("5.5")))

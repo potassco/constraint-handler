@@ -7,7 +7,7 @@
 domain(0..digit_count - 1).
 depth(1..max_depth).
 
-variable_declare(assign_x, x, fromFacts).
+variable_declare(x, fromFacts).
 variable_domain(x, val(int, I)) :- domain(I).
 
 expr(1, variable(x)).
@@ -17,6 +17,6 @@ expr(K + 1, NextExpr) :-
     ScaledExpr = operation(mult, (val(int, digit_count), (Expr, ()))),
     NextExpr = operation(add, (variable(x), (ScaledExpr, ()))).
 
-variable_define(assign_y, y, Expr) :- expr(K, Expr), max_depth = K.
+variable_define(y, Expr) :- expr(K, Expr), max_depth = K.
 
-ensure(y_has_upper_bound, operation(eq, (variable(y), (val(int, digit_count**max_depth - 1), ())))).
+ensure(operation(eq, (variable(y), (val(int, digit_count**max_depth - 1), ())))).
