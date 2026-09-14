@@ -21,7 +21,7 @@ type_expression/2.
 _expression_pythonEval/2.
 _expression_dynamicTainted/1.
 _argument_value/2.
-_direct_queryArgsValues/3.
+_direct_queryOperation/1.
 _computeIdx/2. _computeIdx/3.
 _computedIdx/2.
 _direct_args_list_aux/3.
@@ -30,7 +30,6 @@ _direct_implode/1.
 _direct_imploded_args_aux/3.
 _direct_implodeTupleAux/3.
 _direct_lazy/1.
-_direct_needs_args_list/2.
 _direct_tupleValuesAux/3.
 _expression_eval_exec/2.
 _expression(compile,EXPR).

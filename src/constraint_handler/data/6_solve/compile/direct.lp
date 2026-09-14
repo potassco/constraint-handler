@@ -35,23 +35,22 @@ _argument_value(operation(OP,ARGS),V) :- _expression(compile,operation(OP,ARGS))
 _se_value(operation(OP,ARGS),bad) :- _argument_value(operation(OP,ARGS),bad), not _operator_recoverable(OP), not _expression_safe(operation(OP,ARGS)).
 
 %%%%%%%%%%%%%%%%% _computedIdx operators
-_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), _expression_safe(operation(OP,ARGS)).
-_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), _operator_recoverable(OP).
-_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _operator_recoverable(OP), not _argument_value(operation(OP,ARGS),bad).
-%_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _expression_safe(operation(OP,ARGS)), not _operator_recoverable(OP), not _direct_bad_operation(OP,ARGS).
-%_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _operator_recoverable(OP), not _safe_bad(operation(OP,ARGS)). %% TODO: use static tainted instead
+_direct_queryOperation(operation(OP,ARGS)) :- direct_query(operation(OP,ARGS)), _expression_safe(operation(OP,ARGS)).
+_direct_queryOperation(operation(OP,ARGS)) :- direct_query(operation(OP,ARGS)), _operator_recoverable(OP).
+_direct_queryOperation(operation(OP,ARGS)) :- direct_query(operation(OP,ARGS)), not _operator_recoverable(OP), not _argument_value(operation(OP,ARGS),bad).
+%_direct_queryOperation(operation(OP,ARGS)) :- direct_query(operation(OP,ARGS)), not _expression_safe(operation(OP,ARGS)), not _operator_recoverable(OP), not _direct_bad_operation(OP,ARGS).
+%_direct_queryOperation(operation(OP,ARGS)) :- direct_query(operation(OP,ARGS)), not _operator_recoverable(OP), not _safe_bad(operation(OP,ARGS)). %% TODO: use static tainted instead
 %_se_value(E,bad) :- _expression_dynamicTainted(E).
-%_direct_queryArgsValues(operation(OP,ARGS),OP,ARGS) :- direct_query(operation(OP,ARGS)), not _direct_bad_operation(OP,ARGS).
-_direct_queryArgsValues(operation(EOP,ARGS),OP,ARGS) :- direct_query(operation(EOP,ARGS)), _se_value(EOP,val(function,OP)).
-_computeIdx(E,OP) :-_direct_queryArgsValues(E,OP,ARGS).
-_computeIdx(E,IDX,V) :- _direct_queryArgsValues(E,OP,ARGS), _expression_operationIndex(compile,E,IDX,ARG), _se_value(ARG,V).
-_se_value(E,VO) :- _direct_queryArgsValues(E,OP,ARGS), _computedIdx(E,VO).
+%_direct_queryOperation(operation(OP,ARGS)) :- direct_query(operation(OP,ARGS)), not _direct_bad_operation(OP,ARGS).
+_computeIdx(E,OP) :- _direct_queryOperation(E), _expression_operationOperator(compile,E,OP).
+_computeIdx(operation(EOP,ARGS),OP) :- direct_query(operation(EOP,ARGS)), _se_value(EOP,val(function,OP)).
+_computeIdx(E,IDX,V) :- _computeIdx(E,OP), _expression_operationIndex(compile,E,IDX,ARG), _se_value(ARG,V).
+_se_value(E,VO) :- _computedIdx(E,VO).
 
 %%%%%%%%%%%%%%%%% lambda application
-_direct_needs_args_list(E,ARGS) :- _direct_queryArgsValues(E,lambda(LARGS,SUB),ARGS).
-_direct_args_list_aux(E,IDX,()) :- _direct_needs_args_list(E,ARGS), _expression_operationLength(compile,E,IDX).
-_direct_args_list_aux(E,IDX,(V,VS)) :- _direct_needs_args_list(E,ARGS), _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
-_direct_args_list(E,VS) :- _direct_needs_args_list(E,ARGS), _direct_args_list_aux(E,0,VS).
+_direct_args_list_aux(E,N,()) :- _computeIdx(E,lambda(LARGS,SUB)), _expression_operationLength(compile,E,N).
+_direct_args_list_aux(E,IDX,(V,VS)) :- _direct_args_list_aux(E,IDX+1,VS), _computeIdx(E,IDX,V).
+_direct_args_list(E,VS) :- _direct_args_list_aux(E,0,VS).
 
 _lambda_aux(E,RED) :- _computeIdx(E,lambda(VARS,ERES)),
     _direct_args_list(E,ARGS),
@@ -62,7 +61,7 @@ _computedIdx(E,VO) :- _lambda_aux(E,RED), _se_value(RED,VO).
 
 %%%%%%%%%%%%%%%%% python operator
 _direct_implode(V) :- _computeIdx(E,python(STR)), _computeIdx(E,IDX,V).
-_direct_imploded_args_aux(E,IDX,()) :- _direct_queryArgsValues(E,python(STR),ARGS), _expression_operationLength(compile,E,IDX).
+_direct_imploded_args_aux(E,IDX,()) :- _computeIdx(E,python(STR)), _expression_operationLength(compile,E,IDX).
 _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L), _computeIdx(E,IDX,V),
     _direct_imploded(V,IMP).
 
