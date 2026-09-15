@@ -13,8 +13,8 @@ import constraint_handler.python_externals.interface as python_interface
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.propagator_atom as propagator_atom
 import constraint_handler.schemas.type_ as type_
-from src.constraint_handler.PropagatorConstants import PROPAGATOR_CHECK_MODE_STR
 from constraint_handler.schemas.operators import ArithmeticOperator
+from src.constraint_handler.PropagatorConstants import PROPAGATOR_CHECK_MODE_STR
 
 ctrl_options = ["1000", "--heuristic=Domain"]
 Engine = Literal["compile", "ground", "propagator"]
@@ -51,7 +51,9 @@ def make_expression(index: int) -> expression.Operation:
     )
     distinct = expression.Operation(
         ArithmeticOperator.add,
-        myClorm.ImmutableList([expression.Variable(clingo.Function("y")), expression.Val(type_.BaseType.int, index + 1)]),
+        myClorm.ImmutableList(
+            [expression.Variable(clingo.Function("y")), expression.Val(type_.BaseType.int, index + 1)]
+        ),
     )
     for depth in range(4):
         distinct = expression.Operation(
@@ -98,7 +100,9 @@ propagator_init = BenchmarkPropagateInit(
                 index * 7 + 2,
             ),
             BenchmarkSymbolicAtom(
-                myClorm.pytocl(propagator_atom.Propagator_share_value(make_expression(index), clingo.Function("benchmark"))),
+                myClorm.pytocl(
+                    propagator_atom.Propagator_share_value(make_expression(index), clingo.Function("benchmark"))
+                ),
                 index * 7 + 3,
             ),
             BenchmarkSymbolicAtom(
@@ -112,7 +116,9 @@ propagator_init = BenchmarkPropagateInit(
                 index * 7 + 4,
             ),
             BenchmarkSymbolicAtom(
-                myClorm.pytocl(propagator_atom.Propagator_bool_evaluate(make_expression(index), clingo.Function("benchmark"))),
+                myClorm.pytocl(
+                    propagator_atom.Propagator_bool_evaluate(make_expression(index), clingo.Function("benchmark"))
+                ),
                 index * 7 + 5,
             ),
             BenchmarkSymbolicAtom(
@@ -203,7 +209,17 @@ def run_myclorm_preprocessing() -> None:
         python_interface.pythonStatementVariables,
     ):
         getattr(function, "cache_clear", lambda: None)()
-    for expression_symbol, arguments, globals_id, variables, values, types, statement, extract_statement, extract_expr in preprocessing_inputs:
+    for (
+        expression_symbol,
+        arguments,
+        globals_id,
+        variables,
+        values,
+        types,
+        statement,
+        extract_statement,
+        extract_expr,
+    ) in preprocessing_inputs:
         python_interface.pythonIsExpr(expression_symbol)
         python_interface.pythonNormalExpr(expression_symbol)
         python_interface.pythonExpressionVariable(expression_symbol)
