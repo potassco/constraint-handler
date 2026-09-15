@@ -2,12 +2,15 @@
 
 import dataclasses
 import enum
-import itertools
 import types
 import typing
 from functools import cache
 
 import clingo
+
+TRUE = clingo.Function("true", [])
+FALSE = clingo.Function("false", [])
+NONE = clingo.Function("none", [])
 
 
 class FailedInstantiationExn(Exception):
@@ -61,8 +64,8 @@ class ImmutableList(tuple):
         return cls(un)
 
 
-baseTypes = {"bool": bool, "int": int, "float": float, "string": str, "none": type(None)}
 _NO_CUSTOM_CONVERTER = object()
+_cltopy_cache = {}
 
 
 @cache
@@ -105,6 +108,19 @@ def _get_record_predicate_name(target):
     return predicatedefn_default_predicate_name(target.__name__)
 
 
+@cache
+def _get_record_field_targets(target, target_class):
+    fields = getattr(target_class, "_fields", None)
+    if fields is None:
+        if dataclasses.is_dataclass(target_class):
+            fields = tuple(field.name for field in dataclasses.fields(target_class) if field.init)
+        else:
+            fields = _cached_get_type_hints(target_class)
+    field_types = _cached_get_type_hints(target_class)
+    typevars = dict(zip(getattr(target_class, "__parameters__", ()), _cached_get_args(target)))
+    return {field: _substitute_typevars(field_types.get(field, typing.Any), typevars) for field in fields}
+
+
 def _get_signatures(target):
     target_class = _cached_get_origin(target) or target
     if dataclasses.is_dataclass(target_class):
@@ -121,9 +137,11 @@ def _get_signatures(target):
 @cache
 def _union_rows(target):
     target = _resolve_type_alias(target)
+    while _cached_get_origin(target) is typing.Annotated:
+        target = _resolve_type_alias(_cached_get_args(target)[0])
     origin = _cached_get_origin(target)
     if origin in (typing.Union, types.UnionType):
-        return _cached_get_args(target)
+        return tuple(row for member in _cached_get_args(target) for row in _union_rows(member))
     return (target,)
 
 
@@ -158,28 +176,7 @@ def pytocl(v, target_type=None):
     if target_type is None:
         target_type = type(v)
 
-    if target_type is int:
-        return clingo.Number(v)
-    if target_type is bool:
-        return clingo.Function("true" if v else "false", [])
-    if target_type is str:
-        return clingo.String(v)
-    if target_type is float:
-        return clingo.Function("float", [clingo.String(str(v))])
-    if target_type is types.NoneType or target_type is type(None):
-        return clingo.Function("none", [])
-    if target_type is list:
-        return nest([pytocl(e) for e in v])
-    if target_type is tuple:
-        return clingo.Function("", [pytocl(e) for e in v])
-    if target_type is set or target_type is frozenset:
-        return clingo.Function("set", [nest(sorted([pytocl(e) for e in v]))])
-    if target_type is clingo.Symbol:
-        return v
-
-    rows = _union_rows(target_type)
-    for target in rows:
-        target = _resolve_type_alias(target)
+    for target in _union_rows(target_type):
         target_class = _cached_get_origin(target) or target
         custom_value = _resolve_custom_converter(target, "pytocl", v)
         if custom_value is not _NO_CUSTOM_CONVERTER:
@@ -194,9 +191,9 @@ def pytocl(v, target_type=None):
             symbol_name = v.value if isinstance(v.value, str) else predicatedefn_default_predicate_name(v.name)
             return clingo.Function(symbol_name, [])
         elif target_class == types.NoneType:
-            return clingo.Function("none", [])
+            return NONE
         elif issubclass(target_class, bool):
-            return clingo.Function("true" if v else "false", [])
+            return TRUE if v else FALSE
         elif issubclass(target_class, int):
             return clingo.Number(v)
         elif issubclass(target_class, str):
@@ -240,9 +237,9 @@ def cltopyNoTarget(func: clingo.Symbol) -> object:
         ):
             arg = func.arguments[0]
             return float(arg.string if arg.type == clingo.SymbolType.String else arg.number)
-        elif func.name in ["true", "false"] and len(func.arguments) == 0:
-            return func.name == "true"
-        elif func.name == "none" and len(func.arguments) == 0:
+        elif func in (TRUE, FALSE):
+            return func == TRUE
+        elif func == NONE:
             return None
         elif func.name == "set" and len(func.arguments) == 1:
             l = unnest(func.arguments[0])
@@ -259,6 +256,75 @@ def cltopyNoTarget(func: clingo.Symbol) -> object:
         return func
 
 
+_NO_MATCH = object()
+
+
+def _match_cltopy(symbol, target):
+    """Return a decoded value, a child build plan, or ``_NO_MATCH``."""
+    target_class = _cached_get_origin(target) or target
+    if target == typing.Any:
+        return symbol, None
+    if not isinstance(target_class, type):
+        return _NO_MATCH
+    if target_class not in (list, ImmutableList, set, frozenset, tuple):
+        custom_value = _resolve_custom_converter(target, "cltopy", symbol)
+        if custom_value is not _NO_CUSTOM_CONVERTER:
+            return custom_value, None
+    if issubclass(target_class, clingo.Symbol):
+        return symbol, None
+    if issubclass(target_class, bool):
+        return (symbol == TRUE, None) if symbol in (TRUE, FALSE) else _NO_MATCH
+    if issubclass(target_class, int):
+        return (symbol.number, None) if symbol.type == clingo.SymbolType.Number else _NO_MATCH
+    if issubclass(target_class, str):
+        return (symbol.string, None) if symbol.type == clingo.SymbolType.String else _NO_MATCH
+    if issubclass(target_class, float):
+        if symbol.type == clingo.SymbolType.Function and symbol.name == "float" and len(symbol.arguments) == 1:
+            arg = symbol.arguments[0]
+            if arg.type in [clingo.SymbolType.String, clingo.SymbolType.Number]:
+                return float(arg.string if arg.type == clingo.SymbolType.String else arg.number), None
+        return _NO_MATCH
+    if issubclass(target_class, type(None)):
+        return (None, None) if symbol == NONE else _NO_MATCH
+    if symbol.type != clingo.SymbolType.Function:
+        return _NO_MATCH
+    if issubclass(target_class, enum.Enum):
+        for member in target_class:
+            if not symbol.arguments and (
+                member.name == symbol.name
+                or predicatedefn_default_predicate_name(member.name) == symbol.name
+                or (isinstance(member.value, str) and member.value == symbol.name)
+            ):
+                return member, None
+        return _NO_MATCH
+    if issubclass(target_class, (list, ImmutableList)):
+        elements, container = unnest(symbol), ImmutableList
+    elif issubclass(target_class, (set, frozenset)) and symbol.name == "set" and len(symbol.arguments) == 1:
+        elements, container = unnest(symbol.arguments[0]), frozenset
+    else:
+        elements = None
+    if elements is not None:
+        subtargets = _cached_get_args(target)
+        return (
+            (container(elements), None)
+            if not subtargets
+            else (None, (container, None, (subtargets[0],) * len(elements), elements))
+        )
+    if issubclass(target_class, tuple) and getattr(target_class, "_fields", None) is None:
+        child_targets = _cached_get_args(target)
+        if len(child_targets) >= 2 and child_targets[-1] == Ellipsis:
+            child_targets = child_targets[:-1] + tuple(child_targets[-2] for _ in range(len(symbol.arguments) - 1))
+        if symbol.name != "" or len(child_targets) != len(symbol.arguments):
+            return _NO_MATCH
+        fields = None
+    else:
+        field_targets = _get_record_field_targets(target, target_class)
+        if _get_record_predicate_name(target_class) != symbol.name or len(field_targets) != len(symbol.arguments):
+            return _NO_MATCH
+        fields, child_targets = tuple(field_targets), tuple(field_targets.values())
+    return None, (target_class, fields, child_targets, symbol.arguments)
+
+
 @cache
 def cltopy(func, target_type=typing.Any):
     """Decode a Clingo symbol as ``target_type`` or one of its union members.
@@ -267,133 +333,51 @@ def cltopy(func, target_type=typing.Any):
     >>> cltopy(symbol, list[int | str])
     ImmutableList([1, 'two', 3])
     """
-    target_type = _resolve_type_alias(target_type)
-    rows = _union_rows(target_type)
-    for target in rows:
-        target = _resolve_type_alias(target)
-        target_class = _cached_get_origin(target) or target  # unsubscripted_target
-        try:
-            if target == typing.Any:
-                return func
-            custom_value = _resolve_custom_converter(target, "cltopy", func)
-            if custom_value is not _NO_CUSTOM_CONVERTER:
-                return custom_value
-            elif dataclasses.is_dataclass(target_class):
-                if func.type == clingo.SymbolType.Function:
-                    name = _get_record_predicate_name(target_class)
-                    init_fields = tuple(field for field in dataclasses.fields(target_class) if field.init)
-                    field_types = _cached_get_type_hints(target_class)
-                    typevars = dict(zip(getattr(target_class, "__parameters__", ()), _cached_get_args(target)))
-                    if name == func.name and len(init_fields) == len(func.arguments):
-                        keyword_args = {
-                            field.name: cltopy(
-                                symb, _substitute_typevars(field_types.get(field.name, typing.Any), typevars)
-                            )
-                            for symb, field in zip(func.arguments, init_fields)
-                        }
-                        try:
-                            return target_class(**keyword_args)
-                        except TypeError as error:
-                            raise FailedInstantiationExn(str(error)) from error
-            elif getattr(target_class, "_fields", None) is not None:
-                if func.type == clingo.SymbolType.Function:  # NamedTuple
-                    name = _get_record_predicate_name(target_class)
-                    field_types = _cached_get_type_hints(target_class)
-                    typevars = dict(zip(getattr(target_class, "__parameters__", ()), _cached_get_args(target)))
-                    if name == func.name and len(target_class._fields) == len(func.arguments):
-                        field_values = (
-                            cltopy(symb, _substitute_typevars(field_types.get(field, typing.Any), typevars))
-                            for symb, field in zip(func.arguments, target_class._fields)
-                        )
-                        return target_class(*field_values)
-            elif any(isinstance(target_class, t) for t in list(baseTypes.values()) + [list, clingo.Symbol]):
-                if cltopy(func) == target:
-                    return target
-            elif isinstance(target_class, type):
-                if issubclass(target_class, clingo.Symbol):
-                    return func
-                elif issubclass(target_class, enum.Enum):
-                    if func.type == clingo.SymbolType.Function and len(func.arguments) == 0:
-                        for member in target_class:
-                            if (
-                                member.name == func.name
-                                or predicatedefn_default_predicate_name(member.name) == func.name
-                            ):
-                                return member
-                            if isinstance(member.value, str) and member.value == func.name:
-                                return member
-                elif issubclass(target_class, bool):
-                    if (
-                        func.type == clingo.SymbolType.Function
-                        and func.name in ["true", "false"]
-                        and len(func.arguments) == 0
-                    ):
-                        return func.name == "true"
-                elif issubclass(target_class, int):
-                    if func.type == clingo.SymbolType.Number:
-                        return func.number
-                elif issubclass(target_class, str):
-                    if func.type == clingo.SymbolType.String:
-                        return func.string
-                elif issubclass(target_class, float):
-                    if (
-                        func.type == clingo.SymbolType.Function
-                        and func.name == "float"
-                        and len(func.arguments) == 1
-                        and func.arguments[0].type in [clingo.SymbolType.String, clingo.SymbolType.Number]
-                    ):
-                        arg = func.arguments[0]
-                        return float(arg.string if arg.type == clingo.SymbolType.String else arg.number)
-                elif issubclass(target_class, type(None)):
-                    if func.name == "none" and len(func.arguments) == 0:
-                        return None
-                elif issubclass(target_class, list):
-                    subtarget = _cached_get_args(target)
-                    elements = unnest(func)
-                    if subtarget:
-                        return ImmutableList(cltopy(element, subtarget[0]) for element in elements)
-                    return ImmutableList(elements)
-                elif issubclass(target_class, set) or issubclass(target_class, frozenset):
-                    subtarget = _cached_get_args(target)
-                    if func.type == clingo.SymbolType.Function and func.name == "set" and len(func.arguments) == 1:
-                        elements = unnest(func.arguments[0])
-                        if subtarget:
-                            return frozenset(cltopy(element, subtarget[0]) for element in elements)
-                        return frozenset(elements)
-                elif issubclass(target_class, tuple):
-                    subtargets = _cached_get_args(target)
-                    if len(subtargets) >= 2 and subtargets[-1] == Ellipsis and func.type == clingo.SymbolType.Function:
-                        subtargets = subtargets[:-1] + tuple(subtargets[-2] for _ in range(len(func.arguments) - 1))
-                    if (
-                        func.type == clingo.SymbolType.Function
-                        and func.name == ""
-                        and len(subtargets) <= len(func.arguments)
-                    ):
-                        symbols_and_targets = itertools.zip_longest(func.arguments, subtargets)
-                        return tuple(cltopy(symb, subt) for (symb, subt) in symbols_and_targets)
-                elif func.type == clingo.SymbolType.Function:
-                    name = _get_record_predicate_name(target_class)
-                    field_types = _cached_get_type_hints(target_class)
-                    if name == func.name and len(field_types) == len(func.arguments):
-                        return target_class(
-                            **{
-                                field_name: cltopy(symb, field_type)
-                                for symb, (field_name, field_type) in zip(func.arguments, field_types.items())
-                            }
-                        )
-            raise FailedInstantiationExn(f"'{func}' is not of type '{target}'")
-        except FailedInstantiationExn:
-            pass
-    raise FailedInstantiationExn(f"'{func}' is not of type {target_type}")
+    tasks = [("decode", func, target_type)]
+    values = []
+    while tasks:
+        kind, *task = tasks.pop()
+        if kind == "build":
+            target, size, fields = task
+            children = values[-size:] if size else []
+            if size:
+                del values[-size:]
+            values.append(target(children) if fields is None else target(**dict(zip(fields, children))))
+        elif kind == "cache":
+            _cltopy_cache[task[0]] = values[-1]
+        else:
+            symbol, requested_type = task
+            cache_key = (symbol, requested_type)
+            if cache_key in _cltopy_cache:
+                values.append(_cltopy_cache[cache_key])
+                continue
+            tasks.append(("cache", cache_key))
+            for target in _union_rows(requested_type):
+                match = _match_cltopy(symbol, target)
+                if match is _NO_MATCH:
+                    continue
+                value, build_plan = match
+                if build_plan is None:
+                    values.append(value)
+                    break
+                target_class, fields, child_targets, children = build_plan
+                tasks.append(("build", target_class, len(children), fields))
+                tasks.extend(
+                    ("decode", child, child_target)
+                    for child, child_target in reversed(tuple(zip(children, child_targets)))
+                )
+                break
+            else:
+                raise FailedInstantiationExn(f"'{symbol}' is not of type {requested_type}")
+    return values.pop()
 
 
 def findInModel(
     model: clingo.Model, target_type: typing.Any = typing.Any, atoms: bool = True, theory: bool = True
 ) -> dict[clingo.Symbol, typing.Any]:
     """Return model symbols that decode as ``target_type``."""
-    rows = _union_rows(target_type)
     result = dict()
-    for target in rows:
+    for target in _union_rows(target_type):
         for symb in model.symbols(atoms=atoms, theory=theory):
             try:
                 v = cltopy(symb, target)

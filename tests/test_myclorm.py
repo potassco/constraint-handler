@@ -7,7 +7,10 @@ import clingo
 import pytest
 
 import constraint_handler.myClorm as myClorm
-from constraint_handler.schemas.operators import ConditionalOperator
+import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.statement as statement
+from constraint_handler.schemas.operators import ArithmeticOperator, ConditionalOperator
 
 T = typing.TypeVar("T")
 U = typing.TypeVar("U")
@@ -103,6 +106,15 @@ class NoneReturningConverter:
     @classmethod
     def cltopy(cls, func, target_args=()):
         return None
+
+
+class RecursiveRecord(typing.NamedTuple):
+    value: int
+    child: "RecursiveValue | None"
+
+
+type RecursiveValue = RecursiveRecord | None
+type RecursiveList = int | list[RecursiveList]
 
 
 @pytest.mark.parametrize(
@@ -318,14 +330,109 @@ def test_cltopy_typed_union_accepts_pep604_union():
     assert myClorm.cltopy(clingo.String("v"), int | str) == "v"
 
 
-@pytest.mark.xfail(strict=True, reason="Annotated targets are not decoded")
+@pytest.mark.xfail(strict=True, reason="Overlapping union candidates are not backtracked")
+def test_cltopy_typed_union_backtracks_overlapping_tuple_candidates():
+    symbol = clingo.Function("", [clingo.String("x"), clingo.Number(1)])
+
+    assert myClorm.cltopy(symbol, tuple[int, str] | tuple[str, int]) == ("x", 1)
+
+
+def test_cltopy_atom_backtracks_nested_union_members():
+    terms = [
+        "variable_define(x,operation(add,(val(int,1),(variable(y),()))),_label_anonymous)",
+        "variable_define(z,operation(add,(val(int,2),(variable(y),()))),_label_anonymous)",
+        "variable_define(t,operation(add,(variable(y),(variable(y),()))),_label_anonymous)",
+        "variable_define(a,operation(mult,(variable(y),(variable(y),()))),_label_anonymous)",
+    ]
+
+    assert all(isinstance(myClorm.cltopy(clingo.parse_term(term), atom.Atom), atom.Variable_define) for term in terms)
+
+
 def test_cltopy_typed_annotated_decodes_symbol():
     assert myClorm.cltopy(clingo.Number(4), typing.Annotated[int, "metadata"]) == 4
+
+
+def test_cltopy_typed_annotated_union_member_decodes_symbol():
+    assert myClorm.cltopy(clingo.Number(4), typing.Annotated[int, "metadata"] | str) == 4
+
+
+def test_cltopy_recursive_expr_decodes_deep_values():
+    symbol = clingo.Function("variable", [clingo.Number(4)])
+    assert myClorm.cltopy(symbol, expression.Expr) == expression.Variable(4)
+    assert myClorm.pytocl(expression.Variable(4), expression.Expr) == symbol
+
+    for _ in range(2_000):
+        symbol = clingo.Function("operation", [clingo.Function("add", []), myClorm.nest([symbol])])
+
+    decoded = myClorm.cltopy(symbol, expression.Expr)
+    for _ in range(2_000):
+        assert isinstance(decoded, expression.Operation)
+        decoded = decoded.args[0]
+    assert decoded == expression.Variable(4)
+
+
+@pytest.mark.xfail(strict=True, reason="pytocl does not support deeply nested values")
+def test_pytocl_recursive_expr_encodes_deep_values():
+    value = expression.Variable(4)
+    for _ in range(2_000):
+        value = expression.Operation(ArithmeticOperator.add, myClorm.ImmutableList([value]))
+
+    expected = clingo.Function("variable", [clingo.Number(4)])
+    for _ in range(2_000):
+        expected = clingo.Function("operation", [clingo.Function("add", []), myClorm.nest([expected])])
+
+    assert myClorm.pytocl(value) == expected
+
+
+def test_cltopy_recursive_decodes_deep_record_and_statement():
+    symbol = clingo.Function("none", [])
+    for value in range(2_000):
+        symbol = clingo.Function("recursiveRecord", [clingo.Number(value), symbol])
+
+    decoded = myClorm.cltopy(symbol, RecursiveValue)
+    for value in reversed(range(2_000)):
+        assert decoded.value == value
+        decoded = decoded.child
+    assert decoded is None
+
+    symbol = clingo.Number(1)
+    for _ in range(2_000):
+        symbol = myClorm.nest([symbol])
+
+    decoded = myClorm.cltopy(symbol, RecursiveList)
+    for _ in range(2_000):
+        assert isinstance(decoded, myClorm.ImmutableList)
+        decoded = decoded[0]
+    assert decoded == 1
+
+    symbol = clingo.Function("noop", [])
+    for _ in range(2_000):
+        symbol = clingo.Function("seq2", [clingo.Function("noop", []), symbol])
+
+    decoded = myClorm.cltopy(symbol, statement.Stmt)
+    for _ in range(2_000):
+        assert isinstance(decoded, statement.Seq2)
+        decoded = decoded.snd
+    assert decoded == statement.Noop()
+
+
+def test_cltopy_caches_subterms():
+    child = clingo.Function("variable", [clingo.Number(1)])
+    symbol = clingo.Function("operation", [clingo.Function("add", []), myClorm.nest([child])])
+
+    myClorm._cltopy_cache.clear()
+    myClorm.cltopy(symbol, expression.Expr)
+
+    assert (child, expression.Expr) in myClorm._cltopy_cache
 
 
 @pytest.mark.xfail(strict=True, reason="Literal targets are not decoded")
 def test_cltopy_typed_literal_decodes_symbol():
     assert myClorm.cltopy(clingo.Number(4), typing.Literal[4]) == 4
+
+
+def test_pytocl_typed_annotated_encodes_value():
+    assert myClorm.pytocl(4, typing.Annotated[int, "metadata"]) == clingo.Number(4)
 
 
 def test_cltopy_namedtuple_failure_raises_failed_instantiation():
@@ -420,6 +527,13 @@ def test_pytocl_variadic_tuple_target_is_supported():
 
 def test_cltopy_fixed_length_tuple_arity_mismatch_raises_failed_instantiation():
     symbol = clingo.Function("", [clingo.Number(1)])
+
+    with pytest.raises(myClorm.FailedInstantiationExn):
+        myClorm.cltopy(symbol, tuple[int, str])
+
+
+def test_cltopy_fixed_length_tuple_surplus_fields_raise_failed_instantiation():
+    symbol = clingo.Function("", [clingo.Number(1), clingo.String("x"), clingo.Number(3)])
 
     with pytest.raises(myClorm.FailedInstantiationExn):
         myClorm.cltopy(symbol, tuple[int, str])
