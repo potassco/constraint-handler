@@ -7,6 +7,7 @@ import clingo
 import pytest
 
 import constraint_handler.myClorm as myClorm
+import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
 from constraint_handler.schemas.operators import ConditionalOperator
@@ -329,11 +330,28 @@ def test_cltopy_typed_union_accepts_pep604_union():
     assert myClorm.cltopy(clingo.String("v"), int | str) == "v"
 
 
+@pytest.mark.xfail(strict=True, reason="Overlapping union candidates are not backtracked")
+def test_cltopy_typed_union_backtracks_overlapping_tuple_candidates():
+    symbol = clingo.Function("", [clingo.String("x"), clingo.Number(1)])
+
+    assert myClorm.cltopy(symbol, tuple[int, str] | tuple[str, int]) == ("x", 1)
+
+
+def test_cltopy_atom_backtracks_nested_union_members():
+    terms = [
+        "variable_define(x,operation(add,(val(int,1),(variable(y),()))),_label_anonymous)",
+        "variable_define(z,operation(add,(val(int,2),(variable(y),()))),_label_anonymous)",
+        "variable_define(t,operation(add,(variable(y),(variable(y),()))),_label_anonymous)",
+        "variable_define(a,operation(mult,(variable(y),(variable(y),()))),_label_anonymous)",
+    ]
+
+    assert all(isinstance(myClorm.cltopy(clingo.parse_term(term), atom.Atom), atom.Variable_define) for term in terms)
+
+
 def test_cltopy_typed_annotated_decodes_symbol():
     assert myClorm.cltopy(clingo.Number(4), typing.Annotated[int, "metadata"]) == 4
 
 
-@pytest.mark.xfail(strict=True, reason="Annotated union members are not decoded")
 def test_cltopy_typed_annotated_union_member_decodes_symbol():
     assert myClorm.cltopy(clingo.Number(4), typing.Annotated[int, "metadata"] | str) == 4
 

@@ -141,7 +141,7 @@ def _union_rows(target):
         target = _resolve_type_alias(_cached_get_args(target)[0])
     origin = _cached_get_origin(target)
     if origin in (typing.Union, types.UnionType):
-        return tuple(_resolve_type_alias(member) for member in _cached_get_args(target))
+        return tuple(row for member in _cached_get_args(target) for row in _union_rows(member))
     return (target,)
 
 
@@ -268,108 +268,109 @@ def cltopy(func, target_type=typing.Any):
     while tasks:
         kind, *task = tasks.pop()
         if kind == "build":
-            cache_key, target, size, fields = task
+            target, size, fields = task
             children = values[-size:] if size else []
             if size:
                 del values[-size:]
             values.append(target(children) if fields is None else target(**dict(zip(fields, children))))
-            continue
-        if kind == "cache":
+        elif kind == "cache":
             _cltopy_cache[task[0]] = values[-1]
-            continue
-
-        symbol, target_type = task
-        cache_key = (symbol, target_type)
-        if cache_key in _cltopy_cache:
-            values.append(_cltopy_cache[cache_key])
-            continue
-        tasks.append(("cache", cache_key))
-        for target in _union_rows(target_type):
-            if _cached_get_origin(target) in (typing.Union, types.UnionType):
-                tasks.append(("decode", symbol, target))
-                break
-            target_class = _cached_get_origin(target) or target
-            if target == typing.Any:
-                values.append(symbol)
-                break
-            if not isinstance(target_class, type):
-                continue
-            if target_class not in (list, ImmutableList, set, frozenset, tuple):
-                custom_value = _resolve_custom_converter(target, "cltopy", symbol)
-                if custom_value is not _NO_CUSTOM_CONVERTER:
-                    values.append(custom_value)
-                    break
-            if issubclass(target_class, clingo.Symbol):
-                values.append(symbol)
-                break
-            if issubclass(target_class, bool):
-                if symbol not in (TRUE, FALSE):
-                    continue
-                values.append(symbol == TRUE)
-                break
-            elif issubclass(target_class, int) and symbol.type == clingo.SymbolType.Number:
-                values.append(symbol.number)
-                break
-            elif issubclass(target_class, str) and symbol.type == clingo.SymbolType.String:
-                values.append(symbol.string)
-                break
-            elif issubclass(target_class, float):
-                if symbol.type == clingo.SymbolType.Function and symbol.name == "float" and len(symbol.arguments) == 1:
-                    arg = symbol.arguments[0]
-                    if arg.type in [clingo.SymbolType.String, clingo.SymbolType.Number]:
-                        values.append(float(arg.string if arg.type == clingo.SymbolType.String else arg.number))
-                        break
-            elif issubclass(target_class, type(None)):
-                if symbol == NONE:
-                    values.append(None)
-                    break
-            if symbol.type != clingo.SymbolType.Function:
-                continue
-            if issubclass(target_class, enum.Enum) and not symbol.arguments:
-                for member in target_class:
-                    if member.name == symbol.name or predicatedefn_default_predicate_name(member.name) == symbol.name:
-                        values.append(member)
-                        break
-                    if isinstance(member.value, str) and member.value == symbol.name:
-                        values.append(member)
-                        break
-                else:
-                    continue
-                break
-            if issubclass(target_class, (list, ImmutableList)):
-                elements, container = unnest(symbol), ImmutableList
-            elif issubclass(target_class, (set, frozenset)) and symbol.name == "set" and len(symbol.arguments) == 1:
-                elements, container = unnest(symbol.arguments[0]), frozenset
-            else:
-                elements = None
-            if elements is not None:
-                subtargets = _cached_get_args(target)
-                if not subtargets:
-                    values.append(container(elements))
-                    break
-                tasks.append(("build", cache_key, container, len(elements), None))
-                tasks.extend(("decode", element, subtargets[0]) for element in reversed(elements))
-                break
-            elif issubclass(target_class, tuple) and getattr(target_class, "_fields", None) is None:
-                subtargets = _cached_get_args(target)
-                if len(subtargets) >= 2 and subtargets[-1] == Ellipsis:
-                    subtargets = subtargets[:-1] + tuple(subtargets[-2] for _ in range(len(symbol.arguments) - 1))
-                if symbol.name != "" or len(subtargets) != len(symbol.arguments):
-                    continue
-                fields, child_targets = None, subtargets
-            else:
-                fields = _get_record_field_targets(target, target_class)
-                if _get_record_predicate_name(target_class) != symbol.name or len(fields) != len(symbol.arguments):
-                    continue
-                fields, child_targets = tuple(fields), tuple(fields.values())
-            tasks.append(("build", cache_key, target_class, len(child_targets), fields))
-            tasks.extend(
-                ("decode", value, child_target)
-                for value, child_target in reversed(tuple(zip(symbol.arguments, child_targets)))
-            )
-            break
         else:
-            raise FailedInstantiationExn(f"'{symbol}' is not of type {target_type}")
+            symbol, requested_type = task
+            cache_key = (symbol, requested_type)
+            if cache_key in _cltopy_cache:
+                values.append(_cltopy_cache[cache_key])
+                continue
+            tasks.append(("cache", cache_key))
+            for target in _union_rows(requested_type):
+                target_class = _cached_get_origin(target) or target
+                if target == typing.Any:
+                    values.append(symbol)
+                    break
+                if not isinstance(target_class, type):
+                    continue
+                if target_class not in (list, ImmutableList, set, frozenset, tuple):
+                    custom_value = _resolve_custom_converter(target, "cltopy", symbol)
+                    if custom_value is not _NO_CUSTOM_CONVERTER:
+                        values.append(custom_value)
+                        break
+                if issubclass(target_class, clingo.Symbol):
+                    values.append(symbol)
+                    break
+                if issubclass(target_class, bool):
+                    if symbol not in (TRUE, FALSE):
+                        continue
+                    values.append(symbol == TRUE)
+                    break
+                elif issubclass(target_class, int) and symbol.type == clingo.SymbolType.Number:
+                    values.append(symbol.number)
+                    break
+                elif issubclass(target_class, str) and symbol.type == clingo.SymbolType.String:
+                    values.append(symbol.string)
+                    break
+                elif issubclass(target_class, float):
+                    if (
+                        symbol.type == clingo.SymbolType.Function
+                        and symbol.name == "float"
+                        and len(symbol.arguments) == 1
+                    ):
+                        arg = symbol.arguments[0]
+                        if arg.type in [clingo.SymbolType.String, clingo.SymbolType.Number]:
+                            values.append(float(arg.string if arg.type == clingo.SymbolType.String else arg.number))
+                            break
+                elif issubclass(target_class, type(None)):
+                    if symbol == NONE:
+                        values.append(None)
+                        break
+                if symbol.type != clingo.SymbolType.Function:
+                    continue
+                if issubclass(target_class, enum.Enum) and not symbol.arguments:
+                    symbol_name = symbol.name
+                    for member in target_class:
+                        if (
+                            member.name == symbol_name
+                            or predicatedefn_default_predicate_name(member.name) == symbol_name
+                            or (isinstance(member.value, str) and member.value == symbol_name)
+                        ):
+                            values.append(member)
+                            break
+                    else:
+                        continue
+                    break
+                if issubclass(target_class, (list, ImmutableList)):
+                    elements, container = unnest(symbol), ImmutableList
+                elif issubclass(target_class, (set, frozenset)) and symbol.name == "set" and len(symbol.arguments) == 1:
+                    elements, container = unnest(symbol.arguments[0]), frozenset
+                else:
+                    elements = None
+                if elements is not None:
+                    subtargets = _cached_get_args(target)
+                    if not subtargets:
+                        values.append(container(elements))
+                        break
+                    tasks.append(("build", container, len(elements), None))
+                    tasks.extend(("decode", element, subtargets[0]) for element in reversed(elements))
+                    break
+                elif issubclass(target_class, tuple) and getattr(target_class, "_fields", None) is None:
+                    subtargets = _cached_get_args(target)
+                    if len(subtargets) >= 2 and subtargets[-1] == Ellipsis:
+                        subtargets = subtargets[:-1] + tuple(subtargets[-2] for _ in range(len(symbol.arguments) - 1))
+                    if symbol.name != "" or len(subtargets) != len(symbol.arguments):
+                        continue
+                    fields, child_targets = None, subtargets
+                else:
+                    fields = _get_record_field_targets(target, target_class)
+                    if _get_record_predicate_name(target_class) != symbol.name or len(fields) != len(symbol.arguments):
+                        continue
+                    fields, child_targets = tuple(fields), tuple(fields.values())
+                tasks.append(("build", target_class, len(child_targets), fields))
+                tasks.extend(
+                    ("decode", value, child_target)
+                    for value, child_target in reversed(tuple(zip(symbol.arguments, child_targets)))
+                )
+                break
+            else:
+                raise FailedInstantiationExn(f"'{symbol}' is not of type {requested_type}")
     return values.pop()
 
 
