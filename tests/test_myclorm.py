@@ -10,7 +10,7 @@ import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
-from constraint_handler.schemas.operators import ConditionalOperator
+from constraint_handler.schemas.operators import ArithmeticOperator, ConditionalOperator
 
 T = typing.TypeVar("T")
 U = typing.TypeVar("U")
@@ -369,6 +369,19 @@ def test_cltopy_recursive_expr_decodes_deep_values():
         assert isinstance(decoded, expression.Operation)
         decoded = decoded.args[0]
     assert decoded == expression.Variable(4)
+
+
+@pytest.mark.xfail(strict=True, reason="pytocl does not support deeply nested values")
+def test_pytocl_recursive_expr_encodes_deep_values():
+    value = expression.Variable(4)
+    for _ in range(2_000):
+        value = expression.Operation(ArithmeticOperator.add, myClorm.ImmutableList([value]))
+
+    expected = clingo.Function("variable", [clingo.Number(4)])
+    for _ in range(2_000):
+        expected = clingo.Function("operation", [clingo.Function("add", []), myClorm.nest([expected])])
+
+    assert myClorm.pytocl(value) == expected
 
 
 def test_cltopy_recursive_decodes_deep_record_and_statement():
