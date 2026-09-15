@@ -354,7 +354,7 @@ def cltopy(func, target_type=typing.Any):
                 subtargets = _cached_get_args(target)
                 if len(subtargets) >= 2 and subtargets[-1] == Ellipsis:
                     subtargets = subtargets[:-1] + tuple(subtargets[-2] for _ in range(len(symbol.arguments) - 1))
-                if symbol.name != "" or len(subtargets) > len(symbol.arguments):
+                if symbol.name != "" or len(subtargets) != len(symbol.arguments):
                     continue
                 fields, child_targets = None, subtargets
             else:

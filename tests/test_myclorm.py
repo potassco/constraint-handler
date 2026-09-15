@@ -501,6 +501,13 @@ def test_cltopy_fixed_length_tuple_arity_mismatch_raises_failed_instantiation():
         myClorm.cltopy(symbol, tuple[int, str])
 
 
+def test_cltopy_fixed_length_tuple_surplus_fields_raise_failed_instantiation():
+    symbol = clingo.Function("", [clingo.Number(1), clingo.String("x"), clingo.Number(3)])
+
+    with pytest.raises(myClorm.FailedInstantiationExn):
+        myClorm.cltopy(symbol, tuple[int, str])
+
+
 def test_pytocl_generic_alias_uses_origin_custom_converter_hook():
     value = HookedTuple([1, 2])
 
