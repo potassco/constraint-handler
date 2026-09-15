@@ -72,7 +72,7 @@ line-length = 120
 
 [tool.pytest.ini_options]
 markers = [
-    "performance: engine performance tests that both persist pytest-benchmark results and enforce runtime thresholds",
+    "performance: performance tests that persist pytest-benchmark results and enforce runtime thresholds",
 ]
 
 [tool.pylint.format]
