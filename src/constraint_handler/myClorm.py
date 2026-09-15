@@ -325,6 +325,7 @@ def _match_cltopy(symbol, target):
     return None, (target_class, fields, child_targets, symbol.arguments)
 
 
+@cache
 def cltopy(func, target_type=typing.Any):
     """Decode a Clingo symbol as ``target_type`` or one of its union members.
 
