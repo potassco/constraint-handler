@@ -5,13 +5,13 @@ _expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_domain(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
 
-%%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3
+%%%%%%%%%%%%%%%%% variable_define/2
 _ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E)).
 
-_ge_set_assign(LBL,X,E) :- _passed(ground,LBL,set_assign(X,E)).
-{ _ge_set_assign(LBL,X,E) } :- _passed(ground,LBL,set_baseDomain(X,E)).
-:- _passed(ground,LBL,set_baseDomain(X,E)), _shared_value(operation(set_isin,(E,(variable(X),()))),val(bool,true)), not _ge_set_assign(LBL,X,E).
-_ge_set_declare(LBL,X) :- _passed(ground,LBL,variable_declare(X,set)).
+_ge_set_assign(X,E) :- _passed(ground,LBL,set_assign(X,E)).
+{ _ge_set_assign(X,E) } :- _passed(ground,LBL,set_baseDomain(X,E)).
+:- _passed(ground,LBL,set_baseDomain(X,E)), _shared_value(operation(set_isin,(E,(variable(X),()))),val(bool,true)), not _ge_set_assign(X,E).
+_ge_set_declare(X) :- _passed(ground,LBL,variable_declare(X,set)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 
 ge_value(X,V) :- _ge_assign(X,EXPR), ge_result(EXPR,V).
@@ -37,13 +37,13 @@ _direct_implode(variable(X)) :- _variable(ground,X), _se_value(variable(X),V).
 ge_value(X,VAL) :- _variable(ground,X), _se_value(variable(X),val(T,V)), _direct_imploded(variable(X),VAL).
 
 
-_ge_setAssignsAux(X,#inf,()) :- _ge_set_declare(CNAME,X).
-_ge_setAssignsAux(X,F,(F,L)) :- _ge_setAssignsAux(X,E,L), _ge_set_assign(CNAME,X,F), E < F,
-    0 = #count { G : _ge_set_assign(CNAME,X,G), E < G, G < F }.
+_ge_setAssignsAux(X,#inf,()) :- _ge_set_declare(X).
+_ge_setAssignsAux(X,F,(F,L)) :- _ge_setAssignsAux(X,E,L), _ge_set_assign(X,F), E < F,
+    0 = #count { G : _ge_set_assign(X,G), E < G, G < F }.
 _ge_setAssigns(X,L) :- _ge_setAssignsAux(X,E,L),
-    0 = #count { G : _ge_set_assign(CNAME,X,G), E < G }.
+    0 = #count { G : _ge_set_assign(X,G), E < G }.
 
-_ge_assign(X,set(L)) :- _ge_set_declare(CNAME,X), _ge_setAssigns(X,L).
+_ge_assign(X,set(L)) :- _ge_set_declare(X), _ge_setAssigns(X,L).
 
 _ge_enumeratedVariables(EXPR,R) :- _expression(ground,EXPR), R=@pythonEnumerateVariables(EXPR).
 

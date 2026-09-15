@@ -15,8 +15,8 @@ _main_solverIdentifiers/1.
 ### Intermediate predicates
 
 _expression(ground,EXPR).
-_ge_set_assign/3.
-_ge_set_declare/2.
+_ge_set_assign/2.
+_ge_set_declare/1.
 ge_value/2.
 _variable(ground,VAR).
 _ge_setAssignsAux/3.
