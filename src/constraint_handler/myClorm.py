@@ -361,7 +361,10 @@ def cltopy(func, target_type=typing.Any):
                     break
                 target_class, fields, child_targets, children = build_plan
                 tasks.append(("build", target_class, len(children), fields))
-                tasks.extend(("decode", child, child_target) for child, child_target in reversed(tuple(zip(children, child_targets))))
+                tasks.extend(
+                    ("decode", child, child_target)
+                    for child, child_target in reversed(tuple(zip(children, child_targets)))
+                )
                 break
             else:
                 raise FailedInstantiationExn(f"'{symbol}' is not of type {requested_type}")
