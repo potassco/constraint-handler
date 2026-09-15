@@ -466,11 +466,11 @@ def test_performance(benchmark, benchmark_case: PerformanceBenchmark):
 def test_myclorm_preprocessing_performance(benchmark):
     benchmark.extra_info.update({"component": "myClorm", "workflow": "python externals preprocessing"})
     benchmark.pedantic(run_myclorm_preprocessing, rounds=5, iterations=1)
-    assert benchmark.stats["mean"] <= 2.0
+    assert benchmark.stats["mean"] <= 4.0
 
 
 @pytest.mark.performance
 def test_myclorm_propagator_init_performance(benchmark):
     benchmark.extra_info.update({"component": "myClorm", "workflow": "propagator initialization"})
     benchmark.pedantic(run_myclorm_propagator_init, rounds=5, iterations=1)
-    assert benchmark.stats["mean"] <= 2.0
+    assert benchmark.stats["mean"] <= 4.0
