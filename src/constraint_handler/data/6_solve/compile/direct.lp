@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3
 direct_query(E)  :- _expression(compile,LBL,DECL,E).
-direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), SE=@pythonListElements(ES).
-direct_query(SE) :- direct_query(T), SE=@pythonTupleElements(T).
+direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), _expression_operationIndex(compile,operation(OP,ES),IDX,SE).
+direct_query(SE) :- direct_query(E), _expression_tupleIndex(compile,E,IDX,SE).
 _expression(compile,E) :- direct_query(E).
 
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
