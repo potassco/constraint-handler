@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - rename input predicate `engine_default(ENG)` to `engine_request(ENG)`
 - - replace the `api` argument of `add_to_control` with `engine`; select Flat
     CH with `engine=constraint_handler.engine.fch` instead of `api="fch"`.
 - add `Engine` configurations and an `engine` argument to `add_to_control`; the

@@ -76,10 +76,6 @@ _variable(sugar,X) :- _variable(ssa,X).
 _sugar_userVariable(LBL,X) :- _execution_inputVar(LBL,PRG,N,X).
 _sugar_userVariable(LBL,X) :- _execution_outputVar(LBL,PRG,N,X).
 
-%%%%%% warning atoms
-_passed(sugar,LBL,warning_forbid(KIND,TARGET)) :- _passed(defaultArgs,LBL,warning_forbid(KIND,TARGET)).
-_passed(sugar,LBL,warning_ignore(KIND,TARGET)) :- _passed(defaultArgs,LBL,warning_ignore(KIND,TARGET)).
-
 
 %%%%%% interface variables
 _passed(sugar,LBL,variable_interface(X)) :- _sugar_userVariable(LBL,X).
