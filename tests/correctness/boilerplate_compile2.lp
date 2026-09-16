@@ -1,4 +1,4 @@
-engine_default(compile2).
+engine_request(compile2).
 
 #script (python)
 import constraint_handler

@@ -31,7 +31,7 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
     ctrl = Control("0")
 
     if use_prop:
-        ctrl.add("engine_default(propagator).")
+        ctrl.add("engine_request(propagator).")
 
     constraint_handler.add_to_control(ctrl)
     ctrl.add(program)

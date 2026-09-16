@@ -54,6 +54,7 @@ m4_analysis = [
 ] + m4_variable_safety_checks
 
 m5_presolve = [
+#    "5_presolve/core",
     "5_presolve/dispatch",
     "5_presolve/engine",
     "5_presolve/presolve",

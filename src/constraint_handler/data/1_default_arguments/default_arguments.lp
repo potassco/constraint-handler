@@ -131,14 +131,3 @@ _passed(defaultArgs,LBL,preference_holds(E,K)) :- preference_holds(E,K,LBL).
 _passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,1)) :- preference_variableValue(X,E).
 _passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,K)) :- preference_variableValue(X,E,K).
 _passed(defaultArgs,LBL,preference_variableValue(X,E,K)) :- preference_variableValue(X,E,K,LBL).
-
-%%%%%% warning atoms
-#defined warning_forbid/1.
-#defined warning_forbid/2.
-#defined warning_ignore/1.
-#defined warning_ignore/2.
-
-_passed(defaultArgs,_label_anonymous,warning_forbid(KIND,_internal(all))) :- warning_forbid(KIND).
-_passed(defaultArgs,_label_anonymous,warning_forbid(KIND,LBL)) :- warning_forbid(KIND,LBL).
-_passed(defaultArgs,_label_anonymous,warning_ignore(KIND,_internal(all))) :- warning_ignore(KIND).
-_passed(defaultArgs,_label_anonymous,warning_ignore(KIND,LBL)) :- warning_ignore(KIND,LBL).

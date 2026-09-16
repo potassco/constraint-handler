@@ -14,7 +14,7 @@ def solve_with_clingo_statistics(
 ) -> dict:
     ctl = clingo.Control(["--stats=2"])
     constraint_handler.add_to_control(ctl)
-    ctl.add(f"engine_default({engine}).")
+    ctl.add(f"engine_request({engine}).")
     ctl.load(f"tests/correctness/{name}.lp")
     ctl.ground()
 
@@ -26,7 +26,7 @@ def solve_with_clingo_statistics(
 
 def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propagator"], check_mode: bool = False):
     name = "tests/correctness/" + name
-    engine_prg = f"engine_default({engine})."
+    engine_prg = f"engine_request({engine})."
     expectations = chut.build_expectations(name)
     assert expectations, f"Missing expectations: {name}"
     for test, extra_args in expectations:
