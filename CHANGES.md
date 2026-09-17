@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - swap argument order of `engine_request/2` to `engine_request(ENG,LBL)`
 - - rename input predicate `engine_default(ENG)` to `engine_request(ENG)`
 
 ## v0.0.7

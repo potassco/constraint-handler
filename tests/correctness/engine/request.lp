@@ -14,13 +14,13 @@ variable_define(y(E1,E2,E3),
             (variable(i(E1,E2,E3)),()))),
         (val(int,1),()))),
 assign_y(E1,E2,E3)) :- combo(E1,E2,E3).
-engine_request(assign_i(E1,E2,E3),E1) :- combo(E1,E2,E3).
-engine_request(assign_j(E1,E2,E3),E2) :- combo(E1,E2,E3).
-engine_request(assign_y(E1,E2,E3),E3) :- combo(E1,E2,E3).
+engine_request(E1,assign_i(E1,E2,E3)) :- combo(E1,E2,E3).
+engine_request(E2,assign_j(E1,E2,E3)) :- combo(E1,E2,E3).
+engine_request(E3,assign_y(E1,E2,E3)) :- combo(E1,E2,E3).
 
 variable_define(i,val(int,3),assign_cons_i).
 variable_define(j,operation(mult,(variable(i),(variable(i),()))),assign_cons_j).
 variable_define(k,operation(add,(variable(i),(variable(j),()))),assign_cons_k).
-engine_request(assign_cons_i,compile).
-engine_request(assign_cons_j,ground).
-engine_request(assign_cons_k,propagator).
+engine_request(compile,assign_cons_i).
+engine_request(ground,assign_cons_j).
+engine_request(propagator,assign_cons_k).
