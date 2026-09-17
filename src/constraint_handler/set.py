@@ -1,5 +1,5 @@
-import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.operators as operators
+import constraint_handler.schemas.result as result
 import constraint_handler.schemas.warning as warning
 import constraint_handler.utils.common as common
 import constraint_handler.utils.errors as errors
@@ -15,11 +15,11 @@ def fold(f, s, start):
     return accu
 
 
-def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
+def evaluate_operator(o, args, apply_operator=None) -> result.EvalResult:
     match o:
         case operators.SetOperator.cardinality:
             if len(args) != 1:
-                return atom.EvalResult(
+                return result.EvalResult(
                     common.Bad.bad,
                     (
                         (
@@ -29,13 +29,13 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                     ),
                 )
             if args[0] == common.Bad.bad:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(len(args[0]), NO_ERRORS)
+                return result.EvalResult(common.Bad.bad, NO_ERRORS)
+            return result.EvalResult(len(args[0]), NO_ERRORS)
         case operators.SetOperator.set_make:
-            return atom.EvalResult(frozenset(args), NO_ERRORS)
+            return result.EvalResult(frozenset(args), NO_ERRORS)
         case operators.SetOperator.set_isin:
             if len(args) != 2:
-                return atom.EvalResult(
+                return result.EvalResult(
                     common.Bad.bad,
                     (
                         (
@@ -45,11 +45,11 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                     ),
                 )
             if common.Bad.bad in args:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(args[0] in args[1], NO_ERRORS)
+                return result.EvalResult(common.Bad.bad, NO_ERRORS)
+            return result.EvalResult(args[0] in args[1], NO_ERRORS)
         case operators.SetOperator.set_notin:
             if len(args) != 2:
-                return atom.EvalResult(
+                return result.EvalResult(
                     common.Bad.bad,
                     (
                         (
@@ -59,15 +59,15 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                     ),
                 )
             if args[1] == common.Bad.bad:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(args[0] not in args[1], NO_ERRORS)
+                return result.EvalResult(common.Bad.bad, NO_ERRORS)
+            return result.EvalResult(args[0] not in args[1], NO_ERRORS)
         case operators.SetOperator.union:
             if common.Bad.bad in args:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(frozenset().union(*args), NO_ERRORS)
+                return result.EvalResult(common.Bad.bad, NO_ERRORS)
+            return result.EvalResult(frozenset().union(*args), NO_ERRORS)
         case operators.SetOperator.inter:
             if len(args) < 1:
-                return atom.EvalResult(
+                return result.EvalResult(
                     common.Bad.bad,
                     (
                         (
@@ -77,11 +77,11 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                     ),
                 )
             if common.Bad.bad in args:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(frozenset(args[0].intersection(*args[1:])), NO_ERRORS)
+                return result.EvalResult(common.Bad.bad, NO_ERRORS)
+            return result.EvalResult(frozenset(args[0].intersection(*args[1:])), NO_ERRORS)
         case operators.SetOperator.diff:
             if len(args) != 2:
-                return atom.EvalResult(
+                return result.EvalResult(
                     common.Bad.bad,
                     (
                         (
@@ -91,11 +91,11 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                     ),
                 )
             if common.Bad.bad in args:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(frozenset(args[0].difference(args[1])), NO_ERRORS)
+                return result.EvalResult(common.Bad.bad, NO_ERRORS)
+            return result.EvalResult(frozenset(args[0].difference(args[1])), NO_ERRORS)
         case operators.SetOperator.subset:
             if len(args) != 2:
-                return atom.EvalResult(
+                return result.EvalResult(
                     common.Bad.bad,
                     (
                         (
@@ -105,11 +105,11 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                     ),
                 )
             if common.Bad.bad in args:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
-            return atom.EvalResult(args[0].issubset(args[1]), NO_ERRORS)
+                return result.EvalResult(common.Bad.bad, NO_ERRORS)
+            return result.EvalResult(args[0].issubset(args[1]), NO_ERRORS)
         case operators.SetOperator.set_fold:
             if len(args) != 3:
-                return atom.EvalResult(
+                return result.EvalResult(
                     common.Bad.bad,
                     (
                         (
@@ -119,9 +119,9 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                     ),
                 )
             if args[1] == common.Bad.bad or args[2] == common.Bad.bad:
-                return atom.EvalResult(common.Bad.bad, NO_ERRORS)
+                return result.EvalResult(common.Bad.bad, NO_ERRORS)
             if apply_operator is None:
-                return atom.EvalResult(
+                return result.EvalResult(
                     common.Bad.bad,
                     ((warning.Expression(warning.ExpressionWarning.notImplemented), "set_fold missing callback"),),
                 )
@@ -132,9 +132,9 @@ def evaluate_operator(o, args, apply_operator=None) -> atom.EvalResult:
                 fold_errors.extend(applied.errors)
                 return applied.value
 
-            return atom.EvalResult(fold(step, args[1], args[2]), tuple(fold_errors))
+            return result.EvalResult(fold(step, args[1], args[2]), tuple(fold_errors))
         case _:
-            return atom.EvalResult(
+            return result.EvalResult(
                 common.Bad.bad,
                 ((warning.Expression(warning.ExpressionWarning.notImplemented), f"set.operator {o}"),),
             )

@@ -8,7 +8,7 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
-import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.result as result
 import constraint_handler.solver_environment as solver_environment
 import flat_ch.main as flat_main
 
@@ -54,7 +54,7 @@ m4_analysis = [
 ] + m4_variable_safety_checks
 
 m5_presolve = [
-#    "5_presolve/core",
+    # "5_presolve/core",
     "5_presolve/dispatch",
     "5_presolve/engine",
     "5_presolve/presolve",
@@ -243,4 +243,4 @@ def add_declarations(ctrl: clingo.Control, declarations):
 
 
 def find_values(model: clingo.Model):
-    return myClorm.findInModel(model, atom.ResultAtom)
+    return myClorm.findInModel(model, result.ResultAtom)
