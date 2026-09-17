@@ -13,13 +13,3 @@ _passed(solve,LBL,DECL) :- ch_core(DECL,LBL), DECL=multimap_assign(X,K,B).
 _passed(solve,LBL,DECL) :- ch_core(DECL,LBL), DECL=share_value(E).
 _passed(solve,LBL,DECL) :- ch_core(DECL,LBL), DECL=optimize_component(E,O,P,X,PRIORITY).
 _passed(solve,LBL,DECL) :- ch_core(DECL,LBL), DECL=preference_holds(E,K).
-
-
-
-ch_core(engine_request(LBL,ENG)) :- engine_request(LBL,ENG).
-%%%ch_core(engine_default(ENG)) :- engine_default(ENG).
-%% ch_core(engine_request(LBL,ENG)).
-%%%% ch_core(engine_default(ENG)).
-
-ch_core(warning_forbid(KIND,LBL)) :- warning_forbid(KIND,LBL).
-ch_core(warning_ignore(KIND,LBL)) :- warning_ignore(KIND,LBL).
