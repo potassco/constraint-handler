@@ -7,7 +7,7 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.result as result
 import constraint_handler.schemas.warning as warning
 
 
@@ -109,12 +109,12 @@ def _extend_optimize_values(
     for key, total in totals.items():
         label, priority = key
         cTotal, errors = evaluator.reducedExpr(total)
-        results.append(atom.Optimize_value(label, priority, cTotal))
+        results.append(result.Optimize_value(label, priority, cTotal))
         results.extend(errors)
     for key, total in totals_real.items():
         label, priority = key
         cTotal, errors = evaluator.reducedExpr(total)
-        results.append(atom.Optimize_modelValue(label, priority, cTotal))
+        results.append(result.Optimize_modelValue(label, priority, cTotal))
         results.extend(errors)
     return [myClorm.pytocl(atom) for atom in results]
 

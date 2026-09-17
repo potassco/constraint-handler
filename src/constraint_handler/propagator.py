@@ -9,10 +9,10 @@ from clingo import Symbol
 import constraint_handler.evaluator as evaluator
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
-import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.internal as internal
 import constraint_handler.schemas.propagator_atom as prop_atom
+import constraint_handler.schemas.result as result
 import constraint_handler.schemas.type_ as type_
 import constraint_handler.schemas.warning as warning
 from constraint_handler.PropagatorConstants import (
@@ -103,7 +103,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # this is used for cautious reasoning
         # for the first model, the set is assigned the first model
         # This is will hold the model which is then used to update the result
-        self.python_model: set[atom.ResultAtom] | None = None
+        self.python_model: set[result.ResultAtom] | None = None
         # variable lits is used for brave/cautious reasoning to create nogoods that force changes in the model between stages
         # There is one literal per variable. When it is true, it means that the variable has a different value than previous solutions
         # TODO: Check that the above explanation is true!
@@ -794,7 +794,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             return self.add_nogoods_from_queue(ctl)
 
-    def get_reasoning_mode_nogoods(self, variables: set[atom.ResultAtom], first_call: bool) -> list[Iterable[int]]:
+    def get_reasoning_mode_nogoods(self, variables: set[result.ResultAtom], first_call: bool) -> list[Iterable[int]]:
         """
         Create nogoods used to drive brave/cautious reasoning.
 
@@ -1626,7 +1626,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             elif final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
                 continue
             pyVal, errors = evaluator.reducedExpr(final_value)
-            pyAtom = atom.Evaluated(
+            pyAtom = result.Evaluated(
                 eval_var.ref,
                 pyVal,
             )
@@ -1700,7 +1700,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         try:
             pyVal = expression.Ref(evaluator.get_baseType(final_value), clingo.Function("variable", [var]))
-            pyAtoms = [atom.Value(var, pyVal)]
+            pyAtoms = [result.Value(var, pyVal)]
 
             for value in final_value:
                 if value is ValueStatus.NOT_SET:
@@ -1710,7 +1710,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     set_pyVal = value
                 else:
                     set_pyVal = expression.Val(evaluator.get_baseType(value), value)
-                set_pyAtom = atom.Set_value(var, set_pyVal)
+                set_pyAtom = result.Set_value(var, set_pyVal)
                 pyAtoms.append(set_pyAtom)
             for pyAtom in pyAtoms:
                 self.python_model.add(pyAtom)
@@ -1724,7 +1724,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     )
                 ]
             )
-            self.python_model.add(atom.Value(var, expression.Bad.bad))
+            self.python_model.add(result.Value(var, expression.Bad.bad))
 
     def handle_on_model_dict(self, var: Symbol, final_value: dict):
         """
@@ -1743,7 +1743,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 pyVal = expression.Val(evaluator.get_baseType(final_value), var)
             except Exception:
                 pyVal = expression.Bad.bad
-        pyAtom = atom.Value(var, pyVal)
+        pyAtom = result.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
         if pyVal != expression.Bad.bad:
@@ -1757,7 +1757,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     errors.extend(keyErrors)
                     mm_pyVal, valErrors = evaluator.reducedExpr(val)
                     errors.extend(valErrors)
-                    mm_pyAtom = atom.Multimap_value(var, mm_pyKey, mm_pyVal)
+                    mm_pyAtom = result.Multimap_value(var, mm_pyKey, mm_pyVal)
 
                     self.python_model.add(mm_pyAtom)
 
@@ -1782,7 +1782,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.handle_on_model_warning([warning.Warning(kind, (), msg) for kind, msg in errors])
 
-        pyAtom = atom.Value(var, pyVal)
+        pyAtom = result.Value(var, pyVal)
         self.python_model.add(pyAtom)
 
     def handle_on_model_warning(self, errors: propagator_warning_t):

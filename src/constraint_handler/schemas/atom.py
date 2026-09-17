@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 import clingo
 
@@ -8,7 +8,6 @@ import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.domain as domain  # fmt: skip
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.statement as statement
-import constraint_handler.schemas.warning as warning
 
 LABEL_ANONYMOUS: expression.constant = clingo.Function("_label_anonymous")
 
@@ -17,9 +16,10 @@ class FailIntegrity(NamedTuple):
     pass
 
 
-class EvalResult(NamedTuple):
-    value: Any
-    errors: tuple[tuple[warning.Kind, str], ...]
+class Variable_assign(NamedTuple):
+    name: expression.constant
+    value: expression.Expr
+    label: expression.constant = LABEL_ANONYMOUS
 
 
 class Variable_choice(NamedTuple):
@@ -54,17 +54,12 @@ class Variable_domain(NamedTuple):
     label: expression.constant = LABEL_ANONYMOUS
 
 
-type VariableAtom = Variable_declare | Variable_define | Variable_default | Variable_domain
+type VariableAtom = Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain
 
 
 class Bool_evaluate(NamedTuple):
     expr: expression.Expr
     label: expression.constant = LABEL_ANONYMOUS
-
-
-class Bool_evaluated(NamedTuple):
-    expr: expression.Expr
-    value: expression.ReducedExpr
 
 
 class Set_assign(NamedTuple):
@@ -79,11 +74,6 @@ class Set_baseDomain(NamedTuple):
     label: expression.constant = LABEL_ANONYMOUS
 
 
-class Set_value(NamedTuple):
-    name: expression.constant
-    elt: expression.ReducedExpr
-
-
 type SetAtom = Set_assign | Set_baseDomain
 
 
@@ -92,15 +82,6 @@ class Multimap_assign(NamedTuple):
     key: expression.Expr
     val: expression.Expr
     label: expression.constant = LABEL_ANONYMOUS
-
-
-class Multimap_value(NamedTuple):
-    name: expression.constant
-    key: expression.ReducedExpr
-    cst: expression.ReducedExpr
-
-
-type MultimapAtom = Multimap_assign
 
 
 class Execution_declare(NamedTuple):
@@ -134,21 +115,6 @@ class Optimize_precision(NamedTuple):
 type OptimizeAtom = Optimize_maximizeSum | Optimize_precision
 
 
-class Optimize_modelValue(NamedTuple):
-    label: expression.constant
-    priority: expression.constant
-    total: expression.ReducedExpr
-
-
-class Optimize_value(NamedTuple):
-    label: expression.constant
-    priority: expression.constant
-    total: expression.ReducedExpr
-
-
-type OptimizeResult = Optimize_modelValue | Optimize_value
-
-
 class Preference_maximizeScore(NamedTuple):
     pass
 
@@ -169,21 +135,9 @@ class Preference_variableValue(NamedTuple):
 type PreferenceAtom = Preference_maximizeScore | Preference_holds | Preference_variableValue
 
 
-class Preference_score(NamedTuple):
-    score: int
-
-
 class Ensure(NamedTuple):
     expr: expression.Expr
     label: expression.constant = LABEL_ANONYMOUS
-
-
-class Value(NamedTuple):
-    name: expression.constant
-    val: expression.ReducedExpr
-
-    def __repr__(self):
-        return f"Value({str(self.name)},{str(self.val)})"
 
 
 class Evaluate(NamedTuple):
@@ -191,11 +145,5 @@ class Evaluate(NamedTuple):
     label: expression.constant = LABEL_ANONYMOUS
 
 
-class Evaluated(NamedTuple):
-    expr: expression.Expr
-    value: expression.ReducedExpr
-
-
-type MainAtom = Ensure | Evaluate
-type Atom = ExecutionAtom | MainAtom | MultimapAtom | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
-type ResultAtom = Value | Evaluated | Set_value | Multimap_value | OptimizeResult | Preference_score | warning.Warning
+type MainAtom = Bool_evaluate | Ensure | Evaluate
+type Atom = ExecutionAtom | MainAtom | Multimap_assign | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
