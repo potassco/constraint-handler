@@ -18,39 +18,55 @@ flowchart TD
 		InternalInputDefaulted
 		InternalInputDesugered
 		InternalInputLambdad
+		Normalized
 		Preprocessed
 		Domains
+		Splitting
+		ConstantFolding["Constant Folding"]
+		DefinitionSubstitution["Definition Substitution"]
 		StaticTypes
 		Components
 		PreprocessedFlattened
 		PreprocessedInterned
 	end
 
-	ASPInput -->|Internalizing| InternalInput
-	PythonInput -->|Internalizing| InternalInput
-	StringInput -->|Internalizing| InternalInput
+	ASPInput --> Internalizing
+	PythonInput --> Internalizing
+	StringInput --> Internalizing
+	Internalizing --> InternalInput
 	InternalInput -->|Validation of User Input| UserInputResult
 
 	InternalInput -->|Default Argument Filling| InternalInputDefaulted
 	InternalInputDefaulted -->|Desugaring| InternalInputDesugered
 	InternalInputDesugered -->|Lambda Normalization| InternalInputLambdad
-	InternalInputLambdad -->|SSA| Preprocessed
+	InternalInputLambdad -->|Normalization| Normalized
+	Normalized -->|SSA| Preprocessed
 
 	Preprocessed -->|Domain Computation| Domains
-	Preprocessed -->|Constant Folding| Preprocessed
-	Domains -->|Splitting| Preprocessed
-	Preprocessed -->|Splitting| Preprocessed
-	Preprocessed -->|Definition Substitution| Preprocessed
+	Preprocessed --> ConstantFolding
+	ConstantFolding --> Preprocessed
+	Domains --> Splitting
+	Preprocessed --> Splitting
+	Splitting --> Preprocessed
+	Preprocessed --> DefinitionSubstitution
+	DefinitionSubstitution --> Preprocessed
 	Preprocessed -->|Static Type Checking| StaticTypes
 	Preprocessed -->|Solution Space Decomposition| Components
 
 	Preprocessed -->|Flattening| PreprocessedFlattened
 	PreprocessedFlattened -->|Interning| PreprocessedInterned
 	PreprocessedInterned -->|Module Handling| SharedEngineInput
-	Components -->|Dispatching| EngineInput
-	SharedEngineInput -->|Dispatching| EngineInput
+	Components --> Dispatching
+	SharedEngineInput --> Dispatching
+	Dispatching --> EngineInput
 	EngineInput -->|Computation| EngineOutput
 	EngineOutput -->|Module Handling 2| SharedEngineOutput
 	Components -->|Solution Space Computation| SharedEngineOutput
 	SharedEngineOutput -->|Post Processing| UserOutput
+
+	style Internalizing fill:none,stroke:none
+	style Splitting fill:none,stroke:none
+	style ConstantFolding fill:none,stroke:none
+	style DefinitionSubstitution fill:none,stroke:none
+	style Dispatching fill:none,stroke:none
 ```
