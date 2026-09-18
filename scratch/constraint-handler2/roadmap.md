@@ -36,7 +36,10 @@ API:
 
 - clean separation between preprocessing, grounding constraints, solving,
   postprocessing
-- If we have an external SSA mechanism, then static type checking would make much more sense/can be done, as every variable is only assigned once and can not change their type. So SSA on python code could then allow for type annotation and translation
+- If we have an external SSA mechanism, then static type checking would make
+  much more sense/can be done, as every variable is only assigned once and can
+  not change their type. So SSA on python code could then allow for type
+  annotation and translation
 - How can we provide an API that allows for having maybe python objects,
   assignments, expressions as input, and still use the ch versatile and
   transparent with regard to optimization, brave/cautious reasoning,
@@ -227,17 +230,17 @@ Encoding:
 
 ### Consolidations (same goal, different wording)
 
-| Theme | Contributors | Consolidated goal |
-| --- | --- | --- |
-| **Staged architecture** | Sven, Max, Dominik | One pipeline with explicit, decoupled, independently testable/swappable stages (preprocess -> ground -> solve -> postprocess). |
-| **Input language baseline** | Sven, Dominik, Abdallah | Adopt Philipp's proposal as the input-language starting point. |
-| **Small core + modular extensions** | Dominik ("simplify feature set for now"), Abdallah ("small core language" under "Both", "possible extensions with feature/datatype modules"), Phil ("identify core", "clean up language") | Minimal core language now, with optimization/brave-cautious/defaults/datatypes shipped as opt-in feature modules later. |
-| **Documented/clear semantics** | Dominik ("clearly documented semantics... including undefined behavior"), Phil ("clear semantic principles", "what constitutes a value?", "fundamental constituents") | Same underlying goal: a precisely specified semantic foundation before/alongside implementation. Phil adds the concrete lens (values, singletons/sets/multimaps) Dominik's goal was missing. |
-| **Explanation / query / brave-cautious reasoning** | Sven, Abdallah, Chris | Brave/cautious reasoning + assumptions/unsat-core/explanation + projection-for-performance (Chris's goal is a concrete optimization within this cluster). |
-| **Type checking / SSA** | Sven, Max, Abdallah | SSA-outside-CH (Sven) enables Max's static type annotation idea, which Abdallah's static/dynamic typing goals build on. |
-| **Engineering hygiene / performance internals** | Dominik, Sven ("templating technique") | Same goal at different detail levels. |
-| **Search-space minimization / solving efficiency** | Abdallah ("good theoretical performance... no unnecessary blow-ups"), Phil ("search space as small as possible") | One goal: keep the ground/solving search space minimal by construction, not just fast in practice. |
-| **Testing/benchmarking & Clingo 6 readiness** | Dominik | Tests/benchmarks and "keep suite compatible with Clingo 6" support the performance and correctness clusters without conflicting with anything else. |
+| Theme                                              | Contributors                                                                                                                                                                              | Consolidated goal                                                                                                                                                                            |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Staged architecture**                            | Sven, Max, Dominik                                                                                                                                                                        | One pipeline with explicit, decoupled, independently testable/swappable stages (preprocess -> ground -> solve -> postprocess).                                                               |
+| **Input language baseline**                        | Sven, Dominik, Abdallah                                                                                                                                                                   | Adopt Philipp's proposal as the input-language starting point.                                                                                                                               |
+| **Small core + modular extensions**                | Dominik ("simplify feature set for now"), Abdallah ("small core language" under "Both", "possible extensions with feature/datatype modules"), Phil ("identify core", "clean up language") | Minimal core language now, with optimization/brave-cautious/defaults/datatypes shipped as opt-in feature modules later.                                                                      |
+| **Documented/clear semantics**                     | Dominik ("clearly documented semantics... including undefined behavior"), Phil ("clear semantic principles", "what constitutes a value?", "fundamental constituents")                     | Same underlying goal: a precisely specified semantic foundation before/alongside implementation. Phil adds the concrete lens (values, singletons/sets/multimaps) Dominik's goal was missing. |
+| **Explanation / query / brave-cautious reasoning** | Sven, Abdallah, Chris                                                                                                                                                                     | Brave/cautious reasoning + assumptions/unsat-core/explanation + projection-for-performance (Chris's goal is a concrete optimization within this cluster).                                    |
+| **Type checking / SSA**                            | Sven, Max, Abdallah                                                                                                                                                                       | SSA-outside-CH (Sven) enables Max's static type annotation idea, which Abdallah's static/dynamic typing goals build on.                                                                      |
+| **Engineering hygiene / performance internals**    | Dominik, Sven ("templating technique")                                                                                                                                                    | Same goal at different detail levels.                                                                                                                                                        |
+| **Search-space minimization / solving efficiency** | Abdallah ("good theoretical performance... no unnecessary blow-ups"), Phil ("search space as small as possible")                                                                          | One goal: keep the ground/solving search space minimal by construction, not just fast in practice.                                                                                           |
+| **Testing/benchmarking & Clingo 6 readiness**      | Dominik                                                                                                                                                                                   | Tests/benchmarks and "keep suite compatible with Clingo 6" support the performance and correctness clusters without conflicting with anything else.                                          |
 
 ### Direct conflicts
 
@@ -247,36 +250,34 @@ Encoding:
    richer-but-slower engine, and an experimental engine. Dominik's "eventual
    (but not initial) support for different engines" is a phasing compromise:
    start with one engine, grow into multiple later.
-2. **Error-handling philosophy.** Max wants "undefined behavior on erroneous
-   input... no recovery paths from erroneous input" (fail-fast); Abdallah
-   wants "support for conservative partial model computation (error
-   recovery)". Dominik flags this exact ambiguity himself ("does it do error
-   correction/recovery or just error reporting?") — needs an explicit
-   decision.
-3. **Standalone app vs. library/integration.** Dominik proposes a CLI
+1. **Error-handling philosophy.** Max wants "undefined behavior on erroneous
+   input... no recovery paths from erroneous input" (fail-fast); Abdallah wants
+   "support for conservative partial model computation (error recovery)".
+   Dominik flags this exact ambiguity himself ("does it do error
+   correction/recovery or just error reporting?") — needs an explicit decision.
+1. **Standalone app vs. library/integration.** Dominik proposes a CLI
    ("`ch some_file.lp`"); Abdallah wants "integration with clingo /
    compatibility with other tools (ie, not a standalone app)". Not mutually
-   exclusive (library + thin CLI wrapper), but the wording is contradictory
-   as stated and should be clarified.
-4. **Feature-set minimalism vs. maximalism.** This is now a three-way
-   tension:
-   - Minimalist: Dominik ("simplify feature set for now"), Max ("reduced set
-     of functionality... non-nested sets for simplicity").
+   exclusive (library + thin CLI wrapper), but the wording is contradictory as
+   stated and should be clarified.
+1. **Feature-set minimalism vs. maximalism.** This is now a three-way tension:
+   - Minimalist: Dominik ("simplify feature set for now"), Max ("reduced set of
+     functionality... non-nested sets for simplicity").
    - Maximalist: Abdallah's broad datatype/operator/propagator wishlist and
      Phil's "Keep CH uniqueness: huge variety of constructs and datatypes".
-   - Phil's own goals are in tension with each other here too: "identify
-     core" / "clean up language" (minimalist framing) vs. "keep CH
-     uniqueness: huge variety of constructs and datatypes" (maximalist). The
-     core-vs-modules resolution applies, but Phil should clarify whether
-     "uniqueness" is a Phase-1 core property or a Phase-2 module set.
-5. **ASP-native vs. Python-object input representation.** Phil argues input
-   should stay "ASP-ish" (fits CH's fact-based uniqueness), while Max
-   proposes a Python-object API layer (`Declare`/`Assign`/`Var` plus
+   - Phil's own goals are in tension with each other here too: "identify core"
+     / "clean up language" (minimalist framing) vs. "keep CH uniqueness: huge
+     variety of constructs and datatypes" (maximalist). The core-vs-modules
+     resolution applies, but Phil should clarify whether "uniqueness" is a
+     Phase-1 core property or a Phase-2 module set.
+1. **ASP-native vs. Python-object input representation.** Phil argues input
+   should stay "ASP-ish" (fits CH's fact-based uniqueness), while Max proposes
+   a Python-object API layer (`Declare`/`Assign`/`Var` plus
    `preprocess`/`type_annotate` functions) sitting in front of ASP facts. Not
    strictly contradictory if Max's objects just compile down to facts, but
-   Phil's principle argues for ASP semantics driving the design first,
-   whereas Max explicitly questions whether facts are even the right
-   representation to design around. Needs explicit reconciliation.
+   Phil's principle argues for ASP semantics driving the design first, whereas
+   Max explicitly questions whether facts are even the right representation to
+   design around. Needs explicit reconciliation.
 
 ### Internal tension (same person)
 
@@ -284,23 +285,21 @@ Encoding:
   (proposing Python objects like `Declare`/`Assign`/`Var` with
   `preprocess`/`type_annotate` functions), yet under "Encoding" states a
   preference for "fact based input... all inputs to be facts." Likely
-  reconcilable as Python objects at the API layer compiled down to facts at
-  the encoding layer, but should be made explicit.
-- **Phil** wants to "identify core" / "clean up language" while also wanting
-  to "keep CH uniqueness: huge variety of constructs and datatypes" (see
-  conflict 4 above).
+  reconcilable as Python objects at the API layer compiled down to facts at the
+  encoding layer, but should be made explicit.
+- **Phil** wants to "identify core" / "clean up language" while also wanting to
+  "keep CH uniqueness: huge variety of constructs and datatypes" (see conflict
+  4 above).
 
 ### Suggested phasing
 
 - **Phase 1 (core)**: input language per Philipp's proposal, ASP-native/
-  fact-based semantics (per Phil's "ASP-ish" principle), single engine,
-  staged pipeline with SSA as a preprocessing step outside CH, flat/
-  fact-based internal encoding, client-required features only (optimization,
+  fact-based semantics (per Phil's "ASP-ish" principle), single engine, staged
+  pipeline with SSA as a preprocessing step outside CH, flat/ fact-based
+  internal encoding, client-required features only (optimization,
   brave/cautious, defaults+priorities), fail-fast error reporting, documented
-  core semantics (values, sets, multimaps — Phil + Dominik's correctness
-  goal).
+  core semantics (values, sets, multimaps — Phil + Dominik's correctness goal).
 - **Phase 2 (extension)**: optional feature/datatype modules (Abdallah's
   wishlist + Phil's "huge variety of constructs"), multiple engines
   (propagator, tiered performance), static/dynamic type system,
   error-recovery/partial-model support, explanation/assumptions/unsat-core.
-
