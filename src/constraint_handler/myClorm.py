@@ -414,6 +414,5 @@ def findInPropagateInit(ctl: clingo.propagator.PropagateInit, target_type: typin
     result = dict()
     for atom, value in _find_in_control(ctl, target_type):
         literal = ctl.solver_literal(atom.literal)
-        if literal != -1:
-            result[value] = literal
+        result[value] = literal
     return result
