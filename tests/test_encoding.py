@@ -38,6 +38,7 @@ def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propag
 
 core_tests = [
     "core/bool_evaluate/basic",
+    "core/bool_evaluate/forbidden",
     "core/bool_evaluate/immediate",
     "core/bool_evaluate/inconsistent",
     "core/basic_assignments",
@@ -670,6 +671,7 @@ def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "pro
 
 choice_statistics_skip: set[str] = {
     "core/bool_evaluate/basic",
+    "core/bool_evaluate/forbidden",
     "core/boolean_shortcut_optional_presence",
     "core/empty_set_execution",
     "core/evaluate_dynamic",
