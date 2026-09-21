@@ -609,7 +609,6 @@ propagator_xfail: set[str] = {
     "engine/request_mixed_trig",
     "expression/lambda/recursive",
     "multimap/main",
-    "optimization/preferences",
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
