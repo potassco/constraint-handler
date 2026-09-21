@@ -37,7 +37,9 @@ def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propag
 
 
 core_tests = [
+    "core/bool_evaluate/basic",
     "core/bool_evaluate/immediate",
+    "core/bool_evaluate/inconsistent",
     "core/basic_assignments",
     "core/boolean_shortcut_optional_presence",
     "core/conditional_assign",
@@ -76,7 +78,6 @@ datatype_tests = [
     "datatype/bool/leqv_lxor/variadic",
     "datatype/bool/derived_relations",
     "datatype/bool/equivalence_bad",
-    "datatype/bool/evaluate",
     "datatype/bool/implication_bad",
     "datatype/bool/negation/logical_bad",
     "datatype/bool/negation/logical_basic",
@@ -593,6 +594,7 @@ propagator_skip: set[str] = {
 }
 propagator_xfail: set[str] = {
     "core/bool_evaluate/immediate",
+    "core/bool_evaluate/inconsistent",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
@@ -667,6 +669,7 @@ def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "pro
 
 
 choice_statistics_skip: set[str] = {
+    "core/bool_evaluate/basic",
     "core/boolean_shortcut_optional_presence",
     "core/empty_set_execution",
     "core/evaluate_dynamic",
@@ -793,7 +796,6 @@ choice_statistics_xfail: set[str] = {
     "core/reasoning_modes_with_show",
     "datatype/bool/derived_relations",
     "datatype/bool/equivalence_bad",
-    "datatype/bool/evaluate",
     "datatype/bool/implication_bad",
     "error/recovery_ensure",
     "execution/assert",
