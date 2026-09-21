@@ -38,7 +38,8 @@ typecheck = [
 test = [
     "pytest==9.0.1",
     "clintest>=0.4",
-    "pytest-benchmark>=5.1,<6"
+    "pytest-benchmark>=5.1,<6",
+    "pytest-timeout>=2.4,<3"
 ]
 doc = [
     "mkdocs",
@@ -73,6 +74,7 @@ line-length = 120
 [tool.pytest.ini_options]
 markers = [
     "performance: performance tests that persist pytest-benchmark results and enforce runtime thresholds",
+    "timeout: limit a test's total runtime (provided by pytest-timeout)",
 ]
 
 [tool.pylint.format]

@@ -61,7 +61,11 @@ nox -s benchmark_compare -- .benchmarks/0008_master-20260420-203125.json .benchm
 
 The benchmark ids follow the pattern `compile-...`, `ground-...`,
 `propagator-check-...`, and `propagator-solve-...`, so `pytest -k` can target
-individual cases directly.
+individual cases directly. Each encoding benchmark also times out after its
+aggregate runtime threshold plus one second, preventing a severe regression
+from holding the performance session open indefinitely. The aggregate threshold
+is the configured average multiplied by the number of measured and warmup runs,
+so individual runs may exceed the average when the overall mean still passes.
 
 The default `nox -s test` session excludes `performance` tests so the normal
 test matrix stays practical.

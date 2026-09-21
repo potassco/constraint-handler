@@ -268,8 +268,18 @@ def assert_benchmark_threshold(benchmark, benchmark_case: PerformanceBenchmark) 
     )
 
 
-def benchmark_param(benchmark_case: PerformanceBenchmark, **kwargs):
-    return pytest.param(benchmark_case, id=benchmark_case.pytest_id, **kwargs)
+def benchmark_param(benchmark_case: PerformanceBenchmark, marks: tuple = ()):
+    return pytest.param(
+        benchmark_case,
+        id=benchmark_case.pytest_id,
+        marks=(
+            *marks,
+            pytest.mark.timeout(
+                benchmark_case.max_average_seconds * (benchmark_case.measured_runs + benchmark_case.warmup_runs)
+                + 1
+            ),
+        ),
+    )
 
 
 compile_benchmarks = [
@@ -403,7 +413,7 @@ propagator_benchmarks = [
             check_mode=True,
             constants={"int_domain_size": 3000},
         ),
-        marks=pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),
+        marks=(pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),),
     ),
     benchmark_param(
         PerformanceBenchmark(
@@ -413,7 +423,7 @@ propagator_benchmarks = [
             check_mode=False,
             constants={"int_domain_size": 3000},
         ),
-        marks=pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),
+        marks=(pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),),
     ),
     benchmark_param(
         PerformanceBenchmark(
