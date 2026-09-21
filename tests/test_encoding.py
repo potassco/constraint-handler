@@ -37,6 +37,7 @@ def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propag
 
 
 core_tests = [
+    "core/bool_evaluate/immediate",
     "core/basic_assignments",
     "core/boolean_shortcut_optional_presence",
     "core/conditional_assign",
