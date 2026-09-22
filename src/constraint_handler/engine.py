@@ -1,14 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Literal
 
 from constraint_handler.PropagatorConstants import PROPAGATOR_CHECK_MODE_STR
-
-type EngineName = Literal["compile", "ground", "propagator"]
 
 
 @dataclass(frozen=True)
 class Engine:
-    name: EngineName
+    name: str
     parameters: dict[str, bool] = field(default_factory=dict)
 
     def identifier(self) -> str:
@@ -22,6 +19,7 @@ class Engine:
 
 
 compile = Engine("compile")
+compile2 = Engine("compile2")
 ground = Engine("ground")
 propagator = Engine("propagator")
 propagator_check = Engine("propagator", {"check_mode": True})

@@ -1,20 +1,17 @@
-from typing import Literal
-
 import clingo
 import pytest
 
 import constraint_handler
+import constraint_handler.engine as engine
 import tests.utils.testing as chut
 
 ctrl_options = ["0", "--heuristic=Domain"]
 
 
-def solve_with_clingo_statistics(
-    name: str, engine: Literal["compile", "compile2", "ground", "propagator"] = "compile"
-) -> dict:
+def solve_with_clingo_statistics(name: str, selected_engine: engine.Engine = engine.compile) -> dict:
     ctl = clingo.Control(["--stats=2"])
     constraint_handler.add_to_control(ctl)
-    ctl.add(f"engine_default({engine}).")
+    ctl.add(selected_engine.program())
     ctl.load(f"tests/correctness/{name}.lp")
     ctl.ground()
 
@@ -24,14 +21,13 @@ def solve_with_clingo_statistics(
     return ctl.statistics
 
 
-def run_test(name: str, engine: Literal["compile", "compile2", "ground", "propagator"], check_mode: bool = False):
+def run_test(name: str, selected_engine: engine.Engine):
     name = "tests/correctness/" + name
-    engine_prg = f"engine_default({engine})."
     expectations = chut.build_expectations(name)
     assert expectations, f"Missing expectations: {name}"
     for test, extra_args in expectations:
         options = ctrl_options + extra_args
-        solver = chut.Solver(options, engine_prg, files=[name + ".lp"], propagator_check_only=check_mode)
+        solver = chut.Solver(options, selected_engine.program(), files=[name + ".lp"])
         solver.solve(test)
         test.assert_()
 
@@ -626,12 +622,12 @@ propagator_xfail: set[str] = {
 propagator_true_skip: set[str] = propagator_skip | set()
 propagator_true_xfail: set[str] = propagator_xfail | set()
 
-engine_test_configs: list[tuple[str, set[str], set[str], tuple[bool, ...]]] = [
-    ("compile", compile_skip, compile_xfail, (False,)),
-    ("compile2", compile2_skip, compile2_xfail, (False,)),
-    ("ground", ground_skip, ground_xfail, (False,)),
-    ("propagator", propagator_skip, propagator_xfail, (False,)),
-    ("propagator", propagator_true_skip, propagator_true_xfail, (True,)),
+engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [
+    (engine.compile, compile_skip, compile_xfail),
+    (engine.compile2, compile2_skip, compile2_xfail),
+    (engine.ground, ground_skip, ground_xfail),
+    (engine.propagator, propagator_skip, propagator_xfail),
+    (engine.propagator_check, propagator_true_skip, propagator_true_xfail),
 ]
 
 
@@ -639,32 +635,31 @@ def param_marks(
     name: str,
     skip: set[str],
     xfail: set[str],
-    engine: str,
+    context: str,
 ):
     """Return pytest marks for a test name under a specific engine context."""
     if name in skip:
-        return [pytest.mark.skip(reason=f"skipped in {engine} engine")]
+        return [pytest.mark.skip(reason=f"skipped in {context}")]
     if name in xfail:
-        return [pytest.mark.xfail(reason=f"known failure in {engine} engine")]
+        return [pytest.mark.xfail(reason=f"known failure in {context}")]
     return []
 
 
 @pytest.mark.parametrize(
-    ["name", "engine", "check_mode"],
+    ["name", "selected_engine"],
     [
         pytest.param(
             name,
-            engine,
-            check_mode,
-            marks=param_marks(name, skip, xfail, engine),
+            selected_engine,
+            id=f"{name}-{selected_engine.identifier()}",
+            marks=param_marks(name, skip, xfail, f"{selected_engine.identifier()} engine"),
         )
-        for engine, skip, xfail, check_modes in engine_test_configs
-        for check_mode in check_modes
+        for selected_engine, skip, xfail in engine_test_configs
         for name in base_tests
     ],
 )
-def test_engine(name: str, engine: Literal["compile", "compile2", "ground", "propagator"], check_mode: bool):
-    run_test(name, engine, check_mode)
+def test_engine(name: str, selected_engine: engine.Engine):
+    run_test(name, selected_engine)
 
 
 choice_statistics_skip: set[str] = {
