@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
@@ -17,9 +17,30 @@ from constraint_handler.schemas.operators import ArithmeticOperator
 from src.constraint_handler.PropagatorConstants import PROPAGATOR_CHECK_MODE_STR
 
 ctrl_options = ["1000", "--heuristic=Domain"]
-Engine = Literal["compile", "ground", "propagator"]
+EngineName = Literal["compile", "ground", "propagator"]
 performance_examples_dir = Path("tests/performance")
 MYCLORM_BATCH_SIZE = 100
+
+
+@dataclass(frozen=True)
+class Engine:
+    name: EngineName
+    parameters: dict[str, bool] = field(default_factory=dict)
+
+    def identifier(self) -> str:
+        return "-".join((self.name, *(f"{name}={value}" for name, value in sorted(self.parameters.items()))))
+
+    def program(self) -> str:
+        program = f"engine_default({self.name})."
+        if self.parameters.get("check_mode"):
+            program += f"\n{PROPAGATOR_CHECK_MODE_STR}."
+        return program
+
+
+compile_engine = Engine("compile")
+ground_engine = Engine("ground")
+propagator_engine = Engine("propagator")
+propagator_check_engine = Engine("propagator", {"check_mode": True})
 
 
 @dataclass(frozen=True)
@@ -152,15 +173,7 @@ class PerformanceBenchmark:
     max_average_seconds: float
     measured_runs: int = 1
     warmup_runs: int = 0
-    check_mode: bool = False
     constants: dict[str, int] | None = None
-
-    @property
-    def pytest_id(self) -> str:
-        if self.engine != "propagator":
-            return f"{self.engine}-{self.name}"
-        mode = "check" if self.check_mode else "solve"
-        return f"{self.engine}-{mode}-{self.name}"
 
     @property
     def program_path(self) -> str:
@@ -175,9 +188,7 @@ def run_benchmark_program(benchmark_case: PerformanceBenchmark) -> None:
 
     ctl = clingo.Control(benchmark_options)
     constraint_handler.add_to_control(ctl)
-    ctl.add(f"engine_default({benchmark_case.engine}).")
-    if benchmark_case.engine == "propagator" and benchmark_case.check_mode:
-        ctl.add(PROPAGATOR_CHECK_MODE_STR + ".")
+    ctl.add(benchmark_case.engine.program())
     ctl.load(os.fspath(benchmark_case.program_path))
     ctl.ground()
     ctl.solve()
@@ -262,7 +273,8 @@ def assert_benchmark_threshold(benchmark, benchmark_case: PerformanceBenchmark) 
     durations = benchmark.stats.stats.data
     average_runtime = benchmark.stats["mean"]
     assert average_runtime <= benchmark_case.max_average_seconds, (
-        f"{benchmark_case.engine} benchmark {benchmark_case.name} average runtime {average_runtime:.3f}s exceeded "
+        f"{benchmark_case.engine.identifier()} benchmark {benchmark_case.name} "
+        f"average runtime {average_runtime:.3f}s exceeded "
         f"{benchmark_case.max_average_seconds:.3f}s over {len(durations)} measured runs "
         f"(durations={', '.join(f'{duration:.3f}s' for duration in durations)})"
     )
@@ -271,12 +283,11 @@ def assert_benchmark_threshold(benchmark, benchmark_case: PerformanceBenchmark) 
 def benchmark_param(benchmark_case: PerformanceBenchmark, marks: tuple = ()):
     return pytest.param(
         benchmark_case,
-        id=benchmark_case.pytest_id,
+        id=f"{benchmark_case.engine.identifier()}-{benchmark_case.name}",
         marks=(
             *marks,
             pytest.mark.timeout(
-                benchmark_case.max_average_seconds * (benchmark_case.measured_runs + benchmark_case.warmup_runs)
-                + 1
+                benchmark_case.max_average_seconds * (benchmark_case.measured_runs + benchmark_case.warmup_runs) + 1
             ),
         ),
     )
@@ -286,15 +297,15 @@ compile_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "sum_aggregates",
-            "compile",
+            compile_engine,
             6.0,
         )
     ),
-    benchmark_param(PerformanceBenchmark("sum_chain", "compile", 0.5)),
+    benchmark_param(PerformanceBenchmark("sum_chain", compile_engine, 0.5)),
     benchmark_param(
         PerformanceBenchmark(
             "bad_scaling_ground",
-            "compile",
+            compile_engine,
             2.0,
             constants={"max_depth": 8},
         )
@@ -302,7 +313,7 @@ compile_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "repeated_constraints",
-            "compile",
+            compile_engine,
             20.0,
             constants={"pair_count": 1000},
         )
@@ -310,7 +321,7 @@ compile_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "large_int_domain",
-            "compile",
+            compile_engine,
             6.0,
             constants={"int_domain_size": 8000},  # uses an excessive amount of memory
         )
@@ -318,7 +329,7 @@ compile_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "assignment_chain",
-            "compile",
+            compile_engine,
             5.0,
             constants={"chain_length": 200},
         )
@@ -329,15 +340,15 @@ ground_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "sum_aggregates",
-            "ground",
+            ground_engine,
             200.0,
         )
     ),
-    benchmark_param(PerformanceBenchmark("sum_chain", "ground", 1.0)),
+    benchmark_param(PerformanceBenchmark("sum_chain", ground_engine, 1.0)),
     benchmark_param(
         PerformanceBenchmark(
             "bad_scaling_compile",
-            "ground",
+            ground_engine,
             1.0,
             constants={"max_depth": 9},
         )
@@ -345,7 +356,7 @@ ground_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "repeated_constraints",
-            "ground",
+            ground_engine,
             70.0,
             constants={"pair_count": 1000},
         )
@@ -353,7 +364,7 @@ ground_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "large_int_domain",
-            "ground",
+            ground_engine,
             60.0,
             constants={"int_domain_size": 600},
         )
@@ -361,7 +372,7 @@ ground_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "assignment_chain",
-            "ground",
+            ground_engine,
             6.0,
             constants={"chain_length": 200},
         )
@@ -372,45 +383,40 @@ propagator_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "sum_aggregates",
-            "propagator",
+            propagator_check_engine,
             20.0,
-            check_mode=True,
         )
     ),
     benchmark_param(
         PerformanceBenchmark(
             "sum_aggregates",
-            "propagator",
+            propagator_engine,
             100.0,
-            check_mode=False,
         )
     ),
-    benchmark_param(PerformanceBenchmark("sum_chain", "propagator", 1.5, check_mode=True)),
-    benchmark_param(PerformanceBenchmark("sum_chain", "propagator", 1.5, check_mode=False)),
+    benchmark_param(PerformanceBenchmark("sum_chain", propagator_check_engine, 1.5)),
+    benchmark_param(PerformanceBenchmark("sum_chain", propagator_engine, 1.5)),
     benchmark_param(
         PerformanceBenchmark(
             "repeated_constraints",
-            "propagator",
+            propagator_check_engine,
             170.0,
-            check_mode=True,
             constants={"pair_count": 130},
         )
     ),
     benchmark_param(
         PerformanceBenchmark(
             "repeated_constraints",
-            "propagator",
+            propagator_engine,
             100.0,
-            check_mode=False,
             constants={"pair_count": 1000},
         )
     ),
     benchmark_param(
         PerformanceBenchmark(
             "large_int_domain",
-            "propagator",
+            propagator_check_engine,
             300.0,
-            check_mode=True,
             constants={"int_domain_size": 3000},
         ),
         marks=(pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),),
@@ -418,9 +424,8 @@ propagator_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "large_int_domain",
-            "propagator",
+            propagator_engine,
             300.0,
-            check_mode=False,
             constants={"int_domain_size": 3000},
         ),
         marks=(pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),),
@@ -428,18 +433,16 @@ propagator_benchmarks = [
     benchmark_param(
         PerformanceBenchmark(
             "assignment_chain",
-            "propagator",
+            propagator_check_engine,
             5.0,
-            check_mode=True,
             constants={"chain_length": 200},
         )
     ),
     benchmark_param(
         PerformanceBenchmark(
             "assignment_chain",
-            "propagator",
+            propagator_engine,
             5.0,
-            check_mode=False,
             constants={"chain_length": 200},
         )
     ),
@@ -456,9 +459,9 @@ all_benchmarks = compile_benchmarks + ground_benchmarks + propagator_benchmarks
 def test_performance(benchmark, benchmark_case: PerformanceBenchmark):
     benchmark.extra_info.update(
         {
-            "engine": benchmark_case.engine,
+            "engine": benchmark_case.engine.name,
             "fixture": benchmark_case.name,
-            "check_mode": benchmark_case.check_mode,
+            "engine_parameters": benchmark_case.engine.parameters,
             "constants": benchmark_case.constants or {},
         }
     )
