@@ -1,38 +1,15 @@
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 import clingo
 import pytest
 
 import constraint_handler
-from src.constraint_handler.PropagatorConstants import PROPAGATOR_CHECK_MODE_STR
+from constraint_handler.engine import Engine, compile, ground, propagator, propagator_check
 
 ctrl_options = ["1000", "--heuristic=Domain"]
-EngineName = Literal["compile", "ground", "propagator"]
 performance_examples_dir = Path("tests/performance")
-
-
-@dataclass(frozen=True)
-class Engine:
-    name: EngineName
-    parameters: dict[str, bool] = field(default_factory=dict)
-
-    def identifier(self) -> str:
-        return "-".join((self.name, *(f"{name}={value}" for name, value in sorted(self.parameters.items()))))
-
-    def program(self) -> str:
-        program = f"engine_default({self.name})."
-        if self.parameters.get("check_mode"):
-            program += f"\n{PROPAGATOR_CHECK_MODE_STR}."
-        return program
-
-
-compile_engine = Engine("compile")
-ground_engine = Engine("ground")
-propagator_engine = Engine("propagator")
-propagator_check_engine = Engine("propagator", {"check_mode": True})
 
 
 @dataclass(frozen=True)
@@ -120,17 +97,17 @@ propagator_solve_benchmarks = [
 ]
 
 all_benchmarks = (
-    [benchmark_param(benchmark_case, compile_engine) for benchmark_case in compile_benchmarks]
-    + [benchmark_param(benchmark_case, ground_engine) for benchmark_case in ground_benchmarks]
-    + [benchmark_param(benchmark_case, propagator_check_engine) for benchmark_case in propagator_check_benchmarks]
-    + [benchmark_param(benchmark_case, propagator_engine) for benchmark_case in propagator_solve_benchmarks]
+    [benchmark_param(benchmark_case, compile) for benchmark_case in compile_benchmarks]
+    + [benchmark_param(benchmark_case, ground) for benchmark_case in ground_benchmarks]
+    + [benchmark_param(benchmark_case, propagator_check) for benchmark_case in propagator_check_benchmarks]
+    + [benchmark_param(benchmark_case, propagator) for benchmark_case in propagator_solve_benchmarks]
     + [
         benchmark_param(
             PerformanceBenchmark("large_int_domain", 300.0, constants={"int_domain_size": 3000}),
             engine,
             marks=(pytest.mark.skip(reason="Temporarily disabled: incredibly slow (2026-05-18)"),),
         )
-        for engine in (propagator_check_engine, propagator_engine)
+        for engine in (propagator_check, propagator)
     ]
 )
 
