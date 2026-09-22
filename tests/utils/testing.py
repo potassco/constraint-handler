@@ -11,7 +11,8 @@ from clintest.outcome import Outcome
 from clintest.quantifier import All, Any, Exact, Finished, First, Last, Quantifier
 
 import constraint_handler
-from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM, PROPAGATOR_CHECK_MODE_STR
+from constraint_handler.engine import Engine, compile
+from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM
 
 
 def atoms_from_file(file_name: str) -> list[clingo.Symbol]:
@@ -152,12 +153,12 @@ class Solver(clintest.solver.Solver):
         arguments: Optional[Sequence[str]] = None,
         program: Optional[str] = None,
         files: Optional[Sequence[str]] = None,
-        propagator_check_only: bool = False,
+        engine: Engine = compile,
     ) -> None:
         self.__arguments = [] if arguments is None else arguments
         self.__program = "" if program is None else program
         self.__files = [] if files is None else files
-        self.__propagator_check_only = propagator_check_only
+        self.__engine = engine
 
     def solve(self, test: clintest.test.Test) -> None:
         if test.outcome().is_certain():
@@ -165,9 +166,7 @@ class Solver(clintest.solver.Solver):
 
         ctl = clingo.Control(self.__arguments)
 
-        constraint_handler.add_to_control(ctl)
-        if self.__propagator_check_only:
-            ctl.add("base", [], PROPAGATOR_CHECK_MODE_STR + ".")
+        constraint_handler.add_to_control(ctl, engine=self.__engine)
         ctl.add(self.__program)
 
         for file_name in self.__files:
@@ -188,5 +187,5 @@ class Solver(clintest.solver.Solver):
         arguments = repr(self.__arguments)
         program = repr(self.__program)
         files = repr(self.__files)
-        prop = repr(self.__propagator_check_only)
-        return f"{name}({arguments}, {program}, {files}, {prop})"
+        engine = repr(self.__engine)
+        return f"{name}({arguments}, {program}, {files}, {engine})"

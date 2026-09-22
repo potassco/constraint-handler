@@ -10,8 +10,7 @@ ctrl_options = ["0", "--heuristic=Domain"]
 
 def solve_with_clingo_statistics(name: str, selected_engine: engine.Engine = engine.compile) -> dict:
     ctl = clingo.Control(["--stats=2"])
-    constraint_handler.add_to_control(ctl)
-    ctl.add(selected_engine.program())
+    constraint_handler.add_to_control(ctl, engine=selected_engine)
     ctl.load(f"tests/correctness/{name}.lp")
     ctl.ground()
 
@@ -27,7 +26,7 @@ def run_test(name: str, selected_engine: engine.Engine):
     assert expectations, f"Missing expectations: {name}"
     for test, extra_args in expectations:
         options = ctrl_options + extra_args
-        solver = chut.Solver(options, selected_engine.program(), files=[name + ".lp"])
+        solver = chut.Solver(options, files=[name + ".lp"], engine=selected_engine)
         solver.solve(test)
         test.assert_()
 
