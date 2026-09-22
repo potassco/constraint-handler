@@ -2,6 +2,11 @@
 
 ## Ongoing
 
+- - replace the `api` argument of `add_to_control` with `engine`; select Flat
+    CH with `engine=constraint_handler.engine.fch` instead of `api="fch"`.
+- add `Engine` configurations and an `engine` argument to `add_to_control`; the
+  default engine is `compile`.
+
 ## v0.0.7
 
 - add the flat constraint handler (FCH) to `constraint_handler` and expose it

@@ -11,6 +11,7 @@ import constraint_handler.propagator as propagator
 import constraint_handler.schemas.atom as atom
 import constraint_handler.solver_environment as solver_environment
 import flat_ch.main as flat_main
+from constraint_handler.engine import Engine, compile
 
 module_main = [
     "main",
@@ -155,15 +156,12 @@ def add_to_control(
     ctrl: clingo.Control,
     environment=None,
     _environment_ids=dict(),
-    api: str = "ch",
+    engine: Engine = compile,
 ):
     """Adds encoding logic to the provided Control instance. The environment argumennt specifies the locals used in the python statements and expressions."""
-    if api == "fch":
+    if engine.name == "fch":
         flat_main.add_to_control(ctrl, _build_fch_environment(environment), api="ch")
         return
-
-    if api != "ch":
-        raise ValueError(f"Unsupported api mode: {api}")
 
     global python_enabled
     if not python_enabled:
@@ -187,6 +185,7 @@ def add_to_control(
             evaluator._solver_environment[idx] = environment
             _environment_ids[eid] = idx
         ctrl.add(f"main_solverIdentifier({idx}).")
+    ctrl.add(engine.program())
     setup_propagator(ctrl)
 
 

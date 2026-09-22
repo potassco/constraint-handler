@@ -7,6 +7,7 @@ from typing import Iterator, Set
 from clingo import Control, Symbol
 
 import constraint_handler
+import constraint_handler.engine as engine
 
 
 def test_add_ctrl():
@@ -29,11 +30,7 @@ def get_solutions(program: str, use_prop=False) -> Iterator[Set[Symbol]]:
     Helper function to get the solution from a given program.
     """
     ctrl = Control("0")
-
-    if use_prop:
-        ctrl.add("engine_default(propagator).")
-
-    constraint_handler.add_to_control(ctrl)
+    constraint_handler.add_to_control(ctrl, engine=engine.propagator if use_prop else engine.compile)
     ctrl.add(program)
 
     ctrl.ground()
