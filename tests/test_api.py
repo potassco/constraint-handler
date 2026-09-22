@@ -7,6 +7,7 @@ from typing import Iterator, Set
 from clingo import Control, Symbol
 
 import constraint_handler
+import constraint_handler.engine as engine
 
 
 def test_add_ctrl():
