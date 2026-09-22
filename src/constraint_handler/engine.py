@@ -20,6 +20,7 @@ class Engine:
 
 compile = Engine("compile")
 compile2 = Engine("compile2")
+fch = Engine("fch")
 ground = Engine("ground")
 propagator = Engine("propagator")
 propagator_check = Engine("propagator", {"check_mode": True})
