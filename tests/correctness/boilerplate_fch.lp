@@ -2,7 +2,7 @@
 import constraint_handler
 
 def main(ctrl):
-    constraint_handler.add_to_control(ctrl, engine=constraint_handler.engine.propagator_check)
+    constraint_handler.add_to_control(ctrl, {}, engine=constraint_handler.engine.fch)
     ctrl.ground()
     ctrl.solve()
 #end.
