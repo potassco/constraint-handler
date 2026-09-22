@@ -165,8 +165,11 @@ def compare_saved_benchmarks(session, baseline_path: Path, contender_path: Path)
 
 
 def run_performance_session(session):
-    pytest_args = list(session.posargs) if session.posargs else []
-    pytest_args.insert(0, os.fspath(Path("tests/test_performance.py")))
+    pytest_args = [
+        os.fspath(Path("tests/test_performance_engines.py")),
+        os.fspath(Path("tests/test_performance_myclorm.py")),
+        *session.posargs,
+    ]
 
     try:
         session.run(
