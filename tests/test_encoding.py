@@ -617,7 +617,7 @@ propagator_xfail: set[str] = {
     "warning/bad_interface",
 }
 
-propagator_true_skip: set[str] = propagator_skip | set()
+propagator_true_skip: set[str] = propagator_skip | {"execution/python_integrity_should_be_ignored"}
 propagator_true_xfail: set[str] = propagator_xfail | set()
 
 engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [

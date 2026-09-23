@@ -40,7 +40,7 @@ propagator_set_assign(X,E,CNAME) :- _passed(propagator,CNAME,set_assign(X,E)).
 
 {propagator_set_baseDomain(X,E,CNAME1) : _passed(propagator,CNAME1,set_baseDomain(X,E))} :- propagator_set_declare(X,CNAME2).
 
-% ensure that value of expr is not in set if not chosen
+% make sure that value of expr is not in set if not chosen
 propagator_ensure(operation(set_notin,(E,(variable(X),()))),CNAME) :- _passed(propagator,CNAME,set_baseDomain(X,E)), not propagator_set_baseDomain(X,E,CNAME).
 
 propagator_multimap_assign(X,K,V,LBL) :- _passed(propagator,LBL,multimap_assign(X,K,V)).
