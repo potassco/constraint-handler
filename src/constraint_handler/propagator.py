@@ -1379,7 +1379,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_evaluate)
         bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_bool_evaluate)
-        bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Bool_evaluated)
+        bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, internal._bool_evaluated)
         for (ref, expr, _), literal in evaluate_atoms.items():
             var = EvaluateVariable(ref, expr, literal)
             self.evaluatevars.append(var)

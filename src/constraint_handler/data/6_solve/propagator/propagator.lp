@@ -1,4 +1,3 @@
-propagator_bool_evaluate(E,LBL) :- _passed(propagator,LBL,bool_evaluate(E)).
 propagator_evaluate(REF,EXPR,LBL) :- _passed(propagator,LBL,evaluate(REF,EXPR)).
 
 

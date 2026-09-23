@@ -36,6 +36,7 @@ core_tests = [
     "core/bool_evaluate/forbidden",
     "core/bool_evaluate/immediate",
     "core/bool_evaluate/inconsistent",
+    "core/bool_evaluate/internal",
     "core/basic_assignments",
     "core/boolean_shortcut_optional_presence",
     "core/conditional_assign",

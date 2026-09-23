@@ -8,7 +8,6 @@ import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.result as result
 import constraint_handler.schemas.warning as warning
 
-Bool_evaluated = result.Bool_evaluated
 Evaluated = result.Evaluated
 Multimap_value = result.Multimap_value
 Set_value = result.Set_value
