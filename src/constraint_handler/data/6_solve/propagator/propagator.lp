@@ -1,5 +1,4 @@
 propagator_bool_evaluate(E,LBL) :- _passed(propagator,LBL,bool_evaluate(E)).
-propagator_ensure(E,LBL) :- _passed(propagator,LBL,ensure(E)).
 propagator_evaluate(REF,EXPR,LBL) :- _passed(propagator,LBL,evaluate(REF,EXPR)).
 
 
@@ -47,7 +46,6 @@ propagator_ensure(operation(set_notin,(E,(variable(X),()))),CNAME) :- _passed(pr
 propagator_multimap_assign(X,K,V,LBL) :- _passed(propagator,LBL,multimap_assign(X,K,V)).
 propagator_multimap_declare(X,LBL) :- _passed(propagator,LBL,variable_declare(X,multimap)).
 
-propagator_optimize_maximizeSum(E,ID,PRIO,LBL) :- _passed(propagator,LBL,optimize_component(E,ORIG,PREC,ID,PRIO)).
 propagator_share_value(E,LBL) :- _passed(propagator,LBL,share_value(E)).
 
 propagator_warning_forbid(KIND,LBL) :- _warning_forbid(KIND,LBL).

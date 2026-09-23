@@ -106,6 +106,8 @@ m6_propagator = [
 m6_solve = (
     [
         "6_solve/defaults",
+        "6_solve/ensure",
+        "6_solve/evaluate",
         "6_solve/finiteDomain",
         "6_solve/optimize",
         "6_solve/preference",

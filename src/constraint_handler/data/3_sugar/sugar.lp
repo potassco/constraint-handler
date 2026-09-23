@@ -1,13 +1,9 @@
 %%%%%%%%%%%%%%%%% semantic expression atoms
 _passed(sugar,LBL,bool_evaluate(E)) :- _passed(defaultArgs,LBL,bool_evaluate(E)).
-_passed(sugar,LBL,share_value(E)) :- _passed(defaultArgs,LBL,bool_evaluate(E)).
 
 _passed(sugar,LBL,ensure(E)) :- _passed(defaultArgs,LBL,ensure(E)).
-_passed(sugar,LBL,share_value(E)) :- _passed(defaultArgs,LBL,ensure(E)).
-_passed(sugar,LBL,share_value(E)) :- _passed(ssa,LBL,ensure(E)).
 
 _passed(sugar,LBL,evaluate(E,E)) :- _passed(defaultArgs,LBL,evaluate(E)).
-_passed(sugar,LBL,share_value(E)) :- _passed(defaultArgs,LBL,evaluate(E)).
 
 
 _sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_declare(X,(boolDomain;definition;fromFacts;open;set;multimap))).
@@ -58,7 +54,6 @@ _sugar_aux(LBL,optimize_component(EXPR,E,PREC,ID,PRIO)) :-
   EXPR=operation(floor,(operation(mult,(E,(PREC,()))),())).
 
 _passed(sugar,LBL,optimize_component(E,O,P,ID,PRIORITY)) :- _sugar_aux(LBL,optimize_component(E,O,P,ID,PRIORITY)).
-_passed(sugar,LBL,share_value(E;O;P)) :- _sugar_aux(LBL,optimize_component(E,O,P,ID,PRIORITY)).
 
 %%%%%% preference atoms
 _sugar_aux(LBL,preference_holds(operation(eq,(variable(X),(E,()))),K)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K > 0.
@@ -67,7 +62,6 @@ _sugar_aux(LBL,preference_holds(E,K)) :- _passed(defaultArgs,LBL,preference_hold
 _sugar_aux(LBL,preference_holds(operation(wnot,(E,())),-K)) :- _passed(defaultArgs,LBL,preference_holds(E,K)), K < 0.
 
 _passed(sugar,LBL,preference_holds(E,K)) :- _sugar_aux(LBL,preference_holds(E,K)).
-_passed(sugar,LBL,share_value(E)) :- _sugar_aux(LBL,preference_holds(E,K)).
 
 %%%%%% ssa atoms
 _passed(sugar,LBL,DEC) :- _passed(ssa,LBL,DEC).
