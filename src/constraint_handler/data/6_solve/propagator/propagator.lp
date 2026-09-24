@@ -37,11 +37,6 @@ propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_defin
 propagator_set_declare(X,CNAME) :- _passed(propagator,CNAME,variable_declare(X,set)).
 propagator_set_assign(X,E,CNAME) :- _passed(propagator,CNAME,set_assign(X,E)).
 
-{propagator_set_baseDomain(X,E,CNAME1) : _passed(propagator,CNAME1,set_baseDomain(X,E))} :- propagator_set_declare(X,CNAME2).
-
-% make sure that value of expr is not in set if not chosen
-propagator_ensure(operation(set_notin,(E,(variable(X),()))),CNAME) :- _passed(propagator,CNAME,set_baseDomain(X,E)), not propagator_set_baseDomain(X,E,CNAME).
-
 propagator_multimap_assign(X,K,V,LBL) :- _passed(propagator,LBL,multimap_assign(X,K,V)).
 propagator_multimap_declare(X,LBL) :- _passed(propagator,LBL,variable_declare(X,multimap)).
 

@@ -33,7 +33,6 @@ propagator_variable_define/3.
 propagator_variable_interface/2.
 propagator_set_declare/2.
 propagator_set_assign/3.
-propagator_set_baseDomain/3.
 propagator_multimap_assign/4.
 propagator_multimap_declare/2.
 propagator_optimize_maximizeSum/4.

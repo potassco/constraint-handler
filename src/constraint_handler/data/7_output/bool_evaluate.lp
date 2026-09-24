@@ -1,4 +1,5 @@
 %%%%%%%%%%%%%%%%% bool_evaluate
+_passed(solve,LBL,share_value(E)) :- _bool_evaluate(E,LBL).
 propagator_bool_evaluate(E,LBL) :- _bool_evaluate(E,LBL), _engine(propagator,LBL).
 1 { _bool_evaluated(E,(bad;val(bool,(true;false)))) } 1 :- _bool_evaluate(E,LBL), _engine(propagator,LBL).
 _bool_evaluated(E,V) :- _bool_evaluate(E,LBL), _se_value(E,V), V=(bad;val(bool,(true;false))).

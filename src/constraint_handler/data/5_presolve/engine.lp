@@ -7,7 +7,7 @@ _engine_default(ENG) :- ch_core(engine_request(ENG),_label_anonymous).
 _engine_defaultProvided :- ch_core(engine_request(ENG),_label_anonymous).
 _engine_default(compile) :- not _engine_defaultProvided.
 
-_label(LBL) :- _label(DECL,LBL).
+_label(LBL) :- ch_core(DECL,LBL).
 _engine_userRequest(LBL) :- ch_core(engine_request(ENG),LBL).
 _engine(ENG,LBL) :- ch_core(engine_request(ENG),LBL).
 _engine(ENG,LBL) :- _engine_default(ENG), not _engine_userRequest(LBL), _label(LBL).

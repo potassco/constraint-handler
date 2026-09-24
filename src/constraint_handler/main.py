@@ -111,6 +111,7 @@ m6_solve = (
         "6_solve/finiteDomain",
         "6_solve/optimize",
         "6_solve/preference",
+        "6_solve/set",
     ]
     + m6_datatype
     + m6_compile
