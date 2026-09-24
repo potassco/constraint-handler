@@ -50,4 +50,4 @@ propagator_share_value(E,LBL) :- _passed(propagator,LBL,share_value(E)).
 propagator_warning_forbid(KIND,LBL) :- _warning_forbid(KIND,LBL).
 propagator_warning_ignore(KIND,LBL) :- _warning_ignore(KIND,LBL).
 
-propagator_variable_interface(X,LBL) :- _passed(propagator,LBL,variable_interface(X)).
+propagator_variable_interface(X,LBL) :- _variable_interface(X,LBL).

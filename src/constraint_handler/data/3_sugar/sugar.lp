@@ -5,9 +5,6 @@ _passed(sugar,LBL,ensure(E)) :- _passed(defaultArgs,LBL,ensure(E)).
 
 _passed(sugar,LBL,evaluate(E,E)) :- _passed(defaultArgs,LBL,evaluate(E)).
 
-
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_declare(X,(boolDomain;definition;fromFacts;open;set;multimap))).
-
 %%%%%% variable fromFacts atoms
 _passed(sugar,LBL,variable_declare(X,D)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(definition;fromFacts;open;set;multimap).
 _passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
@@ -16,36 +13,27 @@ _passed(sugar,LBL,variable_domain(X,val(bool,(false;true)))) :- _passed(defaultA
 %%%%%% variable define
 _passed(sugar,LBL,variable_declare(X,definition)) :- _passed(defaultArgs,LBL,variable_define(X,E)), not _defaultArgs_variableDeclared(X).
 _passed(sugar,LBL,variable_define(X,E)) :- _passed(defaultArgs,LBL,variable_define(X,E)).
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_define(X,E)).
 
 %%%%%% variable domain
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
 
 %%%%%% variable assign
 _passed(sugar,LBL,variable_assign(X,E)) :- _passed(defaultArgs,LBL,variable_assign(X,E)).
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_assign(X,E)).
 
 %%%%%% variable choice
 _passed(sugar,LBL,variable_choice(X,E)) :- _passed(defaultArgs,LBL,variable_choice(X,E)).
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_choice(X,E)).
 
 %%%%%% variable default
 _passed(sugar,LBL,variable_default(X,D,C,P)) :- _passed(defaultArgs,LBL,variable_default(X,D,C,P)).
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,variable_default(X,D,C,P)).
 
 
 %%%%%% multimap atoms
 _passed(sugar,LBL,multimap_assign(X,EKEY,EVAL)) :- _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)).
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)).
 
 
 %%%%%% set atoms
 _passed(sugar,LBL,set_assign(X,E)) :- _passed(defaultArgs,LBL,set_assign(X,E)).
 _passed(sugar,LBL,set_baseDomain(X,E)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)).
-
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,set_assign(X,E)).
-_sugar_userVariable(LBL,X) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)).
 
 %%%%%% optimize atoms
 _sugar_aux(LBL,optimize_component(EXPR,E,PREC,ID,PRIO)) :-
@@ -67,14 +55,7 @@ _passed(sugar,LBL,preference_holds(E,K)) :- _sugar_aux(LBL,preference_holds(E,K)
 _passed(sugar,LBL,DEC) :- _passed(ssa,LBL,DEC).
 _variable(sugar,X) :- _variable(ssa,X).
 
-_sugar_userVariable(LBL,X) :- _execution_inputVar(LBL,PRG,N,X).
-_sugar_userVariable(LBL,X) :- _execution_outputVar(LBL,PRG,N,X).
-
-
-%%%%%% interface variables
-_passed(sugar,LBL,variable_interface(X)) :- _sugar_userVariable(LBL,X).
-
 %%%%%% internal declarations
-_passed(internal_declaration,LBL,variable_declare(X,DOM)) :- _passed(ssa,LBL,variable_declare(X,DOM)), _sugar_userVariable(LBL,X).
-_passed(internal_declaration,LBL,variable_define(X,DEF)) :- _passed(ssa,LBL,variable_define(X,DEF)), _sugar_userVariable(LBL,X).
+_passed(internal_declaration,LBL,variable_declare(X,DOM)) :- _passed(ssa,LBL,variable_declare(X,DOM)), _execution_outputVar(LBL,PRG,N,X).
+_passed(internal_declaration,LBL,variable_define(X,DEF)) :- _passed(ssa,LBL,variable_define(X,DEF)), _execution_outputVar(LBL,PRG,N,X).
 _passed(internal_declaration,LBL,ensure(E)) :- _passed(ssa,LBL,ensure(E)).

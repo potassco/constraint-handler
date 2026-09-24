@@ -10,7 +10,8 @@ _passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=set_bas
 _passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=multimap_assign(X,K,B).
 _passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=share_value(E).
 _passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=optimize_component(E,O,P,X,PRIORITY).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_interface(X).
+
+_variable_interface(X,LBL) :- ch_core(variable_declare(X,D),LBL), #false: X=loc(V).
 
 _passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(bool_evaluate(E),LBL).
 %_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(evaluate(REF,E),LBL).
