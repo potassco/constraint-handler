@@ -27,18 +27,28 @@ class _se_value(NamedTuple):
     val: expression.Val | Ref
 
 
+class _bool_evaluate(NamedTuple):
+    expr: expression.Expr
+    label: expression.constant
+
+
+class _bool_evaluated(NamedTuple):
+    expr: expression.Expr
+    value: expression.ReducedExpr
+
+
 class _shared_value(NamedTuple):
     expr: expression.Expr
     val: expression.ReducedExpr
 
 
 class _optimize_component(NamedTuple):
-    label: expression.constant
     expr: expression.Expr
     original: expression.Expr
     precision: clingo.Symbol
     id: expression.constant
     priority: expression.Expr | expression.constant
+    label: expression.constant
 
 
 class Valid(NamedTuple):

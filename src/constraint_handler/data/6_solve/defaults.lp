@@ -28,15 +28,15 @@ _default_apply(X,D,C,P) :- _passed(solve,LBL,variable_default(X,D,C,P)), not -_d
 
 %%%%%% mode depends
 % Collect all variables that occur in ensure declarations.
-_default_ensureVariable(E,X) :- _passed(solve,LBL,ensure(E)), _default_mode(depends), X=@pythonExpressionVariable(E).
+_default_ensureVariable(E,X) :- ch_core(ensure(E),LBL), _default_mode(depends), X=@pythonExpressionVariable(E).
 _default_dependVariable(E,X) :- _default_ensureVariable(E,X), _passed(solve,LBL,variable_declare(X,open)).
 
 _default_connect(X,Y) :- _default_dependVariable(E,X), _default_ensureVariable(E,Y), X != Y.
-_default_connect(X,X) :- _passed(solve,LBL,variable_declare(X,open)), _default_mode(depends).
+_default_connect(X,X) :- ch_core(variable_declare(X,open),LBL), _default_mode(depends).
 
 -_default_apply(X,D,C,P) :-
-  _passed(solve,LBL,variable_default(X,D,C,P)),
-  _passed(solve,LBL2,variable_assign(Y,E)),
+  ch_core(variable_default(X,D,C,P),LBL),
+  ch_core(variable_assign(Y,E),LBL2),
   _default_connect(X,Y),
   _default_mode(depends).
 

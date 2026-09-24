@@ -9,8 +9,6 @@ _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
 _ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E)).
 
 _ge_set_assign(X,E) :- _passed(ground,LBL,set_assign(X,E)).
-{ _ge_set_assign(X,E) } :- _passed(ground,LBL,set_baseDomain(X,E)).
-:- _passed(ground,LBL,set_baseDomain(X,E)), _shared_value(operation(set_isin,(E,(variable(X),()))),val(bool,true)), not _ge_set_assign(X,E).
 _ge_set_declare(X) :- _passed(ground,LBL,variable_declare(X,set)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 

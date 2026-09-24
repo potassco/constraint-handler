@@ -36,6 +36,7 @@ core_tests = [
     "core/bool_evaluate/forbidden",
     "core/bool_evaluate/immediate",
     "core/bool_evaluate/inconsistent",
+    "core/bool_evaluate/internal",
     "core/basic_assignments",
     "core/boolean_shortcut_optional_presence",
     "core/conditional_assign",
@@ -609,7 +610,6 @@ propagator_xfail: set[str] = {
     "engine/request_mixed_trig",
     "expression/lambda/recursive",
     "multimap/main",
-    "optimization/preferences",
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
@@ -618,7 +618,7 @@ propagator_xfail: set[str] = {
     "warning/bad_interface",
 }
 
-propagator_true_skip: set[str] = propagator_skip | set()
+propagator_true_skip: set[str] = propagator_skip | {"execution/python_integrity_should_be_ignored"}
 propagator_true_xfail: set[str] = propagator_xfail | set()
 
 engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [

@@ -9,7 +9,7 @@ _computedIdx(operation(add,ARGS),val(int,N)) :-
     _computeIdx(operation(add,ARGS),add),
     _expression_operationLength(compile,operation(add,ARGS),LEN), LEN > 2,
     %%% LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val((bool;int;none),V)) },
-    LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val((bool;int),V)) }, %%% ensures there are no floats
+    LEN = #count { IDX : _computeIdx(operation(add,ARGS),IDX,val((bool;int),V)) }, %%% makes sure there are no floats
     N = #sum { V,IDX : _computeIdx(operation(add,ARGS),IDX,val(int,V));
                1,IDX : _computeIdx(operation(add,ARGS),IDX,val(bool,true)) }.
 

@@ -1,5 +1,3 @@
-propagator_bool_evaluate(E,LBL) :- _passed(propagator,LBL,bool_evaluate(E)).
-propagator_ensure(E,LBL) :- _passed(propagator,LBL,ensure(E)).
 propagator_evaluate(REF,EXPR,LBL) :- _passed(propagator,LBL,evaluate(REF,EXPR)).
 
 
@@ -39,19 +37,12 @@ propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_defin
 propagator_set_declare(X,CNAME) :- _passed(propagator,CNAME,variable_declare(X,set)).
 propagator_set_assign(X,E,CNAME) :- _passed(propagator,CNAME,set_assign(X,E)).
 
-{propagator_set_baseDomain(X,E,CNAME1) : _passed(propagator,CNAME1,set_baseDomain(X,E))} :- propagator_set_declare(X,CNAME2).
-
-% ensure that value of expr is not in set if not chosen
-propagator_ensure(operation(set_notin,(E,(variable(X),()))),CNAME) :- _passed(propagator,CNAME,set_baseDomain(X,E)), not propagator_set_baseDomain(X,E,CNAME).
-
 propagator_multimap_assign(X,K,V,LBL) :- _passed(propagator,LBL,multimap_assign(X,K,V)).
 propagator_multimap_declare(X,LBL) :- _passed(propagator,LBL,variable_declare(X,multimap)).
 
-propagator_optimize_maximizeSum(E,ID,PRIO,LBL) :- _passed(propagator,LBL,optimize_component(E,ORIG,PREC,ID,PRIO)).
 propagator_share_value(E,LBL) :- _passed(propagator,LBL,share_value(E)).
 
-propagator_warning_forbid(W,LBL) :- _passed(propagator,LBL,warning_forbid(W,_internal(all))).
-propagator_warning_ignore(W,LBL) :- _passed(propagator,LBL,warning_ignore(W,_internal(all))).
+propagator_warning_forbid(KIND,LBL) :- _warning_forbid(KIND,LBL).
+propagator_warning_ignore(KIND,LBL) :- _warning_ignore(KIND,LBL).
 
-
-propagator_variable_interface(X,LBL) :- _passed(propagator,LBL,variable_interface(X)).
+propagator_variable_interface(X,LBL) :- _variable_interface(X,LBL).

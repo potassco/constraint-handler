@@ -14,6 +14,6 @@ variable_define(z,operation(sub,(variable(y),
                                 (variable(f),()))),assign_z).
 variable_define(u,operation(sin,(variable(z),())),assign_u).
 
-engine_request(assign_y,ground).
-engine_request(assign_z,compile).
-engine_request(assign_u,ground).
+engine_request(ground,assign_y).
+engine_request(compile,assign_z).
+engine_request(ground,assign_u).
