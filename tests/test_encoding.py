@@ -735,6 +735,7 @@ choice_statistics_skip: set[str] = {
     "optimization/label_int",
     "optimization/label_string",
     "optimization/optional_absent_linked_value",
+    "set/conditional_assign",
     "python/dynamic",
     "warning/forbid_labeled_match",
     "warning/python_extract/statement_error",

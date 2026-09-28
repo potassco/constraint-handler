@@ -655,7 +655,12 @@ def test_domain_computation_combines_all_required_set_source_options() -> None:
                 "set_baseDomain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
             ),
             clingo.Function(
-                "set_assign", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]
+                "set_assign",
+                [
+                    left_name,
+                    clingo.Function("val", [clingo.Function("int"), clingo.Number(1)]),
+                    clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")]),
+                ],
             ),
             clingo.Function(
                 "set_baseDomain", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(3)])]
@@ -664,10 +669,21 @@ def test_domain_computation_combines_all_required_set_source_options() -> None:
                 "set_baseDomain", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(4)])]
             ),
             clingo.Function(
-                "set_assign", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(3)])]
+                "set_assign",
+                [
+                    right_name,
+                    clingo.Function("val", [clingo.Function("int"), clingo.Number(3)]),
+                    clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")]),
+                ],
             ),
-            clingo.Function("set_assign", [target_name, left_var]),
-            clingo.Function("set_assign", [target_name, right_var]),
+            clingo.Function(
+                "set_assign",
+                [target_name, left_var, clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])],
+            ),
+            clingo.Function(
+                "set_assign",
+                [target_name, right_var, clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])],
+            ),
         ),
         (),
     )
