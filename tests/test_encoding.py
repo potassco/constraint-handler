@@ -513,8 +513,6 @@ compile2_xfail: set[str] = {
     "datatype/float/mult/recovery",
     "datatype/float/pow/mixed",
     "datatype/int/int_div/negative",
-    "default/define/with_domain",
-    "default/depends/with_domain",
     "engine/request",
     "engine/request_set_ref",  # mixed engines?
     "expression/alternative_syntax/lambda",

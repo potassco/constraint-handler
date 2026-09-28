@@ -487,6 +487,8 @@ class DomainComputation:
     VARIABLE_SOURCE_SIGNATURES: ClassVar[frozenset[tuple[str, int]]] = frozenset(
         {
             ("variable_assign", 2),
+            ("variable_choice", 2),
+            ("variable_default", 4),
             ("variable_define", 2),
             ("variable_domain", 2),
             ("set_assign", 3),
@@ -691,9 +693,17 @@ class DomainComputation:
                 continue
             if expr.name == "set_assign" and len(expr.arguments) == 3:
                 var, source_expr, _condition = expr.arguments
+            elif expr.name == "variable_default" and len(expr.arguments) == 4:
+                var, source_expr, _condition, _priority = expr.arguments
             else:
                 var, source_expr = expr.arguments
-            if expr.name in {"variable_assign", "variable_define", "variable_domain"}:
+            if expr.name in {
+                "variable_assign",
+                "variable_choice",
+                "variable_default",
+                "variable_define",
+                "variable_domain",
+            }:
                 variable_sources.setdefault(var, []).append(source_expr)
                 continue
             bucket = set_sources.setdefault(var, {"set_assign": [], "set_baseDomain": []})
@@ -878,6 +888,8 @@ class DomainComputation:
                 for dependency in set_sources.get(expr.arguments[0], {}).get("set_baseDomain", []):
                     yield from visit(dependency)
             if cls.is_function(expr, "set_assign", 3):
+                children = [expr.arguments[1], expr.arguments[2]]
+            elif cls.is_function(expr, "variable_default", 4):
                 children = [expr.arguments[1], expr.arguments[2]]
             elif cls.is_function(expr) and (expr.name, len(expr.arguments)) in cls.VARIABLE_SOURCE_SIGNATURES:
                 children = [expr.arguments[1]]
