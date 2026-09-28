@@ -84,6 +84,22 @@ def symbol_sequence(*items: clingo.Symbol) -> clingo.Symbol:
     return result
 
 
+def optional_condition(name: clingo.Symbol) -> tuple[clingo.Symbol, ...]:
+    return (
+        clingo.Function("variable_declare", [name, clingo.Function("fromFacts")]),
+        clingo.Function(
+            "variable_domain", [name, clingo.Function("val", [clingo.Function("bool"), clingo.Function("false")])]
+        ),
+        clingo.Function(
+            "variable_domain", [name, clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])]
+        ),
+    )
+
+
+def int_symbol(value: int) -> clingo.Symbol:
+    return clingo.Function("val", [clingo.Function("int"), clingo.Number(value)])
+
+
 def test_value_helpers_preserve_set_style_numeric_deduplication() -> None:
     domain = Domain(
         is_bad=True,
@@ -639,50 +655,77 @@ def test_domain_computation_combines_all_required_set_source_options() -> None:
     left_name = clingo.String("left")
     right_name = clingo.String("right")
     target_name = clingo.String("target")
+    left_optional_name = clingo.String("left_optional")
+    right_optional_name = clingo.String("right_optional")
     left_var = clingo.Function("variable", [left_name])
     right_var = clingo.Function("variable", [right_name])
     target_var = clingo.Function("variable", [target_name])
+    left_optional = clingo.Function("variable", [left_optional_name])
+    right_optional = clingo.Function("variable", [right_optional_name])
+    true_value = clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])
 
     computed = DomainComputation.compute(
         (
             target_var,
             left_var,
             right_var,
+            *optional_condition(left_optional_name),
+            *optional_condition(right_optional_name),
             clingo.Function(
-                "set_baseDomain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]
-            ),
-            clingo.Function(
-                "set_baseDomain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
+                "set_assign",
+                [
+                    left_name,
+                    int_symbol(1),
+                    left_optional,
+                ],
             ),
             clingo.Function(
                 "set_assign",
                 [
                     left_name,
-                    clingo.Function("val", [clingo.Function("int"), clingo.Number(1)]),
-                    clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")]),
+                    int_symbol(2),
+                    left_optional,
                 ],
             ),
             clingo.Function(
-                "set_baseDomain", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(3)])]
-            ),
-            clingo.Function(
-                "set_baseDomain", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(4)])]
+                "set_assign",
+                [
+                    left_name,
+                    int_symbol(1),
+                    true_value,
+                ],
             ),
             clingo.Function(
                 "set_assign",
                 [
                     right_name,
-                    clingo.Function("val", [clingo.Function("int"), clingo.Number(3)]),
-                    clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")]),
+                    int_symbol(3),
+                    right_optional,
                 ],
             ),
             clingo.Function(
                 "set_assign",
-                [target_name, left_var, clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])],
+                [
+                    right_name,
+                    int_symbol(4),
+                    right_optional,
+                ],
             ),
             clingo.Function(
                 "set_assign",
-                [target_name, right_var, clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])],
+                [
+                    right_name,
+                    int_symbol(3),
+                    true_value,
+                ],
+            ),
+            clingo.Function(
+                "set_assign",
+                [target_name, left_var, true_value],
+            ),
+            clingo.Function(
+                "set_assign",
+                [target_name, right_var, true_value],
             ),
         ),
         (),
@@ -783,6 +826,13 @@ def test_domain_computation_exports_set_memberships_only_for_python_and_tuple_co
     tuple_child_var = clingo.Function("variable", [tuple_child_name])
     unused_name = clingo.String("unused")
     unused_var = clingo.Function("variable", [unused_name])
+    python_input_optional_name = clingo.String("python_input_optional")
+    tuple_child_optional_name = clingo.String("tuple_child_optional")
+    unused_optional_name = clingo.String("unused_optional")
+    python_input_optional = clingo.Function("variable", [python_input_optional_name])
+    tuple_child_optional = clingo.Function("variable", [tuple_child_optional_name])
+    unused_optional = clingo.Function("variable", [unused_optional_name])
+    true_value = clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])
 
     python_input_expr = clingo.Function(
         "operation",
@@ -809,39 +859,96 @@ def test_domain_computation_exports_set_memberships_only_for_python_and_tuple_co
             tuple_expr,
             tuple_child_var,
             unused_var,
+            *optional_condition(python_input_optional_name),
+            *optional_condition(tuple_child_optional_name),
+            *optional_condition(unused_optional_name),
             clingo.Function(
-                "set_baseDomain",
-                [python_input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])],
+                "set_assign",
+                [
+                    python_input_name,
+                    int_symbol(1),
+                    python_input_optional,
+                ],
             ),
             clingo.Function(
-                "set_baseDomain",
-                [python_input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])],
+                "set_assign",
+                [
+                    python_input_name,
+                    int_symbol(2),
+                    python_input_optional,
+                ],
             ),
             clingo.Function(
-                "set_baseDomain",
-                [python_input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(4)])],
+                "set_assign",
+                [
+                    python_input_name,
+                    int_symbol(4),
+                    python_input_optional,
+                ],
             ),
             clingo.Function(
-                "set_assign", [python_input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]
+                "set_assign",
+                [
+                    python_input_name,
+                    int_symbol(1),
+                    true_value,
+                ],
             ),
             clingo.Function(
-                "set_assign", [python_input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
-            ),
-            clingo.Function("set_assign", [python_output_name, python_output_expr]),
-            clingo.Function(
-                "set_baseDomain", [tuple_child_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(5)])]
-            ),
-            clingo.Function(
-                "set_baseDomain", [tuple_child_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(6)])]
+                "set_assign",
+                [
+                    python_input_name,
+                    int_symbol(2),
+                    true_value,
+                ],
             ),
             clingo.Function(
-                "set_assign", [tuple_child_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(5)])]
+                "set_assign",
+                [
+                    python_output_name,
+                    python_output_expr,
+                    true_value,
+                ],
             ),
             clingo.Function(
-                "set_baseDomain", [unused_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(7)])]
+                "set_assign",
+                [
+                    tuple_child_name,
+                    int_symbol(5),
+                    tuple_child_optional,
+                ],
             ),
             clingo.Function(
-                "set_assign", [unused_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(7)])]
+                "set_assign",
+                [
+                    tuple_child_name,
+                    int_symbol(6),
+                    tuple_child_optional,
+                ],
+            ),
+            clingo.Function(
+                "set_assign",
+                [
+                    tuple_child_name,
+                    int_symbol(5),
+                    true_value,
+                ],
+            ),
+            clingo.Function(
+                "set_assign",
+                [
+                    unused_name,
+                    int_symbol(7),
+                    unused_optional,
+                ],
+            ),
+            clingo.Function(
+                "set_assign",
+                [
+                    unused_name,
+                    int_symbol(7),
+                    true_value,
+                ],
             ),
         ),
         (),

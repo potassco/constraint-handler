@@ -35,6 +35,8 @@ PythonEvaluationInputAtom = tuple[clingo.Symbol, int, clingo.Symbol, DomainAtom]
 PythonEvaluationOutputAtom = tuple[clingo.Symbol, int, PythonEvaluationValue]
 PythonEvaluationAssignment = tuple[DomainAtom, ...]
 PythonEvaluationOutputSignature = tuple[PythonEvaluationValue, ...]
+TRUE_BOOLEAN_SYMBOL = clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])
+FALSE_BOOLEAN_SYMBOL = clingo.Function("val", [clingo.Function("bool"), clingo.Function("false")])
 
 
 @dataclass(frozen=True, slots=True)
@@ -492,7 +494,6 @@ class DomainComputation:
             ("variable_define", 2),
             ("variable_domain", 2),
             ("set_assign", 3),
-            ("set_baseDomain", 2),
         }
     )
 
@@ -557,7 +558,7 @@ class DomainComputation:
             dependencies = list(variable_sources.get(variable_name, []))
             set_source_map = set_sources.get(variable_name, {})
             dependencies.extend(set_source_map.get("set_assign", []))
-            dependencies.extend(set_source_map.get("set_baseDomain", []))
+            dependencies.extend(set_source_map.get("optional_set_assign", []))
         else:
             dependencies = cls.direct_subexpressions(expr)
         return tuple(
@@ -692,7 +693,13 @@ class DomainComputation:
             if not cls.is_function(expr) or (expr.name, len(expr.arguments)) not in cls.VARIABLE_SOURCE_SIGNATURES:
                 continue
             if expr.name == "set_assign" and len(expr.arguments) == 3:
-                var, source_expr, _condition = expr.arguments
+                var, source_expr, condition = expr.arguments
+                bucket = set_sources.setdefault(var, {"set_assign": [], "optional_set_assign": []})
+                if condition == TRUE_BOOLEAN_SYMBOL:
+                    bucket["set_assign"].append(source_expr)
+                elif condition != FALSE_BOOLEAN_SYMBOL:
+                    bucket["optional_set_assign"].append(source_expr)
+                continue
             elif expr.name == "variable_default" and len(expr.arguments) == 4:
                 var, source_expr, _condition, _priority = expr.arguments
             else:
@@ -706,7 +713,7 @@ class DomainComputation:
             }:
                 variable_sources.setdefault(var, []).append(source_expr)
                 continue
-            bucket = set_sources.setdefault(var, {"set_assign": [], "set_baseDomain": []})
+            bucket = set_sources.setdefault(var, {"set_assign": [], "optional_set_assign": []})
             bucket[expr.name].append(source_expr)
         return variable_sources, set_sources
 
@@ -744,7 +751,7 @@ class DomainComputation:
             return None
         source_info = set_sources[var]
         optional_candidates: set[DomainAtom] = set()
-        for source_expr in source_info["set_baseDomain"]:
+        for source_expr in source_info["optional_set_assign"]:
             optional_candidates.update(cls.domain_values(expression_domains.get(source_expr, Domain.empty())))
         required_scalars: set[DomainAtom] = set()
         required_set_options: list[tuple[frozenset[DomainAtom], ...]] = []
@@ -885,7 +892,7 @@ class DomainComputation:
                     yield from visit(dependency)
                 for dependency in set_sources.get(expr.arguments[0], {}).get("set_assign", []):
                     yield from visit(dependency)
-                for dependency in set_sources.get(expr.arguments[0], {}).get("set_baseDomain", []):
+                for dependency in set_sources.get(expr.arguments[0], {}).get("optional_set_assign", []):
                     yield from visit(dependency)
             if cls.is_function(expr, "set_assign", 3):
                 children = [expr.arguments[1], expr.arguments[2]]
