@@ -739,6 +739,28 @@ def test_domain_computation_combines_all_required_set_source_options() -> None:
     )
 
 
+def test_domain_computation_declared_sets_are_empty_only_without_assignments() -> None:
+    empty_name = clingo.String("empty")
+    required_name = clingo.String("required")
+    empty_var = clingo.Function("variable", [empty_name])
+    required_var = clingo.Function("variable", [required_name])
+    true_value = clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])
+
+    computed = DomainComputation.compute(
+        (
+            empty_var,
+            required_var,
+            clingo.Function("variable_declare", [empty_name, clingo.Function("set")]),
+            clingo.Function("variable_declare", [required_name, clingo.Function("set")]),
+            clingo.Function("set_assign", [required_name, int_symbol(1), true_value]),
+        ),
+        (),
+    )
+
+    assert computed.expression_domains[empty_var].sets == {frozenset()}
+    assert computed.expression_domains[required_var] == Domain.set_values(frozenset({1}))
+
+
 def test_domain_computation_exports_python_callable_trace_symbols() -> None:
     variable_name = clingo.String("x")
     variable_expr = clingo.Function("variable", [variable_name])

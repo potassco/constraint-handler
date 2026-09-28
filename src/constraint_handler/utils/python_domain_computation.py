@@ -490,6 +490,7 @@ class DomainComputation:
         {
             ("variable_assign", 2),
             ("variable_choice", 2),
+            ("variable_declare", 2),
             ("variable_default", 4),
             ("variable_define", 2),
             ("variable_domain", 2),
@@ -691,6 +692,10 @@ class DomainComputation:
         set_sources: dict[clingo.Symbol, dict[str, list[clingo.Symbol]]] = {}
         for expr in sorted(top_level_expressions):
             if not cls.is_function(expr) or (expr.name, len(expr.arguments)) not in cls.VARIABLE_SOURCE_SIGNATURES:
+                continue
+            if expr.name == "variable_declare":
+                if cls.is_function(expr.arguments[1], "set", 0):
+                    set_sources.setdefault(expr.arguments[0], {"set_assign": [], "optional_set_assign": []})
                 continue
             if expr.name == "set_assign" and len(expr.arguments) == 3:
                 var, source_expr, condition = expr.arguments
