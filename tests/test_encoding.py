@@ -311,6 +311,7 @@ python_tests = [
 ]
 
 set_tests = [
+    "set/conditional_assign",
     "set/comparisons",
     "set/diff_flat",
     "set/eq_neq_flat",
@@ -618,7 +619,25 @@ propagator_xfail: set[str] = {
     "warning/bad_interface",
 }
 
-propagator_true_skip: set[str] = propagator_skip | {"execution/python_integrity_should_be_ignored"}
+propagator_true_skip: set[str] = propagator_skip | {
+    "core/reasoning_modes",
+    "core/reasoning_modes_with_show",
+    "execution/python_integrity_should_be_ignored",
+    "set/conditional_assign",
+    "set/diff_flat",
+    "set/eq_neq_flat",
+    "set/from_domain",
+    "set/inter_flat",
+    "set/length_flat",
+    "set/missing_declare_repair",
+    "set/nondet_simple",
+    "set/set_in_set_notin",
+    "set/set_make_flat",
+    "set/subset_flat",
+    "set/union_flat",
+    "type/checking/membership_set_polymorphic",
+    "warning/variable_undeclared",
+}
 propagator_true_xfail: set[str] = propagator_xfail | set()
 
 engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [

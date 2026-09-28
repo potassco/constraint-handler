@@ -484,13 +484,13 @@ class ComputedDomains:
 class DomainComputation:
     """Compute compile2 expression domains directly from raw clingo symbols."""
 
-    VARIABLE_SOURCE_NAMES: ClassVar[frozenset[str]] = frozenset(
+    VARIABLE_SOURCE_SIGNATURES: ClassVar[frozenset[tuple[str, int]]] = frozenset(
         {
-            "variable_assign",
-            "variable_define",
-            "variable_domain",
-            "set_assign",
-            "set_baseDomain",
+            ("variable_assign", 2),
+            ("variable_define", 2),
+            ("variable_domain", 2),
+            ("set_assign", 3),
+            ("set_baseDomain", 2),
         }
     )
 
@@ -582,7 +582,7 @@ class DomainComputation:
         for expr in ordered_expressions:
             if expr in skipped_python_extract_exprs:
                 continue
-            if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES:
+            if cls.is_function(expr) and (expr.name, len(expr.arguments)) in cls.VARIABLE_SOURCE_SIGNATURES:
                 continue
             if cls.is_function(expr, "variable", 1):
                 total += 1
@@ -687,9 +687,12 @@ class DomainComputation:
         variable_sources: dict[clingo.Symbol, list[clingo.Symbol]] = {}
         set_sources: dict[clingo.Symbol, dict[str, list[clingo.Symbol]]] = {}
         for expr in sorted(top_level_expressions):
-            if not cls.is_function(expr, arity=2) or expr.name not in cls.VARIABLE_SOURCE_NAMES:
+            if not cls.is_function(expr) or (expr.name, len(expr.arguments)) not in cls.VARIABLE_SOURCE_SIGNATURES:
                 continue
-            var, source_expr = expr.arguments
+            if expr.name == "set_assign" and len(expr.arguments) == 3:
+                var, source_expr, _condition = expr.arguments
+            else:
+                var, source_expr = expr.arguments
             if expr.name in {"variable_assign", "variable_define", "variable_domain"}:
                 variable_sources.setdefault(var, []).append(source_expr)
                 continue
@@ -874,11 +877,12 @@ class DomainComputation:
                     yield from visit(dependency)
                 for dependency in set_sources.get(expr.arguments[0], {}).get("set_baseDomain", []):
                     yield from visit(dependency)
-            children = (
-                [expr.arguments[1]]
-                if expr.name in cls.VARIABLE_SOURCE_NAMES and len(expr.arguments) == 2
-                else cls.direct_subexpressions(expr)
-            )
+            if cls.is_function(expr, "set_assign", 3):
+                children = [expr.arguments[1], expr.arguments[2]]
+            elif cls.is_function(expr) and (expr.name, len(expr.arguments)) in cls.VARIABLE_SOURCE_SIGNATURES:
+                children = [expr.arguments[1]]
+            else:
+                children = cls.direct_subexpressions(expr)
             for child in children:
                 yield from visit(child)
             visiting.remove(expr)
@@ -978,7 +982,7 @@ class DomainComputation:
             for expr in ordered_expressions:
                 if expr in skipped_python_extract_exprs:
                     continue
-                if cls.is_function(expr, arity=2) and expr.name in cls.VARIABLE_SOURCE_NAMES:
+                if cls.is_function(expr) and (expr.name, len(expr.arguments)) in cls.VARIABLE_SOURCE_SIGNATURES:
                     continue
                 expr_start = perf_counter()
                 if cls.is_function(expr, "variable", 1):

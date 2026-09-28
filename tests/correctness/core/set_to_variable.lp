@@ -1,4 +1,4 @@
-% Make sure a set can be assigned directly to a new variable.
+% Make sure a set can be assigned a new variable.
 variable_declare(x,set).
 set_assign(x,val(string,"a")).
 variable_declare(y,definition).

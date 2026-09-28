@@ -136,7 +136,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <set-atom> ::=
     | "set_assign" "(" <variable> "," <expression> ")"
-    | "set_assign" "(" <variable> "," <expression> "," <label> ")"
+    | "set_assign" "(" <variable> "," <expression> "," <expression> ")"
+    | "set_assign" "(" <variable> "," <expression> "," <expression> "," <label> ")"
     | "set_baseDomain" "(" <variable> "," <expression> ")"
     | "set_baseDomain" "(" <variable> "," <expression> "," <label> ")"
 

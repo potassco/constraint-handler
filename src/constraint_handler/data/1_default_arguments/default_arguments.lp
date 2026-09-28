@@ -74,11 +74,13 @@ _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(X,EKEY,
 %%%%% set atoms
 #defined set_assign/2.
 #defined set_assign/3.
+#defined set_assign/4.
 #defined set_baseDomain/2.
 #defined set_baseDomain/3.
 
-_passed(defaultArgs,_label_anonymous,set_assign(X,E)) :- set_assign(X,E).
-_passed(defaultArgs,LBL,set_assign(X,E)) :- set_assign(X,E,LBL).
+_passed(defaultArgs,_label_anonymous,set_assign(X,E,val(bool,true))) :- set_assign(X,E).
+_passed(defaultArgs,_label_anonymous,set_assign(X,E,C)) :- set_assign(X,E,C).
+_passed(defaultArgs,LBL,set_assign(X,E,C)) :- set_assign(X,E,C,LBL).
 _passed(defaultArgs,_label_anonymous,set_baseDomain(X,V)) :- set_baseDomain(X,V).
 _passed(defaultArgs,LBL,set_baseDomain(X,V)) :- set_baseDomain(X,V,LBL).
 

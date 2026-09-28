@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - update `set_assign` to take a condition argument. `set_assign(VAR,E,C,LBL)`
+    will add `E` to `VAR` only when `COND` evaluates to true?
 - add support for preferences in the propagator engine
 - - swap argument order of `engine_request/2` to `engine_request(ENG,LBL)`
 - - rename input predicate `engine_default(ENG)` to `engine_request(ENG)`

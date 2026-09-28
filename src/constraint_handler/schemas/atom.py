@@ -65,6 +65,7 @@ class Bool_evaluate(NamedTuple):
 class Set_assign(NamedTuple):
     name: expression.constant
     member: expression.Expr
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 

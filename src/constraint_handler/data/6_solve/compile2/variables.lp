@@ -94,7 +94,10 @@ _se_value(variable(Var), bad) :-
     _passed(compile2, _, set_baseDomain(Var, Expr)),
 	_se_value(Expr, bad).
 _se_value(variable(Var), bad) :-
-    _passed(compile2, _, set_assign(Var, Expr)),
+	_passed(compile2, _, set_assign(Var, Expr, Cond)),
+	_se_value(Cond, bad).
+_se_value(variable(Var), bad) :-
+	_passed(compile2, _, set_assign(Var, Expr, Cond)),
 	_se_value(Expr, bad).
 
  _set_contains(variable(Var), Val):-
@@ -116,12 +119,14 @@ _set_contains(variable(Var), Val) :-
 	Val != bad.
 
 _set_contains(variable(Var), Val) :-
-    _passed(compile2, _, set_assign(Var, Expr)),
+	_passed(compile2, _, set_assign(Var, Expr, Cond)),
+	_se_value(Cond, val(bool, true)),
 	_set_contains(Expr, Val),
 	Val != bad.
 
 _set_contains(variable(Var), Val) :-
-    _passed(compile2, _, set_assign(Var, Expr)),
+	_passed(compile2, _, set_assign(Var, Expr, Cond)),
+	_se_value(Cond, val(bool, true)),
 	not _se_is_set(Expr),
 	_se_value(Expr, Val),
 	Val != bad.

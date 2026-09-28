@@ -42,8 +42,10 @@ class Propagator_set_declare(NamedTuple):
     label: expression.constant
 
 
-class Propagator_set_assign(atom.Set_assign):
-    pass
+class Propagator_set_assign(NamedTuple):
+    name: expression.constant
+    member: expression.Expr
+    label: expression.constant
 
 
 class Propagator_set_baseDomain(atom.Set_baseDomain):

@@ -32,7 +32,7 @@ _passed(sugar,LBL,multimap_assign(X,EKEY,EVAL)) :- _passed(defaultArgs,LBL,multi
 
 
 %%%%%% set atoms
-_passed(sugar,LBL,set_assign(X,E)) :- _passed(defaultArgs,LBL,set_assign(X,E)).
+_passed(sugar,LBL,set_assign(X,E,C)) :- _passed(defaultArgs,LBL,set_assign(X,E,C)).
 _passed(sugar,LBL,set_baseDomain(X,E)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)).
 
 %%%%%% optimize atoms
