@@ -5,13 +5,13 @@ from typing import NamedTuple
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.domain as domain
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.result as result
 import constraint_handler.schemas.warning as warning
 
-Bool_evaluated = atom.Bool_evaluated
-Evaluated = atom.Evaluated
-Multimap_value = atom.Multimap_value
-Set_value = atom.Set_value
-Value = atom.Value
+Evaluated = result.Evaluated
+Multimap_value = result.Multimap_value
+Set_value = result.Set_value
+Value = result.Value
 
 BoolDomain = domain.BoolDomain
 FromFacts = domain.FromFacts
@@ -42,8 +42,10 @@ class Propagator_set_declare(NamedTuple):
     label: expression.constant
 
 
-class Propagator_set_assign(atom.Set_assign):
-    pass
+class Propagator_set_assign(NamedTuple):
+    name: expression.constant
+    member: expression.Expr
+    label: expression.constant
 
 
 class Propagator_set_baseDomain(atom.Set_baseDomain):

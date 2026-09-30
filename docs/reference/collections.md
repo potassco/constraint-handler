@@ -93,19 +93,22 @@ value(set_name, ref(set, variable(set_name)))
 
 ### Assign
 
-To add elements to a set, use the `set_assign/2` predicate:
+To add elements to a set, use `set_assign/2` or `set_assign/3`. The optional condition must evaluate to `val(bool,true)` for the value to be added; `set_assign/2` defaults it to `val(bool,true)`.
+
 #### Input
 
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 set_assign(Name, Value).
+set_assign(Name, Value, Condition).
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Name` | The unique identifier of the set to which the value will be added
 | `Value` | The value to be added to the set. |
+| `Condition` | Optional Boolean expression that controls whether `Value` is added. |
 
 #### Output
 

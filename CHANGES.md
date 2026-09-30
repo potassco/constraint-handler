@@ -2,6 +2,13 @@
 
 ## Ongoing
 
+## v0.0.8
+
+- - update `set_assign` to take a condition argument. `set_assign(VAR,E,C,LBL)`
+    will add `E` to `VAR` only when `COND` evaluates to true.
+- add support for preferences in the propagator engine
+- - swap argument order of `engine_request/2` to `engine_request(ENG,LBL)`
+- - rename input predicate `engine_default(ENG)` to `engine_request(ENG)`
 - - replace the `api` argument of `add_to_control` with `engine`; select Flat
     CH with `engine=constraint_handler.engine.fch` instead of `api="fch"`.
 - add `Engine` configurations and an `engine` argument to `add_to_control`; the

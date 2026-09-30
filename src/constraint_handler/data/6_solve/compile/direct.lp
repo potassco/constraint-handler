@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%% interface ensure/2 variable_define/3
+%%%%%%%%%%%%%%%%% interface variable_define/3
 direct_query(E)  :- _expression(compile,LBL,DECL,E).
 direct_query(SE) :- direct_query(operation(OP,ES)), not _direct_lazy(OP), _expression_operationIndex(compile,operation(OP,ES),IDX,SE).
 direct_query(SE) :- direct_query(E), _expression_tupleIndex(compile,E,IDX,SE).

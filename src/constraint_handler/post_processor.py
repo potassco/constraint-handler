@@ -7,7 +7,7 @@ import clingo
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
-import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.result as result
 import constraint_handler.schemas.warning as warning
 
 
@@ -23,7 +23,7 @@ class OptimizePostProcessingPropagator(clingo.Propagator):
         self._optimize_symbols = [
             symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_optimize_component", 6)
         ]
-        optimize_exprs = {expr for symbol in self._optimize_symbols for expr in symbol.arguments[1:4]}
+        optimize_exprs = {expr for symbol in self._optimize_symbols for expr in symbol.arguments[:3]}
 
         self._value_symbols_by_expr.clear()
         for symbolic_atom in init.symbolic_atoms.by_signature("_shared_value", 2):
@@ -39,7 +39,7 @@ class OptimizePostProcessingPropagator(clingo.Propagator):
     def get_results(self, model) -> tuple[dict[clingo.Symbol, int | float], list[clingo.Symbol]]:
         values = {}
         for optimize_symbol in self._optimize_symbols:
-            _, value_expr, original_expr, precision_expr, _, _ = optimize_symbol.arguments
+            value_expr, original_expr, precision_expr, _, _, _ = optimize_symbol.arguments
             for expr in (value_expr, original_expr, precision_expr):
                 if expr in values:
                     continue
@@ -82,7 +82,7 @@ def _extend_optimize_values(
     totals: dict[tuple[clingo.Symbol, clingo.Symbol], int | float] = {}
     totals_real: dict[tuple[clingo.Symbol, clingo.Symbol], int | float] = {}
     for symbol in [] if optimize_results is None else optimize_results:
-        label, expr, original_expr, precision_expr, _, priority = symbol.arguments
+        expr, original_expr, precision_expr, _, priority, label = symbol.arguments
 
         key = (label, priority)
         value = values.get(expr, 0)
@@ -109,12 +109,12 @@ def _extend_optimize_values(
     for key, total in totals.items():
         label, priority = key
         cTotal, errors = evaluator.reducedExpr(total)
-        results.append(atom.Optimize_value(label, priority, cTotal))
+        results.append(result.Optimize_value(label, priority, cTotal))
         results.extend(errors)
     for key, total in totals_real.items():
         label, priority = key
         cTotal, errors = evaluator.reducedExpr(total)
-        results.append(atom.Optimize_modelValue(label, priority, cTotal))
+        results.append(result.Optimize_modelValue(label, priority, cTotal))
         results.extend(errors)
     return [myClorm.pytocl(atom) for atom in results]
 

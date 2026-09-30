@@ -12,7 +12,7 @@ class Engine:
         return "-".join((self.name, *(f"{name}={value}" for name, value in sorted(self.parameters.items()))))
 
     def program(self) -> str:
-        program = f"engine_default({self.name})."
+        program = f"engine_request({self.name})."
         if self.parameters.get("check_mode"):
             program += f"\n{PROPAGATOR_CHECK_MODE_STR}."
         return program

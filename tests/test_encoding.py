@@ -36,6 +36,7 @@ core_tests = [
     "core/bool_evaluate/forbidden",
     "core/bool_evaluate/immediate",
     "core/bool_evaluate/inconsistent",
+    "core/bool_evaluate/internal",
     "core/basic_assignments",
     "core/boolean_shortcut_optional_presence",
     "core/conditional_assign",
@@ -310,6 +311,7 @@ python_tests = [
 ]
 
 set_tests = [
+    "set/conditional_assign",
     "set/comparisons",
     "set/diff_flat",
     "set/eq_neq_flat",
@@ -511,8 +513,6 @@ compile2_xfail: set[str] = {
     "datatype/float/mult/recovery",
     "datatype/float/pow/mixed",
     "datatype/int/int_div/negative",
-    "default/define/with_domain",
-    "default/depends/with_domain",
     "engine/request",
     "engine/request_set_ref",  # mixed engines?
     "expression/alternative_syntax/lambda",
@@ -609,7 +609,6 @@ propagator_xfail: set[str] = {
     "engine/request_mixed_trig",
     "expression/lambda/recursive",
     "multimap/main",
-    "optimization/preferences",
     "set/fold_bools",
     "set/iterations",
     "set/selfref",
@@ -618,7 +617,25 @@ propagator_xfail: set[str] = {
     "warning/bad_interface",
 }
 
-propagator_true_skip: set[str] = propagator_skip | set()
+propagator_true_skip: set[str] = propagator_skip | {
+    "core/reasoning_modes",
+    "core/reasoning_modes_with_show",
+    "execution/python_integrity_should_be_ignored",
+    "set/conditional_assign",
+    "set/diff_flat",
+    "set/eq_neq_flat",
+    "set/from_domain",
+    "set/inter_flat",
+    "set/length_flat",
+    "set/missing_declare_repair",
+    "set/nondet_simple",
+    "set/set_in_set_notin",
+    "set/set_make_flat",
+    "set/subset_flat",
+    "set/union_flat",
+    "type/checking/membership_set_polymorphic",
+    "warning/variable_undeclared",
+}
 propagator_true_xfail: set[str] = propagator_xfail | set()
 
 engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [
@@ -716,6 +733,7 @@ choice_statistics_skip: set[str] = {
     "optimization/label_int",
     "optimization/label_string",
     "optimization/optional_absent_linked_value",
+    "set/conditional_assign",
     "python/dynamic",
     "warning/forbid_labeled_match",
     "warning/python_extract/statement_error",

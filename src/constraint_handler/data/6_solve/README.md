@@ -36,10 +36,8 @@ _variable_indexedDomain/3.
 ### Output predicates
 
 _ge_assign/2.
-_passed(compile,LBL,ensure/1).
 _passed(compile,LBL,variable_declare/2).
 _passed(compile,LBL,variable_define/2).
-_passed(ground,LBL,ensure/1).
 _passed(ground,LBL,variable_declare/2).
 _passed(ground,LBL,variable_define/2).
 _se_value/2.

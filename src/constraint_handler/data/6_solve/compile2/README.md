@@ -9,7 +9,6 @@ _passed(compile2, LBL, variable_declare(Var, fromFacts)). % the variable is conn
 _passed(compile2, LBL, variable_domain(Var, Expr)) % all possible expressions
 
 _passed(compile2, LBL, variable_declare(Var, set)). % variable is declared as a set
-_passed(compile2, LBL, set_baseDomain(Var, Expr)).
 
 _passed(compile2, LBL, variable_declare(Var, definition)). % not used, define is enough
 _passed(compile2, LBL, variable_define(Var, Expr))  % Expr is assign to Var

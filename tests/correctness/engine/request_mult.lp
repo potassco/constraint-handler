@@ -1,25 +1,25 @@
 %%% atomic -> set
 variable_define(as_a,val(int,3),assign_as_a).
 variable_declare(as_s,set,assign_as_s).
-set_assign(as_s,val(int,2),assign_as_s).
-set_assign(as_s,variable(as_a),assign_as_s).
+set_assign(as_s,val(int,2),val(bool,true),assign_as_s).
+set_assign(as_s,variable(as_a),val(bool,true),assign_as_s).
 
-engine_request(assign_as_a, compile).
-engine_request(assign_as_s, ground).
+engine_request(compile,assign_as_a).
+engine_request(ground,assign_as_s).
 
 
 %%% (set,set) -> set
 variable_declare(sss_s1,set,assign_sss_s1).
-set_assign(sss_s1,val(int,1),assign_sss_s1).
-set_assign(sss_s1,val(int,2),assign_sss_s1).
+set_assign(sss_s1,val(int,1),val(bool,true),assign_sss_s1).
+set_assign(sss_s1,val(int,2),val(bool,true),assign_sss_s1).
 variable_declare(sss_s2,set,assign_sss_s2).
-set_assign(sss_s2,val(int,2),assign_sss_s2).
-set_assign(sss_s2,val(int,3),assign_sss_s2).
+set_assign(sss_s2,val(int,2),val(bool,true),assign_sss_s2).
+set_assign(sss_s2,val(int,3),val(bool,true),assign_sss_s2).
 variable_define(sss_s3,operation(inter,(variable(sss_s1),(variable(sss_s2),()))),assign_sss_s3).
 
-engine_request(assign_sss_s1,compile).
-engine_request(assign_sss_s2,ground).
-engine_request(assign_sss_s3,compile).
+engine_request(compile,assign_sss_s1).
+engine_request(ground,assign_sss_s2).
+engine_request(compile,assign_sss_s3).
 
 
 %%% set -> atomic
@@ -30,15 +30,15 @@ engine_request(assign_sss_s3,compile).
 %%% ssa_s2 = {1,2,3}
 %%% ssa_a = ssa_s1 \subseteq ssa_s2
 variable_declare(ssa_s1,set,assign_ssa_s1).
-set_assign(ssa_s1,val(int,1),assign_ssa_s1).
-set_assign(ssa_s1,val(int,2),assign_ssa_s1).
+set_assign(ssa_s1,val(int,1),val(bool,true),assign_ssa_s1).
+set_assign(ssa_s1,val(int,2),val(bool,true),assign_ssa_s1).
 variable_declare(ssa_s2,set,assign_ssa_s2).
-set_assign(ssa_s2,val(int,2),assign_ssa_s2).
-set_assign(ssa_s2,val(int,3),assign_ssa_s2).
+set_assign(ssa_s2,val(int,2),val(bool,true),assign_ssa_s2).
+set_assign(ssa_s2,val(int,3),val(bool,true),assign_ssa_s2).
 variable_define(ssa_a,operation(subset,(variable(ssa_s1),(variable(ssa_s2),()))),assign_ssa_a).
 
-engine_request(assign_ssa_s1,compile).
-engine_request(assign_ssa_s2,ground).
-engine_request(assign_ssa_a,propagator).
+engine_request(compile,assign_ssa_s1).
+engine_request(ground,assign_ssa_s2).
+engine_request(propagator,assign_ssa_a).
 
 warning_ignore(type(failed_operation)).

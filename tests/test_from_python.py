@@ -1,11 +1,9 @@
 import clingo
 
 import constraint_handler
-import constraint_handler.schemas.atom as atom
 from constraint_handler.schemas.atom import (
     Ensure,
     Optimize_maximizeSum,
-    Value,
     Variable_declare,
     Variable_define,
     Variable_domain,
@@ -13,6 +11,11 @@ from constraint_handler.schemas.atom import (
 from constraint_handler.schemas.domain import FromFacts
 from constraint_handler.schemas.expression import Operation, Val, Variable
 from constraint_handler.schemas.operators import ArithmeticOperator, ComparisonOperator
+from constraint_handler.schemas.result import (
+    Optimize_modelValue,
+    Optimize_value,
+    Value,
+)
 from constraint_handler.schemas.type_ import BaseType
 
 
@@ -84,11 +87,11 @@ def test_optimization():
     actual_value = {}
     for x in results:
         match x:
-            case atom.Value():
+            case Value():
                 best_assignment[x.name] = x.val.value
-            case atom.Optimize_value():
+            case Optimize_value():
                 opt_value[x.label] = x.total.value
-            case atom.Optimize_modelValue():
+            case Optimize_modelValue():
                 actual_value[x.label] = x.total.value
 
     assert best_assignment == {"x": 4, "y": 3.25}

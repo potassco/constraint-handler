@@ -11,9 +11,9 @@ import constraint_handler.conditional as conditional
 import constraint_handler.logic as logic
 import constraint_handler.multimap as multimap
 import constraint_handler.myClorm as myClorm
-import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.operators as operators
+import constraint_handler.schemas.result as result
 import constraint_handler.schemas.statement as statement
 import constraint_handler.schemas.warning as warning
 import constraint_handler.set as myset
@@ -159,10 +159,10 @@ def python_operator(fn, args, globals_id, locals_env):
     try:
         globals_ = get_environment(globals_id)
         call = eval(fn, globals_, locals_env)
-        return atom.EvalResult(call(*args), NO_ERRORS)
+        return result.EvalResult(call(*args), NO_ERRORS)
     except Exception as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
-        return atom.EvalResult(None, ((kind, repr(exn)),))
+        return result.EvalResult(None, ((kind, repr(exn)),))
 
 
 @cache
@@ -189,21 +189,21 @@ def cached_exec(stmt: str, vars_mapping: tuple, globals_id: myClorm.ImmutableLis
 def pythonExtract_operator(stmt: str, expr_code: str, vars_mapping: tuple, globals_id):
     succ, warns = cached_exec(stmt, vars_mapping, globals_id)
     if succ is None:
-        return atom.EvalResult(expression.Bad.bad, warns)
+        return result.EvalResult(expression.Bad.bad, warns)
     if expr_code == "__succeeds":
-        return atom.EvalResult(warns is not None, NO_ERRORS)
+        return result.EvalResult(warns is not None, NO_ERRORS)
 
     nested_locals = dict(succ)
 
     try:
         globals_env = get_environment(globals_id)
-        return atom.EvalResult(
+        return result.EvalResult(
             eval(get_compiled_eval(expr_code), globals_env, nested_locals),
             NO_ERRORS,
         )
     except Exception as exn:
         kind = warning.Expression(warning.ExpressionWarning.pythonError)
-        return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
+        return result.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
 
 
 def operator(o, args: tuple, globals_id, locals_env):
@@ -212,14 +212,14 @@ def operator(o, args: tuple, globals_id, locals_env):
 
     match o:
         case expression.Bad.bad:
-            return atom.EvalResult(o, NO_ERRORS)
+            return result.EvalResult(o, NO_ERRORS)
         case expression.Python(fn):
             return python_operator(fn, args, globals_id, locals_env)
         case expression.PythonExtract(stmt, e):
             return pythonExtract_operator(stmt, e, args, globals_id)
         case expression.Lambda(vars, expr_body):
             if len(vars) != len(args):
-                return atom.EvalResult(
+                return result.EvalResult(
                     expression.Bad.bad,
                     (
                         (
@@ -250,9 +250,9 @@ def operator(o, args: tuple, globals_id, locals_env):
             return conditional.evaluate_operator(o, args)
         case _:
             if callable(o):
-                return atom.EvalResult(o(*args), NO_ERRORS)
+                return result.EvalResult(o(*args), NO_ERRORS)
             print(o, type(o))
-            return atom.EvalResult(
+            return result.EvalResult(
                 expression.Bad.bad,
                 ((warning.Expression(warning.ExpressionWarning.notImplemented), f"operator {o}"),),
             )
@@ -266,43 +266,43 @@ def expr(expr_, globals_id, locals_env):
             o = op_result.value
 
             if expression.Bad.bad == eo or (expression.Bad.bad in args and o not in RECOVERABLE_OPERATORS):
-                return atom.EvalResult(expression.Bad.bad, op_result.errors + args_errors)
+                return result.EvalResult(expression.Bad.bad, op_result.errors + args_errors)
 
             applied = operator(o, args, globals_id, locals_env)
-            return atom.EvalResult(applied.value, op_result.errors + args_errors + applied.errors)
+            return result.EvalResult(applied.value, op_result.errors + args_errors + applied.errors)
         case expression.Variable(a):
             if a in locals_env:
-                return atom.EvalResult(locals_env[a], NO_ERRORS)
-            return atom.EvalResult(
+                return result.EvalResult(locals_env[a], NO_ERRORS)
+            return result.EvalResult(
                 expression.Bad.bad,
                 ((warning.Variable(warning.VariableWarning.undeclared), f"{a}"),),
             )
         case expression.Python(code):
             try:
                 globals_ = get_environment(globals_id)
-                return atom.EvalResult(eval(get_compiled_eval(code), globals_, locals_env), NO_ERRORS)
+                return result.EvalResult(eval(get_compiled_eval(code), globals_, locals_env), NO_ERRORS)
             except Exception as exn:
                 kind = warning.Expression(warning.ExpressionWarning.pythonError)
-                return atom.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
+                return result.EvalResult(expression.Bad.bad, ((kind, repr(exn)),))
         case expression.Val(type_, val):
-            return atom.EvalResult(val, NO_ERRORS)
+            return result.EvalResult(val, NO_ERRORS)
         case expression.Lambda(vars, body):
             nsymbols = {x: v for x, v in locals_env.items() if x not in vars}
-            return atom.EvalResult(expression.Lambda(vars, beta_reduction(nsymbols, body)), NO_ERRORS)
+            return result.EvalResult(expression.Lambda(vars, beta_reduction(nsymbols, body)), NO_ERRORS)
         case o if isinstance(o, expression.Operator):
-            return atom.EvalResult(expr_, NO_ERRORS)
+            return result.EvalResult(expr_, NO_ERRORS)
         case tuple(eargs):
             values, errors = exprs(eargs, globals_id, locals_env)
-            return atom.EvalResult(tuple(values), errors)
+            return result.EvalResult(tuple(values), errors)
         case set(eargs) | frozenset(eargs):
             values, errors = exprs(eargs, globals_id, locals_env)
-            return atom.EvalResult(frozenset(values), errors)
+            return result.EvalResult(frozenset(values), errors)
         case None:
-            return atom.EvalResult(None, NO_ERRORS)
+            return result.EvalResult(None, NO_ERRORS)
         case expression.Bad.bad:
-            return atom.EvalResult(expr_, NO_ERRORS)
+            return result.EvalResult(expr_, NO_ERRORS)
         case _:
-            return atom.EvalResult(
+            return result.EvalResult(
                 expression.Bad.bad,
                 ((warning.Expression(warning.ExpressionWarning.notImplemented), f"expr {expr_}"),),
             )

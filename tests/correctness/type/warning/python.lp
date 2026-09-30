@@ -19,6 +19,3 @@ variable_define(good_y,GEQ) :-
 GEQ = operation(geq,(variable(y),(val(int,1),()))).
 
 evaluate(operation(limp,(variable(active),(variable(good_y),())))).
-#show value/2.
-#show warning/3.
-%warning_ignore(type(failed_operation)).
