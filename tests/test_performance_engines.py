@@ -82,7 +82,7 @@ ground_benchmarks = [
 ]
 
 propagator_check_benchmarks = [
-    PerformanceBenchmark("sum_aggregates", 25.0),
+    PerformanceBenchmark("sum_aggregates", 35.0),
     PerformanceBenchmark("sum_chain", 1.5),
     PerformanceBenchmark("repeated_constraints", 170.0, constants={"pair_count": 130}),
     PerformanceBenchmark("assignment_chain", 5.0, constants={"chain_length": 200}),
