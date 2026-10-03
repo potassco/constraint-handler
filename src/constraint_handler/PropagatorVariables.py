@@ -4,7 +4,7 @@ import sys
 from abc import abstractmethod
 from collections.abc import Iterable
 from itertools import product
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 import clingo
 
@@ -17,6 +17,7 @@ from constraint_handler.PropagatorConstants import (
     propagator_warning_t,
 )
 from constraint_handler.schemas import expression, warning
+from constraint_handler.utils.bookkeeping import Count
 
 
 def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warning.Warning | None:
@@ -42,18 +43,32 @@ def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warni
     )
 
 
-def is_evaluation_possible(var: VariableType) -> bool:
+def is_evaluation_possible(var: VariableType | VariableValue) -> bool:
     """
     Check whether evaluation is possible for this variable.
     It does this by checking the count of evaluated expressions against the total expressions count.
     Returns:
         bool: True if evaluation is possible, False otherwise.
     """
-    if var.expressions_evaluated_counter > var.expressions_count:
-        raise RuntimeError("Expressions evaluated counter exceeds expressions count.")
-    return var.expressions_evaluated_counter == var.expressions_count
+    if isinstance(var, VariableType):
+        if var.expressions_evaluated_counter > var.expressions_count:
+            raise RuntimeError("Expressions evaluated counter exceeds expressions count.")
+        print(
+            f"Assesing evaluation possibility for variable: {var} with expressions evaluated counter: {var.expressions_evaluated_counter} and expressions count: {var.expressions_count}"
+        )
+        return var.expressions_evaluated_counter == var.expressions_count
+    elif isinstance(var, VariableValue):
+        if var.vars_counter > var.vars_count:
+            raise RuntimeError("Vars counter exceeds vars count.")
+        print(
+            f"Assesing evaluation possibility for variable value: {var} with vars counter: {var.vars_counter} and vars count: {var.vars_count}"
+        )
+        return var.vars_counter == var.vars_count
+
+    raise TypeError(f"Unsupported variable type for evaluation possible check. {type(var)}")
 
 
+@runtime_checkable
 class VariableType(Protocol):
     """
     Protocol for variable types used in the propagator. Defines the required interface for variables.
@@ -95,7 +110,7 @@ class VariableType(Protocol):
     def get_value(self) -> Any: ...
 
     @abstractmethod
-    def reset(self, dl: int) -> None: ...
+    def reset(self, dl: int) -> bool: ...
 
     @abstractmethod
     def get_errors(self) -> propagator_warning_t: ...
@@ -257,17 +272,6 @@ class VariableManager:
             deps.update(var.vars())
         return deps
 
-    def reset(self, dl: int) -> None:
-        """
-        Reset variables based on the decision level.
-
-        Args:
-            dl: Decision level threshold for resetting variables.
-        """
-
-        for var in self.get_variables():
-            var.reset(dl)
-
     def items(self) -> Iterable[tuple[clingo.Symbol, dict[VariableTypeNames, VariableType]]]:
         """
         Get all variable items as (name, variable_dict) pairs.
@@ -346,8 +350,12 @@ class VariableValue:
         self.assigned: bool | None = None
         self.decision_level: int = DEFAULT_DECISION_LEVEL
 
+        self.vars_count: int = len(self.vars())
+        self.vars_counter = 0
+
         self.errors: propagator_warning_t = []
 
+    @Count("VariableValue.evaluate")
     def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
         """
         Evaluate the expression
@@ -759,6 +767,7 @@ class EnsureVariable:
         """
         return
 
+    @Count("EnsureVariable.evaluate")
     def evaluate(
         self,
         evaluations: Evaluations,
@@ -776,16 +785,16 @@ class EnsureVariable:
             # already assigned
             return EvaluationResult.NOT_CHANGED
 
-        changed = self.expression.evaluate(evaluations, ctl, env)
+        self.expression.evaluate(evaluations, ctl, env)
 
-        if self.expression.assigned is not None and not self.expression.assigned:
+        if self.expression.assigned is False:  # test for false since assigned can be None also!
             # Ensure is false, so no conflict
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.NOT_CHANGED
 
-        if not changed:
-            return EvaluationResult.NOT_CHANGED
+        # if not changed:
+        #     return EvaluationResult.NOT_CHANGED
 
         self.value = self.expression.value
         self.decision_level = ctl.assignment.decision_level
@@ -857,17 +866,19 @@ class EnsureVariable:
         """
         return self.expression.active_literals
 
-    def reset(self, dl: int) -> None:
+    def reset(self, dl: int) -> bool:
         """
         Reset based on the decision level.
 
         Args:
             dl: Decision level threshold.
         """
-        self.expression.reset(dl)
+        # self.expression.reset(dl)
         if self.decision_level >= dl:
             self.value = ValueStatus.NOT_SET
             self.decision_level = DEFAULT_DECISION_LEVEL
+            return True
+        return False
 
     def infer(self) -> set[int]:
         """
@@ -922,7 +933,7 @@ class BoolEvaluateVariable:
         self.name: str = name
         self.expression: VariableValue = VariableValue(expr, literal)
         self.value_lits = {True: true_lit, False: false_lit, expression.Bad.bad: bad_lit}
-
+        self.value = None
         self.var = clingo.Function(BoolEvaluateVariable.__var, [clingo.Number(BoolEvaluateVariable.__c)])
         BoolEvaluateVariable.__c += 1
 
@@ -957,6 +968,43 @@ class BoolEvaluateVariable:
             bool: Always True for BoolEvaluateVariable.
         """
         return True
+
+    @property
+    def literals(self) -> set[int]:
+        """
+        Return all literals associated with this boolean evaluation variable.
+
+        Returns:
+            set[int]: Set of all literals (true, false, and bad) for this variable and the literal of the expression.
+        """
+        return set(self.value_lits.values()).union({self.expression.literal})
+
+    @property
+    def active_literals(self) -> set[int]:
+        """
+        Return signed literals that give the current value of the boolean evaluation variable.
+
+        Returns:
+            set[int]: Set of signed literals.
+        """
+        lits = self.expression.active_literals
+        for val, lit in self.value_lits.items():
+            if self.get_value() == val:
+                lits.add(lit)
+            else:
+                lits.add(-lit)
+        return lits
+
+    def simple_evaluate(self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]) -> set[Any]:
+        return set()
+
+    def asses_dependencies_values(
+        self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]
+    ) -> dict[clingo.Symbol, set[Any]]:
+        return {}
+
+    def set_possible_values(self, possible_values: set[Any], ctl: clingo.PropagateInit) -> None:
+        pass
 
     def evaluate(
         self,
@@ -1033,24 +1081,17 @@ class BoolEvaluateVariable:
             errors.append(bad_value_warning)
         return errors
 
-    def reset(self, dl: int) -> None:
+    def reset(self, dl: int) -> bool:
         """
         Reset based on the decision level.
 
         Args:
             dl: Decision level threshold.
-        """
-        self.expression.reset(dl)
-
-    @property
-    def active_literals(self) -> set[int]:
-        """
-        Return signed literals that give the current value of the boolean evaluation variable.
-
         Returns:
-            set[int]: Set of signed literals.
+            bool: False since there is nothing to reset
         """
-        return self.expression.active_literals
+        # self.expression.reset(dl)
+        return False
 
     @property
     def decision_level(self) -> int:
@@ -1424,20 +1465,25 @@ class Variable:
         """
         return self.get_literals(active=True)
 
-    def reset(self, dl: int) -> None:
+    def reset(self, dl: int) -> bool:
         """
         Reset based on decision level.
 
         Args:
             dl: Decision level threshold.
+
+        Returns:
+            bool: True if the variable was reset, False otherwise.
         """
-        for value in self.expressions:
-            value.reset(dl)
+        # for value in self.expressions:
+        #     value.reset(dl)
 
         if self.decision_level >= dl:
             self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = ValueStatus.NOT_SET
             self.errors = []
+            return True
+        return False
 
     def infer(self) -> set[int]:
         """
@@ -1943,18 +1989,23 @@ class SetVariable:
         # if nothing changed or the changes did not lead to a value
         return EvaluationResult.NOT_CHANGED
 
-    def reset(self, dl: int) -> None:
+    def reset(self, dl: int) -> bool:
         """
         Reset based on decision level.
+
+        Returns:
+            bool: True if the variable was reset, False otherwise.
 
         Args:
             dl: Decision level threshold.
         """
-        self.set_expressions.reset(dl)
+        # self.set_expressions.reset(dl)
         if self.decision_level >= dl:
             self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = ValueStatus.NOT_SET
             self.errors = []
+            return True
+        return False
 
     def infer(self) -> set[int]:
         """
@@ -2360,21 +2411,25 @@ class DictVariable:
         # if nothing changed or the changes did not lead to a value
         return EvaluationResult.NOT_CHANGED
 
-    def reset(self, dl: int) -> None:
+    def reset(self, dl: int) -> bool:
         """
         Reset based on the decision level.
 
         Args:
             dl: Decision level threshold.
+        Returns:
+            bool: True if the variable was reset, False otherwise.
         """
-        for key, value in self.dict_expressions.items():
-            key.reset(dl)
-            value.reset(dl)
+        # for key, value in self.dict_expressions.items():
+        #     key.reset(dl)
+        #     value.reset(dl)
 
         if self.decision_level >= dl:
             self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = ValueStatus.NOT_SET
             self.errors = []
+            return True
+        return False
 
     def infer(self) -> set[int]:
         """

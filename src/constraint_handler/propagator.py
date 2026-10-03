@@ -81,6 +81,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.evaluations: Evaluations = Evaluations()
 
         self.expr2var: dict[VariableValue, set[VariableType]] = {}
+        self.var2expr: dict[Symbol, set[VariableValue]] = {}
         self.lit2expr: dict[int, set[VariableValue]] = {}
 
         self.evaluatevars: list[EvaluateVariable] = []
@@ -221,12 +222,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_forbidden_warnings(init)
 
-        self.get_variable_ranks()
-
         for var in self.symbol2var.get_variables():
             for expr in var.expressions:
                 self.expr2var.setdefault(expr, set()).add(var)
                 self.lit2expr.setdefault(expr.literal, set()).add(expr)
+                for svar in expr.vars():
+                    self.var2expr.setdefault(svar, set()).add(expr)
+
+        self.get_variable_ranks()
 
         # valuations = self.preprocess()
         # self.ensure_pairs_dict = self.ensure_pairs(valuations)
@@ -265,23 +268,28 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # loop over vars and get the ones without deps, those have rank 0
         # loop again and get vars with satisfied deps based on known ranks
         # those get rank +1
-        known_vars = set()
+        known_vars: set[Symbol] = set()
         changed = True
         rank = 0
         while changed:
             changed = False
+            vars_this_loop: set[Symbol] = set()
             for var in self.symbol2var.keys():  # noqa: SIM118
                 if var in known_vars:
                     continue
                 if self.symbol2var.get_dependencies(var).issubset(known_vars):
                     self.var_ranks[var] = rank
                     changed = True
-                    known_vars.add(var)
+                    vars_this_loop.add(var)
 
+            known_vars.update(vars_this_loop)
             rank += 1
 
         for expr in self.expr2var:
             self.var_ranks_expr[expr] = max((self.var_ranks[var] for var in expr.vars()), default=0)
+
+        # print("Variable ranks:", self.var_ranks)
+        # print("Expression ranks:", self.var_ranks_expr)
 
     def ensure_pairs(
         self, valuations: dict[Symbol, set[Any]]
@@ -905,7 +913,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             control: Clingo propagation control.
             changes: Sequence of (signed) solver literals that changed.
         """
-
+        # print("Propagating...")
         if self.check_only:
             return
 
@@ -926,7 +934,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 self.set_optimization_check_strength("le")
                 print("Now in optimization stage 2, looking for equal or better solutions")
 
-            if lit in self.expr2var:
+            if lit in self.lit2expr:
                 for expr in self.lit2expr[lit]:
                     to_evaluate_expressions.setdefault(expr, set()).add(rlit)
 
@@ -1063,46 +1071,62 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         max_rank = max(max(eval_by_rank.keys(), default=0), max(eval_by_rank_expr.keys(), default=0))
 
         while rank <= max_rank:
-            self.evaluations.update_evaluations(self.symbol2var.get_variables())
-            if rank in eval_by_rank_expr:
-                while len(eval_by_rank_expr[rank]) > 0:
-                    expr = eval_by_rank_expr[rank].pop()
-                    expr_result: bool = expr.evaluate(self.evaluations, ctl, self.environment)
-                    if expr_result:
-                        for var in self.expr2var[expr]:
-                            var.expressions_evaluated_counter += 1
-                            if is_evaluation_possible(var):
-                                eval_by_rank.setdefault(self.var_ranks[var.var], set()).add(var)
+            print("Evaluating rank: ", rank)
+            changed = True
+            while changed:
+                changed = False
+                if rank in eval_by_rank_expr:
+                    self.evaluations.update_evaluations(self.symbol2var.get_variables())
+                    while len(eval_by_rank_expr[rank]) > 0:
+                        expr = eval_by_rank_expr[rank].pop()
+                        if not is_evaluation_possible(expr):
+                            continue
+                        expr_result: bool = expr.evaluate(self.evaluations, ctl, self.environment)
+                        print("evaluating expr: ", expr, " with result: ", expr_result)
+                        if expr_result:
+                            changed = True
+                            for var in self.expr2var[expr]:
+                                var.expressions_evaluated_counter += 1
+                                print(
+                                    "variable: ",
+                                    var,
+                                    " expressions evaluated counter: ",
+                                    var.expressions_evaluated_counter,
+                                    " with target: ",
+                                    var.expressions_count,
+                                )
+                                if is_evaluation_possible(var):
+                                    print("adding variable to evaluation queue: ", var)
+                                    eval_by_rank.setdefault(self.var_ranks[var.var], set()).add(var)
+                                    max_rank = max(max_rank, self.var_ranks[var.var])
 
-            if rank in eval_by_rank:
-                while len(eval_by_rank[rank]) > 0:
-                    var = eval_by_rank[rank].pop()
-                    # print(f"var: {var}")
-                    result = self.evaluate_variable(ctl, var, to_evaluate.get(var, None))
-                    if result is None:
-                        # variable had issue, stop propagation!
-                        return True
-                    elif result:
-                        # variable changed, evaluate parents
-                        for parent in var.parents:
-                            try:
-                                parent_rank = self.var_ranks[parent.var]
-                            except KeyError:
-                                # parent is not a variable we know about, skip it
-                                # TODO: this is relevant for multi engine solving
-                                # if a variable is a set that is defined from some operation then the _se_value
-                                # is just the operation, which means that the vars that are parents are still used in the propagator even when they should not be
-                                # so, when those variables get a value, the variable is attempted to be added here
-                                # but it is not in the propagator since it does not have parents itself
-                                # How to fix this?
-                                print("var does not exist!?!", parent.var)
-                                continue
-                            if parent_rank not in eval_by_rank:
-                                eval_by_rank.setdefault(parent_rank, set())
-                                max_rank = max(max_rank, parent_rank)
-
-                            if parent not in eval_by_rank[parent_rank] and parent.get_value() == ValueStatus.NOT_SET:
-                                eval_by_rank[parent_rank].add(parent)
+                if rank in eval_by_rank:
+                    while len(eval_by_rank[rank]) > 0:
+                        var = eval_by_rank[rank].pop()
+                        if not is_evaluation_possible(var):
+                            continue
+                        # print(f"var: {var}")
+                        result = self.evaluate_variable(ctl, var, to_evaluate.get(var, None))
+                        print("evaluating variable: ", var, " with result: ", result)
+                        if result is None:
+                            # variable had issue, stop propagation!
+                            return True
+                        elif result:
+                            changed = True
+                            for expr in self.var2expr.get(var.var, set()):
+                                expr.vars_counter += 1
+                                print(
+                                    "expression: ",
+                                    expr,
+                                    " vars counter: ",
+                                    expr.vars_counter,
+                                    " with target: ",
+                                    expr.vars_count,
+                                )
+                                if is_evaluation_possible(expr):
+                                    print("adding expression to evaluation queue: ", expr)
+                                    eval_by_rank_expr.setdefault(self.var_ranks_expr[expr], set()).add(expr)
+                                    max_rank = max(max_rank, self.var_ranks_expr[expr])
             rank += 1
 
         return False
@@ -1182,11 +1206,34 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             changes: Literals undone by clingo.
         """
         for expr in self.expr2var:
+            print("Attempting to reset expression:", expr)
             if expr.reset(assignment.decision_level):
+                print("Resetting expression:", expr)
                 for var in self.expr2var[expr]:
+                    print(
+                        "lowering expression count of:",
+                        var,
+                        "-- current count:",
+                        var.expressions_evaluated_counter,
+                        " --- After decrement: ",
+                        var.expressions_evaluated_counter - 1,
+                    )
                     var.expressions_evaluated_counter -= 1
 
-        self.symbol2var.reset(assignment.decision_level)
+        for var in self.symbol2var.get_variables():
+            print("Attempting to reset variable:", var)
+            if var.reset(assignment.decision_level):
+                print("Resetting variable:", var)
+                for expr in self.var2expr.get(var.var, []):
+                    print(
+                        "lowering variable count of:",
+                        expr,
+                        "-- current count:",
+                        expr.vars_counter,
+                        " --- After decrement: ",
+                        expr.vars_counter - 1,
+                    )
+                    expr.vars_counter -= 1
 
         self.optimization_sum.reset(assignment.decision_level)
 
