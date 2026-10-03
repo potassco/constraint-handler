@@ -286,7 +286,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             rank += 1
 
         for expr in self.expr2var:
-            self.var_ranks_expr[expr] = max((self.var_ranks[var] for var in expr.vars()), default=0)
+            self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
 
         # print("Variable ranks:", self.var_ranks)
         # print("Expression ranks:", self.var_ranks_expr)
@@ -680,7 +680,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             control: Clingo PropagateControl object.
         """
-
+        print("CHECK CHECK")
         if not self.previously_opt_stage_2 and control.assignment.is_true(self.optimization_stage_lits[2]):
             # if we are now in the second stage of optimization,
             # we can now look for equal valued solutions
@@ -913,7 +913,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             control: Clingo propagation control.
             changes: Sequence of (signed) solver literals that changed.
         """
-        # print("Propagating...")
+        print("Propagating...", changes)
         if self.check_only:
             return
 
@@ -938,6 +938,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 for expr in self.lit2expr[lit]:
                     to_evaluate_expressions.setdefault(expr, set()).add(rlit)
 
+        print("To evaluate variables:", to_evaluate)
+        print("To evaluate expressions:", to_evaluate_expressions)
         backtrack = self.evaluated_solver_assignment(control, to_evaluate, to_evaluate_expressions)
         if backtrack:
             # backtracking due to conflicts in evaluation of variables
@@ -1026,6 +1028,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if extra_literals:
             ng = ng.union(extra_literals)
         prop_stop = ctl.add_nogood(ng, lock=True)
+        print("adding ng: ", ng)
         if conflict and prop_stop:
             assert (
                 False
@@ -1096,7 +1099,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                                     var.expressions_count,
                                 )
                                 if is_evaluation_possible(var):
-                                    print("adding variable to evaluation queue: ", var)
+                                    print(
+                                        "adding variable to evaluation queue: ",
+                                        var,
+                                        "with rank",
+                                        self.var_ranks[var.var],
+                                    )
                                     eval_by_rank.setdefault(self.var_ranks[var.var], set()).add(var)
                                     max_rank = max(max_rank, self.var_ranks[var.var])
 
@@ -1124,7 +1132,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                                     expr.vars_count,
                                 )
                                 if is_evaluation_possible(expr):
-                                    print("adding expression to evaluation queue: ", expr)
+                                    print(
+                                        "adding expression to evaluation queue: ",
+                                        expr,
+                                        "with rank",
+                                        self.var_ranks_expr[expr],
+                                    )
                                     eval_by_rank_expr.setdefault(self.var_ranks_expr[expr], set()).add(expr)
                                     max_rank = max(max_rank, self.var_ranks_expr[expr])
             rank += 1
@@ -1154,6 +1167,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_nogood_for_variable(ctl, var)
             return None
         elif eval_result == EvaluationResult.INFER:
+            print("Inferred for variable: ", var)
             if self.add_nogood_for_variable(ctl, var, extra_literals=var.infer(), conflict=False):
                 return None
 
@@ -1205,6 +1219,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             assignment: Current assignment after backtracking.
             changes: Literals undone by clingo.
         """
+        print("UNDO UNDO")
         for expr in self.expr2var:
             print("Attempting to reset expression:", expr)
             if expr.reset(assignment.decision_level):
@@ -1491,6 +1506,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(literal)
             self.add_watch(-literal)
             self.literal2var.setdefault(literal, []).append(bool_var)
+            # for blit in b_vals.values():
+            #     self.literal2var.setdefault(blit, []).append(bool_var)
             # Var name is given here so it works well with the rest of the system
             # It should do nothing and also should never appear in any assignments!!
             self.symbol2var.add_variable(bool_var.var, bool_var)
@@ -1738,7 +1755,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # add to the clingo output the final result based on reasoning mode
         # For brave and cautious, we output the accumulated result (similar to clingo)
         # For standard, we output the current model
-
+        print("ON MODEL CALL")
         assert self.python_model is not None
         for pyAtom in self.python_model:
             clAtom = myClorm.pytocl(pyAtom)
