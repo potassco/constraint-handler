@@ -987,13 +987,8 @@ class BoolEvaluateVariable:
         Returns:
             set[int]: Set of signed literals.
         """
-        lits = self.expression.active_literals
-        for val, lit in self.value_lits.items():
-            if self.get_value() == val:
-                lits.add(lit)
-            else:
-                lits.add(-lit)
-        return lits
+
+        return self.expression.active_literals
 
     def simple_evaluate(self, valuations: dict[clingo.Symbol, Any], env: dict[Any, Any]) -> set[Any]:
         return set()
@@ -1021,8 +1016,8 @@ class BoolEvaluateVariable:
             ctl: PropagateControl
             env: Environment for evaluation.
         """
-        changed = self.expression.evaluate(evaluations, ctl, env)
-        if changed and self.get_value() is not ValueStatus.ASSIGNMENT_IS_FALSE:
+        # changed: Unknown = self.expression.evaluate(evaluations, ctl, env)
+        if self.get_value() is not ValueStatus.ASSIGNMENT_IS_FALSE:
             # if we got a value, we can infer the corresponding literal
             return EvaluationResult.INFER
 
@@ -1121,10 +1116,10 @@ class BoolEvaluateVariable:
         return hash((self.var, self.expression))
 
     def __str__(self) -> str:
-        return f"Variable({self.name}, {self.var}, {self.expression})"
+        return f"BoolEvaluateVariable({self.name}, {self.var}, {self.expression})"
 
     def __repr__(self) -> str:
-        return f"Variable({self.name}, {self.var}, {self.expression})"
+        return f"BoolEvaluateVariable({self.name}, {self.var}, {self.expression})"
 
 
 class Variable:
