@@ -22,7 +22,7 @@ _solve_firstLabel/2.
 _variable_involve(presolve,LBL,X,DECL).
 _passed(presolve,LBL,DECL).
 _passed(skip,DECL).
-_passed(solve,LBL,DECL).
+ch_solve(DECL,LBL).
 
 ### Output predicates
 
@@ -35,4 +35,4 @@ _passed(ground,LBL,DECL).
 _passed(none,LBL,warning_forbid/2).
 _passed(none,LBL,warning_ignore/2).
 _passed(propagator,LBL,DECL).
-_passed(solve,LBL,share_value/1).
+ch_solve(share_value/1,LBL).

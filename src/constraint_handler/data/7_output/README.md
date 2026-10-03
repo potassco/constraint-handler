@@ -10,7 +10,7 @@ _passed(compile2,LBL,share_value/1).
 _passed(ground,LBL,bool_evaluate/1).
 _passed(ground,LBL,share_value/1).
 _passed(propagator,LBL,bool_evaluate/1).
-_passed(solve,LBL,variable_interface/1).
+ch_solve(variable_interface/1,LBL).
 _se_value/2.
 _set_contains/2.
 _warning/3.

@@ -1,14 +1,14 @@
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=bool_evaluate(E).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_assign(X,E).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_choice(X,E).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_declare(X,D).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_default(X,D,C,P).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_define(X,E).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_domain(X,E).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=set_assign(X,E,C).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=multimap_assign(X,K,B).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=share_value(E).
-_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=optimize_component(E,O,P,X,PRIORITY).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=bool_evaluate(E).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_assign(X,E).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_choice(X,E).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_declare(X,D).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_default(X,D,C,P).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_define(X,E).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_domain(X,E).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=set_assign(X,E,C).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=multimap_assign(X,K,B).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=share_value(E).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=optimize_component(E,O,P,X,PRIORITY).
 
 _variable_interface(X,LBL) :- ch_core(variable_declare(X,D),LBL), #false: X=loc(V).
 

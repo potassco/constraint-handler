@@ -13,5 +13,5 @@ _engine(ENG,LBL) :- ch_core(engine_request(ENG),LBL).
 _engine(ENG,LBL) :- _engine_default(ENG), not _engine_userRequest(LBL), _label(LBL).
 
 %%%%%%%%%%%%%%%%% collect labels
-_label(DECL,LBL) :- _passed(solve,LBL,DECL).
+_label(DECL,LBL) :- ch_solve(DECL,LBL).
 _label(DECL,LBL) :- ch_core(DECL,LBL).

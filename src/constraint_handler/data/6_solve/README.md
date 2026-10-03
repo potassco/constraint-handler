@@ -8,9 +8,9 @@ _passed(compile,LBL,variable_declare/2).
 _passed(compile,LBL,variable_domain/2).
 _passed(ground,LBL,variable_declare/2).
 _passed(ground,LBL,variable_domain/2).
-_passed(solve,LBL,ensure/1).
-_passed(solve,LBL,variable_default/3).
-_passed(solve,LBL,variable_define/2).
+ch_core(ensure/1,LBL).
+ch_core(variable_default/3,LBL).
+ch_core(variable_define/2,LBL).
 _passed(sugar,LBL,preference_holds/2).
 _preference_expressionScore/2.
 _se_value/2.
