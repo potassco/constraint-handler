@@ -10,7 +10,6 @@ engine_request/2.
 
 ### Intermediate predicates
 
-_engine_supportOptimization/1.
 _label/1. _label/2.
 _engine_default/1.
 _engine_defaultProvided/0.

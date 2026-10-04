@@ -62,6 +62,17 @@ m5_presolve = [
     "5_presolve/presolve",
 ]
 
+m6_module = [
+    "6_module/bool_evaluate",
+    "6_module/defaults",
+    "6_module/ensure",
+    # "6_module/evaluate",
+    # "6_module/finiteDomain",
+    # "6_module/optimize",
+    "6_module/preference",
+    "6_module/set",
+]
+
 m6_datatype = [
     "6_solve/compile/bool",
     "6_solve/compile/cast",
@@ -105,24 +116,20 @@ m6_propagator = [
 
 m6_solve = (
     [
-        "6_solve/defaults",
-        "6_solve/ensure",
         "6_solve/evaluate",
         "6_solve/finiteDomain",
         "6_solve/optimize",
-        "6_solve/preference",
-        "6_solve/set",
     ]
     + m6_datatype
     + m6_compile
     + m6_ground
     + m6_propagator
     + m6_compile2
+    + m6_module
 )
 
 m7_output = [
     "7_output/bad_value",
-    "7_output/bool_evaluate",
     "7_output/value",
     "7_output/warning",
 ]

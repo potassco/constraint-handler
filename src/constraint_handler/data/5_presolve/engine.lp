@@ -1,5 +1,4 @@
 %%%%%%%%%%%%%%%%% engines
-_engine_supportOptimization(compile;compile2;ground;propagator).
 _engine(compile;compile2;ground;propagator;none).
 _engine_grounding(compile;compile2;ground).
 

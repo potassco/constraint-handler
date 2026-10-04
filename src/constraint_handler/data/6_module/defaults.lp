@@ -42,11 +42,11 @@ _default_connect(X,X) :- ch_core(variable_declare(X,open),LBL), _default_mode(de
 
 
 %%%%%% guessing
-_se_value(variable(X),V) :- _passed((compile;compile2;ground),LBL,variable_assign(X,E)), _se_value(E,V).
+_se_value(variable(X),V) :- ch_core(variable_assign(X,E),LBL), _se_value(E,V).
 
-_se_value(variable(X),V) :- _passed((compile;compile2;ground),LBL,variable_default(X,E,C,P)), _se_value(E,V), _default_apply(X,E,C,P).
+_se_value(variable(X),V) :- ch_core(variable_default(X,E,C,P),LBL), _se_value(E,V), _default_apply(X,E,C,P).
 
-{ _se_value(variable(X),V) : ch_solve(variable_choice(X,E),LBL1), _se_value(E,V) } 1 :-
-  _passed((compile;compile2;ground),LBL,variable_declare(X,open)).
+{ _se_value(variable(X),V) : ch_solve(variable_choice(X,E),LBL1), _se_value(E,V) } :-
+  ch_core(variable_declare(X,open),LBL).
 
-:- _passed((compile;compile2;ground),LBL,variable_declare(X,open)), 1 != { _se_value(variable(X),V) }. % TODO change 1 != to 1 >
+:- ch_core(variable_declare(X,open),LBL), 1 != { _se_value(variable(X),V) }, _engine((compile;compile2;ground),LBL). % TODO change 1 != to 1 >

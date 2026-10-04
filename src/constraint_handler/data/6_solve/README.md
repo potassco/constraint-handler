@@ -1,46 +1,26 @@
 ### Input predicates
 
-default_mode/1.
-engine/2.
-preference_maximizeScore/0.
-_optimize_component/6.
+_engine/2.
+_engine_grounding/1.
 _passed(compile,LBL,variable_declare/2).
 _passed(compile,LBL,variable_domain/2).
 _passed(ground,LBL,variable_declare/2).
 _passed(ground,LBL,variable_domain/2).
-ch_core(ensure/1,LBL).
-ch_core(variable_default/3,LBL).
-ch_core(variable_define/2,LBL).
-_passed(sugar,LBL,preference_holds/2).
-_preference_expressionScore/2.
+_phase_active/1.
 _se_value/2.
 _shared_value/2.
+ch_core(evaluate/2,LBL).
+ch_core(optimize_component/5,LBL).
 
 ### Intermediate predicates
 
-_default_apply/3.
-_default_dependVariable/2.
-_default_depends/2.
-_default_ensureVariable/2.
-_default_mode/1.
-_default_modeProvided/0.
-_default_possibleMode/1.
-_preference_expression/1.
-_preference_index/2.
-_preference_potentialAux/2.
-_preference_potentialScore/1.
-_variable_guess/2.
-_variable_hasDomain/1.
-_variable_indexedDomain/3.
+_evaluate/2.
+_optimize_component/6.
 
 ### Output predicates
 
 _ge_assign/2.
-_passed(compile,LBL,variable_declare/2).
-_passed(compile,LBL,variable_define/2).
-_passed(ground,LBL,variable_declare/2).
-_passed(ground,LBL,variable_define/2).
 _se_value/2.
-_warning/3.
-direct_query/1.
-preference_score/1.
+ch_solve(share_value/1,LBL).
+evaluated/2.
+propagator_optimize_maximizeSum/4.
