@@ -24,9 +24,7 @@ def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warni
 
     if not (
         variable.get_value() == expression.Bad.bad  # ty:ignore[unresolved-attribute]
-        or (
-            isinstance(variable.get_value(), frozenset) and expression.Bad.bad in variable.get_value()
-        )  # ty:ignore[unresolved-attribute]
+        or (isinstance(variable.get_value(), frozenset) and expression.Bad.bad in variable.get_value())  # ty:ignore[unresolved-attribute]
         or (
             isinstance(variable.get_value(), dict)
             and (
@@ -785,7 +783,7 @@ class EnsureVariable:
             # already assigned
             return EvaluationResult.NOT_CHANGED
 
-        self.expression.evaluate(evaluations, ctl, env)
+        # self.expression.evaluate(evaluations, ctl, env)
 
         if self.expression.assigned is False:  # test for false since assigned can be None also!
             # Ensure is false, so no conflict
@@ -1348,17 +1346,17 @@ class Variable:
             # already assigned
             return EvaluationResult.NOT_CHANGED
 
-        changed = False
-        if expr_lits is None or len(expr_lits) == 0:
-            for value in self.expressions:
-                changed |= value.evaluate(evaluations, ctl, env)
-        else:
-            for lit in expr_lits:
-                # if lit < 0:   # TODO: these lines were commented out by copilot
-                #     continue  #       double-check it's a correct change
+        # changed = False
+        # if expr_lits is None or len(expr_lits) == 0:
+        #     for value in self.expressions:
+        #         changed |= value.evaluate(evaluations, ctl, env)
+        # else:
+        #     for lit in expr_lits:
+        #         if lit < 0:
+        #             continue
 
-                if lit in self.lit2expr:
-                    changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
+        #         if lit in self.lit2expr:
+        #             changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
 
         # if not changed:
         #     return EvaluationResult.NOT_CHANGED
@@ -1966,9 +1964,9 @@ class SetVariable:
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CHANGED
 
-        changed = self.set_expressions.evaluate(evaluations, ctl, env)
+        # changed = self.set_expressions.evaluate(evaluations, ctl, env)
 
-        if changed or not self.has_unassigned():
+        if not self.has_unassigned():
             self.value = self.set_expressions.get_value()
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
@@ -2387,12 +2385,12 @@ class DictVariable:
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CHANGED
 
-        changed = False
-        for key, value in self.dict_expressions.items():
-            changed |= key.evaluate(evaluations, ctl, env)
-            changed |= value.evaluate(evaluations, ctl, env)
+        # changed = False
+        # for key, value in self.dict_expressions.items():
+        #     changed |= key.evaluate(evaluations, ctl, env)
+        #     changed |= value.evaluate(evaluations, ctl, env)
 
-        if changed or not self.has_unassigned():
+        if not self.has_unassigned():
             self.value = self.discern_value()
             if self.value != ValueStatus.NOT_SET:
                 # only update decision level if we have a value
