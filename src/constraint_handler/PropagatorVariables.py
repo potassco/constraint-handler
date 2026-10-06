@@ -473,7 +473,7 @@ class VariableValue:
     def __eq__(self, other) -> bool:
         if not isinstance(other, VariableValue):
             return False
-        return self.expr == other.expr
+        return self.expr == other.expr and self.literal == other.literal
 
     def __hash__(self) -> int:
         return hash((str(self.expr), self.literal))
@@ -483,6 +483,25 @@ class VariableValue:
 
     def __repr__(self) -> str:
         return f"VariableValue({self.expr}, {self.value})"
+
+
+class VariableValueRegistry:
+    """Intern VariableValue instances."""
+
+    def __init__(self) -> None:
+        self.values: dict[tuple[str, int], list[VariableValue]] = {}
+
+    def get(self, expr: expression.Expr, lit: int) -> VariableValue:
+        key = (str(expr), lit)
+        value = next(
+            (candidate for candidate in self.values.get(key, []) if candidate.expr == expr),
+            None,
+        )
+        if value is None:
+            value = VariableValue(expr, lit)
+            self.values.setdefault(key, []).append(value)
+
+        return value
 
 
 class EvaluateVariable:
@@ -690,17 +709,16 @@ class EnsureVariable:
     __var = "ensure"
     __c = 0
 
-    def __init__(self, name: str, expr: expression.Expr, literal: int):
+    def __init__(self, name: str, expression_value: VariableValue):
         """
         Initialize an EnsureVariable.
 
         Args:
             name: Name of the ensure atom.
-            expr: Expression that must hold.
-            literal: Literal controlling whether the ensure atom is active.
+            expression_value: Interned expression that must hold.
         """
         self.name: str = name
-        self.expression: VariableValue = VariableValue(expr, literal)
+        self.expression: VariableValue = expression_value
 
         self.value: ValueStatus | bool = ValueStatus.NOT_SET
         self.decision_level: int = DEFAULT_DECISION_LEVEL
@@ -918,20 +936,26 @@ class BoolEvaluateVariable:
     __c = 0
     __var = "__bool_evaluate__"
 
-    def __init__(self, name: str, expr: expression.Expr, literal: int, true_lit: int, false_lit: int, bad_lit: int):
+    def __init__(
+        self,
+        name: str,
+        expression_value: VariableValue,
+        true_lit: int,
+        false_lit: int,
+        bad_lit: int,
+    ):
         """
         Initialize a BoolEvaluateVariable.
 
         Args:
             name: Name of the variable.
-            expr: Expression to evaluate, expected to yield a boolean value.
-            literal: Literal controlling whether this variable is active.
+            expression_value: Interned expression to evaluate, expected to yield a boolean value.
             true_lit: Literal representing the true value of the variable.
             false_lit: Literal representing the false value of the variable.
             bad_lit: Literal representing a bad value of the variable.
         """
         self.name: str = name
-        self.expression: VariableValue = VariableValue(expr, literal)
+        self.expression: VariableValue = expression_value
         self.value_lits = {True: true_lit, False: false_lit, expression.Bad.bad: bad_lit}
         self.value = None
         self.var = clingo.Function(BoolEvaluateVariable.__var, [clingo.Number(BoolEvaluateVariable.__c)])
@@ -1173,17 +1197,15 @@ class Variable:
 
         self.errors: propagator_warning_t = []
 
-    def add_value(self, expr: expression.Expr, value_lit: int, domain_lit: int) -> None:
+    def add_value(self, value: VariableValue, domain_lit: int) -> None:
         """
         Add a possible value expression for this variable.
 
         Args:
-            expr: Expression representing a candidate value.
-            value_lit: Literal for the value assignment.
+            value: Interned expression representing a candidate value.
             domain_lit: Literal indicating the truth value of the domain/declaration context.
         """
-        value = VariableValue(expr, value_lit)
-        self.lit2expr[value_lit] = value
+        self.lit2expr[value.literal] = value
         self.expressions.add(value)
         self.expressions_count += 1
         self.domain_literals.add(domain_lit)
@@ -1542,15 +1564,14 @@ class SetVariableValue:
         """
         return len(self.expressions) > 0
 
-    def add_value(self, arg: expression.Expr, lit: int) -> None:
+    def add_value(self, value: VariableValue) -> None:
         """
         Add a candidate value to the set.
 
         Args:
-            arg: Expression for a set element.
-            lit: Literal guarding the element.
+            value: Interned expression for a set element.
         """
-        self.expressions.add(VariableValue(arg, lit))
+        self.expressions.add(value)
 
     def get_errors(self) -> propagator_warning_t:
         """
@@ -1745,15 +1766,14 @@ class SetVariable:
         """
         return self.set_expressions.has_domain()
 
-    def add_value(self, arg: expression.Expr, lit: int) -> None:
+    def add_value(self, value: VariableValue) -> None:
         """
         Add a potential value expression to the set.
 
         Args:
-            arg: Expression representing one possible set element.
-            lit: Literal for the corresponding `set_assign/3` atom.
+            value: Interned expression for one possible set element.
         """
-        self.set_expressions.add_value(arg, lit)
+        self.set_expressions.add_value(value)
         self.expressions_count += 1
 
     def get_errors(self) -> propagator_warning_t:
@@ -2110,22 +2130,18 @@ class DictVariable:
             exprs.update(value.expressions)
         return exprs
 
-    def add_value(self, key: expression.Expr, expr: expression.Expr, lit: int) -> None:
+    def add_value(self, key_value: VariableValue, value: VariableValue) -> None:
         """
         Add a key-value pair to the dict variable.
 
         Args:
-            key: Expression for the key.
-            expr: Expression for the value.
-            lit: Literal for assignment.
+            key_value: Interned expression for the key.
+            value: Interned expression for the value.
         """
-        # setting lit for key to 1 since it does not have its own literal
-        # the literal is bound for the value!
-        key_val = VariableValue(key, 1)
-        if key_val not in self.dict_expressions:
-            self.dict_expressions[key_val] = SetVariableValue()
+        if key_value not in self.dict_expressions:
+            self.dict_expressions[key_value] = SetVariableValue()
             self.expressions_count += 1
-        self.dict_expressions[key_val].add_value(expr, lit)
+        self.dict_expressions[key_value].add_value(value)
         self.expressions_count += 1
 
     def has_domain(self) -> bool:
@@ -2500,16 +2516,19 @@ class OptimizationSum:
         """
         return {expr for _, expr in self.opt_expressions}
 
-    def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int) -> None:
+    def add_value(
+        self,
+        var: clingo.Symbol,
+        value: VariableValue,
+    ) -> None:
         """
         Add a value to the optimization sum.
 
         Args:
             var: Clingo symbol for the variable.
-            expr: Expression to evaluate.
-            lit: Associated literal.
+            value: Interned expression to evaluate.
         """
-        self.opt_expressions.append((var, VariableValue(expr, lit)))
+        self.opt_expressions.append((var, value))
 
     def get_literals(self, active: bool) -> set[int]:
         """
@@ -2684,22 +2703,21 @@ class OptimizationHandler:
             exprs.update(_sum.expressions)
         return exprs
 
-    def add_value(self, var: clingo.Symbol, expr: expression.Expr, lit: int, priority: int = 0) -> None:
+    def add_value(self, var: clingo.Symbol, value: VariableValue, priority: int = 0) -> None:
         """
         Add a value to the appropriate optimization sum by priority.
 
         Args:
             var: Clingo symbol for the variable.
-            expr: Expression to evaluate.
-            lit: Associated literal.
+            value: Interned expression to evaluate.
             priority: Priority of the optimization sum.
         """
         for _sum in self.sums:
             if _sum.priority == priority:
-                _sum.add_value(var, expr, lit)
+                _sum.add_value(var, value)
                 return
         new_sum = OptimizationSum(priority)
-        new_sum.add_value(var, expr, lit)
+        new_sum.add_value(var, value)
         self.sums.append(new_sum)
 
         self.sums.sort(key=lambda x: x.priority, reverse=True)  # higher priority first
