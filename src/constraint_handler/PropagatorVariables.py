@@ -487,19 +487,29 @@ class VariableValueRegistry:
     """Intern VariableValue instances."""
 
     def __init__(self) -> None:
-        self.values: dict[tuple[str, int], list[VariableValue]] = {}
+        self.values: dict[tuple[str, int], VariableValue] = {}
 
     def get(self, expr: expression.Expr, lit: int) -> VariableValue:
         key = (str(expr), lit)
-        value = next(
-            (candidate for candidate in self.values.get(key, []) if candidate.expr == expr),
-            None,
-        )
+        value = self.values.get(key)
         if value is None:
             value = VariableValue(expr, lit)
-            self.values.setdefault(key, []).append(value)
+            self.values[key] = value
 
         return value
+
+    def get_all(self) -> list[VariableValue]:
+        """Return a snapshot of all interned values."""
+        return list(self.values.values())
+
+    def delete(self, value: VariableValue) -> bool:
+        """Remove the given instance, returning whether it was registered."""
+        key = (str(value.expr), value.literal)
+        if self.values.get(key) is not value:
+            return False
+
+        del self.values[key]
+        return True
 
 
 class EvaluateVariable:
@@ -2619,16 +2629,16 @@ class OptimizationSum:
         Returns:
             bool: True if the value has changed, False otherwise.
         """
-        changed = False
+        # changed = False
 
-        for var, expr in self.opt_expressions:
-            changed |= expr.evaluate(evaluations, ctl, env)
+        # for var, expr in self.opt_expressions:
+        #     changed |= expr.evaluate(evaluations, ctl, env)
 
-        if changed:
-            total = self.discern_value()
-            if total != self.value:
-                self.decision_level = ctl.assignment.decision_level
-                self.value = total
+        # if changed:
+        total = self.discern_value()
+        if total != self.value:
+            self.decision_level = ctl.assignment.decision_level
+            self.value = total
             return True
 
         return False
