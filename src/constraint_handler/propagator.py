@@ -41,6 +41,7 @@ from constraint_handler.PropagatorVariables import (
     VariableManager,
     VariableType,
     VariableValue,
+    VariableValueRegistry,
     is_evaluation_possible,
 )
 
@@ -80,9 +81,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.literal2var: dict[int, list[VariableType]] = {}
         self.evaluations: Evaluations = Evaluations()
 
-        self.expr2var: dict[VariableValue, set[VariableType]] = {}
+        self.expr2var: dict[VariableValue, list[VariableType]] = {}
         self.var2expr: dict[Symbol, set[VariableValue]] = {}
         self.lit2expr: dict[int, set[VariableValue]] = {}
+        self.value_registry = VariableValueRegistry()
 
         self.evaluatevars: list[EvaluateVariable] = []
 
@@ -194,6 +196,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.symbol2var = VariableManager()
         self.literal2var.clear()
         self.evaluatevars.clear()
+        self.expr2var.clear()
+        self.var2expr.clear()
+        self.lit2expr.clear()
+        self.value_registry = VariableValueRegistry()
         self.optimization_sum = OptimizationHandler()
         self.environment = {}
         self.errors.clear()
@@ -224,8 +230,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for var in self.symbol2var.get_variables():
             for expr in var.expressions:
-                self.expr2var.setdefault(expr, set()).add(var)
-                self.lit2expr.setdefault(expr.literal, set()).add(expr)
                 for svar in expr.vars():
                     self.var2expr.setdefault(svar, set()).add(expr)
 
@@ -249,6 +253,18 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         if not self.check_only:
             self.watches.add(lit)
+
+    def get_variable_value(self, expr: expression.Expr, literal: int) -> VariableValue:
+        """Intern a value and index it by its solver literal."""
+        value = self.value_registry.get(expr, literal)
+        self.lit2expr.setdefault(literal, set()).add(value)
+        return value
+
+    def register_variable_value(self, variable: VariableType, value: VariableValue) -> None:
+        """Associate an interned value with its owning variable."""
+        owners = self.expr2var.setdefault(value, [])
+        if not any(owner is variable for owner in owners):
+            owners.append(variable)
 
     def add_watches_to_ctl(self, ctl: clingo.PropagateInit) -> None:
         """
@@ -1297,7 +1313,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             variable: Variable = cast(Variable, self.symbol2var.get_variable(_name, getattr(Variable, "__name__")))
             expr: expression.Expr = val.expr if isinstance(val, internal.Ref) else val
 
-            variable.add_value(expr, _literal, _literal)
+            value = self.get_variable_value(expr, _literal)
+            variable.add_value(value, _literal)
+            self.register_variable_value(variable, value)
 
             self.add_watch(_literal)
             self.add_watch(-_literal)
@@ -1324,7 +1342,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             expr: expression.Expr = val_set.expr if isinstance(val_set, internal.Ref) else val_set
 
-            set_variable.add_value(expr, _literal)
+            value = self.get_variable_value(expr, _literal)
+            set_variable.add_value(value)
+            self.register_variable_value(set_variable, value)
             self.add_watch(_literal)
             self.add_watch(-_literal)
             self.literal2var.setdefault(_literal, []).append(
@@ -1344,7 +1364,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     DictVariable, self.symbol2var.get_variable(name, getattr(DictVariable, "__name__"))
                 )
 
-            multimap_variable.add_value(key, val, _literal)
+            key_value = self.get_variable_value(key, 1)
+            value = self.get_variable_value(val, _literal)
+            multimap_variable.add_value(key_value, value)
+            self.register_variable_value(multimap_variable, key_value)
+            self.register_variable_value(multimap_variable, value)
 
             self.add_watch(_literal)
             self.add_watch(-_literal)
@@ -1408,7 +1432,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             define_variable: Variable = cast(
                 Variable, self.symbol2var.get_variable(symbol_var, getattr(Variable, "__name__"))
             )
-            define_variable.add_value(expr, _literal, _literal)
+            value = self.get_variable_value(expr, _literal)
+            define_variable.add_value(value, _literal)
+            self.register_variable_value(define_variable, value)
             self.add_watch(_literal)
             self.add_watch(-_literal)
 
@@ -1425,7 +1451,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             )
             # literal = ctl.add_literal(freeze=True)
             domain_literal = from_facts_literals[symbol_var]
-            domain_variable.add_value(domain_expr, _literal, domain_literal)
+            value = self.get_variable_value(domain_expr, _literal)
+            domain_variable.add_value(value, domain_literal)
+            self.register_variable_value(domain_variable, value)
             self.add_watch(_literal)
             self.add_watch(-_literal)
 
@@ -1438,7 +1466,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for var in self.symbol2var.get_variables_by_type(getattr(Variable, "__name__")):
             var = cast(Variable, var)
             if len(var.expressions) == 0:
-                var.add_value(expression.Bad.bad, 1, 1)
+                value = self.get_variable_value(expression.Bad.bad, 1)
+                var.add_value(value, 1)
+                self.register_variable_value(var, value)
 
     def get_ensure(self, ctl: clingo.PropagateInit):
         """
@@ -1450,7 +1480,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         ensures = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_ensure)
         for (expr, name), literal in ensures.items():
-            ensure_var: EnsureVariable = EnsureVariable(name, expr, literal)
+            value = self.get_variable_value(expr, literal)
+            ensure_var: EnsureVariable = EnsureVariable(name, value)
+            self.register_variable_value(ensure_var, value)
             self.add_watch(literal)
             self.add_watch(-literal)
             self.literal2var.setdefault(literal, []).append(ensure_var)
@@ -1496,12 +1528,18 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             for (bexpr, value), b_literal in bool_evaluated_atoms.items():
                 if bexpr == expr:
                     b_vals[value] = b_literal
-                    self.add_watch(b_literal)
-                    self.add_watch(-b_literal)
+                    # self.add_watch(b_literal)
+                    # self.add_watch(-b_literal)
 
+            value = self.get_variable_value(expr, literal)
             bool_var = BoolEvaluateVariable(
-                label, expr, literal, b_vals[true_val], b_vals[false_val], b_vals[expression.Bad.bad]
+                label,
+                value,
+                b_vals[true_val],
+                b_vals[false_val],
+                b_vals[expression.Bad.bad],
             )
+            self.register_variable_value(bool_var, value)
 
             self.add_watch(literal)
             self.add_watch(-literal)
@@ -1535,7 +1573,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for (expr, symbol, priority, _), literal in maxSums.items():
             self.using_optimization = True
-            self.optimization_sum.add_value(symbol, expr, literal, priority)
+            value = self.get_variable_value(expr, literal)
+            self.optimization_sum.add_value(symbol, value, priority)
 
         self.best_value = [-sys.maxsize] * self.optimization_sum.get_sum_count()
 
@@ -1566,7 +1605,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 )
             except KeyError:
                 continue
-            setvar.add_value(expr, literal)
+            value = self.get_variable_value(expr, literal)
+            setvar.add_value(value)
+            self.register_variable_value(setvar, value)
             self.literal2var.setdefault(literal, []).append(setvar)
 
             self.add_watch(literal)
@@ -1580,7 +1621,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 )
             except KeyError:
                 continue
-            setvar.add_value(domain_expr, _literal)
+            value = self.get_variable_value(domain_expr, _literal)
+            setvar.add_value(value)
+            self.register_variable_value(setvar, value)
             self.literal2var.setdefault(_literal, []).append(setvar)
 
             self.add_watch(_literal)
@@ -1612,7 +1655,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 )
             except KeyError:
                 continue
-            dictvar.add_value(key_expr, expr, literal)
+            key_value = self.get_variable_value(key_expr, 1)
+            value = self.get_variable_value(expr, literal)
+            dictvar.add_value(key_value, value)
+            self.register_variable_value(dictvar, key_value)
+            self.register_variable_value(dictvar, value)
             self.literal2var.setdefault(literal, []).append(dictvar)
 
             self.add_watch(literal)
