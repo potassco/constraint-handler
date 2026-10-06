@@ -5,7 +5,7 @@ _engine_grounding/1.
 _passed(ENG,LBL,share_value/1).
 _se_value/2.
 _set_contains/2.
-_variable_interface/2.
+ch_post(variable_interface/2).
 _warning/3.
 ch_core(warning_forbid/1,LBL).
 ch_core(warning_ignore/1,LBL).

@@ -1,6 +1,3 @@
-propagator_evaluate(REF,EXPR,LBL) :- _passed(propagator,LBL,evaluate(REF,EXPR)).
-
-
 propagator_variable_declare(X,fromFacts,LBL) :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
 propagator_variable_declare(X,open,LBL) :- _passed(propagator,LBL,variable_declare(X,open)).
 
@@ -46,4 +43,3 @@ propagator_share_value(E,LBL) :- _passed(propagator,LBL,share_value(E)).
 propagator_warning_forbid(KIND,LBL) :- _warning_forbid(KIND,LBL).
 propagator_warning_ignore(KIND,LBL) :- _warning_ignore(KIND,LBL).
 
-propagator_variable_interface(X,LBL) :- _variable_interface(X,LBL).

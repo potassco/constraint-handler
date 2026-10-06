@@ -66,7 +66,7 @@ m6_module = [
     "6_module/bool_evaluate",
     "6_module/defaults",
     "6_module/ensure",
-    # "6_module/evaluate",
+    "6_module/evaluate",
     # "6_module/finiteDomain",
     # "6_module/optimize",
     "6_module/preference",
@@ -116,7 +116,6 @@ m6_propagator = [
 
 m6_solve = (
     [
-        "6_solve/evaluate",
         "6_solve/finiteDomain",
         "6_solve/optimize",
     ]
@@ -130,6 +129,7 @@ m6_solve = (
 
 m7_output = [
     "7_output/bad_value",
+    "7_output/evaluate",
     "7_output/value",
     "7_output/warning",
 ]
