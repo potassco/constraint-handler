@@ -6,6 +6,7 @@ _passed(ENG,LBL,share_value/1).
 _se_value/2.
 _set_contains/2.
 ch_post(variable_interface/2).
+ch_post(evaluate/2).
 _warning/3.
 ch_core(warning_forbid/1,LBL).
 ch_core(warning_ignore/1,LBL).
@@ -26,3 +27,4 @@ set_value/2.
 type_variableD/2.
 value/2.
 warning/3.
+evaluated/2.

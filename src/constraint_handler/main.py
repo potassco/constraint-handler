@@ -71,6 +71,7 @@ m6_module = [
     # "6_module/optimize",
     "6_module/preference",
     "6_module/set",
+    "6_module/value",
 ]
 
 m6_datatype = [

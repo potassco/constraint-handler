@@ -36,6 +36,6 @@ set_value/2.
 value/2.
 multimap_value/3.
 bool_evaluated/2.
-evaluated/3.
+evaluated/2.
 optimize_value/3.
 preference_score/1.

@@ -42,5 +42,4 @@ _variable_strip/3.
 _passed(correction(REASON,add),LBL,variable_declare/2).
 _passed(correction(REASON,add),LBL,variable_define/2).
 _passed(correction(REASON,rem),LBL,DECL).
-_passed(sugar,LBL,variable_interface/1).
 _warning/3.

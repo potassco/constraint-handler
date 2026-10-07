@@ -37,7 +37,6 @@ _passed(sugar,LBL,variable_declare/2).
 _passed(sugar,LBL,variable_default/4).
 _passed(sugar,LBL,variable_define/2).
 _passed(sugar,LBL,variable_domain/2).
-_passed(sugar,LBL,variable_interface/1).
 _passed(sugar,LBL,multimap_assign/3).
 _passed(sugar,LBL,set_assign/2).
 _passed(sugar,LBL,set_baseDomain/2).

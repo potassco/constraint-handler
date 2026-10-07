@@ -3,11 +3,13 @@
 default_mode/1.
 preference_maximizeScore/0.
 _engine/2.
+_engine_grounding/1.
 _bool_evaluated/2.
 _passed(sugar,LBL,preference_holds/2).
 _phase_active/1.
 ch_core(bool_evaluate/1,LBL).
 ch_core(ensure/1,LBL).
+ch_core(evaluate/2,LBL).
 ch_core(preference_holds/2,LBL).
 ch_core(set_baseDomain/2,LBL).
 ch_core(variable_assign/2,LBL).
@@ -45,6 +47,10 @@ ch_solve(set_assign/3,LBL).
 ch_solve(share_value/1,LBL).
 ch_solve(variable_declare/2,LBL).
 ch_solve(variable_domain/2,LBL).
+ch_post(evaluate/2).
+ch_post(variable_interface/2).
 bool_evaluated/2.
 preference_score/1.
 propagator_bool_evaluate/2.
+propagator_evaluate/3.
+propagator_variable_interface/2.
