@@ -1,0 +1,52 @@
+#defined default_mode/1.
+
+_default_possibleMode(basic;define;depends;none).
+_default_modeProvided :- default_mode(MODE), _default_possibleMode(MODE).
+_default_mode(MODE) :- default_mode(MODE), _default_possibleMode(MODE).
+_default_mode(define) :- not _default_modeProvided.
+
+%TODO: rework phase integration and value introduction to be compatible with the propagator engine
+
+
+-_default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL),
+  _se_value(C,val(bool,false)).
+
+-_default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), _default_apply(X,D',C',P'), D != D', P<=P'.
+%%%% TODO: consider alternative `-_default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), 1{_default_apply(X,D',C',P') : D != D', P<=P'}.` it creates less rules but requires aggregates. Should be mostly the same, something to benchmarked.
+_default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), not -_default_apply(X,D,C,P).
+
+%%%%%% mode basic
+-_default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL),
+  _se_value(D,V), _se_value(variable(X),V'), V != V',
+  _default_mode(basic).
+
+%%%%%% mode define
+
+-_default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), ch_solve(variable_assign(X,E),LBL2),
+  _default_mode(define).
+
+
+%%%%%% mode depends
+% Collect all variables that occur in ensure declarations.
+_default_ensureVariable(E,X) :- ch_core(ensure(E),LBL), _default_mode(depends), X=@pythonExpressionVariable(E).
+_default_dependVariable(E,X) :- _default_ensureVariable(E,X), ch_solve(variable_declare(X,open),LBL).
+
+_default_connect(X,Y) :- _default_dependVariable(E,X), _default_ensureVariable(E,Y), X != Y.
+_default_connect(X,X) :- ch_core(variable_declare(X,open),LBL), _default_mode(depends).
+
+-_default_apply(X,D,C,P) :-
+  ch_core(variable_default(X,D,C,P),LBL),
+  ch_core(variable_assign(Y,E),LBL2),
+  _default_connect(X,Y),
+  _default_mode(depends).
+
+
+%%%%%% guessing
+_se_value(variable(X),V) :- ch_core(variable_assign(X,E),LBL), _se_value(E,V).
+
+_se_value(variable(X),V) :- ch_core(variable_default(X,E,C,P),LBL), _se_value(E,V), _default_apply(X,E,C,P).
+
+{ _se_value(variable(X),V) : ch_solve(variable_choice(X,E),LBL1), _se_value(E,V) } :-
+  ch_core(variable_declare(X,open),LBL).
+
+:- ch_core(variable_declare(X,open),LBL), 1 != { _se_value(variable(X),V) }, _engine((compile;compile2;ground),LBL). % TODO change 1 != to 1 >

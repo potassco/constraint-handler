@@ -1,21 +1,19 @@
 ### Input predicates
 
-_passed(propagator,LBL,bool_evaluate/1).
-_passed(propagator,LBL,evaluate/2).
 _passed(propagator,LBL,variable_assign/2).
-_passed(propagator,LBL,variable_choice/2).
 _passed(propagator,LBL,variable_declare/2).
-_passed(propagator,LBL,variable_default/4).
 _passed(propagator,LBL,variable_define/2).
 _passed(propagator,LBL,variable_domain/2).
-_passed(propagator,LBL,variable_interface/1).
-_passed(propagator,LBL,set_assign/2).
-_passed(propagator,LBL,set_baseDomain/2).
+_passed(propagator,LBL,set_assign/3).
 _passed(propagator,LBL,multimap_assign/3).
-_passed(propagator,LBL,optimize_component/5).
 _passed(propagator,LBL,share_value/1).
+_bool_evaluated/2.
 _warning_forbid/2.
 _warning_ignore/2.
+propagator_bool_evaluate/2.
+propagator_evaluate/3.
+propagator_optimize_maximizeSum/4.
+propagator_variable_interface/2.
 
 ### Intermediate predicates
 
@@ -24,18 +22,14 @@ active/3.
 
 ### Output predicates
 
-propagator_bool_evaluate/2.
 propagator_ensure/2.
-propagator_evaluate/4.
 propagator_variable_declare/3.
 propagator_variable_domain/3.
 propagator_variable_define/3.
-propagator_variable_interface/2.
 propagator_set_declare/2.
 propagator_set_assign/3.
 propagator_multimap_assign/4.
 propagator_multimap_declare/2.
-propagator_optimize_maximizeSum/4.
 propagator_share_value/2.
 propagator_warning_forbid/2.
 propagator_warning_ignore/2.

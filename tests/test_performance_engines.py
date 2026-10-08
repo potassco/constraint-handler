@@ -35,7 +35,14 @@ def run_benchmark_program(benchmark_case: PerformanceBenchmark, engine: Engine) 
     constraint_handler.add_to_control(ctl, engine=engine)
     ctl.load(os.fspath(benchmark_case.program_path))
     ctl.ground()
-    ctl.solve()
+    with ctl.solve(async_=True) as solve_handle:
+        if not solve_handle.wait(benchmark_case.max_average_seconds):
+            solve_handle.cancel()
+            pytest.fail(
+                f"{engine.identifier()} benchmark {benchmark_case.name} solve exceeded "
+                f"{benchmark_case.max_average_seconds:.3f}s"
+            )
+        solve_handle.get()
 
 
 def assert_benchmark_threshold(benchmark, benchmark_case: PerformanceBenchmark, engine: Engine) -> None:
@@ -54,12 +61,7 @@ def benchmark_param(benchmark_case: PerformanceBenchmark, engine: Engine, marks:
         benchmark_case,
         engine,
         id=f"{engine.identifier()}-{benchmark_case.name}",
-        marks=(
-            *marks,
-            pytest.mark.timeout(
-                benchmark_case.max_average_seconds * (benchmark_case.measured_runs + benchmark_case.warmup_runs) + 1
-            ),
-        ),
+        marks=marks,
     )
 
 

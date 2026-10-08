@@ -2,7 +2,7 @@
 
 _warning(preference(unsupported),LBL1,("multiple scores for the same expression",E,K1,K2)) :- _passed(sugar,LBL1,preference_holds(E,K1)), _passed(sugar,LBL2,preference_holds(E,K2)), K1 < K2.
 
-_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
+ch_solve(share_value(E),LBL) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
 _preference_expressionScore(E,K) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
 _bool_evaluate(E,LBL) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
 

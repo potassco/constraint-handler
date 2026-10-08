@@ -1,0 +1,47 @@
+\section{Core layer grammar}
+
+The core layer is the normalized interface between presolving and the solving
+engines.  A core fact associates each declaration with exactly one label.
+The nonterminals \texttt{<expression>}, \texttt{<variable>}, \texttt{<term>},
+and \texttt{<label>} are defined in the fact format.
+
+\begin{grammar}
+<core-fact> ::= `ch_core' `(' <core-declaration> `,' <label> `)'
+
+<core-declaration> ::=
+~\alt <core-variable-declaration>
+\alt <core-collection-declaration>
+\alt <core-query-declaration>
+\alt <core-optimization-declaration>
+\alt <core-control-declaration>
+
+<core-variable-declaration> ::=
+~\alt `variable_assign' `(' <variable> `,' <expression> `)'
+\alt `variable_choice' `(' <variable> `,' <expression> `)'
+\alt `variable_declare' `(' <variable> `,' <core-domain> `)'
+\alt `variable_default' `(' <variable> `,' <expression> `,' <expression> `,' <int> `)'
+\alt `variable_define' `(' <variable> `,' <expression> `)'
+\alt `variable_domain' `(' <variable> `,' <expression> `)'
+
+<core-domain> ::= `definition' | `fromFacts' | `open' | `set' | `multimap'
+
+<core-collection-declaration> ::=
+~\alt `set_assign' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `set_baseDomain' `(' <variable> `,' <expression> `)'
+\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `)'
+
+<core-query-declaration> ::=
+~\alt `bool_evaluate' `(' <expression> `)'
+\alt `ensure' `(' <expression> `)'
+\alt `evaluate' `(' <expression> `,' <expression> `)'
+\alt `share_value' `(' <expression> `)'
+
+<core-optimization-declaration> ::=
+~\alt `optimize_component' `(' <expression> `,' <expression> `,' <expression> `,' <term> `,' <expression> `)'
+\alt `preference_holds' `(' <expression> `,' <int> `)'
+
+<core-control-declaration> ::=
+~\alt `engine_request' `(' <term> `)'
+\alt `warning_forbid' `(' <term> `)'
+\alt `warning_ignore' `(' <term> `)'
+\end{grammar}

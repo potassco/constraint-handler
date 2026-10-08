@@ -7,16 +7,13 @@ _passed(sugar,LBL,variable_default/4).
 _passed(sugar,LBL,variable_declare/2).
 _passed(sugar,LBL,variable_define/2).
 _passed(sugar,LBL,variable_domain/2).
-_passed(sugar,LBL,variable_interface(X)).
 _expression(sugar,EXPR).
 _expression_operationIndex(sugar,EXPR,IDX,ARG).
-_expression_operationLength(sugar,EXPR,N).
 _main_solverIdentifiers/1.
 _operator_variadic/1.
 _operator_variadicAccepts/2.
 _operator_variadicEmptyReturns/2.
 _parameter_value/2.
-_type/1.
 _variable(sugar,X).
 operator_declare/3.
 operator_declare_variadic/4.

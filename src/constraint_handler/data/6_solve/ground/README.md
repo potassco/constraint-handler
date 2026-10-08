@@ -1,13 +1,13 @@
 ### Input predicates
 
-_passed(ground,LBL,variable_assign/4).
-_passed(ground,LBL,variable_choice/4).
+_passed(ground,LBL,variable_assign/2).
+_passed(ground,LBL,variable_choice/2).
 _passed(ground,LBL,variable_declare/2).
 _passed(ground,LBL,variable_default/4).
 _passed(ground,LBL,variable_define/2).
 _passed(ground,LBL,variable_domain/2).
-_passed(ground,LBL,set_assign/2).
-_passed(ground,LBL,set_baseDomain/2).
+_passed(ground,LBL,set_assign/3).
+_passed(ground,LBL,share_value/1).
 _direct_imploded/2.
 _main_solverIdentifiers/1.
 

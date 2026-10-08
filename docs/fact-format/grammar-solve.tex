@@ -1,0 +1,35 @@
+\section{Solve layer grammar}
+
+The solve layer contains the declarations dispatched to solving engines.  It
+includes the core declarations handled by the solve layer and declarations
+derived while preparing them for solving.
+
+\begin{grammar}
+<solve-fact> ::= `ch_solve' `(' <solve-declaration> `,' <label> `)'
+
+<solve-declaration> ::=
+~\alt <solve-variable-declaration>
+\alt <solve-collection-declaration>
+\alt <solve-query-declaration>
+\alt <solve-optimization-declaration>
+
+<solve-variable-declaration> ::=
+~\alt `variable_assign' `(' <variable> `,' <expression> `)'
+\alt `variable_choice' `(' <variable> `,' <expression> `)'
+\alt `variable_declare' `(' <variable> `,' <core-domain> `)'
+\alt `variable_default' `(' <variable> `,' <expression> `,' <expression> `,' <int> `)'
+\alt `variable_define' `(' <variable> `,' <expression> `)'
+\alt `variable_domain' `(' <variable> `,' <expression> `)'
+
+<solve-collection-declaration> ::=
+~\alt `set_assign' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `)'
+
+<solve-query-declaration> ::=
+~\alt `bool_evaluate' `(' <expression> `)'
+\alt `evaluate' `(' <expression> `,' <expression> `)'
+\alt `share_value' `(' <expression> `)'
+
+<solve-optimization-declaration> ::=
+~\alt `optimize_component' `(' <expression> `,' <expression> `,' <expression> `,' <term> `,' <expression> `)'
+\end{grammar}
