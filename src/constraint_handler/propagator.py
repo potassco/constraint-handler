@@ -254,10 +254,42 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if not self.check_only:
             self.watches.add(lit)
 
+    def add_literal2var(self, literal: int, variable: VariableType) -> None:
+        """Associate a variable with the positive form of a solver literal."""
+        self.literal2var.setdefault(abs(literal), []).append(variable)
+
+    def get_literal2var(self, literal: int) -> list[VariableType]:
+        """Get variables associated with a solver literal, regardless of sign."""
+        return self.literal2var.get(abs(literal), [])
+
+    def delete_literal2var(self, literal: int, variable: VariableType) -> bool:
+        """Remove a literal-variable association, returning whether it existed."""
+        key = abs(literal)
+        variables = self.literal2var.get(key)
+        if variables is None:
+            return False
+
+        try:
+            variables.remove(variable)
+        except ValueError:
+            return False
+
+        if not variables:
+            del self.literal2var[key]
+        return True
+
+    def set_literal2expr(self, literal: int, value: VariableValue) -> None:
+        """Associate a value with the positive form of a solver literal."""
+        self.lit2expr.setdefault(abs(literal), set()).add(value)
+
+    def get_literal2expr(self, literal: int) -> set[VariableValue]:
+        """Get values associated with a solver literal, regardless of sign."""
+        return self.lit2expr.get(abs(literal), set())
+
     def get_variable_value(self, expr: expression.Expr, literal: int) -> VariableValue:
         """Intern a value and index it by its solver literal."""
         value = self.value_registry.get(expr, literal)
-        self.lit2expr.setdefault(literal, set()).add(value)
+        self.set_literal2expr(literal, value)
         return value
 
     def register_variable_value(self, variable: VariableType, value: VariableValue) -> None:
@@ -301,7 +333,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             known_vars.update(vars_this_loop)
             rank += 1
 
-        for expr in self.expr2var:
+        for expr in self.value_registry.get_all():
             self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
 
         # print("Variable ranks:", self.var_ranks)
@@ -940,19 +972,18 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         to_evaluate: dict[VariableType, set[int] | None] = {}
         to_evaluate_expressions: dict[VariableValue, set[int] | None] = {}
         for rlit in changes:
-            lit = abs(rlit)
-            if lit in self.literal2var:
-                for var in self.literal2var[lit]:
-                    to_evaluate.setdefault(var, set()).add(rlit)
-            elif not self.previously_opt_stage_2 and lit == self.optimization_stage_lits[2]:
+            if self.using_optimization and not self.previously_opt_stage_2 and rlit == self.optimization_stage_lits[2]:
                 # if we are now in the second stage of optimization,
                 # we can now look for equal valued solutions
                 self.set_optimization_check_strength("le")
                 print("Now in optimization stage 2, looking for equal or better solutions")
+                # continue  # this lit should not be present in any variable or expr
 
-            if lit in self.lit2expr:
-                for expr in self.lit2expr[lit]:
-                    to_evaluate_expressions.setdefault(expr, set()).add(rlit)
+            for var in self.get_literal2var(rlit):
+                to_evaluate.setdefault(var, set()).add(rlit)
+
+            for expr in self.get_literal2expr(rlit):
+                to_evaluate_expressions.setdefault(expr, set()).add(rlit)
 
         print("To evaluate variables:", to_evaluate)
         print("To evaluate expressions:", to_evaluate_expressions)
@@ -1101,7 +1132,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                         if not is_evaluation_possible(expr):
                             continue
                         expr_result: bool = expr.evaluate(self.evaluations, ctl, self.environment)
-                        print("evaluating expr: ", expr, " with result: ", expr_result)
+                        print("##evaluating expr: ", expr, " with result: ", expr_result)
                         if expr_result:
                             changed = True
                             for var in self.expr2var[expr]:
@@ -1302,8 +1333,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     self.symbol2var.add_variable(_name, SetVariable(OTHER_ENGINE_VAR_NAME, _name, _literal))
                     self.add_watch(_literal)
                     self.add_watch(-_literal)
-                    self.literal2var.setdefault(_literal, []).append(
-                        self.symbol2var.get_variable(_name, getattr(SetVariable, "__name__"))
+                    self.add_literal2var(
+                        _literal, self.symbol2var.get_variable(_name, getattr(SetVariable, "__name__"))
                     )
                     continue
                 # If the value references something else, or it is not a reference,
@@ -1319,9 +1350,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.add_watch(_literal)
             self.add_watch(-_literal)
-            self.literal2var.setdefault(_literal, []).append(
-                self.symbol2var.get_variable(_name, getattr(Variable, "__name__"))
-            )
+            self.add_literal2var(_literal, self.symbol2var.get_variable(_name, getattr(Variable, "__name__")))
 
         for (name, val_set), _literal in set_value_atoms.items():
             if not isinstance(name, expression.Variable):
@@ -1347,9 +1376,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.register_variable_value(set_variable, value)
             self.add_watch(_literal)
             self.add_watch(-_literal)
-            self.literal2var.setdefault(_literal, []).append(
-                self.symbol2var.get_variable(_name, getattr(SetVariable, "__name__"))
-            )
+            self.add_literal2var(_literal, self.symbol2var.get_variable(_name, getattr(SetVariable, "__name__")))
 
         for (name, key, val), _literal in multimap_value_atoms.items():
             if name not in self.symbol2var:
@@ -1372,9 +1399,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.add_watch(_literal)
             self.add_watch(-_literal)
-            self.literal2var.setdefault(_literal, []).append(
-                self.symbol2var.get_variable(name, getattr(DictVariable, "__name__"))
-            )
+            self.add_literal2var(_literal, self.symbol2var.get_variable(name, getattr(DictVariable, "__name__")))
 
     def get_variable_interface(self, ctl: clingo.PropagateInit):
 
@@ -1410,7 +1435,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(-_literal)
 
             # TODO: make sure we dont need this literal being watched for Variables
-            self.literal2var.setdefault(_literal, []).append(variable)
+            self.add_literal2var(_literal, variable)
 
             if isinstance(domain, prop_atom.FromFacts):
                 # values will be added from facts, nothing to do here
@@ -1439,7 +1464,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(-_literal)
 
             # TODO: make sure we dont need this literal being watched for Variables
-            self.literal2var.setdefault(_literal, []).append(define_variable)
+            # self.literal2var.setdefault(_literal, []).append(define_variable)
             # here we dont add a nogood since its the same literal
 
         for (symbol_var, domain_expr, name), _literal in var_domains.items():
@@ -1449,7 +1474,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             domain_variable: Variable = cast(
                 Variable, self.symbol2var.get_variable(symbol_var, getattr(Variable, "__name__"))
             )
-            # literal = ctl.add_literal(freeze=True)
+
             domain_literal = from_facts_literals[symbol_var]
             value = self.get_variable_value(domain_expr, _literal)
             domain_variable.add_value(value, domain_literal)
@@ -1461,7 +1486,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # literal defining the domain should also be included, not just the variable declaration literal!
             # ctl.add_clause([-literal, _literal])
 
-            self.literal2var.setdefault(_literal, []).append(domain_variable)
+            # self.literal2var.setdefault(_literal, []).append(domain_variable)
 
         for var in self.symbol2var.get_variables_by_type(getattr(Variable, "__name__")):
             var = cast(Variable, var)
@@ -1485,7 +1510,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.register_variable_value(ensure_var, value)
             self.add_watch(literal)
             self.add_watch(-literal)
-            self.literal2var.setdefault(literal, []).append(ensure_var)
+            self.add_literal2var(literal, ensure_var)
             # Var name is given here so it works well with the rest of the system
             # It should do nothing and also should never appear in any assignments!!
             self.symbol2var.add_variable(ensure_var.var, ensure_var)
@@ -1543,7 +1568,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.add_watch(literal)
             self.add_watch(-literal)
-            self.literal2var.setdefault(literal, []).append(bool_var)
+            self.add_literal2var(literal, bool_var)
             # for blit in b_vals.values():
             #     self.literal2var.setdefault(blit, []).append(bool_var)
             # Var name is given here so it works well with the rest of the system
@@ -1592,7 +1617,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
             )
             self.symbol2var.add_variable(symbol_var, variable)
-            self.literal2var.setdefault(literal, []).append(variable)
+            self.add_literal2var(literal, variable)
 
             self.add_watch(literal)
             self.add_watch(-literal)
@@ -1608,7 +1633,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             value = self.get_variable_value(expr, literal)
             setvar.add_value(value)
             self.register_variable_value(setvar, value)
-            self.literal2var.setdefault(literal, []).append(setvar)
+            self.add_literal2var(literal, setvar)
 
             self.add_watch(literal)
             self.add_watch(-literal)
@@ -1624,7 +1649,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             value = self.get_variable_value(domain_expr, _literal)
             setvar.add_value(value)
             self.register_variable_value(setvar, value)
-            self.literal2var.setdefault(_literal, []).append(setvar)
+            self.add_literal2var(_literal, setvar)
 
             self.add_watch(_literal)
             self.add_watch(-_literal)
@@ -1642,7 +1667,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
             )
             self.symbol2var.add_variable(symbol_var, variable)
-            self.literal2var.setdefault(literal, []).append(variable)
+            self.add_literal2var(literal, variable)
 
             self.add_watch(literal)
             self.add_watch(-literal)
@@ -1660,7 +1685,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             dictvar.add_value(key_value, value)
             self.register_variable_value(dictvar, key_value)
             self.register_variable_value(dictvar, value)
-            self.literal2var.setdefault(literal, []).append(dictvar)
+            self.add_literal2var(literal, dictvar)
 
             self.add_watch(literal)
             self.add_watch(-literal)
@@ -1724,17 +1749,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             # Now we delete this variable from the literal2var mapping
             for lit in var.literals:
-                if lit in self.literal2var:
-                    # Should not fail
-                    self.literal2var[lit].remove(var)
+                self.delete_literal2var(lit, var)
             for expr in var.expressions:
                 for lit in expr.literals:
-                    if lit in self.literal2var:
-                        try:
-                            # might already be removed if lit is the same as other expr or the domain lit
-                            self.literal2var[lit].remove(var)
-                        except ValueError:
-                            pass
+                    # Might already be removed if the literal is shared with another expression.
+                    self.delete_literal2var(lit, var)
+                self.expr2var[expr].remove(var)
 
     def update_python_model(self):
         """
