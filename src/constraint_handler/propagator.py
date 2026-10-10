@@ -228,10 +228,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_forbidden_warnings(init)
 
-        for var in self.symbol2var.get_variables():
-            for expr in var.expressions:
-                for svar in expr.vars():
-                    self.var2expr.setdefault(svar, set()).add(expr)
+        for expr in self.value_registry.get_all():
+            for var in expr.vars():
+                self.var2expr.setdefault(var, set()).add(expr)
 
         self.get_variable_ranks()
 
@@ -261,6 +260,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def get_literal2var(self, literal: int) -> list[VariableType]:
         """Get variables associated with a solver literal, regardless of sign."""
         return self.literal2var.get(abs(literal), [])
+
+    def get_expr2var(self, expr: VariableValue) -> list[VariableType]:
+        """Get variables associated with an expression, or an empty list."""
+        return self.expr2var.get(expr, [])
 
     def delete_literal2var(self, literal: int, variable: VariableType) -> bool:
         """Remove a literal-variable association, returning whether it existed."""
@@ -1145,7 +1148,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                         # print("##evaluating expr: ", expr, " with result: ", expr_result)
                         if expr_result:
                             changed = True
-                            for var in self.expr2var[expr]:
+                            for var in self.get_expr2var(expr):
                                 var.expressions_evaluated_counter += 1
                                 # print(
                                 #     "variable: ",
@@ -1170,7 +1173,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                         var = eval_by_rank[rank].pop()
                         if not is_evaluation_possible(var):
                             continue
-                        # print(f"var: {var}")
                         result = self.evaluate_variable(ctl, var, to_evaluate.get(var, None))
                         # print("evaluating variable: ", var, " with result: ", result)
                         if result is None:
@@ -1224,7 +1226,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_nogood_for_variable(ctl, var)
             return None
         elif eval_result == EvaluationResult.INFER:
-            print("Inferred for variable: ", var)
             if self.add_nogood_for_variable(ctl, var, extra_literals=var.infer(), conflict=False):
                 return None
 
@@ -1276,34 +1277,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             assignment: Current assignment after backtracking.
             changes: Literals undone by clingo.
         """
-        print("UNDO UNDO")
-        for expr in self.expr2var:
+        for expr in self.value_registry.get_all():
             if expr.reset(assignment.decision_level):
-                # print("Resetting expression:", expr)
-                for var in self.expr2var[expr]:
-                    # print(
-                    #     "lowering expression count of:",
-                    #     var,
-                    #     "-- current count:",
-                    #     var.expressions_evaluated_counter,
-                    #     " --- After decrement: ",
-                    #     var.expressions_evaluated_counter - 1,
-                    # )
+                for var in self.get_expr2var(expr):
                     var.expressions_evaluated_counter -= 1
 
         for var in self.symbol2var.get_variables():
-            # print("Attempting to reset variable:", var)
             if var.reset(assignment.decision_level):
-                # print("Resetting variable:", var)
                 for expr in self.var2expr.get(var.var, []):
-                    # print(
-                    #     "lowering variable count of:",
-                    #     expr,
-                    #     "-- current count:",
-                    #     expr.vars_counter,
-                    #     " --- After decrement: ",
-                    #     expr.vars_counter - 1,
-                    # )
                     expr.vars_counter -= 1
 
         self.optimization_sum.reset(assignment.decision_level)
@@ -1767,7 +1748,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 for lit in expr.literals:
                     # Might already be removed if the literal is shared with another expression.
                     self.delete_literal2var(lit, var)
-                self.expr2var[expr].remove(var)
+                owners = self.get_expr2var(expr)
+                if var in owners:
+                    owners.remove(var)
 
     def update_python_model(self):
         """
