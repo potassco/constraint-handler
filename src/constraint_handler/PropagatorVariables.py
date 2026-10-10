@@ -2672,9 +2672,6 @@ class OptimizationSum:
         Args:
             dl: Decision level threshold.
         """
-        for var, expr in self.opt_expressions:
-            expr.reset(dl)
-
         if self.decision_level >= dl:
             self.decision_level = DEFAULT_DECISION_LEVEL
             self.value = -sys.maxsize
