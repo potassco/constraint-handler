@@ -2152,13 +2152,17 @@ class DictVariable:
             key_value: Interned expression for the key.
             value: Interned expression for the value.
         """
+        # order is important, first we check if the expression exists to increase counter, then we add it to the dict
+        # if we add it to the dict first, the check for the counter will not trigger for new expressions
+        if key_value not in self.expressions:
+            self.expressions_count += 1
+
         if key_value not in self.dict_expressions:
             self.dict_expressions[key_value] = SetVariableValue()
+
+        if value not in self.expressions:
             self.expressions_count += 1
-        if value in self.dict_expressions[key_value].expressions:
-            return
         self.dict_expressions[key_value].add_value(value)
-        self.expressions_count += 1
 
     def has_domain(self) -> bool:
         """
