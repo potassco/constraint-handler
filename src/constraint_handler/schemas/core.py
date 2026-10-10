@@ -91,6 +91,6 @@ class Evaluate(NamedTuple):
 type Atom = Bool_evaluate | Ensure | Evaluate | Multimap_assign | Optimize_component | PreferenceAtom | Set_assign | Set_baseDomain | Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain
 
 
-class Core_ch(NamedTuple):
+class Ch_core(NamedTuple):
     declaration: Atom
     label: expression.constant
