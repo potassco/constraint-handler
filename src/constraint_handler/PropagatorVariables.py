@@ -53,16 +53,16 @@ def is_evaluation_possible(var: VariableType | VariableValue) -> bool:
     if isinstance(var, VariableType):
         if var.expressions_evaluated_counter > var.expressions_count:
             raise RuntimeError("Expressions evaluated counter exceeds expressions count.")
-        print(
-            f"Assesing evaluation possibility for variable: {var} with expressions evaluated counter: {var.expressions_evaluated_counter} and expressions count: {var.expressions_count}"
-        )
+        # print(
+        #     f"Assesing evaluation possibility for variable: {var} with expressions evaluated counter: {var.expressions_evaluated_counter} and expressions count: {var.expressions_count}"
+        # )
         return var.expressions_evaluated_counter == var.expressions_count
     elif isinstance(var, VariableValue):
         if var.vars_counter > var.vars_count:
             raise RuntimeError("Vars counter exceeds vars count.")
-        print(
-            f"Assesing evaluation possibility for variable value: {var} with vars counter: {var.vars_counter} and vars count: {var.vars_count}"
-        )
+        # print(
+        #     f"Assesing evaluation possibility for variable value: {var} with vars counter: {var.vars_counter} and vars count: {var.vars_count}"
+        # )
         return var.vars_counter == var.vars_count
 
     raise TypeError(f"Unsupported variable type for evaluation possible check. {type(var)}")
@@ -1215,6 +1215,8 @@ class Variable:
             value: Interned expression representing a candidate value.
             domain_lit: Literal indicating the truth value of the domain/declaration context.
         """
+        if value in self.expressions:
+            return
         self.lit2expr[value.literal] = value
         self.expressions.add(value)
         self.expressions_count += 1
@@ -1783,6 +1785,8 @@ class SetVariable:
         Args:
             value: Interned expression for one possible set element.
         """
+        if value in self.expressions:
+            return
         self.set_expressions.add_value(value)
         self.expressions_count += 1
 
@@ -2151,6 +2155,8 @@ class DictVariable:
         if key_value not in self.dict_expressions:
             self.dict_expressions[key_value] = SetVariableValue()
             self.expressions_count += 1
+        if value in self.dict_expressions[key_value].expressions:
+            return
         self.dict_expressions[key_value].add_value(value)
         self.expressions_count += 1
 
