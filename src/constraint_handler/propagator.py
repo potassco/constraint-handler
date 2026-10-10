@@ -333,8 +333,19 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             known_vars.update(vars_this_loop)
             rank += 1
 
+        for v in set(self.symbol2var.keys()) - known_vars:
+            # if a variable can't have its dependencies satisfied
+            # (e.g., one of them does not exist)
+            # then we just assign rank -1
+            print(f"warning: Variable {v} can't have its dependencies satisfied.")
+            self.var_ranks[v] = -1
+
         for expr in self.value_registry.get_all():
-            self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
+            try:
+                self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
+            except Exception:
+                print(f"Warning: Expression {expr} has unknown variable as dependency.")
+                self.var_ranks_expr[expr] = -1
 
         # print("Variable ranks:", self.var_ranks)
         # print("Expression ranks:", self.var_ranks_expr)
@@ -961,7 +972,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             control: Clingo propagation control.
             changes: Sequence of (signed) solver literals that changed.
         """
-        print("Propagating...", changes)
+        # print("Propagating...", changes)
         if self.check_only:
             return
 
@@ -985,8 +996,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             for expr in self.get_literal2expr(rlit):
                 to_evaluate_expressions.setdefault(expr, set()).add(rlit)
 
-        print("To evaluate variables:", to_evaluate)
-        print("To evaluate expressions:", to_evaluate_expressions)
+        # print("To evaluate variables:", to_evaluate)
+        # print("To evaluate expressions:", to_evaluate_expressions)
         backtrack = self.evaluated_solver_assignment(control, to_evaluate, to_evaluate_expressions)
         if backtrack:
             # backtracking due to conflicts in evaluation of variables
@@ -1075,7 +1086,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if extra_literals:
             ng = ng.union(extra_literals)
         prop_stop = ctl.add_nogood(ng, lock=True)
-        print("adding ng: ", ng)
         if conflict and prop_stop:
             assert (
                 False
@@ -1121,7 +1131,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         max_rank = max(max(eval_by_rank.keys(), default=0), max(eval_by_rank_expr.keys(), default=0))
 
         while rank <= max_rank:
-            print("Evaluating rank: ", rank)
+            # print("Evaluating rank: ", rank)
             changed = True
             while changed:
                 changed = False
@@ -1132,26 +1142,26 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                         if not is_evaluation_possible(expr):
                             continue
                         expr_result: bool = expr.evaluate(self.evaluations, ctl, self.environment)
-                        print("##evaluating expr: ", expr, " with result: ", expr_result)
+                        # print("##evaluating expr: ", expr, " with result: ", expr_result)
                         if expr_result:
                             changed = True
                             for var in self.expr2var[expr]:
                                 var.expressions_evaluated_counter += 1
-                                print(
-                                    "variable: ",
-                                    var,
-                                    " expressions evaluated counter: ",
-                                    var.expressions_evaluated_counter,
-                                    " with target: ",
-                                    var.expressions_count,
-                                )
+                                # print(
+                                #     "variable: ",
+                                #     var,
+                                #     " expressions evaluated counter: ",
+                                #     var.expressions_evaluated_counter,
+                                #     " with target: ",
+                                #     var.expressions_count,
+                                # )
                                 if is_evaluation_possible(var):
-                                    print(
-                                        "adding variable to evaluation queue: ",
-                                        var,
-                                        "with rank",
-                                        self.var_ranks[var.var],
-                                    )
+                                    # print(
+                                    #     "adding variable to evaluation queue: ",
+                                    #     var,
+                                    #     "with rank",
+                                    #     self.var_ranks[var.var],
+                                    # )
                                     eval_by_rank.setdefault(self.var_ranks[var.var], set()).add(var)
                                     max_rank = max(max_rank, self.var_ranks[var.var])
 
@@ -1162,7 +1172,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                             continue
                         # print(f"var: {var}")
                         result = self.evaluate_variable(ctl, var, to_evaluate.get(var, None))
-                        print("evaluating variable: ", var, " with result: ", result)
+                        # print("evaluating variable: ", var, " with result: ", result)
                         if result is None:
                             # variable had issue, stop propagation!
                             return True
@@ -1170,21 +1180,21 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                             changed = True
                             for expr in self.var2expr.get(var.var, set()):
                                 expr.vars_counter += 1
-                                print(
-                                    "expression: ",
-                                    expr,
-                                    " vars counter: ",
-                                    expr.vars_counter,
-                                    " with target: ",
-                                    expr.vars_count,
-                                )
+                                # print(
+                                #     "expression: ",
+                                #     expr,
+                                #     " vars counter: ",
+                                #     expr.vars_counter,
+                                #     " with target: ",
+                                #     expr.vars_count,
+                                # )
                                 if is_evaluation_possible(expr):
-                                    print(
-                                        "adding expression to evaluation queue: ",
-                                        expr,
-                                        "with rank",
-                                        self.var_ranks_expr[expr],
-                                    )
+                                    # print(
+                                    #     "adding expression to evaluation queue: ",
+                                    #     expr,
+                                    #     "with rank",
+                                    #     self.var_ranks_expr[expr],
+                                    # )
                                     eval_by_rank_expr.setdefault(self.var_ranks_expr[expr], set()).add(expr)
                                     max_rank = max(max_rank, self.var_ranks_expr[expr])
             rank += 1
@@ -1268,33 +1278,32 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         print("UNDO UNDO")
         for expr in self.expr2var:
-            print("Attempting to reset expression:", expr)
             if expr.reset(assignment.decision_level):
-                print("Resetting expression:", expr)
+                # print("Resetting expression:", expr)
                 for var in self.expr2var[expr]:
-                    print(
-                        "lowering expression count of:",
-                        var,
-                        "-- current count:",
-                        var.expressions_evaluated_counter,
-                        " --- After decrement: ",
-                        var.expressions_evaluated_counter - 1,
-                    )
+                    # print(
+                    #     "lowering expression count of:",
+                    #     var,
+                    #     "-- current count:",
+                    #     var.expressions_evaluated_counter,
+                    #     " --- After decrement: ",
+                    #     var.expressions_evaluated_counter - 1,
+                    # )
                     var.expressions_evaluated_counter -= 1
 
         for var in self.symbol2var.get_variables():
-            print("Attempting to reset variable:", var)
+            # print("Attempting to reset variable:", var)
             if var.reset(assignment.decision_level):
-                print("Resetting variable:", var)
+                # print("Resetting variable:", var)
                 for expr in self.var2expr.get(var.var, []):
-                    print(
-                        "lowering variable count of:",
-                        expr,
-                        "-- current count:",
-                        expr.vars_counter,
-                        " --- After decrement: ",
-                        expr.vars_counter - 1,
-                    )
+                    # print(
+                    #     "lowering variable count of:",
+                    #     expr,
+                    #     "-- current count:",
+                    #     expr.vars_counter,
+                    #     " --- After decrement: ",
+                    #     expr.vars_counter - 1,
+                    # )
                     expr.vars_counter -= 1
 
         self.optimization_sum.reset(assignment.decision_level)
@@ -1427,6 +1436,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if not self.symbol2var.has_var_type(symbol_var, getattr(Variable, "__name__")):
                 self.symbol2var.add_variable(
                     symbol_var, Variable(name, symbol_var, symbol_var in self.symbol2var.user_variable_names)
+                )
+            else:
+                print(
+                    f"Warning!!: Variable {symbol_var} was defined via declare at least 2 times! This may cause unexpected behavior."
                 )
 
             variable: Variable = cast(Variable, self.symbol2var.get_variable(symbol_var, getattr(Variable, "__name__")))
