@@ -1593,6 +1593,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for (expr, symbol, priority, _), literal in maxSums.items():
             self.using_optimization = True
             value = self.get_variable_value(expr, literal)
+            self.add_watch(literal)
+            self.add_watch(-literal)
             self.optimization_sum.add_value(symbol, value, priority)
 
         self.best_value = [-sys.maxsize] * self.optimization_sum.get_sum_count()
