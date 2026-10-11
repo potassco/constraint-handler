@@ -743,12 +743,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             control: Clingo PropagateControl object.
         """
         print("CHECK CHECK")
-        if not self.previously_opt_stage_2 and control.assignment.is_true(self.optimization_stage_lits[2]):
-            # if we are now in the second stage of optimization,
-            # we can now look for equal valued solutions
-            self.set_optimization_check_strength("le")
-            print("Now in optimization stage 2, looking for equal or better solutions")
-            self.previously_opt_stage_2 = True
 
         if self.add_nogoods_from_queue(control):
             # backtracking due to nogoods in queue
@@ -759,16 +753,37 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # Hence, we undo stuff here
             # This is probably severly inefficient as we re-evaluate everything every time
             # maybe there is a way to do this more efficiently?
-            self.symbol2var.reset(0)
+            if not self.previously_opt_stage_2 and control.assignment.is_true(self.optimization_stage_lits[2]):
+                # if we are now in the second stage of optimization,
+                # we can now look for equal valued solutions
+                self.set_optimization_check_strength("le")
+                print("Now in optimization stage 2, looking for equal or better solutions")
+                self.previously_opt_stage_2 = True
+
+            for expr in self.value_registry.get_all():
+                if expr.reset(0):
+                    for var in self.get_expr2var(expr):
+                        var.expressions_evaluated_counter -= 1
+
+            for var in self.symbol2var.get_variables():
+                if var.reset(0):
+                    for expr in self.var2expr.get(var.var, []):
+                        expr.vars_counter -= 1
+
             self.optimization_sum.reset(0)
 
             to_evaluate: dict[VariableType, set[int] | None] = {}
+            to_evaluate_expressions: dict[VariableValue, set[int] | None] = {}
             for var in self.symbol2var.get_variables():
                 if var.get_value() == ValueStatus.NOT_SET:
                     # print("var checking in check: ", var)
                     to_evaluate[var] = None
 
-            backtrack = self.evaluated_solver_assignment(control, to_evaluate)
+            for expr in self.value_registry.get_all():
+                if expr.value == ValueStatus.NOT_SET:
+                    to_evaluate_expressions[expr] = None
+
+            backtrack = self.evaluated_solver_assignment(control, to_evaluate, to_evaluate_expressions)
 
             if backtrack:
                 # backtracking due to conflicts in evaluation of variables
@@ -1026,9 +1041,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if not self.using_optimization:
             return False
         self.evaluations.update_evaluations(self.symbol2var.get_variables())
-        changed = self.optimization_sum.evaluate(self.evaluations, ctl, self.environment)
-        if not changed:
-            return False
+        self.optimization_sum.evaluate(self.evaluations, ctl, self.environment)
 
         for i, _sum in enumerate(self.optimization_sum.get_value()):
             if _sum > self.best_value[i] or self.optimization_sum.has_unassigned(i):
@@ -1829,6 +1842,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.add_shared_values(model)
         if self.using_optimization:
+            print(f"best value: {self.optimization_sum.get_value()}")
             if clingo.Function(OPTIMIZATION_STAGE_ATOM, [clingo.Number(2)]) in model.symbols(atoms=True):
                 self.optimal_models_found += 1
             if self.optimal_models_wanted > 0 and self.optimal_models_found >= self.optimal_models_wanted:
