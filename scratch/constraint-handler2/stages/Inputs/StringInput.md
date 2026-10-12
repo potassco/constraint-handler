@@ -8,11 +8,16 @@ A simple layer that takes a string of python input and converts into either
 ## Python Datastructure
 
 ```python
+def to_expression(input_string: str) -> Expr:
+    # Convert a string of Python input into an expression
+    ...
 
-def from_python(input_string: str, input_types: dict, output_types: dict)
-
-# Parse the input expression and convert it into the appropriate input representation.
-obj = from_python("result = x + 1", {"x": int}, {"result": int})
+# instead of
+#store = ConstraintStore()
+#store.variable_declare(VariableRef("x"), VariableKind.regular, (1, 2))
+#store.variable_declare(VariableRef("result"), VariableKind.regular, None)#
+# you could write
+#store.variable_define(VariableRef("result"), to_expression("x + 1"))
 ```
 
 ## TODO

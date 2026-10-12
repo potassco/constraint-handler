@@ -40,7 +40,7 @@ flowchart TD
 	InternalInputDefaulted -->|Desugaring| InternalInputDesugered
 	InternalInputDesugered -->|Lambda Normalization| InternalInputLambdad
 	InternalInputLambdad -->|Normalization| Normalized
-	Normalized -->|SSA| Preprocessed
+	Normalized --> Preprocessed
 
 	Preprocessed -->|Domain Computation| Domains
 	Preprocessed --> ConstantFolding
