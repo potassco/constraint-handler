@@ -1,7 +1,6 @@
 ### Input predicates
 
 _expression(compile,variable/1).
-_engine_grounding/1.
 _passed(ENG,LBL,share_value/1).
 _se_value/2.
 _set_contains/2.

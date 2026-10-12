@@ -1,6 +1,5 @@
 %%%%%%%%%%%%%%%%% engines
 _engine(compile;compile2;ground;propagator;none).
-_engine_grounding(compile;compile2;ground).
 
 _engine_default(ENG) :- ch_core(engine_request(ENG),_label_anonymous).
 _engine_defaultProvided :- ch_core(engine_request(ENG),_label_anonymous).
@@ -11,6 +10,5 @@ _engine_userRequest(LBL) :- ch_core(engine_request(ENG),LBL).
 _engine(ENG,LBL) :- ch_core(engine_request(ENG),LBL).
 _engine(ENG,LBL) :- _engine_default(ENG), not _engine_userRequest(LBL), _label(LBL).
 
-%%%%%%%%%%%%%%%%% collect labels
-_label(DECL,LBL) :- ch_solve(DECL,LBL).
-_label(DECL,LBL) :- ch_core(DECL,LBL).
+_engine_grounding(LBL) :- _engine((compile;compile2;ground),LBL).
+_engine_propagator(LBL) :- _engine(propagator,LBL).

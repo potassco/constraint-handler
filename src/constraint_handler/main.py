@@ -61,7 +61,6 @@ m4_analysis = [
 m5_presolve = [
     "5_presolve/core",
     "5_presolve/to_core",
-    "5_presolve/dispatch",
     "5_presolve/engine",
     "5_presolve/presolve",
 ]
@@ -121,6 +120,7 @@ m6_propagator = [
 
 m6_solve = (
     [
+        "6_solve/dispatch",
         "6_solve/finiteDomain",
         "6_solve/optimize",
     ]

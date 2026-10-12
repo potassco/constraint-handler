@@ -2,8 +2,7 @@ set_value(X,V) :- _se_value(variable(X),set), _set_contains(variable(X),V), ch_p
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V), ch_post(variable_interface(X),LBL).
 value(X,V) :- _se_value(variable(X),V), V != set, ch_post(variable_interface(X),LBL).
 
-_shared_value(E,V)    :- _passed(ENG,LBL,share_value(E)), _se_value(E,V), _engine_grounding(ENG).
-%_shared_value(E,V)    :- _passed(share,LBL,share_value(E)), _se_value(E,V).
+_shared_value(E,V)    :- _passed(ENG,LBL,share_value(E)), _se_value(E,V).
 
 _se_value1(variable(X)) :- _se_value(variable(X),V), ch_post(variable_interface(X),LBL).
 value(X,bad) :- ch_post(variable_interface(X),LBL), _expression(compile,variable(X)), not _se_value1(variable(X)).

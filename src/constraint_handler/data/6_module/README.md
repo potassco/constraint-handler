@@ -2,8 +2,8 @@
 
 default_mode/1.
 preference_maximizeScore/0.
-_engine/2.
 _engine_grounding/1.
+_engine_propagator/1.
 _bool_evaluated/2.
 _passed(sugar,LBL,preference_holds/2).
 _phase_active/1.

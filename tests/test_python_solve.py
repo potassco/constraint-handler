@@ -25,6 +25,7 @@ def test_python_layer_handoffs():
         Ensure(ensure_expression),
     ]
     anonymous_core_declarations = {
+        core.Engine_request(clingo.Function("compile")),
         core.Variable_declare("x", Definition()),
         core.Variable_define("x", Val(BaseType.int, 5)),
         core.Ensure(ensure_expression),
@@ -88,6 +89,7 @@ def test_python_layer_handoffs():
     constraint_handler.add_solve(ctrl, derived_solve_declarations, derived_label)
     constraint_handler.add_post(ctrl, anonymous_post_declarations)
     constraint_handler.add_post(ctrl, derived_post_declarations, derived_label)
+    constraint_handler.add_core(ctrl, [core.Engine_request(clingo.Function("compile"))], derived_label)
     ctrl.ground()
     with ctrl.solve(yield_=True) as solve_handle:
         actual_values = set(constraint_handler.find_values(solve_handle.model()).values())
