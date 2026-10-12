@@ -1,16 +1,15 @@
 ## Information
 
-This file describes a possible internal representation of the input accepted
-by the `ConstraintStore` interface in [PythonInput](PythonInput.md). The store
-retains declarations and expressions for later processing; it does not
-evaluate expressions or solve constraints.
+This file describes a possible internal representation of the input accepted by
+the `ConstraintStore` interface in [PythonInput](PythonInput.md). The store
+retains declarations and expressions for later processing; it does not evaluate
+expressions or solve constraints.
 
 ## ASP Format
 
 TBD
 
 ## Python Datastructure
-
 
 ```python
 class VariableDefault:

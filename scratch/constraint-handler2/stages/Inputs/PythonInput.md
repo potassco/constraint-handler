@@ -1,7 +1,7 @@
 ## Information
 
-This file describes the caller-facing Python interface and expression model
-for adding input to a `ConstraintStore`. Input is declarative: variables are
+This file describes the caller-facing Python interface and expression model for
+adding input to a `ConstraintStore`. Input is declarative: variables are
 declared and defined with expressions, rather than represented as executable
 statements. A possible internal storage representation is described in
 [InternalInput](InternalInput.md).
@@ -27,9 +27,7 @@ store.ensure(Operation(Operator.eq, (VariableRef("x"), 2)))
 
 ## Python Datastructure
 
-
 ### Variables
-
 
 ```python
 # VariableKind identifies a variable's value shape.
@@ -48,7 +46,6 @@ VariableRef(name: str)
 ```
 
 ### ConstraintStore Methods
-
 
 ```python
 
