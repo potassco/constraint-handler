@@ -26,6 +26,7 @@ class Variable_declare(NamedTuple):
 class Variable_define(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr
 
 
 class Variable_default(NamedTuple):

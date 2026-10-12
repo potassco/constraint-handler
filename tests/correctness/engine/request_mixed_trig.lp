@@ -9,10 +9,10 @@ variable_define(i,val(float,float("42"))).
 variable_define(f,val(float,float("47.1"))).
 variable_define(y,operation(add,(operation(mult,(val(int,2),
                                                 (variable(i),()))),
-                                (val(int,1),()))),assign_y).
+                                (val(int,1),()))),val(bool,true),assign_y).
 variable_define(z,operation(sub,(variable(y),
-                                (variable(f),()))),assign_z).
-variable_define(u,operation(sin,(variable(z),())),assign_u).
+                                (variable(f),()))),val(bool,true),assign_z).
+variable_define(u,operation(sin,(variable(z),())),val(bool,true),assign_u).
 
 engine_request(ground,assign_y).
 engine_request(compile,assign_z).

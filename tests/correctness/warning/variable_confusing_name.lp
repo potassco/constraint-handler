@@ -1,5 +1,5 @@
 %%% raise the respective warning(variable(confusingName),(),((),_))
-variable_define(variable(x),val(bool,true),d1).
+variable_define(variable(x),val(bool,true),val(bool,true),d1).
 variable_define(variable,val(bool,true)).
 variable_define(int,val(bool,true)).
 variable_define(float,val(bool,true)).

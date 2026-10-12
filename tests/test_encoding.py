@@ -40,6 +40,7 @@ core_tests = [
     "core/basic_assignments",
     "core/boolean_shortcut_optional_presence",
     "core/conditional_assign",
+    "core/conditional_define",
     "core/conj_bad_none_recovery",
     "core/custom_globals",
     "core/empty_set_execution",

@@ -19,14 +19,15 @@ _variable_safe(X) :- _variable_query(safe,X),
   _expression_safe(E) : _passed(sugar,LBL,variable_choice(X,E));
   _expression_safe(E) : _passed(sugar,LBL,variable_default(X,E,C,P));
   _expression_safe(C) : _passed(sugar,LBL,variable_default(X,E,C,P));
-  _expression_safe(E) : _passed(sugar,LBL,variable_define(X,E));
+  _expression_safe(E) : _passed(sugar,LBL,variable_define(X,E,C));
+  _expression_safe(C) : _passed(sugar,LBL,variable_define(X,E,C));
   _expression_safe(E) : _passed(sugar,LBL,variable_domain(X,E)).
 _variable_query(safe,X) :- _variable(sugar,X).
 
 
 
 _safe_bad(bad) :- _phase_active(safe).
-_safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_define(X,E)), _safe_bad(E).
+_safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_define(X,E,C)), _safe_bad(E;C).
 _safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_declare(X,set)), _passed(sugar,LBL2,set_assign(X,E,C)), _safe_bad(E;C).
 _safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_declare(X,multimap)), _passed(sugar,LBL2,multimap_assign(LBL2,X,KE,BE)), _safe_bad(KE;BE).
 _safe_bad(EXPR) :- _phase_active(safe), _expression(sugar,EXPR), _expression_tupleIndex(sugar,EXPR,IDX,F), _safe_bad(F).

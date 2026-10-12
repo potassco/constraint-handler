@@ -1,12 +1,12 @@
 _expression(ground,E) :- _passed(ground,LBL,variable_assign(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_choice(X,E)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_default(X,E,C,P)).
-_expression(ground,E) :- _passed(ground,LBL,variable_define(X,E)).
+_expression(ground,(E;C)) :- _passed(ground,LBL,variable_define(X,E,C)).
 _expression(ground,E) :- _passed(ground,LBL,variable_domain(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
 
-%%%%%%%%%%%%%%%%% variable_define/2
-_ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E)).
+%%%%%%%%%%%%%%%%% variable_define/3
+_ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E,C)), ge_result(C,val(bool,true)).
 
 _expression(ground,C) :- _passed(ground,LBL,set_assign(X,E,C)).
 _ge_set_assign(X,E) :- _passed(ground,LBL,set_assign(X,E,C)), _se_value(C,val(bool,true)).

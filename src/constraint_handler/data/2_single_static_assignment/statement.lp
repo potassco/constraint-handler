@@ -157,7 +157,7 @@ _statement_introduce(LBL,EX,V) :- _execution_outputVar(LBL,PRG,X,EX), _passed(de
 _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), not _execution_ou_proj(PRG,X).
 _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)), not _execution_isRunning(PRG).
 
-_passed(ssa,LBL,variable_define(X,E)) :- _statement_introduce(LBL,X,E).
+_passed(ssa,LBL,variable_define(X,E,val(bool,true))) :- _statement_introduce(LBL,X,E).
 _passed(ssa,LBL,variable_declare(X,definition)) :- _statement_introduce(LBL,X,E).
 _passed(ssa,LBL,ensure(E)) :- _statement_ensure(LBL,E).
 _variable(ssa,EX) :- _execution_inputVar(LBL,PRG,X,EX).

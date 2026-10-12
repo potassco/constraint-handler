@@ -1,4 +1,4 @@
-_passed(compile2,CNAME,variable_define(X,E)) :- _passed(compile2,CNAME,variable_assign(X,E)).
+_passed(compile2,CNAME,variable_define(X,E,val(bool,true))) :- _passed(compile2,CNAME,variable_assign(X,E)).
 _passed(compile2,CNAME,variable_domain(X,E)) :- _passed(compile2,CNAME,variable_choice(X,E)).
 %% TODO: temporary hack
 
@@ -18,7 +18,8 @@ _set_value_choice_blocked(variable(Var)) :-
 _se_value(Expr, Expr) :- _expression_is_value(Expr).
 
 :- not _se_value(variable(Var), Value),
-	_passed(compile2, _, variable_define(Var, Expr)),
+	_passed(compile2, _, variable_define(Var, Expr, Cond)),
+	_se_value(Cond, val(bool, true)),
 	_se_value(Expr, Value).
 
 % var has to take one of the values of the domain
@@ -33,7 +34,8 @@ var_has_domain(Var) :- _passed(compile2, _, variable_domain(Var, Expr)).
 1 { _se_value(Expr, Value) : _se_domain(Expr, Value) } 1 :-
 	_se_domain(Expr, _),
 	not _expression_is_value(Expr),
-	not _se_is_set(Expr).
+	not _se_is_set(Expr),
+	#false : Expr = variable(Var), _passed(compile2, _, variable_define(Var, _, Cond)), _se_value(Cond, val(bool, false)).
 
 _set_choice_value(Expr, set) :-
 	_se_is_set(Expr),
@@ -49,7 +51,8 @@ _set_choice_value(Expr, Value) :-
 	_set_choice_value(Expr, _).
 
 _se_value(variable(Var), val(none, none)) :-
-    _passed(compile2, _, variable_define(Var, Expr)),
+    _passed(compile2, _, variable_define(Var, Expr, Cond)),
+	_se_value(Cond, val(bool, true)),
 	_se_is_set(variable(Var)),
 	_se_value(Expr, val(none, none)).
 _se_value(variable(Var), set) :-
@@ -66,11 +69,17 @@ _se_value(variable(Var), val(none, none)) :-
 
 % bad
 _se_value(variable(Var), bad) :-
-    _passed(compile2, _, variable_define(Var, Expr)),
+    _passed(compile2, _, variable_define(Var, Expr, Cond)),
+	_se_value(Cond, bad),
+	_se_is_set(variable(Var)).
+_se_value(variable(Var), bad) :-
+    _passed(compile2, _, variable_define(Var, Expr, Cond)),
+	_se_value(Cond, val(bool, true)),
 	_se_is_set(variable(Var)),
 	_se_value(Expr, bad).
 _se_value(variable(Var), bad) :-
-    _passed(compile2, _, variable_define(Var, Expr)),
+    _passed(compile2, _, variable_define(Var, Expr, Cond)),
+	_se_value(Cond, val(bool, true)),
 	_se_is_set(variable(Var)),
 	not _se_is_set(Expr).
 _se_value(variable(Var), bad) :-
@@ -98,7 +107,8 @@ _se_value(variable(Var), bad) :-
 	_se_value(Expr, bad).
 
  _set_contains(variable(Var), Val):-
-    _passed(compile2, _, variable_define(Var, Expr)),
+	 _passed(compile2, _, variable_define(Var, Expr, Cond)),
+	 _se_value(Cond, val(bool, true)),
     _se_is_set(variable(Var)),
 	_set_contains(Expr, Val),
 	Val != bad.

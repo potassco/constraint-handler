@@ -6,7 +6,7 @@ evaluate/2. evaluate/3.
 variable_assign/2. variable_assign/3.
 variable_choice/2. variable_choice/3.
 variable_declare/2. variable_declare/3.
-variable_define/2. variable_define/3.
+variable_define/2. variable_define/3. variable_define/4.
 variable_domain/2. variable_domain/3.
 variable_default/2. variable_default/3. variable_default/4. variable_default/5.
 multimap_assign/3. multimap_assign/4.
@@ -35,7 +35,7 @@ _passed(defaultArgs,LBL,bool_evaluate/1).
 _passed(defaultArgs,LBL,ensure/1).
 _passed(defaultArgs,LBL,evaluate/2).
 _passed(defaultArgs,LBL,variable_declare/2).
-_passed(defaultArgs,LBL,variable_define/2).
+_passed(defaultArgs,LBL,variable_define/3).
 _passed(defaultArgs,LBL,variable_default/4).
 _passed(defaultArgs,LBL,variable_domain/2).
 _passed(defaultArgs,LBL,multimap_assign/3).

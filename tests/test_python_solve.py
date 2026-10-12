@@ -7,7 +7,7 @@ import constraint_handler.schemas.post as post
 import constraint_handler.schemas.solve as solve
 from constraint_handler.schemas.atom import Ensure, Variable_declare, Variable_define
 from constraint_handler.schemas.domain import Definition
-from constraint_handler.schemas.expression import Operation, Val, Variable
+from constraint_handler.schemas.expression import TRUE, Operation, Val, Variable
 from constraint_handler.schemas.operators import ArithmeticOperator, ComparisonOperator
 from constraint_handler.schemas.result import Value
 from constraint_handler.schemas.type_ import BaseType
@@ -21,18 +21,18 @@ def test_python_layer_handoffs():
         Variable_declare("x", Definition()),
         Variable_define("x", Val(BaseType.int, 5)),
         Variable_declare("y", Definition(), derived_label),
-        Variable_define("y", y_definition, derived_label),
+        Variable_define("y", y_definition, label=derived_label),
         Ensure(ensure_expression),
     ]
     anonymous_core_declarations = {
         core.Engine_request(clingo.Function("compile")),
         core.Variable_declare("x", Definition()),
-        core.Variable_define("x", Val(BaseType.int, 5)),
+        core.Variable_define("x", Val(BaseType.int, 5), TRUE),
         core.Ensure(ensure_expression),
     }
     derived_core_declarations = {
         core.Variable_declare("y", Definition()),
-        core.Variable_define("y", y_definition),
+        core.Variable_define("y", y_definition, TRUE),
     }
     expected_core_declarations = anonymous_core_declarations | derived_core_declarations
 
@@ -50,12 +50,12 @@ def test_python_layer_handoffs():
 
     anonymous_solve_declarations = {
         core.Variable_declare("x", Definition()),
-        core.Variable_define("x", Val(BaseType.int, 5)),
+        core.Variable_define("x", Val(BaseType.int, 5), TRUE),
         solve.Share_value(ensure_expression),
     }
     derived_solve_declarations = {
         core.Variable_declare("y", Definition()),
-        core.Variable_define("y", y_definition),
+        core.Variable_define("y", y_definition, TRUE),
     }
     expected_solve_declarations = anonymous_solve_declarations | derived_solve_declarations
     anonymous_post_declarations = {
