@@ -13,23 +13,23 @@ TBD
 
 ```python
 class VariableDefault:
-	value: Expr
-	condition: Expr
+	value: ExprId
+	condition: ExprId
 	priority: int
 	label: str
 
 
 class Variable:
 	variable_kind: VariableKind
-	domain: Optional[tuple[Expr, ...]]
-	definition: Optional[Expr]
+	domain: Optional[tuple[ExprId, ...]]
+	definition: Optional[ExprId]
 	defaults: list[VariableDefault]
     label: str # can we have several declarations/definitions?
 
 
 @dataclass(frozen=True)
 class Constraint:
-	expr: Expr
+	expr: ExprId
 	is_check: bool
 	label: str
 
@@ -38,6 +38,7 @@ class Constraint:
 class ConstraintStore:
 	variables: dict[VariableRef, Variable]
 	constraints: list[Constraint]
+	_expressions: dict[ExprId, Expr]
 ```
 
 ## TODO
