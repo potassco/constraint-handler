@@ -9,6 +9,23 @@ boolean-valued expressions.
 Domains can contain values, are just lower/upper bound approximations, or even
 potential values for sets (means domain is power set of the element domain)
 
+The input is a mapping from each variable to the set of expressions that could
+define it, `Def(x) = {e1,...,en}`. An expression depends on every defining
+expression of each variable it reads: add an edge `d -> e` for each input
+variable `x` of `e` and each `d in Def(x)`. Once all expressions in `Def(x)`
+have been processed, combine their results according to the variable-definition
+semantics to obtain `D(x)`.
+
+Order expressions with a non-recursive topological pass (Kahn's algorithm):
+build the dependency edges and each expression's indegree, enqueue all
+zero-indegree expressions, then repeatedly dequeue and process one expression
+and decrement the indegrees of its dependents, enqueuing any that reach zero.
+Deduplicate edges when computing indegrees. If the queue empties before every
+expression is processed, the dependency graph contains a cycle; the remaining
+expressions include any expressions blocked downstream of that cycle. Check
+that every input variable has at least one defining expression separately, so
+an undefined variable is not reported as a cycle.
+
 ## Expressions
 
 ### Value(v):
@@ -58,22 +75,22 @@ Here, `unknown(D(x))` tests whether the input domain is unknown; this is
 distinct from `None` being a value in a known domain. For any boolean-result
 operation, if `unknown(D(x))` holds for any input, return the full boolean
 domain `{true, false}`, adding `None` only when that operator's semantics can
-produce `None`. This fallback takes precedence over the operator-specific
-rules below.
+produce `None`. This fallback takes precedence over the operator-specific rules
+below.
 
 For numeric arithmetic, let `I(x)` be the integer part of `D(x)` and `F(x)` its
 float part. For operands `x1,...,xn`, let `N_int = product(|I(xi)|)` and
 `N_float = product(|I(xi)| + |F(xi)|) - N_int`. Thus `N_float` counts
 combinations containing at least one float. For operations where float inputs
-produce float results, compute those combinations exactly if `N_float <=
-Threshold`; otherwise return `unknown`. Compute all-integer combinations
-exactly only if `N_int + N_float <= Threshold`; otherwise use `int_range` only
-if the operation is guaranteed to return integers for those inputs. This keeps
-the total number of exactly evaluated combinations within `Threshold`.
-Operations that can produce floats from all-integer inputs must include those
-combinations in the thresholded exact computation or return `unknown`. Because
-`unknown` represents the whole domain, an unknown result for any partition
-makes the overall result unknown.
+produce float results, compute those combinations exactly if
+`N_float <= Threshold`; otherwise return `unknown`. Compute all-integer
+combinations exactly only if `N_int + N_float <= Threshold`; otherwise use
+`int_range` only if the operation is guaranteed to return integers for those
+inputs. This keeps the total number of exactly evaluated combinations within
+`Threshold`. Operations that can produce floats from all-integer inputs must
+include those combinations in the thresholded exact computation or return
+`unknown`. Because `unknown` represents the whole domain, an unknown result for
+any partition makes the overall result unknown.
 
 ### Operation(Eq, [x,y]):
 
