@@ -425,10 +425,11 @@ if product(|D(x)|,|D(y)|) <= Threshold
 else
     {true,false}
 ```
-# TO BE CONTINUED, EVERYTHING BELOW IS NOT YET CHECKED
+
 ### Operation(SetFold, [f,s,z]):
 ```
 fold f over S in D(s), starting with z in D(z)
+# complete domain computation
 ```
 
 ### Operation(Find, [k,m]):
@@ -443,9 +444,9 @@ fold f over S in D(s), starting with z in D(z)
 
 ### Operation(MultimapIsIn, [k,m]):
 ```
-{k in m | k in D(k), m in D(m)}
+{true, false}
 ```
-
+<!-- 
 ### Operation(MultimapMake, [args...]):
 ```
 multimaps formed from argument key/value pairs
@@ -484,14 +485,17 @@ sum of integer entries; bounds from entry-count and value bounds
 ### Operation(MinEntries, [m]):
 ```
 [min(D(values)),max(D(values))]; include None if empty is possible
-```
+``` -->
 
 ### Operation(PythonEval, [fn,args...]):
 ```
-apply to every input combination and collect results if N <= Threshold; else unknown
+if product(|D(args[0])|,|D(args[1])|, ..., |D(args[n])|) <= Threshold
+    {fn(args[0], args[1], ..., args[n]) | args[0] in D(args[0]), args[1] in D(args[1]), ..., args[n] in D(args[n])}
+else
+    unknown
 ```
 
 ### Operation(Lambda, [vars,body]):
 ```
-function from D(vars) to D(body)
+same as PythonEval I guess
 ```
