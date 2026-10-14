@@ -1,96 +1,255 @@
 ## Description
 
-Splitting breaks down nested expressions into simpler components. For example,
-start with the binary expression `(((a + b) + c) + d)`, where each variable has
-domain `{0, ..., 9}`. Evaluating it directly requires `10⁴ = 10000` input
-combinations. Fully splitting the expression by repeatedly applying the rule
-introduces auxiliary variables:
+Splitting introduces auxiliary variables for nested operations when doing so
+reduces the estimated grounding complexity of the enclosing expression. The
+estimate depends on the operation's encoding, not just on input combinations.
+
+For example, `concat(x, y)` enumerates pairs and costs `|D(x)| * |D(y)|`. An
+n-ary addition with more than two arguments can use an aggregate guarded by its
+result domain and costs `|D(add(...))|`. Set union uses membership rules and
+costs the sum of the numbers of potential members in its two input sets,
+without enumerating pairs of complete sets.
+
+After splitting, convert every remaining non-trivial expression into a lambda
+application. Trivial operations remain available for specialized encodings.
+
+## Definitions
+
+The input is the `ConstraintStore` from
+[InternalInput](../Inputs/InternalInput.md), with domains from
+[Domains](Domains.md) computed using [DomainComputation](DomainComputation.md).
+
+- `params(e)` is the ordered sequence of direct parameters. Repeated parameters
+  retain their separate positions.
+- `vars(e)` is the set of free variables occurring in `e`.
+- `D(e)` is the domain of possible complete values of `e`.
+- `P(s)` is the set of potential members of a set-valued expression:
+  `P(s) = union(S for S in D(s))`. For an implicit set domain, `D(s)` is the
+  power set of `P(s)`, including the empty set, so `|D(s)| = 2 ** |P(s)|`.
+
+An operation is **trivial** if its parameters contain no suboperation. Its
+parameters may be variables, scalar values, sets, or tuples. Collection
+contents must also contain no operation; a collection does not hide a nested
+operation. A literal value has a singleton domain. Variables and operation-free
+collections are leaves for splitting.
+
+Each trivial operation has an encoding-specific cost, listed at the end of this
+document. The complexity of any operation `e` is:
 
 ```text
-s1 = a + b
-s2 = s1 + c
-s3 = s2 + d
+complexity(e) = trivial_cost(e)                    if e is trivial
+complexity(e) = product(|D(v)| for v in vars(e))   otherwise
 ```
 
-The domains of `s1`, `s2`, and `s3` contain 19, 28, and 37 values,
-respectively. Grounding the three definitions takes
-`10*10 + 19*10 + 28*10 = 570` combinations: 100 for `s1`, 190 for `s2`, and 280
-for `s3`.
+For a non-trivial operation, count each distinct free variable once, even if it
+occurs in several parameters. This matches evaluation of the expression as a
+lambda, rather than assuming intermediate results have already been computed.
 
-## Algorithms
+These are grounding estimates, not solver runtime bounds. Aggregate costs count
+candidate result instances; aggregate elements still require grounding work. An
+opaque callable's runtime is not included. An unknown cardinality has cost
+infinity; do not enumerate an unknown domain to obtain its size. A product is
+zero if any factor is zero, even if another factor is unknown.
 
-Input: Domains from Domain.md
+## Algorithm
 
-ConstraintStore with variables, constraints and expressions from
-InternalInput.md
+Start with the top-level expressions of variable definitions and constraints.
+For each expression, test every subset of direct parameters containing
+operations. Parameters that are already leaves remain unchanged. Process newly
+introduced auxiliary definitions in the same way.
 
-The algorithm uses the domain computation from DomainComputation.md
+Let `trivial_cost(e)` be the encoding-specific cost from the tables below,
+computed from the existing domains as if all parameters were leaves. For a
+subset `selected`, let `remaining_vars(e, selected)` be the union of the free
+variables in the unselected parameters. A variable shared with a selected
+parameter remains in this union if an unselected parameter still uses it.
 
-Given a nested expression `e`: `expr(expr(a, b), expr(a,c))` and
+Replacing a parameter preserves its domain and potential members. Compute the
+cost without creating candidate variables or rewriting the store:
 
-- let `vars(e)` denote the set of variables occurring in `e`
-- let `params(e)` denote the set of direct parameters of `e` so in our examples
-  `vars(e)` = {a, b, c} `params(e)` = {expr(a, b), expr(a, c)}
-
+```text
+outer_cost(e, selected) = (
+  trivial_cost(e) if every parameter containing an operation is selected
+  else product(|D(v)| for v in remaining_vars(e, selected))
+     * product(|D(p)| for p in selected)
+)
+split_cost(e, selected) = outer_cost(e, selected) + sum(
+  complexity(p) for p in selected
+)
 ```
-if any(unknown(D(p)) for p in params(e)) or product(|D(v)| for v in vars(e)) > product(|D(p)| for p in params(e)):
-    for all non-trivial parameters p of `e`:
-        replace `p` new_var := p
-        update domain of new_var to be D(p)
+
+If the outer expression remains non-trivial, each selected parameter
+contributes one fresh auxiliary with domain `D(p)`. The unselected parameters
+contribute their distinct free variables. If every nested parameter is
+selected, use the specialized trivial-operation cost instead. The sum includes
+all new auxiliary definitions. The empty subset costs `complexity(e)`.
+
+```text
+worklist = top_level_expressions(store)
+
+while worklist is not empty:
+  e = worklist.pop()
+  if e is trivial:
+    continue
+
+  parameters = [p for p in params(e) if p contains an operation]
+  best_subset = empty_set
+  best_cost = complexity(e)
+
+  for selected in powerset(parameters):
+    cost = split_cost(e, selected)
+    if cost < best_cost:
+      best_subset = selected
+      best_cost = cost
+
+  for p in best_subset in parameter order:
+    auxiliary = fresh_variable_with_domain(D(p))
+    add_definition(auxiliary, p)
+    replace this parameter occurrence in e with auxiliary
+    worklist.push(definition_of(auxiliary))
 ```
 
-After processing `e`, recursively apply the same rule to each newly introduced
-auxiliary definition. Stop when a pass introduces no new auxiliaries.
+Evaluate all subsets against the same unchanged expression. Enumerate them
+deterministically, first by size and then by parameter order. Retain the first
+candidate on equal costs, preferring no replacement to an equally costly split.
+Only after the search, create and commit all replacements in the best subset.
+Preserve each parameter's value kind and domain, including set membership
+information. Repeated parameter occurrences remain separate candidates, each
+with its own auxiliary and definition cost.
 
-This splitting should be applied only to the top level expressions of variables
-and constraints.
+The comparison requires a strict reduction in the combined estimated cost of
+the outer expression and the new definitions. Equality does not justify a
+split, including `infinity > infinity`, which is false. Unknown domains do not
+separately force splitting. These are local estimates; subsequent splitting and
+lambda conversion may change the eventual cost.
 
-### Example: Recursive Application
+For `n` parameters containing operations, test `2 ** n` subsets. This is
+exhaustive for the direct parameters of one expression, not a global search
+over recursive splitting decisions. Given that the number of parameters is
+usually small, the exhaustive search over all subsets is typically feasible.
+Maybe we need a guard for very large numbers of parameters to avoid
+combinatorial explosion. I've seen disjunctions with 100 members, maybe then
+just testing all or nothing is more practical.
 
-Let `e = add(add(add(a, b), c), d)`, with
-`D(a) = D(b) = D(c) = D(d) = {0, ..., 9}`.
+### Examples
 
-1. `vars(e) = {a, b, c, d}`, so the left side is `10*10*10*10 = 10000`.
-1. `params(e) = {add(add(a, b), c), d}`. The first parameter has domain
-   `{0, ..., 27}` (28 values), and `d` has 10 values, so the right side is
-   `28*10 = 280`.
-1. Since `10000 > 280`, the rule applies. The only non-trivial direct parameter
-   is `add(add(a, b), c)`. Introduce `s = add(add(a, b), c)` with
-   `D(s) = {0, ..., 27}`.
-1. The rewritten expression is `add(s, d)`. This application does not split the
-   definition of `s`; evaluating it directly takes `10*10*10 = 1000`
-   combinations. The rewritten outer addition takes `28*10 = 280`, for a total
-   of `1280` combinations after this one application.
+Unless specified otherwise, each variable ranges over `{0, ..., 9}`. Costs
+include the auxiliary definitions. "First" and "second" refer to the nested
+direct parameter occurrences, in their original order. Bold marks the lowest
+cost in each row.
 
-Apply the rule again to the definition `s = add(add(a, b), c)`:
+| Case                       | Expression               | Nothing | First only | Second only | Both    |
+| -------------------------- | ------------------------ | ------- | ---------- | ----------- | ------- |
+| One replacement helps      | `add(add(a,b),c)`        | 1000    | **290**    | N/A         | N/A     |
+| All is best                | `sub(add(a,b),add(c,d))` | 10000   | 2000       | 2000        | **561** |
+| Only all helps             | `add(abs(a),abs(b),c)`   | 1000    | 1010       | 1010        | **48**  |
+| Only a proper subset helps | `sub(add(a,b),abs(c))`   | 40      | **34**     | 50          | 44      |
+| Shared variables           | `sub(add(a,b),add(a,b))` | **100** | 2000       | 2000        | 561     |
 
-1. Its variables are `{a, b, c}`, so the left side is `10*10*10 = 1000`.
-1. Its parameters are `{add(a, b), c}`, whose domain sizes are 19 and 10, so
-   the right side is `19*10 = 190`.
-1. Since `1000 > 190`, introduce `t = add(a, b)` with `D(t) = {0, ..., 18}`.
-   The definition of `s` becomes `s = add(t, c)`.
+For the proper-subset row only, `D(a) = D(b) = {0, 1}`; `c` still ranges over
+`{0, ..., 9}`. The cases illustrate:
 
-The resulting additions take `100` combinations for `t`, `190` for `s`, and
-`280` for `add(s, d)`, for a total of `570`.
+- **One replacement:** `add(a,b)` costs `10 * 10 = 100` and has 19 results. The
+  outer binary addition costs `19 * 10 = 190`, totaling 290 instead of
+  `10 * 10 * 10 = 1000`.
+- **All is best:** each inner addition costs 100 and has 19 results. Replacing
+  one costs `100 + 19 * 10 * 10 = 2000`; replacing both costs
+  `100 + 100 + 19 * 19 = 561`.
+- **Only all helps:** replacing one `abs` leaves the outer expression
+  non-trivial, costing `1000 + 10 = 1010`. Replacing both enables the n-ary sum
+  aggregate over the result domain `{0, ..., 27}`, costing `28 + 10 + 10 = 48`.
+- **Only a proper subset helps:** replacing `add(a,b)` costs `4 + 3 * 10 = 34`,
+  compared with `2 * 2 * 10 = 40` unsplit. Replacing only `abs(c)` costs
+  `10 + 2 * 2 * 10 = 50`; replacing both costs `4 + 10 + 3 * 10 = 44`.
+- **Shared variables:** count `a` and `b` once each in the unsplit expression,
+  giving `10 * 10 = 100`. Replacing one occurrence leaves both original
+  variables in the other, giving `100 + 19 * 10 * 10 = 2000`. Replacing both
+  costs `100 + 100 + 19 * 19 = 561`. This assumes separate auxiliaries per
+  occurrence, without algebraic simplification or shared-expression reuse.
 
-Finally, apply the rule to `t = add(a, b)`. Its variables and direct parameters
-are both `{a, b}`, so both products are `10*10 = 100`. Since `100 > 100` is
-false, no auxiliary is introduced and the recursion stops.
+### Final Step: Lambda Conversion
 
-### Example: Splitting Can Increase the Total
+After splitting, convert each non-trivial top-level expression in variable
+definitions and constraints, including auxiliary definitions, into a lambda
+application. Bind its distinct free variables in a deterministic order, retain
+the expression as the body, and pass the corresponding variables as arguments.
+Respect existing lambda scopes; do not capture their bound variables.
 
-Let `e = add(add(a, b), c)`, with `D(a) = D(b) = D(c) = {0, 1}`. The unsplit
-expression takes `2*2*2 = 8` combinations. The rule compares this with
-`3*2 = 6` combinations for the direct parameters and therefore introduces an
-auxiliary `s = add(a, b)`. Evaluating the definition of `s` takes `2*2 = 4`
-combinations, and evaluating `add(s, c)` takes `3*2 = 6`, for a total of 10.
+For example:
 
-Although splitting increases the total in this example, this tradeoff should be
-acceptable for most cases.
+```text
+sub(add(a, b), add(a, b))
 
-## TODO
+becomes
 
-- for n-ary sums, balanced grouping of terms may reduce the number of
-  combinations Example: (a+b) + (c+d) results in 100 + 100 + 19\*19 = 561
-  combinations, a little less than the 570 combinations for the left-heavy
-  grouping.
+lambda_(Lambda((u, v), sub(add(u, v), add(u, v))), a, b)
+```
+
+Here `u` and `v` are fresh bound variables. Constants and collection structure
+remain in the body. A closed expression uses a zero-argument lambda. Preserve
+the original result domain on the application.
+
+Treat the resulting application as an opaque call; do not split or wrap it
+again. Its body may remain nested. Its call cost is the product of the domains
+of its distinct actual arguments, matching the free-variable cost used for
+non-trivial expressions above.
+
+## Complexity of Trivial Operations
+
+The tables cover scalar, set, and call operators from
+[PythonInput](../Inputs/PythonInput.md). Costs refer to the proposed encoding
+strategy. Where no specialized encoding is specified, use complete-value
+enumeration as a conservative fallback.
+
+Notation:
+
+- `d(x) = |D(x)|`, for any input or result expression.
+- `C(args) = product(d(x) for x in args)`, excluding callable descriptors and
+  lambda bodies. The product over no arguments is 1.
+- `p(s) = |P(s)|`.
+
+### Scalar and Boolean Operations
+
+| Trivial operation                                                                                                        | Complexity                   | Encoding strategy                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `concat(x, y)`                                                                                                           | `d(x) * d(y)`                | Enumerate pairs of values.                                                                                           |
+| `length(x)` for a string or tuple                                                                                        | `d(x)`                       | One length per possible complete value.                                                                              |
+| `abs`, `sqrt`, `cos`, `sin`, `tan`, `acos`, `asin`, `atan`, `minus`, `floor`, `ceil`, `float_from_int`, `int_from_float` | `d(x)`                       | Unary value enumeration.                                                                                             |
+| `add(x1, ..., xn)`, `n > 2`                                                                                              | `d(e)`                       | Result-domain-guarded sum aggregate.                                                                                 |
+| `add(x, y)`, `sub`, `int_div`, `float_div`, `pow`                                                                        | `d(x) * d(y)`                | Binary value enumeration.                                                                                            |
+| `add(x1, ..., xn)`, `n < 2`                                                                                              | `C(args)`                    | Degenerate argument enumeration.                                                                                     |
+| `mult(x1, ..., xn)`                                                                                                      | `C(args)`                    | No product aggregate is assumed.                                                                                     |
+| `min(x1, ..., xn)`, `max(x1, ..., xn)`                                                                                   | `C(args)`                    | Conservative enumeration until a specialized aggregate encoding is specified.                                        |
+| `eq(x, y)`, `neq(x, y)`                                                                                                  | `2 * min(d(x), d(y))`        | Scan the smaller scalar domain, joining or negating membership in the other input; see the set specialization below. |
+| `leq`, `lt`, `geq`, `gt`                                                                                                 | `d(x) * d(y)`                | Binary value enumeration.                                                                                            |
+| `get_or_else(x, y)`, `if_(x, condition)`                                                                                 | `C(args)`                    | Enumerate value and fallback or condition combinations.                                                              |
+| `has_value(x)`                                                                                                           | `d(x)`                       | Test each possible value for `None`.                                                                                 |
+| `conj(x1, ..., xn)`, `disj(x1, ..., xn)`                                                                                 | `n + 1`                      | Linear estimate: independent argument checks plus fixed result rules; no input Cartesian product.                    |
+| `ite(condition, x, y)`                                                                                                   | `d(condition) * d(x) * d(y)` | Enumerate condition and branch values.                                                                               |
+| `leqv`, `limp`, `lxor`                                                                                                   | `d(x) * d(y)`                | Binary truth-table enumeration.                                                                                      |
+| `lnot`, `snot`, `wnot`                                                                                                   | `d(x)`                       | Unary truth-table enumeration.                                                                                       
+### Set Operations
+
+Membership encodings operate on potential members rather than enumerating
+`D(s)`. These estimates assume valid set inputs; nullable or invalid inputs
+also need scalar validity guards.
+
+| Trivial operation                   | Complexity                    | Encoding strategy                                                               |
+| ----------------------------------- | ----------------------------- | ------------------------------------------------------------------------------- |
+| `union(s1, s2)`                     | `p(s1) + p(s2)`               | One membership rule per input; shared members contribute to both rules.         |
+| `inter(s1, s2)`                     | `min(p(s1), p(s2))`          | Join membership on the same element, not pairs of distinct elements.            |
+| `diff(s1, s2)`                      | `p(s1)`                       | Check right-hand membership for each potential left-hand member.                |
+| `subset(s1, s2)`                    | `p(s1)`                       | Search for a left-hand member missing from the right-hand set.                  |
+| `eq(s1, s2)`, `neq(s1, s2)`         | `p(s1) + p(s2)`               | Compare membership in both directions.                                          |
+| `set_make(x1, ..., xn)`             | `sum(d(xi) for xi in args)`   | Derive membership independently from each argument.                             |
+| `set_isin(x, s)`, `set_notin(x, s)` | `d(x)`                        | Check each candidate `x`; never enumerate complete sets.                        |
+| `cardinality(s)`, `length(s)`       | `d(e) + p(s)`                 | Candidate count results and membership elements.                                |
+| `set_fold(f, s, z)`                 | `d(s) * d(z)`                 | Fallback: one fold per complete set and initial value; body work is additional. |
+
+
+### Call Operations
+
+| Trivial operation          | Complexity | Encoding strategy                              |
+| -------------------------- | ---------- | ---------------------------------------------- |
+| `python_eval(fn, args...)` | `C(args)`  | One opaque evaluation per argument tuple.      |
+| `lambda_(lambda, args...)` | `C(args)`  | One evaluation of the body per argument tuple. |
