@@ -227,25 +227,25 @@ Notation:
 | `conj(x1, ..., xn)`, `disj(x1, ..., xn)`                                                                                 | `n + 1`                      | Linear estimate: independent argument checks plus fixed result rules; no input Cartesian product.                    |
 | `ite(condition, x, y)`                                                                                                   | `d(condition) * d(x) * d(y)` | Enumerate condition and branch values.                                                                               |
 | `leqv`, `limp`, `lxor`                                                                                                   | `d(x) * d(y)`                | Binary truth-table enumeration.                                                                                      |
-| `lnot`, `snot`, `wnot`                                                                                                   | `d(x)`                       | Unary truth-table enumeration.                                                                                       
+| `lnot`, `snot`, `wnot`                                                                                                   | `d(x)`                       | Unary truth-table enumeration.                                                                                       |
+
 ### Set Operations
 
 Membership encodings operate on potential members rather than enumerating
 `D(s)`. These estimates assume valid set inputs; nullable or invalid inputs
 also need scalar validity guards.
 
-| Trivial operation                   | Complexity                    | Encoding strategy                                                               |
-| ----------------------------------- | ----------------------------- | ------------------------------------------------------------------------------- |
-| `union(s1, s2)`                     | `p(s1) + p(s2)`               | One membership rule per input; shared members contribute to both rules.         |
-| `inter(s1, s2)`                     | `min(p(s1), p(s2))`          | Join membership on the same element, not pairs of distinct elements.            |
-| `diff(s1, s2)`                      | `p(s1)`                       | Check right-hand membership for each potential left-hand member.                |
-| `subset(s1, s2)`                    | `p(s1)`                       | Search for a left-hand member missing from the right-hand set.                  |
-| `eq(s1, s2)`, `neq(s1, s2)`         | `p(s1) + p(s2)`               | Compare membership in both directions.                                          |
-| `set_make(x1, ..., xn)`             | `sum(d(xi) for xi in args)`   | Derive membership independently from each argument.                             |
-| `set_isin(x, s)`, `set_notin(x, s)` | `d(x)`                        | Check each candidate `x`; never enumerate complete sets.                        |
-| `cardinality(s)`, `length(s)`       | `d(e) + p(s)`                 | Candidate count results and membership elements.                                |
-| `set_fold(f, s, z)`                 | `d(s) * d(z)`                 | Fallback: one fold per complete set and initial value; body work is additional. |
-
+| Trivial operation                   | Complexity                  | Encoding strategy                                                               |
+| ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
+| `union(s1, s2)`                     | `p(s1) + p(s2)`             | One membership rule per input; shared members contribute to both rules.         |
+| `inter(s1, s2)`                     | `min(p(s1), p(s2))`         | Join membership on the same element, not pairs of distinct elements.            |
+| `diff(s1, s2)`                      | `p(s1)`                     | Check right-hand membership for each potential left-hand member.                |
+| `subset(s1, s2)`                    | `p(s1)`                     | Search for a left-hand member missing from the right-hand set.                  |
+| `eq(s1, s2)`, `neq(s1, s2)`         | `p(s1) + p(s2)`             | Compare membership in both directions.                                          |
+| `set_make(x1, ..., xn)`             | `sum(d(xi) for xi in args)` | Derive membership independently from each argument.                             |
+| `set_isin(x, s)`, `set_notin(x, s)` | `d(x)`                      | Check each candidate `x`; never enumerate complete sets.                        |
+| `cardinality(s)`, `length(s)`       | `d(e) + p(s)`               | Candidate count results and membership elements.                                |
+| `set_fold(f, s, z)`                 | `d(s) * d(z)`               | Fallback: one fold per complete set and initial value; body work is additional. |
 
 ### Call Operations
 
