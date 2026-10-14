@@ -34,7 +34,6 @@ class VariableDefault:
 
 
 class Variable:
-	variable_kind: VariableKind
 	domain: Optional[tuple[ExprId, ...]]
 	definition: Optional[ExprId]
 	defaults: list[VariableDefault]
