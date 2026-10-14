@@ -7,6 +7,8 @@ statements. A possible internal storage representation is described in
 [InternalInput](InternalInput.md).
 
 ```python
+from python_input import Operation, Operator, VariableRef
+
 store = ConstraintStore()
 store.variable_declare(
     VariableRef("x"),
@@ -69,6 +71,8 @@ class ConstraintStore:
     def check(self, expr: Expr, label: str = LABEL_ANONYMOUS): ...
 
 # Examples
+from python_input import Operation, Operator, VariableRef
+
 store.variable_declare(VariableRef("x"), VariableKind.regular, (1, 2), "input")
 store.variable_define(VariableRef("x"), 2, "input")
 store.variable_default(
@@ -85,30 +89,33 @@ store.variable_default(
 ### Expressions
 
 ```python
-# Expr is the recursive type of expressions
+# These expression types belong to the python_input namespace.
 #
 Expr = VariableRef | Value | Set | Tuple | MultiDict | Operation
 
-# A value can be any constant value such as a boolean, float, integer, string, None, set, list or multi-map
+# Scalar values use Python base types at the user-facing boundary.
 #
 Value = bool | float | int | str | None
+
+# Collections are expression forms, not scalar values.
+#
 Set = frozenset[Expr]
 Tuple = tuple[Expr, ...]
 MultiDict = dict[Expr, frozenset[Expr]]
 
-# An Operation stores an operator and its argument expressions.
+# Operation stores an operator and its argument expressions.
 # For example, x + 2 is represented by Operation(Operator.add, (VariableRef("x"), 2)).
 #
 OperationArg = Expr | Lambda | Python
 Operation(op: Operator, args: tuple[OperationArg, ...])
 # Example: Operation(Operator.add, (VariableRef("x"), 2)).
 
-# A Lambda stores parameter names and an expression body.
+# Lambda stores parameter names and an expression body.
 #
 Lambda(vars: tuple[VariableRef, ...], expr: Expr)
 # Example: Lambda((VariableRef("x"),), Operation(Operator.add, (VariableRef("x"), 2))).
 
-# A Python stores a Python expression that the evaluator executes.
+# Python stores a Python expression that the evaluator executes.
 #
 Python(fn: str)
 # Example: Python("math.sqrt(x)") evaluates a Python expression using x.

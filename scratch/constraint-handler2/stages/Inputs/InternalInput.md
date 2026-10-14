@@ -12,6 +12,20 @@ TBD
 ## Python Datastructure
 
 ```python
+enum ValueType {
+	boolean,
+	integer,
+	floating_point,
+	string,
+	none,
+}
+
+# Internal scalar literals retain their type explicitly.
+# The value is the corresponding Python base-type value.
+#
+ValueDef(value_type: ValueType, value: Any)
+
+
 class VariableDefault:
 	value: ExprId
 	condition: ExprId
@@ -39,6 +53,39 @@ class ConstraintStore:
 	variables: dict[VariableRef, Variable]
 	constraints: list[Constraint]
 	_expressions: dict[ExprId, Expr]
+
+
+# Expr is the internal recursive expression type. Its forms use the same
+# simple names as the Python-facing types, in a distinct namespace.
+#
+Expr = ValueDef | VariableRef | Set | Tuple | MultiDict | Operation
+Set = frozenset[Expr]
+Tuple = tuple[Expr, ...]
+MultiDict = dict[Expr, frozenset[Expr]]
+OperationArg = Expr | Lambda | Python
+
+
+@dataclass(frozen=True)
+class Operation:
+	op: Operator
+	args: tuple[OperationArg, ...]
+
+
+Lambda(vars: tuple[VariableRef, ...], expr: Expr)
+Python(fn: str)
+```
+
+## Usage
+
+Stages that consume this representation can import its types explicitly:
+
+```python
+from internal_input import Operation, Operator, ValueDef, ValueType
+
+sum_expr = Operation(
+	Operator.add,
+	(ValueDef(ValueType.integer, 1), ValueDef(ValueType.integer, 2)),
+)
 ```
 
 ## TODO

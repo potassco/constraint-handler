@@ -8,6 +8,9 @@ A simple layer that takes a string of python input and converts into either
 ## Python Datastructure
 
 ```python
+from python_input import Expr
+
+
 def to_expression(input_string: str) -> Expr:
     # Convert a string of Python input into an expression
     ...
