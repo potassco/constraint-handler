@@ -29,12 +29,14 @@ ValueDef(value_type: ValueType, value: Any)
 @dataclass(frozen=True)
 class VariableChoice:
 	value: ExprId
+	condition: ExprId
 	label: str
 
 
 @dataclass(frozen=True)
 class VariableDefinition:
 	value: ExprId
+	condition: ExprId
 	label: str
 
 

@@ -45,15 +45,16 @@ from collections.abc import Iterable
 
 class ConstraintStore:
     # variable_choice adds candidate expressions to the variable's choices.
-    # The iterable is consumed once; each element receives the supplied label.
-    # Repeated calls extend one list of elements, retaining duplicates and labels.
+    # The iterable is consumed once; each element receives the supplied condition and label.
+    # Repeated calls extend one list of elements, retaining duplicates, conditions, and labels.
     #
-    def variable_choice(self, name: VariableRef, choices: Iterable[Expr] = (), label: str = LABEL_ANONYMOUS): ...
+    def variable_choice(self, name: VariableRef, choices: Iterable[Expr] = (), condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
 
     # variable_define appends a labeled defining expression to a variable.
-    # Repeated calls retain all definitions and their labels.
+    # The definition is active only when condition holds.
+    # Repeated calls retain all definitions, conditions, and labels.
     #
-    def variable_define(self, name: VariableRef, value: Expr, label: str = LABEL_ANONYMOUS): ...
+    def variable_define(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
 
     # variable_default defines a conditional default value with a priority.
     #
@@ -67,8 +68,8 @@ class ConstraintStore:
 # Examples
 from python_input import Operation, Operator, VariableRef
 
-store.variable_choice(VariableRef("x"), (1, 2), "input")
-store.variable_define(VariableRef("x"), 2, "input")
+store.variable_choice(VariableRef("x"), (1, 2), label="input")
+store.variable_define(VariableRef("x"), 2, label="input")
 store.variable_default(
     VariableRef("x"),
     0,

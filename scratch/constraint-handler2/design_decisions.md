@@ -1,5 +1,6 @@
 - no cycles between variables
 - no non-monotonic operators
+- variable definitions and choices get an extra condition
 - only facts as input
 - None as a datatype
 - ssa (single static assignment conversion) outside of constraint handler
