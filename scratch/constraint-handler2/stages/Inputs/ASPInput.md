@@ -103,4 +103,5 @@ to Python `str` values.
 ## TODO
 
 - Confirm the final signatures and semantics for set and multimap statements.
+- Consider further language constructs like multiple check and ensure (former does not require proof latter does).
 - Decide whether `default_mode` may be specified more than once per variable or expressions.
