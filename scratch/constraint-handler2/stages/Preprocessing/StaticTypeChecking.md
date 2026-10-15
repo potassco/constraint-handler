@@ -29,7 +29,7 @@ union(T_1, ..., T_n) = UnknownType()  if any T_i == UnknownType()
 `UnknownType()` absorbs every union it appears in. The information is not
 recovered by later unions.
 
-### Variables: Definition, Domain Declaration, and Defaults
+### Variables: Definitions, Choices, and Defaults
 
 For each variable `v`, collect types from all three sources:
 
@@ -38,16 +38,21 @@ v is a Variable:
 given:
 
 ```python
-domain_type = union(type(e) for e in v.domain) if v.domain is not None else frozenset()
-definition_type = type(v.definition) if v.definition is not None else frozenset()
-defaults_type = union(type(d.value) for d in v.defaults) if v.defaults is not None else frozenset()
+choices_type = (
+	union(type(choice.value) for choice in v.choices)
+	if v.choices is not None
+	else frozenset()
+)
+definition_type = union(type(definition.value) for definition in v.definitions)
+defaults_type = union(type(default.value) for default in v.defaults)
 ```
 
-%%% Abdallah: please recheck, not sure if domain get overridden by definition
-or defaults and how they are combined
+An empty union is `frozenset()`. Entries are retained independently; labels
+identify their source and do not affect the type union. How these sources
+combine when solving remains a separate variable-semantics decision.
 
 ```
-type(v) = domain_type union definition_type union defaults_type
+type(v) = choices_type union definition_type union defaults_type
 ```
 
 ## Operator Type Table

@@ -26,6 +26,19 @@ enum ValueType {
 ValueDef(value_type: ValueType, value: Any)
 
 
+@dataclass(frozen=True)
+class VariableChoice:
+	value: ExprId
+	label: str
+
+
+@dataclass(frozen=True)
+class VariableDefinition:
+	value: ExprId
+	label: str
+
+
+@dataclass(frozen=True)
 class VariableDefault:
 	value: ExprId
 	condition: ExprId
@@ -34,10 +47,9 @@ class VariableDefault:
 
 
 class Variable:
-	domain: Optional[tuple[ExprId, ...]]
-	definition: Optional[ExprId]
+	choices: list[VariableChoice]
+	definitions: list[VariableDefinition]
 	defaults: list[VariableDefault]
-    label: str # can we have several declarations/definitions?
 
 
 @dataclass(frozen=True)

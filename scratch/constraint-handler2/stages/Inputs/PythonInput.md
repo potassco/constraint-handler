@@ -10,9 +10,8 @@ statements. A possible internal storage representation is described in
 from python_input import Operation, Operator, VariableRef
 
 store = ConstraintStore()
-store.variable_declare(
+store.variable_choice(
     VariableRef("x"),
-    VariableKind.regular,
     (1, 2)
 )
 store.variable_define(
@@ -32,14 +31,6 @@ store.ensure(Operation(Operator.eq, (VariableRef("x"), 2)))
 ### Variables
 
 ```python
-# VariableKind identifies a variable's value shape.
-#
-enum VariableKind {
-    regular,
-    set,
-    multi_set
-}
-
 # A VariableRef stores the name of a variable used by an expression.
 # For example, x in x + 2 is represented by VariableRef(x).
 #
@@ -50,14 +41,17 @@ VariableRef(name: str)
 ### ConstraintStore Methods
 
 ```python
+from collections.abc import Iterable
 
 class ConstraintStore:
-    # variable_declare declares a variable, its kind, and its candidate domain.
-    # A domain of None means the variable is open; otherwise its expressions are candidate values.
+    # variable_choice adds candidate expressions to the variable's choices.
+    # The iterable is consumed once; each element receives the supplied label.
+    # Repeated calls extend one list of elements, retaining duplicates and labels.
     #
-    def variable_declare(self, name: VariableRef, kind: VariableKind, domain: tuple[Expr, ...] | None, label: str = LABEL_ANONYMOUS): ...
+    def variable_choice(self, name: VariableRef, choices: Iterable[Expr] = (), label: str = LABEL_ANONYMOUS): ...
 
-    # variable_define defines a variable's value with an expression.
+    # variable_define appends a labeled defining expression to a variable.
+    # Repeated calls retain all definitions and their labels.
     #
     def variable_define(self, name: VariableRef, value: Expr, label: str = LABEL_ANONYMOUS): ...
 
@@ -73,7 +67,7 @@ class ConstraintStore:
 # Examples
 from python_input import Operation, Operator, VariableRef
 
-store.variable_declare(VariableRef("x"), VariableKind.regular, (1, 2), "input")
+store.variable_choice(VariableRef("x"), (1, 2), "input")
 store.variable_define(VariableRef("x"), 2, "input")
 store.variable_default(
     VariableRef("x"),
