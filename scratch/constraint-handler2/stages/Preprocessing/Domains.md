@@ -37,7 +37,3 @@ represents the top domain. sets can't be nested.
 A boolean domain uses `bools` for its possible boolean values and `has_none` to
 indicate whether `None` is also possible. The full boolean domain is
 `bools={false, true}`; a nullable boolean domain also sets `has_none=true`.
-
-## TODO
-
-Multimap representation

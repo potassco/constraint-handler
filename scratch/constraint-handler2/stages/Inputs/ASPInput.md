@@ -1,9 +1,9 @@
 ## Information
 
-This file describes the ASP fact format. These facts declare values,
-offer candidate values, provide defaults, and state constraints. They are
-intended to be heads of ASP rules; ordinary rule bodies can condition when a
-statement applies.
+This file describes the ASP fact format. These facts declare values, offer
+candidate values, provide defaults, and state constraints. They are intended to
+be heads of ASP rules; ordinary rule bodies can condition when a statement
+applies.
 
 ## ASP Format
 
@@ -27,20 +27,20 @@ Operator terms can be nested to form larger expressions.
 
 The statement predicates are:
 
-| Form | Meaning |
-| --- | --- |
-| `singleton_assign(name,expression)` and `set_assign(name,expression)` | Assign an expression as the value of a singleton or as a set element. |
-| `multimap_assign(name,key,expression)` | Assigns an expression for a key in the named multimap. |
-| `singleton_choice(name,expression)` and `set_choice(name,expression)` | Offer an expression as a possible singleton value or set element. |
-| `multimap_choice(name,key,expression)` | Offers an expression as a possible value for a multimap key. |
+| Form                                                                                                                                                                               | Meaning                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `singleton_assign(name,expression)` and `set_assign(name,expression)`                                                                                                              | Assign an expression as the value of a singleton or as a set element.                     |
+| `multimap_assign(name,key,expression)`                                                                                                                                             | Assigns an expression for a key in the named multimap.                                    |
+| `singleton_choice(name,expression)` and `set_choice(name,expression)`                                                                                                              | Offer an expression as a possible singleton value or set element.                         |
+| `multimap_choice(name,key,expression)`                                                                                                                                             | Offers an expression as a possible value for a multimap key.                              |
 | `singleton_default(name,expression[,condition[,priority]])`, `set_default(name,expression[,condition[,priority]])`, `multimap_default(name,key,expression[,condition[,priority]])` | Provide a fallback expression, optionally guarded by a condition and ordered by priority. |
-| `ensure(expression)` | Requires the expression to evaluate to `val(bool,true)`. |
-| `default_mode(mode)` | Selects `basic`, `assign`, or `depends` default handling. The default mode is `assign`. |
+| `ensure(expression)`                                                                                                                                                               | Requires the expression to evaluate to `val(bool,true)`.                                  |
+| `default_mode(mode)`                                                                                                                                                               | Selects `basic`, `assign`, or `depends` default handling. The default mode is `assign`.   |
 
 The set forms have no key argument; multimap forms include a key. Assignment,
-choice, default, and `ensure` statements occur in rule heads. For example, a rule body
-can make a choice conditional, while a choice rule can make that justification
-optional:
+choice, default, and `ensure` statements occur in rule heads. For example, a
+rule body can make a choice conditional, while a choice rule can make that
+justification optional:
 
 ```prolog
 singleton_choice(x,val(int,4)) :- a.
@@ -94,14 +94,16 @@ symbol = myClorm.pytocl(statement)
 # singleton_assign(x,add(val(int,2),val(int,2)))
 ```
 
-Define a corresponding record for each predicate or expression constructor
-used by an input program. The full expression type must include every operator
-and expression form used by that program. Names such as `x`, types such as
-`int`, and operators such as `eq` are Clingo symbols; quoted ASP strings map
-to Python `str` values.
+Define a corresponding record for each predicate or expression constructor used
+by an input program. The full expression type must include every operator and
+expression form used by that program. Names such as `x`, types such as `int`,
+and operators such as `eq` are Clingo symbols; quoted ASP strings map to Python
+`str` values.
 
 ## TODO
 
 - Confirm the final signatures and semantics for set and multimap statements.
-- Consider further language constructs like multiple check and ensure (former does not require proof latter does).
-- Decide whether `default_mode` may be specified more than once per variable or expressions.
+- Consider further language constructs like multiple check and ensure (former
+  does not require proof latter does).
+- Decide whether `default_mode` may be specified more than once per variable or
+  expressions.

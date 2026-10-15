@@ -79,7 +79,7 @@ store.variable_default(
     VariableRef("x"),
     0,
     Operation(Operator.eq, (VariableRef("x"), 1)),
-    "1",
+    1,
     "defaults",
 )
 
@@ -91,7 +91,7 @@ store.variable_default(
 ```python
 # These expression types belong to the python_input namespace.
 #
-Expr = VariableRef | Value | Set | Tuple | MultiDict | Operation
+Expr = VariableRef | Value | Set | Tuple | Operation
 
 # Scalar values use Python base types at the user-facing boundary.
 #
@@ -101,7 +101,6 @@ Value = bool | float | int | str | None
 #
 Set = frozenset[Expr]
 Tuple = tuple[Expr, ...]
-MultiDict = dict[Expr, frozenset[Expr]]
 
 # Operation stores an operator and its argument expressions.
 # For example, x + 2 is represented by Operation(Operator.add, (VariableRef("x"), 2)).
@@ -185,19 +184,6 @@ enum Operator {
     diff,
     subset,
     set_fold,
-
-    # Multimap construction and queries
-    find,
-    find2,
-    multimap_isin,
-    multimap_make,
-    multimap_fold,
-    multimap_fold_i,
-    count_keys,
-    count_entries,
-    sum_int_entries,
-    max_entries,
-    min_entries,
 
     # call operations
     python_eval,

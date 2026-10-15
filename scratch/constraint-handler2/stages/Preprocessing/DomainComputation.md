@@ -52,10 +52,6 @@ D(x)
 {(v1,...,vn) | vi in D(ei)}
 ```
 
-### MultiDict(entries):
-
-multimaps formed from entry key/value domains
-
 ### Lambda(vars,body):
 
 --- actually not sure how this works with the vars
@@ -72,11 +68,7 @@ else
 ## Operators
 
 Here, `unknown(D(x))` tests whether the input domain is unknown; this is
-distinct from `None` being a value in a known domain. For any boolean-result
-operation, if `unknown(D(x))` holds for any input, return the full boolean
-domain `{true, false}`, adding `None` only when that operator's semantics can
-produce `None`. This fallback takes precedence over the operator-specific rules
-below.
+distinct from `None` being a value in a known domain.
 
 For numeric arithmetic, let `I(x)` be the integer part of `D(x)` and `F(x)` its
 float part. For operands `x1,...,xn`, let `N_int = product(|I(xi)|)` and
@@ -717,73 +709,6 @@ If any input domain is unknown, the domain is unknown.
 fold f over S in D(s), starting with z in D(z)
 # complete domain computation
 ```
-
-### Operation(Find, [k,m]):
-
-If any input domain is unknown, the domain is unknown.
-
-```
-{m[k] if k in m else {} | k in D(k), m in D(m)}
-```
-
-### Operation(Find2, [k,v,m]):
-
-```
-if unknown(D(k)) or unknown(D(v)) or unknown(D(m))
-    {true, false}
-else
-    {k in m and v in m[k] | k in D(k), v in D(v), m in D(m)}
-```
-
-### Operation(MultimapIsIn, [k,m]):
-
-```
-if unknown(D(k)) or unknown(D(m))
-    {true, false}
-else
-    {true, false}
-```
-
-<!--
-### Operation(MultimapMake, [args...]):
-```
-multimaps formed from argument key/value pairs
-```
-
-### Operation(MultimapFold, [f,m,z]):
-```
-fold f over entries of m in D(m), starting with z in D(z)
-```
-
-### Operation(MultimapFoldI, [f,m,z]):
-```
-as multimap_fold, passing each key to f
-```
-
-### Operation(CountKeys, [m]):
-```
-[min_key_count(D(m)),max_key_count(D(m))]
-```
-
-### Operation(CountEntries, [m]):
-```
-[min_entry_count(D(m)),max_entry_count(D(m))]
-```
-
-### Operation(SumIntEntries, [m]):
-```
-sum of integer entries; bounds from entry-count and value bounds
-```
-
-### Operation(MaxEntries, [m]):
-```
-[min(D(values)),max(D(values))]; include None if empty is possible
-```
-
-### Operation(MinEntries, [m]):
-```
-[min(D(values)),max(D(values))]; include None if empty is possible
-``` -->
 
 ### Operation(PythonEval, [fn,args...]):
 

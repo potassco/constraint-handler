@@ -57,10 +57,9 @@ class ConstraintStore:
 # Expr is the internal recursive expression type. Its forms use the same
 # simple names as the Python-facing types, in a distinct namespace.
 #
-Expr = ValueDef | VariableRef | Set | Tuple | MultiDict | Operation
+Expr = ValueDef | VariableRef | Set | Tuple | Operation
 Set = frozenset[Expr]
 Tuple = tuple[Expr, ...]
-MultiDict = dict[Expr, frozenset[Expr]]
 OperationArg = Expr | Lambda | Python
 
 
