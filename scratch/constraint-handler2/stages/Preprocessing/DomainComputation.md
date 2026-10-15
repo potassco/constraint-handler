@@ -90,7 +90,7 @@ any partition makes the overall result unknown.
 if (unknown(D(x)) or unknown(D(y))) or product(|D(x)|,|D(y)|) > BooleanThreshold
     {true, false}
 else
-    {false if a is None and b is None else a == b | a in D(x), b in D(y)}
+    {a == b | a in D(x), b in D(y)}
 ```
 
 ### Operation(Neq, [x,y]):
@@ -99,7 +99,7 @@ else
 if (unknown(D(x)) or unknown(D(y))) or product(|D(x)|,|D(y)|) > BooleanThreshold
     {true, false}
 else
-    {false if a is None and b is None else a != b | a in D(x), b in D(y)}
+    {a != b | a in D(x), b in D(y)}
 ```
 
 ### Operation(Concat, [x,y]):
