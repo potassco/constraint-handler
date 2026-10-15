@@ -52,18 +52,10 @@ D(x)
 {(v1,...,vn) | vi in D(ei)}
 ```
 
-### Lambda(vars,body):
+### Lambda(vars,body) and Python(fn):
 
---- actually not sure how this works with the vars
-
-### Python(fn):
-
-```
-if product(|D(xi)|) <= Threshold
-    apply fn to every (v1,...,vn) in product(D(xi)) and collect results
-else
-    unknown
-```
+Undefined. Neither is a value, so neither has a domain. `Lambda` is consumed by
+`Operation(LambdaCall, ...)` and `Python` by `Operation(PythonEval, ...)`.
 
 ## Operators
 
@@ -711,10 +703,29 @@ else
     unknown
 ```
 
-### Operation(Lambda, [vars,body]):
+### Operation(LambdaCall, [L,a1,...,an]):
 
-If any input domain is unknown, the domain is unknown.
+`L` is `Lambda((x1,...,xn), body)` and the operator is `lambda_`. The arity must
+match: `n` arguments for `n` parameters. The body is not a graph node; it is
+evaluated once per binding, so the only dependencies are the argument
+expressions. The body must be closed over its parameters, which the final step
+of [Splitting](Splitting.md) guarantees. A zero-argument call evaluates the body
+once. The enumeration cost matches the call cost `C(args)` in Splitting.
 
 ```
-same as PythonEval I guess
+if unknown(D(a1)) or ... or unknown(D(an)) or product(|D(a1)|,...,|D(an)|) > Threshold
+    unknown
+else
+    R = {}
+    for (v1,...,vn) in D(a1) x ... x D(an)
+        b = body(v1,...,vn)
+        if unknown(b)
+            unknown
+        R = R union b
+    R
 ```
+
+`body(v1,...,vn)` is the domain of the body with each parameter bound to its
+value. If any body evaluation is unknown, the result is unknown.
+
+An empty argument domain makes the product zero, so the result is `{}`.

@@ -55,6 +55,56 @@ combine when solving remains a separate variable-semantics decision.
 type(v) = choices_type union definition_type union defaults_type
 ```
 
+### Lambda and Python Operands
+
+`Lambda(vars, body)` and `Python(fn)` are not expressions. They have no type and
+no entry in [StaticTypes](StaticTypes.md). They appear only as the callable
+operand of a call operation, with pseudo-types `lambda` and `callable`.
+
+### Call Operation `lambda_`
+
+```
+type(lambda_(Lambda((x_1,...,x_n), body), a_1,...,a_n))
+    = union of type(body | x_i : {t_i}) for (t_1,...,t_n) in type(a_1) x ... x type(a_n)
+```
+
+`type(body | x_i : {t_i})` is the type of `body` under the rules in this
+document, with each `VariableRef(x_i)` typed `{t_i}`. Parameters shadow outer
+variables of the same name, so they are looked up in the lambda's environment,
+not in `StaticTypes.variables`.
+
+Binding one member type at a time keeps the result exact. With
+`x : {integer, floating_point}`, `add(x, 1)` gives
+`{integer, floating_point}`, while binding the whole union would give only
+`floating_point`. The number of combinations is `product(|type(a_i)|)`. An
+`UnknownType()` argument gives `UnknownType()`. An empty argument type gives an
+empty result, matching the empty-domain rule. The type does not depend on the
+domain, so it is available even when the domain is unknown.
+
+Algorithm:
+
+```
+function type_lambda_call(Lambda((x_1,...,x_n), body), a_1,...,a_n):
+    if len(args) != n
+        error: arity mismatch
+    T_i = type(a_i) for i in 1..n
+    if some T_i == UnknownType()
+        return UnknownType()
+    R = {}
+    for (t_1,...,t_n) in T_1 x ... x T_n
+        env = {x_i -> {t_i} | i in 1..n}
+        B = type_in_env(body, env)
+        if B == UnknownType()
+            return UnknownType()
+        R = R union B
+    return R
+```
+
+`type_in_env(e, env)` applies the rules of this document to `e`, where
+`VariableRef(x)` looks up `env` first and falls back to `StaticTypes.variables`.
+An empty `T_i` makes the product empty, so `R = {}`. For zero arguments the
+product holds one empty tuple, so the body is typed once.
+
 ## Operator Type Table
 
 | Operator(s)                                                                             | Input type contract                                                                      | Result type                                                                                                  |
@@ -90,7 +140,7 @@ type(v) = choices_type union definition_type union defaults_type
 | `subset(A,B)`                                                                           | `type(A) == type(B) == set`                                                              | `boolean`                                                                                                    |
 | `set_fold(callback,S,initial)`                                                          | `type(callback)=callable, type(S) == set, type(initial)=any`                             | `UnknownType()`                                                                                              |
 | `python_eval(fn,args)`                                                                  | `type(fn)=callable, args=any`                                                            | `UnknownType()`                                                                                              |
-| `lambda_(L,args)`                                                                       | `type(L)=lambda, args match parameters of `L\`                                           | body type under argument bindings                                                                            |
+| `lambda_(L,args)`                                                                       | `type(L)=lambda`, `len(args)` equals the arity of `L`                                    | `UnknownType()` if any `type(a_i)` is unknown; else union over `(t_1,...,t_n)` in `type(a_1) x ... x type(a_n)` of `type_in_env(body, {x_i -> {t_i}})`; see Call Operation `lambda_` |
 
 # TODO:
 
