@@ -511,10 +511,16 @@ else
 
 ```
 if unknown(D(x1)) or ... or unknown(D(xn))
-    {true, false, None}
+    {true, false}
+else if D(x1) = {} or ... or D(xn) = {}
+    {}
+else if false in D(x1) or ... or false in D(xn)
+    {true, false}
 else
-    ???
+    {true}
 ```
+
+All-`true` inputs always give `true`, since zero `false` arguments is an even count.
 
 ### Operation(Limp, [x,y]):
 
