@@ -90,7 +90,7 @@ any partition makes the overall result unknown.
 if (unknown(D(x)) or unknown(D(y))) or product(|D(x)|,|D(y)|) > BooleanThreshold
     {true, false}
 else
-    {a == b | a in D(x), b in D(y)}
+    {false if a is None and b is None else a == b | a in D(x), b in D(y)}
 ```
 
 ### Operation(Neq, [x,y]):
@@ -99,7 +99,7 @@ else
 if (unknown(D(x)) or unknown(D(y))) or product(|D(x)|,|D(y)|) > BooleanThreshold
     {true, false}
 else
-    {a != b | a in D(x), b in D(y)}
+    {false if a is None and b is None else a != b | a in D(x), b in D(y)}
 ```
 
 ### Operation(Concat, [x,y]):
@@ -479,7 +479,7 @@ else
 
 ```
 if unknown(D(x1)) or ... or unknown(D(xn))
-    {true, false, None}
+    {true, false}
 else if D(x1) = {} or ... or D(xn) = {}
     {}
 else
@@ -488,9 +488,6 @@ else
         R = R union {false}
     if true in D(x1) and ... and true in D(xn)
         R = R union {true}
-    if None in any D(xi)
-        and for every i, (true in D(xi) or None in D(xi))
-        R = R union {None}
     R
 ```
 
@@ -498,7 +495,7 @@ else
 
 ```
 if unknown(D(x1)) or ... or unknown(D(xn))
-    {true, false, None}
+    {true, false}
 else if D(x1) = {} or ... or D(xn) = {}
     {}
 else
@@ -507,9 +504,6 @@ else
         R = R union {true}
     if false in D(x1) and ... and false in D(xn)
         R = R union {false}
-    if None in any D(xi)
-        and for every i, (false in D(xi) or None in D(xi))
-        R = R union {None}
     R
 ```
 
@@ -526,7 +520,7 @@ else
 
 ```
 if unknown(D(x)) or unknown(D(y))
-    {true, false, None}
+    {true, false}
 else
     {limp(a,b) | a in D(x), b in D(y)}
 ```
@@ -534,28 +528,23 @@ else
 where `limp(a, b)` is defined by this table:
 
 ```
-a \\ b | false | true  | None
--------|-------|-------|------
-false  | true  | true  | true
-true   | false | true  | None
-None   | None  | true  | None
+a \\ b | false | true
+-------|-------|-----
+false  | true  | true
+true   | false | true
 ```
-
-In particular, a false `a` makes the result true regardless of `b`.
 
 ### Operation(Lnot, [x]):
 
 ```
 if unknown(D(x))
-    {true, false, None}
+    {true, false}
 else
     R = {}
     if true in D(x)
         R = R union {false}
     if false in D(x)
         R = R union {true}
-    if None in D(x)
-        R = R union {None}
     R
 ```
 
@@ -563,26 +552,21 @@ else
 
 ```
 if unknown(D(x1)) or ... or unknown(D(xn))
-    {true, false, None}
+    {true, false}
 else if product(|D(x1)|,...,|D(xn)|) <= BooleanThreshold
     {xor(v1,...,vn) | vi in D(xi)}
 else
-    R = {true, false}
-    if None in any D(xi)
-        R = R union {None}
-    R
+    {true, false}
 ```
 
 For two operands, `xor(a, b)` is defined by this table. For more operands,
-apply binary xor across the operands; if any operand is `None`, the result is
-`None`.
+apply binary xor across the boolean operands.
 
 ```
-a \\ b | false | true  | None
--------|-------|-------|------
-false  | false | true  | None
-true   | true  | false | None
-None   | None  | None  | None
+a \\ b | false | true
+-------|-------|------
+false  | false | true
+true   | true  | false
 ```
 
 ### Operation(Snot, [x]):
