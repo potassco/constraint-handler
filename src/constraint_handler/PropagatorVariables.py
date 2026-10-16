@@ -479,10 +479,10 @@ class VariableValue:
         return hash((str(self.expr), self.literal))
 
     def __str__(self) -> str:
-        return f"VariableValue({self.expr}, {self.value})"
+        return f"VariableValue({self.expr}, {self.value}, {self.literal})"
 
     def __repr__(self) -> str:
-        return f"VariableValue({self.expr}, {self.value})"
+        return f"VariableValue({self.expr}, {self.value}, {self.literal})"
 
 
 class VariableValueRegistry:
