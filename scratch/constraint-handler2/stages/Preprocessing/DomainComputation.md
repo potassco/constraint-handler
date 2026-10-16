@@ -512,7 +512,8 @@ else
     {true}
 ```
 
-All-`true` inputs always give `true`, since zero `false` arguments is an even count.
+All-`true` inputs always give `true`, since zero `false` arguments is an even
+count.
 
 ### Operation(Limp, [x,y]):
 
@@ -705,12 +706,12 @@ else
 
 ### Operation(LambdaCall, [L,a1,...,an]):
 
-`L` is `Lambda((x1,...,xn), body)` and the operator is `lambda_`. The arity must
-match: `n` arguments for `n` parameters. The body is not a graph node; it is
-evaluated once per binding, so the only dependencies are the argument
+`L` is `Lambda((x1,...,xn), body)` and the operator is `lambda_`. The arity
+must match: `n` arguments for `n` parameters. The body is not a graph node; it
+is evaluated once per binding, so the only dependencies are the argument
 expressions. The body must be closed over its parameters, which the final step
-of [Splitting](Splitting.md) guarantees. A zero-argument call evaluates the body
-once. The enumeration cost matches the call cost `C(args)` in Splitting.
+of [Splitting](Splitting.md) guarantees. A zero-argument call evaluates the
+body once. The enumeration cost matches the call cost `C(args)` in Splitting.
 
 ```
 if unknown(D(a1)) or ... or unknown(D(an)) or product(|D(a1)|,...,|D(an)|) > Threshold

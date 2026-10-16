@@ -5,4 +5,5 @@
 - None as a datatype
 - ssa (single static assignment conversion) outside of constraint handler
 - clingo 6
-- two different kind of constraints, check and ensure with different semantics if expression is undefined
+- two different kind of constraints, check and ensure with different semantics
+  if expression is undefined
