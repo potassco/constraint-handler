@@ -10,8 +10,10 @@ _fch_input(variable_declare(LABEL, NAME, DOMAIN)) :- variable_declare(NAME, DOMA
 
 #defined variable_define/2.
 #defined variable_define/3.
-_fch_input(variable_define(_fch_label, NAME, EXPR)) :- variable_define(NAME, EXPR).
-_fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_define(NAME, EXPR, LABEL).
+#defined variable_define/4.
+_fch_input(variable_define(_fch_label, NAME, EXPR, val(bool, true))) :- variable_define(NAME, EXPR).
+_fch_input(variable_define(_fch_label, NAME, EXPR, COND)) :- variable_define(NAME, EXPR, COND).
+_fch_input(variable_define(LABEL, NAME, EXPR, COND)) :- variable_define(NAME, EXPR, COND, LABEL).
 
 #defined variable_domain/2.
 #defined variable_domain/3.
@@ -27,8 +29,8 @@ _fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_choice(NAME, EXPR, LA
 % variable_assign forces a value, exactly like variable_define.
 #defined variable_assign/2.
 #defined variable_assign/3.
-_fch_input(variable_define(_fch_label, NAME, EXPR)) :- variable_assign(NAME, EXPR).
-_fch_input(variable_define(LABEL, NAME, EXPR)) :- variable_assign(NAME, EXPR, LABEL).
+_fch_input(variable_define(_fch_label, NAME, EXPR, val(bool, true))) :- variable_assign(NAME, EXPR).
+_fch_input(variable_define(LABEL, NAME, EXPR, val(bool, true))) :- variable_assign(NAME, EXPR, LABEL).
 
 #defined variable_default/2.
 #defined variable_default/3.

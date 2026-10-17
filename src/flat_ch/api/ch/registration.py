@@ -117,10 +117,15 @@ class Registration(BaseRegistration):
             self.reg.update_var(var_sym, (self.parse_expression(args[2]),))
 
     def _handle_define(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 3:
+        if len(args) == 4:
             var_sym = self._lower_variable_symbol(args[1])
             self.reg.sequential_inputs.append(
-                IVariableDefine(var_sym, self.parse_expression(args[2]), self.reg.current_registration_id)
+                IVariableDefine(
+                    var_sym,
+                    self.parse_expression(args[2]),
+                    self.parse_expression(args[3]),
+                    registration_id=self.reg.current_registration_id,
+                )
             )
 
     def _handle_variable_default(self, args: tuple[clingo.Symbol, ...]):

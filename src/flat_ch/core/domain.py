@@ -70,7 +70,7 @@ class FlatFact(str, Enum):
 _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.VARIABLE_DECLARE: ("NAME",),
     FlatFact.VARIABLE_DOMAIN: ("NAME", "EXPR_ID"),
-    FlatFact.VARIABLE_DEFINE: ("NAME", "EXPR_ID"),
+    FlatFact.VARIABLE_DEFINE: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.EXPRESSION_VALUE: ("ID", "TYPE_ID", "VALUE"),
     FlatFact.EXPRESSION_VARIABLE: ("ID", "NAME"),
     FlatFact.ENSURE: ("NAME", "EXPR_ID"),
@@ -184,6 +184,7 @@ class IVariableDeclare:
 class IVariableDefine:
     name: str | Symbol
     expression: Expression
+    condition: Expression = IValue(Type.BOOL, True)
     registration_id: int | None = None
     kind: ProgramInputKind = ProgramInputKind.VARIABLE_DEFINE
 

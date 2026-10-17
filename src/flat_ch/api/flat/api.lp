@@ -30,7 +30,7 @@ _fch_ssa(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT)) :-
 % INPUT
 % =============================================================================
 
-%*! variable_define(Name, Expression)
+%*! variable_define(Name, Expression, Condition)
 
 Defines a variable by associating it with a specific expression that can be evaluated to yield its value.
 
@@ -38,9 +38,12 @@ Args:
  - Name: The unique identifier for the variable being defined.
  - Expression: The expression that computes the variable's value, which can include operations,
     references to other variables, or literal values.
+ - Condition: A boolean expression that determines whether the definition applies.
 *%
 #defined variable_define/2.
-_fch_input(variable_define(NAME, EXPR))  :- variable_define(NAME, EXPR).
+#defined variable_define/3.
+_fch_input(variable_define(NAME, EXPR, val(bool, true))) :- variable_define(NAME, EXPR).
+_fch_input(variable_define(NAME, EXPR, COND)) :- variable_define(NAME, EXPR, COND).
 
 %*! variable_declare(Name)
 Declares a dynamic variable.
