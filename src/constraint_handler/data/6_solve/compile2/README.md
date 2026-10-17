@@ -11,7 +11,7 @@ _passed(compile2, LBL, variable_domain(Var, Expr)) % all possible expressions
 _passed(compile2, LBL, variable_declare(Var, set)). % variable is declared as a set
 
 _passed(compile2, LBL, variable_declare(Var, definition)). % not used, define is enough
-_passed(compile2, LBL, variable_define(Var, Expr))  % Expr is assign to Var
+_passed(compile2, LBL, variable_define(Var, Expr, Cond))  % Expr is assigned to Var when Cond is true
 
 _passed(compile2, LBL, set_assign(Var, Expr)) % Expr is assigned to Var, but Var is a set
 

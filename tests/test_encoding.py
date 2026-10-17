@@ -684,6 +684,7 @@ choice_statistics_skip: set[str] = {
     "core/bool_evaluate/basic",
     "core/bool_evaluate/forbidden",
     "core/boolean_shortcut_optional_presence",
+    "core/conditional_definitions",
     "core/empty_set_execution",
     "core/evaluate_dynamic",
     "core/optional_set_empty_execution",
@@ -737,8 +738,7 @@ choice_statistics_skip: set[str] = {
     "optimization/optional_absent_linked_value",
     "set/conditional_assign",
     "python/dynamic",
-    "warning/forbid_labeled_match",
-    "warning/python_extract/statement_error",
+    "type/bool/has_value",
     "unit/bad/bad_eq",
     "unit/bad/bad_float_div",
     "unit/bad/bad_geq",
@@ -801,6 +801,8 @@ choice_statistics_skip: set[str] = {
     "unit/unary/boolean_wnot",
     "unit/unary/float_minus",
     "unit/unary/set_length",
+    "warning/forbid_labeled_match",
+    "warning/python_extract/statement_error",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",

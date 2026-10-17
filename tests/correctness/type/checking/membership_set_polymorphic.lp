@@ -16,7 +16,7 @@ set_baseDomain(v(set),val(string,"x")).
 
 check_types(int;float;string;bool).
 
-variable_define(check(OP,set), EXPR) :-
+variable_define(check(OP,T), EXPR) :-
     EXPR = operation(OP,(variable(v(T)),(variable(v(set)),()))),
     check_types(T),
     OP = (set_isin;set_notin).

@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - disable and remove multipleDefinitions warning.
 - - update `variable_define` to take an optional condition argument.
     `variable_define(VAR,E,COND,LBL)` defines `VAR` only when `COND` evaluates
     to true. The former labelled `variable_define(VAR,E,LBL)` form is now

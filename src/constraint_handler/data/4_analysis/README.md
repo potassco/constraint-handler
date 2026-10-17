@@ -68,7 +68,6 @@ _variable_declareRequired/3.
 _variable_hasDomain/2.
 _variable_multiple/2.
 _variable_multipleDeclarations/3.
-_variable_multipleDefinitions/3.
 _variable_name/2.
 _variable_query/2.
 _variable_safe/1.

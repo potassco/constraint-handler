@@ -1,8 +1,8 @@
 variable_define(ok,val(bool,false)).
 
-variable_define(a,val(bool,true),val(bool,true),d_a1).
-variable_define(a,operation(lnot,(val(bool,false),())),val(bool,true),d_a2).
-variable_define(b,val(bool,true),val(bool,true),d_b1).
-variable_define(b,operation(lnot,(val(bool,false),())),val(bool,true),d_b2).
+variable_declare(a,set,d_a1).
+variable_declare(a,boolDomain,d_a2).
+variable_declare(b,set,d_b1).
+variable_declare(b,boolDomain,d_b2).
 
-warning_ignore(variable(multipleDefinitions),d_a1).
+warning_ignore(variable(multipleDeclarations),d_a1).

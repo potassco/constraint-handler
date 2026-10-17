@@ -17,6 +17,10 @@ _set_value_choice_blocked(variable(Var)) :-
 
 _se_value(Expr, Expr) :- _expression_is_value(Expr).
 
+_variable_has_active_definition(Var) :-
+	_passed(compile2, _, variable_define(Var, _, Cond)),
+	_se_value(Cond, val(bool, true)).
+
 :- not _se_value(variable(Var), Value),
 	_passed(compile2, _, variable_define(Var, Expr, Cond)),
 	_se_value(Cond, val(bool, true)),
@@ -35,7 +39,7 @@ var_has_domain(Var) :- _passed(compile2, _, variable_domain(Var, Expr)).
 	_se_domain(Expr, _),
 	not _expression_is_value(Expr),
 	not _se_is_set(Expr),
-	#false : Expr = variable(Var), _passed(compile2, _, variable_define(Var, _, Cond)), _se_value(Cond, val(bool, false)).
+	#false : Expr = variable(Var), _passed(compile2, _, variable_define(Var, _, _)), not _variable_has_active_definition(Var).
 
 _set_choice_value(Expr, set) :-
 	_se_is_set(Expr),

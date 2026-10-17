@@ -1,10 +1,10 @@
 phase_request(type_check,true).
 
-variable_define(v_none_bool(1;2),fromFacts).
+variable_declare(v_none_bool(1;2),fromFacts).
 variable_domain(v_none_bool(1;2),val(none,none)).
 variable_domain(v_none_bool(1;2),val(bool,true)).
 
-variable_define(v_optional_int(1;2),fromFacts).
+variable_declare(v_optional_int(1;2),fromFacts).
 variable_domain(v_optional_int(1;2),val(none,none)).
 variable_domain(v_optional_int(1;2),val(int,5)).
 

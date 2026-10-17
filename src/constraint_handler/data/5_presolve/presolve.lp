@@ -13,7 +13,7 @@ _variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=multi
 
 _solve_conflictVariable(X) :- _variable(sugar,X),
   1 < #count { LBL0,DECL : _passed(presolve,LBL0,DECL),
-               DECL=(variable_define(X,E,C);variable_declare(X,(fromFacts;open;set;multimap))) }.
+               DECL=variable_declare(X,(fromFacts;open;set;multimap)) }.
 
 ch_core(DECL,LBL) :- _passed(presolve,LBL,DECL), #false : _variable_involve(presolve,LBL,X,DECL), _solve_conflictVariable(X).
 
