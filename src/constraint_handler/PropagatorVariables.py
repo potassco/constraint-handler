@@ -17,7 +17,6 @@ from constraint_handler.PropagatorConstants import (
     propagator_warning_t,
 )
 from constraint_handler.schemas import expression, warning
-from constraint_handler.utils.bookkeeping import Count
 
 
 def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warning.Warning | None:
@@ -353,7 +352,6 @@ class VariableValue:
 
         self.errors: propagator_warning_t = []
 
-    @Count("VariableValue.evaluate")
     def evaluate(self, evaluations: Evaluations, ctl: clingo.PropagateControl, env: dict[Any, Any]) -> bool:
         """
         Evaluate the expression
@@ -793,7 +791,6 @@ class EnsureVariable:
         """
         return
 
-    @Count("EnsureVariable.evaluate")
     def evaluate(
         self,
         evaluations: Evaluations,
