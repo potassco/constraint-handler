@@ -1293,8 +1293,8 @@ class Variable:
                 changed |= value.evaluate(evaluations, ctl, env)
         else:
             for lit in expr_lits:
-                if lit < 0:
-                    continue
+                # if lit < 0:   # TODO: these lines were commented out by copilot
+                #     continue  #       double-check it's a correct change
 
                 if lit in self.lit2expr:
                     changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
