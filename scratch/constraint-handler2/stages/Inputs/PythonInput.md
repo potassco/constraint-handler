@@ -10,11 +10,11 @@ statements. A possible internal storage representation is described in
 from python_input import Operation, Operator, VariableRef
 
 store = ConstraintStore()
-store.variable_choice(
+store.choose_from_iterator(
     VariableRef("x"),
     (1, 2)
 )
-store.variable_define(
+store.define(
     VariableRef("y"),
     Operation(
         Operator.add,
@@ -44,21 +44,42 @@ VariableRef(name: str)
 from collections.abc import Iterable
 
 class ConstraintStore:
-    # variable_choice adds candidate expressions to the variable's choices.
-    # The iterable is consumed once; each element receives the supplied condition and label.
+    # choose adds a single candidate expression to the variable's choices.
+    #
+    def choose(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
+
+    # choose_from_iterator adds candidate expressions from an iterable to the variable's choices.
+    # Syntactic sugar and equivalent to repeated calls to choose with each element.
     # Repeated calls extend one list of elements, retaining duplicates, conditions, and labels.
     #
-    def variable_choice(self, name: VariableRef, choices: Iterable[Expr] = (), condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
+    def choose_from_iterator(self, name: VariableRef, choices: Iterable[Expr] = (), condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
 
-    # variable_define appends a labeled defining expression to a variable.
+    # define appends a labeled defining expression to a variable.
     # The definition is active only when condition holds.
     # Repeated calls retain all definitions, conditions, and labels.
     #
-    def variable_define(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
+    def define(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
 
-    # variable_default defines a conditional default value with a priority.
+    # default_to defines a conditional default value with a priority.
     #
-    def variable_default(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, priority: int = 0, label: str = LABEL_ANONYMOUS): ...
+    def default_to(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, priority: int = 0, label: str = LABEL_ANONYMOUS): ...
+
+    # set_contain requires set variable name to contain value when condition holds.
+    #
+    def set_contain(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
+
+    # set_contain_default_to defines a conditional default element for a set variable with a priority.
+    #
+    def set_contain_default_to(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, priority: int = 0, label: str = LABEL_ANONYMOUS): ...
+
+    # set_contain_choose lets set variable name choose whether to contain value.
+    #
+    def set_contain_choose(self, name: VariableRef, value: Expr, condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
+
+    # set_contain_choose_from_iterator adds candidate elements from an iterable to the set variable.
+    # Syntactic sugar and equivalent to repeated calls to set_contain_choose with each element.
+    #
+    def set_contain_choose_from_iterator(self, name: VariableRef, choices: Iterable[Expr] = (), condition: Expr = expression.TRUE, label: str = LABEL_ANONYMOUS): ...
 
     # actual constraints
     # check(x/0 > 9). holds and ensure(x/0 > 9) does not hold
@@ -68,15 +89,26 @@ class ConstraintStore:
 # Examples
 from python_input import Operation, Operator, VariableRef
 
-store.variable_choice(VariableRef("x"), (1, 2), label="input")
-store.variable_define(VariableRef("x"), 2, label="input")
-store.variable_default(
+store.choose(VariableRef("a"), 42, label="input")
+store.choose_from_iterator(VariableRef("x"), (1, 2), label="input")
+store.define(VariableRef("x"), 2, label="input")
+store.default_to(
     VariableRef("x"),
     0,
     Operation(Operator.eq, (VariableRef("x"), 1)),
     1,
     "defaults",
 )
+store.set_contain(VariableRef("s"), 42)
+store.set_contain_default_to(
+    VariableRef("s"),
+    42,
+    Operation(Operator.eq, (VariableRef("x"), 1)),
+    1,
+    "defaults",
+)
+store.set_contain_choose(VariableRef("s"), 42)
+store.set_contain_choose_from_iterator(VariableRef("s"), (1, 2))
 
 
 ```

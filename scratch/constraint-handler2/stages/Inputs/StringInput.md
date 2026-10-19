@@ -17,10 +17,10 @@ def to_expression(input_string: str) -> Expr:
 
 # instead of
 #store = ConstraintStore()
-#store.variable_choice(VariableRef("x"), (1, 2))
-#store.variable_choice(VariableRef("result"), None)#
+#store.choose_from_iterator(VariableRef("x"), (1, 2))
+#store.choose(VariableRef("result"), None)#
 # you could write
-#store.variable_define(VariableRef("result"), to_expression("x + 1"))
+#store.define(VariableRef("result"), to_expression("x + 1"))
 ```
 
 ## TODO
