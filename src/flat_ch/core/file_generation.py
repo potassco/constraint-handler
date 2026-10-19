@@ -14,6 +14,7 @@ _REGISTRATION_GUARDED_FLAT_FACTS: tuple[FlatFact, ...] = (
     FlatFact.VARIABLE_DEFINE,
     FlatFact.VARIABLE_DEFAULT,
     FlatFact.ENSURE,
+    FlatFact.CHECK,
     FlatFact.EVALUATE,
     FlatFact.BOOL_EVALUATE,
 )

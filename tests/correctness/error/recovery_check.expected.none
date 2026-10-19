@@ -1,0 +1,2 @@
+value(ints,val(int,3))
+value(div_maybe_bad,val(int,2))

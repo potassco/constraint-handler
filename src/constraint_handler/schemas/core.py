@@ -85,6 +85,10 @@ class Ensure(NamedTuple):
     expr: expression.Expr
 
 
+class Check(NamedTuple):
+    expr: expression.Expr
+
+
 class Evaluate(NamedTuple):
     expr: expression.Expr
 
@@ -93,7 +97,7 @@ class Engine_request(NamedTuple):
     engine: expression.constant
 
 
-type Atom = Bool_evaluate | Engine_request | Ensure | Evaluate | Multimap_assign | Optimize_component | PreferenceAtom | Set_assign | Set_baseDomain | Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain
+type Atom = Bool_evaluate | Check | Engine_request | Ensure | Evaluate | Multimap_assign | Optimize_component | PreferenceAtom | Set_assign | Set_baseDomain | Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain
 
 
 class Ch_core(NamedTuple):

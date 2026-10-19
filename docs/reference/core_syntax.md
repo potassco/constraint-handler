@@ -389,13 +389,14 @@ In this case, one or more elements of the argument list will be entire `operatio
     operation(add, (variable(a), (operation(add, (variable(b), (variable(c),()))),())))
     ```
 
-## Ensure
+## Check and Ensure
 
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-Ensures allow users to specify conditions that must hold true in the model. For this, the constraint handler provides the `ensure/1` predicate.
+Checks and ensures allow users to specify conditions in the model. An `ensure/1` condition must hold; a `check/1` condition only rejects a result that evaluates to `false`.
 
 ```prolog
+check(Condition).
 ensure(Condition).
 ```
 
@@ -406,39 +407,39 @@ ensure(Condition).
 ### Condition
 Conditions can be any expression with a [Bool] result. If the condition evaluates to false, the model is considered invalid.
 
-!!! info "Strict Evaluation"
-    The constraint handler is strict. The condition must explicitly evaluate to `true`. If a condition cannot be evaluated (e.g., because it references a variable that was never assigned), the constraint is considered violated.
+!!! info "Evaluation"
+    An `ensure/1` condition must explicitly evaluate to `true`; a `bad` or unevaluated result violates it. A `check/1` condition only rejects an explicit `false` result and permits `bad` and unevaluated results.
 
 If a variable itself is of type [Bool], it can be used directly as a condition.
 
 !!! Example
-    Ensure that a variable `x` is true:
+    Check that a variable `x` is true:
     ```prolog
-    ensure(variable(x)).
+    check(variable(x)).
     ```
 
 Conditions can also be more complex expressions, such as comparisons or operations that yield a boolean result.
 
 !!! Example
-    Ensure the variable `x` has a greater value than the variable `y`.
+    Check that variable `x` has a greater value than variable `y`.
     ```prolog
-    ensure(operation(gt, (variable(x),(variable(y),())))).
+    check(operation(gt,(variable(x),(variable(y),())))).
     ```
 
-Because **all** ensures must hold true for the model to be valid, they can be used to enforce multiple conditions at the same time. It is recommended to use this feature to break down complex constraints into smaller, more manageable parts.
+Because every `ensure/1` must evaluate to `true` and every `check/1` must not evaluate to `false`, multiple declarations can enforce separate conditions in the same model. This is often clearer than combining conditions into a single expression.
 
 !!! Example
-    To ensure that variable `x` is greater than `y` and that variable `z` is true, one could write:
+    To check that variable `x` is greater than `y` and that variable `z` is true, one could write:
 
     ```prolog
-    ensure(operation(conj, (operation(gt, (variable(x),(variable(y),()))),(variable(z),())))).
+    check(operation(conj,(operation(gt,(variable(x),(variable(y),()))),(variable(z),())))).
     ```
 
-    While this works, it gets harder to read the more conditions are added. A better approach is to use multiple `ensure/1` atoms:
+    While this works, it gets harder to read the more conditions are added. A better approach is to use multiple `check/1` atoms:
 
     ```prolog
-    ensure(operation(gt, (variable(x),(variable(y),())))).
-    ensure(variable(z)).
+    check(operation(gt,(variable(x),(variable(y),())))).
+    check(variable(z)).
     ```
 
     This way, each condition is clearly separated and easier to understand and debug.

@@ -1,6 +1,7 @@
 ### Input predicates
 
 _passed(defaultArgs,LBL,bool_evaluate/1).
+_passed(defaultArgs,LBL,check/1).
 _passed(defaultArgs,LBL,ensure/1).
 _passed(defaultArgs,LBL,evaluate/2).
 _passed(defaultArgs,LBL,variable_assign/2).
@@ -28,6 +29,7 @@ _variable_execution_outputVar/1.
 ### Output predicates
 
 _passed(sugar,LBL,bool_evaluate/1).
+_passed(sugar,LBL,check/1).
 _passed(sugar,LBL,ensure/1).
 _passed(sugar,LBL,evaluate/1).
 _passed(sugar,LBL,share_value(E)).

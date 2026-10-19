@@ -28,11 +28,12 @@ cs__defined(X) :- cs__defined_multimap(X).
 % Expressions
 %
 
-% Expressions are defined in assignments and ensures
+% Expressions are defined in assignments, checks, and ensures
 cs__expression(E) :- assign(_,X,E).
 cs__expression(E) :- set_assign(_,X,E).
 cs__expression(E) :- multimap_assign(_,X,E,_).
 cs__expression(E) :- multimap_assign(_,X,_,E).
+cs__expression(E) :- check(_,E).
 cs__expression(E) :- ensure(_,E).
 
 % Expressions can be lists of sub-expressions

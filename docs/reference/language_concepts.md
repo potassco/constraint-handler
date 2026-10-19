@@ -150,7 +150,8 @@ A list of declarations used to define problems.
 
 | Declaration | Description |
 |-|-|
-| [ensure] | Declares a constraint that must hold in all valid solutions. |
+| [check] | Declares a constraint that rejects explicit `false` results. |
+| [ensure] | Declares a constraint that must explicitly evaluate to `true`. |
 | [evaluate] | Experimental and not documented. |
 | **Variable** | |
 | [domain] | Defines a domain of possible values for variables. |

@@ -79,7 +79,7 @@ We say that $\vec{v}$ is \emph{consistent} if the following conditions hold.
 \item for every atom $\texttt{variable_declare($y$,boolDomain)} \in \modelPart{\vec{v}}$, $y$ is mapped to a boolean value, that is $\vec{v}(y) \in \mathbb{B}$;
 \item for every atom $\texttt{variable_declare($y$,fromFacts)} \in \modelPart{\vec{v}}$, there exists an expression $e$ such that $\texttt{variable_domain($y$,$e$)} \in \modelPart{\vec{v}}$ and $\vec{v}\entails\redto{e}{\vec{v}(y)}$;
 \item for every atom $\texttt{execution_declare($p$,$s$,$i$,$o$)} \in \modelPart{\vec{v}}$ such that $\texttt{execution_run($p$)} \in \modelPart{\vec{v}}$, the valuations $\vec{i} = \{ x \mapsto \vec{v}(\texttt{execution_input($s$,$x$)}) \suchthat x \in i \}$ and $\vec{o} = \{ x \mapsto \vec{v}(\texttt{execution_output($s$,$x$)}) \suchthat x \in o \}$ satisfy $\vec{i}\entails\redto{s}{\vec{o}}$; and
-\item for every atom $\texttt{ensure($e$)} \in \modelPart{\vec{v}}$, we have $\vec{v}\entails\redto{e}{\True}$.
+\item for every atom $\texttt{ensure($e$)} \in \modelPart{\vec{v}}$, we have $\vec{v}\entails\redto{e}{\True}$; and for every atom $\texttt{check($e$)} \in \modelPart{\vec{v}}$, $e$ does not reduce to $\False$.
 \end{itemize}
 
 Let $P$ be an answer set program, $\vec{v}$ be a valuation, and $\modelPart{\vec{v}}$ its model part.

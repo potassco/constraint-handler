@@ -170,6 +170,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "warning_ignore" "(" <term> "," <term> ")"
 
 <atom> ::=
+    | "check" "(" <expression> ")"
+    | "check" "(" <expression> "," <label> ")"
     | "ensure" "(" <expression> ")"
     | "ensure" "(" <expression> "," <label> ")"
     | "bool_evaluate" "(" <expression> ")"
