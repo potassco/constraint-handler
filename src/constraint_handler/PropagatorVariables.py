@@ -23,7 +23,9 @@ def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warni
 
     if not (
         variable.get_value() == expression.Bad.bad  # ty:ignore[unresolved-attribute]
-        or (isinstance(variable.get_value(), frozenset) and expression.Bad.bad in variable.get_value())  # ty:ignore[unresolved-attribute]
+        or (
+            isinstance(variable.get_value(), frozenset) and expression.Bad.bad in variable.get_value()
+        )  # ty:ignore[unresolved-attribute]
         or (
             isinstance(variable.get_value(), dict)
             and (
@@ -133,10 +135,7 @@ class VariableType(Protocol):
     @abstractmethod
     def evaluate(
         self,
-        evaluations: Evaluations,
         ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
-        expr_lits: set[int] | None = None,
     ) -> EvaluationResult: ...
 
     @abstractmethod
@@ -825,10 +824,7 @@ class EnsureVariable:
 
     def evaluate(
         self,
-        evaluations: Evaluations,
         ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
-        expr_lits: set[int] | None = None,
     ) -> EvaluationResult:
         """
         Evaluate the expression and return a tuple (changed, conflict).
@@ -836,10 +832,7 @@ class EnsureVariable:
         conflict is True if there is a conflict.
 
         Args:
-            evaluations: Current variable evaluations.
             ctl: Clingo propagate control.
-            env: Environment dictionary for evaluation context.
-            expr_lits: Set of literals associated with the expression, if any.
 
         Returns:
             EvaluationResult: Result of the evaluation, indicating whether the value changed or if there was a conflict.
@@ -1079,19 +1072,13 @@ class BoolEvaluateVariable:
 
     def evaluate(
         self,
-        evaluations: Evaluations,
         ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
-        expr_lits: set[int] | None = None,
     ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
 
         Args:
-            evaluations: Current variable evaluations.
             ctl: PropagateControl
-            env: Environment for evaluation.
-            expr_lits: Set of literals associated with the expression, if any.
 
         Returns:
             EvaluationResult: Result of the evaluation, indicating whether the value changed or if an inference should be made.
@@ -1425,18 +1412,12 @@ class Variable:
 
     def evaluate(
         self,
-        evaluations: Evaluations,
         ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
-        expr_lits: set[int] | None = None,
     ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
         Args:
-            evaluations: Current evaluations of expressions.
             ctl: PropagateControl object for interacting with the solver.
-            env: Environment dictionary for evaluation context.
-            expr_lits: Optional set of expression literals to evaluate.
 
         Returns:
             EvaluationResult: Result of the evaluation.
@@ -1716,31 +1697,6 @@ class SetVariableValue:
         for arg in self.expressions:
             vars.update(arg.vars())
         return vars
-
-    def evaluate(
-        self,
-        evaluations: Evaluations,
-        ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
-        expr_lits: set[int] | None = None,
-    ) -> bool:
-        """
-        Evaluate the expression and return True if the value has changed.
-
-        Args:
-            evaluations: Current evaluations of variables.
-            ctl: Clingo propagate control object.
-            env: Environment dictionary for evaluation context.
-            expr_lits: Optional set of literals associated with the expression.
-
-        Returns:
-            bool: True if the value of the expression has changed, False otherwise.
-        """
-        changed = False
-        for arg in self.expressions:
-            changed |= arg.evaluate(evaluations, ctl, env)
-
-        return changed
 
     def reset(self, dl: int) -> None:
         """
@@ -2051,19 +2007,13 @@ class SetVariable:
 
     def evaluate(
         self,
-        evaluations: Evaluations,
         ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
-        expr_lits: set[int] | None = None,
     ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
 
         Args:
-            evaluations: Current evaluations of variables.
             ctl: Clingo propagate control object.
-            env: Environment dictionary for evaluation context.
-            expr_lits: Optional set of literals associated with the expression.
 
         Returns:
             EvaluationResult: The result of the evaluation, indicating whether the value changed, remained the same, or if there was a conflict.
@@ -2489,20 +2439,14 @@ class DictVariable:
 
     def evaluate(
         self,
-        evaluations: Evaluations,
         ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
-        expr_lits: set[int] | None = None,
     ) -> EvaluationResult:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
 
         Args:
-            evaluations: Current evaluations of variables.
             ctl: Clingo propagate control object.
-            env: Environment dictionary for evaluation context.
-            expr_lits: Optional set of literals associated with the expression.
 
         Returns:
             EvaluationResult: The result of the evaluation, indicating whether the value changed, remained the same, or if there was a conflict.
@@ -2720,27 +2664,17 @@ class OptimizationSum:
 
     def evaluate(
         self,
-        evaluations: Evaluations,
         ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
     ) -> bool:
         """
         Evaluate the optimization sum and return True if the value has changed.
 
         Args:
-            evaluations: Current variable evaluations.
             ctl: Clingo propagate control.
-            env: Evaluation environment.
 
         Returns:
             bool: True if the value has changed, False otherwise.
         """
-        # changed = False
-
-        # for var, expr in self.opt_expressions:
-        #     changed |= expr.evaluate(evaluations, ctl, env)
-
-        # if changed:
         total = self.discern_value()
         if total != self.value:
             self.decision_level = ctl.assignment.decision_level
@@ -2844,26 +2778,20 @@ class OptimizationHandler:
 
     def evaluate(
         self,
-        evaluations: Evaluations,
         ctl: clingo.PropagateControl,
-        env: dict[Any, Any],
-        expr_lits: set[int] | None = None,
     ) -> bool:
         """
         Evaluate all optimization sums and return True if any value has changed.
 
         Args:
-            evaluations: Current variable evaluations.
             ctl: Clingo propagate control.
-            env: Evaluation environment.
-            expr_lits: Optional set of literals associated with the expressions.
 
         Returns:
             bool: True if any value has changed, False otherwise.
         """
         changed = False
         for _sum in self.sums:
-            changed |= _sum.evaluate(evaluations, ctl, env)
+            changed |= _sum.evaluate(ctl)
         return changed
 
     def vars(self) -> set[clingo.Symbol]:

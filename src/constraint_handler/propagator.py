@@ -393,18 +393,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # if a variable can't have its dependencies satisfied
             # (e.g., one of them does not exist)
             # then we just assign rank -1
-            print(f"warning: Variable {v} can't have its dependencies satisfied.")
+            # print(f"warning: Variable {v} can't have its dependencies satisfied.")
             self.var_ranks[v] = -1
 
         for expr in self.value_registry.get_all():
             try:
                 self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
             except KeyError:
-                print(f"Warning: Expression {expr} has unknown variable as dependency.")
+                # print(f"Warning: Expression {expr} has unknown variable as dependency.")
                 self.var_ranks_expr[expr] = -1
-
-        # print("Variable ranks:", self.var_ranks)
-        # print("Expression ranks:", self.var_ranks_expr)
 
     def ensure_pairs(
         self, valuations: dict[Symbol, set[Any]]
@@ -484,7 +481,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if not change1 and not change2:
                 break
 
-        print(f"Preprocessing done in {cycles_done} cycles.")
+        # print(f"Preprocessing done in {cycles_done} cycles.")
         return valuations
 
     def forward_prune(self, valuations: dict[Symbol, set[Any]], evaluation_order: list[Symbol]) -> bool:
@@ -806,8 +803,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             control: Clingo PropagateControl object.
         """
-        print("CHECK CHECK")
-
         if self.add_nogoods_from_queue(control):
             # backtracking due to nogoods in queue
             return
@@ -1062,8 +1057,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # backtracking due to nogoods in queue
             return
 
-        to_evaluate: dict[VariableType, set[int] | None] = {}
-        to_evaluate_expressions: dict[VariableValue, set[int] | None] = {}
+        to_evaluate: set[VariableType] = set()
+        to_evaluate_expressions: set[VariableValue] = set()
         for rlit in changes:
             if self.using_optimization and not self.previously_opt_stage_2 and rlit == self.optimization_stage_lits[2]:
                 # if we are now in the second stage of optimization,
@@ -1072,14 +1067,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 print("Now in optimization stage 2, looking for equal or better solutions")
                 # continue  # this lit should not be present in any variable or expr
 
-            for var in self.get_literal2var(rlit):
-                to_evaluate.setdefault(var, set()).add(rlit)
+            to_evaluate.update(self.get_literal2var(rlit))
 
-            for expr in self.get_literal2expr(rlit):
-                to_evaluate_expressions.setdefault(expr, set()).add(rlit)
+            to_evaluate_expressions.update(self.get_literal2expr(rlit))
 
-        # print("To evaluate variables:", to_evaluate)
-        # print("To evaluate expressions:", to_evaluate_expressions)
         backtrack = self.evaluated_solver_assignment(control, to_evaluate, to_evaluate_expressions)
         if backtrack:
             # backtracking due to conflicts in evaluation of variables
@@ -1105,7 +1096,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if not self.using_optimization:
             return False
         self.evaluations.update_evaluations(self.symbol2var.get_variables())
-        self.optimization_sum.evaluate(self.evaluations, ctl, self.environment)
+        self.optimization_sum.evaluate(ctl)
 
         for i, _sum in enumerate(self.optimization_sum.get_value()):
             if _sum > self.best_value[i] or self.optimization_sum.has_unassigned(i):
@@ -1176,8 +1167,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def evaluated_solver_assignment(
         self,
         ctl: clingo.PropagateControl,
-        to_evaluate: dict[VariableType, set[int] | None],
-        to_evaluate_expressions: dict[VariableValue, set[int] | None],
+        to_evaluate: set[VariableType],
+        to_evaluate_expressions: set[VariableValue],
     ) -> bool:
         """
         Evaluate a set of variables under the current solver assignment.
@@ -1251,7 +1242,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                         var = eval_by_rank[rank].pop()
                         if not is_evaluation_possible(var):
                             continue
-                        result = self.evaluate_variable(ctl, var, to_evaluate.get(var, None))
+                        result = self.evaluate_variable(ctl, var)
                         # print("evaluating variable: ", var, " with result: ", result)
                         if result is None:
                             # variable had issue, stop propagation!
@@ -1281,9 +1272,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         return False
 
-    def evaluate_variable(
-        self, ctl: clingo.PropagateControl, var: VariableType, expr_lits: set[int] | None = None
-    ) -> bool | None:
+    def evaluate_variable(self, ctl: clingo.PropagateControl, var: VariableType) -> bool | None:
         """
         Evaluate one variable against the current assignment.
 
@@ -1299,7 +1288,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 - None if evaluation detected a conflict (nogood added).
         """
         self.evaluations.update_evaluations(self.symbol2var.get_variables())
-        eval_result: EvaluationResult = var.evaluate(self.evaluations, ctl, self.environment, expr_lits)
+        eval_result: EvaluationResult = var.evaluate(ctl)
 
         if eval_result == EvaluationResult.CONFLICT:
             self.add_nogood_for_variable(ctl, var)
@@ -1861,7 +1850,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # add to the clingo output the final result based on reasoning mode
         # For brave and cautious, we output the accumulated result (similar to clingo)
         # For standard, we output the current model
-        print("ON MODEL CALL")
         assert self.python_model is not None
         for pyAtom in self.python_model:
             clAtom = myClorm.pytocl(pyAtom)
@@ -1870,7 +1858,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.add_shared_values(model)
         if self.using_optimization:
-            print(f"best value: {self.optimization_sum.get_value()}")
             if clingo.Function(OPTIMIZATION_STAGE_ATOM, [clingo.Number(2)]) in model.symbols(atoms=True):
                 self.optimal_models_found += 1
             if self.optimal_models_wanted > 0 and self.optimal_models_found >= self.optimal_models_wanted:
