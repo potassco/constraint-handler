@@ -42,8 +42,12 @@ def create_bad_value_warning(variable: VariableType | EvaluateVariable) -> warni
 
 def is_evaluation_possible(var: VariableType | VariableValue) -> bool:
     """
-    Check whether evaluation is possible for this variable.
-    It does this by checking the count of evaluated expressions against the total expressions count.
+    Check whether evaluation is possible for this variable
+    by checking the count of evaluated expressions against the total expressions count.
+
+    Args:
+        var: The variable or variable value to check for evaluation possibility.
+
     Returns:
         bool: True if evaluation is possible, False otherwise.
     """
@@ -170,6 +174,7 @@ class VariableManager:
         We assume that this is called only once for a given VariableType
 
         Args:
+            name: The name of the variable to add.
             variable: The VariableType instance to add.
         """
         if name not in self.variables:
@@ -195,8 +200,7 @@ class VariableManager:
         """
 
         for var_dict in self.variables.values():
-            for var in var_dict.values():
-                yield var
+            yield from var_dict.values()
 
     def get_variables_by_type(self, var_type: VariableTypeNames) -> Iterable[VariableType]:
         """
@@ -431,6 +435,9 @@ class VariableValue:
 
         Args:
             dl: Decision level threshold.
+
+        Returns:
+            bool: True if the value was reset; False otherwise.
         """
         if self.decision_level >= dl:
             self.value = ValueStatus.NOT_SET
@@ -497,11 +504,24 @@ class VariableValueRegistry:
         return value
 
     def get_all(self) -> list[VariableValue]:
-        """Return a snapshot of all interned values."""
+        """
+        Return a snapshot of all interned values.
+
+        Returns:
+            list[VariableValue]: A list of all interned VariableValue instances.
+        """
         return list(self.values.values())
 
     def delete(self, value: VariableValue) -> bool:
-        """Remove the given instance, returning whether it was registered."""
+        """
+        Remove the given instance, returning whether it was registered.
+
+        Args:
+            value: The VariableValue instance to remove.
+
+        Returns:
+            bool: True if the instance was registered and removed; False otherwise.
+        """
         key = (str(value.expr), value.literal)
         if self.values.get(key) is not value:
             return False
@@ -612,16 +632,15 @@ class EvaluateVariable:
 
 class SharedValue:
     """
-    TODO
+    Represents a shared value that is used by other parts of the constraint handler.
     """
 
     def __init__(self, expr: expression.Expr, literal: int = -1):
         """
-        Initialize an EvaluateVariable.
+        Initialize a SharedValue.
 
         Args:
-            op: Operator to apply.
-            args: Operands for the operator.
+            expr: The expression associated with this shared value.
             literal: Literal controlling whether this operation is active.
         """
         self.expr: expression.Expr = expr
@@ -769,10 +788,10 @@ class EnsureVariable:
         This is used for preprocessing to determine which values result in either True or Bad.
 
         Args:
-            valuations: Current variable evaluations.
+            evaluations: Current variable evaluations.
             env: Environment dictionary for evaluation context.
         Returns:
-            dict[clingo.Symbol, set[Any]]: A dictionary mapping the variable's symbolic representation to a set of values that result in either True or Bad.
+            bool: True if the values result in either True or Bad; False otherwise.
         """
         res = evaluator.evaluate_expr(self.expression.expr, env, evaluations)[0]
         return bool(res is True or res == expression.Bad.bad)
@@ -782,12 +801,25 @@ class EnsureVariable:
     ) -> dict[clingo.Symbol, set[Any]]:
         """
         Just here to comply with VariableType protocol. Ensure variables already do this part in the propagator itself.
+
+        Args:
+            valuations: Current variable evaluations.
+            env: Environment dictionary for evaluation context.
+
+        Returns:
+            dict[clingo.Symbol, set[Any]]: Always an empty dictionary for ensure variables.
         """
         return {}
 
     def set_possible_values(self, possible_values: set[Any], ctl: clingo.PropagateInit) -> None:
         """
         Just here to comply with VariableType protocol.
+        Args:
+            possible_values: Set of possible values for the variable.
+            ctl: Clingo propagate initialization control.
+
+        Returns:
+            None
         """
         return
 
@@ -802,6 +834,15 @@ class EnsureVariable:
         Evaluate the expression and return a tuple (changed, conflict).
         changed is True if the value has changed.
         conflict is True if there is a conflict.
+
+        Args:
+            evaluations: Current variable evaluations.
+            ctl: Clingo propagate control.
+            env: Environment dictionary for evaluation context.
+            expr_lits: Set of literals associated with the expression, if any.
+
+        Returns:
+            EvaluationResult: Result of the evaluation, indicating whether the value changed or if there was a conflict.
         """
 
         if self.value != ValueStatus.NOT_SET:
@@ -895,6 +936,9 @@ class EnsureVariable:
 
         Args:
             dl: Decision level threshold.
+
+        Returns:
+            bool: True if the variable was reset, False otherwise.
         """
         # self.expression.reset(dl)
         if self.decision_level >= dl:
@@ -907,6 +951,9 @@ class EnsureVariable:
         """
         Curently this return an empty set as it does not support any inferences.
         This is here for compatibility with the VariableType protocol.
+
+        Returns:
+            set[int]: An empty set, as no inferences are supported.
         """
 
         return set()
@@ -1044,6 +1091,10 @@ class BoolEvaluateVariable:
             evaluations: Current variable evaluations.
             ctl: PropagateControl
             env: Environment for evaluation.
+            expr_lits: Set of literals associated with the expression, if any.
+
+        Returns:
+            EvaluationResult: Result of the evaluation, indicating whether the value changed or if an inference should be made.
         """
         # changed: Unknown = self.expression.evaluate(evaluations, ctl, env)
         if self.get_value() is not ValueStatus.ASSIGNMENT_IS_FALSE:
@@ -1278,6 +1329,10 @@ class Variable:
         evaluate the variable with the given evaluations and environment, without any checks for decision levels or literal assignments.
         This function does not change the internal state of the variable.
 
+        Args:
+            valuations: A dictionary mapping variables to their possible values.
+            env: Environment dictionary for evaluation context.
+
         Returns:
             set[Any]: Possible values.
         """
@@ -1319,6 +1374,12 @@ class Variable:
         It looks at the possible values for this variable, then checks which values for the dependencies generate those values.
         It returns the values for the dependencies that can generate the possible values for this variable.
 
+        Args:
+            valuations: A dictionary mapping variables to their possible values.
+            env: Environment dictionary for evaluation context.
+
+        Returns:
+            dict[clingo.Symbol, set[Any]]: A dictionary mapping each dependency to the set of values that can generate the possible values for this variable.
         """
         possible_dep_values: dict[clingo.Symbol, set[Any]] = {}
 
@@ -1371,28 +1432,20 @@ class Variable:
     ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
+        Args:
+            evaluations: Current evaluations of expressions.
+            ctl: PropagateControl object for interacting with the solver.
+            env: Environment dictionary for evaluation context.
+            expr_lits: Optional set of expression literals to evaluate.
+
+        Returns:
+            EvaluationResult: Result of the evaluation.
         """
 
         if self.value != ValueStatus.NOT_SET:
             # already assigned
             return EvaluationResult.NOT_CHANGED
 
-        # changed = False
-        # if expr_lits is None or len(expr_lits) == 0:
-        #     for value in self.expressions:
-        #         changed |= value.evaluate(evaluations, ctl, env)
-        # else:
-        #     for lit in expr_lits:
-        #         if lit < 0:
-        #             continue
-
-        #         if lit in self.lit2expr:
-        #             changed |= self.lit2expr[lit].evaluate(evaluations, ctl, env)
-
-        # if not changed:
-        #     return EvaluationResult.NOT_CHANGED
-
-        # if some value changed, we need to discern the new value
         val = self.get_values()
         if len(val) > 1:
             # multiple values assigned to the same variable
@@ -1634,6 +1687,9 @@ class SetVariableValue:
         """
         If there is an unassigned value, return ValueStatus.NOT_SET.
         Otherwise return the set of assigned values.
+
+        Returns:
+            ValueStatus | frozenset[Any]: ValueStatus.NOT_SET if any element is unassigned, otherwise a frozenset of assigned values.
         """
         if self.has_unassigned():
             return ValueStatus.NOT_SET
@@ -1668,7 +1724,18 @@ class SetVariableValue:
         env: dict[Any, Any],
         expr_lits: set[int] | None = None,
     ) -> bool:
-        """Evaluate the expression and return True if the value has changed."""
+        """
+        Evaluate the expression and return True if the value has changed.
+
+        Args:
+            evaluations: Current evaluations of variables.
+            ctl: Clingo propagate control object.
+            env: Environment dictionary for evaluation context.
+            expr_lits: Optional set of literals associated with the expression.
+
+        Returns:
+            bool: True if the value of the expression has changed, False otherwise.
+        """
         changed = False
         for arg in self.expressions:
             changed |= arg.evaluate(evaluations, ctl, env)
@@ -1849,6 +1916,9 @@ class SetVariable:
     def get_value(self) -> ValueStatus | frozenset[Any]:
         """
         See SetVariableValue.get_value
+
+        Returns:
+            ValueStatus | frozenset[Any]: The current value of the set variable
         """
         return self.value
 
@@ -1874,6 +1944,8 @@ class SetVariable:
         """
         Evaluate the set variable with the given valuations and environment, without any checks for decision levels or literal assignments.
         This function does not change the internal state of the variable.
+
+        Args:
 
         Returns:
             set[frozenset[Any]]: Possible values for the set variable.
@@ -1918,6 +1990,13 @@ class SetVariable:
         This function is supposed to be used after pruning values with ensures.
         It looks at the possible values for this variable, then checks which values for the dependencies generate those values.
         It returns those values
+
+        Args:
+            valuations: A dictionary mapping variables to their possible values.
+            env: Environment dictionary for evaluation context.
+
+        Returns:
+            dict[clingo.Symbol, set[Any]]: A dictionary mapping each dependency to the set of values that can generate the possible values for this variable.
 
         """
         possible_dep_values: dict[clingo.Symbol, set[Any]] = {}
@@ -1979,6 +2058,15 @@ class SetVariable:
     ) -> EvaluationResult:
         """
         Evaluate the expression and return an EvaluationResult.
+
+        Args:
+            evaluations: Current evaluations of variables.
+            ctl: Clingo propagate control object.
+            env: Environment dictionary for evaluation context.
+            expr_lits: Optional set of literals associated with the expression.
+
+        Returns:
+            EvaluationResult: The result of the evaluation, indicating whether the value changed, remained the same, or if there was a conflict.
         """
         self.assigned = ctl.assignment.value(self.literal)
 
@@ -2033,7 +2121,7 @@ class SetVariable:
 
     def infer(self) -> set[int]:
         """
-        Curently this return an empty set as it does not support any inferences.
+        Curently this returns an empty set as it does not support any inferences.
         This is here for compatibility with the VariableType protocol.
         """
 
@@ -2254,6 +2342,9 @@ class DictVariable:
         """
         Returns a dictionary mapping keys to their assigned values.
         If any value is unassigned, returns None for that key.
+
+        Returns:
+            ValueStatus | multimap.Multimap[clingo.Symbol, Any]: The discerned value of the dict variable, or NOT_SET if any key/value is unassigned.
         """
         result: dict[clingo.Symbol, Any] = {}
         for key, value in self.dict_expressions.items():
@@ -2300,6 +2391,10 @@ class DictVariable:
         """
         Evaluate the dict variable with the given valuations and environment, without any checks for decision levels or literal assignments.
         This function does not change the internal state of the variable.
+
+        Args:
+            valuations: A dictionary mapping variables to their possible values.
+            env: Environment dictionary for evaluation context.
 
         Returns:
             set[multimap.Multimap[clingo.Symbol, Any]]: Possible values for the dict variable.
@@ -2402,6 +2497,15 @@ class DictVariable:
         """
         Evaluate all values in the dictionary and return (changed, conflict).
         For DictVariable, conflict should never occur.
+
+        Args:
+            evaluations: Current evaluations of variables.
+            ctl: Clingo propagate control object.
+            env: Environment dictionary for evaluation context.
+            expr_lits: Optional set of literals associated with the expression.
+
+        Returns:
+            EvaluationResult: The result of the evaluation, indicating whether the value changed, remained the same, or if there was a conflict.
         """
 
         self.assigned = ctl.assignment.value(self.literal)
@@ -2417,11 +2521,6 @@ class DictVariable:
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CHANGED
-
-        # changed = False
-        # for key, value in self.dict_expressions.items():
-        #     changed |= key.evaluate(evaluations, ctl, env)
-        #     changed |= value.evaluate(evaluations, ctl, env)
 
         if not self.has_unassigned():
             self.value = self.discern_value()
@@ -2446,9 +2545,6 @@ class DictVariable:
         Returns:
             bool: True if the variable was reset, False otherwise.
         """
-        # for key, value in self.dict_expressions.items():
-        #     key.reset(dl)
-        #     value.reset(dl)
 
         if self.decision_level >= dl:
             self.decision_level = DEFAULT_DECISION_LEVEL
@@ -2461,6 +2557,9 @@ class DictVariable:
         """
         Curently this return an empty set as it does not support any inferences.
         This is here for compatibility with the VariableType protocol.
+
+        Returns:
+            set[int]: A set of inferred values, currently always empty.
         """
 
         return set()
@@ -2757,6 +2856,7 @@ class OptimizationHandler:
             evaluations: Current variable evaluations.
             ctl: Clingo propagate control.
             env: Evaluation environment.
+            expr_lits: Optional set of literals associated with the expressions.
 
         Returns:
             bool: True if any value has changed, False otherwise.

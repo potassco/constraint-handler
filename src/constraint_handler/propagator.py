@@ -249,19 +249,49 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.watches.add(lit)
 
     def add_literal2var(self, literal: int, variable: VariableType) -> None:
-        """Associate a variable with the positive form of a solver literal."""
+        """
+        Associate a variable with the positive form of a solver literal.
+        Args:
+            literal: Solver literal.
+            variable: Variable to associate with the literal.
+        """
         self.literal2var.setdefault(abs(literal), []).append(variable)
 
     def get_literal2var(self, literal: int) -> list[VariableType]:
-        """Get variables associated with a solver literal, regardless of sign."""
+        """
+        Get variables associated with a solver literal, regardless of sign.
+
+        Args:
+            literal: Solver literal.
+
+        Returns:
+            list[VariableType]: List of associated variables.
+        """
         return self.literal2var.get(abs(literal), [])
 
     def get_expr2var(self, expr: VariableValue) -> list[VariableType]:
-        """Get variables associated with an expression, or an empty list."""
+        """
+        Get variables associated with an expression, or an empty list.
+
+        Args:
+            expr: Expression value.
+
+        Returns:
+            list[VariableType]: List of associated variables.
+        """
         return self.expr2var.get(expr, [])
 
     def delete_literal2var(self, literal: int, variable: VariableType) -> bool:
-        """Remove a literal-variable association, returning whether it existed."""
+        """
+        Remove a literal-variable association, returning whether it existed.
+
+        Args:
+            literal: Solver literal.
+            variable: Variable to disassociate from the literal.
+
+        Returns:
+            bool: True if the association existed and was removed, False otherwise.
+        """
         key = abs(literal)
         variables = self.literal2var.get(key)
         if variables is None:
@@ -277,21 +307,50 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         return True
 
     def set_literal2expr(self, literal: int, value: VariableValue) -> None:
-        """Associate a value with the positive form of a solver literal."""
+        """
+        Associate a value with the positive form of a solver literal.
+
+        Args:
+            literal: Solver literal.
+            value: Expression value to associate with the literal.
+        """
         self.lit2expr.setdefault(abs(literal), set()).add(value)
 
     def get_literal2expr(self, literal: int) -> set[VariableValue]:
-        """Get values associated with a solver literal, regardless of sign."""
+        """
+        Get values associated with a solver literal, regardless of sign.
+
+        Args:
+            literal: Solver literal.
+
+        Returns:
+            set[VariableValue]: Set of associated expression values.
+        """
         return self.lit2expr.get(abs(literal), set())
 
     def get_variable_value(self, expr: expression.Expr, literal: int) -> VariableValue:
-        """Intern a value and index it by its solver literal."""
+        """
+        Intern a value and index it by its solver literal.
+
+        Args:
+            expr: Expression object.
+            literal: Solver literal.
+
+        Returns:
+            VariableValue: Interned expression value.
+        """
         value = self.value_registry.get(expr, literal)
         self.set_literal2expr(literal, value)
         return value
 
     def register_variable_value(self, variable: VariableType, value: VariableValue) -> None:
-        """Associate an interned value with its owning variable."""
+        """
+        Associate an interned value with its owning variable.
+
+        Args:
+            variable: Owning variable.
+            value: Interned expression value.
+        """
         owners = self.expr2var.setdefault(value, [])
         if not any(owner is variable for owner in owners):
             owners.append(variable)
@@ -308,7 +367,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_variable_ranks(self) -> None:
         """
-        Variable get a rank based on rank of dependencies
+        Variables get a rank based on rank of dependencies.
         """
 
         # loop over vars and get the ones without deps, those have rank 0
@@ -341,7 +400,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for expr in self.value_registry.get_all():
             try:
                 self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
-            except Exception:
+            except KeyError:
                 print(f"Warning: Expression {expr} has unknown variable as dependency.")
                 self.var_ranks_expr[expr] = -1
 
@@ -369,6 +428,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 4: [2]
             }
         }
+        Args:
+            valuations: A dictionary mapping variable symbols to their possible values.
+
+        Returns:
+            dict[EnsureVariable, dict[Symbol, dict[Any, set[Any]]]]: A dictionary mapping ensure variables to their corresponding value pairs.
         """
 
         # TODO: parts of this are very similar to check_ensure. Maybe make the similar parts into a function?
@@ -402,6 +466,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         This finds the possible domains for all variables, checks the ensures to see which ones are the possible ones
         and prunes the variables based on their ability to be used in variables that depend on them.
 
+        Args:
+            cycles: The number of preprocessing cycles to perform. Defaults to -1, which means unlimited cycles.
         Returns:
             dict[Symbol, set[Any]]: A dictionary mapping variable symbols to their possible values.
         """
@@ -509,6 +575,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         Args:
             valuations: A dictionary mapping variable symbols to their possible values.
+            init: The clingo.PropagateInit instance used for setting possible values.
         """
         for var_symb, values in valuations.items():
             for var in self.symbol2var[var_symb].values():
@@ -612,6 +679,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         Args:
             valuations: Current valuations of variables.
+
+        Returns:
+            dict[Symbol, set[Any]]: A dictionary mapping variable symbols to their updated possible values.
         """
 
         possible_values: dict[Symbol, set[Any]] = {}
@@ -1118,6 +1188,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo PropagateControl object.
             to_evaluate: Variables that may have been affected by recent changes.
+            to_evaluate_expressions: Expressions that may have been affected by recent changes.
 
         Returns:
             bool: True if propagation should stop (conflict/forbidden warning),
@@ -1220,6 +1291,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo PropagateControl object.
             var: Variable to evaluate.
+            expr_lits: Set of expression literals relevant for the evaluation. Defaults to None.
 
         Returns:
             bool | None:
@@ -1256,7 +1328,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         Args:
             var: Variable whose reasons should be collected.
-
+            seen: Set of variables already visited to avoid infinite recursion. Defaults to None.
         Returns:
             set[int]: Set of signed solver literals.
         """
