@@ -5,7 +5,7 @@ _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=evaluate(REF,E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_assign(X,E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_choice(X,E).
 _expression(PHASE,LBL,DECL,(D;C)) :- _passed(PHASE,LBL,DECL), DECL=variable_default(X,D,C,P).
-_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_define(X,E).
+_expression(PHASE,LBL,DECL,(E;C)) :- _passed(PHASE,LBL,DECL), DECL=variable_define(X,E,C).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_domain(X,E).
 _expression(PHASE,LBL,DECL,(E;C)) :- _passed(PHASE,LBL,DECL), DECL=set_assign(X,E,C).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_baseDomain(X,E).
@@ -27,7 +27,7 @@ _variable(PHASE,X) :- _expression(PHASE,variable(X)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_assign(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_choice(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_default(X,D,C,P)).
-_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_define(X,E)).
+_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_define(X,E,C)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_domain(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,set_assign(X,E,C)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,set_baseDomain(X,E)).

@@ -8,10 +8,14 @@ import clingo
 import pytest
 
 import constraint_handler.evaluator as evaluator
+import constraint_handler.myClorm as myClorm
 import constraint_handler.solver_environment as solver_environment
 from constraint_handler.schemas import expression, operators
+from constraint_handler.schemas.expression import TRUE
 from constraint_handler.utils.python_domain import Domain, PythonEvaluationSession
 from constraint_handler.utils.python_domain_computation import DomainComputation
+
+TRUE_SYMBOL = myClorm.pytocl(TRUE)
 
 
 @pytest.fixture(autouse=True)
@@ -642,7 +646,14 @@ def test_domain_computation_preserves_bad_tuple_inputs_for_python_extract() -> N
         (
             operation_expr,
             variable_expr,
-            clingo.Function("variable_define", [variable_name, clingo.Function("bad")]),
+            clingo.Function(
+                "variable_define",
+                [
+                    variable_name,
+                    clingo.Function("bad"),
+                    TRUE_SYMBOL,
+                ],
+            ),
         ),
         (),
     )
@@ -777,7 +788,12 @@ def test_domain_computation_exports_python_callable_trace_symbols() -> None:
             operation_expr,
             variable_expr,
             clingo.Function(
-                "variable_define", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
+                "variable_define",
+                [
+                    variable_name,
+                    clingo.Function("val", [clingo.Function("int"), clingo.Number(2)]),
+                    TRUE_SYMBOL,
+                ],
             ),
             clingo.Function(
                 "variable_domain", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(0)])]
@@ -1056,13 +1072,23 @@ def test_domain_computation_exports_python_extract_inputs_against_value_expressi
             left_var,
             right_var,
             clingo.Function(
-                "variable_define", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])]
+                "variable_define",
+                [
+                    left_name,
+                    clingo.Function("val", [clingo.Function("int"), clingo.Number(1)]),
+                    TRUE_SYMBOL,
+                ],
             ),
             clingo.Function(
                 "variable_domain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
             ),
             clingo.Function(
-                "variable_define", [right_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
+                "variable_define",
+                [
+                    right_name,
+                    clingo.Function("val", [clingo.Function("int"), clingo.Number(2)]),
+                    TRUE_SYMBOL,
+                ],
             ),
         ),
         (),
@@ -1136,7 +1162,12 @@ def test_domain_computation_exports_python_extract_statement_error_output() -> N
             operation_expr,
             input_var,
             clingo.Function(
-                "variable_define", [input_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(4)])]
+                "variable_define",
+                [
+                    input_name,
+                    clingo.Function("val", [clingo.Function("int"), clingo.Number(4)]),
+                    TRUE_SYMBOL,
+                ],
             ),
         ),
         (),
@@ -1214,7 +1245,11 @@ def test_domain_computation_groups_python_extract_outputs_with_shared_inputs() -
                 variable_expr,
                 clingo.Function(
                     "variable_define",
-                    [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(1)])],
+                    [
+                        variable_name,
+                        clingo.Function("val", [clingo.Function("int"), clingo.Number(1)]),
+                        TRUE_SYMBOL,
+                    ],
                 ),
                 clingo.Function(
                     "variable_domain",

@@ -29,7 +29,9 @@ propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_assig
 %propagator_variable_assign(X,E,CNAME) :- _passed(propagator,CNAME,variable_assign(X,E)).
 %propagator_variable_choice(X,E,CNAME) :- _passed(propagator,CNAME,variable_choice(X,E)).
 %propagator_variable_default(X,E,C,P,CNAME) :- _passed(propagator,CNAME,variable_default(X,E,C,P)). %% TODO: temporary hack
-propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_define(X,E)).
+propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_define(X,E,val(bool,true))).
+_bool_evaluate(C,CNAME) :- _passed(propagator,CNAME,variable_define(X,E,C)), C != val(bool,true), C != val(bool,false).
+propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_define(X,E,C)), _bool_evaluated(C,val(bool,true)).
 
 propagator_set_declare(X,CNAME) :- _passed(propagator,CNAME,variable_declare(X,set)).
 _bool_evaluate(C,LBL) :- _passed(propagator,LBL,set_assign(X,E,C)).

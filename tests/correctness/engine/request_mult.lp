@@ -1,5 +1,5 @@
 %%% atomic -> set
-variable_define(as_a,val(int,3),assign_as_a).
+variable_define(as_a,val(int,3),val(bool,true),assign_as_a).
 variable_declare(as_s,set,assign_as_s).
 set_assign(as_s,val(int,2),val(bool,true),assign_as_s).
 set_assign(as_s,variable(as_a),val(bool,true),assign_as_s).
@@ -15,7 +15,7 @@ set_assign(sss_s1,val(int,2),val(bool,true),assign_sss_s1).
 variable_declare(sss_s2,set,assign_sss_s2).
 set_assign(sss_s2,val(int,2),val(bool,true),assign_sss_s2).
 set_assign(sss_s2,val(int,3),val(bool,true),assign_sss_s2).
-variable_define(sss_s3,operation(inter,(variable(sss_s1),(variable(sss_s2),()))),assign_sss_s3).
+variable_define(sss_s3,operation(inter,(variable(sss_s1),(variable(sss_s2),()))),val(bool,true),assign_sss_s3).
 
 engine_request(compile,assign_sss_s1).
 engine_request(ground,assign_sss_s2).
@@ -35,7 +35,7 @@ set_assign(ssa_s1,val(int,2),val(bool,true),assign_ssa_s1).
 variable_declare(ssa_s2,set,assign_ssa_s2).
 set_assign(ssa_s2,val(int,2),val(bool,true),assign_ssa_s2).
 set_assign(ssa_s2,val(int,3),val(bool,true),assign_ssa_s2).
-variable_define(ssa_a,operation(subset,(variable(ssa_s1),(variable(ssa_s2),()))),assign_ssa_a).
+variable_define(ssa_a,operation(subset,(variable(ssa_s1),(variable(ssa_s2),()))),val(bool,true),assign_ssa_a).
 
 engine_request(compile,assign_ssa_s1).
 engine_request(ground,assign_ssa_s2).

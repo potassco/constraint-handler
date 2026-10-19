@@ -17,7 +17,7 @@ _expression_domain(EXPR,val(T,V)) :- _expression(sugar,EXPR), EXPR=val(T,V).
 _expression_domain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_assign(X,E2)), _expression_domain(E2,V).
 _expression_domain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_choice(X,E2)), _expression_domain(E2,V).
 _expression_domain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_default(X,E2,C,P)), _expression_domain(E2,V).
-_expression_domain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_define(X,E2)), _expression_domain(E2,V).
+_expression_domain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_define(X,E2,C)), _expression_domain(E2,V).
 _expression_domain(EXPR,V) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_domain(X,E2)), _expression_domain(E2,V).
 
 _expression_tupleDomainAux(EXPR,N,()) :- _expression(sugar,EXPR), _expression_tupleLength(sugar,EXPR,N), #false.

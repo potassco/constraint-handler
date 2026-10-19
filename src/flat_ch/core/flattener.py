@@ -106,8 +106,9 @@ class Flattener:
             case ProgramInputKind.VARIABLE_DEFINE:
                 var_def: IVariableDefine = node  # type: ignore
                 expr_id = self._intern_expr(var_def.expression)
+                condition_id = self._intern_expr(var_def.condition)
                 self.interned_program.append(
-                    (ProgramInputKind.VARIABLE_DEFINE, (var_def.name, expr_id, var_def.registration_id))
+                    (ProgramInputKind.VARIABLE_DEFINE, (var_def.name, expr_id, condition_id, var_def.registration_id))
                 )
 
             case ProgramInputKind.SET_DECLARE:
@@ -485,10 +486,10 @@ class Flattener:
                     )
 
             case ProgramInputKind.VARIABLE_DEFINE:
-                name, expr_id, registration_id = payload
+                name, expr_id, condition_id, registration_id = payload
                 var_sym = name if isinstance(name, Symbol) else Function(name, [])
                 fact_name = FlatFact.VARIABLE_DEFINE.value
-                fact_args = [var_sym, Number(expr_id)]
+                fact_args = [var_sym, Number(expr_id), Number(condition_id)]
                 if registration_id is not None:
                     fact_args.insert(0, Number(registration_id))
                 self._emit_fact(Function(fact_name, fact_args))

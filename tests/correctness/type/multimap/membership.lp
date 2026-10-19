@@ -15,7 +15,7 @@ multimap_assign(v(multimap),variable(v(symbol)),variable(v(int))).
 
 check_types(T) :- variable_declare(v(T),_).
 
-variable_define(check(OP,multimap), EXPR) :-
+variable_define(check(OP,T), EXPR) :-
     EXPR = operation(OP,(variable(v(T)),(variable(v(multimap)),()))),
     check_types(T),
     OP = (multimap_isin;find).

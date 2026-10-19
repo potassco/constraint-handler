@@ -49,4 +49,4 @@ _se_value(variable(X),V) :- ch_core(variable_default(X,E,C,P),LBL), _se_value(E,
 { _se_value(variable(X),V) : ch_solve(variable_choice(X,E),LBL1), _se_value(E,V) } :-
   ch_core(variable_declare(X,open),LBL).
 
-:- ch_core(variable_declare(X,open),LBL), 1 != { _se_value(variable(X),V) }, _engine((compile;compile2;ground),LBL). % TODO change 1 != to 1 >
+:- ch_core(variable_declare(X,open),LBL), 1 != { _se_value(variable(X),V) }, _engine_grounding(LBL). % TODO change 1 != to 1 >

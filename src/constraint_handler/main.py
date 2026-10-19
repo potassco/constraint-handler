@@ -8,7 +8,11 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
+import constraint_handler.schemas.atom as atom
+import constraint_handler.schemas.core as core
+import constraint_handler.schemas.post as post
 import constraint_handler.schemas.result as result
+import constraint_handler.schemas.solve as solve
 import constraint_handler.solver_environment as solver_environment
 import flat_ch.main as flat_main
 from constraint_handler.engine import Engine, compile
@@ -57,7 +61,6 @@ m4_analysis = [
 m5_presolve = [
     "5_presolve/core",
     "5_presolve/to_core",
-    "5_presolve/dispatch",
     "5_presolve/engine",
     "5_presolve/presolve",
 ]
@@ -117,6 +120,7 @@ m6_propagator = [
 
 m6_solve = (
     [
+        "6_solve/dispatch",
         "6_solve/finiteDomain",
         "6_solve/optimize",
     ]
@@ -253,5 +257,44 @@ def add_declarations(ctrl: clingo.Control, declarations):
         ctrl.add(f"{myClorm.pytocl(declaration)}.")
 
 
+def add_core(ctrl: clingo.Control, declarations, label=atom.LABEL_ANONYMOUS):
+    add_declarations(ctrl, (core.Ch_core(declaration, label) for declaration in declarations))
+
+
+def add_solve(ctrl: clingo.Control, declarations, label=atom.LABEL_ANONYMOUS):
+    add_declarations(ctrl, (solve.Ch_solve(declaration, label) for declaration in declarations))
+
+
+def add_post(ctrl: clingo.Control, declarations, label=atom.LABEL_ANONYMOUS):
+    add_declarations(ctrl, (post.Ch_post(declaration, label) for declaration in declarations))
+
+
 def find_values(model: clingo.Model):
     return myClorm.findInModel(model, result.ResultAtom)
+
+
+def find_core(model: clingo.Model, label=None):
+    declarations = myClorm.findInModel(model, core.Ch_core)
+    return {
+        symbol: declaration.declaration
+        for symbol, declaration in declarations.items()
+        if label is None or declaration.label == label
+    }
+
+
+def find_solve(model: clingo.Model, label=None):
+    declarations = myClorm.findInModel(model, solve.Ch_solve)
+    return {
+        symbol: declaration.declaration
+        for symbol, declaration in declarations.items()
+        if label is None or declaration.label == label
+    }
+
+
+def find_post(model: clingo.Model, label=None):
+    declarations = myClorm.findInModel(model, post.Ch_post)
+    return {
+        symbol: declaration.declaration
+        for symbol, declaration in declarations.items()
+        if label is None or declaration.label == label
+    }

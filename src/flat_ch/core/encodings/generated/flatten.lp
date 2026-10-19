@@ -8,8 +8,8 @@
 %% CORE ELEMENTS
 _fch_expr_val(ID, TYPE_ID, VALUE) :- _fch_flat(expr_val(ID, TYPE_ID, VALUE)).
 _fch_expr_var(ID, NAME) :- _fch_flat(expr_var(ID, NAME)).
-_fch_var_def(NAME, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_def(ID, NAME, EXPR_ID)).
-_fch_var_def(NAME, EXPR_ID) :- _fch_flat(var_def(NAME, EXPR_ID)).
+_fch_var_def(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_def(ID, NAME, EXPR_ID, COND_EXPR_ID)).
+_fch_var_def(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_flat(var_def(NAME, EXPR_ID, COND_EXPR_ID)).
 _fch_var_decl(NAME) :- _fch_registered(_, ID), _fch_flat(var_decl(ID, NAME)).
 _fch_var_decl(NAME) :- _fch_flat(var_decl(NAME)).
 _fch_var_dom(NAME, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_dom(ID, NAME, EXPR_ID)).

@@ -21,8 +21,10 @@ class Propagator_variable_declare(atom.Variable_declare):
     pass
 
 
-class Propagator_variable_define(atom.Variable_define):
-    pass
+class Propagator_variable_define(NamedTuple):
+    name: expression.constant
+    value: expression.Expr
+    label: expression.constant
 
 
 class Propagator_variable_domain(atom.Variable_domain):

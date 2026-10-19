@@ -105,7 +105,18 @@ class Registration(BaseRegistration):
             case self._ui_def if args_len == 2:
                 self.reg.sequential_inputs.append(
                     IVariableDefine(
-                        self.to_str(args[0]), self.parse_expression(args[1]), self.reg.current_registration_id
+                        self.to_str(args[0]),
+                        self.parse_expression(args[1]),
+                        registration_id=self.reg.current_registration_id,
+                    )
+                )
+            case self._ui_def if args_len == 3:
+                self.reg.sequential_inputs.append(
+                    IVariableDefine(
+                        self.to_str(args[0]),
+                        self.parse_expression(args[1]),
+                        self.parse_expression(args[2]),
+                        registration_id=self.reg.current_registration_id,
                     )
                 )
             case self._ui_ensure if args_len == 1:

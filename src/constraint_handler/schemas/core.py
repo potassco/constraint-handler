@@ -26,6 +26,7 @@ class Variable_declare(NamedTuple):
 class Variable_define(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr
 
 
 class Variable_default(NamedTuple):
@@ -88,9 +89,13 @@ class Evaluate(NamedTuple):
     expr: expression.Expr
 
 
-type Atom = Bool_evaluate | Ensure | Evaluate | Multimap_assign | Optimize_component | PreferenceAtom | Set_assign | Set_baseDomain | Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain
+class Engine_request(NamedTuple):
+    engine: expression.constant
 
 
-class Core_ch(NamedTuple):
+type Atom = Bool_evaluate | Engine_request | Ensure | Evaluate | Multimap_assign | Optimize_component | PreferenceAtom | Set_assign | Set_baseDomain | Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain
+
+
+class Ch_core(NamedTuple):
     declaration: Atom
     label: expression.constant

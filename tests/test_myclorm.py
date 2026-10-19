@@ -339,10 +339,10 @@ def test_cltopy_typed_union_backtracks_overlapping_tuple_candidates():
 
 def test_cltopy_atom_backtracks_nested_union_members():
     terms = [
-        "variable_define(x,operation(add,(val(int,1),(variable(y),()))),_label_anonymous)",
-        "variable_define(z,operation(add,(val(int,2),(variable(y),()))),_label_anonymous)",
-        "variable_define(t,operation(add,(variable(y),(variable(y),()))),_label_anonymous)",
-        "variable_define(a,operation(mult,(variable(y),(variable(y),()))),_label_anonymous)",
+        "variable_define(x,operation(add,(val(int,1),(variable(y),()))),val(bool,true),_label_anonymous)",
+        "variable_define(z,operation(add,(val(int,2),(variable(y),()))),val(bool,true),_label_anonymous)",
+        "variable_define(t,operation(add,(variable(y),(variable(y),()))),val(bool,true),_label_anonymous)",
+        "variable_define(a,operation(mult,(variable(y),(variable(y),()))),val(bool,true),_label_anonymous)",
     ]
 
     assert all(isinstance(myClorm.cltopy(clingo.parse_term(term), atom.Atom), atom.Variable_define) for term in terms)

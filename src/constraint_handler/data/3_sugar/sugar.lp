@@ -11,8 +11,8 @@ _passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,vari
 _passed(sugar,LBL,variable_domain(X,val(bool,(false;true)))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
 
 %%%%%% variable define
-_passed(sugar,LBL,variable_declare(X,definition)) :- _passed(defaultArgs,LBL,variable_define(X,E)), not _defaultArgs_variableDeclared(X).
-_passed(sugar,LBL,variable_define(X,E)) :- _passed(defaultArgs,LBL,variable_define(X,E)).
+_passed(sugar,LBL,variable_declare(X,definition)) :- _passed(defaultArgs,LBL,variable_define(X,E,C)), not _defaultArgs_variableDeclared(X).
+_passed(sugar,LBL,variable_define(X,E,C)) :- _passed(defaultArgs,LBL,variable_define(X,E,C)).
 
 %%%%%% variable domain
 _passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
@@ -57,5 +57,5 @@ _variable(sugar,X) :- _variable(ssa,X).
 
 %%%%%% internal declarations
 _passed(internal_declaration,LBL,variable_declare(X,DOM)) :- _passed(ssa,LBL,variable_declare(X,DOM)), _execution_outputVar(LBL,PRG,N,X).
-_passed(internal_declaration,LBL,variable_define(X,DEF)) :- _passed(ssa,LBL,variable_define(X,DEF)), _execution_outputVar(LBL,PRG,N,X).
+_passed(internal_declaration,LBL,variable_define(X,DEF,COND)) :- _passed(ssa,LBL,variable_define(X,DEF,COND)), _execution_outputVar(LBL,PRG,N,X).
 _passed(internal_declaration,LBL,ensure(E)) :- _passed(ssa,LBL,ensure(E)).

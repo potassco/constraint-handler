@@ -6,7 +6,7 @@ _passed(correction(emptyDomain,rem),LBL,variable_declare(X,fromFacts)) :-
 _passed(correction(emptyDomain,add),LBL,variable_declare(X,definition)) :-
 	_passed(sugar,LBL,variable_declare(X,fromFacts)),
 	not _variable_hasDomain(sugar,X).
-_passed(correction(emptyDomain,add),LBL,variable_define(X,bad)) :-
+_passed(correction(emptyDomain,add),LBL,variable_define(X,bad,val(bool,true))) :-
 	_passed(sugar,LBL,variable_declare(X,fromFacts)),
 	not _variable_hasDomain(sugar,X).
 
@@ -31,6 +31,6 @@ _passed(correction(emptyDomain,rem),LBL,variable_declare(X,open)) :-
 _passed(correction(emptyDomain,add),LBL,variable_declare(X,definition)) :-
 	_passed(sugar,LBL,variable_declare(X,open)),
 	not _variable_hasSource(sugar,X).
-_passed(correction(emptyDomain,add),LBL,variable_define(X,bad)) :-
+_passed(correction(emptyDomain,add),LBL,variable_define(X,bad,val(bool,true))) :-
 	_passed(sugar,LBL,variable_declare(X,open)),
 	not _variable_hasSource(sugar,X).

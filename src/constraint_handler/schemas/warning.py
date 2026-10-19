@@ -56,7 +56,7 @@ class Type(typing.NamedTuple):
 
 VariableWarning = common.PPEnum(
     "VariableWarning",
-    ["badValue", "emptyDomain", "multipleDeclarations", "multipleDefinitions", "undeclared", "confusingName"],
+    ["badValue", "emptyDomain", "multipleDeclarations", "undeclared", "confusingName"],
 )
 
 

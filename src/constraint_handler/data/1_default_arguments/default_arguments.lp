@@ -59,10 +59,12 @@ _passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E,LBL).
 %%%%%% variable definition
 #defined variable_define/2.
 #defined variable_define/3.
+#defined variable_define/4.
 
-_passed(defaultArgs,_label_anonymous,variable_define(X,E)) :- variable_define(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_define(X,E)) :- variable_define(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_define(X,E)) :- variable_define(X,E,LBL).
+_passed(defaultArgs,_label_anonymous,variable_define(X,E,val(bool,true))) :- variable_define(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_define(X,E,val(bool,true))) :- variable_define(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,_label_anonymous,variable_define(X,E,C)) :- variable_define(X,E,C).
+_passed(defaultArgs,LBL,variable_define(X,E,C)) :- variable_define(X,E,C,LBL).
 
 %%%%%% multimap atoms
 #defined multimap_assign/3.

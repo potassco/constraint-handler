@@ -31,6 +31,10 @@ _fch_static_expr_val(ID, TYPE_ID, VALUE) :-
 _fch_dynamic_expr_val(ID, TYPE, VAL) :-
     _fch_static_expr_val(ID, TYPE, VAL).
 
+_fch_var_def(NAME, EXPR_ID) :-
+    _fch_var_def(NAME, EXPR_ID, COND_EXPR_ID),
+    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
+
 % For each declared variable we pick exactly one expression from its domain to define it.
 % This must also happen for variables that are only observed via public output.
 % Variables with a declared default (see variable_default) get a soft (0-or-1) choice instead,

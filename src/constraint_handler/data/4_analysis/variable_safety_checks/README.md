@@ -5,7 +5,7 @@ _passed(sugar,LBL,variable_assign/2).
 _passed(sugar,LBL,variable_choice/2).
 _passed(sugar,LBL,variable_declare/2).
 _passed(sugar,LBL,variable_default/4).
-_passed(sugar,LBL,variable_define/2).
+_passed(sugar,LBL,variable_define/3).
 _passed(sugar,LBL,variable_domain/2).
 _passed(sugar,LBL,set_assign/2).
 _passed(sugar,LBL,set_baseDomain/2).
@@ -14,7 +14,7 @@ _passed(defaultArgs,LBL,variable_assign/2).
 _passed(defaultArgs,LBL,variable_choice/2).
 _passed(defaultArgs,LBL,variable_declare/2).
 _passed(defaultArgs,LBL,variable_domain/2).
-_passed(defaultArgs,LBL,variable_define/2).
+_passed(defaultArgs,LBL,variable_define/3).
 _passed(defaultArgs,LBL,set_assign/2).
 _passed(defaultArgs,LBL,set_baseDomain/2).
 _passed(defaultArgs,LBL,multimap_assign/3).
@@ -30,7 +30,6 @@ _variable_declared/2.
 _variable_declareRequired/3.
 _variable_hasDomain/2.
 _variable_multipleDeclarations/3.
-_variable_multipleDefinitions/3.
 _variable_multiple/2.
 _variable_name(conflict,X).
 _variable_name(confusing/1,X).
@@ -40,6 +39,6 @@ _variable_strip/3.
 ### Output predicates
 
 _passed(correction(REASON,add),LBL,variable_declare/2).
-_passed(correction(REASON,add),LBL,variable_define/2).
+_passed(correction(REASON,add),LBL,variable_define/3).
 _passed(correction(REASON,rem),LBL,DECL).
 _warning/3.
