@@ -127,7 +127,7 @@ _fch_dynamic_expr_val(ID, _fch_type_fail_id, undefined_variable(NAME)) :-
     not _fch_set_decl(NAME),
 	not _fch_inactive_execution_output(NAME).
 
-_fch_var_has_definition(NAME) :- _fch_var_def(NAME, EXPR_ID).
+_fch_var_has_definition(NAME) :- _fch_var_def(NAME, _, _).
 
 % Failures on strict child expressions propagate to the parent expression.
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
@@ -200,6 +200,9 @@ _fch_dynamic_expr_needed(ELSE_ID) :-
 % All ensures must be satisfied for the solution to be valid.
 :- _fch_ensure(NAME, EXPR_ID),
     not _fch_dynamic_expr_val(EXPR_ID, _fch_type_bool_id, true).
+
+:- _fch_check(NAME, EXPR_ID),
+    _fch_dynamic_expr_val(EXPR_ID, _fch_type_bool_id, false).
 
 % The value of an expression that can be evaluated by Python is the result of that evaluation.
 _fch_dynamic_expr_val(ID, TYPE_ID, VALUE) :-

@@ -2,7 +2,8 @@
 
 ## Ongoing
 
-- - introduce the declaration `check(COND)` that rejects candidate where `COND` evaluates to false.
+- - introduce the declaration `check(COND)` that rejects candidate where `COND`
+    evaluates to false.
 - - update the semantics of `ensure` to reject condition with `bad` evaluation.
 - - disable and remove multipleDefinitions warning.
 - - update `variable_define` to take an optional condition argument.

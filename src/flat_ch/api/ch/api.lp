@@ -46,6 +46,11 @@ _fch_input(variable_default(LABEL, NAME, DEFAULT, CONDITION, PRIORITY)) :- varia
 _fch_input(ensure(__anonymous, EXPR)) :- ensure(EXPR).
 _fch_input(ensure(LABEL, EXPR)) :- ensure(EXPR, LABEL).
 
+#defined check/1.
+#defined check/2.
+_fch_input(check(__anonymous, EXPR)) :- check(EXPR).
+_fch_input(check(LABEL, EXPR)) :- check(EXPR, LABEL).
+
 #defined evaluate/1.
 #defined evaluate/2.
 _fch_input(evaluate(_fch_label, EXPR)) :- evaluate(EXPR).

@@ -8,6 +8,7 @@ from flat_ch.api.flat.input import UserInput
 from flat_ch.core.base_registration import BaseRegistration, parse_operator, parse_python_operator
 from flat_ch.core.domain import (
     BoolEvaluateInput,
+    CheckConstraint,
     EnsureConstraint,
     EvaluateInput,
     ExecutionDeclare,
@@ -44,6 +45,7 @@ class Registration(BaseRegistration):
         self._ui_dom = UserInput.DOMAIN.value
         self._ui_def = UserInput.DEFINE.value
         self._ui_ensure = UserInput.ENSURE.value
+        self._ui_check = UserInput.CHECK.value
         self._ui_eval = UserInput.EVALUATE.value
         self._ui_bool_eval = UserInput.BOOL_EVALUATE.value
         self._ui_set_decl = UserInput.SET_DECLARE.value
@@ -126,6 +128,16 @@ class Registration(BaseRegistration):
             case self._ui_ensure if args_len == 2:
                 self.reg.sequential_inputs.append(
                     EnsureConstraint(
+                        self.to_str(args[0]), self.parse_expression(args[1]), self.reg.current_registration_id
+                    )
+                )
+            case self._ui_check if args_len == 1:
+                self.reg.sequential_inputs.append(
+                    CheckConstraint(None, self.parse_expression(args[0]), self.reg.current_registration_id)
+                )
+            case self._ui_check if args_len == 2:
+                self.reg.sequential_inputs.append(
+                    CheckConstraint(
                         self.to_str(args[0]), self.parse_expression(args[1]), self.reg.current_registration_id
                     )
                 )

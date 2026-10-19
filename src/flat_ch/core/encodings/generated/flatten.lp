@@ -18,6 +18,8 @@ _fch_var_default(NAME, EXPR_ID, COND_EXPR_ID, PRIORITY) :- _fch_registered(_, ID
 _fch_var_default(NAME, EXPR_ID, COND_EXPR_ID, PRIORITY) :- _fch_flat(var_default(NAME, EXPR_ID, COND_EXPR_ID, PRIORITY)).
 _fch_ensure(NAME, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(ensure(ID, NAME, EXPR_ID)).
 _fch_ensure(NAME, EXPR_ID) :- _fch_flat(ensure(NAME, EXPR_ID)).
+_fch_check(NAME, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(check(ID, NAME, EXPR_ID)).
+_fch_check(NAME, EXPR_ID) :- _fch_flat(check(NAME, EXPR_ID)).
 _fch_evaluate(EXPR, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(evaluate(ID, EXPR, EXPR_ID)).
 _fch_evaluate(EXPR, EXPR_ID) :- _fch_flat(evaluate(EXPR, EXPR_ID)).
 _fch_bool_evaluate(EXPR, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(bool_evaluate(ID, EXPR, EXPR_ID)).

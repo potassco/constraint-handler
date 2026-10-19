@@ -61,4 +61,3 @@ _variable(sugar,X) :- _variable(ssa,X).
 _passed(internal_declaration,LBL,variable_declare(X,DOM)) :- _passed(ssa,LBL,variable_declare(X,DOM)), _execution_outputVar(LBL,PRG,N,X).
 _passed(internal_declaration,LBL,variable_define(X,DEF,COND)) :- _passed(ssa,LBL,variable_define(X,DEF,COND)), _execution_outputVar(LBL,PRG,N,X).
 _passed(internal_declaration,LBL,check(E)) :- _passed(ssa,LBL,check(E)).
-_passed(internal_declaration,LBL,ensure(E)) :- _passed(ssa,LBL,ensure(E)).

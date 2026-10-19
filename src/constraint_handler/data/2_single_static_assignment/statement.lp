@@ -159,5 +159,5 @@ _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(LBL,PRG,X,EX
 
 _passed(ssa,LBL,variable_define(X,E,val(bool,true))) :- _statement_introduce(LBL,X,E).
 _passed(ssa,LBL,variable_declare(X,definition)) :- _statement_introduce(LBL,X,E).
-_passed(ssa,LBL,ensure(E)) :- _statement_ensure(LBL,E).
+_passed(ssa,LBL,check(E)) :- _statement_ensure(LBL,E).
 _variable(ssa,EX) :- _execution_inputVar(LBL,PRG,X,EX).

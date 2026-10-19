@@ -11,6 +11,7 @@ class UserInput(str, Enum):
     VARIABLE = "variable"
     OPERATION = "operation"
     ENSURE = "ensure"
+    CHECK = "check"
     EVALUATE = "evaluate"
     BOOL_EVALUATE = "bool_evaluate"
     SET_DECLARE = "set_declare"

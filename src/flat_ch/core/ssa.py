@@ -5,7 +5,7 @@ import itertools
 import clingo
 
 from flat_ch.core.domain import (
-    EnsureConstraint,
+    CheckConstraint,
     ExecutionDeclare,
     ExecutionStatement,
     Expression,
@@ -100,7 +100,7 @@ class SSA:
 
         for key, expr in state.items():
             if key.startswith("_ssa"):
-                outputs.append(EnsureConstraint(key, expr))
+                outputs.append(CheckConstraint(key, expr))
 
         return outputs
 

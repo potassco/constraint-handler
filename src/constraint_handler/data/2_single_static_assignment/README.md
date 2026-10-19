@@ -43,6 +43,6 @@ _execution_inputVar(LBL,PRG,X,execution_input(PRG,X)).
 _execution_outputVar(LBL,PRG,X,execution_output(PRG,X)).
 _passed(ssa,LBL,variable_define/3).
 _passed(ssa,LBL,variable_declare/2).
-_passed(ssa,LBL,ensure/1).
+_passed(ssa,LBL,check/1).
 _variable(ssa,execution_input/2).
 _warning/3.

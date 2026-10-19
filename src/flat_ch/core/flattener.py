@@ -9,6 +9,7 @@ from clingo import Function, Number, String, Symbol
 
 from flat_ch.core.domain import (
     BoolEvaluateInput,
+    CheckConstraint,
     EnsureConstraint,
     EvaluateInput,
     Expression,
@@ -123,6 +124,14 @@ class Flattener:
                 label_str = ens.label if ens.label else "__anonymous"
                 self.interned_program.append(
                     (ProgramInputKind.ENSURE_CONSTRAINT, (label_str, expr_id, ens.registration_id))
+                )
+
+            case ProgramInputKind.CHECK_CONSTRAINT:
+                check: CheckConstraint = node  # type: ignore
+                expr_id = self._intern_expr(check.expression)
+                label_str = check.label if check.label else "__anonymous"
+                self.interned_program.append(
+                    (ProgramInputKind.CHECK_CONSTRAINT, (label_str, expr_id, check.registration_id))
                 )
 
             case ProgramInputKind.VARIABLE_DEFAULT:
@@ -516,6 +525,14 @@ class Flattener:
             case ProgramInputKind.ENSURE_CONSTRAINT:
                 label_str, expr_id, registration_id = payload
                 fact_name = FlatFact.ENSURE.value
+                fact_args = [Function(label_str, []), Number(expr_id)]
+                if registration_id is not None:
+                    fact_args.insert(0, Number(registration_id))
+                self._emit_fact(Function(fact_name, fact_args))
+
+            case ProgramInputKind.CHECK_CONSTRAINT:
+                label_str, expr_id, registration_id = payload
+                fact_name = FlatFact.CHECK.value
                 fact_args = [Function(label_str, []), Number(expr_id)]
                 if registration_id is not None:
                     fact_args.insert(0, Number(registration_id))

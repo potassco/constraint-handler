@@ -88,6 +88,26 @@ Args:
 #defined ensure/2.
 _fch_input(ensure(NAME, EXPR))           :- ensure(NAME, EXPR).
 
+%*! check(Expression)
+
+Defines an anonymous boolean constraint that only rejects an explicit false result.
+
+Args:
+ - Expression: A boolean expression that represents the constraint to be checked.
+*%
+#defined check/1.
+_fch_input(check(__anonymous, EXPR))     :- check(EXPR).
+
+%*! check(Name, Expression)
+
+Defines a named boolean constraint that only rejects an explicit false result.
+
+Args:
+ - Expression: A boolean expression that represents the constraint to be checked.
+*%
+#defined check/2.
+_fch_input(check(NAME, EXPR))            :- check(NAME, EXPR).
+
 %*! bool_evaluate(Expression)
 
 Evaluates a boolean expression and exposes its result as `bool_evaluated(Expression, Value)`.

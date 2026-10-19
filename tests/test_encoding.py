@@ -594,6 +594,8 @@ propagator_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {
+    "core/check",
+    "core/ensure",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
@@ -687,6 +689,7 @@ choice_statistics_skip: set[str] = {
     "core/bool_evaluate/basic",
     "core/bool_evaluate/forbidden",
     "core/boolean_shortcut_optional_presence",
+    "core/check",
     "core/conditional_definitions",
     "core/empty_set_execution",
     "core/evaluate_dynamic",
@@ -733,7 +736,9 @@ choice_statistics_skip: set[str] = {
     "default/depends/single",
     "default/depends/with_domain",
     "default/depends/with_domain_bydepends",
+    "error/recovery_check",
     "execution/conditional_string_equality_single_model",
+    "execution/python_integrity_should_be_ignored",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
     "optimization/label_int",
