@@ -5,4 +5,3 @@ execution_declare(miss_input,
     noop)),
     (v1,(v2,())),
     (v1,(v2,(v3,(v5,()))))).
-execution_run(miss_input).

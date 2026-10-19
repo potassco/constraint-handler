@@ -21,8 +21,6 @@ execution_declare(flagger, STMT, (mode, ()), ("__condition_holds__", ("result", 
 variable_declare(execution_input(flagger, mode), fromFacts).
 variable_domain(execution_input(flagger, mode), val(string, ("a"; "b"))).
 
-execution_run(flagger).
-
 evaluate(operation(
     leqv,
     (

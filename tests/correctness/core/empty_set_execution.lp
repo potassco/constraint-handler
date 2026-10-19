@@ -11,4 +11,4 @@ variable_define(i,val(int,1),val(bool,true),i).
 variable_declare(execution_input(e,"a"),fromFacts).
 variable_domain(execution_input(e,"a"),variable(i)).
 
-execution_declare(e,if(operation(eq,(variable("a"),(val(int,1),()))),assign("b",operation(set_make,())),noop),("a",()),("b",())).
+execution_declare(e,if(operation(eq,(variable("a"),(val(int,1),()))),assign("b",operation(set_make,())),noop),("a",()),("b",()),val(bool,false)).

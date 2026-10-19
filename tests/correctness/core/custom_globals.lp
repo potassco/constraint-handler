@@ -3,7 +3,6 @@
 execution_declare(flooring,STMT,("x",()),("y",())) :-
     STMT = statement_python("y = myths.floor(x)").
 variable_define(execution_input(flooring,"x"),val(float,float("10.5"))).
-execution_run(flooring).
 
 variable_define(yep,operation(python("myths.floor"),(val(float,float("3.333")),()))).
 
@@ -13,7 +12,6 @@ main_solverIdentifier(3).
 
 execution_declare(empty,STMT,(),("y",())) :-
     STMT = statement_python("y = '5'").
-execution_run(empty).
 
 phase_request(type_check,false).
 

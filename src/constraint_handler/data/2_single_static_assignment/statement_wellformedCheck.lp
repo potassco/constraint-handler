@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%% _statement_query,
-_statement_query(PRG,(PRG,()),STMT) :- _phase_active(statement_wellformedCheck), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)).
+_statement_query(PRG,(PRG,()),STMT) :- _phase_active(statement_wellformedCheck), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)).
 _statement_query(PRG,SCOPE,STM1) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)).
 _statement_query(PRG,SCOPE,STM2) :- _statement_query(PRG,SCOPE,seq2(STM1,STM2)).
 _statement_query(PRG,SCOPE,THEN) :- _statement_query(PRG,SCOPE,if(EXPR,THEN,ELSE)).
@@ -15,10 +15,10 @@ _statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)),
 
 
 
-_warning(statement(syntaxError),LBL,STMT) :- _statement_query(PRG,SCOPE,STMT), not _statement_wellformed(STMT), _passed(defaultArgs,LBL,execution_declare(PRG,STMT2,INS,OUTS)).
+_warning(statement(syntaxError),LBL,STMT) :- _statement_query(PRG,SCOPE,STMT), not _statement_wellformed(STMT), _passed(defaultArgs,LBL,execution_declare(PRG,STMT2,INS,OUTS,COND)).
 
 
 %%%%%% statement atoms
-_warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _phase_active(statement_wellformedCheck), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS)),
-    #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS).
+_warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _phase_active(statement_wellformedCheck), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)),
+    #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS), true=@pythonIsExpr(COND).
 %%% TODO add bad for all exec outs

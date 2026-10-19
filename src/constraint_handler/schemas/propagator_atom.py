@@ -81,10 +81,6 @@ class Propagator_execution_declare(atom.Execution_declare):
     pass
 
 
-class Propagator_execution_run(atom.Execution_run):
-    pass
-
-
 class Propagator_evaluate(NamedTuple):
     ref: expression.Expr
     expr: expression.Expr

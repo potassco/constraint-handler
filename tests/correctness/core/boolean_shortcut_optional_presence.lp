@@ -3,9 +3,6 @@
 
 variable_domain(execution_input(((((),"r"),"u"),"chk"),"result"),val(none,none)).
 
-execution_run(rupos).
-execution_run(((((),"r"),"u"),"chk")).
-
 variable_declare(s0(rup),set).
 set_baseDomain(s0(rup),val(string,"Back")).
 

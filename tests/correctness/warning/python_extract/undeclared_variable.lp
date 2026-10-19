@@ -8,6 +8,5 @@ variable_define(n,val(int,3)).
 variable_define(c,variable(execution_output(prg2,"c"))).
 
 execution_declare(prg,statement_python("a = range(n)\nc = set(a)"),("n",()),("c",())).
-execution_run(prg).
 
 #show warning/3.

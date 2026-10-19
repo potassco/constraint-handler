@@ -7,5 +7,3 @@ execution_declare(py_stmt,
 
 variable_declare(execution_input(py_stmt,"x"),fromFacts).
 variable_domain(execution_input(py_stmt,"x"),val(int,2)).
-
-execution_run(py_stmt).

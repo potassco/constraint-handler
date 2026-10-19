@@ -4,7 +4,6 @@ ensure(operation(limp,(val(bool,true),(operation(eq,(variable(b),(variable(execu
 ensure(operation(limp,(val(bool,true),(operation(eq,(variable(b),(variable(execution_output(prg,b)),()))),())))).
 
 execution_declare(prg,assign(b,operation(set_make,(val(string,"A"),(val(string,"C"),())))),(),(b,())).
-execution_run(prg).
 
 variable_declare(b,set).
 set_baseDomain(b,val(string,"A")).

@@ -10,7 +10,6 @@ execution_declare(absolut,STMT,(x,()),(y,())) :-
     STMT = if(GEQ,THEN,ELSE).
 variable_declare(execution_input(absolut,x),fromFacts).
 variable_domain(execution_input(absolut,x),val(int,(-2;0;2))).
-execution_run(absolut).
 evaluate(operation(geq,(variable(execution_output(absolut,y)),(val(int,0),())))).
 evaluate(operation(eq,
         (operation(mult,

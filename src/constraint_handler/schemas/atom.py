@@ -91,15 +91,8 @@ class Execution_declare(NamedTuple):
     body: statement.Stmt
     inputs_vars: myClorm.ImmutableList[expression.constant]
     outputs_vars: myClorm.ImmutableList[expression.constant]
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
-
-
-class Execution_run(NamedTuple):
-    name: expression.constant
-    label: expression.constant = LABEL_ANONYMOUS
-
-
-type ExecutionAtom = Execution_declare | Execution_run
 
 
 class Optimize_maximizeSum(NamedTuple):
@@ -153,4 +146,4 @@ class Evaluate(NamedTuple):
 
 
 type MainAtom = Bool_evaluate | Check | Ensure | Evaluate
-type Atom = ExecutionAtom | MainAtom | Multimap_assign | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
+type Atom = Execution_declare | MainAtom | Multimap_assign | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom

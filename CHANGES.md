@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - replace CH's `execution_run` with an optional boolean condition in
+    `execution_declare(NAME,STMT,INPUT,OUTPUT,COND,LBL)`.
 - - introduce the declaration `check(COND)` that rejects candidate where `COND`
     evaluates to false.
 - - update the semantics of `ensure` to reject condition with `bad` evaluation.

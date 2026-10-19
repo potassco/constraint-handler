@@ -5,7 +5,6 @@ variable_define(execution_input(div0,"x"),val(int,4)).
 variable_define(execution_input(div0,"y"),variable(y)).
 
 execution_declare(div0,statement_python("z = x/y\nassert 1.5 < z"),("x",("y",())),()).
-execution_run(div0).
 
 { activate }.
 warning_forbid(expression(pythonError)) :- activate.

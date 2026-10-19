@@ -1,0 +1,6 @@
+value(execution_output(default,x),val(int,1))
+value(execution_output(always,x),val(int,2))
+value(execution_output(never,x),val(none,none))
+value(execution_output(missing,x),val(none,none))
+evaluated(operation(leqv,(variable(run),(operation(hasValue,(variable(execution_output(dynamic,x)),())),()))),val(bool,true))
+evaluated(operation(leqv,(operation(lnot,(variable(run),())),(operation(hasValue,(variable(execution_output(inverted,x)),())),()))),val(bool,true))

@@ -16,7 +16,5 @@ variable_define(execution_input(q,run),operation(lnot,(variable(b),()))).
 
 execution_declare(p,if(variable(run),assign("x",val(float,float("1.1"))),noop),(run,()),("x",())).
 execution_declare(q,if(variable(run),assign("y",val(float,float("2.2"))),noop),(run,()),("y",())).
-execution_run(p).
-execution_run(q).
 
 evaluate(operation(disj,(operation(eq,(variable(f),(val(float,float("1.1")),()))),(operation(eq,(variable(f),(val(float,float("2.2")),()))),())))).

@@ -9,4 +9,3 @@ execution_declare(pyt,STMT,("x",()),("x",(y,()))) :-
     STMT3 = assign(y,operation(add,(variable(z),(variable("x"),())))),
     STMT  = seq2(STMT1,seq2(STMT2,STMT3)).
 variable_define(execution_input(pyt,"x"),val(int,10)).
-execution_run(pyt).

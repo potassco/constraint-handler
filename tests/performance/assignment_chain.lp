@@ -15,5 +15,3 @@ stmt(K + 1, seq2(S, assign(t(K + 1), operation(add, (variable(t(K)), (val(int, 1
 execution_declare(counter, S, (), (t(M), ())) :-
     stmt(M, S),
     max_step(M).
-
-execution_run(counter).

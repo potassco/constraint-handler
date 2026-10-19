@@ -9,8 +9,7 @@ evaluate/2. evaluate/3.
 multimap_assign/3. multimap_assign/4.
 set_assign/2. set_assign/3.
 set_baseDomain/2. set_baseDomain/3.
-execution_declare/4. execution_declare/5.
-execution_run/1. execution_run/2.
+execution_declare/4. execution_declare/5. execution_declare/6.
 optimize_precision/1. optimize_precision/2.
 optimize_maximizeSum/2. optimize_maximizeSum/3. optimize_maximizeSum/4.
 preference_holds/1. preference_holds/2. preference_holds/3.

@@ -254,6 +254,7 @@ execution_tests = [
     "execution/python_integrity_should_be_ignored",
     "execution/python_list",
     "execution/python_set_empty_equality",
+    "execution/run_condition",
 ]
 
 expression_tests = [
@@ -737,6 +738,7 @@ choice_statistics_skip: set[str] = {
     "error/recovery_check",
     "execution/conditional_string_equality_single_model",
     "execution/python_integrity_should_be_ignored",
+    "execution/run_condition",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
     "optimization/label_int",

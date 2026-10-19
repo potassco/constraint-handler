@@ -93,13 +93,11 @@ _passed(defaultArgs,LBL,set_baseDomain(X,V)) :- set_baseDomain(X,V,LBL).
 %%%%%% statement atoms
 #defined execution_declare/4.
 #defined execution_declare/5.
-#defined execution_run/1.
-#defined execution_run/2.
+#defined execution_declare/6.
 
-_passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS).
-_passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS,LBL).
-_passed(defaultArgs,NAME,execution_run(NAME)) :- execution_run(NAME), _passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)).
-_passed(defaultArgs,LBL,execution_run(NAME)) :- execution_run(NAME,LBL).
+_passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS,val(bool,true))) :- execution_declare(NAME,STMT,INS,OUTS).
+_passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS,COND)) :- execution_declare(NAME,STMT,INS,OUTS,COND).
+_passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS,COND)) :- execution_declare(NAME,STMT,INS,OUTS,COND,LBL).
 
 %%%%%% optimization atoms
 #defined optimize_precision/1.

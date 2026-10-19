@@ -5,9 +5,6 @@ ensure(operation(limp,(val(bool,true),(operation(eq,(variable(execution_input(q,
 ensure(operation(limp,(val(bool,true),(operation(eq,(variable(execution_input(q,"b")),(variable(b),()))),())))).
 ensure(operation(limp,(val(bool,true),(operation(eq,(variable(execution_input(p,"a")),(variable(a),()))),())))).
 
-execution_run(p).
-execution_run(q).
-
 variable_declare(a,set).
 variable_domain(b,val(int,2)).
 variable_domain(b,val(int,1)).

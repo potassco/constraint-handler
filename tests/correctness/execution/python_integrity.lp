@@ -26,7 +26,6 @@ execution_declare(myprog(3),statement_python("z = x/y\nif z <= 1.5:\n  raise sol
 variable_declare(execution_input(myprog(P),("x";"y")),fromFacts) :- active_version(P).
 variable_domain(execution_input(myprog(P),"x"),val(int,2)) :- active_version(P).
 variable_domain(execution_input(myprog(P),"y"),val(int,0..2)) :- active_version(P).
-execution_run(myprog(P)) :- active_version(P).
 
 warning_ignore(type(failed_operation)).
 warning_ignore(variable(undeclared)).

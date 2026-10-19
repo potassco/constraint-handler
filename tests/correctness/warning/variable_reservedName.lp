@@ -4,10 +4,10 @@ variable_define(execution_input(itsfine,y),val(int,3)).
 variable_declare(execution_input(itsfine,z),boolDomain,d_z).
 variable_define((istfine,a),val(int,3)).
 variable_define(a,val(int,3)).
-execution_declare(itsfine,assign(a,val(int,2)),(x,(y,(z,()))),(a,())).
+execution_declare(itsfine,assign(a,val(int,2)),(x,(y,(z,()))),(a,()),val(bool,false)).
 
 %%% raise warning(variable(reservedName),...)
-execution_declare(itsbad,assign(a,val(int,2)),(x,(y,(z,()))),(a,())).
+execution_declare(itsbad,assign(a,val(int,2)),(x,(y,(z,()))),(a,()),val(bool,false)).
 
 variable_declare(execution_output(itsbad,x),boolDomain).
 variable_define(execution_output(itsbad,y),val(int,3)).
@@ -19,7 +19,6 @@ variable_define(execution_output(itsbad,b),val(int,1)).
 
 %%% raise warning(variable(reservedName),...)
 execution_declare(alsobad,assign(a,val(int,2)),(x,(y,(z,()))),(a,())).
-execution_run(alsobad).
 
 variable_declare(execution_output(alsobad,x),boolDomain).
 variable_define(execution_output(alsobad,y),val(int,3)).
