@@ -54,7 +54,11 @@ LINKS = {
     "variable_declare": "reference/core_syntax.md#declare",
     "variable_declareOptional": "reference/core_syntax.md#optional",
     "Operation": "reference/core_syntax.md#operation",
-    "Ensure": "reference/core_syntax.md#ensure",
+    "Check": "reference/core_syntax.md#check-and-ensure",
+    "check": "reference/core_syntax.md#check-and-ensure",
+    "Ensure": "reference/core_syntax.md#check-and-ensure",
+    "ensure": "reference/core_syntax.md#check-and-ensure",
+    "Check and Ensure": "reference/core_syntax.md#check-and-ensure",
     # Base Types
     "Type": "reference/base_types.md",
     "Operator Signatures": "reference/base_types.md#operator-signatures",

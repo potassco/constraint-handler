@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - introduce the declaration `check(COND)` that rejects candidate where `COND` evaluates to false.
+- - update the semantics of `ensure` to reject condition with `bad` evaluation.
 - - disable and remove multipleDefinitions warning.
 - - update `variable_define` to take an optional condition argument.
     `variable_define(VAR,E,COND,LBL)` defines `VAR` only when `COND` evaluates

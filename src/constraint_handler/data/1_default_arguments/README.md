@@ -1,6 +1,7 @@
 ### Input predicates
 
 bool_evaluate/1. bool_evaluate/2.
+check/1. check/2.
 ensure/1. ensure/2.
 evaluate/2. evaluate/3.
 variable_assign/2. variable_assign/3.
@@ -32,6 +33,7 @@ _label/1.
 ### Output predicates
 
 _passed(defaultArgs,LBL,bool_evaluate/1).
+_passed(defaultArgs,LBL,check/1).
 _passed(defaultArgs,LBL,ensure/1).
 _passed(defaultArgs,LBL,evaluate/2).
 _passed(defaultArgs,LBL,variable_declare/2).

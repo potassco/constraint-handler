@@ -8,6 +8,7 @@ _bool_evaluated/2.
 _passed(sugar,LBL,preference_holds/2).
 _phase_active/1.
 ch_core(bool_evaluate/1,LBL).
+ch_core(check/1,LBL).
 ch_core(ensure/1,LBL).
 ch_core(evaluate/2,LBL).
 ch_core(preference_holds/2,LBL).

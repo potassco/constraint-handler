@@ -1,4 +1,5 @@
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=bool_evaluate(E).
+_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=check(E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=ensure(E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=evaluate(REF,E).
 

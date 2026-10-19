@@ -3,6 +3,7 @@
 bool_evaluate/1. bool_evaluate/2.
 engine_request/2.
 engine_default/1.
+check/1. check/2.
 ensure/1. ensure/2.
 evaluate/2. evaluate/3.
 multimap_assign/3. multimap_assign/4.

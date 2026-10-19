@@ -1,0 +1,3 @@
+value(enabled,val(bool,true))
+value(x,val(bool,true))
+value(y,val(bool,true))

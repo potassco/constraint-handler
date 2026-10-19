@@ -1,5 +1,7 @@
 #defined bool_evaluate/1.
 #defined bool_evaluate/2.
+#defined check/1.
+#defined check/2.
 #defined ensure/1.
 #defined ensure/2.
 #defined evaluate/1.
@@ -8,6 +10,8 @@
 %%%%%%%%%%%%%%%%% labels are optional
 _passed(defaultArgs,_label_anonymous,bool_evaluate(E)) :- bool_evaluate(E).
 _passed(defaultArgs,LBL,bool_evaluate(E)) :- bool_evaluate(E,LBL).
+_passed(defaultArgs,_label_anonymous,check(E)) :- check(E).
+_passed(defaultArgs,LBL,check(E)) :- check(E,LBL).
 _passed(defaultArgs,_label_anonymous,ensure(E)) :- ensure(E).
 _passed(defaultArgs,LBL,ensure(E)) :- ensure(E,LBL).
 _passed(defaultArgs,_label_anonymous,evaluate(E)) :- evaluate(E).

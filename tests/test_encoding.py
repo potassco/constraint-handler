@@ -39,6 +39,7 @@ core_tests = [
     "core/bool_evaluate/internal",
     "core/basic_assignments",
     "core/boolean_shortcut_optional_presence",
+    "core/check",
     "core/conditional_assign",
     "core/conditional_define",
     "core/conditional_definitions",
@@ -46,6 +47,7 @@ core_tests = [
     "core/custom_globals",
     "core/empty_set_execution",
     "core/empty_variadics",
+    "core/ensure",
     "core/evaluate_dynamic",
     "core/integrity",
     "core/optional_absent_comparison_evaluation",
@@ -227,6 +229,7 @@ engine_tests = [
 error_tests = [
     "error/recovery",
     "error/recovery_bool",
+    "error/recovery_check",
     "error/recovery_conditionals",
     "error/recovery_ensure",
 ]

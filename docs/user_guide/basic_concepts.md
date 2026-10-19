@@ -83,14 +83,14 @@ To perform calculations—such as arithmetic, logical comparisons, or set manipu
 ## Constraints
 While assignments *create* data, constraints *validate* it.
 
-The `ensure/1` predicate asserts that a specific condition must be true. If the condition fails, the constraint handler rejects the current model (similar to an integrity constraint `:- ...` in standard ASP).
+The `check/1` and `ensure/1` predicates validate conditions. An `ensure/1` condition must evaluate to `true`; `check/1` rejects only explicit `false`.
 
-**Syntax:** `ensure(Condition)`
+**Syntax:** `check(Condition)` or `ensure(Condition)`
 
 !!! Example
     Ensuring that variable `z` is greater than 10:
     ```prolog
-    ensure(operation(gt, (variable(z), (val(int, 10), ())))).
+    check(operation(gt, (variable(z), (val(int, 10), ())))).
     ```
 
-> For more details, see [Ensure] in the reference.
+> For more details, see [Check and Ensure] in the reference.

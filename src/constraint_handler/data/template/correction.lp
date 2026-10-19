@@ -15,6 +15,9 @@ _correction_proposed(PHASE,LBL,share_value(E),share_value(NE)) :-
 _correction_proposed(PHASE,LBL,bool_evaluate(E),bool_evaluate(NE)) :-
   _passed(sugar,LBL,bool_evaluate(E)),
   _correction_expressionOutput(PHASE,E,NE). % TODO: do better, use REF
+_correction_proposed(PHASE,LBL,check(E),check(NE)) :-
+  _passed(sugar,LBL,check(E)),
+  _correction_expressionOutput(PHASE,E,NE).
 _correction_proposed(PHASE,LBL,ensure(E),ensure(NE)) :-
   _passed(sugar,LBL,ensure(E)),
   _correction_expressionOutput(PHASE,E,NE).

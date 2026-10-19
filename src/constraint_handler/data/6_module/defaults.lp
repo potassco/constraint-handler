@@ -27,7 +27,8 @@ _default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), not -_defaul
 
 
 %%%%%% mode depends
-% Collect all variables that occur in ensure declarations.
+% Collect all variables that occur in check and ensure declarations.
+_default_ensureVariable(E,X) :- ch_core(check(E),LBL), _default_mode(depends), X=@pythonExpressionVariable(E).
 _default_ensureVariable(E,X) :- ch_core(ensure(E),LBL), _default_mode(depends), X=@pythonExpressionVariable(E).
 _default_dependVariable(E,X) :- _default_ensureVariable(E,X), ch_solve(variable_declare(X,open),LBL).
 

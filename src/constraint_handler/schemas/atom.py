@@ -142,10 +142,15 @@ class Ensure(NamedTuple):
     label: expression.constant = LABEL_ANONYMOUS
 
 
+class Check(NamedTuple):
+    expr: expression.Expr
+    label: expression.constant = LABEL_ANONYMOUS
+
+
 class Evaluate(NamedTuple):
     expr: expression.Expr
     label: expression.constant = LABEL_ANONYMOUS
 
 
-type MainAtom = Bool_evaluate | Ensure | Evaluate
+type MainAtom = Bool_evaluate | Check | Ensure | Evaluate
 type Atom = ExecutionAtom | MainAtom | Multimap_assign | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
