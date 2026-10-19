@@ -208,7 +208,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_variable_interface(init)
         self.get_variables(init)
-        self.get_ensure(init)
         self.get_set_declarations(init)
         self.get_multimap_declarations(init)
         self.get_optimization_sums(init)
@@ -1568,26 +1567,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 value = self.get_variable_value(expression.Bad.bad, 1)
                 var.add_value(value, 1)
                 self.register_variable_value(var, value)
-
-    def get_ensure(self, ctl: clingo.PropagateInit):
-        """
-        Load ensure constraints from ASP facts and create EnsureVariable instances.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-
-        ensures = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_ensure)
-        for (expr, name), literal in ensures.items():
-            value = self.get_variable_value(expr, literal)
-            ensure_var: EnsureVariable = EnsureVariable(name, value)
-            self.register_variable_value(ensure_var, value)
-            self.add_watch(literal)
-            self.add_watch(-literal)
-            self.add_literal2var(literal, ensure_var)
-            # Var name is given here so it works well with the rest of the system
-            # It should do nothing and also should never appear in any assignments!!
-            self.symbol2var.add_variable(ensure_var.var, ensure_var)
 
     def get_shared_values(self, ctl: clingo.PropagateInit):
         """
