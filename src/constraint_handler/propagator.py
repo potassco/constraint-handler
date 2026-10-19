@@ -1188,10 +1188,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if len(to_evaluate) == 0 and len(to_evaluate_expressions) == 0:
             return False
 
-        assert (
-            len(to_evaluate) > 0 or len(to_evaluate_expressions) > 0
-        ), "to_evaluate and to_evaluate_expressions should not both be empty"
-
         eval_by_rank: dict[int, set[VariableType]] = {}
         eval_by_rank_expr: dict[int, set[VariableValue]] = {}
         for v in to_evaluate:
@@ -1204,73 +1200,117 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         while rank <= max_rank:
             # print("Evaluating rank: ", rank)
-            changed = True
-            while changed:
-                changed = False
-                if rank in eval_by_rank_expr:
-                    self.evaluations.update_evaluations(self.symbol2var.get_variables())
-                    while len(eval_by_rank_expr[rank]) > 0:
-                        expr = eval_by_rank_expr[rank].pop()
-                        if not is_evaluation_possible(expr):
-                            continue
-                        expr_result: bool = expr.evaluate(self.evaluations, ctl, self.environment)
-                        # print("##evaluating expr: ", expr, " with result: ", expr_result)
-                        if expr_result:
-                            changed = True
-                            for var in self.get_expr2var(expr):
-                                var.expressions_evaluated_counter += 1
-                                # print(
-                                #     "variable: ",
-                                #     var,
-                                #     " expressions evaluated counter: ",
-                                #     var.expressions_evaluated_counter,
-                                #     " with target: ",
-                                #     var.expressions_count,
-                                # )
-                                if is_evaluation_possible(var):
-                                    # print(
-                                    #     "adding variable to evaluation queue: ",
-                                    #     var,
-                                    #     "with rank",
-                                    #     self.var_ranks[var.var],
-                                    # )
-                                    eval_by_rank.setdefault(self.var_ranks[var.var], set()).add(var)
-                                    max_rank = max(max_rank, self.var_ranks[var.var])
 
-                if rank in eval_by_rank:
-                    while len(eval_by_rank[rank]) > 0:
-                        var = eval_by_rank[rank].pop()
-                        if not is_evaluation_possible(var):
-                            continue
-                        result = self.evaluate_variable(ctl, var)
-                        # print("evaluating variable: ", var, " with result: ", result)
-                        if result is None:
-                            # variable had issue, stop propagation!
-                            return True
-                        elif result:
-                            changed = True
-                            for expr in self.var2expr.get(var.var, set()):
-                                expr.vars_counter += 1
-                                # print(
-                                #     "expression: ",
-                                #     expr,
-                                #     " vars counter: ",
-                                #     expr.vars_counter,
-                                #     " with target: ",
-                                #     expr.vars_count,
-                                # )
-                                if is_evaluation_possible(expr):
-                                    # print(
-                                    #     "adding expression to evaluation queue: ",
-                                    #     expr,
-                                    #     "with rank",
-                                    #     self.var_ranks_expr[expr],
-                                    # )
-                                    eval_by_rank_expr.setdefault(self.var_ranks_expr[expr], set()).add(expr)
-                                    max_rank = max(max_rank, self.var_ranks_expr[expr])
+            max_rank = self.evaluate_expressions_at_rank(
+                ctl,
+                rank,
+                eval_by_rank_expr,
+                eval_by_rank,
+                max_rank,
+            )
+
+            backtrack, max_rank = self.evaluate_variables_at_rank(
+                ctl,
+                rank,
+                eval_by_rank,
+                eval_by_rank_expr,
+                max_rank,
+            )
+            if backtrack:
+                return True
             rank += 1
 
         return False
+
+    def evaluate_expressions_at_rank(
+        self,
+        ctl: clingo.PropagateControl,
+        rank: int,
+        eval_by_rank_expr: dict[int, set[VariableValue]],
+        eval_by_rank: dict[int, set[VariableType]],
+        max_rank: int,
+    ) -> int:
+        """
+        Evaluate expressions at one rank and schedule their eligible owners.
+
+        Args:
+            ctl: Clingo PropagateControl object.
+            rank: The current rank to evaluate.
+            eval_by_rank_expr: Dictionary mapping ranks to sets of expressions to evaluate.
+            eval_by_rank: Dictionary mapping ranks to sets of variables to evaluate.
+            max_rank: The maximum rank encountered so far.
+
+        Returns:
+            int: The updated maximum rank.
+        """
+        if rank not in eval_by_rank_expr:
+            return max_rank
+
+        self.evaluations.update_evaluations(self.symbol2var.get_variables())
+
+        while eval_by_rank_expr[rank]:
+            expr = eval_by_rank_expr[rank].pop()
+            if not is_evaluation_possible(expr):
+                continue
+
+            expr_result = expr.evaluate(self.evaluations, ctl, self.environment)
+            if not expr_result:
+                continue
+
+            for var in self.get_expr2var(expr):
+                var.expressions_evaluated_counter += 1
+                if is_evaluation_possible(var):
+                    var_rank = self.var_ranks[var.var]
+                    eval_by_rank.setdefault(var_rank, set()).add(var)
+                    max_rank = max(max_rank, var_rank)
+
+        return max_rank
+
+    def evaluate_variables_at_rank(
+        self,
+        ctl: clingo.PropagateControl,
+        rank: int,
+        eval_by_rank: dict[int, set[VariableType]],
+        eval_by_rank_expr: dict[int, set[VariableValue]],
+        max_rank: int,
+    ) -> tuple[bool, int]:
+        """
+        Evaluate variables at one rank and schedule their dependent expressions.
+
+        Args:
+            ctl: Clingo PropagateControl object.
+            rank: The current rank to evaluate.
+            eval_by_rank: Dictionary mapping ranks to sets of variables to evaluate.
+            eval_by_rank_expr: Dictionary mapping ranks to sets of expressions to evaluate.
+            max_rank: The maximum rank encountered so far.
+
+        Returns:
+            tuple[bool, int]:
+                - True if a conflict was detected and backtracking is needed, False otherwise.
+                - The updated maximum rank.
+        """
+        if rank not in eval_by_rank:
+            return False, max_rank
+
+        while eval_by_rank[rank]:
+            var = eval_by_rank[rank].pop()
+            if not is_evaluation_possible(var):
+                continue
+
+            result = self.evaluate_variable(ctl, var)
+            if result is None:
+                return True, max_rank
+            if not result:
+                continue
+
+            for expr in self.var2expr.get(var.var, set()):
+                expr.vars_counter += 1
+                if is_evaluation_possible(expr):
+                    expr_rank = self.var_ranks_expr[expr]
+                    eval_by_rank_expr.setdefault(expr_rank, set()).add(expr)
+                    max_rank = max(max_rank, expr_rank)
+
+        return False, max_rank
 
     def evaluate_variable(self, ctl: clingo.PropagateControl, var: VariableType) -> bool | None:
         """
