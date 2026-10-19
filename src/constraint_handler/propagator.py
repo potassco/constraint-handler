@@ -1709,26 +1709,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             value = self.get_variable_value(expr, literal)
             setvar.add_value(value)
             self.register_variable_value(setvar, value)
-            self.add_literal2var(literal, setvar)
 
             self.add_watch(literal)
             self.add_watch(-literal)
-
-        domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_baseDomain)
-        for (symbol_var, domain_expr, name), _literal in domains.items():
-            try:
-                setvar: SetVariable = cast(
-                    SetVariable, self.symbol2var.get_variable(symbol_var, getattr(SetVariable, "__name__"))
-                )
-            except KeyError:
-                continue
-            value = self.get_variable_value(domain_expr, _literal)
-            setvar.add_value(value)
-            self.register_variable_value(setvar, value)
-            self.add_literal2var(_literal, setvar)
-
-            self.add_watch(_literal)
-            self.add_watch(-_literal)
 
     def get_multimap_declarations(self, ctl: clingo.PropagateInit):
         """
@@ -1761,7 +1744,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             dictvar.add_value(key_value, value)
             self.register_variable_value(dictvar, key_value)
             self.register_variable_value(dictvar, value)
-            self.add_literal2var(literal, dictvar)
 
             self.add_watch(literal)
             self.add_watch(-literal)
