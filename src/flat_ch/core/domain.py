@@ -40,7 +40,6 @@ class ProgramInputKind(IntEnum):
     OPTIMIZE_MAXIMIZE_SUM = auto()
     OPTIMIZE_PRECISION = auto()
     EXECUTION_DECLARE = auto()
-    EXECUTION_RUN = auto()
 
 
 class FlatFact(str, Enum):
@@ -277,15 +276,9 @@ class ExecutionDeclare:
     statements: tuple[ExecutionStatement, ...]
     inputs: tuple[str | Symbol, ...] = ()
     outputs: tuple[str | Symbol, ...] = ()
+    condition: Expression = IValue(Type.BOOL, True)
     label: str | None = None
     kind: ProgramInputKind = ProgramInputKind.EXECUTION_DECLARE
-
-
-@dataclass(frozen=True, slots=True)
-class ExecutionRun:
-    name: str
-    target: ScalarValue | str | None = None
-    kind: ProgramInputKind = ProgramInputKind.EXECUTION_RUN
 
 
 ProgramInput: TypeAlias = (
@@ -301,5 +294,4 @@ ProgramInput: TypeAlias = (
     | OptimizeMaximizeSum
     | OptimizePrecision
     | ExecutionDeclare
-    | ExecutionRun
 )

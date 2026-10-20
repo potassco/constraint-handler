@@ -90,26 +90,13 @@ _fch_input(optimize_precision(EXPR, all)) :- optimize_precision(EXPR).
 
 #defined execution_declare/4.
 #defined execution_declare/5.
-_fch_input(execution_declare(_fch_label, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
-_fch_input(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL).
-
-_fch_execution_decl_meta(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL).
-
-#defined execution_run/1.
-#defined execution_run/2.
-_fch_input(execution_run(_fch_label, NAME)) :- execution_run(NAME).
-_fch_input(execution_run(LABEL, NAME)) :- execution_run(NAME, LABEL).
-
-
-%
-% ?????
-%
-_fch_execution_run(NAME) :- execution_run(NAME).
-_fch_execution_run(NAME) :- execution_run(NAME, _).
-_fch_ssa(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :-
-	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL),
-	_fch_execution_run(NAME).
-
+#defined execution_declare/6.
+_fch_input(execution_declare(_fch_label, NAME, STATEMENTS, INPUT, OUTPUT, val(bool, true))) :-
+	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
+_fch_input(execution_declare(_fch_label, NAME, STATEMENTS, INPUT, OUTPUT, CONDITION)) :-
+	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, CONDITION).
+_fch_input(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT, CONDITION)) :-
+	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, CONDITION, LABEL).
 
 #defined _fch_enable_optimize_value_output/0.
 #defined optimize_value/3.
@@ -245,11 +232,6 @@ value(NAME, val(bool, VALUE)) :- value(NAME, bool, VALUE).
 value(execution_input(EXEC, VAR), VALUE) :- value((EXEC, VAR, in), VALUE).
 value(execution_output(EXEC, VAR), VALUE) :- value((EXEC, VAR, out), VALUE).
 
-value((EXEC, VAR, out), none, none) :-
-	_fch_flat(execution_output_decl(EXEC, VAR)),
-	not _fch_execution_run(EXEC),
-	not value((EXEC, VAR, out), bad).
-
 set_value(NAME, val(none, none)) :- set_member(NAME, none, none).
 set_value(NAME, val(int, VALUE)) :- set_member(NAME, int, VALUE).
 set_value(NAME, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
@@ -325,8 +307,7 @@ warning(expression(pythonError), (), (python, EXPR_ID, MESSAGE)) :-
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, pythonError(MESSAGE)).
 
 warning(variable(emptyDomain), (), NAME) :-
-	_fch_empty_var_domain(NAME),
-	not _fch_inactive_execution_output(NAME).
+	_fch_empty_var_domain(NAME).
 
 :- warning(KIND, INFO, MSG), _fch_warning_forbid(KIND), not _fch_warning_ignore(KIND).
 

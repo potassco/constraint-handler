@@ -95,11 +95,6 @@ _fch_dynamic_expr_val(ID, TYPE, VAL) :-
     _fch_var_def(NAME, EXPR_ID),
     _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL).
 
-% In CH, execution outputs of declared but inactive executions resolve to none.
-_fch_inactive_execution_output((EXEC, VAR, out)) :-
-    _fch_flat(execution_output_decl(EXEC, VAR)),
-    not _fch_execution_run(EXEC).
-
 _fch_var_has_domain(NAME) :- _fch_var_dom(NAME, _).
 
 % Declared variables without any domain entries are treated as invalid inputs,
@@ -110,22 +105,16 @@ _fch_empty_var_domain(NAME) :-
     not _fch_var_has_default(NAME),
     not _fch_var_def(NAME, _).
 
-_fch_dynamic_expr_val(ID, _fch_type_none_id, none) :-
-    _fch_expr_var(ID, NAME),
-    _fch_inactive_execution_output(NAME).
-
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, empty_domain(NAME)) :-
     _fch_expr_var(ID, NAME),
-    _fch_empty_var_domain(NAME),
-    not _fch_inactive_execution_output(NAME).
+    _fch_empty_var_domain(NAME).
 
 % Referencing a variable that has neither a declaration nor a definition is a failure.
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, undefined_variable(NAME)) :-
     _fch_expr_var(ID, NAME),
     not _fch_var_decl(NAME),
     not _fch_var_has_definition(NAME),
-    not _fch_set_decl(NAME),
-	not _fch_inactive_execution_output(NAME).
+    not _fch_set_decl(NAME).
 
 _fch_var_has_definition(NAME) :- _fch_var_def(NAME, _, _).
 

@@ -18,13 +18,14 @@
 % But right now I try to eliminate them via SSA.
 % =============================================================================
 #defined execution_declare/4.
-#defined execution_run/1.
+#defined execution_declare/5.
+#defined execution_declare/6.
 _fch_input(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT)) :-
     execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
-_fch_input(execution_run(NAME)) :- execution_run(NAME).
-_fch_execution_run(NAME) :- execution_run(NAME).
-_fch_ssa(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT)) :-
-        execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
+_fch_input(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, CONDITION)) :-
+    execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, CONDITION).
+_fch_input(execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, CONDITION, LABEL)) :-
+    execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, CONDITION, LABEL).
 
 % =============================================================================
 % INPUT

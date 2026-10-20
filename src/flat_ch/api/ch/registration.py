@@ -12,7 +12,6 @@ from flat_ch.core.domain import (
     EnsureConstraint,
     EvaluateInput,
     ExecutionDeclare,
-    ExecutionRun,
     ExecutionStatement,
     Expression,
     IAssertStatement,
@@ -60,7 +59,6 @@ class Registration(BaseRegistration):
             UserInput.OPTIMIZE_SUM.value: self._handle_optimize_sum,
             UserInput.OPTIMIZE_PRECISION.value: self._handle_optimize_precision,
             UserInput.EXECUTION_DECLARE.value: self._handle_execution_declare,
-            UserInput.EXECUTION_RUN.value: self._handle_execution_run,
             UserInput.SET_DECLARE.value: self._handle_set_declare,
             UserInput.SET_BASE_DOMAIN.value: self._handle_set_base_domain,
             UserInput.SET_ASSIGN.value: self._handle_set_assign,
@@ -195,6 +193,7 @@ class Registration(BaseRegistration):
         label = self.to_str(args[0])
         inputs = tuple(self.unnest(args[3]))
         outputs = tuple(self.unnest(args[4]))
+        condition = self.parse_expression(args[5])
 
         self.reg.add_execution(
             ExecutionDeclare(
@@ -202,6 +201,7 @@ class Registration(BaseRegistration):
                 self._parse_execution_statement(args[2]),
                 inputs,
                 outputs,
+                condition=condition,
                 label=label,
             )
         )
@@ -257,10 +257,6 @@ class Registration(BaseRegistration):
         if len(args) == 1 and args[0].type == clingo.SymbolType.String:
             return [IPythonStatement(code=args[0].string)]
         raise ValueError(f"Invalid statement_python format: {args}")
-
-    def _handle_execution_run(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 2:
-            self.reg.sequential_inputs.append(ExecutionRun(self.to_str(args[0]), self.scalar_value(args[1])))
 
     def _handle_set_declare(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 2:
