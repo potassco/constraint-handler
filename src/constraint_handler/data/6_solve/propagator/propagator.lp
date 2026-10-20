@@ -22,7 +22,10 @@ order(CNAME,X,E,IDX) :- _passed(propagator,CNAME,variable_domain(X,E)), IDX = @o
 active(CNAME,X,IDX-1) :- order(CNAME,X,E,IDX), propagator_variable_domain(X,E,CNAME), IDX > 0.
 active(CNAME,X,N-1) :- active(CNAME,X,N), N > 0.
 
-propagator_ensure(operation(neq,(variable(X),(E,()))),CNAME) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
+_propagator_ensure(operation(neq,(variable(X),(E,()))),CNAME) :- _passed(propagator,CNAME,variable_domain(X,E)), active(CNAME,X,IDX), order(CNAME,X,E,IDX).
+
+_bool_evaluate(E,LBL) :- _propagator_ensure(E,LBL).
+:- _propagator_ensure(E,LBL), not _bool_evaluated(E,val(bool,true)), not _bool_evaluated(E,bad).
 
 propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_assign(X,E)).
 %_passed(propagator,CNAME,variable_domain(X,E)) :- _passed(propagator,CNAME,variable_choice(X,E)).
