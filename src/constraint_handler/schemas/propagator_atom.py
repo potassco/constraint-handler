@@ -47,6 +47,7 @@ class Propagator_set_declare(NamedTuple):
 class Propagator_set_assign(NamedTuple):
     name: expression.constant
     member: expression.Expr
+    condition: expression.Expr
     label: expression.constant
 
 

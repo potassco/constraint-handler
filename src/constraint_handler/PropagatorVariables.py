@@ -1594,7 +1594,10 @@ class SetVariableValue:
 
     def __init__(self) -> None:
         """Initialize a SetVariableValue."""
-        self.expressions: set[VariableValue] = set()
+
+        # Set of pairs (value, condition_value) representing possible values and their conditions.
+        # A None condition is treated as always true, meaning the value is always added to the set.
+        self.expressions_pairs: set[tuple[VariableValue, VariableValue | None]] = set()
 
     def has_domain(self) -> bool:
         """
@@ -1603,16 +1606,16 @@ class SetVariableValue:
         Returns:
             bool: True if any value expression exists.
         """
-        return len(self.expressions) > 0
+        return len(self.expressions_pairs) > 0
 
-    def add_value(self, value: VariableValue) -> None:
+    def add_value(self, value: VariableValue, condition_value: VariableValue | None = None) -> None:
         """
         Add a candidate value to the set.
 
         Args:
             value: Interned expression for a set element.
         """
-        self.expressions.add(value)
+        self.expressions_pairs.add((value, condition_value))
 
     def get_errors(self) -> propagator_warning_t:
         """
@@ -1622,8 +1625,10 @@ class SetVariableValue:
             propagator_warning_t: List of warnings.
         """
         errors: propagator_warning_t = []
-        for var_value in self.expressions:
+        for var_value, condition_value in self.expressions_pairs:
             errors.extend(var_value.get_errors())
+            if condition_value is not None:
+                errors.extend(condition_value.get_errors())
         return errors
 
     def get_literals(self, active: bool) -> set[int]:
@@ -1637,11 +1642,15 @@ class SetVariableValue:
             set[int]: Set of literals.
         """
         lits: set[int] = set()
-        for value in self.expressions:
+        for value, condition_value in self.expressions_pairs:
             if active:
                 lits.update(value.active_literals)
+                if condition_value is not None:
+                    lits.update(condition_value.active_literals)
             else:
                 lits.update(value.literals)
+                if condition_value is not None:
+                    lits.update(condition_value.literals)
         return lits
 
     @property
@@ -1664,6 +1673,21 @@ class SetVariableValue:
         """
         return self.get_literals(active=True)
 
+    @property
+    def expressions(self) -> set[VariableValue]:
+        """
+        Return all value expressions in the set variable.
+
+        Returns:
+            set[VariableValue]: Set of value expressions.
+        """
+        exprs = set()
+        for value, condition_value in self.expressions_pairs:
+            exprs.add(value)
+            if condition_value is not None:
+                exprs.add(condition_value)
+        return exprs
+
     def get_value(self) -> ValueStatus | frozenset[Any]:
         """
         If there is an unassigned value, return ValueStatus.NOT_SET.
@@ -1675,7 +1699,14 @@ class SetVariableValue:
         if self.has_unassigned():
             return ValueStatus.NOT_SET
         # Note that we let None be a part of the set!
-        return frozenset(arg.value for arg in self.expressions if arg.value != ValueStatus.ASSIGNMENT_IS_FALSE)
+        # We add the value to the set if condition does not exist
+        # (applicable for dicts or other engine set vars that do not have condition for adding) or it is True
+        return frozenset(
+            arg.value
+            for arg, condition_value in self.expressions_pairs
+            if arg.value != ValueStatus.ASSIGNMENT_IS_FALSE
+            and (condition_value is None or condition_value.value == True)
+        )
 
     def has_unassigned(self) -> bool:
         """
@@ -1694,8 +1725,10 @@ class SetVariableValue:
             set[clingo.Symbol]: Referenced variables.
         """
         vars = set()
-        for arg in self.expressions:
+        for arg, condition_value in self.expressions_pairs:
             vars.update(arg.vars())
+            if condition_value is not None:
+                vars.update(condition_value.vars())
         return vars
 
     def reset(self, dl: int) -> None:
@@ -1705,19 +1738,21 @@ class SetVariableValue:
         Args:
             dl: Decision level threshold.
         """
-        for arg in self.expressions:
+        for arg, condition_value in self.expressions_pairs:
             arg.reset(dl)
+            if condition_value is not None:
+                condition_value.reset(dl)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, SetVariableValue):
             return False
-        return self.expressions == other.expressions
+        return self.expressions_pairs == other.expressions_pairs
 
     def __hash__(self) -> int:
-        return hash(frozenset(self.expressions))
+        return hash(frozenset(self.expressions_pairs))
 
     def __str__(self) -> str:
-        return f"SetVariableValue({self.expressions})"
+        return f"SetVariableValue({self.expressions_pairs})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -1796,17 +1831,25 @@ class SetVariable:
         """
         return self.set_expressions.has_domain()
 
-    def add_value(self, value: VariableValue) -> None:
+    def add_value(self, value: VariableValue, condition_value: VariableValue | None) -> None:
         """
-        Add a potential value expression to the set.
+        Add a potential value expression with its associated condition to the set.
 
         Args:
             value: Interned expression for one possible set element.
+            condition_value: Interned expression representing the condition under which the value is added to the set. If None, the value is always added.
         """
-        if value in self.expressions:
+        if (value, condition_value) in self.expressions:
             return
-        self.set_expressions.add_value(value)
-        self.expressions_count += 1
+        if value not in self.set_expressions.expressions:
+            self.expressions_count += 1
+        if (
+            condition_value is not None
+            and value != condition_value
+            and condition_value not in self.set_expressions.expressions
+        ):
+            self.expressions_count += 1
+        self.set_expressions.add_value(value, condition_value)
 
     def get_errors(self) -> propagator_warning_t:
         """
@@ -1910,7 +1953,7 @@ class SetVariable:
         deps = list(self.vars())
 
         expr_values: dict[VariableValue, set[Any]] = {}
-        for var_value in self.set_expressions.expressions:
+        for var_value, condition_value in self.set_expressions.expressions_pairs:
             expr_values[var_value] = set()
             if var_value.literal != 1:
                 expr_values[var_value].add(ValueStatus.ASSIGNMENT_IS_FALSE)
@@ -1925,11 +1968,13 @@ class SetVariable:
             # and delete the special empty value
             evaluations = dict(zip(deps, values))
 
-            for var_value in self.set_expressions.expressions:
+            for var_value, condition_value in self.set_expressions.expressions_pairs:
                 val, _errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
                 expr_values[var_value].add(val)
 
-        for possible_val in product(*(expr_values[var_value] for var_value in self.set_expressions.expressions)):
+        for possible_val in product(
+            *(expr_values[var_value] for var_value, condition_value in self.set_expressions.expressions_pairs)
+        ):
             possible_val_set = set(possible_val)
             possible_val_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
             possible_values.add(frozenset(possible_val_set))
@@ -1967,13 +2012,15 @@ class SetVariable:
             evaluations = dict(zip(deps, values))
 
             expr_values: dict[VariableValue, set[Any]] = {}
-            for var_value in self.set_expressions.expressions:
+            for var_value, condition_value in self.set_expressions.expressions_pairs:
                 if var_value.literal != 1:
                     expr_values.setdefault(var_value, set()).add(ValueStatus.ASSIGNMENT_IS_FALSE)
 
                 val, _errors = evaluator.evaluate_expr(var_value.expr, env, evaluations)
                 expr_values.setdefault(var_value, set()).add(val)
-            for possible_val in product(*(expr_values[var_value] for var_value in self.set_expressions.expressions)):
+            for possible_val in product(
+                *(expr_values[var_value] for var_value, condition_value in self.set_expressions.expressions_pairs)
+            ):
                 possible_val_set = set(possible_val)
                 possible_val_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
 
@@ -2032,8 +2079,6 @@ class SetVariable:
             self.value = ValueStatus.ASSIGNMENT_IS_FALSE
             self.decision_level = ctl.assignment.decision_level
             return EvaluationResult.CHANGED
-
-        # changed = self.set_expressions.evaluate(evaluations, ctl, env)
 
         if not self.has_unassigned():
             self.value = self.set_expressions.get_value()
@@ -2377,7 +2422,7 @@ class DictVariable:
             possible_values_for_key: set[tuple[Any, frozenset[Any]]] = set()
             expr_values: dict[VariableValue, set[Any]] = {}
 
-            for mm_val in value.expressions:
+            for mm_val in value.expressions_pairs:
                 val = evaluator.evaluate_expr(mm_val.expr, env, evaluations)[0]
                 expr_values.setdefault(mm_val, set()).add(val)
                 self.val_expr2values.setdefault(mm_val, set()).add(val)
@@ -2385,7 +2430,7 @@ class DictVariable:
                 if mm_val.literal != 1:
                     expr_values.setdefault(mm_val, set()).add(ValueStatus.ASSIGNMENT_IS_FALSE)
 
-            for possible_mm_vals in product(*(expr_values[mm_val] for mm_val in value.expressions)):
+            for possible_mm_vals in product(*(expr_values[mm_val] for mm_val in value.expressions_pairs)):
                 possible_mm_vals_set = set(possible_mm_vals)
                 possible_mm_vals_set.discard(ValueStatus.ASSIGNMENT_IS_FALSE)
                 possible_values_for_key.add((key_val, frozenset(possible_mm_vals_set)))

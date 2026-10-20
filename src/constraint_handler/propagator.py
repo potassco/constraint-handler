@@ -1468,11 +1468,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             expr: expression.Expr = val_set.expr if isinstance(val_set, internal.Ref) else val_set
 
             value = self.get_variable_value(expr, _literal)
-            set_variable.add_value(value)
+            set_variable.add_value(value, None)
             self.register_variable_value(set_variable, value)
             self.add_watch(_literal)
             self.add_watch(-_literal)
-            self.add_literal2var(_literal, self.symbol2var.get_variable(_name, SetVariable.__name__))
 
         for (name, key, val), _literal in multimap_value_atoms.items():
             if name not in self.symbol2var:
@@ -1699,14 +1698,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.add_watch(-literal)
 
         assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_assign)
-        for (symbol_var, expr, name), literal in assigns.items():
+        for (symbol_var, expr, condition, name), literal in assigns.items():
             try:
                 setvar: SetVariable = cast(SetVariable, self.symbol2var.get_variable(symbol_var, SetVariable.__name__))
             except KeyError:
                 continue
+            condition_value = self.get_variable_value(condition, literal)
             value = self.get_variable_value(expr, literal)
-            setvar.add_value(value)
+            setvar.add_value(value, condition_value)
             self.register_variable_value(setvar, value)
+            self.register_variable_value(setvar, condition_value)
 
             self.add_watch(literal)
             self.add_watch(-literal)
