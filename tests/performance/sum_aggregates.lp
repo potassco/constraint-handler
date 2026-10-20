@@ -67,6 +67,7 @@ variable_define(
             )
         )
     ),
+    val(bool,true),
     d_sum
 ).
 
