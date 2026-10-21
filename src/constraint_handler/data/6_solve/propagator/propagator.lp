@@ -37,8 +37,7 @@ _bool_evaluate(C,CNAME) :- _passed(propagator,CNAME,variable_define(X,E,C)), C !
 propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_define(X,E,C)), _bool_evaluated(C,val(bool,true)).
 
 propagator_set_declare(X,CNAME) :- _passed(propagator,CNAME,variable_declare(X,set)).
-_bool_evaluate(C,LBL) :- _passed(propagator,LBL,set_assign(X,E,C)).
-propagator_set_assign(X,E,LBL) :- _passed(propagator,LBL,set_assign(X,E,C)), _bool_evaluated(C,val(bool,true)).
+propagator_set_assign(X,E,C,LBL) :- _passed(propagator,LBL,set_assign(X,E,C)).
 
 propagator_multimap_assign(X,K,V,LBL) :- _passed(propagator,LBL,multimap_assign(X,K,V)).
 propagator_multimap_declare(X,LBL) :- _passed(propagator,LBL,variable_declare(X,multimap)).

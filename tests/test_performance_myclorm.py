@@ -116,7 +116,10 @@ propagator_init = BenchmarkPropagateInit(
             BenchmarkSymbolicAtom(
                 myClorm.pytocl(
                     propagator_atom.Propagator_set_assign(
-                        clingo.Function(f"set_{index}"), make_expression(index), clingo.Function("benchmark")
+                        clingo.Function(f"set_{index}"),
+                        make_expression(index),
+                        expression.Val(type_.BaseType.bool, True),
+                        clingo.Function("benchmark"),
                     )
                 ),
                 index * 7 + 6,
