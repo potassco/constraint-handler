@@ -14,6 +14,7 @@ _ge_set_declare(X) :- _passed(ground,LBL,variable_declare(X,set)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 
 ge_value(X,V) :- _ge_assign(X,EXPR), ge_result(EXPR,V).
+ge_value(X,bad) :- _ge_assign(X,EXPR), _se_value(EXPR,bad).
 
 _expression(ground,EXPR) :- _ge_assign(X,EXPR).
 

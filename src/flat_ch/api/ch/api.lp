@@ -280,9 +280,13 @@ value(NAME, bad) :-
 	_fch_dynamic_var_def(NAME, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
 
+value(NAME, bad) :- _fch_empty_var_domain(NAME).
+
 _fch_execution_input_declared(EXEC, VAR) :- _fch_flat(var_decl((EXEC, VAR, in))).
 _fch_execution_input_defined(EXEC, VAR) :- _fch_flat(var_def((EXEC, VAR, in), _)).
-_fch_execution_input_has_domain(EXEC, VAR) :- _fch_flat(var_dom((EXEC, VAR, in), _, _)).
+_fch_execution_input_has_domain(EXEC, VAR) :-
+	_fch_var_dom((EXEC, VAR, in), _, COND_EXPR_ID),
+	_fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
 
 value((EXEC, VAR, in), bad) :-
 	_fch_flat(execution_input_decl(EXEC, VAR)),

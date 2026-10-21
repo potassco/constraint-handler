@@ -42,7 +42,7 @@ _fch_var_def(NAME, EXPR_ID) :-
 % (e.g. variable_assign) skip domain choice entirely.
 1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
     _fch_var_decl(NAME),
-    _fch_var_dom(NAME, _, _),
+	_fch_var_has_domain(NAME),
     not _fch_var_def(NAME, _),
     not _fch_var_has_default(NAME).
 
