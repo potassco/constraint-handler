@@ -83,8 +83,8 @@ _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.SET_BASE_DOMAIN: ("NAME", "EXPR_ID"),
     FlatFact.SET_ASSIGN: ("NAME", "EXPR_ID"),
     FlatFact.PAIR: ("ID", "KEY_EXPR_ID", "VALUE_EXPR_ID"),
-    FlatFact.OPTIMIZE_SUM: ("ID", "ELEM", "PRIO"),
-    FlatFact.OPTIMIZE_LABEL: ("LABEL", "EXPR_ID", "PRIO"),
+    FlatFact.OPTIMIZE_SUM: ("ID", "ELEM", "PRIO", "COND_EXPR_ID"),
+    FlatFact.OPTIMIZE_LABEL: ("LABEL", "EXPR_ID", "PRIO", "COND_EXPR_ID"),
     FlatFact.OPTIMIZE_PRECISION: ("EXPR_ID", "PRIO"),
 }
 
@@ -260,6 +260,7 @@ class OptimizeMaximizeSum:
     element: str | Symbol
     priority: int
     label: str | Symbol | None = None
+    condition: Expression = IValue(Type.BOOL, True)
     kind: ProgramInputKind = ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM
 
 

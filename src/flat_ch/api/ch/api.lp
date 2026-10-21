@@ -79,9 +79,11 @@ _fch_input(set_assign(LABEL, NAME, EXPR)) :- set_assign(NAME, EXPR, LABEL).
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
-_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, 0)) :- optimize_maximizeSum(EXPR, ELEMENT).
-_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, PRIORITY)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY).
-_fch_input(optimize_maximizeSum(LABEL, EXPR, ELEMENT, PRIORITY)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY, LABEL).
+#defined optimize_maximizeSum/5.
+_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, 0, val(bool, true))) :- optimize_maximizeSum(EXPR, ELEMENT).
+_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, PRIORITY, val(bool, true))) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY).
+_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, PRIORITY, CONDITION)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY, CONDITION).
+_fch_input(optimize_maximizeSum(LABEL, EXPR, ELEMENT, PRIORITY, CONDITION)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY, CONDITION, LABEL).
 
 #defined optimize_precision/1.
 #defined optimize_precision/2.
@@ -101,7 +103,7 @@ _fch_input(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT, CONDITION))
 #defined _fch_enable_optimize_value_output/0.
 #defined optimize_value/3.
 
-_fch_optimize_label(LABEL, EXPR_ID, PRIORITY) :- _fch_flat(optimize_label(LABEL, EXPR_ID, PRIORITY)).
+_fch_optimize_label(LABEL, EXPR_ID, PRIORITY, CONDITION) :- _fch_flat(optimize_label(LABEL, EXPR_ID, PRIORITY, CONDITION)).
 
 %
 % ?????
@@ -312,7 +314,7 @@ warning(variable(emptyDomain), (), NAME) :-
 :- warning(KIND, INFO, MSG), _fch_warning_forbid(KIND), not _fch_warning_ignore(KIND).
 
 blabla(LABEL, PRIORITY) :-
-	_fch_optimize_label(LABEL, EXPR_ID, PRIORITY),
+	_fch_optimize_label(LABEL, EXPR_ID, PRIORITY, _),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_float_id, _).
 
 % _fch_optimize_value_is_float(LABEL, PRIORITY) :-

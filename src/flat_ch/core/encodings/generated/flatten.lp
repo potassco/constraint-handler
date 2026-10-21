@@ -27,8 +27,8 @@ _fch_bool_evaluate(EXPR, EXPR_ID) :- _fch_flat(bool_evaluate(EXPR, EXPR_ID)).
 _fch_set_decl(NAME) :- _fch_flat(set_decl(NAME)).
 _fch_set_base_domain(NAME, EXPR_ID) :- _fch_flat(set_base_domain(NAME, EXPR_ID)).
 _fch_set_assign(NAME, EXPR_ID) :- _fch_flat(set_assign(NAME, EXPR_ID)).
-_fch_optimize_sum(ID, ELEM, PRIO) :- _fch_flat(optimize_sum(ID, ELEM, PRIO)).
-_fch_optimize_label(LABEL, EXPR_ID, PRIO) :- _fch_flat(optimize_label(LABEL, EXPR_ID, PRIO)).
+_fch_optimize_sum(ID, ELEM, PRIO, COND_EXPR_ID) :- _fch_flat(optimize_sum(ID, ELEM, PRIO, COND_EXPR_ID)).
+_fch_optimize_label(LABEL, EXPR_ID, PRIO, COND_EXPR_ID) :- _fch_flat(optimize_label(LABEL, EXPR_ID, PRIO, COND_EXPR_ID)).
 _fch_optimize_precision(EXPR_ID, PRIO) :- _fch_flat(optimize_precision(EXPR_ID, PRIO)).
 _fch_pair(ID, KEY_EXPR_ID, VALUE_EXPR_ID) :- _fch_flat(pair(ID, KEY_EXPR_ID, VALUE_EXPR_ID)).
 

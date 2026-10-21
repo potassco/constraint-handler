@@ -187,10 +187,11 @@ class Flattener:
             case ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM:
                 opt_sum: OptimizeMaximizeSum = node  # type: ignore
                 expr_id = self._intern_expr(opt_sum.expression)
+                condition_id = self._intern_expr(opt_sum.condition)
                 self.interned_program.append(
                     (
                         ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM,
-                        (expr_id, opt_sum.element, opt_sum.priority, opt_sum.label),
+                        (expr_id, opt_sum.element, opt_sum.priority, opt_sum.label, condition_id),
                     )
                 )
 
@@ -572,7 +573,7 @@ class Flattener:
                 self._emit_fact(Function(fact_name, fact_args))
 
             case ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM:
-                expr_id, elem, prio, label = payload
+                expr_id, elem, prio, label, condition_id = payload
                 elem_sym = elem if isinstance(elem, Symbol) else Function(elem, [])
                 label_sym = (
                     label
@@ -582,13 +583,13 @@ class Flattener:
                 self._emit_fact(
                     Function(
                         FlatFact.OPTIMIZE_SUM.value,
-                        [Number(expr_id), elem_sym, Number(prio)],
+                        [Number(expr_id), elem_sym, Number(prio), Number(condition_id)],
                     )
                 )
                 self._emit_fact(
                     Function(
                         FlatFact.OPTIMIZE_LABEL.value,
-                        [label_sym, Number(expr_id), Number(prio)],
+                        [label_sym, Number(expr_id), Number(prio), Number(condition_id)],
                     )
                 )
 

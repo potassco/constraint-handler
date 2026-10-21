@@ -12,12 +12,13 @@ def _output_label(label: clingo.Symbol) -> clingo.Symbol:
 
 class OptimizationScore:
     def __init__(self, control: clingo.Control) -> None:
-        self._labels: list[tuple[clingo.Symbol, clingo.Symbol, clingo.Symbol]] = []
-        for atom in control.symbolic_atoms.by_signature("_fch_optimize_label", 3):
+        self._labels: list[tuple[clingo.Symbol, clingo.Symbol, clingo.Symbol, clingo.Symbol]] = []
+        for atom in control.symbolic_atoms.by_signature("_fch_optimize_label", 4):
             args = atom.symbol.arguments
-            self._labels.append((args[0], args[1], args[2]))
-        expression_ids = {expr_id for _, expr_id, _ in self._labels}
-        priorities = {priority for _, _, priority in self._labels}
+            self._labels.append((args[0], args[1], args[2], args[3]))
+        expression_ids = {expression_id for _, expression_id, _, _ in self._labels}
+        expression_ids.update(condition_id for _, _, _, condition_id in self._labels)
+        priorities = {priority for _, _, priority, _ in self._labels}
 
         self._dynamic_val_atoms: dict[clingo.Symbol, list[tuple[int, clingo.Symbol, clingo.Symbol]]] = {}
         for atom in control.symbolic_atoms.by_signature("_fch_dynamic_expr_val", 3):
@@ -55,10 +56,10 @@ class OptimizationScore:
         bool_type_sym = clingo.Number(Type.BOOL.value)
         float_type_sym = clingo.Number(Type.FLOAT.value)
 
-        for label, expr_id, priority in self._labels:
+        for label, expr_id, priority, condition_id in self._labels:
             key = (label, priority)
             dynamic_value = dynamic_types.get(expr_id)
-            if dynamic_value is None:
+            if dynamic_value is None or dynamic_types.get(condition_id) != (bool_type_sym, clingo.Function("true", [])):
                 continue
             type_id, value = dynamic_value
             precision = precisions.get(priority, 1)

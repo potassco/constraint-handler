@@ -130,7 +130,10 @@ _fch_dynamic_expr_needed(EXPR_ID) :-
     _fch_ensure(_, EXPR_ID).
 
 _fch_dynamic_expr_needed(EXPR_ID) :-
-    _fch_optimize_sum(EXPR_ID, _, _).
+    _fch_optimize_sum(EXPR_ID, _, _, _).
+
+_fch_dynamic_expr_needed(COND_EXPR_ID) :-
+    _fch_optimize_sum(_, _, _, COND_EXPR_ID).
 
 _fch_dynamic_expr_needed(CHILD_ID) :-
     _fch_dynamic_expr_needed(PARENT_ID),
@@ -220,7 +223,7 @@ _fch_python_error(ID) :-
 % =============================================================================
 
 _fch_optimize_priority(Level) :-
-    _fch_optimize_sum(_, _, Level).
+    _fch_optimize_sum(_, _, Level, _).
 
 _fch_optimize_precision_value(Level, Precision) :-
     _fch_optimize_precision(ExprId, Level),
@@ -240,30 +243,38 @@ _fch_optimize_precision_value(Level, 1) :-
 _fch_has_optimize_precision(Level) :- _fch_optimize_precision(_, Level).
 _fch_has_global_optimize_precision :- _fch_optimize_precision(_, all).
 
-_fch_optimize_weight_by_expr(ExprId, Level, Value) :-
-    _fch_optimize_sum(ExprId, Key, Level),
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, Value) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, true),
     _fch_optimize_precision_value(Level, Precision),
     _fch_dynamic_expr_val(ExprId, _fch_type_int_id, BaseValue),
     Value = BaseValue * Precision.
 
-_fch_optimize_weight_by_expr(ExprId, Level, Value) :-
-    _fch_optimize_sum(ExprId, Key, Level),
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, Value) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, true),
     _fch_optimize_precision_value(Level, Precision),
     _fch_dynamic_expr_val(ExprId, _fch_type_bool_id, true),
     Value = Precision.
 
-_fch_optimize_weight_by_expr(ExprId, Level, 0) :-
-    _fch_optimize_sum(ExprId, Key, Level),
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, 0) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, true),
     _fch_dynamic_expr_val(ExprId, _fch_type_bool_id, false).
 
-_fch_optimize_weight_by_expr(ExprId, Level, IntValue) :-
-    _fch_optimize_sum(ExprId, Key, Level),
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, 0) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, false).
+
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, IntValue) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, true),
     _fch_optimize_precision_value(Level, Precision),
     _fch_dynamic_expr_val(ExprId, _fch_type_float_id, FloatValue),
     IntValue = @fch_scaled_float_to_int(FloatValue, Precision).
 
 _fch_optimize_weight(Key, Level, Value) :-
-	_fch_optimize_sum(ExprId, Key, Level),
-	_fch_optimize_weight_by_expr(ExprId, Level, Value).
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_optimize_weight_by_expr(ExprId, CondExprId, Level, Value).
 
 #maximize { Value@Level, Key : _fch_optimize_weight(Key, Level, Value) }.

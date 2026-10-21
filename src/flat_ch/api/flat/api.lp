@@ -161,7 +161,9 @@ _fch_input(set_assign(NAME, EXPR))       :- set_assign(NAME, EXPR).
 
 
 #defined optimize_maximizeSum/3.
-_fch_input(optimize_maximizeSum(EXPR,ELEMENT,PRIORITY)) :- optimize_maximizeSum(EXPR,ELEMENT,PRIORITY).
+#defined optimize_maximizeSum/4.
+_fch_input(optimize_maximizeSum(EXPR,ELEMENT,PRIORITY,val(bool, true))) :- optimize_maximizeSum(EXPR,ELEMENT,PRIORITY).
+_fch_input(optimize_maximizeSum(EXPR,ELEMENT,PRIORITY,CONDITION)) :- optimize_maximizeSum(EXPR,ELEMENT,PRIORITY,CONDITION).
 
 #defined optimize_precision/1.
 #defined optimize_precision/2.

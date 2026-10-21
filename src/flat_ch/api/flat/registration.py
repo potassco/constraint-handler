@@ -181,9 +181,14 @@ class Registration(BaseRegistration):
                 self.reg.update_set(self.to_str(args[0]), base_domain=(self.parse_expression(args[1]),))
             case self._ui_set_assign if args_len == 2:
                 self.reg.update_set(self.to_str(args[0]), assignment=(self.parse_expression(args[1]),))
-            case self._ui_opt_sum if args_len == 3:
+            case self._ui_opt_sum if args_len == 4:
                 self.reg.sequential_inputs.append(
-                    OptimizeMaximizeSum(self.parse_expression(args[0]), self.to_str(args[1]), int(args[2].number))
+                    OptimizeMaximizeSum(
+                        self.parse_expression(args[0]),
+                        self.to_str(args[1]),
+                        int(args[2].number),
+                        condition=self.parse_expression(args[3]),
+                    )
                 )
             case self._ui_opt_prec if args_len == 1:
                 self.reg.sequential_inputs.append(OptimizePrecision(self.parse_expression(args[0])))
