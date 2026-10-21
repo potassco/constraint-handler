@@ -4,7 +4,7 @@ import sys
 from abc import abstractmethod
 from collections.abc import Iterable
 from itertools import product
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 import clingo
 
@@ -140,9 +140,6 @@ class VariableType(Protocol):
 
     @abstractmethod
     def infer(self) -> set[int]: ...
-
-    @abstractmethod
-    def add_self_to_evaluations(self, e: Evaluations) -> None: ...
 
 
 class VariableManager:
@@ -951,16 +948,6 @@ class EnsureVariable:
 
         return set()
 
-    def add_self_to_evaluations(self, e: Evaluations) -> None:
-        """
-        Does nothing, as ensure variables are not added to the evaluation dictionary.
-        This is here for compatibility with the VariableType protocol.
-
-        Args:
-            e: Evaluations object to update.
-        """
-        return
-
     def __hash__(self):
         return hash((self.name, self.expression))
 
@@ -1164,15 +1151,6 @@ class BoolEvaluateVariable:
             int: Decision level of the variable.
         """
         return self.expression.decision_level
-
-    def add_self_to_evaluations(self, e: Evaluations) -> None:
-        """
-        This variable is not added to the evaluation dictionary
-
-        Args:
-            e: Evaluations object to update.
-        """
-        return
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Variable):
@@ -1552,22 +1530,6 @@ class Variable:
             set[int]: Empty set (no inferences).
         """
         return set()
-
-    def add_self_to_evaluations(self, e: Evaluations) -> None:
-        """
-        Add this variable's value to the evaluation dictionary.
-
-        Args:
-            e: Evaluations object to update.
-        """
-        value = self.get_value()
-        if value == ValueStatus.NOT_SET:
-            return
-        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            e.false_assignments.append(self.var)  # type: ignore
-            return
-
-        e.evaluations[self.var] = value
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Variable):
@@ -2122,22 +2084,6 @@ class SetVariable:
 
         return set()
 
-    def add_self_to_evaluations(self, e: Evaluations) -> None:
-        """
-        Add this variable's value into an output dictionary.
-
-        Args:
-            e: Evaluations object to update.
-        """
-        value = self.get_value()
-        if value == ValueStatus.NOT_SET:
-            return
-        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            e.false_assignments.append(self.var)  # type: ignore
-            return
-
-        e.evaluations[self.var] = value
-
     def __eq__(self, value) -> bool:
         if not isinstance(value, SetVariable):
             return False
@@ -2553,22 +2499,6 @@ class DictVariable:
 
         return set()
 
-    def add_self_to_evaluations(self, e: Evaluations) -> None:
-        """
-        Add this variable's value into the given Evaluations object.
-
-        Args:
-            e: Evaluations object to update.
-        """
-        value = self.get_value()
-        if value == ValueStatus.NOT_SET:
-            return
-        elif value == ValueStatus.ASSIGNMENT_IS_FALSE:
-            e.false_assignments.append(self.var)  # type: ignore
-            return
-
-        e.evaluations[self.var] = value
-
     def __eq__(self, other) -> bool:
         if not isinstance(other, DictVariable):
             return False
@@ -2947,23 +2877,45 @@ class Evaluations:
         for var in variables:
             self.existing_vars[var.var] = self.existing_vars.get(var.var, 0) + 1
 
-    def update_evaluations(
-        self,
-        variables: Iterable[VariableType],
-    ) -> None:
-        """Build a plain Python dictionary from a collection of variables.
-
-        The resulting dictionary maps each variable symbol to its evaluated value.
-        Variables that are assigned false are listed under the `FALSE_ASSIGNMENTS` key.
+    def add_var_to_evaluations(self, variable: VariableType) -> None:
+        """
+        Add a value-bearing variable's value to this evaluation context.
 
         Args:
-            variables: Iterable of variables to export. Variables must implement the `add_self_to_evaluations` method!
-
+            variable: The variable to add.
         """
-        self.evaluations.clear()
-        self.false_assignments.clear()
-        for var in variables:
-            var.add_self_to_evaluations(self)
+        if isinstance(variable, (EnsureVariable, BoolEvaluateVariable)):
+            return
+
+        value = variable.get_value()
+        if value == ValueStatus.NOT_SET:
+            return
+        if value == ValueStatus.ASSIGNMENT_IS_FALSE:
+            self.false_assignments.append(variable.var)
+            return
+
+        self.evaluations[variable.var] = value
+
+    def remove_var_from_evaluations(self, variable: VariableType) -> None:
+        """
+        Remove a value-bearing variable's contribution from this context.
+
+        Args:
+            variable: The variable to remove.
+        """
+        if isinstance(variable, (EnsureVariable, BoolEvaluateVariable)):
+            return
+
+        res = self.evaluations.pop(variable.var, None)
+
+        if res is not None:
+            return
+
+        try:
+            self.false_assignments.remove(variable.var)
+            return
+        except ValueError:
+            pass
 
     def var_usable(self, var: clingo.Symbol) -> bool:
         """
@@ -2987,15 +2939,13 @@ class Evaluations:
             appearances += 1
         if var in self.false_assignments:
             appearances += 1
-        if appearances == self.existing_vars[var]:
-            return True
-        return False
+        return appearances == self.existing_vars[var]
 
 
-type VariableTypeNames = (
-    Literal[getattr(Variable, "__name__")]
-    | Literal[getattr(EnsureVariable, "__name__")]
-    | Literal[getattr(SetVariable, "__name__")]
-    | Literal[getattr(DictVariable, "__name__")]
-    | Literal[getattr(BoolEvaluateVariable, "__name__")]
-)
+type VariableTypeNames = Literal[
+    Variable.__name__,  # ty: ignore[invalid-type-form]
+    EnsureVariable.__name__,  # ty: ignore[invalid-type-form]
+    SetVariable.__name__,  # ty: ignore[invalid-type-form]
+    DictVariable.__name__,  # ty: ignore[invalid-type-form]
+    BoolEvaluateVariable.__name__,  # ty: ignore[invalid-type-form]
+]
