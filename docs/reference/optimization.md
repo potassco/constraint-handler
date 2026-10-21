@@ -11,12 +11,14 @@ The optimization module supports maximizing the sum of a set of [Expressions]. T
 The predicate is available in the following forms:
 
 ```prolog
+optimize_maximizeSum(Expression).
 optimize_maximizeSum(Expression, Id).
 optimize_maximizeSum(Expression, Id, Priority).
-optimize_maximizeSum(Expression, Id, Priority, Label).
+optimize_maximizeSum(Expression, Id, Priority, Condition).
+optimize_maximizeSum(Expression, Id, Priority, Condition, Label).
 ```
 
-The shorter forms are shorthands. The `optimize_maximizeSum/2` form uses priority `0`, and the `optimize_maximizeSum/3` form uses an anonymous [Label].
+Omitted trailing arguments use these defaults: ID `0`, priority `0`, condition `val(bool,true)`, and the anonymous [Label].
 
 ```prolog
 optimize_maximizeSum(Expression, Id, Priority)
@@ -27,8 +29,9 @@ optimize_maximizeSum(Expression, Id, Priority)
 | `Expression` | The expression whose value is used in the maximization. |
 | `Id` | Identifier for one optimization contribution. For a single aggregate value, a fixed identifier like `total` is sufficient. For multiple contributions, this is typically the item or variable identifier. |
 | `Priority` | The priority level for this optimization criterion. Higher priorities are optimized first. |
+| `Condition` | The boolean expression that must hold for this contribution to be included. |
 
-If you need to address a specific optimization declaration via [requestEngine] or want it to appear with an explicit label in warnings, use the `optimize_maximizeSum/4` form with a trailing [Label].
+If you need to address a specific optimization declaration via [requestEngine] or want it to appear with an explicit label in warnings, use the `optimize_maximizeSum/5` form with a trailing [Label].
 
 ### Output
 
@@ -48,8 +51,8 @@ This means that optimization labels are not just annotations for declarations. T
 When clingo continues enumerating optimal models in combination with brave or cautious reasoning, the constraint handler freezes these `optimize_value/3` atoms at the first model whose `optimality_proven` flag is true and reuses that same valuation for later models in the same solve call. This is intentional, to give you access to partial information about the optimality criteria. These are not the consequences!
 
 !!! Note
-    The shorthand forms `optimize_maximizeSum/2` and `optimize_maximizeSum/3` use the anonymous label `_label_anonymous`. As a consequence, they also produce a result atom of the form `optimize_value(_label_anonymous, Priority, Total)`.
-    If you want a stable and meaningful output atom, use the explicit `optimize_maximizeSum/4` form with your own label.
+    All forms except `optimize_maximizeSum/5` use the anonymous label `_label_anonymous`. As a consequence, they also produce a result atom of the form `optimize_value(_label_anonymous, Priority, Total)`.
+    If you want a stable and meaningful output atom, use the explicit `optimize_maximizeSum/5` form with your own label.
 
 
 

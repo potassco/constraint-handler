@@ -21,7 +21,6 @@ class UserInput(str, Enum):
     OPTIMIZE_SUM = "optimize_maximizeSum"
     OPTIMIZE_PRECISION = "optimize_precision"
     EXECUTION_DECLARE = "execution_declare"
-    EXECUTION_RUN = "execution_run"
     STATEMENT_SEQUENCE = "seq2"
     STATEMENT_ASSIGN = "assign"
     STATEMENT_ASSERT = "assert"

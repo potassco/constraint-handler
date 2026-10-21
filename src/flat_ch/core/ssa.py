@@ -96,11 +96,24 @@ class SSA:
         for output_var in execution.outputs:
             output_sym = _make_exec_sym(self._execution_name, output_var, "out")
             expr = state.get(_identifier_name(output_var), SSA._none_value())
-            outputs.append(IVariableDefine(output_sym, expr))
+            if execution.condition == SSA._bool_true_value():
+                outputs.append(IVariableDefine(output_sym, expr))
+            else:
+                outputs.append(IVariableDefine(output_sym, expr, execution.condition))
+                outputs.append(
+                    IVariableDefine(
+                        output_sym,
+                        SSA._none_value(),
+                        IOperation(Operator.LNOT, (execution.condition,)),
+                    )
+                )
 
         for key, expr in state.items():
             if key.startswith("_ssa"):
-                outputs.append(CheckConstraint(key, expr))
+                if execution.condition == SSA._bool_true_value():
+                    outputs.append(CheckConstraint(key, expr))
+                else:
+                    outputs.append(CheckConstraint(key, IOperation(Operator.LIMP, (execution.condition, expr))))
 
         return outputs
 

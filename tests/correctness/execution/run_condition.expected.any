@@ -1,0 +1,4 @@
+value(run,val(bool,true))
+value(run,val(bool,false))
+value(execution_output(dynamic,x),val(int,4))
+value(execution_output(inverted,x),val(int,5))

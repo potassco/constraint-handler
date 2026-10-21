@@ -42,6 +42,7 @@ core_tests = [
     "core/check",
     "core/conditional_assign",
     "core/conditional_define",
+    "core/conditional_domain",
     "core/conditional_definitions",
     "core/conj_bad_none_recovery",
     "core/custom_globals",
@@ -240,6 +241,8 @@ execution_tests = [
     "execution/change",
     "execution/conditional",
     "execution/conditional_assert",
+    "execution/conditional_input_domain",
+    "execution/conditional_input_domain_dynamic",
     "execution/conditional_string_equality_single_model",
     "execution/implicit_variable",
     "execution/main_absolut",
@@ -254,6 +257,7 @@ execution_tests = [
     "execution/python_integrity_should_be_ignored",
     "execution/python_list",
     "execution/python_set_empty_equality",
+    "execution/run_condition",
 ]
 
 expression_tests = [
@@ -435,6 +439,8 @@ unit_tests = [
 ]
 
 variable_tests = [
+    "variable/conditional_domain_bad_propagation",
+    "variable/direct_bad_propagation",
     "variable/dynamic_type",
     "variable/flexible_domain",
     "variable/main",
@@ -601,8 +607,6 @@ propagator_xfail: set[str] = {
     "default/define/condition",
     "default/define/disabled",
     "default/define/no_domain",
-    "default/define/single",
-    "default/define/with_domain_unsat",
     "default/define/with_domain",
     "default/depends/condition",
     "default/depends/disabled",
@@ -625,6 +629,9 @@ propagator_xfail: set[str] = {
 propagator_true_skip: set[str] = propagator_skip | {
     "core/reasoning_modes",
     "core/reasoning_modes_with_show",
+    "core/conditional_domain",
+    "execution/conditional_input_domain",
+    "execution/conditional_input_domain_dynamic",
     "execution/python_integrity_should_be_ignored",
     "set/conditional_assign",
     "set/diff_flat",
@@ -641,7 +648,9 @@ propagator_true_skip: set[str] = propagator_skip | {
     "type/checking/membership_set_polymorphic",
     "warning/variable_undeclared",
 }
-propagator_true_xfail: set[str] = propagator_xfail | set()
+propagator_true_xfail: set[str] = propagator_xfail | {
+    "core/conditional_domain",
+}
 
 engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [
     (engine.compile, compile_skip, compile_xfail),
@@ -737,6 +746,7 @@ choice_statistics_skip: set[str] = {
     "error/recovery_check",
     "execution/conditional_string_equality_single_model",
     "execution/python_integrity_should_be_ignored",
+    "execution/run_condition",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
     "optimization/label_int",

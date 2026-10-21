@@ -20,14 +20,10 @@ variable_define(execution_input(py_membership,"x"),variable(x)).
 variable_define(py_in,variable(execution_output(py_membership,"py_in"))).
 variable_define(py_not,variable(execution_output(py_membership,"py_not"))).
 
-execution_run(py_membership).
-
 variable_define(execution_input(py_membership2,"pool"),variable(pool2)).
 variable_define(execution_input(py_membership2,"x"),variable(x)).
 variable_define(py_in2,variable(execution_output(py_membership2,"py_in"))).
 variable_define(py_not2,variable(execution_output(py_membership2,"py_not"))).
-
-execution_run(py_membership2).
 
 evaluate(operation(set_isin,(variable(x),(variable(pool),())))).
 evaluate(operation(set_notin,(variable(x),(variable(pool),())))).

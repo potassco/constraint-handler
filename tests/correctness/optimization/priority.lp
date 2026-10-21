@@ -27,18 +27,14 @@ variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
 % Maximize value with priority 1 (higher priority)
-optimize_maximizeSum(EXPR,X,1) :- item(X,W,V),
+optimize_maximizeSum(val(int,V),X,1,COND) :- item(X,W,V),
   ITEM = val(symbol,X),
-  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
-  VALU = val(int,V),
-  EXPR = operation(ite,(COND,(VALU,(val(int,0),())))).
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))).
 
 % Minimize weight with priority 0 (lower priority) by maximizing negative weight
-optimize_maximizeSum(EXPR,X) :- item(X,W,V),
+optimize_maximizeSum(val(int,-W),X,0,COND) :- item(X,W,V),
   ITEM = val(symbol,X),
-  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
-  WGHT = val(int,-W),
-  EXPR = operation(ite,(COND,(WGHT,(val(int,0),())))).
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))).
 
 % Capacity constraint
 variable_define(carried,EXPR) :-

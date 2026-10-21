@@ -277,8 +277,6 @@ warning(statement(pythonError), (Label,()), ("error running", Message))
 
     execution_declare(my_exec, S, (a,()), (a,())) :-
         S = assign(a, operation(int_div, (val(int, 2),(val(int, 0),())))).
-
-    execution_run(my_exec).
     ```
 
     Raises the warning:

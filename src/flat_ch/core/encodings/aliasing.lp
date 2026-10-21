@@ -4,11 +4,12 @@
 
 % A variable is a pure alias only when its domain has one expression.
 _fch_var_singleton_domain(NAME) :-
-    _fch_var_dom(NAME, _),
-    1 = #count { EXPR_ID : _fch_var_dom(NAME, EXPR_ID) }.
+    _fch_var_dom(NAME, _, COND_EXPR_ID),
+    _fch_static_expr_val(COND_EXPR_ID, _fch_type_bool_id, true),
+    1 = #count { EXPR_ID, OTHER_COND_EXPR_ID : _fch_var_dom(NAME, EXPR_ID, OTHER_COND_EXPR_ID) }.
 
 _fch_var_direct_alias(NAME, TARGET_NAME) :-
-    _fch_var_dom(NAME, EXPR_ID),
+    _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID),
     _fch_expr_var(EXPR_ID, TARGET_NAME),
     NAME != TARGET_NAME,
     _fch_var_singleton_domain(NAME).

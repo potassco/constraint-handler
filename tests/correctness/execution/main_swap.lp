@@ -13,6 +13,5 @@ variable_declare(execution_input(swap,x),fromFacts).
 variable_domain(execution_input(swap,x),val(int,(10;20))).
 variable_declare(execution_input(swap,y),fromFacts).
 variable_domain(execution_input(swap,y),val(int,(30;40))).
-execution_run(swap).
 evaluate(operation(eq,(variable(execution_output(swap,x)),(variable(execution_input(swap,y)),())))).
 evaluate(operation(eq,(variable(execution_output(swap,y)),(variable(execution_input(swap,x)),())))).

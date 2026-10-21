@@ -92,10 +92,12 @@ def optional_condition(name: clingo.Symbol) -> tuple[clingo.Symbol, ...]:
     return (
         clingo.Function("variable_declare", [name, clingo.Function("fromFacts")]),
         clingo.Function(
-            "variable_domain", [name, clingo.Function("val", [clingo.Function("bool"), clingo.Function("false")])]
+            "variable_domain",
+            [name, clingo.Function("val", [clingo.Function("bool"), clingo.Function("false")]), TRUE_SYMBOL],
         ),
         clingo.Function(
-            "variable_domain", [name, clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")])]
+            "variable_domain",
+            [name, clingo.Function("val", [clingo.Function("bool"), clingo.Function("true")]), TRUE_SYMBOL],
         ),
     )
 
@@ -796,7 +798,8 @@ def test_domain_computation_exports_python_callable_trace_symbols() -> None:
                 ],
             ),
             clingo.Function(
-                "variable_domain", [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(0)])]
+                "variable_domain",
+                [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(0)]), TRUE_SYMBOL],
             ),
         ),
         (),
@@ -1080,7 +1083,8 @@ def test_domain_computation_exports_python_extract_inputs_against_value_expressi
                 ],
             ),
             clingo.Function(
-                "variable_domain", [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])]
+                "variable_domain",
+                [left_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)]), TRUE_SYMBOL],
             ),
             clingo.Function(
                 "variable_define",
@@ -1253,7 +1257,7 @@ def test_domain_computation_groups_python_extract_outputs_with_shared_inputs() -
                 ),
                 clingo.Function(
                     "variable_domain",
-                    [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)])],
+                    [variable_name, clingo.Function("val", [clingo.Function("int"), clingo.Number(2)]), TRUE_SYMBOL],
                 ),
             ),
             solver_identifiers=(solver_identifier,),

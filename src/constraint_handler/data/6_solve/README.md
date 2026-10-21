@@ -4,12 +4,12 @@ _engine/2.
 _phase_active/1.
 _se_value/2.
 _shared_value/2.
-ch_core(optimize_component/5,LBL).
+ch_core(optimize_component/6,LBL).
 ch_solve(DECL,LBL).
 
 ### Intermediate predicates
 
-_optimize_component/6.
+_optimize_component/7.
 
 ### Output predicates
 

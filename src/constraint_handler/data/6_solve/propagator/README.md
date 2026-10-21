@@ -3,7 +3,7 @@
 _passed(propagator,LBL,variable_assign/2).
 _passed(propagator,LBL,variable_declare/2).
 _passed(propagator,LBL,variable_define/3).
-_passed(propagator,LBL,variable_domain/2).
+_passed(propagator,LBL,variable_domain/3).
 _passed(propagator,LBL,set_assign/3).
 _passed(propagator,LBL,multimap_assign/3).
 _passed(propagator,LBL,share_value/1).

@@ -3,19 +3,24 @@ phase_request(statement_wellformedCheck,true).
 execution_declare(malformed_decl_inputs_not_list,
 	noop,
 	bad_inputs,
-	()
+	(),
+	val(bool,false)
 ).
 
 execution_declare(malformed_decl_outputs_not_list,
 	noop,
 	(),
-	bad_outputs
+	bad_outputs,
+	val(bool,false)
 ).
 
 execution_declare(malformed_decl_both_not_list,
 	noop,
 	bad_inputs2,
-	bad_outputs2
+	bad_outputs2,
+	val(bool,false)
 ).
+
+execution_declare(malformed_decl_condition,noop,(),(),bad_condition).
 
 #show warning/3.

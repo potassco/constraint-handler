@@ -11,9 +11,6 @@ variable_define(execution_input(exec_external, my_multimap), variable(my_multima
 execution_declare(exec_external, STMT, (my_multimap,()), (external_out,())) :-
     STMT = assign(external_out, variable(my_multimap)).
 
-execution_run(exec_external).
-execution_run(exec_internal).
-execution_run(exec_internal_empty).
 
 evaluate(operation(multimap_isin, (val(symbol,some_key),(variable(execution_output(exec_internal,internal_out)),())))).
 evaluate(operation(multimap_isin, (val(symbol,some_key),(variable(execution_output(exec_external,external_out)),())))).

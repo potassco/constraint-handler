@@ -235,16 +235,19 @@ fromList(Values)
 
 **[Declaration]**{.badge .declaration }
 
-Another way to define a domain is to use the `fromFacts/0` function symbol. However, this additionally requires the use of the `variable_domain/2` predicate to extract the possible values from existing facts.
+Another way to define a domain is to use the `fromFacts/0` function symbol. However, this additionally requires the use of the `variable_domain/2` predicate to extract the possible values from existing facts. An optional condition can restrict which expressions are included.
 
 ```prolog
 variable_domain(Name, Domain).
+variable_domain(Name, Domain, Condition, Label).
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Name` | A unique identifier for the variable. |
 | `Domain` | The facts representing the domain of possible values. |
+| `Condition` | An optional boolean expression that enables the domain facts. |
+| `Label` | An optional declaration identifier. |
 
 !!! Example
     Creating a variable `y` that can take the integer values `1`, `2`, or `3`:

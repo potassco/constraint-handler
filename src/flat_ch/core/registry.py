@@ -68,7 +68,7 @@ class ProgramRegistry:
         for decl in program_ir:
             print(f"[FCH IR:{mode}] {decl}")
 
-    def update_var(self, name: str, domain_extensions: tuple[Expression, ...]) -> None:
+    def update_var(self, name: str, domain_extensions: tuple[tuple[Expression, Expression], ...]) -> None:
         self.sequential_inputs.append(IVariableDeclare(name, domain_extensions, self.current_registration_id))
 
     def update_set(

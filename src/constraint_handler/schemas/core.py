@@ -39,6 +39,7 @@ class Variable_default(NamedTuple):
 class Variable_domain(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr
 
 
 class Bool_evaluate(NamedTuple):
@@ -67,6 +68,7 @@ class Optimize_component(NamedTuple):
     precision: expression.Expr
     id: expression.constant
     priority: expression.constant
+    condition: expression.Expr
 
 
 class Preference_maximizeScore(NamedTuple):

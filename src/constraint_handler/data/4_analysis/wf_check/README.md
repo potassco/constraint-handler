@@ -4,7 +4,7 @@ _phase_active(wf_check).
 _expression(sugar,EXPR).
 _expression(sugar,LBL,DECL,EXPR).
 _number(sugar,N).
-_passed(defaultArgs,LBL,execution_declare/4).
+_passed(defaultArgs,LBL,execution_declare/5).
 
 ### Intermediate predicates
 

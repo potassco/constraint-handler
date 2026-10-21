@@ -16,18 +16,14 @@ variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,PROFIT,BONUS).
 
 % Maximize total profit under the explicit label profit.
-optimize_maximizeSum(EXPR,X,1,profit) :- item(X,W,PROFIT,BONUS),
+optimize_maximizeSum(val(float,PROFIT),X,1,COND,profit) :- item(X,W,PROFIT,BONUS),
   ITEM = val(symbol,X),
-  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
-  VALU = val(float,PROFIT),
-  EXPR = operation(if,(COND,(VALU,()))).
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))).
 
 % Maximize a second float-valued bonus label on the same priority.
-optimize_maximizeSum(EXPR,X,1,bonus) :- item(X,W,PROFIT,BONUS),
+optimize_maximizeSum(val(float,BONUS),X,1,COND,bonus) :- item(X,W,PROFIT,BONUS),
   ITEM = val(symbol,X),
-  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
-  VALU = val(float,BONUS),
-  EXPR = operation(if,(COND,(VALU,()))).
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))).
 
 variable_define(carried,EXPR) :-
   EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),

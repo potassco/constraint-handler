@@ -4,7 +4,6 @@
 #const tail_offset = 1.
 
 execution_declare(
-    dummy,
     snippet,
     seq2(
         assign(t2, operation(add, (variable(w1), (variable(w2), ())))),
@@ -17,8 +16,9 @@ execution_declare(
         )
     ),
     (w1, (w2, ())),
-    (t5, ())
+    (t5, ()),
+    val(bool,true),
+    dummy
 ).
-execution_run(dummy, snippet).
 variable_define(execution_input(snippet, w1), val(int, input_w1)).
 variable_define(execution_input(snippet, w2), val(int, input_w2)).

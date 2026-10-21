@@ -176,8 +176,7 @@ A list of declarations used to define problems.
 | [preference_holds] | Declares a preference based on a condition. |
 | [preference_variableValue] | Declares a preference for a variable having a specific value. |
 | **Execution** | |
-| [execution_declare] | Prepares a statement for execution by declaring it with a specific name and providing input and output. |
-| [execution_run] | Runs a previously declared execution. |
+| [execution_declare] | Declares a statement with input, output, and an optional boolean condition controlling execution. |
 
 ---
 

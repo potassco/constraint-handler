@@ -1,8 +1,10 @@
 import clingo
+import pytest
 
 import constraint_handler
 from constraint_handler.schemas.atom import (
     Ensure,
+    Execution_declare,
     Optimize_maximizeSum,
     Variable_declare,
     Variable_define,
@@ -16,6 +18,7 @@ from constraint_handler.schemas.result import (
     Optimize_value,
     Value,
 )
+from constraint_handler.schemas.statement import Assign
 from constraint_handler.schemas.type_ import BaseType
 
 
@@ -97,3 +100,20 @@ def test_optimization():
     assert best_assignment == {"x": 4, "y": 3.25}
     assert opt_value == {"price": 7}
     assert actual_value == {"price": 7.25}
+
+
+@pytest.mark.parametrize("condition", [None, True, False])
+def test_execution_condition(condition):
+    declaration = Execution_declare("p", Assign("x", Val(BaseType.int, 3)), (), ("x", ()))
+    if condition is not None:
+        declaration = declaration._replace(condition=Val(BaseType.bool, condition), label="execution_label")
+
+    ctrl = clingo.Control()
+    constraint_handler.add_to_control(ctrl)
+    constraint_handler.add_declarations(ctrl, [declaration])
+    ctrl.ground()
+    with ctrl.solve(yield_=True) as solve_handle:
+        model = solve_handle.model()
+        assert model is not None
+        output = clingo.parse_term('value(execution_output("p","x"),val(int,3))')
+        assert model.contains(output) is (condition is not False)

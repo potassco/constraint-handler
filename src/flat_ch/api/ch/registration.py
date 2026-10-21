@@ -12,7 +12,6 @@ from flat_ch.core.domain import (
     EnsureConstraint,
     EvaluateInput,
     ExecutionDeclare,
-    ExecutionRun,
     ExecutionStatement,
     Expression,
     IAssertStatement,
@@ -60,7 +59,6 @@ class Registration(BaseRegistration):
             UserInput.OPTIMIZE_SUM.value: self._handle_optimize_sum,
             UserInput.OPTIMIZE_PRECISION.value: self._handle_optimize_precision,
             UserInput.EXECUTION_DECLARE.value: self._handle_execution_declare,
-            UserInput.EXECUTION_RUN.value: self._handle_execution_run,
             UserInput.SET_DECLARE.value: self._handle_set_declare,
             UserInput.SET_BASE_DOMAIN.value: self._handle_set_base_domain,
             UserInput.SET_ASSIGN.value: self._handle_set_assign,
@@ -104,19 +102,25 @@ class Registration(BaseRegistration):
             if domain_kind == "set":
                 self.reg.update_set(var_sym)
             elif domain_kind == "boolDomain":
-                self.reg.update_var(var_sym, (IValue(Type.BOOL, True), IValue(Type.BOOL, False)))
+                self.reg.update_var(
+                    var_sym,
+                    (
+                        (IValue(Type.BOOL, True), IValue(Type.BOOL, True)),
+                        (IValue(Type.BOOL, False), IValue(Type.BOOL, True)),
+                    ),
+                )
             elif domain_kind == "fromFacts":
                 self.reg.update_var(var_sym, ())
             elif domain_kind == "open":
                 self.reg.update_var(var_sym, ())
             elif domain_kind == "fromList":
                 unnested = tuple(self.parse_expression(s) for s in self.unnest(args[2].arguments[0]))
-                self.reg.update_var(var_sym, unnested)
+                self.reg.update_var(var_sym, tuple((expr, IValue(Type.BOOL, True)) for expr in unnested))
 
     def _handle_domain(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 3:
+        if len(args) == 4:
             var_sym = self._lower_variable_symbol(args[1])
-            self.reg.update_var(var_sym, (self.parse_expression(args[2]),))
+            self.reg.update_var(var_sym, ((self.parse_expression(args[2]), self.parse_expression(args[3])),))
 
     def _handle_define(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:
@@ -180,9 +184,11 @@ class Registration(BaseRegistration):
             )
 
     def _handle_optimize_sum(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 4:
+        if len(args) == 5:
             self.reg.sequential_inputs.append(
-                OptimizeMaximizeSum(self.parse_expression(args[1]), args[2], args[3].number, args[0])
+                OptimizeMaximizeSum(
+                    self.parse_expression(args[1]), args[2], args[3].number, args[0], self.parse_expression(args[4])
+                )
             )
 
     def _handle_optimize_precision(self, args: tuple[clingo.Symbol, ...]):
@@ -195,6 +201,7 @@ class Registration(BaseRegistration):
         label = self.to_str(args[0])
         inputs = tuple(self.unnest(args[3]))
         outputs = tuple(self.unnest(args[4]))
+        condition = self.parse_expression(args[5])
 
         self.reg.add_execution(
             ExecutionDeclare(
@@ -202,6 +209,7 @@ class Registration(BaseRegistration):
                 self._parse_execution_statement(args[2]),
                 inputs,
                 outputs,
+                condition=condition,
                 label=label,
             )
         )
@@ -257,10 +265,6 @@ class Registration(BaseRegistration):
         if len(args) == 1 and args[0].type == clingo.SymbolType.String:
             return [IPythonStatement(code=args[0].string)]
         raise ValueError(f"Invalid statement_python format: {args}")
-
-    def _handle_execution_run(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 2:
-            self.reg.sequential_inputs.append(ExecutionRun(self.to_str(args[0]), self.scalar_value(args[1])))
 
     def _handle_set_declare(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 2:

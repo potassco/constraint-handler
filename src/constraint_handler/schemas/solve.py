@@ -6,14 +6,6 @@ import constraint_handler.schemas.core as core
 import constraint_handler.schemas.expression as expression
 
 
-class Optimize_component(NamedTuple):
-    value: expression.Expr
-    original: expression.Expr
-    precision: expression.Expr
-    id: expression.constant
-    priority: expression.constant
-
-
 class Share_value(NamedTuple):
     expr: expression.Expr
 
@@ -28,7 +20,6 @@ type Atom = (
     | core.Variable_default
     | core.Variable_define
     | core.Variable_domain
-    | Optimize_component
     | Share_value
 )
 

@@ -11,6 +11,5 @@ variable_domain(execution_input(p,"a"),variable(a)).
 ensure(operation(limp,(val(bool,true),(operation(eq,(variable(execution_input(p,"a")),(variable(a),()))),())))).
 
 execution_declare(p,if(operation(eq,(variable("a"),(val(int,4),()))),statement_python("assert(False)"),noop),("a",()),()).
-execution_run(p).
 
 evaluate(operation(eq,(variable(a),(val(int,4),())))).

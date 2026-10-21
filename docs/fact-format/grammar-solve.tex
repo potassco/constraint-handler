@@ -11,7 +11,6 @@ derived while preparing them for solving.
 ~\alt <solve-variable-declaration>
 \alt <solve-collection-declaration>
 \alt <solve-query-declaration>
-\alt <solve-optimization-declaration>
 
 <solve-variable-declaration> ::=
 ~\alt `variable_assign' `(' <variable> `,' <expression> `)'
@@ -29,7 +28,4 @@ derived while preparing them for solving.
 ~\alt `bool_evaluate' `(' <expression> `)'
 \alt `evaluate' `(' <expression> `,' <expression> `)'
 \alt `share_value' `(' <expression> `)'
-
-<solve-optimization-declaration> ::=
-~\alt `optimize_component' `(' <expression> `,' <expression> `,' <expression> `,' <term> `,' <expression> `)'
 \end{grammar}

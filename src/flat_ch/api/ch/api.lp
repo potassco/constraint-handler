@@ -17,14 +17,16 @@ _fch_input(variable_define(LABEL, NAME, EXPR, COND)) :- variable_define(NAME, EX
 
 #defined variable_domain/2.
 #defined variable_domain/3.
-_fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_domain(NAME, EXPR).
-_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_domain(NAME, EXPR, LABEL).
+#defined variable_domain/4.
+_fch_input(variable_domain(_fch_label, NAME, EXPR, val(bool, true))) :- variable_domain(NAME, EXPR).
+_fch_input(variable_domain(_fch_label, NAME, EXPR, COND)) :- variable_domain(NAME, EXPR, COND).
+_fch_input(variable_domain(LABEL, NAME, EXPR, COND)) :- variable_domain(NAME, EXPR, COND, LABEL).
 
 % variable_choice is a domain-population alias, just like in CH's own compile2/propagator engines.
 #defined variable_choice/2.
 #defined variable_choice/3.
-_fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_choice(NAME, EXPR).
-_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_choice(NAME, EXPR, LABEL).
+_fch_input(variable_domain(_fch_label, NAME, EXPR, val(bool, true))) :- variable_choice(NAME, EXPR).
+_fch_input(variable_domain(LABEL, NAME, EXPR, val(bool, true))) :- variable_choice(NAME, EXPR, LABEL).
 
 % variable_assign forces a value, exactly like variable_define.
 #defined variable_assign/2.
@@ -79,9 +81,11 @@ _fch_input(set_assign(LABEL, NAME, EXPR)) :- set_assign(NAME, EXPR, LABEL).
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
-_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, 0)) :- optimize_maximizeSum(EXPR, ELEMENT).
-_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, PRIORITY)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY).
-_fch_input(optimize_maximizeSum(LABEL, EXPR, ELEMENT, PRIORITY)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY, LABEL).
+#defined optimize_maximizeSum/5.
+_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, 0, val(bool, true))) :- optimize_maximizeSum(EXPR, ELEMENT).
+_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, PRIORITY, val(bool, true))) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY).
+_fch_input(optimize_maximizeSum(_fch_label, EXPR, ELEMENT, PRIORITY, CONDITION)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY, CONDITION).
+_fch_input(optimize_maximizeSum(LABEL, EXPR, ELEMENT, PRIORITY, CONDITION)) :- optimize_maximizeSum(EXPR, ELEMENT, PRIORITY, CONDITION, LABEL).
 
 #defined optimize_precision/1.
 #defined optimize_precision/2.
@@ -90,31 +94,18 @@ _fch_input(optimize_precision(EXPR, all)) :- optimize_precision(EXPR).
 
 #defined execution_declare/4.
 #defined execution_declare/5.
-_fch_input(execution_declare(_fch_label, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
-_fch_input(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL).
-
-_fch_execution_decl_meta(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :- execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL).
-
-#defined execution_run/1.
-#defined execution_run/2.
-_fch_input(execution_run(_fch_label, NAME)) :- execution_run(NAME).
-_fch_input(execution_run(LABEL, NAME)) :- execution_run(NAME, LABEL).
-
-
-%
-% ?????
-%
-_fch_execution_run(NAME) :- execution_run(NAME).
-_fch_execution_run(NAME) :- execution_run(NAME, _).
-_fch_ssa(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT)) :-
-	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, LABEL),
-	_fch_execution_run(NAME).
-
+#defined execution_declare/6.
+_fch_input(execution_declare(_fch_label, NAME, STATEMENTS, INPUT, OUTPUT, val(bool, true))) :-
+	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT).
+_fch_input(execution_declare(_fch_label, NAME, STATEMENTS, INPUT, OUTPUT, CONDITION)) :-
+	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, CONDITION).
+_fch_input(execution_declare(LABEL, NAME, STATEMENTS, INPUT, OUTPUT, CONDITION)) :-
+	execution_declare(NAME, STATEMENTS, INPUT, OUTPUT, CONDITION, LABEL).
 
 #defined _fch_enable_optimize_value_output/0.
 #defined optimize_value/3.
 
-_fch_optimize_label(LABEL, EXPR_ID, PRIORITY) :- _fch_flat(optimize_label(LABEL, EXPR_ID, PRIORITY)).
+_fch_optimize_label(LABEL, EXPR_ID, PRIORITY, CONDITION) :- _fch_flat(optimize_label(LABEL, EXPR_ID, PRIORITY, CONDITION)).
 
 %
 % ?????
@@ -245,11 +236,6 @@ value(NAME, val(bool, VALUE)) :- value(NAME, bool, VALUE).
 value(execution_input(EXEC, VAR), VALUE) :- value((EXEC, VAR, in), VALUE).
 value(execution_output(EXEC, VAR), VALUE) :- value((EXEC, VAR, out), VALUE).
 
-value((EXEC, VAR, out), none, none) :-
-	_fch_flat(execution_output_decl(EXEC, VAR)),
-	not _fch_execution_run(EXEC),
-	not value((EXEC, VAR, out), bad).
-
 set_value(NAME, val(none, none)) :- set_member(NAME, none, none).
 set_value(NAME, val(int, VALUE)) :- set_member(NAME, int, VALUE).
 set_value(NAME, val(float, @fch_legacy_float(INT_PART, REMAINDER))) :-
@@ -294,9 +280,13 @@ value(NAME, bad) :-
 	_fch_dynamic_var_def(NAME, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
 
+value(NAME, bad) :- _fch_empty_var_domain(NAME).
+
 _fch_execution_input_declared(EXEC, VAR) :- _fch_flat(var_decl((EXEC, VAR, in))).
 _fch_execution_input_defined(EXEC, VAR) :- _fch_flat(var_def((EXEC, VAR, in), _)).
-_fch_execution_input_has_domain(EXEC, VAR) :- _fch_flat(var_dom((EXEC, VAR, in), _)).
+_fch_execution_input_has_domain(EXEC, VAR) :-
+	_fch_var_dom((EXEC, VAR, in), _, COND_EXPR_ID),
+	_fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
 
 value((EXEC, VAR, in), bad) :-
 	_fch_flat(execution_input_decl(EXEC, VAR)),
@@ -325,13 +315,12 @@ warning(expression(pythonError), (), (python, EXPR_ID, MESSAGE)) :-
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, pythonError(MESSAGE)).
 
 warning(variable(emptyDomain), (), NAME) :-
-	_fch_empty_var_domain(NAME),
-	not _fch_inactive_execution_output(NAME).
+	_fch_empty_var_domain(NAME).
 
 :- warning(KIND, INFO, MSG), _fch_warning_forbid(KIND), not _fch_warning_ignore(KIND).
 
 blabla(LABEL, PRIORITY) :-
-	_fch_optimize_label(LABEL, EXPR_ID, PRIORITY),
+	_fch_optimize_label(LABEL, EXPR_ID, PRIORITY, _),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_float_id, _).
 
 % _fch_optimize_value_is_float(LABEL, PRIORITY) :-

@@ -132,7 +132,8 @@
 \alt `variable_define' `(' <variable> `,' <expression> `)'
 \alt `variable_define' `(' <variable> `,' <expression> `,' <label> `)'
 \alt `variable_domain' `(' <variable> `,' <expression> `)'
-\alt `variable_domain' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `variable_domain' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `variable_domain' `(' <variable> `,' <expression> `,' <expression> `,' <label> `)'
 
 <multimap-atom> ::=
 ~\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `)'
@@ -146,14 +147,15 @@
 
 <execution-atom> ::=
 ~\alt `execution_declare' `(' <term> `,' <statement> `,' <variable-list> `,' <variable-list> `)'
-\alt `execution_declare' `(' <term> `,' <statement> `,' <variable-list> `,' <variable-list> `,' <label> `)'
-\alt `execution_run' `(' <term> `)'
-\alt `execution_run' `(' <term> `,' <label> `)'
+\alt `execution_declare' `(' <term> `,' <statement> `,' <variable-list> `,' <variable-list> `,' <expression> `)'
+\alt `execution_declare' `(' <term> `,' <statement> `,' <variable-list> `,' <variable-list> `,' <expression> `,' <label> `)'
 
 <optimize-atom> ::=
+~\alt `optimize_maximizeSum' `(' <expression> `)'
 ~\alt `optimize_maximizeSum' `(' <expression> `,' <term> `)'
 \alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `)'
-\alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `,' <label> `)'
+\alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `,' <expression> `)'
+\alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `,' <expression> `,' <label> `)'
 \alt `optimize_precision' `(' <expression>  `)'
 \alt `optimize_precision' `(' <expression> `,' <expression> `)'
 

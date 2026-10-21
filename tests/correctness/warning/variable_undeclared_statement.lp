@@ -9,7 +9,7 @@ execution_declare(stmt,
     seq2(assign(vd,variable(v5)),
          assign(v5,variable(v4))))),
     (v0,(v1,(v2,(v3,())))),
-    (v4,(v7,(v8,())))).
+    (v4,(v7,(v8,()))),val(bool,false)).
 variable_define(v9,variable(execution_output(stmt,v4))).
 variable_define(va,variable(v7)).
 variable_define(vb,variable(execution_input(stmt,v8))).

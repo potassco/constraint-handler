@@ -7,12 +7,12 @@ _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_assign(X
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_choice(X,E).
 _expression(PHASE,LBL,DECL,(D;C)) :- _passed(PHASE,LBL,DECL), DECL=variable_default(X,D,C,P).
 _expression(PHASE,LBL,DECL,(E;C)) :- _passed(PHASE,LBL,DECL), DECL=variable_define(X,E,C).
-_expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_domain(X,E).
+_expression(PHASE,LBL,DECL,(E;C)) :- _passed(PHASE,LBL,DECL), DECL=variable_domain(X,E,C).
 _expression(PHASE,LBL,DECL,(E;C)) :- _passed(PHASE,LBL,DECL), DECL=set_assign(X,E,C).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=set_baseDomain(X,E).
 _expression(PHASE,LBL,DECL,(K;B)) :- _passed(PHASE,LBL,DECL), DECL=multimap_assign(X,K,B).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=share_value(E).
-_expression(PHASE,LBL,DECL,(E;O;P)) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,O,P,X,PRIORITY).
+_expression(PHASE,LBL,DECL,(E;O;P;C)) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,O,P,X,PRIORITY,C).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(E,K).
 
 _expression(PHASE,E) :- _expression(PHASE,LBL,DECL,E).
@@ -20,7 +20,7 @@ _expression(PHASE,D) :- _expression(PHASE,operation(O,L)), D=@pythonListElements
 _expression(PHASE,D) :- _expression(PHASE,T), D=@pythonTupleElements(T).
 
 _number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=variable_default(X,D,C,PRIO).
-_number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,ORIG,PREC,X,PRIO).
+_number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,ORIG,PREC,X,PRIO,C).
 _number(PHASE,LBL,DECL,K) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(E,K).
 _number(PHASE,K) :- _number(PHASE,LBL,DECL,K).
 
@@ -29,7 +29,7 @@ _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_assign(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_choice(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_default(X,D,C,P)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_define(X,E,C)).
-_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_domain(X,E)).
+_expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_domain(X,E,C)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,set_assign(X,E,C)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,set_baseDomain(X,E)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,multimap_assign(X,K,B)).

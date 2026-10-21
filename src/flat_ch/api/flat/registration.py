@@ -12,7 +12,6 @@ from flat_ch.core.domain import (
     EnsureConstraint,
     EvaluateInput,
     ExecutionDeclare,
-    ExecutionRun,
     Expression,
     IBind,
     IOperation,
@@ -54,7 +53,6 @@ class Registration(BaseRegistration):
         self._ui_opt_sum = UserInput.OPTIMIZE_SUM.value
         self._ui_opt_prec = UserInput.OPTIMIZE_PRECISION.value
         self._ui_exec_decl = UserInput.EXECUTION_DECLARE.value
-        self._ui_exec_run = UserInput.EXECUTION_RUN.value
         self._ui_val = UserInput.VALUE.value
         self._ui_var = UserInput.VARIABLE.value
         self._ui_bind = UserInput.BIND.value
@@ -103,7 +101,11 @@ class Registration(BaseRegistration):
             case self._ui_decl if args_len == 1:
                 self.reg.update_var(self.to_str(args[0]), ())
             case self._ui_dom if args_len == 2:
-                self.reg.update_var(self.to_str(args[0]), (self.parse_expression(args[1]),))
+                self.reg.update_var(self.to_str(args[0]), ((self.parse_expression(args[1]), IValue(Type.BOOL, True)),))
+            case self._ui_dom if args_len == 3:
+                self.reg.update_var(
+                    self.to_str(args[0]), ((self.parse_expression(args[1]), self.parse_expression(args[2])),)
+                )
             case self._ui_def if args_len == 2:
                 self.reg.sequential_inputs.append(
                     IVariableDefine(
@@ -183,9 +185,14 @@ class Registration(BaseRegistration):
                 self.reg.update_set(self.to_str(args[0]), base_domain=(self.parse_expression(args[1]),))
             case self._ui_set_assign if args_len == 2:
                 self.reg.update_set(self.to_str(args[0]), assignment=(self.parse_expression(args[1]),))
-            case self._ui_opt_sum if args_len == 3:
+            case self._ui_opt_sum if args_len == 4:
                 self.reg.sequential_inputs.append(
-                    OptimizeMaximizeSum(self.parse_expression(args[0]), self.to_str(args[1]), int(args[2].number))
+                    OptimizeMaximizeSum(
+                        self.parse_expression(args[0]),
+                        self.to_str(args[1]),
+                        int(args[2].number),
+                        condition=self.parse_expression(args[3]),
+                    )
                 )
             case self._ui_opt_prec if args_len == 1:
                 self.reg.sequential_inputs.append(OptimizePrecision(self.parse_expression(args[0])))
@@ -202,8 +209,27 @@ class Registration(BaseRegistration):
                         tuple(self.to_str(symbol) for symbol in self.unnest(args[3])),
                     )
                 )
-            case self._ui_exec_run if args_len == 1:
-                self.reg.sequential_inputs.append(ExecutionRun(self.to_str(args[0])))
+            case self._ui_exec_decl if args_len == 5:
+                self.reg.sequential_inputs.append(
+                    ExecutionDeclare(
+                        self.to_str(args[0]),
+                        self.scalar_value(args[1]),
+                        tuple(self.to_str(symbol) for symbol in self.unnest(args[2])),
+                        tuple(self.to_str(symbol) for symbol in self.unnest(args[3])),
+                        self.parse_expression(args[4]),
+                        self.to_str(args[5]),
+                    )
+                )
+            case self._ui_exec_decl if args_len == 6:
+                self.reg.sequential_inputs.append(
+                    ExecutionDeclare(
+                        self.to_str(args[0]),
+                        self.scalar_value(args[1]),
+                        tuple(self.to_str(symbol) for symbol in self.unnest(args[2])),
+                        tuple(self.to_str(symbol) for symbol in self.unnest(args[3])),
+                        self.parse_expression(args[4]),
+                    )
+                )
             case _:
                 raise ValueError(f"Invalid or out-of-spec FCH fact format: {term}")
 

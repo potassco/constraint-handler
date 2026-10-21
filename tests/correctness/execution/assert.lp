@@ -11,7 +11,6 @@ execution_declare(myfun,STMT,(x,(y,())),(z,())) :-
     SUM  = operation(add,(variable(x),(variable(y),()))),
     STMT = seq2(assert(NEQ),assign(z,SUM)).
     %STMT = seq2(assign(w,NEQ),assign(z,SUM)).
-execution_run(myfun).
 
 variable_define(execution_input(myfun,x),variable(gx)).
 variable_define(execution_input(myfun,y),variable(gy)).

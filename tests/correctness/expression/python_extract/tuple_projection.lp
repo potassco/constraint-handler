@@ -8,7 +8,6 @@ ensure(operation(limp,(val(bool,true),(operation(eq,(variable(y),(variable(execu
 ensure(operation(limp,(operation(hasValue,(variable(y),())),(operation(hasValue,(variable(execution_input(c,"y")),())),()))),link_y_has).
 
 execution_declare(c,statement_python("tmp = 0"),("x",("y",())),()).
-execution_run(c).
 
 variable_declare(x,fromFacts).
 variable_declare(y,fromFacts).

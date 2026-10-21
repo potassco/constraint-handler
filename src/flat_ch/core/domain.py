@@ -40,7 +40,6 @@ class ProgramInputKind(IntEnum):
     OPTIMIZE_MAXIMIZE_SUM = auto()
     OPTIMIZE_PRECISION = auto()
     EXECUTION_DECLARE = auto()
-    EXECUTION_RUN = auto()
 
 
 class FlatFact(str, Enum):
@@ -71,7 +70,7 @@ class FlatFact(str, Enum):
 
 _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.VARIABLE_DECLARE: ("NAME",),
-    FlatFact.VARIABLE_DOMAIN: ("NAME", "EXPR_ID"),
+    FlatFact.VARIABLE_DOMAIN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.VARIABLE_DEFINE: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.EXPRESSION_VALUE: ("ID", "TYPE_ID", "VALUE"),
     FlatFact.EXPRESSION_VARIABLE: ("ID", "NAME"),
@@ -84,8 +83,8 @@ _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.SET_BASE_DOMAIN: ("NAME", "EXPR_ID"),
     FlatFact.SET_ASSIGN: ("NAME", "EXPR_ID"),
     FlatFact.PAIR: ("ID", "KEY_EXPR_ID", "VALUE_EXPR_ID"),
-    FlatFact.OPTIMIZE_SUM: ("ID", "ELEM", "PRIO"),
-    FlatFact.OPTIMIZE_LABEL: ("LABEL", "EXPR_ID", "PRIO"),
+    FlatFact.OPTIMIZE_SUM: ("ID", "ELEM", "PRIO", "COND_EXPR_ID"),
+    FlatFact.OPTIMIZE_LABEL: ("LABEL", "EXPR_ID", "PRIO", "COND_EXPR_ID"),
     FlatFact.OPTIMIZE_PRECISION: ("EXPR_ID", "PRIO"),
 }
 
@@ -178,7 +177,7 @@ ExecutionStatement: TypeAlias = IAssignStatement | IAssertStatement | IIfStateme
 @dataclass(frozen=True, slots=True)
 class IVariableDeclare:
     name: str | Symbol
-    domain: tuple[Expression, ...] = ()
+    domain: tuple[tuple[Expression, Expression], ...] = ()
     registration_id: int | None = None
     kind: ProgramInputKind = ProgramInputKind.VARIABLE_DECLARE
 
@@ -261,6 +260,7 @@ class OptimizeMaximizeSum:
     element: str | Symbol
     priority: int
     label: str | Symbol | None = None
+    condition: Expression = IValue(Type.BOOL, True)
     kind: ProgramInputKind = ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM
 
 
@@ -277,15 +277,9 @@ class ExecutionDeclare:
     statements: tuple[ExecutionStatement, ...]
     inputs: tuple[str | Symbol, ...] = ()
     outputs: tuple[str | Symbol, ...] = ()
+    condition: Expression = IValue(Type.BOOL, True)
     label: str | None = None
     kind: ProgramInputKind = ProgramInputKind.EXECUTION_DECLARE
-
-
-@dataclass(frozen=True, slots=True)
-class ExecutionRun:
-    name: str
-    target: ScalarValue | str | None = None
-    kind: ProgramInputKind = ProgramInputKind.EXECUTION_RUN
 
 
 ProgramInput: TypeAlias = (
@@ -301,5 +295,4 @@ ProgramInput: TypeAlias = (
     | OptimizeMaximizeSum
     | OptimizePrecision
     | ExecutionDeclare
-    | ExecutionRun
 )

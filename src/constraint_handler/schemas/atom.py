@@ -52,6 +52,7 @@ class Variable_default(NamedTuple):
 class Variable_domain(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 
@@ -91,21 +92,15 @@ class Execution_declare(NamedTuple):
     body: statement.Stmt
     inputs_vars: myClorm.ImmutableList[expression.constant]
     outputs_vars: myClorm.ImmutableList[expression.constant]
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
-
-
-class Execution_run(NamedTuple):
-    name: expression.constant
-    label: expression.constant = LABEL_ANONYMOUS
-
-
-type ExecutionAtom = Execution_declare | Execution_run
 
 
 class Optimize_maximizeSum(NamedTuple):
     value: expression.Expr
     id: expression.constant = 0
     priority: expression.constant = 0
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 
@@ -153,4 +148,4 @@ class Evaluate(NamedTuple):
 
 
 type MainAtom = Bool_evaluate | Check | Ensure | Evaluate
-type Atom = ExecutionAtom | MainAtom | Multimap_assign | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom
+type Atom = Execution_declare | MainAtom | Multimap_assign | OptimizeAtom | PreferenceAtom | SetAtom | VariableAtom

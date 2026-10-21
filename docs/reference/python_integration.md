@@ -146,11 +146,6 @@ statement_python(String)
         ).
     ```
 
-    Executing the program:
-    ```prolog
-    execution_run(python_add_twice).
-    ```
-
     This will yield the following result:
     ```prolog
     value(execution_output(python_add_twice,"x"),val(int,7))
@@ -183,11 +178,6 @@ Since only the Python statements require this format, a convenient way to map be
         S = seq2(SYM_TO_STR, seq2(ADD_ONE, seq2(ADD_ONE, STR_TO_SYM))).
     ```
 
-    Executing the program:
-    ```prolog
-    execution_run(python_add_twice).
-    ```
-
     This will yield the following result:
     ```prolog
     value(execution_output(python_add_twice,x),val(int,7))
@@ -210,8 +200,6 @@ This is a special exception that, when raised within a Python statement, does no
 
     execution_declare(py_exn, S, ("x",("y",())),("z",())) :-
         S = statement_python("z = x/y\nif z <= 1.5:\n  raise solver_environment.FailIntegrityExn").
-
-    execution_run(py_exn).
     ```
 
     This means, all values where `x` = 1 will automatically violate the integrity constraint. Likewise, whenever `y` is 2 or 3, there is no way for `z` to be greater than `1.5`. The only values that satisfy the integrity constraint are when `x` is 2 or 3 and `y` is 1, which results in `z` being 2 or 3, respectively.
@@ -246,8 +234,6 @@ This function takes a boolean condition as an argument and raises a `FailIntegri
 
     execution_declare(py_exn, S, ("x",("y",())),("z",())) :-
         S = statement_python("z = x/y\nsolver_environment.constrain(z > 1.5)").
-
-    execution_run(py_exn).
     ```
 
     >Since the `constrain` function raises a `FailIntegrityExn` when the condition is not satisfied, we had to reverse the condition from `z <= 1.5` to `z > 1.5` in order to maintain the same integrity constraint as in the previous example.

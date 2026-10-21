@@ -11,10 +11,6 @@ variable_define(execution_input(exec_external,my_set),variable(my_set)).
 execution_declare(exec_external,STMT,(my_set,()),(external_out,())) :-
     STMT = assign(external_out,variable(my_set)).
 
-execution_run(exec_external).
-execution_run(exec_internal).
-execution_run(exec_internal_empty).
-
 evaluate(operation(set_isin,(val(int,2),(variable(execution_output(exec_internal,internal_out)),())))).
 evaluate(operation(set_isin,(val(int,2),(variable(execution_output(exec_external,external_out)),())))).
 evaluate(operation(set_isin,(val(int,2),(variable(execution_output(exec_internal_empty,internal_out)),())))).

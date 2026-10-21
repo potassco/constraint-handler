@@ -1,13 +1,11 @@
 ### Input predicates
 
-_passed(defaultArgs,LBL,execution_declare/4).
-_passed(defaultArgs,LBL,execution_run/1).
+_passed(defaultArgs,LBL,execution_declare/5).
 _main_solverIdentifiers/1.
 
 ### Intermediate predicates
 
 _execution_inputVar/4.
-_execution_isRunning/1.
 _execution_ou_proj/2.
 _execution_outputVar/4.
 _statement_query/3.

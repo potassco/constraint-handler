@@ -27,8 +27,10 @@ class Propagator_variable_define(NamedTuple):
     label: expression.constant
 
 
-class Propagator_variable_domain(atom.Variable_domain):
-    pass
+class Propagator_variable_domain(NamedTuple):
+    name: expression.constant
+    value: expression.Expr
+    label: expression.constant
 
 
 class Propagator_ensure(atom.Ensure):
@@ -64,8 +66,11 @@ class Propagator_multimap_assign(atom.Multimap_assign):
     pass
 
 
-class Propagator_optimize_maximizeSum(atom.Optimize_maximizeSum):
-    pass
+class Propagator_optimize_maximizeSum(NamedTuple):
+    value: expression.Expr
+    id: expression.constant
+    priority: expression.constant
+    label: expression.constant
 
 
 class Propagator_share_value(NamedTuple):
@@ -78,10 +83,6 @@ class Propagator_optimize_precision(atom.Optimize_precision):
 
 
 class Propagator_execution_declare(atom.Execution_declare):
-    pass
-
-
-class Propagator_execution_run(atom.Execution_run):
     pass
 
 

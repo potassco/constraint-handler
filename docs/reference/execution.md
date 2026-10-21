@@ -186,10 +186,12 @@ assert(Condition)
 
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-In order to execute some statement, first an execution has to be declared. For this, the `execution_declare/4` predicate is used.
+The `execution_declare` predicate declares a statement and controls whether it runs.
 
 ```prolog
 execution_declare(Name, Statement, Input, Output)
+execution_declare(Name, Statement, Input, Output, Condition)
+execution_declare(Name, Statement, Input, Output, Condition, Label)
 ```
 
 | Name | Description |
@@ -198,6 +200,14 @@ execution_declare(Name, Statement, Input, Output)
 | `Statement` | The [Statement] to be executed. |
 | `Input` | A [List] of terms representing the input to the statement. |
 | `Output` | A [List] of terms representing the output of the statement. |
+| `Condition` | A boolean [Expression] controlling execution. Defaults to `val(bool,true)`. |
+| `Label` | An optional label for diagnostics. Defaults to `Name`. |
+
+The statement runs when `Condition` evaluates to true. When it evaluates to false,
+outputs have value `none`, and assertions and Python integrity checks within the
+execution do not reject the model. The condition is evaluated outside the
+statement's local variable context; use `variable(execution_input(Name, X))`
+to refer to an execution input.
 
 !!! Example
     Declaring an execution with a simple assignment statement:
@@ -207,29 +217,22 @@ execution_declare(Name, Statement, Input, Output)
         S = assign(a, val(int, 3)).
     ```
 
-    This declares an execution named `my_exec` that assigns the integer value `3` to the variable `a`, taking `a` as input and producing `a` as output.
+    This declares and runs `my_exec`, assigning the integer value `3` to `a`.
 
 ---
 
-## Run
-
-**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
-
-To execute a previously declared execution, the `execution_run/1` predicate is used.
-
-```prolog
-execution_run(Name)
-```
-
-| Name | Description |
-| :--- | :--- |
-| `Name` | The unique identifier for the execution to be run. |
-
 !!! Example
-    Running a previously declared execution:
+    Running an execution only when a boolean variable is true:
 
     ```prolog
-    execution_run(my_exec).
+    variable_declare(run,boolDomain).
+    execution_declare(my_exec, assign(a,val(int,3)), (), (a,()), variable(run)).
     ```
 
-    This runs the execution named `my_exec` that was declared earlier.
+The former `execution_run` predicate is no longer used by CH. Remove unconditional
+run facts; move conditional execution into the declaration's `Condition` argument.
+For labelled declarations, insert the condition before the label.
+
+!!! Note
+    Flat CH has not yet migrated to this interface and still uses its previous
+    declaration/run predicates.

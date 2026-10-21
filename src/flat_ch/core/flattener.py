@@ -99,7 +99,9 @@ class Flattener:
         match node.kind:
             case ProgramInputKind.VARIABLE_DECLARE:
                 var_decl: IVariableDeclare = node  # type: ignore
-                dom_ids = tuple(self._intern_expr(arg) for arg in var_decl.domain)
+                dom_ids = tuple(
+                    (self._intern_expr(expr), self._intern_expr(condition)) for expr, condition in var_decl.domain
+                )
                 self.interned_program.append(
                     (ProgramInputKind.VARIABLE_DECLARE, (var_decl.name, dom_ids, var_decl.registration_id))
                 )
@@ -187,10 +189,11 @@ class Flattener:
             case ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM:
                 opt_sum: OptimizeMaximizeSum = node  # type: ignore
                 expr_id = self._intern_expr(opt_sum.expression)
+                condition_id = self._intern_expr(opt_sum.condition)
                 self.interned_program.append(
                     (
                         ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM,
-                        (expr_id, opt_sum.element, opt_sum.priority, opt_sum.label),
+                        (expr_id, opt_sum.element, opt_sum.priority, opt_sum.label, condition_id),
                     )
                 )
 
@@ -483,8 +486,8 @@ class Flattener:
                 if registration_id is not None:
                     decl_args.insert(0, Number(registration_id))
                 self._emit_fact(Function(FlatFact.VARIABLE_DECLARE.value, decl_args))
-                for dom_id in dom_ids:
-                    dom_args = [var_sym, Number(dom_id)]
+                for expr_id, condition_id in dom_ids:
+                    dom_args = [var_sym, Number(expr_id), Number(condition_id)]
                     if registration_id is not None:
                         dom_args.insert(0, Number(registration_id))
                     self._emit_fact(
@@ -572,7 +575,7 @@ class Flattener:
                 self._emit_fact(Function(fact_name, fact_args))
 
             case ProgramInputKind.OPTIMIZE_MAXIMIZE_SUM:
-                expr_id, elem, prio, label = payload
+                expr_id, elem, prio, label, condition_id = payload
                 elem_sym = elem if isinstance(elem, Symbol) else Function(elem, [])
                 label_sym = (
                     label
@@ -582,13 +585,13 @@ class Flattener:
                 self._emit_fact(
                     Function(
                         FlatFact.OPTIMIZE_SUM.value,
-                        [Number(expr_id), elem_sym, Number(prio)],
+                        [Number(expr_id), elem_sym, Number(prio), Number(condition_id)],
                     )
                 )
                 self._emit_fact(
                     Function(
                         FlatFact.OPTIMIZE_LABEL.value,
-                        [label_sym, Number(expr_id), Number(prio)],
+                        [label_sym, Number(expr_id), Number(prio), Number(condition_id)],
                     )
                 )
 

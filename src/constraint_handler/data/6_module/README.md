@@ -47,7 +47,7 @@ _se_value/2.
 ch_solve(set_assign/3,LBL).
 ch_solve(share_value/1,LBL).
 ch_solve(variable_declare/2,LBL).
-ch_solve(variable_domain/2,LBL).
+ch_solve(variable_domain/3,LBL).
 ch_post(evaluate/2,LBL).
 ch_post(variable_interface/1,LBL).
 bool_evaluated/2.

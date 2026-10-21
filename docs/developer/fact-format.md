@@ -128,7 +128,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "variable_define" "(" <variable> "," <expression> ")"
     | "variable_define" "(" <variable> "," <expression> "," <label> ")"
     | "variable_domain" "(" <variable> "," <expression> ")"
-    | "variable_domain" "(" <variable> "," <expression> "," <label> ")"
+    | "variable_domain" "(" <variable> "," <expression> "," <expression> ")"
+    | "variable_domain" "(" <variable> "," <expression> "," <expression> "," <label> ")"
 
 <multimap-atom> ::=
     | "multimap_assign" "(" <variable> "," <expression> "," <expression> ")"
@@ -143,14 +144,15 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <execution-atom> ::=
     | "execution_declare" "(" <term> "," <statement> "," <variable-list> "," <variable-list> ")"
-    | "execution_declare" "(" <term> "," <statement> "," <variable-list> "," <variable-list> "," <label> ")"
-    | "execution_run" "(" <term> ")"
-    | "execution_run" "(" <term> "," <label> ")"
+    | "execution_declare" "(" <term> "," <statement> "," <variable-list> "," <variable-list> "," <expression> ")"
+    | "execution_declare" "(" <term> "," <statement> "," <variable-list> "," <variable-list> "," <expression> "," <label> ")"
 
 <optimize-atom> ::=
+    | "optimize_maximizeSum" "(" <expression> ")"
     | "optimize_maximizeSum" "(" <expression> "," <term> ")"
     | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> ")"
-    | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> "," <label> ")"
+    | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> "," <expression> ")"
+    | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> "," <expression> "," <label> ")"
     | "optimize_precision" "(" <expression> ")"
     | "optimize_precision" "(" <expression> "," <expression> ")"
 

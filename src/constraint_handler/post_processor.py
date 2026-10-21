@@ -21,9 +21,11 @@ class OptimizePostProcessingPropagator(clingo.Propagator):
     def init(self, init: clingo.PropagateInit) -> None:
         self.reset_optimize_value_symbols()
         self._optimize_symbols = [
-            symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_optimize_component", 6)
+            symbolic_atom.symbol for symbolic_atom in init.symbolic_atoms.by_signature("_optimize_component", 7)
         ]
-        optimize_exprs = {expr for symbol in self._optimize_symbols for expr in symbol.arguments[:3]}
+        optimize_exprs = {
+            expr for symbol in self._optimize_symbols for expr in (*symbol.arguments[:3], symbol.arguments[5])
+        }
 
         self._value_symbols_by_expr.clear()
         for symbolic_atom in init.symbolic_atoms.by_signature("_shared_value", 2):
@@ -39,8 +41,8 @@ class OptimizePostProcessingPropagator(clingo.Propagator):
     def get_results(self, model) -> tuple[dict[clingo.Symbol, int | float], list[clingo.Symbol]]:
         values = {}
         for optimize_symbol in self._optimize_symbols:
-            value_expr, original_expr, precision_expr, _, _, _ = optimize_symbol.arguments
-            for expr in (value_expr, original_expr, precision_expr):
+            value_expr, original_expr, precision_expr, _, _, condition_expr, _ = optimize_symbol.arguments
+            for expr in (value_expr, original_expr, precision_expr, condition_expr):
                 if expr in values:
                     continue
                 for value_symbol in self._value_symbols_by_expr.get(expr, []):
@@ -82,28 +84,21 @@ def _extend_optimize_values(
     totals: dict[tuple[clingo.Symbol, clingo.Symbol], int | float] = {}
     totals_real: dict[tuple[clingo.Symbol, clingo.Symbol], int | float] = {}
     for symbol in [] if optimize_results is None else optimize_results:
-        expr, original_expr, precision_expr, _, priority, label = symbol.arguments
+        expr, original_expr, precision_expr, _, priority, condition_expr, label = symbol.arguments
 
         key = (label, priority)
+        condition = values.get(condition_expr, 0)
+        if condition_expr not in values or any(
+            value_expr not in values for value_expr in (expr, precision_expr, original_expr)
+        ):
+            results.append(warning.Warning(warning.OtherError(), (), f"no value computed for optimization {symbol}"))
+        if not condition:
+            continue
         value = values.get(expr, 0)
-        if expr not in values:
-            results.append(
-                warning.Warning(warning.OtherError(), (), f"no value computed for {expr} used in optimization")
-            )
         precision = values.get(precision_expr, 1)
-        if precision_expr not in values:
-            results.append(
-                warning.Warning(
-                    warning.OtherError(), (), f"no value computed for {precision_expr} used in optimization"
-                )
-            )
         amount = value / precision if precision != 1 else value
         totals[key] = totals.get(key, 0) + amount
 
-        if original_expr not in values:
-            results.append(
-                warning.Warning(warning.OtherError(), (), f"no value computed for {original_expr} used in optimization")
-            )
         totals_real[key] = totals_real.get(key, 0) + values.get(original_expr, 0)
 
     for key, total in totals.items():

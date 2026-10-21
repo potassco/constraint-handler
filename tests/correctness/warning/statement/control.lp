@@ -3,7 +3,8 @@ phase_request(statement_wellformedCheck,true).
 execution_declare(control_lists_ok,
 	noop,
 	(inp,()),
-	(out,())
+	(out,()),
+	val(bool,false)
 ).
 
 execution_declare(control_nested_ok,
@@ -19,7 +20,8 @@ execution_declare(control_nested_ok,
 		)
 	),
 	(inp,()),
-	(out,(inp,()))
+	(out,(inp,())),
+	val(bool,false)
 ).
 
 #show warning/3.

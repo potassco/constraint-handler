@@ -29,10 +29,12 @@ _passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(X,D,LBL).
 %%%%%% variable fromFacts
 #defined variable_domain/2.
 #defined variable_domain/3.
+#defined variable_domain/4.
 
-_passed(defaultArgs,_label_anonymous,variable_domain(X,E)) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E,LBL).
+_passed(defaultArgs,_label_anonymous,variable_domain(X,E,val(bool,true))) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_domain(X,E,val(bool,true))) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,_label_anonymous,variable_domain(X,E,C)) :- variable_domain(X,E,C).
+_passed(defaultArgs,LBL,variable_domain(X,E,C)) :- variable_domain(X,E,C,LBL).
 
 %%%%%% variable open
 #defined variable_assign/2.
@@ -93,13 +95,11 @@ _passed(defaultArgs,LBL,set_baseDomain(X,V)) :- set_baseDomain(X,V,LBL).
 %%%%%% statement atoms
 #defined execution_declare/4.
 #defined execution_declare/5.
-#defined execution_run/1.
-#defined execution_run/2.
+#defined execution_declare/6.
 
-_passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS).
-_passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)) :- execution_declare(NAME,STMT,INS,OUTS,LBL).
-_passed(defaultArgs,NAME,execution_run(NAME)) :- execution_run(NAME), _passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS)).
-_passed(defaultArgs,LBL,execution_run(NAME)) :- execution_run(NAME,LBL).
+_passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS,val(bool,true))) :- execution_declare(NAME,STMT,INS,OUTS).
+_passed(defaultArgs,NAME,execution_declare(NAME,STMT,INS,OUTS,COND)) :- execution_declare(NAME,STMT,INS,OUTS,COND).
+_passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS,COND)) :- execution_declare(NAME,STMT,INS,OUTS,COND,LBL).
 
 %%%%%% optimization atoms
 #defined optimize_precision/1.
@@ -108,11 +108,13 @@ _passed(defaultArgs,LBL,execution_run(NAME)) :- execution_run(NAME,LBL).
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
+#defined optimize_maximizeSum/5.
 
-_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,0,0)) :- optimize_maximizeSum(E).
-_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,0)) :- optimize_maximizeSum(E,X).
-_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(E,X,P).
-_passed(defaultArgs,LBL,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(E,X,P,LBL).
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,0,0,val(bool,true))) :- optimize_maximizeSum(E).
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,0,val(bool,true))) :- optimize_maximizeSum(E,X).
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,P,val(bool,true))) :- optimize_maximizeSum(E,X,P).
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,P,C)) :- optimize_maximizeSum(E,X,P,C).
+_passed(defaultArgs,LBL,optimize_maximizeSum(E,X,P,C)) :- optimize_maximizeSum(E,X,P,C,LBL).
 
 % 4-parameter version with explicit priority
 % Precision for specific priority (priority is last argument)
@@ -123,7 +125,7 @@ _defaultArgs_precisionProj :- optimize_precision(PREC).
 _defaultArgs_precisionProj(PRIO) :- optimize_precision(PREC,PRIO).
 % Default precision value of 1 if no precision is specified at all
 _defaultArgs_optimizePrecision(val(int,1)) :- not _defaultArgs_precisionProj.
-_defaultArgs_optimize_priority(PRIO) :- _passed(defaultArgs,LBL,optimize_maximizeSum(E,X,PRIO)).
+_defaultArgs_optimize_priority(PRIO) :- _passed(defaultArgs,LBL,optimize_maximizeSum(E,X,PRIO,C)).
 _passed(defaultArgs,_label_anonymous,optimize_precision(PREC,PRIO)) :- _defaultArgs_optimizePrecision(PREC), _defaultArgs_optimize_priority(PRIO), not _defaultArgs_precisionProj(PRIO).
 
 %%%%%% preference atoms

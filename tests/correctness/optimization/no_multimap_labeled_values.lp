@@ -14,9 +14,9 @@ optimize_precision(val(int,100),1).
 variable_declare(take(X),boolDomain) :- item(X,W,V,B).
 
 % Maximize total profit under the explicit label profit.
-optimize_maximizeSum(EXPR,X,1,profit) :- item(X,W,V,B), EXPR=operation(if,(variable(take(X)),(val(float,V),()))).
+optimize_maximizeSum(val(float,V),X,1,variable(take(X)),profit) :- item(X,W,V,B).
 % Maximize a second float-valued bonus label on the same priority.
-optimize_maximizeSum(EXPR,X,1,bonus) :- item(X,W,V,B), EXPR=operation(if,(variable(take(X)),(val(float,B),()))).
+optimize_maximizeSum(val(float,B),X,1,variable(take(X)),bonus) :- item(X,W,V,B).
 
 item_idx(IDX,X,W) :- item(X,W,V,B), IDX = #count { Y : item(Y,Z,V2,B2), Y < X }.
 weight_list_aux(N,()) :- N = #count { Y : item(Y,Z,V,B) }.

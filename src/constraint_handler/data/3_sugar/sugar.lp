@@ -10,14 +10,14 @@ _passed(sugar,LBL,evaluate(E,E)) :- _passed(defaultArgs,LBL,evaluate(E)).
 %%%%%% variable fromFacts atoms
 _passed(sugar,LBL,variable_declare(X,D)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(definition;fromFacts;open;set;multimap).
 _passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
-_passed(sugar,LBL,variable_domain(X,val(bool,(false;true)))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
+_passed(sugar,LBL,variable_domain(X,val(bool,(false;true)),val(bool,true))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
 
 %%%%%% variable define
 _passed(sugar,LBL,variable_declare(X,definition)) :- _passed(defaultArgs,LBL,variable_define(X,E,C)), not _defaultArgs_variableDeclared(X).
 _passed(sugar,LBL,variable_define(X,E,C)) :- _passed(defaultArgs,LBL,variable_define(X,E,C)).
 
 %%%%%% variable domain
-_passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
+_passed(sugar,LBL,variable_domain(X,E,C)) :- _passed(defaultArgs,LBL,variable_domain(X,E,C)).
 
 %%%%%% variable assign
 _passed(sugar,LBL,variable_assign(X,E)) :- _passed(defaultArgs,LBL,variable_assign(X,E)).
@@ -38,12 +38,12 @@ _passed(sugar,LBL,set_assign(X,E,C)) :- _passed(defaultArgs,LBL,set_assign(X,E,C
 _passed(sugar,LBL,set_baseDomain(X,E)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)).
 
 %%%%%% optimize atoms
-_sugar_aux(LBL,optimize_component(EXPR,E,PREC,ID,PRIO)) :-
-  _passed(defaultArgs,LBL,optimize_maximizeSum(E,ID,PRIO)),
+_sugar_aux(LBL,optimize_component(EXPR,E,PREC,ID,PRIO,C)) :-
+  _passed(defaultArgs,LBL,optimize_maximizeSum(E,ID,PRIO,C)),
   _passed(defaultArgs,LBL2,optimize_precision(PREC,PRIO)),
   EXPR=operation(floor,(operation(mult,(E,(PREC,()))),())).
 
-_passed(sugar,LBL,optimize_component(E,O,P,ID,PRIORITY)) :- _sugar_aux(LBL,optimize_component(E,O,P,ID,PRIORITY)).
+_passed(sugar,LBL,optimize_component(E,O,P,ID,PRIORITY,C)) :- _sugar_aux(LBL,optimize_component(E,O,P,ID,PRIORITY,C)).
 
 %%%%%% preference atoms
 _sugar_aux(LBL,preference_holds(operation(eq,(variable(X),(E,()))),K)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K > 0.

@@ -22,4 +22,3 @@ class UserInput(str, Enum):
     OPTIMIZE_PRECISION = "optimize_precision"
     PAIR = "pair"
     EXECUTION_DECLARE = "execution_declare"
-    EXECUTION_RUN = "execution_run"

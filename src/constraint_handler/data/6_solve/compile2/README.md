@@ -6,7 +6,7 @@ Declaration can be:
 
 %%% variable and domain definition
 _passed(compile2, LBL, variable_declare(Var, fromFacts)). % the variable is connected to a domain, unecessary
-_passed(compile2, LBL, variable_domain(Var, Expr)) % all possible expressions
+_passed(compile2, LBL, variable_domain(Var, Expr, Cond)) % all enabled expressions
 
 _passed(compile2, LBL, variable_declare(Var, set)). % variable is declared as a set
 

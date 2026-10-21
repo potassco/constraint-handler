@@ -1568,7 +1568,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             domain_literal = from_facts_literals[symbol_var]
             value = self.get_variable_value(domain_expr, _literal)
-            domain_variable.add_value(value, domain_literal)
+            domain_variable.add_value(value, _literal)
             self.register_variable_value(domain_variable, value)
             self.add_watch(_literal)
             self.add_watch(-_literal)

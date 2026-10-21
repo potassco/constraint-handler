@@ -6,7 +6,7 @@ _passed(sugar,LBL,variable_choice/2).
 _passed(sugar,LBL,variable_default/4).
 _passed(sugar,LBL,variable_declare/2).
 _passed(sugar,LBL,variable_define/3).
-_passed(sugar,LBL,variable_domain/2).
+_passed(sugar,LBL,variable_domain/3).
 _expression(sugar,EXPR).
 _expression_operationIndex(sugar,EXPR,IDX,ARG).
 _main_solverIdentifiers/1.

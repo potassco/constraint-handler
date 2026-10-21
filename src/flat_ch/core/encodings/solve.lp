@@ -40,15 +40,15 @@ _fch_var_def(NAME, EXPR_ID) :-
 % Variables with a declared default (see variable_default) get a soft (0-or-1) choice instead,
 % since the default may supply the value; variables that are already forced via _fch_var_def
 % (e.g. variable_assign) skip domain choice entirely.
-1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID)}1 :-
+1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
     _fch_var_decl(NAME),
-    _fch_var_dom(NAME, _),
+	_fch_var_has_domain(NAME),
     not _fch_var_def(NAME, _),
     not _fch_var_has_default(NAME).
 
-{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID)}1 :-
+{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
     _fch_var_decl(NAME),
-    _fch_var_dom(NAME, _),
+    _fch_var_dom(NAME, _, _),
     not _fch_var_def(NAME, _),
     _fch_var_has_default(NAME).
 
@@ -74,7 +74,8 @@ _fch_dynamic_expr_resolved(EXPR_ID) :- _fch_dynamic_expr_val(EXPR_ID, _, _).
     not _fch_dynamic_expr_resolved(EXPR_ID).
 
 _fch_dynamic_dom_val(NAME, DOM_EXPR_ID, TYPE, VAL) :-
-    _fch_var_dom(NAME, DOM_EXPR_ID),
+    _fch_var_dom(NAME, DOM_EXPR_ID, COND_EXPR_ID),
+    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true),
     _fch_dynamic_expr_val(DOM_EXPR_ID, TYPE, VAL).
 
 % Equivalent domain expressions should not create duplicate models.
@@ -95,12 +96,7 @@ _fch_dynamic_expr_val(ID, TYPE, VAL) :-
     _fch_var_def(NAME, EXPR_ID),
     _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL).
 
-% In CH, execution outputs of declared but inactive executions resolve to none.
-_fch_inactive_execution_output((EXEC, VAR, out)) :-
-    _fch_flat(execution_output_decl(EXEC, VAR)),
-    not _fch_execution_run(EXEC).
-
-_fch_var_has_domain(NAME) :- _fch_var_dom(NAME, _).
+_fch_var_has_domain(NAME) :- _fch_var_dom(NAME, _, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
 
 % Declared variables without any domain entries are treated as invalid inputs,
 % unless a declared default or a direct assignment/definition can supply their value instead.
@@ -110,22 +106,16 @@ _fch_empty_var_domain(NAME) :-
     not _fch_var_has_default(NAME),
     not _fch_var_def(NAME, _).
 
-_fch_dynamic_expr_val(ID, _fch_type_none_id, none) :-
-    _fch_expr_var(ID, NAME),
-    _fch_inactive_execution_output(NAME).
-
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, empty_domain(NAME)) :-
     _fch_expr_var(ID, NAME),
-    _fch_empty_var_domain(NAME),
-    not _fch_inactive_execution_output(NAME).
+    _fch_empty_var_domain(NAME).
 
 % Referencing a variable that has neither a declaration nor a definition is a failure.
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, undefined_variable(NAME)) :-
     _fch_expr_var(ID, NAME),
     not _fch_var_decl(NAME),
     not _fch_var_has_definition(NAME),
-    not _fch_set_decl(NAME),
-	not _fch_inactive_execution_output(NAME).
+    not _fch_set_decl(NAME).
 
 _fch_var_has_definition(NAME) :- _fch_var_def(NAME, _, _).
 
@@ -141,7 +131,10 @@ _fch_dynamic_expr_needed(EXPR_ID) :-
     _fch_ensure(_, EXPR_ID).
 
 _fch_dynamic_expr_needed(EXPR_ID) :-
-    _fch_optimize_sum(EXPR_ID, _, _).
+    _fch_optimize_sum(EXPR_ID, _, _, _).
+
+_fch_dynamic_expr_needed(COND_EXPR_ID) :-
+    _fch_optimize_sum(_, _, _, COND_EXPR_ID).
 
 _fch_dynamic_expr_needed(CHILD_ID) :-
     _fch_dynamic_expr_needed(PARENT_ID),
@@ -231,7 +224,7 @@ _fch_python_error(ID) :-
 % =============================================================================
 
 _fch_optimize_priority(Level) :-
-    _fch_optimize_sum(_, _, Level).
+    _fch_optimize_sum(_, _, Level, _).
 
 _fch_optimize_precision_value(Level, Precision) :-
     _fch_optimize_precision(ExprId, Level),
@@ -251,30 +244,38 @@ _fch_optimize_precision_value(Level, 1) :-
 _fch_has_optimize_precision(Level) :- _fch_optimize_precision(_, Level).
 _fch_has_global_optimize_precision :- _fch_optimize_precision(_, all).
 
-_fch_optimize_weight_by_expr(ExprId, Level, Value) :-
-    _fch_optimize_sum(ExprId, Key, Level),
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, Value) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, true),
     _fch_optimize_precision_value(Level, Precision),
     _fch_dynamic_expr_val(ExprId, _fch_type_int_id, BaseValue),
     Value = BaseValue * Precision.
 
-_fch_optimize_weight_by_expr(ExprId, Level, Value) :-
-    _fch_optimize_sum(ExprId, Key, Level),
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, Value) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, true),
     _fch_optimize_precision_value(Level, Precision),
     _fch_dynamic_expr_val(ExprId, _fch_type_bool_id, true),
     Value = Precision.
 
-_fch_optimize_weight_by_expr(ExprId, Level, 0) :-
-    _fch_optimize_sum(ExprId, Key, Level),
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, 0) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, true),
     _fch_dynamic_expr_val(ExprId, _fch_type_bool_id, false).
 
-_fch_optimize_weight_by_expr(ExprId, Level, IntValue) :-
-    _fch_optimize_sum(ExprId, Key, Level),
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, 0) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, false).
+
+_fch_optimize_weight_by_expr(ExprId, CondExprId, Level, IntValue) :-
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_dynamic_expr_val(CondExprId, _fch_type_bool_id, true),
     _fch_optimize_precision_value(Level, Precision),
     _fch_dynamic_expr_val(ExprId, _fch_type_float_id, FloatValue),
     IntValue = @fch_scaled_float_to_int(FloatValue, Precision).
 
 _fch_optimize_weight(Key, Level, Value) :-
-	_fch_optimize_sum(ExprId, Key, Level),
-	_fch_optimize_weight_by_expr(ExprId, Level, Value).
+    _fch_optimize_sum(ExprId, Key, Level, CondExprId),
+    _fch_optimize_weight_by_expr(ExprId, CondExprId, Level, Value).
 
 #maximize { Value@Level, Key : _fch_optimize_weight(Key, Level, Value) }.

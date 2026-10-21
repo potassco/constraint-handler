@@ -11,8 +11,6 @@ variable_declare(execution_input(snippet,x),fromFacts).
 variable_domain(execution_input(snippet,x),val(bool,(true;false))).
 variable_domain(execution_input(snippet,x),val(none,none)).
 
-execution_run(snippet).
-
 evaluate(operation(leqv,
   (operation(eq,(variable(execution_output(snippet,y)),(val(int,5),()))),
   (operation(eq,(variable(execution_input(snippet,x)),(val(bool,false),()))),())))).

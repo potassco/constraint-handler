@@ -11,11 +11,9 @@ optimize_precision(val(int,10)).
 variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
-optimize_maximizeSum(EXPR,X) :- item(X,W,V),
+optimize_maximizeSum(val(float,V),X,0,COND) :- item(X,W,V),
   ITEM = val(symbol,X),
-  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
-  VALU = val(float,V),
-  EXPR = operation(ite,(COND,(VALU,(val(int,0),())))).
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))).
 
 variable_define(carried,EXPR) :-
   EXPR = operation(multimap_fold,(LAMB,(MAP,(STAR,())))),

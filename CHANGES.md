@@ -2,6 +2,15 @@
 
 ## Ongoing
 
+## v0.0.9
+
+- - update `variable_domain` to take an optional condition argument.
+    `variable_domain(VAR,E,COND,LBL)` includes `E` in `VAR`'s domain only when
+    `COND` evaluates to true. The former labelled `variable_domain(VAR,E,LBL)`
+    form is now `variable_domain(VAR,E,val(bool,true),LBL)`.
+- - update `optimize_maximizeSum` to take an optional condition argument.
+- - replace CH's `execution_run` with an optional boolean condition in
+    `execution_declare(NAME,STMT,INPUT,OUTPUT,COND,LBL)`.
 - - introduce the declaration `check(COND)` that rejects candidate where `COND`
     evaluates to false.
 - - update the semantics of `ensure` to reject condition with `bad` evaluation.

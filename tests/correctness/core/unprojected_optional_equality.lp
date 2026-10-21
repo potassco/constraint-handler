@@ -24,9 +24,6 @@ execution_declare(y,
              assert(val(bool,false)),
              noop)),("e",("f",())),()).
 
-execution_run(x).
-execution_run(y).
-
 variable_declare(a,fromFacts).
 variable_domain(a,val(int,0)).
 variable_domain(a,val(int,1)).
