@@ -14,11 +14,8 @@ from constraint_handler.PropagatorConstants import (
     OPTIMIZATION_STAGE_ATOM,
     OTHER_ENGINE_VAR_NAME,
     PROPAGATOR_CHECK_MODE_ATOM,
-    REASONING_MODE_PROGRAM,
-    REASONING_STAGE_ATOM,
     EvaluationResult,
     OptimizationStrength,
-    ReasoningMode,
     ValueStatus,
     propagator_warning_t,
 )
@@ -38,6 +35,7 @@ from constraint_handler.PropagatorVariables import (
     VariableValueRegistry,
     is_evaluation_possible,
 )
+from constraint_handler.reasoning_modes import ReasoningModeHandler
 from constraint_handler.schemas import expression, internal, result, type_, warning
 
 
@@ -95,26 +93,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.errors: propagator_warning_t = []
 
-        self.reasoning_mode: ReasoningMode = ReasoningMode.STANDARD
-        # Here we don't keep track of the third stage lit, however, it is important that it exists,
-        # as it is in that stage where we report the model of the reasoning mode!
-        # Stage 1: get reasoning mode atoms for clingo
-        # stage 2: get reasoning mode atoms for propagator
-        # stage 3: report results on first model found here
-        self.reasoning_mode_stage_lits: dict[Literal[1, 2], int] = {1: -1, 2: -1}
-
-        # this is used for cautious reasoning
-        # for the first model, the set is assigned the first model
-        # This is will hold the model which is then used to update the result
+        self.reasoning_mode_handler = ReasoningModeHandler()
         self.python_model: set[result.ResultAtom] | None = None
-        # variable lits is used for brave/cautious reasoning to create nogoods that force changes in the model between stages
-        # There is one literal per variable. When it is true, it means that the variable has a different value than previous solutions
-        # TODO: Check that the above explanation is true!
-        self.variable_lits: dict[VariableType, int] = {}
-        self.previously_stage_2: bool = False
-        # It is important that we collect the nogoods for seen solutions as we get the solutions!
-        # since later, we wont hace access to the actual reasons for the values of the variables!
-        self.stage1_ngs: list[Iterable[int]] = []
 
         self.optimization_stage_lits: dict[Literal[1, 2, 3], int] = {1: -1, 2: -1, 3: -1}
         self.previously_opt_stage_2: bool = False
@@ -140,24 +120,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo control instance.
         """
-        match ctl.configuration.solve.enum_mode:  # ty:ignore[unresolved-attribute]
-            case "brave":
-                self.reasoning_mode = ReasoningMode.BRAVE
-            case "cautious":
-                self.reasoning_mode = ReasoningMode.CAUTIOUS
-            case _:
-                self.reasoning_mode = ReasoningMode.STANDARD
-
-        if self.reasoning_mode != ReasoningMode.STANDARD:
-            if ctl.configuration.solver.heuristic != "Domain":  # ty:ignore[unresolved-attribute]
-                self.errors.append(
-                    warning.Warning(
-                        warning.Propagator(),
-                        (),
-                        f"Brave/cautious reasoning requires --heuristic=Domain, but {ctl.configuration.solver.heuristic} was set. This may lead to incorrect results.",  # ty:ignore[unresolved-attribute]
-                    )
-                )
-            ctl.add("base", [], REASONING_MODE_PROGRAM)
+        reasoning_warning = self.reasoning_mode_handler.configure(ctl)
+        if reasoning_warning is not None:
+            self.errors.append(reasoning_warning)
 
         ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
         self.optimal_models_wanted = 1
@@ -197,6 +162,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.lit2expr.clear()
         self.value_registry = VariableValueRegistry()
         self.optimization_sum = OptimizationHandler()
+        self.reasoning_mode_handler.reset()
         self.environment = {}
         self.errors.clear()
 
@@ -218,7 +184,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.set_parents()
 
-        self.add_reasoning_mode_helper_atoms(init)
+        self.reasoning_mode_handler.add_helper_atoms(init, self.symbol2var.get_variables())
         self.add_optimization_helper_atoms(init)
 
         self.get_forbidden_warnings(init)
@@ -710,55 +676,19 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         return possible_values
 
-    def add_reasoning_mode_helper_atoms(self, ctl: clingo.PropagateInit) -> None:
-        """
-        Register helper literals for brave/cautious reasoning.
-
-        In brave/cautious mode, the encoding provides stage atoms that separate
-        (1) clingo reasoning for solver-handled variables and (2) propagator-side
-        evaluation.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-        if self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS):
-            # Adding reasoning mode helper atoms
-            for a in ctl.symbolic_atoms.by_signature(REASONING_STAGE_ATOM, 1):
-                assert a.symbol.arguments[0].number in (1, 2, 3), f"Unknown reasoning stage atom: {a.symbol}"
-                self.reasoning_mode_stage_lits[a.symbol.arguments[0].number] = ctl.solver_literal(
-                    a.literal
-                )  # ty:ignore[invalid-assignment]
-
-            # TODO: check if it works with the new variable manager stuff
-            # TODO: support BoolevaluateVariable: probably needs to add it to the output model?
-            for var in self.symbol2var.get_variables():
-                if isinstance(var, (EnsureVariable, BoolEvaluateVariable)):
-                    continue
-                lit = ctl.add_literal(freeze=True)
-                self.variable_lits[var] = lit
-
     def add_optimization_helper_atoms(self, ctl: clingo.PropagateInit) -> None:
-        """
-        Register helper literals for optimization pruning.
+        """Register helper literals used to prune optimization candidates."""
+        if not self.using_optimization:
+            return
 
-        If optimization is used, the encoding provides an atom that is true when
-        we are still finding the optimal value and adds nogoods to prune worse solution than the current one.
-        Then, we disable this atom and look for solutions with the SAME value so we find all optimal solutions
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
+        for atom in ctl.symbolic_atoms.by_signature(OPTIMIZATION_STAGE_ATOM, 1):
+            literal = ctl.solver_literal(atom.literal)
+            stage = atom.symbol.arguments[0].number
 
-        if self.using_optimization:
-            # Adding optimization helper atoms
-            for a in ctl.symbolic_atoms.by_signature(OPTIMIZATION_STAGE_ATOM, 1):
-                lit = ctl.solver_literal(a.literal)
-                stage = a.symbol.arguments[0].number
-
-                assert stage in (1, 2), f"Unknown optimization stage atom: {a.symbol}"
-                self.optimization_stage_lits[stage] = lit
-
-                if stage == 2:
-                    self.add_watch(lit)
+            assert stage in (1, 2), f"Unknown optimization stage atom: {atom.symbol}"
+            self.optimization_stage_lits[stage] = literal
+            if stage == 2:
+                self.add_watch(literal)
 
     def set_optimization_check_strength(self, strength: Literal["lt", "le"]) -> None:
         """
@@ -905,102 +835,19 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Returns:
             bool: True if nogoods were added and propagation should stop.
         """
-        old_model = self.python_model
         self.update_python_model()
-
-        if self.reasoning_mode == ReasoningMode.STANDARD:
-            return False
-
-        # This part onwards is only for brave/cautious reasoning
-        assert type(self.python_model) is set
-        if old_model is not None:
-            if self.reasoning_mode == ReasoningMode.CAUTIOUS:
-                self.python_model = old_model.intersection(self.python_model)
-            if self.reasoning_mode == ReasoningMode.BRAVE:
-                self.python_model = old_model.union(self.python_model)
-
-        if not ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]):
-            self.stage1_ngs.extend(self.get_reasoning_mode_nogoods(self.python_model, first_call=True))
-            return False
-
-        assert ctl.assignment.is_true(self.reasoning_mode_stage_lits[2]), "stage 2 should be true!"
-
-        if not self.previously_stage_2:
-            # First time in stage 2
-            self.previously_stage_2 = True
-
-            # add nogoods for the stuff in the current model
-            self.nogood_queue.extend(self.stage1_ngs)
-            self.nogood_queue.extend(self.get_reasoning_mode_nogoods(self.python_model, first_call=True))
-
-            # add nogoods to ensure at least 1 var changes
-            self.nogood_queue.append(
-                [-lit for lit in self.variable_lits.values()] + [self.reasoning_mode_stage_lits[2]]
-            )
-
+        assert self.python_model is not None
+        model, nogoods, enqueue_now = self.reasoning_mode_handler.process_model(
+            self.python_model,
+            ctl,
+            lambda symbol: self.symbol2var[symbol].values(),
+            self.get_reasons,
+        )
+        self.python_model = model
+        self.nogood_queue.extend(nogoods)
+        if enqueue_now:
             return self.add_nogoods_from_queue(ctl)
-
-        elif self.previously_stage_2:
-            # Subsequent times in stage 2
-            assert old_model is not None
-
-            # add nogoods for the new stuff
-            if self.reasoning_mode == ReasoningMode.BRAVE:
-                variables_considered = self.python_model.difference(old_model)
-            elif self.reasoning_mode == ReasoningMode.CAUTIOUS:
-                variables_considered = old_model.difference(self.python_model)
-
-            self.nogood_queue.extend(self.get_reasoning_mode_nogoods(variables_considered, first_call=False))
-
-            return self.add_nogoods_from_queue(ctl)
-
-    def get_reasoning_mode_nogoods(self, variables: set[result.ResultAtom], first_call: bool) -> list[Iterable[int]]:
-        """
-        Create nogoods used to drive brave/cautious reasoning.
-
-        - BRAVE: force the next model to differ in at least one variable so the
-            accumulated model can grow.
-        - CAUTIOUS: on first call behaves like brave; on subsequent calls, block
-            exactly the changes observed to converge to the intersection.
-
-        Args:
-                variables: Result atoms relevant for the current step.
-                first_call: Whether this is the first stage-2 call for the run.
-
-        Returns:
-                list[Iterable[int]]: Nogoods to add (each is a collection of solver literals).
-        """
-        assert self.reasoning_mode in (ReasoningMode.BRAVE, ReasoningMode.CAUTIOUS)
-
-        nogoods: list[Iterable[int]] = []
-        for result_var in variables:
-            # TODO: add support for evaluate and warnings
-            if isinstance(result_var, (prop_atom.Evaluated, warning.Warning)):
-                continue
-            assert type(result_var) in (
-                prop_atom.Value,
-                prop_atom.Set_value,
-                prop_atom.Multimap_value,
-            ), f"Unexpected variable type: {type(result_var)} with value {result_var}"
-            assert isinstance(result_var.name, Symbol)
-
-            if self.reasoning_mode == ReasoningMode.BRAVE or first_call:
-                # The first time we add nogoods, it is the same for brave and cautious
-                for var in self.symbol2var[result_var.name].values():
-                    ng = self.get_reasons(var).union({self.variable_lits[var]})
-                    ng.add(self.reasoning_mode_stage_lits[2])
-                    nogoods.append(ng)
-
-            elif self.reasoning_mode == ReasoningMode.CAUTIOUS and not first_call:
-                # Second time for cautious we only add nogoods that disable the changes for the variable
-                for var in self.symbol2var[result_var.name].values():
-                    ng = {self.variable_lits[var]}
-                    ng.add(self.reasoning_mode_stage_lits[2])
-                    nogoods.append(ng)
-            else:
-                assert False, "Should not reach here"
-
-        return nogoods
+        return False
 
     def add_nogoods_from_queue(self, ctl: clingo.PropagateControl) -> bool:
         """
