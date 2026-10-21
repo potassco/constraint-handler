@@ -1,9 +1,20 @@
 propagator_variable_declare(X,fromFacts,LBL) :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
 propagator_variable_declare(X,open,LBL) :- _passed(propagator,LBL,variable_declare(X,open)).
 
-%_bool_evaluate(C,LBL) :- _passed(propagator,LBL,variable_domain(X,D,C)).
-%1 {propagator_variable_domain(X,D,LBL) : _passed(propagator,LBL,variable_domain(X,D,C)), _bool_evaluated(C,val(bool,true)) } 1 :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
-1 {propagator_variable_domain(X,D,LBL) : _passed(propagator,LBL,variable_domain(X,D,C)) } 1 :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
+_bool_evaluate(C,LBL) :- _passed(propagator,LBL,variable_domain(X,D,C)), C!=val(bool,true).
+1 { propagator_variable_domain(X,D,DOMAIN_LBL) :
+        _passed(propagator,DOMAIN_LBL,variable_domain(X,D,C));
+    _variable_emptyDomain(X)
+} 1 :- _passed(propagator,LBL,variable_declare(X,fromFacts)).
+
+:- propagator_variable_domain(X,D,DOMAIN_LBL), _passed(propagator,DOMAIN_LBL,variable_domain(X,D,C)), C!=val(bool,true), not _bool_evaluated(C,val(bool,true)).
+
+:- _variable_emptyDomain(X),
+    _passed(propagator,_,variable_domain(X,_,val(bool,true))).
+:- _variable_emptyDomain(X),
+    _passed(propagator,_,variable_domain(X,_,C)),
+    C != val(bool,true),
+    _bool_evaluated(C,val(bool,true)).
 
 #script (python)
 

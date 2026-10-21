@@ -439,6 +439,8 @@ unit_tests = [
 ]
 
 variable_tests = [
+    "variable/conditional_domain_bad_propagation",
+    "variable/direct_bad_propagation",
     "variable/dynamic_type",
     "variable/flexible_domain",
     "variable/main",
@@ -630,6 +632,9 @@ propagator_xfail: set[str] = {
 propagator_true_skip: set[str] = propagator_skip | {
     "core/reasoning_modes",
     "core/reasoning_modes_with_show",
+    "core/conditional_domain",
+    "execution/conditional_input_domain",
+    "execution/conditional_input_domain_dynamic",
     "execution/python_integrity_should_be_ignored",
     "set/conditional_assign",
     "set/diff_flat",
