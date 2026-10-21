@@ -493,7 +493,7 @@ class DomainComputation:
             ("variable_declare", 2),
             ("variable_default", 4),
             ("variable_define", 3),
-            ("variable_domain", 2),
+            ("variable_domain", 3),
             ("set_assign", 3),
         }
     )
@@ -708,6 +708,8 @@ class DomainComputation:
             elif expr.name == "variable_default" and len(expr.arguments) == 4:
                 var, source_expr, _condition, _priority = expr.arguments
             elif expr.name == "variable_define" and len(expr.arguments) == 3:
+                var, source_expr, _condition = expr.arguments
+            elif expr.name == "variable_domain" and len(expr.arguments) == 3:
                 var, source_expr, _condition = expr.arguments
             else:
                 var, source_expr = expr.arguments

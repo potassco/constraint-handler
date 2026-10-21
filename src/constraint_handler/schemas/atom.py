@@ -52,6 +52,7 @@ class Variable_default(NamedTuple):
 class Variable_domain(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 

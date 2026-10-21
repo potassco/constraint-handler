@@ -10,14 +10,14 @@ _passed(sugar,LBL,evaluate(E,E)) :- _passed(defaultArgs,LBL,evaluate(E)).
 %%%%%% variable fromFacts atoms
 _passed(sugar,LBL,variable_declare(X,D)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(definition;fromFacts;open;set;multimap).
 _passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
-_passed(sugar,LBL,variable_domain(X,val(bool,(false;true)))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
+_passed(sugar,LBL,variable_domain(X,val(bool,(false;true)),val(bool,true))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
 
 %%%%%% variable define
 _passed(sugar,LBL,variable_declare(X,definition)) :- _passed(defaultArgs,LBL,variable_define(X,E,C)), not _defaultArgs_variableDeclared(X).
 _passed(sugar,LBL,variable_define(X,E,C)) :- _passed(defaultArgs,LBL,variable_define(X,E,C)).
 
 %%%%%% variable domain
-_passed(sugar,LBL,variable_domain(X,E)) :- _passed(defaultArgs,LBL,variable_domain(X,E)).
+_passed(sugar,LBL,variable_domain(X,E,C)) :- _passed(defaultArgs,LBL,variable_domain(X,E,C)).
 
 %%%%%% variable assign
 _passed(sugar,LBL,variable_assign(X,E)) :- _passed(defaultArgs,LBL,variable_assign(X,E)).

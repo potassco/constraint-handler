@@ -42,6 +42,7 @@ core_tests = [
     "core/check",
     "core/conditional_assign",
     "core/conditional_define",
+    "core/conditional_domain",
     "core/conditional_definitions",
     "core/conj_bad_none_recovery",
     "core/custom_globals",
@@ -595,6 +596,7 @@ propagator_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {
+    "core/conditional_domain",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",

@@ -2,7 +2,7 @@ _expression(ground,E) :- _passed(ground,LBL,variable_assign(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_choice(X,E)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_default(X,E,C,P)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_define(X,E,C)).
-_expression(ground,E) :- _passed(ground,LBL,variable_domain(X,E)).
+_expression(ground,(E;C)) :- _passed(ground,LBL,variable_domain(X,E,C)).
 _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
 
 %%%%%%%%%%%%%%%%% variable_define/3

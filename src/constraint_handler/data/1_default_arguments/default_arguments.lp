@@ -29,10 +29,12 @@ _passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(X,D,LBL).
 %%%%%% variable fromFacts
 #defined variable_domain/2.
 #defined variable_domain/3.
+#defined variable_domain/4.
 
-_passed(defaultArgs,_label_anonymous,variable_domain(X,E)) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
-_passed(defaultArgs,LBL,variable_domain(X,E)) :- variable_domain(X,E,LBL).
+_passed(defaultArgs,_label_anonymous,variable_domain(X,E,val(bool,true))) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_domain(X,E,val(bool,true))) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,_label_anonymous,variable_domain(X,E,C)) :- variable_domain(X,E,C).
+_passed(defaultArgs,LBL,variable_domain(X,E,C)) :- variable_domain(X,E,C,LBL).
 
 %%%%%% variable open
 #defined variable_assign/2.

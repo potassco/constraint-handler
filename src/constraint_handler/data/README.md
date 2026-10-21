@@ -20,7 +20,7 @@ phase_request/2.
 parameter_request/2.
 variable_declare/2. variable_declare/3.
 variable_define/2. variable_define/3. variable_define/4.
-variable_domain/2. variable_domain/3.
+variable_domain/2. variable_domain/3. variable_domain/4.
 variable_default/2. variable_default/3. variable_default/4.
 warning_forbid/1. warning_forbid/2.
 warning_ignore/1. warning_ignore/2.

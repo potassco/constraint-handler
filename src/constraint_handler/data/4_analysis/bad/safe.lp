@@ -21,7 +21,8 @@ _variable_safe(X) :- _variable_query(safe,X),
   _expression_safe(C) : _passed(sugar,LBL,variable_default(X,E,C,P));
   _expression_safe(E) : _passed(sugar,LBL,variable_define(X,E,C));
   _expression_safe(C) : _passed(sugar,LBL,variable_define(X,E,C));
-  _expression_safe(E) : _passed(sugar,LBL,variable_domain(X,E)).
+  _expression_safe(E) : _passed(sugar,LBL,variable_domain(X,E,C));
+  _expression_safe(C) : _passed(sugar,LBL,variable_domain(X,E,C)).
 _variable_query(safe,X) :- _variable(sugar,X).
 
 

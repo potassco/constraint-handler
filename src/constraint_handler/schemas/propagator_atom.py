@@ -27,8 +27,10 @@ class Propagator_variable_define(NamedTuple):
     label: expression.constant
 
 
-class Propagator_variable_domain(atom.Variable_domain):
-    pass
+class Propagator_variable_domain(NamedTuple):
+    name: expression.constant
+    value: expression.Expr
+    label: expression.constant
 
 
 class Propagator_ensure(atom.Ensure):

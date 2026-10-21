@@ -38,9 +38,9 @@ _correction_proposed(PHASE,LBL,variable_define(X,E,C),variable_define(X,NE,NC)) 
   _passed(sugar,LBL,variable_define(X,E,C)),
   _correction_expressionOutput(PHASE,E,NE),
   _correction_expressionOutput(PHASE,C,NC).
-_correction_proposed(PHASE,LBL,variable_domain(X,E),variable_domain(X,NE)) :-
-  _passed(sugar,LBL,variable_domain(X,E)),
-  _correction_expressionOutput(PHASE,E,NE).
+_correction_proposed(PHASE,LBL,variable_domain(X,E,C),variable_domain(X,NE,NC)) :-
+  _passed(sugar,LBL,variable_domain(X,E,C)),
+  _correction_expressionOutput(PHASE,E,NE), _correction_expressionOutput(PHASE,C,NC).
 _correction_proposed(PHASE,LBL,set_assign(X,E,C),set_assign(X,NE,NC)) :-
   _passed(sugar,LBL,set_assign(X,E,C)),
   _correction_expressionOutput(PHASE,E,NE), _correction_expressionOutput(PHASE,C,NC).
