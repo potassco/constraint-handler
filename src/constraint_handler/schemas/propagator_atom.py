@@ -64,8 +64,11 @@ class Propagator_multimap_assign(atom.Multimap_assign):
     pass
 
 
-class Propagator_optimize_maximizeSum(atom.Optimize_maximizeSum):
-    pass
+class Propagator_optimize_maximizeSum(NamedTuple):
+    value: expression.Expr
+    id: expression.constant
+    priority: expression.constant
+    label: expression.constant
 
 
 class Propagator_share_value(NamedTuple):

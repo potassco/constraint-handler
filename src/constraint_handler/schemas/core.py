@@ -67,6 +67,7 @@ class Optimize_component(NamedTuple):
     precision: expression.Expr
     id: expression.constant
     priority: expression.constant
+    condition: expression.Expr
 
 
 class Preference_maximizeScore(NamedTuple):

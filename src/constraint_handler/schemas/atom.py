@@ -99,6 +99,7 @@ class Optimize_maximizeSum(NamedTuple):
     value: expression.Expr
     id: expression.constant = 0
     priority: expression.constant = 0
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 

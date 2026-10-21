@@ -50,11 +50,12 @@ _correction_proposed(PHASE,LBL,set_baseDomain(X,E),set_baseDomain(X,NE)) :-
 _correction_proposed(PHASE,LBL,multimap_assign(X,K,B),multimap_assign(X,NK,NB)) :-
   _passed(sugar,LBL,multimap_assign(X,K,B)),
   _correction_expressionOutput(PHASE,K,NK), _correction_expressionOutput(PHASE,B,NB).
-_correction_proposed(PHASE,LBL,optimize_component(E,ORIG,PREC,ID,PRIO),optimize_component(NE,NORIG,NREC,ID,NRIO)) :-
-  _passed(sugar,LBL,optimize_component(E,ORIG,PREC,ID,PRIO)),
+_correction_proposed(PHASE,LBL,optimize_component(E,ORIG,PREC,ID,PRIO,C),optimize_component(NE,NORIG,NREC,ID,NRIO,NC)) :-
+  _passed(sugar,LBL,optimize_component(E,ORIG,PREC,ID,PRIO,C)),
   _correction_expressionOutput(PHASE,E,NE),
   _correction_expressionOutput(PHASE,ORIG,NORIG),
   _correction_expressionOutput(PHASE,PREC,NREC),
+  _correction_expressionOutput(PHASE,C,NC),
   _correction_numberOutput(PHASE,PRIO,NRIO).
 _correction_proposed(PHASE,LBL,preference_holds(E,K),preference_holds(NE,NK)) :- _passed(sugar,LBL,preference_holds(E,K)),
   _correction_expressionOutput(PHASE,E,NE),

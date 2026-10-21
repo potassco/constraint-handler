@@ -106,11 +106,13 @@ _passed(defaultArgs,LBL,execution_declare(NAME,STMT,INS,OUTS,COND)) :- execution
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
 #defined optimize_maximizeSum/4.
+#defined optimize_maximizeSum/5.
 
-_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,0,0)) :- optimize_maximizeSum(E).
-_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,0)) :- optimize_maximizeSum(E,X).
-_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(E,X,P).
-_passed(defaultArgs,LBL,optimize_maximizeSum(E,X,P)) :- optimize_maximizeSum(E,X,P,LBL).
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,0,0,val(bool,true))) :- optimize_maximizeSum(E).
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,0,val(bool,true))) :- optimize_maximizeSum(E,X).
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,P,val(bool,true))) :- optimize_maximizeSum(E,X,P).
+_passed(defaultArgs,_label_anonymous,optimize_maximizeSum(E,X,P,C)) :- optimize_maximizeSum(E,X,P,C).
+_passed(defaultArgs,LBL,optimize_maximizeSum(E,X,P,C)) :- optimize_maximizeSum(E,X,P,C,LBL).
 
 % 4-parameter version with explicit priority
 % Precision for specific priority (priority is last argument)
@@ -121,7 +123,7 @@ _defaultArgs_precisionProj :- optimize_precision(PREC).
 _defaultArgs_precisionProj(PRIO) :- optimize_precision(PREC,PRIO).
 % Default precision value of 1 if no precision is specified at all
 _defaultArgs_optimizePrecision(val(int,1)) :- not _defaultArgs_precisionProj.
-_defaultArgs_optimize_priority(PRIO) :- _passed(defaultArgs,LBL,optimize_maximizeSum(E,X,PRIO)).
+_defaultArgs_optimize_priority(PRIO) :- _passed(defaultArgs,LBL,optimize_maximizeSum(E,X,PRIO,C)).
 _passed(defaultArgs,_label_anonymous,optimize_precision(PREC,PRIO)) :- _defaultArgs_optimizePrecision(PREC), _defaultArgs_optimize_priority(PRIO), not _defaultArgs_precisionProj(PRIO).
 
 %%%%%% preference atoms

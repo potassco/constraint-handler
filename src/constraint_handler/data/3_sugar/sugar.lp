@@ -38,12 +38,12 @@ _passed(sugar,LBL,set_assign(X,E,C)) :- _passed(defaultArgs,LBL,set_assign(X,E,C
 _passed(sugar,LBL,set_baseDomain(X,E)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)).
 
 %%%%%% optimize atoms
-_sugar_aux(LBL,optimize_component(EXPR,E,PREC,ID,PRIO)) :-
-  _passed(defaultArgs,LBL,optimize_maximizeSum(E,ID,PRIO)),
+_sugar_aux(LBL,optimize_component(EXPR,E,PREC,ID,PRIO,C)) :-
+  _passed(defaultArgs,LBL,optimize_maximizeSum(E,ID,PRIO,C)),
   _passed(defaultArgs,LBL2,optimize_precision(PREC,PRIO)),
   EXPR=operation(floor,(operation(mult,(E,(PREC,()))),())).
 
-_passed(sugar,LBL,optimize_component(E,O,P,ID,PRIORITY)) :- _sugar_aux(LBL,optimize_component(E,O,P,ID,PRIORITY)).
+_passed(sugar,LBL,optimize_component(E,O,P,ID,PRIORITY,C)) :- _sugar_aux(LBL,optimize_component(E,O,P,ID,PRIORITY,C)).
 
 %%%%%% preference atoms
 _sugar_aux(LBL,preference_holds(operation(eq,(variable(X),(E,()))),K)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K > 0.

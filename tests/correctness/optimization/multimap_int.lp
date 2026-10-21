@@ -8,11 +8,9 @@ phase_request(type_check,false).
 variable_declare(taken,multimap).
 { multimap_assign(taken,val(symbol,X),val(int,W)) } :- item(X,W,V).
 
-optimize_maximizeSum(EXPR,X) :- item(X,W,V),
+optimize_maximizeSum(val(int,V),X,0,COND) :- item(X,W,V),
   ITEM = val(symbol,X),
-  COND = operation(multimap_isin,(ITEM,(variable(taken),()))),
-  VALU = val(int,V),
-  EXPR = operation(ite,(COND,(VALU,(val(int,0),())))).
+  COND = operation(multimap_isin,(ITEM,(variable(taken),()))).
 
 
 variable_define(carried,EXPR) :-

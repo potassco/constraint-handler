@@ -147,9 +147,11 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "execution_declare" "(" <term> "," <statement> "," <variable-list> "," <variable-list> "," <expression> "," <label> ")"
 
 <optimize-atom> ::=
+    | "optimize_maximizeSum" "(" <expression> ")"
     | "optimize_maximizeSum" "(" <expression> "," <term> ")"
     | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> ")"
-    | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> "," <label> ")"
+    | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> "," <expression> ")"
+    | "optimize_maximizeSum" "(" <expression> "," <term> "," <expression> "," <expression> "," <label> ")"
     | "optimize_precision" "(" <expression> ")"
     | "optimize_precision" "(" <expression> "," <expression> ")"
 

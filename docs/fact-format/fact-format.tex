@@ -150,9 +150,11 @@
 \alt `execution_declare' `(' <term> `,' <statement> `,' <variable-list> `,' <variable-list> `,' <expression> `,' <label> `)'
 
 <optimize-atom> ::=
+~\alt `optimize_maximizeSum' `(' <expression> `)'
 ~\alt `optimize_maximizeSum' `(' <expression> `,' <term> `)'
 \alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `)'
-\alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `,' <label> `)'
+\alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `,' <expression> `)'
+\alt `optimize_maximizeSum' `(' <expression> `,' <term> `,' <expression> `,' <expression> `,' <label> `)'
 \alt `optimize_precision' `(' <expression>  `)'
 \alt `optimize_precision' `(' <expression> `,' <expression> `)'
 

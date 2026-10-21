@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - update `optimize_maximizeSum` to take an optional condition argument.
 - - replace CH's `execution_run` with an optional boolean condition in
     `execution_declare(NAME,STMT,INPUT,OUTPUT,COND,LBL)`.
 - - introduce the declaration `check(COND)` that rejects candidate where `COND`
