@@ -189,6 +189,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             init: Clingo PropagateInit object
         """
         self.symbol2var = VariableManager()
+        self.evaluations = Evaluations()
         self.literal2var.clear()
         self.evaluatevars.clear()
         self.expr2var.clear()
@@ -826,6 +827,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             for var in self.symbol2var.get_variables():
                 if var.reset(0):
+                    self.evaluations.remove_var_from_evaluations(var)
                     for expr in self.var2expr.get(var.var, []):
                         expr.vars_counter -= 1
 
@@ -1024,7 +1026,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo PropagateControl object.
         """
-        self.evaluations.update_evaluations(self.symbol2var.get_variables())
         for var in self.evaluatevars:
             var.evaluate(self.evaluations, ctl, self.environment)
 
@@ -1035,7 +1036,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo PropagateControl object.
         """
-        self.evaluations.update_evaluations(self.symbol2var.get_variables())
         for var in self.shared_values:
             var.evaluate(self.evaluations, ctl, self.environment)
 
@@ -1095,7 +1095,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         if not self.using_optimization:
             return False
-        self.evaluations.update_evaluations(self.symbol2var.get_variables())
         self.optimization_sum.evaluate(ctl)
 
         for i, _sum in enumerate(self.optimization_sum.get_value()):
@@ -1246,8 +1245,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if rank not in eval_by_rank_expr:
             return max_rank
 
-        self.evaluations.update_evaluations(self.symbol2var.get_variables())
-
         while eval_by_rank_expr[rank]:
             expr = eval_by_rank_expr[rank].pop()
             if not is_evaluation_possible(expr):
@@ -1303,6 +1300,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if not result:
                 continue
 
+            self.evaluations.add_var_to_evaluations(var)
             for expr in self.var2expr.get(var.var, set()):
                 expr.vars_counter += 1
                 if is_evaluation_possible(expr):
@@ -1327,7 +1325,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 - False if it did not change.
                 - None if evaluation detected a conflict (nogood added).
         """
-        self.evaluations.update_evaluations(self.symbol2var.get_variables())
         eval_result: EvaluationResult = var.evaluate(ctl)
 
         if eval_result == EvaluationResult.CONFLICT:
@@ -1392,6 +1389,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for var in self.symbol2var.get_variables():
             if var.reset(assignment.decision_level):
+                self.evaluations.remove_var_from_evaluations(var)
                 for expr in self.var2expr.get(var.var, []):
                     expr.vars_counter -= 1
 
