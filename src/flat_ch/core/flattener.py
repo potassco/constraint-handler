@@ -99,7 +99,9 @@ class Flattener:
         match node.kind:
             case ProgramInputKind.VARIABLE_DECLARE:
                 var_decl: IVariableDeclare = node  # type: ignore
-                dom_ids = tuple((self._intern_expr(expr), self._intern_expr(condition)) for expr, condition in var_decl.domain)
+                dom_ids = tuple(
+                    (self._intern_expr(expr), self._intern_expr(condition)) for expr, condition in var_decl.domain
+                )
                 self.interned_program.append(
                     (ProgramInputKind.VARIABLE_DECLARE, (var_decl.name, dom_ids, var_decl.registration_id))
                 )

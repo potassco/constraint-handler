@@ -104,7 +104,10 @@ class Registration(BaseRegistration):
             elif domain_kind == "boolDomain":
                 self.reg.update_var(
                     var_sym,
-                    ((IValue(Type.BOOL, True), IValue(Type.BOOL, True)), (IValue(Type.BOOL, False), IValue(Type.BOOL, True))),
+                    (
+                        (IValue(Type.BOOL, True), IValue(Type.BOOL, True)),
+                        (IValue(Type.BOOL, False), IValue(Type.BOOL, True)),
+                    ),
                 )
             elif domain_kind == "fromFacts":
                 self.reg.update_var(var_sym, ())
