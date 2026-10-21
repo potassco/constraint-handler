@@ -70,7 +70,7 @@ class FlatFact(str, Enum):
 
 _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.VARIABLE_DECLARE: ("NAME",),
-    FlatFact.VARIABLE_DOMAIN: ("NAME", "EXPR_ID"),
+    FlatFact.VARIABLE_DOMAIN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.VARIABLE_DEFINE: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.EXPRESSION_VALUE: ("ID", "TYPE_ID", "VALUE"),
     FlatFact.EXPRESSION_VARIABLE: ("ID", "NAME"),
@@ -177,7 +177,7 @@ ExecutionStatement: TypeAlias = IAssignStatement | IAssertStatement | IIfStateme
 @dataclass(frozen=True, slots=True)
 class IVariableDeclare:
     name: str | Symbol
-    domain: tuple[Expression, ...] = ()
+    domain: tuple[tuple[Expression, Expression], ...] = ()
     registration_id: int | None = None
     kind: ProgramInputKind = ProgramInputKind.VARIABLE_DECLARE
 

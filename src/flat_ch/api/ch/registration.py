@@ -102,19 +102,22 @@ class Registration(BaseRegistration):
             if domain_kind == "set":
                 self.reg.update_set(var_sym)
             elif domain_kind == "boolDomain":
-                self.reg.update_var(var_sym, (IValue(Type.BOOL, True), IValue(Type.BOOL, False)))
+                self.reg.update_var(
+                    var_sym,
+                    ((IValue(Type.BOOL, True), IValue(Type.BOOL, True)), (IValue(Type.BOOL, False), IValue(Type.BOOL, True))),
+                )
             elif domain_kind == "fromFacts":
                 self.reg.update_var(var_sym, ())
             elif domain_kind == "open":
                 self.reg.update_var(var_sym, ())
             elif domain_kind == "fromList":
                 unnested = tuple(self.parse_expression(s) for s in self.unnest(args[2].arguments[0]))
-                self.reg.update_var(var_sym, unnested)
+                self.reg.update_var(var_sym, tuple((expr, IValue(Type.BOOL, True)) for expr in unnested))
 
     def _handle_domain(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 3:
+        if len(args) == 4:
             var_sym = self._lower_variable_symbol(args[1])
-            self.reg.update_var(var_sym, (self.parse_expression(args[2]),))
+            self.reg.update_var(var_sym, ((self.parse_expression(args[2]), self.parse_expression(args[3])),))
 
     def _handle_define(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:

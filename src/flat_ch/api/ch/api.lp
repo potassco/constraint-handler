@@ -17,14 +17,16 @@ _fch_input(variable_define(LABEL, NAME, EXPR, COND)) :- variable_define(NAME, EX
 
 #defined variable_domain/2.
 #defined variable_domain/3.
-_fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_domain(NAME, EXPR).
-_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_domain(NAME, EXPR, LABEL).
+#defined variable_domain/4.
+_fch_input(variable_domain(_fch_label, NAME, EXPR, val(bool, true))) :- variable_domain(NAME, EXPR).
+_fch_input(variable_domain(_fch_label, NAME, EXPR, COND)) :- variable_domain(NAME, EXPR, COND).
+_fch_input(variable_domain(LABEL, NAME, EXPR, COND)) :- variable_domain(NAME, EXPR, COND, LABEL).
 
 % variable_choice is a domain-population alias, just like in CH's own compile2/propagator engines.
 #defined variable_choice/2.
 #defined variable_choice/3.
-_fch_input(variable_domain(_fch_label, NAME, EXPR)) :- variable_choice(NAME, EXPR).
-_fch_input(variable_domain(LABEL, NAME, EXPR)) :- variable_choice(NAME, EXPR, LABEL).
+_fch_input(variable_domain(_fch_label, NAME, EXPR, val(bool, true))) :- variable_choice(NAME, EXPR).
+_fch_input(variable_domain(LABEL, NAME, EXPR, val(bool, true))) :- variable_choice(NAME, EXPR, LABEL).
 
 % variable_assign forces a value, exactly like variable_define.
 #defined variable_assign/2.
@@ -280,7 +282,7 @@ value(NAME, bad) :-
 
 _fch_execution_input_declared(EXEC, VAR) :- _fch_flat(var_decl((EXEC, VAR, in))).
 _fch_execution_input_defined(EXEC, VAR) :- _fch_flat(var_def((EXEC, VAR, in), _)).
-_fch_execution_input_has_domain(EXEC, VAR) :- _fch_flat(var_dom((EXEC, VAR, in), _)).
+_fch_execution_input_has_domain(EXEC, VAR) :- _fch_flat(var_dom((EXEC, VAR, in), _, _)).
 
 value((EXEC, VAR, in), bad) :-
 	_fch_flat(execution_input_decl(EXEC, VAR)),

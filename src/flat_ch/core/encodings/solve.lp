@@ -40,15 +40,15 @@ _fch_var_def(NAME, EXPR_ID) :-
 % Variables with a declared default (see variable_default) get a soft (0-or-1) choice instead,
 % since the default may supply the value; variables that are already forced via _fch_var_def
 % (e.g. variable_assign) skip domain choice entirely.
-1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID)}1 :-
+1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
     _fch_var_decl(NAME),
-    _fch_var_dom(NAME, _),
+    _fch_var_dom(NAME, _, _),
     not _fch_var_def(NAME, _),
     not _fch_var_has_default(NAME).
 
-{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID)}1 :-
+{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
     _fch_var_decl(NAME),
-    _fch_var_dom(NAME, _),
+    _fch_var_dom(NAME, _, _),
     not _fch_var_def(NAME, _),
     _fch_var_has_default(NAME).
 
@@ -74,7 +74,8 @@ _fch_dynamic_expr_resolved(EXPR_ID) :- _fch_dynamic_expr_val(EXPR_ID, _, _).
     not _fch_dynamic_expr_resolved(EXPR_ID).
 
 _fch_dynamic_dom_val(NAME, DOM_EXPR_ID, TYPE, VAL) :-
-    _fch_var_dom(NAME, DOM_EXPR_ID),
+    _fch_var_dom(NAME, DOM_EXPR_ID, COND_EXPR_ID),
+    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true),
     _fch_dynamic_expr_val(DOM_EXPR_ID, TYPE, VAL).
 
 % Equivalent domain expressions should not create duplicate models.
@@ -95,7 +96,7 @@ _fch_dynamic_expr_val(ID, TYPE, VAL) :-
     _fch_var_def(NAME, EXPR_ID),
     _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL).
 
-_fch_var_has_domain(NAME) :- _fch_var_dom(NAME, _).
+_fch_var_has_domain(NAME) :- _fch_var_dom(NAME, _, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
 
 % Declared variables without any domain entries are treated as invalid inputs,
 % unless a declared default or a direct assignment/definition can supply their value instead.

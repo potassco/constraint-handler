@@ -101,7 +101,11 @@ class Registration(BaseRegistration):
             case self._ui_decl if args_len == 1:
                 self.reg.update_var(self.to_str(args[0]), ())
             case self._ui_dom if args_len == 2:
-                self.reg.update_var(self.to_str(args[0]), (self.parse_expression(args[1]),))
+                self.reg.update_var(self.to_str(args[0]), ((self.parse_expression(args[1]), IValue(Type.BOOL, True)),))
+            case self._ui_dom if args_len == 3:
+                self.reg.update_var(
+                    self.to_str(args[0]), ((self.parse_expression(args[1]), self.parse_expression(args[2])),)
+                )
             case self._ui_def if args_len == 2:
                 self.reg.sequential_inputs.append(
                     IVariableDefine(

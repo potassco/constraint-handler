@@ -12,8 +12,8 @@ _fch_var_def(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_registered(_, ID), _fch_flat(v
 _fch_var_def(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_flat(var_def(NAME, EXPR_ID, COND_EXPR_ID)).
 _fch_var_decl(NAME) :- _fch_registered(_, ID), _fch_flat(var_decl(ID, NAME)).
 _fch_var_decl(NAME) :- _fch_flat(var_decl(NAME)).
-_fch_var_dom(NAME, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_dom(ID, NAME, EXPR_ID)).
-_fch_var_dom(NAME, EXPR_ID) :- _fch_flat(var_dom(NAME, EXPR_ID)).
+_fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_dom(ID, NAME, EXPR_ID, COND_EXPR_ID)).
+_fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_flat(var_dom(NAME, EXPR_ID, COND_EXPR_ID)).
 _fch_var_default(NAME, EXPR_ID, COND_EXPR_ID, PRIORITY) :- _fch_registered(_, ID), _fch_flat(var_default(ID, NAME, EXPR_ID, COND_EXPR_ID, PRIORITY)).
 _fch_var_default(NAME, EXPR_ID, COND_EXPR_ID, PRIORITY) :- _fch_flat(var_default(NAME, EXPR_ID, COND_EXPR_ID, PRIORITY)).
 _fch_ensure(NAME, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(ensure(ID, NAME, EXPR_ID)).

@@ -57,16 +57,19 @@ Args:
 #defined variable_declare/1.
 _fch_input(variable_declare(NAME))       :- variable_declare(NAME).
 
-%*! variable_domain(Name, Expression)
+%*! variable_domain(Name, Expression, Condition)
 
 Adds an expression to the domain of a previously declared variable.
 
 Args:
  - Name: The unique identifier for the target variable.
  - Expression: The expression that evaluates to a value for the variable.
+ - Condition: A boolean expression that enables the domain value.
 *%
 #defined variable_domain/2.
-_fch_input(variable_domain(NAME, EXPR))  :- variable_domain(NAME, EXPR).
+#defined variable_domain/3.
+_fch_input(variable_domain(NAME, EXPR, val(bool,true)))  :- variable_domain(NAME, EXPR).
+_fch_input(variable_domain(NAME, EXPR, COND)) :- variable_domain(NAME, EXPR, COND).
 
 %*! ensure(Expression)
 

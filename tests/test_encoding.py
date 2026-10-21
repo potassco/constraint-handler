@@ -241,6 +241,8 @@ execution_tests = [
     "execution/change",
     "execution/conditional",
     "execution/conditional_assert",
+    "execution/conditional_input_domain",
+    "execution/conditional_input_domain_dynamic",
     "execution/conditional_string_equality_single_model",
     "execution/implicit_variable",
     "execution/main_absolut",
