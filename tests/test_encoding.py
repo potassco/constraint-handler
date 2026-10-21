@@ -600,7 +600,6 @@ propagator_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {
-    "core/conditional_domain",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
@@ -608,8 +607,6 @@ propagator_xfail: set[str] = {
     "default/define/condition",
     "default/define/disabled",
     "default/define/no_domain",
-    "default/define/single",
-    "default/define/with_domain_unsat",
     "default/define/with_domain",
     "default/depends/condition",
     "default/depends/disabled",
@@ -651,7 +648,9 @@ propagator_true_skip: set[str] = propagator_skip | {
     "type/checking/membership_set_polymorphic",
     "warning/variable_undeclared",
 }
-propagator_true_xfail: set[str] = propagator_xfail | set()
+propagator_true_xfail: set[str] = propagator_xfail | {
+    "core/conditional_domain",
+}
 
 engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [
     (engine.compile, compile_skip, compile_xfail),

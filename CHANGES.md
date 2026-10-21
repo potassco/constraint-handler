@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+## v0.0.9
+
 - - update `variable_domain` to take an optional condition argument.
     `variable_domain(VAR,E,COND,LBL)` includes `E` in `VAR`'s domain only when
     `COND` evaluates to true. The former labelled `variable_domain(VAR,E,LBL)`
