@@ -143,4 +143,4 @@ where `<name>` is a basic gringo term, and `<value>` is a value, and
 What is a `<condition>`?
 
 - `(<expression>,<value>)`
-- `((<variable>_1,..,variable_n),((<value>_11,..,<value>_1n),..,(<value>_m1,..,<value>_mn)))`
+- `((<variable>_1,..,<variable>_n),((<value>_11,..,<value>_1n),..,(<value>_m1,..,<value>_mn)))`
