@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from itertools import product
 
-from ..internal_input import ExprId
+from ..diagnostics import ExpressionLocation
 from ..python_input import Operator
 from .evaluation import DomainHandler, EvaluationContext
 from .values import (
@@ -18,10 +18,10 @@ from .values import (
 )
 
 
-def _eval_concat(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_concat(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Concat, [x, y])."""
     if len(doms) != 2:
-        context.diagnostics.error(f"concat expects 2 arguments, got {len(doms)}", expr_id=expr_id)
+        context.diagnostics.error(f"concat expects 2 arguments, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -38,17 +38,17 @@ def _eval_concat(context: EvaluationContext, op: Operator, doms: list[Domain], e
     ):
         context.diagnostics.error(
             "concat requires string arguments; ignoring unsupported values",
-            expr_id=expr_id,
+            location=location,
         )
     if len(dx.strings) * len(dy.strings) > context.threshold:
         return UNKNOWN_DOMAIN
     return Domain(strings=frozenset(a + b for a, b in product(dx.strings, dy.strings)))
 
 
-def _eval_length(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_length(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Length, [x])."""
     if len(doms) != 1:
-        context.diagnostics.error(f"length expects 1 argument, got {len(doms)}", expr_id=expr_id)
+        context.diagnostics.error(f"length expects 1 argument, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx = doms[0]
     if dx.unknown:
@@ -56,7 +56,7 @@ def _eval_length(context: EvaluationContext, op: Operator, doms: list[Domain], e
     if dx.bools or dx.int_count() or dx.reals or dx.has_none:
         context.diagnostics.error(
             "length requires strings, tuples, or sets; ignoring unsupported values",
-            expr_id=expr_id,
+            location=location,
         )
     lengths = set(dx.possible_set_sizes())
     for s in dx.strings:
@@ -66,12 +66,14 @@ def _eval_length(context: EvaluationContext, op: Operator, doms: list[Domain], e
     return Domain(ints=frozenset(lengths))
 
 
-def _eval_tuple_get(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_tuple_get(
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+) -> Domain:
     """Compute domain for Operation(TupleGet, [tuple_expr, index_expr])."""
     if len(doms) != 2:
         context.diagnostics.error(
             f"tuple_get expects 2 arguments, got {len(doms)}",
-            expr_id=expr_id,
+            location=location,
         )
         return UNKNOWN_DOMAIN
     dt, di = doms
@@ -86,14 +88,16 @@ def _eval_tuple_get(context: EvaluationContext, op: Operator, doms: list[Domain]
         if 0 <= idx < len(tup):
             results.append(tup[idx])
         else:
-            context.diagnostics.warn(f"tuple_get index {idx} out of bounds", expr_id=expr_id)
+            context.diagnostics.warn(f"tuple_get index {idx} out of bounds", location=location)
     return domain_from_values(results)
 
 
-def _eval_conversion(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_conversion(
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+) -> Domain:
     """Compute domains for numeric rounding and type conversions."""
     if len(doms) != 1:
-        context.diagnostics.error(f"{op} expects 1 argument, got {len(doms)}", expr_id=expr_id)
+        context.diagnostics.error(f"{op} expects 1 argument, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx = doms[0]
     if dx.unknown:

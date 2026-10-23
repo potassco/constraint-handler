@@ -1,6 +1,6 @@
 """Constraint-handling library."""
 
-from .diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
+from .diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity, ExpressionLocation
 from .domains import Domain, DomainStore
 from .internal_input import ConstraintStore
 from .preprocessor import (
@@ -34,6 +34,7 @@ __all__ = [
     "Domain",
     "DomainStore",
     "Expr",
+    "ExpressionLocation",
     "Lambda",
     "Operation",
     "OperationArg",

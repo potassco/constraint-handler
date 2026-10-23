@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from itertools import chain, product
 from typing import Literal
 
-from ..internal_input import ExprId
+from ..diagnostics import ExpressionLocation
 from ..python_input import Operator
 from .evaluation import DomainHandler, EvaluationContext
 from .values import (
@@ -28,9 +28,7 @@ class NumericProduct:
         """Count integer-only and real-containing tuples, ignoring other values."""
         self.domains = domains
         self.int_count = math.prod(domain.int_count() for domain in domains)
-        self.total_count = math.prod(
-            domain.int_count() + len(domain.reals) for domain in domains
-        )
+        self.total_count = math.prod(domain.int_count() + len(domain.reals) for domain in domains)
         self.real_count = self.total_count - self.int_count
 
     def integers(self) -> Iterator[tuple[int, ...]]:
@@ -88,24 +86,19 @@ def _safe_pow(a: float, b: float) -> int | float | None:
     return res
 
 
-def _eval_min_max(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_min_max(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Min/Max, [x1, ..., xn])."""
     if not doms:
-        context.diagnostics.error(f"{op} requires at least 1 argument", expr_id=expr_id)
+        context.diagnostics.error(f"{op} requires at least 1 argument", location=location)
         return UNKNOWN_DOMAIN
     if any(d.unknown for d in doms):
         return UNKNOWN_DOMAIN
     if any(d.is_empty() for d in doms):
         return EMPTY_DOMAIN
-    if any(
-        d.strings or d.tuples or d.explicit_sets or d.implicit_set_elements is not None
-        for d in doms
-    ):
+    if any(d.strings or d.tuples or d.explicit_sets or d.implicit_set_elements is not None for d in doms):
         context.diagnostics.error(
             f"{op} requires numeric or boolean arguments; ignoring unsupported values",
-            expr_id=expr_id,
+            location=location,
         )
     cards = [d.int_count() + len(d.reals) + len(d.bools) for d in doms]
     if any(count == 0 for count in cards):
@@ -126,13 +119,11 @@ def _eval_min_max(
 
 
 def _eval_unary_math(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
 ) -> Domain:
     """Compute domain for unary mathematical and conversion operators."""
     if len(doms) != 1:
-        context.diagnostics.error(
-            f"{op} expects 1 argument, got {len(doms)}", expr_id=expr_id
-        )
+        context.diagnostics.error(f"{op} expects 1 argument, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx = doms[0]
     if dx.unknown:
@@ -141,9 +132,7 @@ def _eval_unary_math(
         return EMPTY_DOMAIN
 
     if op == Operator.minus:
-        int_range = (
-            (-dx.int_range[1], -dx.int_range[0]) if dx.int_range is not None else None
-        )
+        int_range = (-dx.int_range[1], -dx.int_range[0]) if dx.int_range is not None else None
         return Domain(
             ints=frozenset(-v for v in dx.ints),
             int_range=int_range,
@@ -173,14 +162,10 @@ def _eval_unary_math(
             min_i = dx.min_int()
             has_neg = (min_i is not None and min_i < 0) or any(f < 0 for f in dx.reals)
             if has_neg:
-                context.diagnostics.warn(
-                    "sqrt domain contains negative values", expr_id=expr_id
-                )
+                context.diagnostics.warn("sqrt domain contains negative values", location=location)
             if total_nums > context.threshold:
                 return UNKNOWN_DOMAIN
-            return Domain(
-                reals=frozenset(math.sqrt(v) for v in all_nums_real if v >= 0)
-            )
+            return Domain(reals=frozenset(math.sqrt(v) for v in all_nums_real if v >= 0))
         case Operator.cos:
             if total_nums > context.threshold:
                 return UNKNOWN_DOMAIN
@@ -199,7 +184,7 @@ def _eval_unary_math(
                     if not warned_pole:
                         context.diagnostics.warn(
                             "tan domain contains an odd multiple of pi/2",
-                            expr_id=expr_id,
+                            location=location,
                         )
                         warned_pole = True
                 else:
@@ -208,21 +193,19 @@ def _eval_unary_math(
         case Operator.acos | Operator.asin:
             fn = math.acos if op == Operator.acos else math.asin
             bounds = dx.integer_bounds()
-            out_of_bounds = (
-                bounds is not None and (bounds[0] < -1 or bounds[1] > 1)
-            ) or any(f < -1.0 or f > 1.0 for f in dx.reals)
+            out_of_bounds = (bounds is not None and (bounds[0] < -1 or bounds[1] > 1)) or any(
+                f < -1.0 or f > 1.0 for f in dx.reals
+            )
             if out_of_bounds:
                 context.diagnostics.warn(
                     f"{op} domain contains values outside [-1, 1]",
-                    expr_id=expr_id,
+                    location=location,
                 )
             in_bounds_ints = [v for v in (-1, 0, 1) if dx.contains_int(v)]
             in_bounds_reals = [f for f in dx.reals if -1.0 <= f <= 1.0]
             if len(in_bounds_ints) + len(in_bounds_reals) > context.threshold:
                 return UNKNOWN_DOMAIN
-            return Domain(
-                reals=frozenset(fn(v) for v in (*in_bounds_ints, *in_bounds_reals))
-            )
+            return Domain(reals=frozenset(fn(v) for v in (*in_bounds_ints, *in_bounds_reals)))
         case Operator.atan:
             if total_nums > context.threshold:
                 return UNKNOWN_DOMAIN
@@ -231,12 +214,10 @@ def _eval_unary_math(
             return UNKNOWN_DOMAIN
 
 
-def _eval_add(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_add(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Add, [x1, ..., xn])."""
     if not doms:
-        context.diagnostics.error("add requires at least 1 argument", expr_id=expr_id)
+        context.diagnostics.error("add requires at least 1 argument", location=location)
         return UNKNOWN_DOMAIN
     if any(d.unknown for d in doms):
         return UNKNOWN_DOMAIN
@@ -259,14 +240,10 @@ def _eval_add(
     return Domain(int_range=(min_sum, max_sum), reals=frozenset(r_real))
 
 
-def _eval_sub(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_sub(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Sub, [x, y])."""
     if len(doms) != 2:
-        context.diagnostics.error(
-            f"sub expects 2 arguments, got {len(doms)}", expr_id=expr_id
-        )
+        context.diagnostics.error(f"sub expects 2 arguments, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -295,12 +272,10 @@ def _eval_sub(
     )
 
 
-def _eval_mult(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_mult(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Mult, [x1, ..., xn])."""
     if not doms:
-        context.diagnostics.error("mult requires at least 1 argument", expr_id=expr_id)
+        context.diagnostics.error("mult requires at least 1 argument", location=location)
         return UNKNOWN_DOMAIN
     if any(d.unknown for d in doms):
         return UNKNOWN_DOMAIN
@@ -329,13 +304,11 @@ def _eval_mult(
 
 
 def _eval_int_div_or_mod(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
 ) -> Domain:
     """Compute domain for Operation(IntDiv/Mod, [x, y])."""
     if len(doms) != 2:
-        context.diagnostics.error(
-            f"{op} expects 2 arguments, got {len(doms)}", expr_id=expr_id
-        )
+        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -343,7 +316,7 @@ def _eval_int_div_or_mod(
 
     has_zero_y = dy.contains_int(0) or 0.0 in dy.reals
     if has_zero_y:
-        context.diagnostics.warn(f"{op} divisor domain contains 0", expr_id=expr_id)
+        context.diagnostics.warn(f"{op} divisor domain contains 0", location=location)
 
     numeric = NumericProduct(doms)
     if numeric.real_count > context.threshold:
@@ -361,11 +334,7 @@ def _eval_int_div_or_mod(
     if numeric.int_count == 0:
         return Domain(ints=frozenset(r_ints), reals=frozenset(r_real))
     if numeric.total_count <= context.threshold:
-        r_ints.update(
-            (a // b if op == Operator.int_div else a % b)
-            for a, b in numeric.integers()
-            if b != 0
-        )
+        r_ints.update((a // b if op == Operator.int_div else a % b) for a, b in numeric.integers() if b != 0)
         return Domain(ints=frozenset(r_ints), reals=frozenset(r_real))
 
     bounds_x = dx.integer_bounds()
@@ -385,13 +354,13 @@ def _eval_int_div_or_mod(
 
 
 def _eval_real_div(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
 ) -> Domain:
     """Compute domain for Operation(RealDiv, [x, y])."""
     if len(doms) != 2:
         context.diagnostics.error(
             f"real_div expects 2 arguments, got {len(doms)}",
-            expr_id=expr_id,
+            location=location,
         )
         return UNKNOWN_DOMAIN
     dx, dy = doms
@@ -401,25 +370,19 @@ def _eval_real_div(
         return EMPTY_DOMAIN
     has_zero_y = dy.contains_int(0) or 0.0 in dy.reals
     if has_zero_y:
-        context.diagnostics.warn("real_div divisor domain contains 0", expr_id=expr_id)
+        context.diagnostics.warn("real_div divisor domain contains 0", location=location)
     cx, cy = dx.cardinality(), dy.cardinality()
     if cx is None or cy is None or cx * cy > context.threshold:
         return UNKNOWN_DOMAIN
     nums_x = [*dx.iter_ints(), *dx.reals]
     nums_y = [*dy.iter_ints(), *dy.reals]
-    return Domain(
-        reals=frozenset(float(a / b) for a, b in product(nums_x, nums_y) if b != 0)
-    )
+    return Domain(reals=frozenset(float(a / b) for a, b in product(nums_x, nums_y) if b != 0))
 
 
-def _eval_pow(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_pow(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Pow, [x, y])."""
     if len(doms) != 2:
-        context.diagnostics.error(
-            f"pow expects 2 arguments, got {len(doms)}", expr_id=expr_id
-        )
+        context.diagnostics.error(f"pow expects 2 arguments, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -439,10 +402,7 @@ def _eval_pow(
     if base_bounds is not None and max_exponent is not None:
         min_base, max_base = base_bounds
         magnitude = max(abs(min_base), abs(max_base))
-        if (
-            magnitude > 1
-            and max_exponent > (MAX_POWER_BITS - 1) // (magnitude - 1).bit_length()
-        ):
+        if magnitude > 1 and max_exponent > (MAX_POWER_BITS - 1) // (magnitude - 1).bit_length():
             return UNKNOWN_DOMAIN
 
     cx, cy = dx.cardinality(), dy.cardinality()
@@ -458,7 +418,7 @@ def _eval_pow(
                 if not warned:
                     context.diagnostics.warn(
                         "pow domain contains undefined or non-real power",
-                        expr_id=expr_id,
+                        location=location,
                     )
                     warned = True
             elif isinstance(val, int):
@@ -481,9 +441,7 @@ def _eval_pow(
         neg_ints_y = dy.restrict_integers(None, -1)
         integer_pairs: Iterator[tuple[int | float, ...]] = iter(())
         if ix and neg_ints_y.int_count():
-            integer_pairs = numeric_combinations(
-                [Domain(ints=dx.ints, int_range=dx.int_range), neg_ints_y], "integers"
-            )
+            integer_pairs = numeric_combinations([Domain(ints=dx.ints, int_range=dx.int_range), neg_ints_y], "integers")
         warned = False
         for a, b in chain(NumericProduct(doms).reals(), integer_pairs):
             val = _safe_pow(a, b)
@@ -491,7 +449,7 @@ def _eval_pow(
                 if not warned:
                     context.diagnostics.warn(
                         "pow domain contains undefined or non-real power",
-                        expr_id=expr_id,
+                        location=location,
                     )
                     warned = True
             else:
@@ -521,7 +479,7 @@ def linear_integer(
     coeffs: list[int],
     term_doms: list[Domain],
     offset: int,
-    expr_id: ExprId | None,
+    location: ExpressionLocation,
 ) -> Domain:
     """Evaluate an integer linear combination with exact or interval domains."""
     if any(d.unknown for d in term_doms):
@@ -536,9 +494,7 @@ def linear_integer(
         or d.implicit_set_elements is not None
         for d in term_doms
     ):
-        context.diagnostics.error(
-            "linear_integer terms must be integers", expr_id=expr_id
-        )
+        context.diagnostics.error("linear_integer terms must be integers", location=location)
         return UNKNOWN_DOMAIN
     if any(d.is_empty() for d in term_doms):
         return EMPTY_DOMAIN

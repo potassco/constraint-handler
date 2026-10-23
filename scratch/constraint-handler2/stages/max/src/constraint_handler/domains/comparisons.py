@@ -5,7 +5,7 @@ from __future__ import annotations
 import operator
 from itertools import product
 
-from ..internal_input import ExprId
+from ..diagnostics import ExpressionLocation
 from ..python_input import Operator
 from .evaluation import DomainHandler, EvaluationContext
 from .values import (
@@ -45,10 +45,12 @@ def _ordered_bounds(dom: Domain) -> tuple[float | int, float | int] | None:
     return (min(mins), max(maxs))
 
 
-def _eval_equality(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_equality(
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+) -> Domain:
     """Compute domain for eq and neq."""
     if len(doms) != 2:
-        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", expr_id=expr_id)
+        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -68,10 +70,12 @@ def _eval_equality(context: EvaluationContext, op: Operator, doms: list[Domain],
     return Domain(bools=frozenset(bools))
 
 
-def _eval_comparison(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_comparison(
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+) -> Domain:
     """Compute domain for leq, lt, geq, gt."""
     if len(doms) != 2:
-        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", expr_id=expr_id)
+        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -83,7 +87,7 @@ def _eval_comparison(context: EvaluationContext, op: Operator, doms: list[Domain
     if bx is None or by is None:
         context.diagnostics.error(
             f"{op} requires ordered numeric or boolean domains",
-            expr_id=expr_id,
+            location=location,
         )
         return TRUE_FALSE_DOMAIN
     min_x, max_x = bx

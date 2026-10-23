@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 from itertools import product
 
-from ..internal_input import ExprId
+from ..diagnostics import ExpressionLocation
 from ..python_input import Operator
 from .evaluation import DomainHandler, EvaluationContext
 from .values import (
@@ -17,7 +17,7 @@ from .values import (
 )
 
 
-def _eval_conj(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_conj(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Conj, [x1, ..., xn])."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
@@ -31,7 +31,7 @@ def _eval_conj(context: EvaluationContext, op: Operator, doms: list[Domain], exp
     return Domain(bools=frozenset(res))
 
 
-def _eval_disj(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_disj(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Disj, [x1, ..., xn])."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
@@ -45,12 +45,14 @@ def _eval_disj(context: EvaluationContext, op: Operator, doms: list[Domain], exp
     return Domain(bools=frozenset(res))
 
 
-def _eval_get_or_else(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_get_or_else(
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+) -> Domain:
     """Compute domain for Operation(GetOrElse, [x, y])."""
     if len(doms) != 2:
         context.diagnostics.error(
             f"get_or_else expects 2 arguments, got {len(doms)}",
-            expr_id=expr_id,
+            location=location,
         )
         return UNKNOWN_DOMAIN
     dx, dy = doms
@@ -62,10 +64,10 @@ def _eval_get_or_else(context: EvaluationContext, op: Operator, doms: list[Domai
     return join_domains((dx_without_none, dy), context.threshold)
 
 
-def _eval_if(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_if(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(If, [c, x])."""
     if len(doms) != 2:
-        context.diagnostics.error(f"if_ expects 2 arguments, got {len(doms)}", expr_id=expr_id)
+        context.diagnostics.error(f"if_ expects 2 arguments, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dc, dx = doms
     if dc.unknown or dx.unknown:
@@ -77,10 +79,10 @@ def _eval_if(context: EvaluationContext, op: Operator, doms: list[Domain], expr_
     return dx
 
 
-def _eval_ite(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_ite(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for Operation(Ite, [c, x, y])."""
     if len(doms) != 3:
-        context.diagnostics.error(f"ite expects 3 arguments, got {len(doms)}", expr_id=expr_id)
+        context.diagnostics.error(f"ite expects 3 arguments, got {len(doms)}", location=location)
         return UNKNOWN_DOMAIN
     dc, dx, dy = doms
     if dc.unknown or dx.unknown or dy.unknown:
@@ -92,7 +94,9 @@ def _eval_ite(context: EvaluationContext, op: Operator, doms: list[Domain], expr
     return join_domains((dx, dy), context.threshold)
 
 
-def _eval_logic_ops(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_logic_ops(
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+) -> Domain:
     """Compute domain for boolean and three-valued logic operators."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
@@ -104,7 +108,7 @@ def _eval_logic_ops(context: EvaluationContext, op: Operator, doms: list[Domain]
             if len(doms) != 1:
                 context.diagnostics.error(
                     f"lnot expects 1 argument, got {len(doms)}",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             d = doms[0]
@@ -115,7 +119,7 @@ def _eval_logic_ops(context: EvaluationContext, op: Operator, doms: list[Domain]
             if len(doms) != 1:
                 context.diagnostics.error(
                     f"snot expects 1 argument, got {len(doms)}",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             d = doms[0]
@@ -127,7 +131,7 @@ def _eval_logic_ops(context: EvaluationContext, op: Operator, doms: list[Domain]
             if len(doms) != 1:
                 context.diagnostics.error(
                     f"wnot expects 1 argument, got {len(doms)}",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             d = doms[0]
@@ -139,7 +143,7 @@ def _eval_logic_ops(context: EvaluationContext, op: Operator, doms: list[Domain]
             if len(doms) != 2:
                 context.diagnostics.error(
                     f"limp expects 2 arguments, got {len(doms)}",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             dx, dy = doms
@@ -157,7 +161,7 @@ def _eval_logic_ops(context: EvaluationContext, op: Operator, doms: list[Domain]
             ):
                 context.diagnostics.error(
                     f"{op} requires boolean arguments; ignoring unsupported values",
-                    expr_id=expr_id,
+                    location=location,
                 )
             if any(not domain.bools for domain in doms):
                 return EMPTY_DOMAIN
@@ -172,12 +176,14 @@ def _eval_logic_ops(context: EvaluationContext, op: Operator, doms: list[Domain]
             return TRUE_FALSE_DOMAIN
 
 
-def _eval_has_value(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_has_value(
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+) -> Domain:
     """Compute whether a value can be present or absent."""
     if len(doms) != 1:
         context.diagnostics.error(
             f"has_value expects 1 argument, got {len(doms)}",
-            expr_id=expr_id,
+            location=location,
         )
         return UNKNOWN_DOMAIN
     d = doms[0]

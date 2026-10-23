@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from itertools import product
 from typing import TypeIs, cast
 
-from ..internal_input import Expr, VariableRef
+from ..analysis import ExpressionStore
 
 type SetValue = bool | int | float | str | None | tuple[SetValue, ...]
 type DomainValue = SetValue | frozenset[SetValue]
@@ -124,7 +124,11 @@ class Domain:
     def contains_int(self, value: int) -> bool:
         """Test membership in the stored integer components, excluding Booleans."""
         return type(value) is int and (
-            value in self.ints or (self.int_range is not None and self.int_range[0] <= value <= self.int_range[1])
+            value in self.ints
+            or (
+                self.int_range is not None
+                and self.int_range[0] <= value <= self.int_range[1]
+            )
         )
 
     def integer_bounds(self) -> tuple[int, int] | None:
@@ -151,7 +155,9 @@ class Domain:
                 int_range = (start, stop)
         return Domain(
             ints=frozenset(
-                value for value in self.ints if (low is None or low <= value) and (high is None or value <= high)
+                value
+                for value in self.ints
+                if (low is None or low <= value) and (high is None or value <= high)
             ),
             int_range=int_range,
         )
@@ -186,7 +192,11 @@ class Domain:
         else:
             implicit_elems = self.implicit_set_elements
             implicit_keys = {value_key(value) for value in implicit_elems}
-            extra_sets = sum(1 for s in self.explicit_sets if not {value_key(value) for value in s} <= implicit_keys)
+            extra_sets = sum(
+                1
+                for s in self.explicit_sets
+                if not {value_key(value) for value in s} <= implicit_keys
+            )
             total += (1 << len(implicit_elems)) + extra_sets
         return total
 
@@ -205,7 +215,9 @@ class Domain:
             elems = tuple(self.implicit_set_elements)
             yielded: set[object] = set()
             for bits in product((False, True), repeat=len(elems)):
-                subset = frozenset(e for e, include in zip(elems, bits, strict=True) if include)
+                subset = frozenset(
+                    e for e, include in zip(elems, bits, strict=True) if include
+                )
                 yielded.add(value_key(subset))
                 yield subset
             for s in self.explicit_sets:
@@ -275,13 +287,16 @@ def _is_set_value(value: object) -> TypeIs[SetValue]:
     """Recognize supported scalars and recursively supported tuple members."""
     if value is None or type(value) in (bool, int, float, str):
         return True
-    return isinstance(value, tuple) and all(_is_set_value(item) for item in cast(tuple[object, ...], value))
+    return isinstance(value, tuple) and all(
+        _is_set_value(item) for item in cast(tuple[object, ...], value)
+    )
 
 
 def is_domain_value(value: object) -> TypeIs[DomainValue]:
     """Recognize supported values without silently discarding Python results."""
     return _is_set_value(value) or (
-        isinstance(value, frozenset) and all(_is_set_value(item) for item in cast(frozenset[object], value))
+        isinstance(value, frozenset)
+        and all(_is_set_value(item) for item in cast(frozenset[object], value))
     )
 
 
@@ -294,35 +309,8 @@ def is_finite_value(value: DomainValue) -> bool:
     return True
 
 
-class DomainStore(dict[Expr, Domain]):
+class DomainStore(ExpressionStore[Domain]):
     """Map expressions, including variables, to their precomputed domains."""
-
-    def __init__(self, expressions: Mapping[Expr, Domain] | Iterable[tuple[Expr, Domain]] = ()) -> None:
-        """Initialize expression metadata and a separate lambda-context mapping."""
-        super().__init__(expressions)
-        self.scoped_expressions: dict[tuple[Expr, frozenset[tuple[VariableRef, Domain]]], Domain] = {}
-
-    def lookup(
-        self,
-        expr: Expr,
-        *,
-        scope: frozenset[tuple[VariableRef, Domain]] = frozenset(),
-    ) -> Domain:
-        """Look up an expression in its explicit lambda binding environment."""
-        return self.scoped_expressions[expr, scope] if scope else self[expr]
-
-    def record(
-        self,
-        expr: Expr,
-        domain: Domain,
-        *,
-        scope: frozenset[tuple[VariableRef, Domain]] = frozenset(),
-    ) -> None:
-        """Record an expression in its explicit lambda binding environment."""
-        if scope:
-            self.scoped_expressions[expr, scope] = domain
-        else:
-            self[expr] = domain
 
 
 def domain_from_values(values: Iterable[DomainValue]) -> Domain:
@@ -371,7 +359,9 @@ def domain_from_values(values: Iterable[DomainValue]) -> Domain:
     )
 
 
-def join_domains(domains: Iterable[Domain], threshold: int = DEFAULT_THRESHOLD) -> Domain:
+def join_domains(
+    domains: Iterable[Domain], threshold: int = DEFAULT_THRESHOLD
+) -> Domain:
     """Return a sound approximation containing every input domain's values.
 
     This is neither exact runtime set union nor necessarily a least upper bound
@@ -440,7 +430,11 @@ def join_domains(domains: Iterable[Domain], threshold: int = DEFAULT_THRESHOLD) 
     final_implicit = frozenset(implicit_elems) if implicit_elems is not None else None
     if final_implicit is not None:
         implicit_keys = {value_key(value) for value in final_implicit}
-        explicit_sets = {s for s in explicit_sets if not {value_key(value) for value in s} <= implicit_keys}
+        explicit_sets = {
+            s
+            for s in explicit_sets
+            if not {value_key(value) for value in s} <= implicit_keys
+        }
 
     return Domain(
         bools=frozenset(bools),

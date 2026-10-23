@@ -177,14 +177,14 @@ _OPERATOR_MAP: dict[str, Operator] = {
     "sub": Operator.sub,
     "mult": Operator.mult,
     "int_div": Operator.int_div,
-    "float_div": Operator.float_div,
+    "float_div": Operator.real_div,
     "pow": Operator.pow,
     "leq": Operator.leq,
     "lt": Operator.lt,
     "geq": Operator.geq,
     "gt": Operator.gt,
-    "float_from_int": Operator.float_from_int,
-    "int_from_float": Operator.int_from_float,
+    "float_from_int": Operator.real_from_int,
+    "int_from_float": Operator.int_from_real,
     "conj": Operator.conj,
     "disj": Operator.disj,
     "ite": Operator.ite,
@@ -701,12 +701,9 @@ def _convert_arg(
     env: dict[Term, VariableRef] | None = None,
     default_prg: Term | None = None,
 ) -> OperationArg:
-    """Convert an operation argument term into an Expr, Lambda, or Python."""
-    if isinstance(term, FuncTerm):
-        if term.name == "lambda" and len(term.args) == 2:
-            return _convert_lambda(term, env)
-        if term.name == "python" and len(term.args) == 1 and isinstance(term.args[0], StringTerm):
-            return Python(term.args[0].value)
+    """Convert an operation argument into a value expression or lambda descriptor."""
+    if isinstance(term, FuncTerm) and term.name == "lambda" and len(term.args) == 2:
+        return _convert_lambda(term, env)
     return _convert_expr(term, env, default_prg)
 
 
@@ -740,7 +737,7 @@ def _convert_expr(
                     return VariableRef(_var_term_to_name(implicit_in))
             return VariableRef(_var_term_to_name(var_term))
         case FuncTerm("python", (StringTerm(code),)):
-            return Operation(Operator.python_eval, (Python(code),))
+            return Operation(Operator.python_eval, (Python(f"lambda: ({code}\n)"),))
         case FuncTerm("lambda", (_, _)):
             return Operation(Operator.lambda_, (_convert_lambda(term, env),))
         case FuncTerm("operation", (op_term, args_list_term)):
@@ -991,7 +988,7 @@ class _SSAConverter:
         if not is_running:
             for out_var in self._outputs:
                 out_term = FuncTerm("execution_output", (self._prg, out_var))
-                self._store.variable_define(
+                self._store.define(
                     VariableRef(_var_term_to_name(out_term)),
                     None,
                     label=self._label,
@@ -1012,7 +1009,7 @@ class _SSAConverter:
             out_term = FuncTerm("execution_output", (self._prg, out_var))
             out_ref = VariableRef(_var_term_to_name(out_term))
             val_expr: Expr = final_env.get(out_var, None)
-            self._store.variable_define(out_ref, val_expr, label=self._label)
+            self._store.define(out_ref, val_expr, label=self._label)
 
     def _convert_stmt(
         self,
@@ -1040,7 +1037,7 @@ class _SSAConverter:
             case StmtAssign(var_term, expr_term):
                 rhs = _convert_expr(expr_term, env, self._prg)
                 ssa_var = self._fresh_var(_var_term_to_name(var_term), scope)
-                self._store.variable_define(
+                self._store.define(
                     ssa_var,
                     rhs,
                     condition=_make_condition(conds),
@@ -1070,13 +1067,13 @@ class _SSAConverter:
                     merged_var = self._fresh_var(_var_term_to_name(var_term), scope)
                     then_val: Expr = then_env.get(var_term, None)
                     else_val: Expr = else_env.get(var_term, None)
-                    self._store.variable_define(
+                    self._store.define(
                         merged_var,
                         then_val,
                         condition=_make_condition(then_conds),
                         label=self._label,
                     )
-                    self._store.variable_define(
+                    self._store.define(
                         merged_var,
                         else_val,
                         condition=_make_condition(else_conds),
@@ -1103,7 +1100,7 @@ class _SSAConverter:
                 if needed_outputs:
                     fn_str = _build_python_callable(code, string_vars, needed_outputs)
                     tuple_var = self._fresh_var("_py_tuple", scope)
-                    self._store.variable_define(
+                    self._store.define(
                         tuple_var,
                         Operation(Operator.python_eval, (Python(fn_str), *input_args)),
                         condition=cond_expr,
@@ -1111,7 +1108,7 @@ class _SSAConverter:
                     )
                     for idx, out_name in enumerate(needed_outputs):
                         out_ssa_var = self._fresh_var(out_name, scope)
-                        self._store.variable_define(
+                        self._store.define(
                             out_ssa_var,
                             Operation(Operator.tuple_get, (tuple_var, idx)),
                             condition=cond_expr,
@@ -1173,7 +1170,7 @@ def convert_string(source: str) -> ConstraintStore:
     for var_term, (dom_name, lbl) in declared_domains.items():
         var_ref = VariableRef(_var_term_to_name(var_term))
         if dom_name == "boolDomain":
-            store.variable_choice(var_ref, (False, True), label=lbl)
+            store.choose_from_iterator(var_ref, (False, True), label=lbl)
             variables_with_entries.add(var_term)
 
     for atom in atoms:
@@ -1189,7 +1186,7 @@ def convert_string(source: str) -> ConstraintStore:
                 var_term, expr_term = args[0], args[1]
                 default_lbl = declared_labels.get(var_term, LABEL_ANONYMOUS)
                 lbl = _label_term_to_str(args[2] if len(args) == 3 else None, default_lbl)
-                store.variable_choice(
+                store.choose_from_iterator(
                     VariableRef(_var_term_to_name(var_term)),
                     (_convert_expr(expr_term),),
                     label=lbl,
@@ -1202,7 +1199,7 @@ def convert_string(source: str) -> ConstraintStore:
                 var_term, expr_term = args[0], args[1]
                 default_lbl = declared_labels.get(var_term, LABEL_ANONYMOUS)
                 lbl = _label_term_to_str(args[2] if len(args) == 3 else None, default_lbl)
-                store.variable_choice(
+                store.choose_from_iterator(
                     VariableRef(_var_term_to_name(var_term)),
                     (_convert_expr(expr_term),),
                     label=lbl,
@@ -1215,7 +1212,7 @@ def convert_string(source: str) -> ConstraintStore:
                 var_term, expr_term = args[0], args[1]
                 default_lbl = declared_labels.get(var_term, LABEL_ANONYMOUS)
                 lbl = _label_term_to_str(args[2] if len(args) == 3 else None, default_lbl)
-                store.variable_define(
+                store.define(
                     VariableRef(_var_term_to_name(var_term)),
                     _convert_expr(expr_term),
                     label=lbl,
@@ -1234,7 +1231,7 @@ def convert_string(source: str) -> ConstraintStore:
                     prio = args[3].value
                 default_lbl = declared_labels.get(var_term, LABEL_ANONYMOUS)
                 lbl = _label_term_to_str(args[4] if len(args) == 5 else None, default_lbl)
-                store.variable_default(
+                store.default_to(
                     VariableRef(_var_term_to_name(var_term)),
                     _convert_expr(expr_term),
                     condition=cond_expr,
@@ -1248,7 +1245,7 @@ def convert_string(source: str) -> ConstraintStore:
                     raise ConversionError(f"Invalid arity for set_baseDomain: {_term_to_str(atom)}")
                 var_term, expr_term = args[0], args[1]
                 lbl = _label_term_to_str(args[2] if len(args) == 3 else None)
-                store.setvariable_base(
+                store.set_contain_choose_from_iterator(
                     VariableRef(_var_term_to_name(var_term)),
                     (_convert_expr(expr_term),),
                     label=lbl,
@@ -1261,7 +1258,7 @@ def convert_string(source: str) -> ConstraintStore:
                 var_term, expr_term = args[0], args[1]
                 cond_expr = _convert_expr(args[2]) if len(args) >= 3 else True
                 lbl = _label_term_to_str(args[3] if len(args) == 4 else None)
-                store.setvariable_assign(
+                store.set_contain(
                     VariableRef(_var_term_to_name(var_term)),
                     _convert_expr(expr_term),
                     condition=cond_expr,
@@ -1281,7 +1278,7 @@ def convert_string(source: str) -> ConstraintStore:
                 lbl = _label_term_to_str(args[1] if len(args) == 2 else None)
                 eval_var = VariableRef(f"__evaluate_{eval_counter}")
                 eval_counter += 1
-                store.variable_define(eval_var, _convert_expr(args[0]), label=lbl)
+                store.define(eval_var, _convert_expr(args[0]), label=lbl)
 
             case "bool_evaluate":
                 if len(args) not in (1, 2):
@@ -1289,7 +1286,7 @@ def convert_string(source: str) -> ConstraintStore:
                 lbl = _label_term_to_str(args[1] if len(args) == 2 else None)
                 bool_eval_var = VariableRef(f"__bool_evaluate_{bool_eval_counter}")
                 bool_eval_counter += 1
-                store.variable_define(bool_eval_var, _convert_expr(args[0]), label=lbl)
+                store.define(bool_eval_var, _convert_expr(args[0]), label=lbl)
 
             case "execution_declare":
                 if len(args) not in (4, 5):
@@ -1308,11 +1305,11 @@ def convert_string(source: str) -> ConstraintStore:
     for var_term, (dom_name, lbl) in declared_domains.items():
         var_ref = VariableRef(_var_term_to_name(var_term))
         if dom_name in ("fromFacts", "open") and var_term not in variables_with_entries:
-            store.variable_choice(var_ref, (), label=lbl)
+            store.choose_from_iterator(var_ref, (), label=lbl)
         elif dom_name == "definition" and var_term not in variables_with_entries:
             store.variables.setdefault(var_ref, Variable())
         elif dom_name == "set" and var_term not in sets_with_entries:
-            store.setvariable_base(var_ref, (), label=lbl)
+            store.set_contain_choose_from_iterator(var_ref, (), label=lbl)
             store.set_variables.setdefault(var_ref, SetVariable())
 
     for prg_term, stmt, ins, outs, lbl in executions:
