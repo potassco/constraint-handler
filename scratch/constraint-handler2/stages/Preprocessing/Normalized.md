@@ -9,6 +9,15 @@ integer literals, and every term must be known to have only integer values.
 Real-valued, mixed integer/real, and unknown operands are not eligible for
 these rewrites.
 
+Lambda calls are normalized separately using the static types of their bound
+arguments. For example, `lambda p: p + p` called with an integer is rewritten
+to use `2*p`; a real-valued call is left unchanged. A shared lambda can
+therefore have different normalized bodies at different call sites. If one call
+can bind a parameter to either integers or reals, its body is rewritten only
+where the rewrite is valid for every possible binding. Nested calls retain
+captured parameter types, while inner parameters shadow outer bindings. Unknown
+binding types never inherit an unrelated outer variable's type.
+
 Relational expressions are also rewritten so that one side is the zero constant
 when both sides are known to be integer-valued. A relation is of the form
 `lhs relation 0`. Relations involving reals are not moved to zero.
@@ -63,5 +72,9 @@ Expr(operator="eq", arguments=(0, Expr(operator="sub", arguments=(c, Expr(operat
 
 (or with `Operator.linear_integer` on the non-zero side after linear
 normalization).
+
+Canceling terms or dropping zero products is allowed even if eliminated
+expressions could be undefined. Such rewrites may suppress potential errors or
+warnings, e.g. division by zero in `0 * (1 // 0)`.
 
 ## TODO

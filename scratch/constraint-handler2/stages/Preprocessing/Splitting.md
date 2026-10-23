@@ -19,6 +19,25 @@ The input is the `ConstraintStore` from
 [InternalInput](../Inputs/InternalInput.md), with domains from
 [Domains](Domains.md) computed using [DomainComputation](DomainComputation.md).
 
+### Input Preconditions
+
+The caller must supply structurally valid, type-checked internal expressions,
+with domains, static types, and an evaluation order computed for the current
+store. Recorded unknown domains and static types are allowed; missing metadata
+for expressions inspected by the pass is not.
+
+In particular, `linear_integer` must contain zero or more `(coefficient, term)`
+pairs followed by an explicit integer literal offset. Each coefficient is also
+an integer literal. The offset is required even when it is zero; a final term
+pair is not an implicit zero offset. Shared input validation rejects malformed
+linear forms before splitting. The pass does not validate or repair them.
+
+The preprocessing pipeline runs normalization before computing the metadata
+used by splitting. Direct callers need not normalize other arithmetic
+operators, but must satisfy the same structural and metadata preconditions.
+
+### Notation
+
 - `params(e)` is the ordered sequence of direct parameters. Repeated parameters
   retain their separate positions. For `linear_integer`, expose each term
   expression without detaching its literal coefficient, followed by the
@@ -37,7 +56,7 @@ operation. A literal value has a singleton domain. Variables and operation-free
 collections are leaves for splitting.
 
 Each trivial operation has an encoding-specific cost, listed at the end of this
-document. The complexity of any operation `e` is:
+document. The complexity of any expression `e` is:
 
 ```text
 complexity(e) = trivial_cost(e)                    if e is trivial
@@ -47,6 +66,8 @@ complexity(e) = product(|D(v)| for v in vars(e))   otherwise
 For a non-trivial operation, count each distinct free variable once, even if it
 occurs in several parameters. This matches evaluation of the expression as a
 lambda, rather than assuming intermediate results have already been computed.
+Collection-valued candidates also use the product over distinct free variables;
+their domain cardinality still counts complete tuple or set values.
 
 These are grounding estimates, not solver runtime bounds. Aggregate costs count
 candidate result instances; aggregate elements still require grounding work. An
@@ -61,7 +82,9 @@ definitions, choices, defaults, and constraints. For each expression, test
 subsets of direct parameters containing operations. Parameters that are already
 leaves remain unchanged. Process newly introduced auxiliary definitions in the
 same way. Actual arguments of existing `lambda_` applications participate in
-this search; their callable bodies remain intact.
+this search; their callable bodies remain intact. Only operation roots undergo
+subset search. Tuple and set roots containing operations are retained for the
+final lambda conversion, without introducing auxiliaries for their elements.
 
 Let `trivial_cost(e)` be the encoding-specific cost from the tables below,
 computed from the existing domains as if all parameters were leaves. For a
@@ -94,7 +117,7 @@ worklist = expression_ids(store)
 
 while worklist is not empty:
   e = worklist.pop()
-  if e is trivial:
+  if e is not an operation or e is trivial:
     continue
 
   parameters = [p for p in params(e) if p contains an operation]
@@ -213,6 +236,20 @@ again. Its body may remain nested. Its call cost is the product of the domains
 of its distinct actual arguments, matching the free-variable cost used for
 non-trivial expressions above.
 
+### Pass and Metadata Contract
+
+The caller supplies domains, static types, diagnostics, and an evaluation order
+for the current store. Splitting mutates the store and metadata in place, uses
+the supplied order only for traversal, and does not recompute dependency order,
+domains, or static types. Existing diagnostics and metadata entries are
+preserved. If diagnostics already contain errors, leave the input unchanged. A
+negative subset limit is rejected.
+
+New auxiliaries and rewritten applications retain their source domain and
+static type. During lambda conversion, copy available metadata to renamed body
+nodes under the new parameter bindings, using each actual argument's complete
+domain or static type. Preserve bindings of existing nested lambdas.
+
 ## Complexity of Trivial Operations
 
 The tables cover scalar, set, and call operators from
@@ -225,7 +262,17 @@ Notation:
 - `d(x) = |D(x)|`, for any input or result expression.
 - `C(args) = product(d(x) for x in args)`, excluding callable descriptors and
   lambda bodies. The product over no arguments is 1.
+- `F(f, args) = C(args) * product(d(v) for v in vars(f) if v not in args)`.
+  This includes each distinct captured free variable once, except captures
+  already supplied as direct variable arguments. A nested actual argument is
+  treated as its prospective auxiliary, not as its free variables. Thus a
+  capture used inside a selected argument remains a separate dependency.
 - `p(s) = |P(s)|`.
+
+For example, with `x` and `y` ranging over ten values,
+`lambda_(Lambda((u,), add(x,u)), abs(y))` costs 100 unsplit. Splitting `abs(y)`
+costs 100 for the call plus 10 for the auxiliary, not 20, so it is rejected.
+Callable bodies remain opaque; their internal runtime is not included.
 
 ### Scalar and Boolean Operations
 
@@ -259,21 +306,21 @@ also need scalar validity guards. Select the set specializations of `eq`,
 `neq`, and `length` only when static types establish exclusively set-valued
 inputs, rather than inferring the value kind from domain representation.
 
-| Trivial operation                   | Complexity                  | Encoding strategy                                                               |
-| ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
-| `union(s1, s2)`                     | `p(s1) + p(s2)`             | One membership rule per input; shared members contribute to both rules.         |
-| `inter(s1, s2)`                     | `min(p(s1), p(s2))`         | Join membership on the same element, not pairs of distinct elements.            |
-| `diff(s1, s2)`                      | `p(s1)`                     | Check right-hand membership for each potential left-hand member.                |
-| `subset(s1, s2)`                    | `p(s1)`                     | Search for a left-hand member missing from the right-hand set.                  |
-| `eq(s1, s2)`, `neq(s1, s2)`         | `p(s1) + p(s2)`             | Compare membership in both directions.                                          |
-| `set_make(x1, ..., xn)`             | `sum(d(xi) for xi in args)` | Derive membership independently from each argument.                             |
-| `set_isin(x, s)`, `set_notin(x, s)` | `d(x)`                      | Check each candidate `x`; never enumerate complete sets.                        |
-| `cardinality(s)`, `length(s)`       | `d(e) + p(s)`               | Candidate count results and membership elements.                                |
-| `set_fold(f, s, z)`                 | `d(s) * d(z)`               | Fallback: one fold per complete set and initial value; body work is additional. |
+| Trivial operation                   | Complexity                  | Encoding strategy                                                                                  |
+| ----------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------- |
+| `union(s1, s2)`                     | `p(s1) + p(s2)`             | One membership rule per input; shared members contribute to both rules.                            |
+| `inter(s1, s2)`                     | `min(p(s1), p(s2))`         | Join membership on the same element, not pairs of distinct elements.                               |
+| `diff(s1, s2)`                      | `p(s1)`                     | Check right-hand membership for each potential left-hand member.                                   |
+| `subset(s1, s2)`                    | `p(s1)`                     | Search for a left-hand member missing from the right-hand set.                                     |
+| `eq(s1, s2)`, `neq(s1, s2)`         | `p(s1) + p(s2)`             | Compare membership in both directions.                                                             |
+| `set_make(x1, ..., xn)`             | `sum(d(xi) for xi in args)` | Derive membership independently from each argument.                                                |
+| `set_isin(x, s)`, `set_notin(x, s)` | `d(x)`                      | Check each candidate `x`; never enumerate complete sets.                                           |
+| `cardinality(s)`, `length(s)`       | `d(e) + p(s)`               | Candidate count results and membership elements.                                                   |
+| `set_fold(f, s, z)`                 | `F(f, (s, z))`              | One fold per complete set, initial value, and captured-input combination; body work is additional. |
 
 ### Call Operations
 
-| Trivial operation          | Complexity | Encoding strategy                              |
-| -------------------------- | ---------- | ---------------------------------------------- |
-| `python_eval(fn, args...)` | `C(args)`  | One opaque evaluation per argument tuple.      |
-| `lambda_(lambda, args...)` | `C(args)`  | One evaluation of the body per argument tuple. |
+| Trivial operation          | Complexity        | Encoding strategy                                                 |
+| -------------------------- | ----------------- | ----------------------------------------------------------------- |
+| `python_eval(fn, args...)` | `C(args)`         | One opaque evaluation per argument tuple.                         |
+| `lambda_(lambda, args...)` | `F(lambda, args)` | One evaluation per argument tuple and captured-input combination. |
