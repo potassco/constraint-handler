@@ -76,6 +76,11 @@ include those combinations in the thresholded exact computation or return
 `unknown`. Because `unknown` represents the whole domain, an unknown result for
 any partition makes the overall result unknown.
 
+Numerical failures, including overflow and non-finite real inputs or results,
+must emit a warning and return `unknown` for the entire operation, discarding
+any partial results. Mathematically undefined or complex-valued combinations
+are instead excluded with a warning.
+
 ### Operation(Eq, [x,y]):
 
 Equality accepts operands of any types; different types are not a static type
@@ -111,7 +116,8 @@ If any input domain is unknown, the domain is unknown.
 
 ### Operation(Length, [x]):
 
-If any input domain is unknown, the domain is unknown.
+If any input domain is unknown, the domain is unknown. Supported inputs are
+strings, tuples, and sets; all return integer lengths.
 
 ```
 {len(a) | a in D(x)}
@@ -335,7 +341,9 @@ else
 
 ### Operation(IntDiv, [x,y]):
 
-If any input domain is unknown, the domain is unknown.
+If any input domain is unknown, the domain is unknown. The result is always an
+integer, including for real operands: evaluate `int(a // b)`, rounding the
+quotient toward negative infinity, not toward zero.
 
 ```
 N_int = |I(x)| * |I(y)|
@@ -343,8 +351,8 @@ N_real = (|I(x)| + |R(x)|) * (|I(y)| + |R(y)|) - N_int
 if N_real > Threshold
     unknown
 else
-    R_real = {a // b | a in I(x) union R(x), b in I(y) union R(y),
-               a in R(x) or b in R(y), b != 0}
+    R_mixed = {int(a // b) | a in I(x) union R(x), b in I(y) union R(y),
+                a in R(x) or b in R(y), b != 0}
     if N_int + N_real <= Threshold
         R_int = {a // b | a in I(x), b in I(y), b != 0}
     else
@@ -355,7 +363,7 @@ else
             M = max(abs(min(I(x))),abs(max(I(x))))
             m = min(abs(b) | b in B)
             R_int = int_range=(-ceil(M/m),ceil(M/m))
-    R_int union R_real
+    R_int union R_mixed  # Both parts contain only integers.
 # error/warning if 0 in D(y)
 ```
 
@@ -379,7 +387,7 @@ If any input domain is unknown, the domain is unknown.
 if D(x) = {} or D(y) = {}
     {}
 else if D(y) = {0}
-    {1}
+    {a ** 0 | a in D(x)}  # Integer bases give 1; real bases give 1.0.
 else if D(y) = {1}
     D(x)
 else if product(|D(x)|,|D(y)|) <= Threshold

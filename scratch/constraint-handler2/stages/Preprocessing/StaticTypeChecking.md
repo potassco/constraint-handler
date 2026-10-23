@@ -93,6 +93,10 @@ type(v) = choices_type union definition_type union defaults_type
 | `python_eval(fn,args)`                                                     | `type(fn)=callable, args=any`                                        | `UnknownType()`                                                                                                                                                                      |
 | `lambda_(L,args)`                                                          | `type(L)=lambda`, `len(args)` equals the arity of `L`                | `UnknownType()` if any `type(a_i)` is unknown; else union over `(t_1,...,t_n)` in `type(a_1) x ... x type(a_n)` of `type_in_env(body, {x_i -> {t_i}})`; see Call Operation `lambda_` |
 
+Nullary `conj()`, `disj()`, `lxor()`, and `leqv()` are valid Boolean
+expressions. Their respective values are `true`, `false`, `false`, and `true`.
+The Boolean input contract holds vacuously when there are no operands.
+
 Equality and inequality accept different input types. Different scalar types
 compare unequal, except integers and reals compare by numeric value. Thus
 `eq("a", 42)` and `eq(true, 1)` are false, while `eq(1, 1.0)` is true. These
