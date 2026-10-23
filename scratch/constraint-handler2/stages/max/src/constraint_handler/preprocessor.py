@@ -1,0 +1,152 @@
+"""Preprocessing and solving workflow interface."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
+
+from .diagnostics import Diagnostics
+from .domains import (
+    DEFAULT_BOOLEAN_THRESHOLD,
+    DEFAULT_THRESHOLD,
+    DomainStore,
+    compute_domains,
+)
+from .internal_input import ConstraintStore
+from .normalization import normalize
+from .python_input import Expr, Value, VariableRef
+from .splitting import DEFAULT_SUBSET_LIMIT, split
+from .static_types import StaticTypeStore, compute_static_types
+from .util import compute_evaluation_order
+
+
+@dataclass(frozen=True, slots=True)
+class PreprocessOptions:
+    """Configuration options for preprocessing a ConstraintStore."""
+
+    arguments: tuple[str, ...] = ()
+    threshold: int = DEFAULT_THRESHOLD
+    boolean_threshold: int = DEFAULT_BOOLEAN_THRESHOLD
+    splitting_subset_limit: int = DEFAULT_SUBSET_LIMIT
+
+
+@dataclass(frozen=True, slots=True)
+class SolveOptions:
+    """Configuration options for an isolated Solver session."""
+
+    arguments: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedProblem:
+    """Logically immutable, shareable artifact produced by Preprocessor."""
+
+    store: ConstraintStore
+    static_types: StaticTypeStore
+    domains: DomainStore
+
+    def dump(self, path: Path) -> None:
+        """Serialize this PreparedProblem to the given path."""
+        raise NotImplementedError
+
+    @classmethod
+    def load(cls, path: Path) -> PreparedProblem:
+        """Load and validate a serialized PreparedProblem from the given path."""
+        raise NotImplementedError
+
+    def create_solver(self, options: SolveOptions) -> Solver:
+        """Create an isolated Solver session for this prepared problem."""
+        return Solver(self, options)
+
+
+class Preprocessor:
+    """Prepare a ConstraintStore into a detached PreparedProblem and Diagnostics."""
+
+    def __init__(self, options: PreprocessOptions) -> None:
+        """Initialize the preprocessor with preprocessing options."""
+        self._options = options
+        self._store = ConstraintStore()
+
+    @property
+    def options(self) -> PreprocessOptions:
+        """Return the preprocessing options."""
+        return self._options
+
+    def add(self, store: ConstraintStore) -> None:
+        """Collect declarations and constraints from a ConstraintStore."""
+        self._store.merge(store)
+
+    def add_context(self, name: str, context: object) -> None:
+        """Bind preparation dependencies."""
+        raise NotImplementedError
+
+    def preprocess(self) -> tuple[PreparedProblem, Diagnostics]:
+        """Snapshot, type-check, normalize, compute domains, and split the store."""
+        snapshot = self._store.copy()
+        diagnostics = Diagnostics()
+        order = compute_evaluation_order(snapshot, diagnostics)
+        static_types = compute_static_types(snapshot, order, diagnostics)
+        if not diagnostics.has_errors:
+            normalize(snapshot, static_types)
+            order = compute_evaluation_order(snapshot, diagnostics)
+            static_types = compute_static_types(snapshot, order, diagnostics)
+        domains = compute_domains(
+            snapshot,
+            order,
+            diagnostics,
+            threshold=self._options.threshold,
+            boolean_threshold=self._options.boolean_threshold,
+        )
+        if not diagnostics.has_errors:
+            split(
+                snapshot,
+                domains,
+                static_types,
+                order,
+                diagnostics,
+                subset_limit=self._options.splitting_subset_limit,
+            )
+        return (
+            PreparedProblem(
+                store=snapshot,
+                static_types=static_types,
+                domains=domains,
+            ),
+            diagnostics,
+        )
+
+
+class Solver:
+    """Isolated solving session created from a PreparedProblem."""
+
+    def __init__(self, problem: PreparedProblem, options: SolveOptions) -> None:
+        """Initialize an isolated solver session for the given PreparedProblem."""
+        self._problem = problem
+        self._options = options
+
+    @property
+    def problem(self) -> PreparedProblem:
+        """Return the PreparedProblem bound to this solver session."""
+        return self._problem
+
+    @property
+    def options(self) -> SolveOptions:
+        """Return the SolveOptions for this solver session."""
+        return self._options
+
+    def add_context(self, name: str, context: object) -> None:
+        """Bind runtime dependencies and validate the declared interface."""
+        raise NotImplementedError
+
+    def preset(self, values: Mapping[VariableRef, Value]) -> None:
+        """Preset variable values for this solver session."""
+        raise NotImplementedError
+
+    def enforce_query(self, query: Expr) -> None:
+        """Enforce an additional query constraint in this solver session."""
+        raise NotImplementedError
+
+    def solve(self) -> object:
+        """Solve the prepared problem under current presets and queries."""
+        raise NotImplementedError
