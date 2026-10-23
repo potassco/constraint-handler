@@ -27,5 +27,6 @@ class StaticTypes:
 ```
 
 ## TODO
+
 - this is a representation that only supports non-nested sets
 - consider extending `ValueType` and `Type` to support nested sets if needed

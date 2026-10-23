@@ -7,4 +7,5 @@
 - clingo 6
 - two different kind of constraints, check and ensure with different semantics
   if expression is undefined
-- sets of sets (and anything else, so basically arbitrary nested structures as long as they are finite)
+- sets of sets (and anything else, so basically arbitrary nested structures as
+  long as they are finite)

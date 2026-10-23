@@ -141,10 +141,10 @@ Operation(op: Operator, args: tuple[OperationArg, ...])
 Lambda(vars: tuple[VariableRef, ...], expr: Expr)
 # Example: Lambda((VariableRef("x"),), Operation(Operator.add, (VariableRef("x"), 2))).
 
-# Python stores a Python expression that the evaluator executes.
+# Python stores trusted source evaluating to a deterministic, side-effect-free callable.
 #
 Python(fn: str)
-# Example: Python("math.sqrt(x)") evaluates a Python expression using x.
+# Example: Python("lambda x: math.sqrt(x)") accepts one python_eval argument.
 
 
 # Operator lists all operator values accepted by Operation.
@@ -180,15 +180,16 @@ enum Operator {
     add,
     sub,
     mult,
+    linear_integer,
     int_div,
-    float_div,
+    real_div,
     pow,
     leq,
     lt,
     geq,
     gt,
-    float_from_int,
-    int_from_float,
+    real_from_int,
+    int_from_real,
 
     # Boolean and three-valued logic
     conj,

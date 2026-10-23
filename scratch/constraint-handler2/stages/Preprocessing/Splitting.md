@@ -20,7 +20,10 @@ The input is the `ConstraintStore` from
 [Domains](Domains.md) computed using [DomainComputation](DomainComputation.md).
 
 - `params(e)` is the ordered sequence of direct parameters. Repeated parameters
-  retain their separate positions.
+  retain their separate positions. For `linear_integer`, expose each term
+  expression without detaching its literal coefficient, followed by the
+  constant offset. Callable descriptors and lambda bodies are not split
+  candidates.
 - `vars(e)` is the set of free variables occurring in `e`.
 - `D(e)` is the domain of possible complete values of `e`.
 - `P(s)` is the set of potential members of a set-valued expression:
@@ -53,10 +56,12 @@ zero if any factor is zero, even if another factor is unknown.
 
 ## Algorithm
 
-Start with the top-level expressions of variable definitions and constraints.
-For each expression, test every subset of direct parameters containing
-operations. Parameters that are already leaves remain unchanged. Process newly
-introduced auxiliary definitions in the same way.
+Start with every expression ID in the store, including values and conditions of
+definitions, choices, defaults, and constraints. For each expression, test
+subsets of direct parameters containing operations. Parameters that are already
+leaves remain unchanged. Process newly introduced auxiliary definitions in the
+same way. Actual arguments of existing `lambda_` applications participate in
+this search; their callable bodies remain intact.
 
 Let `trivial_cost(e)` be the encoding-specific cost from the tables below,
 computed from the existing domains as if all parameters were leaves. For a
@@ -85,7 +90,7 @@ selected, use the specialized trivial-operation cost instead. The sum includes
 all new auxiliary definitions. The empty subset costs `complexity(e)`.
 
 ```text
-worklist = top_level_expressions(store)
+worklist = expression_ids(store)
 
 while worklist is not empty:
   e = worklist.pop()
@@ -96,7 +101,11 @@ while worklist is not empty:
   best_subset = empty_set
   best_cost = complexity(e)
 
-  for selected in powerset(parameters):
+  candidates = (
+    powerset(parameters) if len(parameters) <= subset_limit
+    else [empty_set, all_parameters]
+  )
+  for selected in candidates:
     cost = split_cost(e, selected)
     if cost < best_cost:
       best_subset = selected
@@ -123,13 +132,16 @@ split, including `infinity > infinity`, which is false. Unknown domains do not
 separately force splitting. These are local estimates; subsequent splitting and
 lambda conversion may change the eventual cost.
 
-For `n` parameters containing operations, test `2 ** n` subsets. This is
-exhaustive for the direct parameters of one expression, not a global search
-over recursive splitting decisions. Given that the number of parameters is
-usually small, the exhaustive search over all subsets is typically feasible.
-Maybe we need a guard for very large numbers of parameters to avoid
-combinatorial explosion. I've seen disjunctions with 100 members, maybe then
-just testing all or nothing is more practical.
+For `n` parameters containing operations, test `2 ** n` subsets when
+`n <= subset_limit`. The default limit is 12, inclusive. Above the limit,
+compare only no replacement with replacing all nested parameters. Thus an
+expression with 12 nested parameters receives exhaustive search, while one with
+13 receives all-or-nothing search.
+
+This search is local to the direct parameters of one expression, not a global
+search over recursive splitting decisions. Cache each parameter's complexity,
+domain size, and free variables before enumerating subsets. Only mutate the
+store after selecting the winning subset.
 
 ### Examples
 
@@ -169,10 +181,12 @@ For the proper-subset row only, `D(a) = D(b) = {0, 1}`; `c` still ranges over
 
 ### Final Step: Lambda Conversion
 
-After splitting, convert each non-trivial top-level expression in variable
-definitions and constraints, including auxiliary definitions, into a lambda
-application. Bind its distinct free variables in a deterministic order, retain
-the expression as the body, and pass the corresponding variables as arguments.
+After splitting, convert each remaining non-trivial store expression, including
+auxiliary definitions, into a lambda application. This also applies to an
+existing `lambda_` call whose actual arguments still contain operations: wrap
+the entire call, retaining its original callable inside the new body. Bind the
+expression's distinct free variables in deterministic name order, retain the
+expression as the body, and pass the corresponding variables as arguments.
 Respect existing lambda scopes; do not capture their bound variables.
 
 For example:
@@ -188,6 +202,11 @@ lambda_(Lambda((u, v), sub(add(u, v), add(u, v))), a, b)
 Here `u` and `v` are fresh bound variables. Constants and collection structure
 remain in the body. A closed expression uses a zero-argument lambda. Preserve
 the original result domain on the application.
+
+For example, a user-written `lambda_(Lambda((u,), u), add(abs(x), 1))` that
+does not benefit from auxiliary splitting becomes an outer lambda over `x`. The
+existing call and its nested argument remain inside that outer body, not as
+nested actual arguments in the final store expression.
 
 Treat the resulting application as an opaque call; do not split or wrap it
 again. Its body may remain nested. Its call cost is the product of the domains
@@ -210,31 +229,35 @@ Notation:
 
 ### Scalar and Boolean Operations
 
-| Trivial operation                                                                                                        | Complexity                   | Encoding strategy                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `concat(x, y)`                                                                                                           | `d(x) * d(y)`                | Enumerate pairs of values.                                                                                           |
-| `length(x)` for a string or tuple                                                                                        | `d(x)`                       | One length per possible complete value.                                                                              |
-| `abs`, `sqrt`, `cos`, `sin`, `tan`, `acos`, `asin`, `atan`, `minus`, `floor`, `ceil`, `float_from_int`, `int_from_float` | `d(x)`                       | Unary value enumeration.                                                                                             |
-| `add(x1, ..., xn)`, `n > 2`                                                                                              | `d(e)`                       | Result-domain-guarded sum aggregate.                                                                                 |
-| `add(x, y)`, `sub`, `int_div`, `float_div`, `pow`                                                                        | `d(x) * d(y)`                | Binary value enumeration.                                                                                            |
-| `add(x1, ..., xn)`, `n < 2`                                                                                              | `C(args)`                    | Degenerate argument enumeration.                                                                                     |
-| `mult(x1, ..., xn)`                                                                                                      | `C(args)`                    | No product aggregate is assumed.                                                                                     |
-| `min(x1, ..., xn)`, `max(x1, ..., xn)`                                                                                   | `C(args)`                    | Conservative enumeration until a specialized aggregate encoding is specified.                                        |
-| `eq(x, y)`, `neq(x, y)`                                                                                                  | `2 * min(d(x), d(y))`        | Scan the smaller scalar domain, joining or negating membership in the other input; see the set specialization below. |
-| `leq`, `lt`, `geq`, `gt`                                                                                                 | `d(x) * d(y)`                | Binary value enumeration.                                                                                            |
-| `get_or_else(x, y)`, `if_(x, condition)`                                                                                 | `C(args)`                    | Enumerate value and fallback or condition combinations.                                                              |
-| `has_value(x)`                                                                                                           | `d(x)`                       | Test each possible value for `None`.                                                                                 |
-| `conj(x1, ..., xn)`, `disj(x1, ..., xn)`                                                                                 | `n + 1`                      | Linear estimate: independent argument checks plus fixed result rules; no input Cartesian product.                    |
-| `leqv(x1, ..., xn)`                                                                                                      | `n`                          | Aggregate counts `false` arguments; result is `true` iff the count is even.                                          |
-| `ite(condition, x, y)`                                                                                                   | `d(condition) * d(x) * d(y)` | Enumerate condition and branch values.                                                                               |
-| `limp`, `lxor`                                                                                                           | `d(x) * d(y)`                | Binary truth-table enumeration.                                                                                      |
-| `lnot`, `snot`, `wnot`                                                                                                   | `d(x)`                       | Unary truth-table enumeration.                                                                                       |
+| Trivial operation                                                                                                      | Complexity                   | Encoding strategy                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `concat(x, y)`                                                                                                         | `d(x) * d(y)`                | Enumerate pairs of values.                                                                                           |
+| `length(x)` for a string or tuple                                                                                      | `d(x)`                       | One length per possible complete value.                                                                              |
+| `abs`, `sqrt`, `cos`, `sin`, `tan`, `acos`, `asin`, `atan`, `minus`, `floor`, `ceil`, `real_from_int`, `int_from_real` | `d(x)`                       | Unary value enumeration.                                                                                             |
+| `add(x1, ..., xn)`, `n > 2`                                                                                            | `d(e)`                       | Result-domain-guarded sum aggregate.                                                                                 |
+| `linear_integer((c1, x1), ..., (cn, xn), c)`, `n > 2`                                                                  | `d(e)`                       | Result-domain-guarded weighted sum aggregate.                                                                        |
+| `linear_integer((c1, x1), ..., (cn, xn), c)`, `n <= 2`                                                                 | `C(x1, ..., xn)`             | Direct argument enumeration.                                                                                         |
+| `add(x, y)`, `sub`, `int_div`, `real_div`, `pow`                                                                       | `d(x) * d(y)`                | Binary value enumeration.                                                                                            |
+| `add(x1, ..., xn)`, `n < 2`                                                                                            | `C(args)`                    | Degenerate argument enumeration.                                                                                     |
+| `mult(x1, ..., xn)`                                                                                                    | `C(args)`                    | No product aggregate is assumed.                                                                                     |
+| `min(x1, ..., xn)`, `max(x1, ..., xn)`                                                                                 | `C(args)`                    | Conservative enumeration until a specialized aggregate encoding is specified.                                        |
+| `eq(x, y)`, `neq(x, y)`                                                                                                | `2 * min(d(x), d(y))`        | Scan the smaller scalar domain, joining or negating membership in the other input; see the set specialization below. |
+| `leq`, `lt`, `geq`, `gt`                                                                                               | `d(x) * d(y)`                | Binary value enumeration.                                                                                            |
+| `get_or_else(x, y)`, `if_(x, condition)`                                                                               | `C(args)`                    | Enumerate value and fallback or condition combinations.                                                              |
+| `has_value(x)`                                                                                                         | `d(x)`                       | Test each possible value for `None`.                                                                                 |
+| `conj(x1, ..., xn)`, `disj(x1, ..., xn)`                                                                               | `n + 1`                      | Linear estimate: independent argument checks plus fixed result rules; no input Cartesian product.                    |
+| `leqv(x1, ..., xn)`                                                                                                    | `n`                          | Aggregate counts `false` arguments; result is `true` iff the count is even.                                          |
+| `ite(condition, x, y)`                                                                                                 | `d(condition) * d(x) * d(y)` | Enumerate condition and branch values.                                                                               |
+| `limp`, `lxor`                                                                                                         | `d(x) * d(y)`                | Binary truth-table enumeration.                                                                                      |
+| `lnot`, `snot`, `wnot`                                                                                                 | `d(x)`                       | Unary truth-table enumeration.                                                                                       |
 
 ### Set Operations
 
 Membership encodings operate on potential members rather than enumerating
 `D(s)`. These estimates assume valid set inputs; nullable or invalid inputs
-also need scalar validity guards.
+also need scalar validity guards. Select the set specializations of `eq`,
+`neq`, and `length` only when static types establish exclusively set-valued
+inputs, rather than inferring the value kind from domain representation.
 
 | Trivial operation                   | Complexity                  | Encoding strategy                                                               |
 | ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
