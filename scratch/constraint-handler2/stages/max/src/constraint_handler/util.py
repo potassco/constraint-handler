@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from graphlib import CycleError, TopologicalSorter
 from typing import assert_never
 
-from .diagnostics import Diagnostics
+from .diagnostics import Diagnostics, ExpressionLocation
 from .internal_input import (
     ConstraintStore,
     ExprId,
@@ -97,7 +97,7 @@ def compute_evaluation_order(store: ConstraintStore, diagnostics: Diagnostics) -
                     diagnostics.error(
                         f"Variable {var.name!r} has no defining expressions",
                         variable=var,
-                        expr_id=expr_id,
+                        location=ExpressionLocation(expr_id, var),
                     )
                 undefined.add(var)
         sorter.add(expr_id, *deps)
@@ -113,7 +113,7 @@ def compute_evaluation_order(store: ConstraintStore, diagnostics: Diagnostics) -
     for expr_id in sorted(cyclic):
         diagnostics.error(
             f"Expression {expr_id} is part of or depends on a dependency cycle",
-            expr_id=expr_id,
+            location=ExpressionLocation(expr_id, store.expressions[expr_id]),
         )
 
     return EvaluationOrder(

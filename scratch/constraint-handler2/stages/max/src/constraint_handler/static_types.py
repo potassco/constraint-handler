@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 from dataclasses import dataclass
 from itertools import product
-from typing import assert_never
+from math import inf
+from typing import Final, Literal, assert_never, final
 
-from .diagnostics import Diagnostics
+from .analysis import ExpressionStore, lambda_call, linear_integer_arguments
+from .diagnostics import Diagnostics, ExpressionLocation
 from .internal_input import (
     ConstraintStore,
     Expr,
@@ -39,35 +41,127 @@ class TupleType:
     elements: tuple[Type, ...]
 
 
+@final
 @dataclass(frozen=True, slots=True)
 class UnknownType:
     """Represent an absorbing unknown static type."""
 
+    def __new__(cls) -> UnknownType:
+        """Return the shared immutable unknown marker."""
+        return UNKNOWN
+
+
+UNKNOWN: Final = object.__new__(UnknownType)
+
 
 type TypeMember = ValueType | SetOf | TupleType
 type Type = frozenset[TypeMember] | UnknownType
+type TypeScope = frozenset[tuple[VariableRef, Type]]
 
 _NUMERIC_TYPES: frozenset[ValueType] = frozenset({ValueType.integer, ValueType.real})
-_ORDERED_TYPES: frozenset[ValueType] = frozenset({ValueType.boolean, ValueType.integer, ValueType.real})
-_BOOL_OR_NONE_TYPES: frozenset[ValueType] = frozenset({ValueType.boolean, ValueType.none})
+_ORDERED_TYPES: frozenset[ValueType] = frozenset(
+    {ValueType.boolean, ValueType.integer, ValueType.real}
+)
+_BOOL_OR_NONE_TYPES: frozenset[ValueType] = frozenset(
+    {ValueType.boolean, ValueType.none}
+)
 
 
-class StaticTypeStore(dict[Expr, Type]):
-    """Map expressions, including variables, to their precomputed static types."""
+@dataclass(frozen=True, slots=True)
+class _ScalarRule:
+    """Describe scalar arity, accepted members, and result construction."""
 
-    def __init__(self, expressions: Mapping[Expr, Type] | Iterable[tuple[Expr, Type]] = ()) -> None:
-        """Initialize expression metadata and a separate lambda-context mapping."""
-        super().__init__(expressions)
-        self.scoped_expressions: dict[tuple[Expr, frozenset[tuple[VariableRef, Type]]], Type] = {}
+    minimum: int
+    maximum: int | float
+    allowed: frozenset[ValueType]
+    result: ValueType | Literal["identity", "union", "arithmetic", "power"]
+    contract: str
 
-    def lookup(
-        self,
-        expr: Expr,
-        *,
-        scope: frozenset[tuple[VariableRef, Type]] = frozenset(),
-    ) -> Type:
-        """Look up an expression in its explicit lambda binding environment."""
-        return self.scoped_expressions[expr, scope] if scope else self[expr]
+
+_SCALAR_RULES: dict[Operator, _ScalarRule] = {
+    Operator.concat: _ScalarRule(
+        2, 2, frozenset({ValueType.string}), ValueType.string, "2 string arguments"
+    ),
+    **{
+        op: _ScalarRule(
+            1, inf, _ORDERED_TYPES, "union", "at least 1 boolean/integer/real argument"
+        )
+        for op in (Operator.min, Operator.max)
+    },
+    **{
+        op: _ScalarRule(1, 1, _NUMERIC_TYPES, "identity", "1 numeric argument")
+        for op in (Operator.abs, Operator.minus)
+    },
+    **{
+        op: _ScalarRule(1, 1, _NUMERIC_TYPES, ValueType.real, "1 numeric argument")
+        for op in (
+            Operator.sqrt,
+            Operator.cos,
+            Operator.sin,
+            Operator.tan,
+            Operator.acos,
+            Operator.asin,
+            Operator.atan,
+        )
+    },
+    **{
+        op: _ScalarRule(1, 1, _NUMERIC_TYPES, ValueType.integer, "1 numeric argument")
+        for op in (Operator.floor, Operator.ceil)
+    },
+    **{
+        op: _ScalarRule(
+            1, inf, _NUMERIC_TYPES, "arithmetic", "at least 1 numeric argument"
+        )
+        for op in (Operator.add, Operator.mult)
+    },
+    **{
+        op: _ScalarRule(2, 2, _NUMERIC_TYPES, "arithmetic", "2 numeric arguments")
+        for op in (Operator.sub, Operator.mod)
+    },
+    Operator.int_div: _ScalarRule(
+        2, 2, _NUMERIC_TYPES, ValueType.integer, "2 numeric arguments"
+    ),
+    Operator.real_div: _ScalarRule(
+        2, 2, _NUMERIC_TYPES, ValueType.real, "2 numeric arguments"
+    ),
+    Operator.pow: _ScalarRule(2, 2, _NUMERIC_TYPES, "power", "2 numeric arguments"),
+    **{
+        op: _ScalarRule(2, 2, _ORDERED_TYPES, ValueType.boolean, "2 ordered arguments")
+        for op in (Operator.leq, Operator.lt, Operator.geq, Operator.gt)
+    },
+    Operator.real_from_int: _ScalarRule(
+        1, 1, frozenset({ValueType.integer}), ValueType.real, "1 integer argument"
+    ),
+    Operator.int_from_real: _ScalarRule(
+        1, 1, frozenset({ValueType.real}), ValueType.integer, "1 real argument"
+    ),
+    **{
+        op: _ScalarRule(
+            0,
+            inf,
+            frozenset({ValueType.boolean}),
+            ValueType.boolean,
+            "boolean arguments",
+        )
+        for op in (Operator.conj, Operator.disj, Operator.lxor, Operator.leqv)
+    },
+    Operator.limp: _ScalarRule(
+        2, 2, frozenset({ValueType.boolean}), ValueType.boolean, "2 boolean arguments"
+    ),
+    Operator.lnot: _ScalarRule(
+        1, 1, frozenset({ValueType.boolean}), ValueType.boolean, "1 boolean argument"
+    ),
+    **{
+        op: _ScalarRule(
+            1, 1, _BOOL_OR_NONE_TYPES, ValueType.boolean, "1 boolean or none argument"
+        )
+        for op in (Operator.snot, Operator.wnot)
+    },
+}
+
+
+class StaticTypeStore(ExpressionStore[Type]):
+    """Own global and lambda-scoped types through an expression mapping interface."""
 
 
 def union_types(types: Iterable[Type]) -> Type:
@@ -112,10 +206,8 @@ def _is_all_scalars(t: Type) -> bool:
     return all(isinstance(m, ValueType) for m in t)
 
 
-def _extract_set_info(t: Type) -> tuple[frozenset[ValueType], bool]:
+def _extract_set_info(t: frozenset[TypeMember]) -> tuple[frozenset[ValueType], bool]:
     """Extract combined element types and can_be_empty flag from SetOf members."""
-    if isinstance(t, UnknownType):
-        return frozenset(), True
     elems: set[ValueType] = set()
     can_be_empty = False
     for m in t:
@@ -167,60 +259,78 @@ class _StaticTypeComputer:
 
     def _compute_variable_type(self, var: VariableRef) -> None:
         """Combine choices, definitions, and defaults for a variable."""
+        types: list[Type] = []
         if var in self._store.set_variables:
             set_var = self._store.set_variables[var]
-            elem_types = union_types(
-                [
-                    *(self._result[self._store.expressions[b.value]] for b in set_var.bases),
-                    *(self._result[self._store.expressions[a.value]] for a in set_var.assigns),
-                    *(self._result[self._store.expressions[d.value]] for d in set_var.defaults),
-                ]
+            sources = [
+                *(
+                    self._result[self._store.expressions[b.value]]
+                    for b in set_var.bases
+                ),
+                *(
+                    self._result[self._store.expressions[a.value]]
+                    for a in set_var.assigns
+                ),
+                *(
+                    self._result[self._store.expressions[d.value]]
+                    for d in set_var.defaults
+                ),
+            ]
+            elem_types = frozenset(
+                member
+                for kind in sources
+                if not isinstance(kind, UnknownType)
+                for member in kind
             )
-            if isinstance(elem_types, UnknownType):
-                self._result[var] = UnknownType()
-                return
             scalars: set[ValueType] = set()
+            invalid = False
             for m in elem_types:
                 if isinstance(m, ValueType):
                     scalars.add(m)
                 else:
+                    invalid = True
                     self._diagnostics.error(
                         f"Set variable {var.name!r} requires scalar elements, got {m}",
                         variable=var,
                     )
-            can_be_empty = len(set_var.assigns) == 0
-            self._result[var] = frozenset({SetOf(frozenset(scalars), can_be_empty)})
-            return
+            if invalid or any(isinstance(kind, UnknownType) for kind in sources):
+                types.append(UNKNOWN)
+            else:
+                can_be_empty = not any(
+                    self._store.expressions[assignment.condition]
+                    == ValueDef(ValueType.boolean, True)
+                    for assignment in set_var.assigns
+                )
+                types.append(frozenset({SetOf(frozenset(scalars), can_be_empty)}))
 
-        variable = self._store.variables[var]
-        choices_type: Type = (
-            union_types(self._result[self._store.expressions[c.value]] for c in variable.choices)
-            if variable.choices
-            else frozenset[TypeMember]()
-        )
-        definition_type = union_types(self._result[self._store.expressions[d.value]] for d in variable.definitions)
-        defaults_type = union_types(self._result[self._store.expressions[d.value]] for d in variable.defaults)
-        self._result[var] = union_types((choices_type, definition_type, defaults_type))
+        if var in self._store.variables:
+            variable = self._store.variables[var]
+            types.extend(
+                self._result[self._store.expressions[source.value]]
+                for source in (
+                    *variable.choices,
+                    *variable.definitions,
+                    *variable.defaults,
+                )
+            )
+        self._result[var] = union_types(types)
 
     def _eval_expr(
         self,
         expr: Expr,
         env: dict[VariableRef, Type],
-        expr_id: ExprId | None,
+        root_id: ExprId,
     ) -> Type:
         """Retain every visited subexpression's type in its binding context."""
-        result = self._compute_expr(expr, env, expr_id)
-        if env:
-            self._result.scoped_expressions[expr, frozenset(env.items())] = result
-        else:
-            self._result[expr] = result
+        result = self._compute_expr(expr, env, ExpressionLocation(root_id, expr))
+        self._result.record(expr, result, scope=frozenset(env.items()))
         return result
 
     def _compute_expr(
         self,
         expr: Expr,
         env: dict[VariableRef, Type],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Type:
         """Compute the static type of an internal expression."""
         match expr:
@@ -233,60 +343,68 @@ class _StaticTypeComputer:
             case frozenset():
                 if not expr:
                     return frozenset({SetOf(frozenset(), True)})
-                item_types = union_types(self._eval_expr(item, env, expr_id) for item in expr)
-                if isinstance(item_types, UnknownType):
-                    return UnknownType()
-                if not _is_all_scalars(item_types):
+                element_types = [
+                    self._eval_expr(item, env, location.root_id) for item in expr
+                ]
+                if not all(_is_all_scalars(kind) for kind in element_types):
                     self._diagnostics.error(
                         "Set literal elements must be scalar values",
-                        expr_id=expr_id,
+                        location=location,
                     )
                     return UnknownType()
+                item_types = union_types(element_types)
+                if isinstance(item_types, UnknownType):
+                    return UnknownType()
+                if any(not kind for kind in element_types):
+                    return frozenset()
                 scalars = frozenset(m for m in item_types if isinstance(m, ValueType))
                 return frozenset({SetOf(scalars, False)})
             case tuple():
-                elem_types = tuple(self._eval_expr(item, env, expr_id) for item in expr)
+                elem_types = tuple(
+                    self._eval_expr(item, env, location.root_id) for item in expr
+                )
+                if any(
+                    isinstance(member, SetOf)
+                    for kind in elem_types
+                    if not isinstance(kind, UnknownType)
+                    for member in kind
+                ):
+                    self._diagnostics.error(
+                        "Sets inside tuples are not supported", location=location
+                    )
+                    return UNKNOWN
                 if any(isinstance(t, UnknownType) for t in elem_types):
                     return UnknownType()
-                if any(len(t) == 0 for t in elem_types if not isinstance(t, UnknownType)):
+                if any(
+                    len(t) == 0 for t in elem_types if not isinstance(t, UnknownType)
+                ):
                     return frozenset()
                 return frozenset({TupleType(elem_types)})
             case Operation(op, args):
-                return self._eval_operation(op, args, env, expr_id)
+                return self._eval_operation(op, args, env, location)
         assert_never(expr)
 
     def _eval_expr_arg(
         self,
         arg: OperationArg,
         env: dict[VariableRef, Type],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Type:
         """Evaluate an operation argument that must be an expression."""
         if isinstance(arg, (Lambda, Python)):
             self._diagnostics.error(
                 f"Expected value expression argument, got {type(arg).__name__}",
-                expr_id=expr_id,
+                location=location,
             )
             return UnknownType()
-        return self._eval_expr(arg, env, expr_id)
-
-    def _check_contract(
-        self,
-        condition: bool,
-        message: str,
-        expr_id: ExprId | None,
-    ) -> bool:
-        """Record an error diagnostic when a type contract is violated."""
-        if not condition:
-            self._diagnostics.error(message, expr_id=expr_id)
-        return condition
+        return self._eval_expr(arg, env, location.root_id)
 
     def _eval_operation(
         self,
         op: Operator,
         args: tuple[OperationArg, ...],
         env: dict[VariableRef, Type],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Type:
         """Compute the result type of an Operation according to the type table."""
         match op:
@@ -294,480 +412,353 @@ class _StaticTypeComputer:
                 if not args or not isinstance(args[0], Python):
                     self._diagnostics.error(
                         "python_eval requires a Python callable as first argument",
-                        expr_id=expr_id,
+                        location=location,
                     )
                 for arg in args[1:]:
-                    self._eval_expr_arg(arg, env, expr_id)
+                    self._eval_expr_arg(arg, env, location)
                 return UnknownType()
 
             case Operator.set_fold:
-                if len(args) != 3:
-                    self._diagnostics.error(
-                        f"set_fold expects 3 arguments, got {len(args)}",
-                        expr_id=expr_id,
-                    )
-                    return UnknownType()
-                callback, set_arg, init_arg = args
-                if not isinstance(callback, (Lambda, Python)):
-                    self._diagnostics.error(
-                        "set_fold first argument must be a callable",
-                        expr_id=expr_id,
-                    )
-                set_type = self._eval_expr_arg(set_arg, env, expr_id)
-                self._eval_expr_arg(init_arg, env, expr_id)
-                self._check_contract(
-                    _is_all_sets(set_type),
-                    f"set_fold requires a set argument, got {set_type}",
-                    expr_id,
-                )
-                return UnknownType()
+                return self._eval_set_fold(args, env, location)
 
             case Operator.lambda_:
-                if not args or not isinstance(args[0], Lambda):
-                    self._diagnostics.error(
-                        "lambda_ requires a Lambda as first argument",
-                        expr_id=expr_id,
-                    )
-                    return UnknownType()
-                lam = args[0]
-                call_args = args[1:]
-                if len(call_args) != len(lam.vars):
-                    self._diagnostics.error(
-                        f"Lambda expects {len(lam.vars)} arguments, got {len(call_args)}",
-                        expr_id=expr_id,
-                    )
-                    return UnknownType()
-                arg_types = [self._eval_expr_arg(a, env, expr_id) for a in call_args]
-                if any(isinstance(t, UnknownType) for t in arg_types):
-                    return UnknownType()
-                known_arg_types: list[frozenset[TypeMember]] = [t for t in arg_types if not isinstance(t, UnknownType)]
-                if any(len(t) == 0 for t in known_arg_types):
-                    return frozenset()
-                results: list[Type] = []
-                for combo in product(*known_arg_types):
-                    local_env = dict(env)
-                    for param, member_type in zip(lam.vars, combo, strict=True):
-                        local_env[param] = frozenset({member_type})
-                    results.append(self._eval_expr(lam.expr, local_env, expr_id))
-                return union_types(results)
+                lam = lambda_call(args, self._diagnostics, location)
+                if lam is None:
+                    return UNKNOWN
+                arg_types = [
+                    self._eval_expr_arg(arg, env, location) for arg in args[1:]
+                ]
+                return self._apply_lambda(lam, arg_types, env, location)
 
             case Operator.linear_integer:
-                return self._eval_linear_integer(args, env, expr_id)
+                return self._eval_linear_integer(args, env, location)
 
             case _:
                 pass
 
-        arg_types = [self._eval_expr_arg(arg, env, expr_id) for arg in args]
-        if any(isinstance(t, UnknownType) for t in arg_types):
-            return UnknownType()
-        known_types: list[frozenset[TypeMember]] = [t for t in arg_types if not isinstance(t, UnknownType)]
-        if any(len(t) == 0 for t in known_types):
-            return frozenset()
+        arg_types = [self._eval_expr_arg(arg, env, location) for arg in args]
+        if op in _SCALAR_RULES:
+            return self._eval_scalar_operation(op, arg_types, location)
+        return self._eval_value_operation(op, args, arg_types, location)
 
-        match op:
-            case Operator.eq | Operator.neq:
-                if not self._check_contract(
-                    len(known_types) == 2,
-                    f"{op} expects 2 arguments, got {len(known_types)}",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
+    def _apply_lambda(
+        self,
+        callback: Lambda,
+        arg_types: list[Type],
+        env: dict[VariableRef, Type],
+        location: ExpressionLocation,
+    ) -> Type:
+        """Check a lambda under each binding combination, including unknown arguments."""
+        if not self._check_contract(
+            len(set(callback.vars)) == len(callback.vars),
+            "Lambda parameter names must be distinct",
+            location,
+        ):
+            return UNKNOWN
+        alternatives: list[Iterable[TypeMember | UnknownType]] = [
+            (kind,) if isinstance(kind, UnknownType) else kind for kind in arg_types
+        ]
+        results: list[Type] = []
+        for combination in product(*alternatives):
+            local_env = dict(env)
+            for parameter, member in zip(callback.vars, combination, strict=True):
+                local_env[parameter] = (
+                    member if isinstance(member, UnknownType) else frozenset({member})
+                )
+            results.append(self._eval_expr(callback.expr, local_env, location.root_id))
+        if any(isinstance(kind, UnknownType) for kind in arg_types):
+            return UNKNOWN
+        return union_types(results)
 
-            case Operator.concat:
-                if not self._check_contract(
-                    len(known_types) == 2
-                    and all(_is_subset_of_scalars(t, frozenset({ValueType.string})) for t in known_types),
-                    "concat requires 2 string arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.string})
-
-            case Operator.length:
-                if not self._check_contract(
-                    len(known_types) == 1
-                    and all(
-                        member == ValueType.string or isinstance(member, (TupleType, SetOf))
-                        for member in known_types[0]
-                    ),
-                    "length requires 1 string, tuple, or set argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.integer})
-
-            case Operator.max | Operator.min:
-                if not self._check_contract(
-                    len(known_types) >= 1 and all(_is_subset_of_scalars(t, _ORDERED_TYPES) for t in known_types),
-                    f"{op} requires at least 1 boolean/integer/real argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return union_types(known_types)
-
-            case Operator.get_or_else:
-                if not self._check_contract(
-                    len(known_types) == 2,
-                    f"get_or_else expects 2 arguments, got {len(known_types)}",
-                    expr_id,
-                ):
-                    return UnknownType()
-                without_none = frozenset(m for m in known_types[0] if m != ValueType.none)
-                return union_types((without_none, known_types[1]))
-
-            case Operator.if_:
-                if not self._check_contract(
-                    len(known_types) == 2 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.boolean})),
-                    "if_ requires (boolean, any) arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return union_types((known_types[1], frozenset({ValueType.none})))
-
-            case Operator.has_value:
-                if not self._check_contract(
-                    len(known_types) == 1,
-                    f"has_value expects 1 argument, got {len(known_types)}",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
-
-            case Operator.abs | Operator.minus:
-                if not self._check_contract(
-                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
-                    f"{op} requires 1 numeric argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return known_types[0]
-
-            case (
-                Operator.sqrt
-                | Operator.cos
-                | Operator.sin
-                | Operator.tan
-                | Operator.acos
-                | Operator.asin
-                | Operator.atan
+    def _eval_set_fold(
+        self,
+        args: tuple[OperationArg, ...],
+        env: dict[VariableRef, Type],
+        location: ExpressionLocation,
+    ) -> Type:
+        """Check fold callbacks to a scalar fixed point, widening structural growth."""
+        if not self._check_contract(
+            len(args) == 3, f"set_fold expects 3 arguments, got {len(args)}", location
+        ):
+            return UNKNOWN
+        callback, set_arg, init_arg = args
+        set_type = self._eval_expr_arg(set_arg, env, location)
+        accumulator = self._eval_expr_arg(init_arg, env, location)
+        valid_set = self._check_contract(
+            _is_all_sets(set_type),
+            f"set_fold requires a set argument, got {set_type}",
+            location,
+        )
+        if not self._check_contract(
+            isinstance(callback, (Lambda, Python)),
+            "set_fold first argument must be a callable",
+            location,
+        ):
+            return UNKNOWN
+        if not isinstance(callback, Lambda):
+            return UNKNOWN
+        if not self._check_contract(
+            len(callback.vars) == 2, "set_fold lambda requires 2 parameters", location
+        ):
+            return UNKNOWN
+        if not valid_set:
+            return UNKNOWN
+        elements: Type = (
+            UNKNOWN
+            if isinstance(set_type, UnknownType)
+            else _extract_set_info(set_type)[0]
+        )
+        while True:
+            result = self._apply_lambda(
+                callback, [accumulator, elements], env, location
+            )
+            combined = union_types((accumulator, result))
+            if (
+                isinstance(combined, UnknownType)
+                or isinstance(accumulator, UnknownType)
+                or combined == accumulator
             ):
-                if not self._check_contract(
-                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
-                    f"{op} requires 1 numeric argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.real})
-
-            case Operator.floor | Operator.ceil:
-                if not self._check_contract(
-                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
-                    f"{op} requires 1 numeric argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.integer})
-
-            case Operator.add | Operator.mult:
-                if not self._check_contract(
-                    len(known_types) >= 1 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
-                    f"{op} requires at least 1 numeric argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return _combine_arithmetic_types(known_types)
-
-            case Operator.sub | Operator.mod:
-                if not self._check_contract(
-                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
-                    f"{op} requires 2 numeric arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return _combine_arithmetic_types(known_types)
-
-            case Operator.int_div:
-                if not self._check_contract(
-                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
-                    "int_div requires 2 numeric arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.integer})
-
-            case Operator.real_div:
-                if not self._check_contract(
-                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
-                    "real_div requires 2 numeric arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.real})
-
-            case Operator.pow:
-                if not self._check_contract(
-                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
-                    "pow requires 2 numeric arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                results_pow: set[TypeMember] = set()
-                for b_t, e_t in product(known_types[0], known_types[1]):
-                    if b_t == ValueType.integer and e_t == ValueType.integer:
-                        results_pow.add(ValueType.integer)
-                        results_pow.add(ValueType.real)
-                    else:
-                        results_pow.add(ValueType.real)
-                return frozenset(results_pow)
-
-            case Operator.leq | Operator.lt | Operator.geq | Operator.gt:
-                if not self._check_contract(
-                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _ORDERED_TYPES) for t in known_types),
-                    f"{op} requires 2 ordered arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
-
-            case Operator.real_from_int:
-                if not self._check_contract(
-                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.integer})),
-                    "real_from_int requires 1 integer argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.real})
-
-            case Operator.int_from_real:
-                if not self._check_contract(
-                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.real})),
-                    "int_from_real requires 1 real argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.integer})
-
-            case Operator.conj | Operator.disj | Operator.lxor | Operator.leqv:
-                if not self._check_contract(
-                    all(_is_subset_of_scalars(t, frozenset({ValueType.boolean})) for t in known_types),
-                    f"{op} requires boolean arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
-
-            case Operator.limp:
-                if not self._check_contract(
-                    len(known_types) == 2
-                    and all(_is_subset_of_scalars(t, frozenset({ValueType.boolean})) for t in known_types),
-                    "limp requires 2 boolean arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
-
-            case Operator.ite:
-                if not self._check_contract(
-                    len(known_types) == 3 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.boolean})),
-                    "ite requires (boolean, any, any) arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return union_types((known_types[1], known_types[2]))
-
-            case Operator.lnot:
-                if not self._check_contract(
-                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.boolean})),
-                    "lnot requires 1 boolean argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
-
-            case Operator.snot | Operator.wnot:
-                if not self._check_contract(
-                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], _BOOL_OR_NONE_TYPES),
-                    f"{op} requires 1 boolean or none argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
-
-            case Operator.cardinality:
-                if not self._check_contract(
-                    len(known_types) == 1 and _is_all_sets(known_types[0]),
-                    "cardinality requires 1 set argument",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.integer})
-
-            case Operator.set_make:
-                if not known_types:
-                    return frozenset({SetOf(frozenset(), True)})
-                if not self._check_contract(
-                    all(_is_all_scalars(t) for t in known_types),
-                    "set_make requires scalar arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                combined = union_types(known_types)
-                if isinstance(combined, UnknownType):  # pragma: no cover
-                    return UnknownType()
-                scalars = frozenset(m for m in combined if isinstance(m, ValueType))
-                return frozenset({SetOf(scalars, False)})
-
-            case Operator.set_isin | Operator.set_notin:
-                if not self._check_contract(
-                    len(known_types) == 2 and _is_all_scalars(known_types[0]) and _is_all_sets(known_types[1]),
-                    f"{op} requires (scalar, set) arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
-
-            case Operator.union:
-                if not self._check_contract(
-                    len(known_types) == 2 and _is_all_sets(known_types[0]) and _is_all_sets(known_types[1]),
-                    "union requires 2 set arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                elems_a, empty_a = _extract_set_info(known_types[0])
-                elems_b, empty_b = _extract_set_info(known_types[1])
-                return frozenset({SetOf(elems_a | elems_b, empty_a and empty_b)})
-
-            case Operator.inter:
-                if not self._check_contract(
-                    len(known_types) == 2 and _is_all_sets(known_types[0]) and _is_all_sets(known_types[1]),
-                    "inter requires 2 set arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                elems_a, _ = _extract_set_info(known_types[0])
-                elems_b, _ = _extract_set_info(known_types[1])
-                return frozenset({SetOf(elems_a | elems_b, True)})
-
-            case Operator.diff:
-                if not self._check_contract(
-                    len(known_types) == 2 and _is_all_sets(known_types[0]) and _is_all_sets(known_types[1]),
-                    "diff requires 2 set arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                elems_a, _ = _extract_set_info(known_types[0])
-                return frozenset({SetOf(elems_a, True)})
-
-            case Operator.subset:
-                if not self._check_contract(
-                    len(known_types) == 2 and _is_all_sets(known_types[0]) and _is_all_sets(known_types[1]),
-                    "subset requires 2 set arguments",
-                    expr_id,
-                ):
-                    return UnknownType()
-                return frozenset({ValueType.boolean})
-
-            case Operator.tuple_get:
-                if len(known_types) != 2 or len(args) != 2:
-                    self._diagnostics.error(
-                        f"tuple_get expects 2 arguments, got {len(args)}",
-                        expr_id=expr_id,
-                    )
-                    return UnknownType()
-                tuple_t, idx_t = known_types
-                if not _is_subset_of_scalars(idx_t, frozenset({ValueType.integer})):
-                    self._diagnostics.error(
-                        "tuple_get index must be an integer",
-                        expr_id=expr_id,
-                    )
-                    return UnknownType()
-                idx_arg = args[1]
-                if not all(isinstance(m, TupleType) for m in tuple_t):
-                    self._diagnostics.error(
-                        "tuple_get first argument must be a tuple",
-                        expr_id=expr_id,
-                    )
-                    return UnknownType()
-                if (
-                    isinstance(idx_arg, ValueDef)
-                    and idx_arg.value_type == ValueType.integer
-                    and isinstance(idx_arg.value, int)
-                ):
-                    idx_val = idx_arg.value
-                    projected: list[Type] = []
-                    for m in tuple_t:
-                        if isinstance(m, TupleType):
-                            if 0 <= idx_val < len(m.elements):
-                                projected.append(m.elements[idx_val])
-                            else:
-                                self._diagnostics.error(
-                                    f"tuple_get index {idx_val} out of range",
-                                    expr_id=expr_id,
-                                )
-                                return UnknownType()
-                    return union_types(projected)
-                all_pos: list[Type] = []
-                for m in tuple_t:
-                    if isinstance(m, TupleType):
-                        all_pos.extend(m.elements)
-                return union_types(all_pos)
-
-        assert_never(op)
+                return UNKNOWN
+            if any(
+                not isinstance(member, ValueType) and member not in accumulator
+                for member in combined
+            ):
+                self._apply_lambda(callback, [UNKNOWN, elements], env, location)
+                return UNKNOWN
+            accumulator = combined
 
     def _eval_linear_integer(
         self,
         args: tuple[OperationArg, ...],
         env: dict[VariableRef, Type],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Type:
         """Compute the static type of Operation(Operator.linear_integer, ...)."""
-        if not args:
-            self._diagnostics.error("linear_integer requires at least one argument", expr_id=expr_id)
-            return UnknownType()
+        validated = linear_integer_arguments(args, self._diagnostics, location)
+        if validated is None:
+            return UNKNOWN
         component_types: list[Type] = []
-        for idx, arg in enumerate(args):
-            if isinstance(arg, tuple) and len(arg) == 2:
+        for arg in validated:
+            if isinstance(arg, tuple):
                 coeff, term = arg
-                if not isinstance(coeff, ValueDef) or coeff.value_type != ValueType.integer:
-                    self._diagnostics.error(
-                        "linear_integer coefficient must be a constant integer literal",
-                        expr_id=expr_id,
-                    )
-                    return UnknownType()
-                self._eval_expr(arg, env, expr_id)
+                self._eval_expr(arg, env, location.root_id)
                 scope = frozenset(env.items())
                 c_type = self._result.lookup(coeff, scope=scope)
                 x_type = self._result.lookup(term, scope=scope)
                 component_types.append(c_type)
                 component_types.append(x_type)
-            elif idx == len(args) - 1 and not isinstance(arg, (Lambda, Python, tuple)):
-                if not isinstance(arg, ValueDef) or arg.value_type != ValueType.integer:
-                    self._diagnostics.error(
-                        "linear_integer constant offset must be a constant integer literal",
-                        expr_id=expr_id,
-                    )
-                    return UnknownType()
-                component_types.append(self._eval_expr(arg, env, expr_id))
             else:
-                self._diagnostics.error(
-                    f"Invalid linear_integer argument at position {idx}: {arg}",
-                    expr_id=expr_id,
-                )
-                return UnknownType()
+                component_types.append(self._eval_expr(arg, env, location.root_id))
 
-        if any(isinstance(t, UnknownType) for t in component_types):
-            return UnknownType()
-        known = [t for t in component_types if not isinstance(t, UnknownType)]
-        if any(len(t) == 0 for t in known):
-            return frozenset()
         if not self._check_contract(
-            all(_is_subset_of_scalars(t, frozenset({ValueType.integer})) for t in known),
+            all(
+                _is_subset_of_scalars(kind, frozenset({ValueType.integer}))
+                for kind in component_types
+            ),
             "linear_integer requires integer coefficients, terms, and constant offset",
-            expr_id,
+            location,
         ):
-            return UnknownType()
+            return UNKNOWN
+        if any(isinstance(kind, UnknownType) for kind in component_types):
+            return UNKNOWN
+        if any(not kind for kind in component_types):
+            return frozenset()
         return frozenset({ValueType.integer})
+
+    def _check_contract(
+        self, condition: bool, message: str, location: ExpressionLocation
+    ) -> bool:
+        """Record an error diagnostic when a type contract is violated."""
+        if not condition:
+            self._diagnostics.error(message, location=location)
+        return condition
+
+    def _eval_value_operation(
+        self,
+        op: Operator,
+        args: tuple[OperationArg, ...],
+        arg_types: list[Type],
+        location: ExpressionLocation,
+    ) -> Type:
+        """Keep each value operator's contract and inference together before propagation."""
+        known: list[frozenset[TypeMember]] = [
+            frozenset() if isinstance(kind, UnknownType) else kind for kind in arg_types
+        ]
+        result: Type = UNKNOWN
+        match op:
+            case Operator.eq | Operator.neq:
+                valid = len(arg_types) == 2
+                message = f"{op} expects 2 arguments, got {len(arg_types)}"
+                result = frozenset({ValueType.boolean})
+            case Operator.get_or_else:
+                valid = len(arg_types) == 2
+                message = f"{op} expects 2 arguments, got {len(arg_types)}"
+                if valid:
+                    result = union_types((known[0] - {ValueType.none}, known[1]))
+            case Operator.has_value:
+                valid = len(arg_types) == 1
+                message = f"has_value expects 1 argument, got {len(arg_types)}"
+                result = frozenset({ValueType.boolean})
+            case Operator.length:
+                valid = len(arg_types) == 1 and (
+                    isinstance(arg_types[0], UnknownType)
+                    or all(
+                        member == ValueType.string
+                        or isinstance(member, (TupleType, SetOf))
+                        for member in arg_types[0]
+                    )
+                )
+                message = "length requires 1 string, tuple, or set argument"
+                result = frozenset({ValueType.integer})
+            case Operator.if_ | Operator.ite:
+                arity = 2 if op == Operator.if_ else 3
+                valid = len(arg_types) == arity and _is_subset_of_scalars(
+                    arg_types[0], frozenset({ValueType.boolean})
+                )
+                message = (
+                    "if_ requires (boolean, any) arguments"
+                    if op == Operator.if_
+                    else "ite requires (boolean, any, any) arguments"
+                )
+                if valid:
+                    result = union_types(
+                        (
+                            known[1],
+                            frozenset({ValueType.none})
+                            if op == Operator.if_
+                            else known[2],
+                        )
+                    )
+            case Operator.cardinality:
+                valid = len(arg_types) == 1 and _is_all_sets(arg_types[0])
+                message = "cardinality requires 1 set argument"
+                result = frozenset({ValueType.integer})
+            case Operator.set_make:
+                valid = all(_is_all_scalars(kind) for kind in arg_types)
+                message = "set_make requires scalar arguments"
+                scalars = frozenset(
+                    member
+                    for kind in known
+                    for member in kind
+                    if isinstance(member, ValueType)
+                )
+                result = frozenset({SetOf(scalars, not arg_types)})
+            case Operator.set_isin | Operator.set_notin:
+                valid = (
+                    len(arg_types) == 2
+                    and _is_all_scalars(arg_types[0])
+                    and _is_all_sets(arg_types[1])
+                )
+                message = f"{op} requires (scalar, set) arguments"
+                result = frozenset({ValueType.boolean})
+            case Operator.union | Operator.inter | Operator.diff | Operator.subset:
+                valid = len(arg_types) == 2 and all(
+                    _is_all_sets(kind) for kind in arg_types
+                )
+                message = f"{op} requires 2 set arguments"
+                if valid:
+                    elems_a, empty_a = _extract_set_info(known[0])
+                    elems_b, empty_b = _extract_set_info(known[1])
+                    match op:
+                        case Operator.union:
+                            result = frozenset(
+                                {SetOf(elems_a | elems_b, empty_a and empty_b)}
+                            )
+                        case Operator.inter:
+                            result = frozenset({SetOf(elems_a | elems_b, True)})
+                        case Operator.diff:
+                            result = frozenset({SetOf(elems_a, True)})
+                        case Operator.subset:
+                            result = frozenset({ValueType.boolean})
+            case Operator.tuple_get:
+                if not self._check_contract(
+                    len(arg_types) == 2,
+                    f"tuple_get expects 2 arguments, got {len(arg_types)}",
+                    location,
+                ):
+                    return UNKNOWN
+                tuple_type, index_type = arg_types
+                valid_index = self._check_contract(
+                    _is_subset_of_scalars(index_type, frozenset({ValueType.integer})),
+                    "tuple_get index must be an integer",
+                    location,
+                )
+                valid_tuple = self._check_contract(
+                    isinstance(tuple_type, UnknownType)
+                    or all(isinstance(member, TupleType) for member in tuple_type),
+                    "tuple_get first argument must be a tuple",
+                    location,
+                )
+                if not valid_index or not valid_tuple:
+                    return UNKNOWN
+                tuples = [
+                    member for member in known[0] if isinstance(member, TupleType)
+                ]
+                index = args[1]
+                if (
+                    isinstance(index, ValueDef)
+                    and index.value_type == ValueType.integer
+                    and isinstance(index.value, int)
+                ):
+                    if not self._check_contract(
+                        all(
+                            0 <= index.value < len(member.elements) for member in tuples
+                        ),
+                        f"tuple_get index {index.value} out of range",
+                        location,
+                    ):
+                        return UNKNOWN
+                    result = union_types(
+                        member.elements[index.value] for member in tuples
+                    )
+                else:
+                    result = union_types(
+                        position for member in tuples for position in member.elements
+                    )
+                valid, message = True, ""
+            case _:
+                raise AssertionError(f"Missing static type rule for {op}")
+        if not self._check_contract(valid, message, location):
+            return UNKNOWN
+        if any(isinstance(kind, UnknownType) for kind in arg_types):
+            return UNKNOWN
+        if any(not kind for kind in known):
+            return frozenset()
+        return result
+
+    def _eval_scalar_operation(
+        self, op: Operator, arg_types: list[Type], location: ExpressionLocation
+    ) -> Type:
+        """Validate scalar contracts before unknown propagation and combine union members."""
+        rule = _SCALAR_RULES[op]
+        if not self._check_contract(
+            rule.minimum <= len(arg_types) <= rule.maximum
+            and all(_is_subset_of_scalars(kind, rule.allowed) for kind in arg_types),
+            f"{op} requires {rule.contract}",
+            location,
+        ):
+            return UNKNOWN
+        if any(isinstance(kind, UnknownType) for kind in arg_types):
+            return UNKNOWN
+        known = [kind for kind in arg_types if not isinstance(kind, UnknownType)]
+        if any(not kind for kind in known):
+            return frozenset()
+        match rule.result:
+            case ValueType() as scalar:
+                return frozenset({scalar})
+            case "identity":
+                return known[0]
+            case "union":
+                return union_types(known)
+            case "arithmetic":
+                return _combine_arithmetic_types(known)
+            case "power":
+                return (
+                    frozenset({ValueType.integer, ValueType.real})
+                    if all(ValueType.integer in kind for kind in known)
+                    else frozenset({ValueType.real})
+                )
+        assert_never(rule.result)
 
 
 def _combine_arithmetic_types(

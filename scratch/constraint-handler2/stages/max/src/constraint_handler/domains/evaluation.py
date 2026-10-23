@@ -4,8 +4,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from ..diagnostics import Diagnostics
-from ..internal_input import ExprId
+from ..diagnostics import Diagnostics, ExpressionLocation
 from ..python_input import Operator
 from .values import Domain
 
@@ -46,4 +45,4 @@ class EvaluationContext:
     boolean_threshold: int
 
 
-type DomainHandler = Callable[[EvaluationContext, Operator, list[Domain], ExprId | None], Domain]
+type DomainHandler = Callable[[EvaluationContext, Operator, list[Domain], ExpressionLocation], Domain]

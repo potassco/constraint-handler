@@ -9,10 +9,13 @@ import pytest
 from constraint_handler import (
     LABEL_ANONYMOUS,
     Operator,
+    PreprocessOptions,
+    Preprocessor,
     Python,
     VariableRef,
     internal_input,
 )
+from constraint_handler.domains import Domain
 from constraint_handler.internal_input import ValueDef, ValueType
 
 from .converter import (
@@ -93,10 +96,10 @@ def test_convert_float_string_and_none_values() -> None:
     """
     store = convert_string(source)
     assert store._expressions[store.variables[VariableRef("f1")].definitions[0].value] == ValueDef(
-        ValueType.floating_point, 1.5
+        ValueType.real, 1.5
     )
     assert store._expressions[store.variables[VariableRef("f2")].definitions[0].value] == ValueDef(
-        ValueType.floating_point, 2.0
+        ValueType.real, 2.0
     )
     assert store._expressions[store.variables[VariableRef("st")].definitions[0].value] == ValueDef(
         ValueType.string, "hello"
@@ -269,6 +272,45 @@ def test_static_python_and_lambda_expressions() -> None:
     assert VariableRef("f") in lam_store.variables
     assert VariableRef("call_f") in lam_store.variables
     assert VariableRef("tup") in lam_store.variables
+
+
+@pytest.mark.parametrize(
+    ("fixture", "expected"),
+    [
+        ("python/static.lp", {"constant": 2, "abs_value": 3, "sum_value": 7}),
+        ("expression/python.lp", {"x": 2, "y": -1, "z": 1}),
+    ],
+)
+def test_preprocess_python_expressions(fixture: str, expected: dict[str, int]) -> None:
+    """Evaluate legacy Python values and function calls through preprocessing."""
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(convert_file(CORRECTNESS_DIR / fixture))
+    prepared, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.items
+    for name, value in expected.items():
+        assert prepared.domains[VariableRef(name)] == Domain(ints=frozenset({value}))
+
+
+@pytest.mark.parametrize(
+    ("expression", "operator", "domain"),
+    [
+        ('operation(float_div,(val(int,7),(val(int,2),())))', Operator.real_div, Domain(reals=frozenset({3.5}))),
+        ('operation(float_from_int,(val(int,2),()))', Operator.real_from_int, Domain(reals=frozenset({2.0}))),
+        ('operation(int_from_float,(val(float,float("2.5")),()))', Operator.int_from_real, Domain(ints=frozenset({2}))),
+    ],
+)
+def test_preprocess_renamed_operators(expression: str, operator: Operator, domain: Domain) -> None:
+    """Map legacy float operator names to the current real operators."""
+    store = convert_string(f"variable_define(result,{expression}).")
+    result = VariableRef("result")
+    definition = store.expressions[store.variables[result].definitions[0].value]
+    assert isinstance(definition, internal_input.Operation)
+    assert definition.op == operator
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    prepared, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.items
+    assert prepared.domains[result] == domain
 
 
 @pytest.mark.parametrize(

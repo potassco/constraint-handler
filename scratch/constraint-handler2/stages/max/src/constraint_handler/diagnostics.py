@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from enum import StrEnum, auto
 
-from .internal_input import ExprId, VariableRef
+from .internal_input import Expr, ExprId, VariableRef
 
 
 class DiagnosticSeverity(StrEnum):
@@ -14,13 +14,21 @@ class DiagnosticSeverity(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
+class ExpressionLocation:
+    """Pair a stored root ID with the relevant analysis-time expression node."""
+
+    root_id: ExprId
+    expression: Expr
+
+
+@dataclass(frozen=True, slots=True)
 class Diagnostic:
     """Record a single warning or error message and its optional location."""
 
     severity: DiagnosticSeverity
     message: str
     variable: VariableRef | None = None
-    expr_id: ExprId | None = None
+    location: ExpressionLocation | None = None
 
 
 @dataclass(slots=True)
@@ -34,20 +42,20 @@ class Diagnostics:
         message: str,
         *,
         variable: VariableRef | None = None,
-        expr_id: ExprId | None = None,
+        location: ExpressionLocation | None = None,
     ) -> None:
         """Append a warning diagnostic."""
-        self.items.append(Diagnostic(DiagnosticSeverity.warning, message, variable, expr_id))
+        self.items.append(Diagnostic(DiagnosticSeverity.warning, message, variable, location))
 
     def error(
         self,
         message: str,
         *,
         variable: VariableRef | None = None,
-        expr_id: ExprId | None = None,
+        location: ExpressionLocation | None = None,
     ) -> None:
         """Append an error diagnostic."""
-        self.items.append(Diagnostic(DiagnosticSeverity.error, message, variable, expr_id))
+        self.items.append(Diagnostic(DiagnosticSeverity.error, message, variable, location))
 
     @property
     def warnings(self) -> tuple[Diagnostic, ...]:

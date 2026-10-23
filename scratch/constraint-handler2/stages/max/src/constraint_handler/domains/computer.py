@@ -7,7 +7,8 @@ from collections.abc import Callable
 from itertools import product
 from typing import assert_never
 
-from ..diagnostics import Diagnostics
+from ..analysis import lambda_call, linear_integer_arguments
+from ..diagnostics import Diagnostics, ExpressionLocation
 from ..internal_input import (
     ConstraintStore,
     Expr,
@@ -40,7 +41,9 @@ from .values import (
     join_domains,
 )
 
-type ScopedDomainHandler = Callable[[tuple[OperationArg, ...], dict[VariableRef, Domain], ExprId | None], Domain]
+type ScopedDomainHandler = Callable[
+    [tuple[OperationArg, ...], dict[VariableRef, Domain], ExpressionLocation], Domain
+]
 
 
 class _DomainComputer:
@@ -60,7 +63,9 @@ class _DomainComputer:
         self._diagnostics = diagnostics
         self._threshold = threshold
         self._result = DomainStore()
-        self._operations = DomainOperationEvaluator(diagnostics, threshold, boolean_threshold)
+        self._operations = DomainOperationEvaluator(
+            diagnostics, threshold, boolean_threshold
+        )
 
         self._scoped_handlers: dict[Operator, ScopedDomainHandler] = {
             Operator.python_eval: self._visit_python_call,
@@ -99,9 +104,18 @@ class _DomainComputer:
         if var in self._store.set_variables:
             set_var = self._store.set_variables[var]
             elem_doms = [
-                *(self._result[self._store.expressions[b.value]] for b in set_var.bases),
-                *(self._result[self._store.expressions[a.value]] for a in set_var.assigns),
-                *(self._result[self._store.expressions[d.value]] for d in set_var.defaults),
+                *(
+                    self._result[self._store.expressions[b.value]]
+                    for b in set_var.bases
+                ),
+                *(
+                    self._result[self._store.expressions[a.value]]
+                    for a in set_var.assigns
+                ),
+                *(
+                    self._result[self._store.expressions[d.value]]
+                    for d in set_var.defaults
+                ),
             ]
             if any(d.unknown for d in elem_doms):
                 self._result[var] = UNKNOWN_DOMAIN
@@ -133,8 +147,14 @@ class _DomainComputer:
         variable = self._store.variables[var]
         def_doms = [
             *(self._result[self._store.expressions[c.value]] for c in variable.choices),
-            *(self._result[self._store.expressions[d.value]] for d in variable.definitions),
-            *(self._result[self._store.expressions[d.value]] for d in variable.defaults),
+            *(
+                self._result[self._store.expressions[d.value]]
+                for d in variable.definitions
+            ),
+            *(
+                self._result[self._store.expressions[d.value]]
+                for d in variable.defaults
+            ),
         ]
         self._result[var] = join_domains(def_doms, self._threshold)
         if self._result[var].unknown and has_value_collisions(
@@ -149,10 +169,10 @@ class _DomainComputer:
         self,
         expr: Expr,
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        root_id: ExprId,
     ) -> Domain:
         """Retain every visited subexpression's domain in its binding context."""
-        result = self._compute_expr(expr, env, expr_id)
+        result = self._compute_expr(expr, env, ExpressionLocation(root_id, expr))
         self._result.record(expr, result, scope=frozenset(env.items()))
         return result
 
@@ -160,7 +180,7 @@ class _DomainComputer:
         self,
         expr: Expr,
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Compute the sound Domain of an internal expression."""
         match expr:
@@ -184,33 +204,33 @@ class _DomainComputer:
                     return env[expr]
                 return self._result.get(expr, UNKNOWN_DOMAIN)
             case frozenset():
-                return self._visit_set_expr(tuple(expr), env, expr_id)
+                return self._visit_set_expr(tuple(expr), env, location)
             case tuple():
-                return self._visit_tuple_expr(expr, env, expr_id)
+                return self._visit_tuple_expr(expr, env, location)
             case Operation(op, args):
-                return self._visit_operation(op, args, env, expr_id)
+                return self._visit_operation(op, args, env, location)
         assert_never(expr)
 
     def _visit_set_expr(
         self,
         items: tuple[Expr, ...],
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Compute the domain of a set literal or set_make operation."""
-        item_doms = [self._visit_expr(item, env, expr_id) for item in items]
-        return self._operations.evaluate(Operator.set_make, item_doms, expr_id)
+        item_doms = [self._visit_expr(item, env, location.root_id) for item in items]
+        return self._operations.evaluate(Operator.set_make, item_doms, location)
 
     def _visit_tuple_expr(
         self,
         items: tuple[Expr, ...],
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Compute the domain of a tuple expression {(v1,...,vn) | vi in D(ei)}."""
         if not items:
             return Domain(tuples=frozenset({()}))
-        item_doms = [self._visit_expr(item, env, expr_id) for item in items]
+        item_doms = [self._visit_expr(item, env, location.root_id) for item in items]
         decision = bounded_product_decision(item_doms, self._threshold)
         if decision in (EnumerationDecision.UNKNOWN, EnumerationDecision.EXCESSIVE):
             return UNKNOWN_DOMAIN
@@ -221,7 +241,9 @@ class _DomainComputer:
             vals: list[SetValue] = []
             for v in d.iter_values():
                 if isinstance(v, frozenset):
-                    self._diagnostics.error("Sets inside tuples are not supported", expr_id=expr_id)
+                    self._diagnostics.error(
+                        "Sets inside tuples are not supported", location=location
+                    )
                     return UNKNOWN_DOMAIN
                 vals.append(v)
             value_lists.append(vals)
@@ -229,7 +251,7 @@ class _DomainComputer:
         if result.unknown:
             self._diagnostics.warn(
                 "Tuple alternatives contain values that Python sets cannot distinguish; returning unknown",
-                expr_id=expr_id,
+                location=location,
             )
         return result
 
@@ -237,70 +259,55 @@ class _DomainComputer:
         self,
         arg: OperationArg,
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Evaluate an OperationArg that is expected to be an expression."""
         if isinstance(arg, (Lambda, Python)):
             self._diagnostics.error(
                 f"{type(arg).__name__} is not a value and has no domain",
-                expr_id=expr_id,
+                location=location,
             )
             return UNKNOWN_DOMAIN
-        return self._visit_expr(arg, env, expr_id)
+        return self._visit_expr(arg, env, location.root_id)
 
     def _visit_operation(
         self,
         op: Operator,
         args: tuple[OperationArg, ...],
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Dispatch domain computation for an Operation."""
         handler = self._scoped_handlers.get(op)
         if handler is not None:
-            return handler(args, env, expr_id)
+            return handler(args, env, location)
 
-        doms = [self._visit_arg(arg, env, expr_id) for arg in args]
+        doms = [self._visit_arg(arg, env, location) for arg in args]
 
-        return self._operations.evaluate(op, doms, expr_id)
+        return self._operations.evaluate(op, doms, location)
 
     def _visit_linear_integer(
         self,
         args: tuple[OperationArg, ...],
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Compute domain for Operation(LinearInteger, [(c1, x1), ..., (cn, xn), c])."""
-        if not args:
-            self._diagnostics.error("linear_integer requires at least 1 argument", expr_id=expr_id)
+        validated = linear_integer_arguments(args, self._diagnostics, location)
+        if validated is None:
             return UNKNOWN_DOMAIN
         coeffs: list[int] = []
         term_doms: list[Domain] = []
         offset = 0
 
-        for idx, arg in enumerate(args):
-            if isinstance(arg, tuple) and len(arg) == 2:
+        for arg in validated:
+            if isinstance(arg, tuple):
                 coeff_expr, term_expr = arg
-                if not isinstance(coeff_expr, ValueDef) or coeff_expr.value_type != ValueType.integer:
-                    self._diagnostics.error(
-                        "linear_integer coefficient must be a constant integer literal",
-                        expr_id=expr_id,
-                    )
-                    return UNKNOWN_DOMAIN
-                self._visit_expr(coeff_expr, env, expr_id)
-                term_domain = self._visit_expr(term_expr, env, expr_id)
+                self._visit_expr(coeff_expr, env, location.root_id)
+                term_domain = self._visit_expr(term_expr, env, location.root_id)
                 scope = frozenset(env.items())
-                c_dom = self._result.lookup(coeff_expr, scope=scope)
-                if c_dom.unknown or c_dom.cardinality() != 1:
-                    self._diagnostics.error(
-                        "linear_integer coefficient must be a constant integer literal",
-                        expr_id=expr_id,
-                    )
-                    return UNKNOWN_DOMAIN
-                c_val = next(c_dom.iter_values())
-                if not isinstance(c_val, int) or isinstance(c_val, bool):
-                    self._diagnostics.error("linear_integer coefficient must be integer", expr_id=expr_id)
-                    return UNKNOWN_DOMAIN
+                c_val = coeff_expr.value
+                assert isinstance(c_val, int)
                 coeffs.append(c_val)
                 term_doms.append(term_domain)
                 count = term_domain.cardinality()
@@ -312,59 +319,29 @@ class _DomainComputer:
                     and term_domain.implicit_set_elements is None
                 ):
                     pair_domain = domain_from_values(
-                        (c_val, value) for value in term_domain.iter_values() if not isinstance(value, frozenset)
+                        (c_val, value)
+                        for value in term_domain.iter_values()
+                        if not isinstance(value, frozenset)
                     )
                 self._result.record(arg, pair_domain, scope=scope)
-            elif idx == len(args) - 1 and not isinstance(arg, (Lambda, Python, tuple)):
-                if not isinstance(arg, ValueDef) or arg.value_type != ValueType.integer:
-                    self._diagnostics.error(
-                        "linear_integer constant offset must be a constant integer literal",
-                        expr_id=expr_id,
-                    )
-                    return UNKNOWN_DOMAIN
-                off_dom = self._visit_expr(arg, env, expr_id)
-                if off_dom.unknown or off_dom.cardinality() != 1:
-                    self._diagnostics.error(
-                        "linear_integer constant offset must be a constant literal",
-                        expr_id=expr_id,
-                    )
-                    return UNKNOWN_DOMAIN
-                off_val = next(off_dom.iter_values())
-                if not isinstance(off_val, int) or isinstance(off_val, bool):
-                    self._diagnostics.error(
-                        "linear_integer constant offset must be integer",
-                        expr_id=expr_id,
-                    )
-                    return UNKNOWN_DOMAIN
-                offset = off_val
             else:
-                self._diagnostics.error(
-                    f"Invalid linear_integer argument at position {idx}",
-                    expr_id=expr_id,
-                )
-                return UNKNOWN_DOMAIN
+                self._visit_expr(arg, env, location.root_id)
+                assert isinstance(arg.value, int)
+                offset = arg.value
 
-        return self._operations.linear_integer(coeffs, term_doms, offset, expr_id)
+        return self._operations.linear_integer(coeffs, term_doms, offset, location)
 
     def _visit_lambda_call(
         self,
         args: tuple[OperationArg, ...],
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Compute domain for Operation(LambdaCall, [Lambda(vars, body), a1, ..., an])."""
-        if not args or not isinstance(args[0], Lambda):
-            self._diagnostics.error("lambda_ requires a Lambda as first argument", expr_id=expr_id)
+        lam = lambda_call(args, self._diagnostics, location)
+        if lam is None:
             return UNKNOWN_DOMAIN
-        lam = args[0]
-        call_args = args[1:]
-        if len(call_args) != len(lam.vars):
-            self._diagnostics.error(
-                f"Lambda expects {len(lam.vars)} arguments, got {len(call_args)}",
-                expr_id=expr_id,
-            )
-            return UNKNOWN_DOMAIN
-        arg_doms = [self._visit_arg(a, env, expr_id) for a in call_args]
+        arg_doms = [self._visit_arg(arg, env, location) for arg in args[1:]]
         decision = bounded_product_decision(arg_doms, self._threshold)
         if decision in (EnumerationDecision.UNKNOWN, EnumerationDecision.EXCESSIVE):
             return UNKNOWN_DOMAIN
@@ -375,23 +352,23 @@ class _DomainComputer:
             local_env = dict(env)
             for param, val in zip(lam.vars, combo, strict=True):
                 local_env[param] = domain_from_values((val,))
-            branch_doms.append(self._visit_expr(lam.expr, local_env, expr_id))
+            branch_doms.append(self._visit_expr(lam.expr, local_env, location.root_id))
         return join_domains(branch_doms, self._threshold)
 
     def _visit_python_call(
         self,
         args: tuple[OperationArg, ...],
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Compute domain for Operation(PythonEval, [Python(fn), ...])."""
         if not args or not isinstance(args[0], Python):
             self._diagnostics.error(
                 "python_eval requires a Python callable as first argument",
-                expr_id=expr_id,
+                location=location,
             )
             return UNKNOWN_DOMAIN
-        arg_domains = [self._visit_arg(arg, env, expr_id) for arg in args[1:]]
+        arg_domains = [self._visit_arg(arg, env, location) for arg in args[1:]]
         decision = bounded_product_decision(arg_domains, self._threshold)
         if decision in (EnumerationDecision.UNKNOWN, EnumerationDecision.EXCESSIVE):
             return UNKNOWN_DOMAIN
@@ -407,14 +384,18 @@ class _DomainComputer:
             for values in product(*(domain.iter_values() for domain in arg_domains)):
                 value = callback(*values)
                 if not is_domain_value(value):
-                    raise TypeError(f"unsupported Python result type: {type(value).__name__}")
+                    raise TypeError(
+                        f"unsupported Python result type: {type(value).__name__}"
+                    )
                 if not is_finite_value(value):
                     raise ValueError("non-finite real result")
                 results.append(value)
         except Exception as error:
             if isinstance(error, (MemoryError, RecursionError)):
                 raise
-            self._diagnostics.warn(f"python_eval domain evaluation failed: {error}", expr_id=expr_id)
+            self._diagnostics.warn(
+                f"python_eval domain evaluation failed: {error}", location=location
+            )
             return UNKNOWN_DOMAIN
         return join_domains((domain_from_values(results),), self._threshold)
 
@@ -422,42 +403,49 @@ class _DomainComputer:
         self,
         args: tuple[OperationArg, ...],
         env: dict[VariableRef, Domain],
-        expr_id: ExprId | None,
+        location: ExpressionLocation,
     ) -> Domain:
         """Fold in repr order, as specified, including for heterogeneous members."""
         if len(args) != 3:
             self._diagnostics.error(
                 f"set_fold expects 3 arguments, got {len(args)}",
-                expr_id=expr_id,
+                location=location,
             )
             return UNKNOWN_DOMAIN
         callback, set_arg, init_arg = args
-        ds = self._visit_arg(set_arg, env, expr_id)
-        dz = self._visit_arg(init_arg, env, expr_id)
+        ds = self._visit_arg(set_arg, env, location)
+        dz = self._visit_arg(init_arg, env, location)
         if not isinstance(callback, Lambda) or len(callback.vars) != 2:
             if isinstance(callback, Python):
                 self._diagnostics.warn(
                     "set_fold domain evaluation supports only Lambda callbacks; returning unknown",
-                    expr_id=expr_id,
+                    location=location,
                 )
             elif isinstance(callback, Lambda):
-                self._diagnostics.error("set_fold Lambda expects 2 parameters", expr_id=expr_id)
+                self._diagnostics.error(
+                    "set_fold Lambda expects 2 parameters", location=location
+                )
             else:
                 self._diagnostics.error(
                     "set_fold first argument must be a callable",
-                    expr_id=expr_id,
+                    location=location,
                 )
             return UNKNOWN_DOMAIN
         if ds.unknown or dz.unknown:
             return UNKNOWN_DOMAIN
         if ds.is_empty() or dz.is_empty():
             return EMPTY_DOMAIN
-        if bounded_product_decision((ds, dz), self._threshold) != EnumerationDecision.ENUMERABLE:
+        if (
+            bounded_product_decision((ds, dz), self._threshold)
+            != EnumerationDecision.ENUMERABLE
+        ):
             return UNKNOWN_DOMAIN
         results: list[Domain] = []
         sets = [s for s in ds.iter_values() if isinstance(s, frozenset)]
         if not sets:
-            self._diagnostics.error("set_fold requires a set argument", expr_id=expr_id)
+            self._diagnostics.error(
+                "set_fold requires a set argument", location=location
+            )
             return UNKNOWN_DOMAIN
         for s_val, z_val in product(sets, dz.iter_values()):
             acc_dom = domain_from_values((z_val,))
@@ -466,7 +454,7 @@ class _DomainComputer:
                 local_env = dict(env)
                 local_env[callback.vars[0]] = acc_dom
                 local_env[callback.vars[1]] = elem_dom
-                acc_dom = self._visit_expr(callback.expr, local_env, expr_id)
+                acc_dom = self._visit_expr(callback.expr, local_env, location.root_id)
                 if acc_dom.unknown:
                     return UNKNOWN_DOMAIN
             results.append(acc_dom)
@@ -482,4 +470,6 @@ def compute_domains(
     boolean_threshold: int = DEFAULT_BOOLEAN_THRESHOLD,
 ) -> DomainStore:
     """Compute a sound Domain for every variable and expression in the store."""
-    return _DomainComputer(store, order, diagnostics, threshold, boolean_threshold).run()
+    return _DomainComputer(
+        store, order, diagnostics, threshold, boolean_threshold
+    ).run()

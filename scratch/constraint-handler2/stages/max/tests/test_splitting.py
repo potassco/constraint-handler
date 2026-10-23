@@ -43,7 +43,9 @@ def _metadata(store: ConstraintStore) -> tuple[DomainStore, StaticTypeStore]:
 
 
 @pytest.mark.parametrize("profitable", [False, True])
-def test_splitting_does_not_recompute_metadata(monkeypatch: pytest.MonkeyPatch, profitable: bool) -> None:
+def test_splitting_does_not_recompute_metadata(
+    monkeypatch: pytest.MonkeyPatch, profitable: bool
+) -> None:
     """Preserve caller metadata without rerunning metadata or dependency analysis."""
     store = ConstraintStore()
     variable = VariableRef("x")
@@ -58,7 +60,9 @@ def test_splitting_does_not_recompute_metadata(monkeypatch: pytest.MonkeyPatch, 
     store.define(
         VariableRef("result"),
         (
-            Operation(Operator.add, (Operation(Operator.add, (variable, second)), third))
+            Operation(
+                Operator.add, (Operation(Operator.add, (variable, second)), third)
+            )
             if profitable
             else Operation(Operator.add, (Operation(Operator.abs, (variable,)), 1))
         ),
@@ -86,7 +90,9 @@ def test_splitting_does_not_recompute_metadata(monkeypatch: pytest.MonkeyPatch, 
     original_scoped_domains = dict(domains.scoped_expressions)
     original_scoped_types = dict(types.scoped_expressions)
     assert original_scoped_domains and original_scoped_types
-    monkeypatch.setattr("constraint_handler.util.compute_evaluation_order", unexpected_computation)
+    monkeypatch.setattr(
+        "constraint_handler.util.compute_evaluation_order", unexpected_computation
+    )
     split(store, domains, types, order, diagnostics)
     assert not diagnostics.has_errors
     assert tuple(diagnostics.items) == original_diagnostics
@@ -94,6 +100,37 @@ def test_splitting_does_not_recompute_metadata(monkeypatch: pytest.MonkeyPatch, 
     assert all(types[expr] is value for expr, value in original_types.items())
     assert original_scoped_domains.items() <= domains.scoped_expressions.items()
     assert original_scoped_types.items() <= types.scoped_expressions.items()
+
+
+def test_lambda_metadata_scopes_do_not_combine_independent_calls() -> None:
+    """Transfer shared constants once per lambda without combining sibling scopes."""
+    store = ConstraintStore()
+    variable = VariableRef("x")
+    store.choose_from_iterator(variable, (0, 1))
+    for index in range(12):
+        store.define(
+            VariableRef(f"result_{index}"),
+            Operation(Operator.sub, (Operation(Operator.abs, (variable,)), 0)),
+        )
+    parameter = VariableRef("u")
+    store.define(
+        VariableRef("scoped"),
+        Operation(Operator.lambda_, (Lambda((parameter,), 0), "text")),
+    )
+    domains, types = _metadata(store)
+    original_domains = set(domains.scoped_expressions)
+    original_types = set(types.scoped_expressions)
+    _split(store, domains, types)
+    zero = ValueDef(ValueType.integer, 0)
+    for metadata, original in ((domains, original_domains), (types, original_types)):
+        scopes = [
+            scope
+            for expr, scope in metadata.scoped_expressions.keys() - original
+            if expr == zero
+        ]
+        assert len(scopes) == 12
+        assert all(len(scope) == 1 for scope in scopes)
+        assert all(parameter not in dict(scope) for scope in scopes)
 
 
 def test_split_preserves_input_with_existing_errors() -> None:
@@ -130,7 +167,9 @@ def test_documented_subset_decisions(case: int, count: int) -> None:
     first, second, third, fourth = (VariableRef(name) for name in "abcd")
     variables = (first, second, third, fourth)
     for index, variable in enumerate(variables):
-        store.choose_from_iterator(variable, range(2 if case == 3 and index < 2 else 10))
+        store.choose_from_iterator(
+            variable, range(2 if case == 3 and index < 2 else 10)
+        )
     inner = Operation(Operator.add, (first, second))
     examples = (
         Operation(Operator.add, (inner, third)),
@@ -166,7 +205,9 @@ def test_documented_subset_decisions(case: int, count: int) -> None:
     assert not diagnostics.has_errors
     if case == 3:
         definition = store.variables[next(iter(auxiliaries))].definitions[0]
-        assert store.expressions[definition.value] == InternalOperation(Operator.add, (first, second))
+        assert store.expressions[definition.value] == InternalOperation(
+            Operator.add, (first, second)
+        )
     if case == 4:
         definition = store.variables[result].definitions[0]
         call = store.expressions[definition.value]
@@ -177,7 +218,8 @@ def test_documented_subset_decisions(case: int, count: int) -> None:
         assert call.args[1:] == (first, second)
         assert free_variables(callback) == frozenset()
         scope = frozenset(
-            (parameter, domains[arg]) for parameter, arg in zip(callback.vars, (first, second), strict=True)
+            (parameter, domains[arg])
+            for parameter, arg in zip(callback.vars, (first, second), strict=True)
         )
         assert domains.lookup(callback.expr, scope=scope) == domains[call]
     before = store.copy()
@@ -235,7 +277,10 @@ def test_expression_store_lookups_and_lambda_scopes() -> None:
     assert types[variable] == frozenset({ValueType.integer})
     text_domain = Domain(strings=frozenset({"text"}))
     text_type = frozenset({ValueType.string})
-    assert domains.lookup(variable, scope=frozenset({(variable, text_domain)})) == text_domain
+    assert (
+        domains.lookup(variable, scope=frozenset({(variable, text_domain)}))
+        == text_domain
+    )
     assert types.lookup(variable, scope=frozenset({(variable, text_type)})) == text_type
     root = store.variables[VariableRef("nested")].definitions[0].value
     expression = store.expressions[root]
@@ -313,7 +358,9 @@ def test_unknown_and_empty_domains_do_not_force_splits() -> None:
         first, second = VariableRef("a"), VariableRef("b")
         store.choose(first, 1)
         store.choose(second, 1)
-        store.ensure(Operation(Operator.add, (Operation(Operator.abs, (first,)), second)))
+        store.ensure(
+            Operation(Operator.add, (Operation(Operator.abs, (first,)), second))
+        )
         domains, types = _metadata(store)
         if empty:
             domains[second] = Domain()
@@ -419,7 +466,9 @@ def test_wide_expression_guard_and_negative_limit() -> None:
         (Operator.length, ("text",), 3),
     ],
 )
-def test_specialized_costs(operator: Operator, names: tuple[str, ...], expected: int) -> None:
+def test_specialized_costs(
+    operator: Operator, names: tuple[str, ...], expected: int
+) -> None:
     """Check exact encoding costs, including implicit sets and mixed kinds."""
     store = ConstraintStore()
     for name, count in (("x", 3), ("y", 5)):
@@ -430,7 +479,9 @@ def test_specialized_costs(operator: Operator, names: tuple[str, ...], expected:
         store.set_contain_choose_from_iterator(VariableRef(name), range(count))
     store.choose_from_iterator(VariableRef("text"), ("a", "bb", "ccc"))
     result = VariableRef("result")
-    store.define(result, Operation(operator, tuple(VariableRef(name) for name in names)))
+    store.define(
+        result, Operation(operator, tuple(VariableRef(name) for name in names))
+    )
     domains, types = _metadata(store)
     definition = store.variables[result].definitions[0]
     expression = store.expressions[definition.value]
@@ -450,7 +501,9 @@ def test_length_cost_uses_static_set_kind() -> None:
             expression: Domain(ints=frozenset(range(4))),
         }
     )
-    types = StaticTypeStore({variable: frozenset({SetOf(frozenset({ValueType.integer}), True)})})
+    types = StaticTypeStore(
+        {variable: frozenset({SetOf(frozenset({ValueType.integer}), True)})}
+    )
     costs = GroundingCost(domains, types)
     assert costs.trivial_cost(expression) == 7
     types[variable] = frozenset({ValueType.string})
@@ -471,7 +524,10 @@ def _proper_subset_problem(parameter_count: int) -> ConstraintStore:
             Operator.add,
             (
                 Operation(Operator.add, (first, second)),
-                *(Operation(Operator.abs, (third,)) for _ in range(parameter_count - 1)),
+                *(
+                    Operation(Operator.abs, (third,))
+                    for _ in range(parameter_count - 1)
+                ),
             ),
         ),
     )
@@ -495,7 +551,9 @@ def test_default_subset_limit_boundary(parameter_count: int, auxiliaries: int) -
 
 
 @pytest.mark.parametrize("limit, auxiliaries", [(1, 0), (2, 1)])
-def test_guard_rejects_unprofitable_all_parameter_split(limit: int, auxiliaries: int) -> None:
+def test_guard_rejects_unprofitable_all_parameter_split(
+    limit: int, auxiliaries: int
+) -> None:
     """A profitable proper subset is unavailable above the configured limit."""
     store = _proper_subset_problem(2)
     domains, types = _metadata(store)
@@ -526,11 +584,84 @@ def test_existing_lambda_arguments_are_split_and_converted(cardinality: int) -> 
     call = store.expressions[definition.value]
     assert isinstance(call, InternalOperation) and call.op == Operator.lambda_
     assert all(isinstance(arg, VariableRef) for arg in call.args[1:])
-    assert domains[VariableRef("result")] == Domain(ints=frozenset(range(1, cardinality + 1)))
+    assert domains[VariableRef("result")] == Domain(
+        ints=frozenset(range(1, cardinality + 1))
+    )
     assert set(store.variables) == {variable, VariableRef("result")}
     before = store.copy()
     _split(store, domains, types)
     assert store == before
+
+
+@pytest.mark.parametrize("captured_argument", [False, True])
+def test_lambda_cost_includes_captures_once(captured_argument: bool) -> None:
+    """Reject false savings caused by ignoring a callable's captured inputs."""
+    store = ConstraintStore()
+    captured, actual, parameter = (VariableRef(name) for name in ("x", "y", "u"))
+    for variable in (captured, actual):
+        store.choose_from_iterator(variable, range(10))
+    argument = captured if captured_argument else actual
+    result = VariableRef("result")
+    callback = Lambda((parameter,), Operation(Operator.add, (captured, parameter)))
+    store.define(
+        result,
+        Operation(Operator.lambda_, (callback, Operation(Operator.abs, (argument,)))),
+    )
+    domains, types = _metadata(store)
+    definition = store.variables[result].definitions[0]
+    expression = store.expressions[definition.value]
+    assert isinstance(expression, InternalOperation)
+    costs = GroundingCost(domains, types)
+    assert costs.trivial_cost(expression) == 100
+    direct = InternalOperation(Operator.lambda_, (expression.args[0], captured))
+    assert costs.trivial_cost(direct) == 10
+    _split(store, domains, types)
+    assert set(store.variables) == {captured, actual, result}
+
+
+def test_lambda_proper_subset_retains_captured_dependencies() -> None:
+    """Keep captures in the outer cost even when their nested argument is selected."""
+    store = ConstraintStore()
+    captured, actual, first, second = (
+        VariableRef(name) for name in ("x", "z", "u", "v")
+    )
+    store.choose_from_iterator(captured, range(-5, 5))
+    store.choose_from_iterator(actual, range(10))
+    callback = Lambda(
+        (first, second), Operation(Operator.add, (captured, first, second))
+    )
+    result = VariableRef("result")
+    store.define(
+        result,
+        Operation(
+            Operator.lambda_,
+            (
+                callback,
+                Operation(Operator.abs, (captured,)),
+                Operation(Operator.abs, (actual,)),
+            ),
+        ),
+    )
+    domains, types = _metadata(store)
+    _split(store, domains, types)
+    assert set(store.variables) == {captured, actual, result}
+
+
+def test_fold_cost_includes_captures() -> None:
+    """Include a fold callback's captured inputs in complete-value enumeration."""
+    captured, values, initial, accumulator, item = (
+        VariableRef(name) for name in ("x", "values", "initial", "acc", "item")
+    )
+    callback = InternalLambda((accumulator, item), captured)
+    expression = InternalOperation(Operator.set_fold, (callback, values, initial))
+    domains = DomainStore(
+        {
+            captured: Domain(ints=frozenset(range(10))),
+            values: Domain(implicit_set_elements=frozenset({0, 1})),
+            initial: Domain(ints=frozenset({0, 1, 2})),
+        }
+    )
+    assert GroundingCost(domains, StaticTypeStore()).trivial_cost(expression) == 120
 
 
 def test_existing_lambda_arguments_use_profitable_splits() -> None:
@@ -556,13 +687,17 @@ def test_existing_lambda_arguments_use_profitable_splits() -> None:
     assert store.expressions[definition.value] == InternalOperation(
         Operator.lambda_,
         (
-            InternalLambda((left, right), InternalOperation(Operator.add, (left, right))),
+            InternalLambda(
+                (left, right), InternalOperation(Operator.add, (left, right))
+            ),
             auxiliary,
             third,
         ),
     )
     auxiliary_definition = store.variables[auxiliary].definitions[0]
-    assert store.expressions[auxiliary_definition.value] == InternalOperation(Operator.add, (first, second))
+    assert store.expressions[auxiliary_definition.value] == InternalOperation(
+        Operator.add, (first, second)
+    )
 
 
 def test_collection_and_python_renaming() -> None:
@@ -570,7 +705,9 @@ def test_collection_and_python_renaming() -> None:
     store = ConstraintStore()
     variable = VariableRef("x")
     store.choose_from_iterator(variable, (1, 2))
-    store.define(VariableRef("set_result"), frozenset({Operation(Operator.abs, (variable,))}))
+    store.define(
+        VariableRef("set_result"), frozenset({Operation(Operator.abs, (variable,))})
+    )
     callback = Python("lambda value: value")
     store.define(
         VariableRef("python_result"),
@@ -590,7 +727,9 @@ def test_collection_and_python_renaming() -> None:
         assert free_variables(body) == frozenset()
         if name == "set_result":
             assert isinstance(body.expr, frozenset)
-            assert domains[call] == Domain(explicit_sets=frozenset({frozenset({1}), frozenset({2})}))
+            assert domains[call] == Domain(
+                explicit_sets=frozenset({frozenset({1}), frozenset({2})})
+            )
         else:
             assert isinstance(body.expr, InternalOperation)
             inner = body.expr.args[0]
@@ -647,6 +786,11 @@ def test_lambda_conversion_preserves_existing_scopes_and_captures() -> None:
             (shadowed, Domain(ints=frozenset({1}))),
         }
     )
-    assert domains.lookup(nested.expr, scope=domain_scope) == Domain(ints=frozenset(range(1, 11)))
-    type_scope = frozenset((parameter, frozenset({ValueType.integer})) for parameter in (outer.vars[0], shadowed))
+    assert domains.lookup(nested.expr, scope=domain_scope) == Domain(
+        ints=frozenset(range(1, 11))
+    )
+    type_scope = frozenset(
+        (parameter, frozenset({ValueType.integer}))
+        for parameter in (outer.vars[0], shadowed)
+    )
     assert types.lookup(nested.expr, scope=type_scope) == frozenset({ValueType.integer})

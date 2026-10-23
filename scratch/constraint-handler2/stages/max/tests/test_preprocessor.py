@@ -62,6 +62,31 @@ def test_preprocess_integer_division(left: float, right: float, quotient: int) -
     assert prepared.domains[result] == Domain(ints=frozenset({2 * quotient + 1}))
 
 
+@pytest.mark.parametrize("term_count", (1, 3))
+def test_preprocess_rejects_linear_integer_without_offset(term_count: int) -> None:
+    """Reject a missing constant offset before splitting can rewrite the last term."""
+    store = ConstraintStore()
+    variables = tuple(VariableRef(f"x{index}") for index in range(term_count))
+    for variable in variables:
+        store.choose_from_iterator(variable, range(10))
+    store.define(
+        VariableRef("result"),
+        Operation(
+            Operator.linear_integer,
+            tuple((1, Operation(Operator.abs, (variable,))) for variable in variables),
+        ),
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    prepared, diagnostics = preprocessor.preprocess()
+    assert diagnostics.has_errors
+    assert any(
+        error.message == "linear_integer constant offset must be a constant integer literal"
+        for error in diagnostics.errors
+    )
+    assert prepared.store == store
+
+
 def test_preprocessor_workflow() -> None:
     """Verify Preprocessor.add, snapshot isolation, and prepared metadata."""
     x = VariableRef("x")

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from itertools import product
 
-from ..internal_input import ExprId
+from ..diagnostics import ExpressionLocation
 from ..python_input import Operator
 from .evaluation import (
     DomainHandler,
@@ -46,7 +46,9 @@ def _checked_members(members: Iterable[SetValue]) -> frozenset[SetValue] | None:
     return frozenset(values)
 
 
-def _eval_set_domains(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_set_domains(
+    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+) -> Domain:
     """Construct sets from evaluated arguments without dropping invalid values."""
     if not doms:
         return Domain(explicit_sets=frozenset({frozenset()}))
@@ -61,7 +63,7 @@ def _eval_set_domains(context: EvaluationContext, op: Operator, doms: list[Domai
             vals: list[SetValue] = []
             for v in d.iter_values():
                 if isinstance(v, frozenset):
-                    context.diagnostics.error("Nested sets are not supported", expr_id=expr_id)
+                    context.diagnostics.error("Nested sets are not supported", location=location)
                     return UNKNOWN_DOMAIN
                 vals.append(v)
             value_lists.append(vals)
@@ -71,7 +73,7 @@ def _eval_set_domains(context: EvaluationContext, op: Operator, doms: list[Domai
             if members is None:
                 context.diagnostics.warn(
                     "set_make contains values that Python sets cannot distinguish",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             results.append(members)
@@ -88,13 +90,13 @@ def _eval_set_domains(context: EvaluationContext, op: Operator, doms: list[Domai
     if members is None:
         context.diagnostics.warn(
             "set_make contains values that Python sets cannot distinguish",
-            expr_id=expr_id,
+            location=location,
         )
         return UNKNOWN_DOMAIN
     return Domain(implicit_set_elements=members)
 
 
-def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
+def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
     """Compute domain for set operations."""
     if any(d.unknown for d in doms):
         if op in (Operator.set_isin, Operator.set_notin, Operator.subset):
@@ -108,7 +110,7 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
             if len(doms) != 1:
                 context.diagnostics.error(
                     f"cardinality expects 1 argument, got {len(doms)}",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             ds = doms[0]
@@ -118,7 +120,7 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
             if len(doms) != 2:
                 context.diagnostics.error(
                     f"{op} expects 2 arguments, got {len(doms)}",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             dx, ds = doms
@@ -137,7 +139,7 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
             if len(doms) != 2:
                 context.diagnostics.error(
                     f"{op} expects 2 arguments, got {len(doms)}",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             da, db = doms
@@ -151,7 +153,7 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
                         if members is None:
                             context.diagnostics.warn(
                                 "union contains values that Python sets cannot distinguish",
-                                expr_id=expr_id,
+                                location=location,
                             )
                             return UNKNOWN_DOMAIN
                         res_sets.append(members)
@@ -176,7 +178,7 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
                 ):
                     context.diagnostics.warn(
                         f"{op} member universe contains values that Python sets cannot distinguish",
-                        expr_id=expr_id,
+                        location=location,
                     )
                     return UNKNOWN_DOMAIN
             pa = da.potential_set_members()
@@ -186,7 +188,7 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
                 if members is None:
                     context.diagnostics.warn(
                         "union contains values that Python sets cannot distinguish",
-                        expr_id=expr_id,
+                        location=location,
                     )
                     return UNKNOWN_DOMAIN
                 return Domain(implicit_set_elements=members)
@@ -198,7 +200,7 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
             if len(doms) != 2:
                 context.diagnostics.error(
                     f"subset expects 2 arguments, got {len(doms)}",
-                    expr_id=expr_id,
+                    location=location,
                 )
                 return UNKNOWN_DOMAIN
             da, db = doms
