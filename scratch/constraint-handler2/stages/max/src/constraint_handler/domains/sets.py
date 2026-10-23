@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-import math
+from collections.abc import Iterable
 from itertools import product
 
 from ..internal_input import ExprId
 from ..python_input import Operator
-from .evaluation import DomainHandler, EvaluationContext
+from .evaluation import (
+    DomainHandler,
+    EnumerationDecision,
+    EvaluationContext,
+    bounded_product_decision,
+)
 from .values import (
     EMPTY_DOMAIN,
     TRUE_FALSE_DOMAIN,
@@ -16,48 +21,62 @@ from .values import (
     SetValue,
     domain_from_values,
     has_value_collisions,
-    union_domains,
+    join_domains,
     value_key,
 )
 
 
-def _eval_set_domains(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _member_keys(members: Iterable[SetValue]) -> frozenset[object]:
+    """Index set members using recursive language equality."""
+    return frozenset(value_key(member) for member in members)
+
+
+def _select_members(
+    members: Iterable[SetValue], keys: frozenset[object], *, exclude: bool = False
+) -> frozenset[SetValue]:
+    """Select intersection or difference members against a precomputed index."""
+    return frozenset(member for member in members if (value_key(member) in keys) != exclude)
+
+
+def _checked_members(members: Iterable[SetValue]) -> frozenset[SetValue] | None:
+    """Build a member set unless Python equality would collapse distinct values."""
+    values = tuple(members)
+    if has_value_collisions(values):
+        return None
+    return frozenset(values)
+
+
+def _eval_set_domains(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Construct sets from evaluated arguments without dropping invalid values."""
     if not doms:
         return Domain(explicit_sets=frozenset({frozenset()}))
-    if any(d.unknown for d in doms):
+    decision = bounded_product_decision(doms, context.threshold)
+    if decision == EnumerationDecision.UNKNOWN:
         return UNKNOWN_DOMAIN
-    if any(d.is_empty() for d in doms):
+    if decision == EnumerationDecision.EMPTY:
         return EMPTY_DOMAIN
-    counts = [d.cardinality() for d in doms]
-    if any(c is None for c in counts):  # pragma: no cover
-        return UNKNOWN_DOMAIN
-    int_counts = [c for c in counts if c is not None]
-    if math.prod(int_counts) <= context.threshold:
+    if decision == EnumerationDecision.ENUMERABLE:
         value_lists: list[list[SetValue]] = []
         for d in doms:
             vals: list[SetValue] = []
             for v in d.iter_values():
                 if isinstance(v, frozenset):
-                    context.diagnostics.error(
-                        "Nested sets are not supported", expr_id=expr_id
-                    )
+                    context.diagnostics.error("Nested sets are not supported", expr_id=expr_id)
                     return UNKNOWN_DOMAIN
                 vals.append(v)
             value_lists.append(vals)
         results: list[frozenset[SetValue]] = []
         for combo in product(*value_lists):
-            if has_value_collisions(combo):
+            members = _checked_members(combo)
+            if members is None:
                 context.diagnostics.warn(
                     "set_make contains values that Python sets cannot distinguish",
                     expr_id=expr_id,
                 )
                 return UNKNOWN_DOMAIN
-            results.append(frozenset(combo))
+            results.append(members)
         return domain_from_values(results)
-    merged = union_domains(doms, context.threshold)
+    merged = join_domains(doms, context.threshold)
     if merged.unknown or merged.int_range is not None:
         return UNKNOWN_DOMAIN
     all_scalars: list[SetValue] = []
@@ -65,18 +84,17 @@ def _eval_set_domains(
         if isinstance(v, frozenset):
             return UNKNOWN_DOMAIN
         all_scalars.append(v)
-    if has_value_collisions(all_scalars):
+    members = _checked_members(all_scalars)
+    if members is None:
         context.diagnostics.warn(
             "set_make contains values that Python sets cannot distinguish",
             expr_id=expr_id,
         )
         return UNKNOWN_DOMAIN
-    return Domain(implicit_set_elements=frozenset(all_scalars))
+    return Domain(implicit_set_elements=members)
 
 
-def _eval_set_ops(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for set operations."""
     if any(d.unknown for d in doms):
         if op in (Operator.set_isin, Operator.set_notin, Operator.subset):
@@ -94,10 +112,7 @@ def _eval_set_ops(
                 )
                 return UNKNOWN_DOMAIN
             ds = doms[0]
-            sizes = {len(s) for s in ds.explicit_sets}
-            if ds.implicit_set_elements is not None:
-                sizes.update(range(len(ds.implicit_set_elements) + 1))
-            return Domain(ints=frozenset(sizes))
+            return Domain(ints=ds.possible_set_sizes())
 
         case Operator.set_isin | Operator.set_notin:
             if len(doms) != 2:
@@ -107,17 +122,13 @@ def _eval_set_ops(
                 )
                 return UNKNOWN_DOMAIN
             dx, ds = doms
-            cx, cs = dx.cardinality(), ds.cardinality()
-            if (
-                cx is not None
-                and cs is not None
-                and cx * cs <= context.boolean_threshold
-            ):
+            if bounded_product_decision(doms, context.boolean_threshold) == EnumerationDecision.ENUMERABLE:
                 bools: set[bool] = set()
-                sets = [s for s in ds.iter_values() if isinstance(s, frozenset)]
+                sets = [_member_keys(s) for s in ds.iter_values() if isinstance(s, frozenset)]
                 scalars = [v for v in dx.iter_values() if not isinstance(v, frozenset)]
-                for val, s in product(scalars, sets):
-                    inside = any(value_key(val) == value_key(item) for item in s)
+                scalar_keys = [value_key(value) for value in scalars]
+                for key, keys in product(scalar_keys, sets):
+                    inside = key in keys
                     bools.add(inside if op == Operator.set_isin else not inside)
                 return Domain(bools=frozenset(bools))
             return TRUE_FALSE_DOMAIN
@@ -130,46 +141,38 @@ def _eval_set_ops(
                 )
                 return UNKNOWN_DOMAIN
             da, db = doms
-            ca, cb = da.cardinality(), db.cardinality()
-            if ca is not None and cb is not None and ca * cb <= context.threshold:
+            if bounded_product_decision(doms, context.threshold) == EnumerationDecision.ENUMERABLE:
                 sets_a = [s for s in da.iter_values() if isinstance(s, frozenset)]
                 sets_b = [s for s in db.iter_values() if isinstance(s, frozenset)]
+                res_sets: list[frozenset[SetValue]] = []
                 if op == Operator.union:
-                    if any(
-                        has_value_collisions((*sa, *sb))
-                        for sa, sb in product(sets_a, sets_b)
-                    ):
-                        context.diagnostics.warn(
-                            "union contains values that Python sets cannot distinguish",
-                            expr_id=expr_id,
-                        )
-                        return UNKNOWN_DOMAIN
-                    res_sets = [sa | sb for sa, sb in product(sets_a, sets_b)]
-                elif op == Operator.inter:
-                    res_sets = [
-                        frozenset(
-                            v for v in sa if value_key(v) in {value_key(w) for w in sb}
-                        )
-                        for sa, sb in product(sets_a, sets_b)
-                    ]
+                    for sa, sb in product(sets_a, sets_b):
+                        members = _checked_members((*sa, *sb))
+                        if members is None:
+                            context.diagnostics.warn(
+                                "union contains values that Python sets cannot distinguish",
+                                expr_id=expr_id,
+                            )
+                            return UNKNOWN_DOMAIN
+                        res_sets.append(members)
                 else:
+                    right_keys = [_member_keys(members) for members in sets_b]
                     res_sets = [
-                        frozenset(
-                            v
-                            for v in sa
-                            if value_key(v) not in {value_key(w) for w in sb}
-                        )
-                        for sa, sb in product(sets_a, sets_b)
+                        _select_members(sa, keys, exclude=op == Operator.diff)
+                        for sa, keys in product(sets_a, right_keys)
                     ]
                 return domain_from_values(res_sets)
             for domain in (da, db) if op != Operator.diff else (da,):
-                if has_value_collisions(
-                    value
-                    for members in (
-                        *domain.explicit_sets,
-                        domain.implicit_set_elements or frozenset(),
+                if (
+                    _checked_members(
+                        value
+                        for members in (
+                            *domain.explicit_sets,
+                            domain.implicit_set_elements or frozenset(),
+                        )
+                        for value in members
                     )
-                    for value in members
+                    is None
                 ):
                     context.diagnostics.warn(
                         f"{op} member universe contains values that Python sets cannot distinguish",
@@ -179,19 +182,16 @@ def _eval_set_ops(
             pa = da.potential_set_members()
             pb = db.potential_set_members()
             if op == Operator.union:
-                if has_value_collisions((*pa, *pb)):
+                members = _checked_members((*pa, *pb))
+                if members is None:
                     context.diagnostics.warn(
                         "union contains values that Python sets cannot distinguish",
                         expr_id=expr_id,
                     )
                     return UNKNOWN_DOMAIN
-                return Domain(implicit_set_elements=pa | pb)
+                return Domain(implicit_set_elements=members)
             if op == Operator.inter:
-                return Domain(
-                    implicit_set_elements=frozenset(
-                        v for v in pa if value_key(v) in {value_key(w) for w in pb}
-                    )
-                )
+                return Domain(implicit_set_elements=_select_members(pa, _member_keys(pb)))
             return Domain(implicit_set_elements=pa)
 
         case Operator.subset:
@@ -202,20 +202,10 @@ def _eval_set_ops(
                 )
                 return UNKNOWN_DOMAIN
             da, db = doms
-            ca, cb = da.cardinality(), db.cardinality()
-            if (
-                ca is not None
-                and cb is not None
-                and ca * cb <= context.boolean_threshold
-            ):
-                sets_a = [s for s in da.iter_values() if isinstance(s, frozenset)]
-                sets_b = [s for s in db.iter_values() if isinstance(s, frozenset)]
-                return Domain(
-                    bools=frozenset(
-                        {value_key(v) for v in sa} <= {value_key(v) for v in sb}
-                        for sa, sb in product(sets_a, sets_b)
-                    )
-                )
+            if bounded_product_decision(doms, context.boolean_threshold) == EnumerationDecision.ENUMERABLE:
+                sets_a = [_member_keys(s) for s in da.iter_values() if isinstance(s, frozenset)]
+                sets_b = [_member_keys(s) for s in db.iter_values() if isinstance(s, frozenset)]
+                return Domain(bools=frozenset(sa <= sb for sa, sb in product(sets_a, sets_b)))
             return TRUE_FALSE_DOMAIN
 
         case _:  # pragma: no cover

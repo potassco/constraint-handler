@@ -33,11 +33,10 @@ def _ordered_bounds(dom: Domain) -> tuple[float | int, float | int] | None:
     if dom.bools:
         mins.append(int(min(dom.bools)))
         maxs.append(int(max(dom.bools)))
-    min_i = dom.min_int()
-    max_i = dom.max_int()
-    if min_i is not None and max_i is not None:
-        mins.append(min_i)
-        maxs.append(max_i)
+    bounds = dom.integer_bounds()
+    if bounds is not None:
+        mins.append(bounds[0])
+        maxs.append(bounds[1])
     if dom.reals:
         mins.append(min(dom.reals))
         maxs.append(max(dom.reals))
@@ -46,14 +45,10 @@ def _ordered_bounds(dom: Domain) -> tuple[float | int, float | int] | None:
     return (min(mins), max(maxs))
 
 
-def _eval_equality(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_equality(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for eq and neq."""
     if len(doms) != 2:
-        context.diagnostics.error(
-            f"{op} expects 2 arguments, got {len(doms)}", expr_id=expr_id
-        )
+        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", expr_id=expr_id)
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -73,14 +68,10 @@ def _eval_equality(
     return Domain(bools=frozenset(bools))
 
 
-def _eval_comparison(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_comparison(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for leq, lt, geq, gt."""
     if len(doms) != 2:
-        context.diagnostics.error(
-            f"{op} expects 2 arguments, got {len(doms)}", expr_id=expr_id
-        )
+        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", expr_id=expr_id)
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:

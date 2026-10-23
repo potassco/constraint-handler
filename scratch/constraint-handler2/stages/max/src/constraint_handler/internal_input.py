@@ -68,10 +68,7 @@ class Operation:
     def __str__(self) -> str:
         """Format operation in infix or prefix call form."""
         if self.op in self._INFIX_OPERATORS and len(self.args) == 2:
-            left, right = (
-                f"({arg})" if isinstance(arg, Operation) else str(arg)
-                for arg in self.args
-            )
+            left, right = (f"({arg})" if isinstance(arg, Operation) else str(arg) for arg in self.args)
             return f"{left} {self._INFIX_OPERATORS[self.op]} {right}"
         return f"{self.op}({', '.join(str(arg) for arg in self.args)})"
 
@@ -122,9 +119,7 @@ class Variable:
     """Collect labeled choices, definitions, and defaults for a variable."""
 
     choices: list[VariableChoice] = field(default_factory=list[VariableChoice])
-    definitions: list[VariableDefinition] = field(
-        default_factory=list[VariableDefinition]
-    )
+    definitions: list[VariableDefinition] = field(default_factory=list[VariableDefinition])
     defaults: list[VariableDefault] = field(default_factory=list[VariableDefault])
 
 
@@ -185,16 +180,10 @@ def _convert_argument(arg: python_input.OperationArg) -> OperationArg:
 class ConstraintStore:
     """Retain caller input as typed expressions referenced by local IDs."""
 
-    variables: dict[VariableRef, Variable] = field(
-        default_factory=dict[VariableRef, Variable], init=False
-    )
-    set_variables: dict[VariableRef, SetVariable] = field(
-        default_factory=dict[VariableRef, SetVariable], init=False
-    )
+    variables: dict[VariableRef, Variable] = field(default_factory=dict[VariableRef, Variable], init=False)
+    set_variables: dict[VariableRef, SetVariable] = field(default_factory=dict[VariableRef, SetVariable], init=False)
     constraints: list[Constraint] = field(default_factory=list[Constraint], init=False)
-    _expressions: dict[ExprId, Expr] = field(
-        default_factory=dict[ExprId, Expr], init=False
-    )
+    _expressions: dict[ExprId, Expr] = field(default_factory=dict[ExprId, Expr], init=False)
 
     @property
     def expressions(self) -> Mapping[ExprId, Expr]:
@@ -242,10 +231,7 @@ class ConstraintStore:
         """Extend the variable's labeled choices, each guarded by the condition."""
         variable = self.variables.setdefault(name, Variable())
         condition_id = self._store_expression(condition)
-        variable.choices.extend(
-            VariableChoice(self._store_expression(expr), condition_id, label)
-            for expr in choices
-        )
+        variable.choices.extend(VariableChoice(self._store_expression(expr), condition_id, label) for expr in choices)
 
     def define(
         self,
@@ -304,10 +290,7 @@ class ConstraintStore:
         """Extend the set variable's candidate elements, each guarded by the condition."""
         variable = self.set_variables.setdefault(name, SetVariable())
         condition_id = self._store_expression(condition)
-        variable.bases.extend(
-            VariableChoice(self._store_expression(expr), condition_id, label)
-            for expr in choices
-        )
+        variable.bases.extend(VariableChoice(self._store_expression(expr), condition_id, label) for expr in choices)
 
     def set_contain(
         self,
@@ -378,38 +361,27 @@ class ConstraintStore:
         for var, variable in other.variables.items():
             target = self.variables.setdefault(var, Variable())
             target.choices.extend(
-                VariableChoice(id_map[c.value], id_map[c.condition], c.label)
-                for c in variable.choices
+                VariableChoice(id_map[c.value], id_map[c.condition], c.label) for c in variable.choices
             )
             target.definitions.extend(
-                VariableDefinition(id_map[d.value], id_map[d.condition], d.label)
-                for d in variable.definitions
+                VariableDefinition(id_map[d.value], id_map[d.condition], d.label) for d in variable.definitions
             )
             target.defaults.extend(
-                VariableDefault(
-                    id_map[d.value], id_map[d.condition], d.priority, d.label
-                )
-                for d in variable.defaults
+                VariableDefault(id_map[d.value], id_map[d.condition], d.priority, d.label) for d in variable.defaults
             )
         for var, set_variable in other.set_variables.items():
             target_set = self.set_variables.setdefault(var, SetVariable())
             target_set.bases.extend(
-                VariableChoice(id_map[b.value], id_map[b.condition], b.label)
-                for b in set_variable.bases
+                VariableChoice(id_map[b.value], id_map[b.condition], b.label) for b in set_variable.bases
             )
             target_set.assigns.extend(
-                VariableDefinition(id_map[a.value], id_map[a.condition], a.label)
-                for a in set_variable.assigns
+                VariableDefinition(id_map[a.value], id_map[a.condition], a.label) for a in set_variable.assigns
             )
             target_set.defaults.extend(
-                VariableDefault(
-                    id_map[d.value], id_map[d.condition], d.priority, d.label
-                )
+                VariableDefault(id_map[d.value], id_map[d.condition], d.priority, d.label)
                 for d in set_variable.defaults
             )
-        self.constraints.extend(
-            Constraint(id_map[c.expr], c.is_check, c.label) for c in other.constraints
-        )
+        self.constraints.extend(Constraint(id_map[c.expr], c.is_check, c.label) for c in other.constraints)
 
     def __str__(self) -> str:
         """Group entries by category, one indented block per category."""
@@ -419,33 +391,19 @@ class ConstraintStore:
                 text += f"  {name.name}:\n"
             for choice in variable.choices:
                 condition = self._expressions[choice.condition]
-                guard = (
-                    ""
-                    if condition == ValueDef(ValueType.boolean, True)
-                    else f" if {condition}"
-                )
+                guard = "" if condition == ValueDef(ValueType.boolean, True) else f" if {condition}"
                 text += f"    {{ {self._expressions[choice.value]} }}{guard}\n"
         text += "\nVariable defines:\n"
         for name, variable in self.variables.items():
             for definition in variable.definitions:
                 condition = self._expressions[definition.condition]
-                guard = (
-                    ""
-                    if condition == ValueDef(ValueType.boolean, True)
-                    else f" if {condition}"
-                )
-                text += (
-                    f"  {name.name} = {self._expressions[definition.value]}{guard}\n"
-                )
+                guard = "" if condition == ValueDef(ValueType.boolean, True) else f" if {condition}"
+                text += f"  {name.name} = {self._expressions[definition.value]}{guard}\n"
         text += "\nVariable defaults:\n"
         for name, variable in self.variables.items():
             for default in variable.defaults:
                 condition = self._expressions[default.condition]
-                guard = (
-                    ""
-                    if condition == ValueDef(ValueType.boolean, True)
-                    else f" if {condition}"
-                )
+                guard = "" if condition == ValueDef(ValueType.boolean, True) else f" if {condition}"
                 text += f"  {name.name} = {self._expressions[default.value]}{guard} (priority {default.priority})\n"
         text += "\nSet variable bases:\n"
         for name, set_variable in self.set_variables.items():
@@ -453,35 +411,21 @@ class ConstraintStore:
                 text += f"  {name.name}:\n"
             for base in set_variable.bases:
                 condition = self._expressions[base.condition]
-                guard = (
-                    ""
-                    if condition == ValueDef(ValueType.boolean, True)
-                    else f" if {condition}"
-                )
+                guard = "" if condition == ValueDef(ValueType.boolean, True) else f" if {condition}"
                 text += f"    {{ {self._expressions[base.value]} }}{guard}\n"
         text += "\nSet variable assigns:\n"
         for name, set_variable in self.set_variables.items():
             for assign in set_variable.assigns:
                 condition = self._expressions[assign.condition]
-                guard = (
-                    ""
-                    if condition == ValueDef(ValueType.boolean, True)
-                    else f" if {condition}"
-                )
+                guard = "" if condition == ValueDef(ValueType.boolean, True) else f" if {condition}"
                 text += f"  {name.name}: {self._expressions[assign.value]}{guard}\n"
         text += "\nSet variable defaults:\n"
         for name, set_variable in self.set_variables.items():
             for default in set_variable.defaults:
                 condition = self._expressions[default.condition]
-                guard = (
-                    ""
-                    if condition == ValueDef(ValueType.boolean, True)
-                    else f" if {condition}"
-                )
+                guard = "" if condition == ValueDef(ValueType.boolean, True) else f" if {condition}"
                 text += f"  {name.name}: {self._expressions[default.value]}{guard} (priority {default.priority})\n"
         text += "\nConstraints:\n"
         for c in self.constraints:
-            text += (
-                f"  {'check' if c.is_check else 'ensure'} {self._expressions[c.expr]}\n"
-            )
+            text += f"  {'check' if c.is_check else 'ensure'} {self._expressions[c.expr]}\n"
         return text.rstrip()

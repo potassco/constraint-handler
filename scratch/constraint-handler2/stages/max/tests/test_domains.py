@@ -2,7 +2,7 @@
 
 import math
 from collections.abc import Iterator
-from itertools import product
+from itertools import combinations, product
 from typing import Literal
 from unittest.mock import patch
 
@@ -30,15 +30,25 @@ from constraint_handler.domains import (
     compute_domains,
     conversions,
     domain_from_values,
+    join_domains,
     logic,
     sets,
-    union_domains,
 )
-from constraint_handler.domains.arithmetic import MAX_POWER_BITS, numeric_combinations
+from constraint_handler.domains.arithmetic import (
+    MAX_POWER_BITS,
+    NumericProduct,
+    numeric_combinations,
+)
+from constraint_handler.domains.evaluation import (
+    EnumerationDecision,
+    bounded_product_decision,
+)
 from constraint_handler.domains.operations import (
     DOMAIN_HANDLERS,
     DomainOperationEvaluator,
 )
+from constraint_handler.domains.values import SetValue
+from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueType
 from constraint_handler.python_input import Expr
 from constraint_handler.static_types import SetOf, compute_static_types
@@ -64,10 +74,261 @@ def _domains_for(
     )
 
 
-@pytest.mark.parametrize("op", (Operator.lxor, Operator.leqv))
 @pytest.mark.parametrize(
-    "operands", ((), (True, True, True), (False,), (False, False), (True, False))
+    ("domains", "threshold", "expected"),
+    (
+        ((), 0, EnumerationDecision.EXCESSIVE),
+        ((), 1, EnumerationDecision.ENUMERABLE),
+        ((EMPTY_DOMAIN,), 0, EnumerationDecision.EMPTY),
+        ((EMPTY_DOMAIN, UNKNOWN_DOMAIN), 0, EnumerationDecision.UNKNOWN),
+        ((UNKNOWN_DOMAIN, EMPTY_DOMAIN), 0, EnumerationDecision.UNKNOWN),
+        ((Domain(int_range=(0, 10**100)),), 10, EnumerationDecision.EXCESSIVE),
+        (
+            (Domain(int_range=(0, 10**100)), EMPTY_DOMAIN),
+            0,
+            EnumerationDecision.EMPTY,
+        ),
+        (
+            (EMPTY_DOMAIN, Domain(int_range=(0, 10**100))),
+            0,
+            EnumerationDecision.EMPTY,
+        ),
+        (
+            (Domain(ints=frozenset({0}), strings=frozenset({"a"})),) * 2,
+            3,
+            EnumerationDecision.EXCESSIVE,
+        ),
+        (
+            (Domain(ints=frozenset({0}), strings=frozenset({"a"})),) * 2,
+            4,
+            EnumerationDecision.ENUMERABLE,
+        ),
+        (
+            (Domain(ints=frozenset({0, 1}), int_range=(0, 1)),),
+            2,
+            EnumerationDecision.ENUMERABLE,
+        ),
+        (
+            (Domain(implicit_set_elements=frozenset({1, 2})),),
+            3,
+            EnumerationDecision.EXCESSIVE,
+        ),
+        (
+            (Domain(implicit_set_elements=frozenset({1, 2})),),
+            4,
+            EnumerationDecision.ENUMERABLE,
+        ),
+    ),
 )
+def test_bounded_whole_domain_product(
+    domains: tuple[Domain, ...], threshold: int, expected: EnumerationDecision
+) -> None:
+    """Decide full products without enumeration or confusing numeric projections."""
+    with patch.object(Domain, "iter_values", side_effect=AssertionError("unexpected enumeration")):
+        assert bounded_product_decision(domains, threshold) == expected
+
+
+@pytest.mark.parametrize("kind", ("tuple", "lambda", "python", "set"))
+@pytest.mark.parametrize("threshold", (0, 3, 4))
+def test_construction_product_thresholds(kind: str, threshold: int) -> None:
+    """Share inclusive product limits while retaining the set approximation fallback."""
+    store = ConstraintStore()
+    left, right, result = map(VariableRef, ("left", "right", "result"))
+    store.choose_from_iterator(left, ("a", "b"))
+    store.choose_from_iterator(right, ("x", "y"))
+    expression: Expr = (left, right)
+    if kind == "lambda":
+        expression = Operation(Operator.lambda_, (Lambda((left, right), (left, right)), left, right))
+    elif kind == "python":
+        expression = Operation(
+            Operator.python_eval,
+            (Python("lambda left, right: (left, right)"), left, right),
+        )
+    elif kind == "set":
+        expression = Operation(Operator.set_make, (left, right))
+    store.define(result, expression)
+    if threshold < 4:
+        expected = Domain(implicit_set_elements=frozenset({"a", "b", "x", "y"})) if kind == "set" else UNKNOWN_DOMAIN
+    else:
+        expected = domain_from_values(
+            frozenset(pair) if kind == "set" else pair for pair in product(("a", "b"), ("x", "y"))
+        )
+    assert _domains_for(store, threshold=threshold, boolean_threshold=0)[result] == expected
+
+
+@pytest.mark.parametrize("kind", ("tuple", "lambda", "python", "set"))
+@pytest.mark.parametrize("threshold", (0, 1))
+def test_nullary_construction_product(kind: str, threshold: int) -> None:
+    """Keep one nullary combination and the tuple/set threshold exemptions."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    expression: Expr = ()
+    expected = Domain(tuples=frozenset({()}))
+    if kind == "set":
+        expression = Operation(Operator.set_make, ())
+        expected = Domain(explicit_sets=frozenset({frozenset()}))
+    elif kind in ("lambda", "python"):
+        expression = (
+            Operation(Operator.lambda_, (Lambda((), "value"),))
+            if kind == "lambda"
+            else Operation(Operator.python_eval, (Python("lambda: 'value'"),))
+        )
+        expected = Domain(strings=frozenset({"value"})) if threshold else UNKNOWN_DOMAIN
+    store.define(result, expression)
+    assert _domains_for(store, threshold=threshold)[result] == expected
+
+
+@pytest.mark.parametrize("kind", ("tuple", "lambda", "python", "set"))
+@pytest.mark.parametrize("mode", ("empty", "unknown", "excessive"))
+@pytest.mark.parametrize("reverse", (False, True))
+def test_construction_skips_unaffordable_axes(kind: str, mode: str, reverse: bool) -> None:
+    """Skip huge axes for rejected products, with unknown preceding empty."""
+    store = ConstraintStore()
+    wide, empty, missing, result = map(VariableRef, ("wide", "empty", "missing", "result"))
+    store.choose_from_iterator(wide, (0, 10**100))
+    store.choose_from_iterator(empty, ())
+    arguments = (wide, empty)
+    if mode == "unknown":
+        store.define(missing, Operation(Operator.python_eval, (Python("1"),)))
+        arguments = (*arguments, missing)
+    elif mode == "excessive":
+        arguments = (wide,)
+    if reverse:
+        arguments = arguments[::-1]
+    expression: Expr = arguments
+    if kind == "lambda":
+        expression = Operation(Operator.lambda_, (Lambda(arguments, "value"), *arguments))
+    elif kind == "python":
+        expression = Operation(Operator.python_eval, (Python("lambda *values: 'value'"), *arguments))
+    elif kind == "set":
+        expression = Operation(Operator.set_make, arguments)
+    store.define(result, expression)
+    with patch.object(Domain, "iter_values", side_effect=AssertionError("unexpected enumeration")):
+        domains = _domains_for(store, threshold=1)
+    assert domains[wide].int_range == (0, 10**100)
+    assert domains[result] == (EMPTY_DOMAIN if mode == "empty" else UNKNOWN_DOMAIN)
+
+
+@pytest.mark.parametrize("boolean_threshold", (0, 2))
+@pytest.mark.parametrize("op", (Operator.set_isin, Operator.set_notin, Operator.subset))
+def test_set_product_uses_boolean_threshold(op: Operator, boolean_threshold: int) -> None:
+    """Keep predicate enumeration independent of the ordinary product limit."""
+    left = Domain(ints=frozenset({1, 2}))
+    right = Domain(explicit_sets=frozenset({frozenset({1, 2})}))
+    if op == Operator.subset:
+        left = Domain(explicit_sets=frozenset({frozenset({1}), frozenset({2})}))
+    evaluator = DomainOperationEvaluator(Diagnostics(), 0, boolean_threshold)
+    expected = TRUE_FALSE_DOMAIN if boolean_threshold == 0 else Domain(bools=frozenset({op != Operator.set_notin}))
+    assert evaluator.evaluate(op, [left, right], None) == expected
+
+
+@pytest.mark.parametrize(
+    "domain",
+    (
+        EMPTY_DOMAIN,
+        Domain(ints=frozenset({0})),
+        Domain(int_range=(0, 0)),
+        Domain(int_range=(-5, -2)),
+        Domain(int_range=(2, 5)),
+        Domain(int_range=(-5, 0)),
+        Domain(int_range=(0, 5)),
+        Domain(int_range=(-1, 1)),
+        Domain(ints=frozenset({-4, 0, 7})),
+        Domain(ints=frozenset({-2, 0}), int_range=(4, 7)),
+        Domain(ints=frozenset({-7, 0, 2, 9}), int_range=(-3, 4)),
+        domain_from_values((False, True, 0.0, 1.0, "text", None)),
+    ),
+)
+def test_integer_domain_helpers(domain: Domain) -> None:
+    """Match integer membership, bounds, and nonzero magnitude to exact values."""
+    integers = set(domain.iter_ints())
+    assert set(domain.restrict_integers(None, None).iter_ints()) == integers
+    assert domain.integer_bounds() == ((min(integers), max(integers)) if integers else None)
+    nonzero = [abs(value) for value in integers if value]
+    assert domain.min_nonzero_abs_int() == (min(nonzero) if nonzero else None)
+    for value in range(-8, 11):
+        assert domain.contains_int(value) == (value in integers)
+    assert not domain.contains_int(False)
+    assert not domain.contains_int(True)
+
+
+@pytest.mark.parametrize(
+    ("low", "high"),
+    ((None, None), (0, None), (None, -1), (0, 0), (-2, 2), (6, 8), (3, -3)),
+)
+def test_restrict_integers_projection(low: int | None, high: int | None) -> None:
+    """Clip overlapping integers inclusively while dropping non-integer values."""
+    domain = Domain(
+        ints=frozenset({-7, -2, 0, 2, 9}),
+        int_range=(-3, 4),
+        bools=frozenset({True}),
+        reals=frozenset({0.5}),
+        has_none=True,
+        strings=frozenset({"text"}),
+        tuples=frozenset({(1,)}),
+        explicit_sets=frozenset({frozenset({1})}),
+        implicit_set_elements=frozenset({2}),
+    )
+    restricted = domain.restrict_integers(low, high)
+    expected = {
+        value for value in domain.iter_ints() if (low is None or low <= value) and (high is None or value <= high)
+    }
+    assert set(restricted.iter_ints()) == expected
+    assert restricted.int_count() == len(expected)
+    assert restricted == Domain(ints=frozenset(domain.ints & expected), int_range=restricted.int_range)
+    assert EMPTY_DOMAIN.restrict_integers(low, high) == EMPTY_DOMAIN
+
+
+@pytest.mark.parametrize(
+    ("threshold", "expected"),
+    (
+        (0, UNKNOWN_DOMAIN),
+        (1, Domain(int_range=(-1, 1), reals=frozenset({1.0}))),
+        (4, Domain(int_range=(-1, 1), reals=frozenset({1.0}))),
+        (5, Domain(ints=frozenset({1}), reals=frozenset({1.0}))),
+    ),
+)
+def test_power_overlapping_integer_sign_partitions(threshold: int, expected: Domain) -> None:
+    """Count overlapping exponent values once across sign and threshold boundaries."""
+    exponents = Domain(ints=frozenset({-1, 0, 2}), int_range=(-1, 3))
+    evaluator = DomainOperationEvaluator(Diagnostics(), threshold, 10)
+    assert evaluator.evaluate(Operator.pow, [Domain(ints=frozenset({1})), exponents], None) == expected
+
+
+def test_integer_helpers_do_not_enumerate_huge_ranges() -> None:
+    """Inspect and restrict huge intervals without iterating any integers."""
+    bound = 10**100
+    domain = Domain(ints=frozenset({-bound - 1, 0, bound + 1}), int_range=(-bound, bound))
+    with patch.object(Domain, "iter_ints", side_effect=AssertionError("unexpected enumeration")):
+        assert domain.contains_int(0)
+        assert domain.contains_int(bound + 1)
+        assert not domain.contains_int(bound + 2)
+        assert domain.integer_bounds() == (-bound - 1, bound + 1)
+        assert domain.min_nonzero_abs_int() == 1
+        nonnegative = domain.restrict_integers(0, None)
+        negative = domain.restrict_integers(None, -1)
+        assert nonnegative == Domain(ints=frozenset({0, bound + 1}), int_range=(0, bound))
+        assert nonnegative.int_count() == bound + 2
+        assert negative == Domain(ints=frozenset({-bound - 1}), int_range=(-bound, -1))
+        assert negative.int_count() == bound + 1
+        assert domain.restrict_integers(0, 0).min_nonzero_abs_int() is None
+    original_iter_ints = Domain.iter_ints
+
+    def singleton_iter_ints(domain: Domain) -> Iterator[int]:
+        """Allow the singleton power pair but reject enumeration of huge ranges."""
+        assert domain.int_count() <= 1
+        return original_iter_ints(domain)
+
+    exponents = Domain(ints=frozenset({-1, 0}), int_range=(0, bound))
+    with patch.object(Domain, "iter_ints", singleton_iter_ints):
+        evaluator = DomainOperationEvaluator(Diagnostics(), 1, 10)
+        assert evaluator.evaluate(Operator.pow, [Domain(ints=frozenset({1})), exponents], None) == Domain(
+            int_range=(-1, 1), reals=frozenset({1.0})
+        )
+
+
+@pytest.mark.parametrize("op", (Operator.lxor, Operator.leqv))
+@pytest.mark.parametrize("operands", ((), (True, True, True), (False,), (False, False), (True, False)))
 @pytest.mark.parametrize("boolean_threshold", (0, 1, DEFAULT_BOOLEAN_THRESHOLD))
 def test_logic_parity_is_threshold_independent(
     op: Operator, operands: tuple[bool, ...], boolean_threshold: int
@@ -84,13 +345,7 @@ def test_logic_parity_is_threshold_independent(
     ):
         domains = _domains_for(store, boolean_threshold=boolean_threshold)
     assert domains[result] == Domain(
-        bools=frozenset(
-            {
-                sum(operands) % 2 == 1
-                if op == Operator.lxor
-                else operands.count(False) % 2 == 0
-            }
-        )
+        bools=frozenset({sum(operands) % 2 == 1 if op == Operator.lxor else operands.count(False) % 2 == 0})
     )
 
 
@@ -150,6 +405,61 @@ def test_integer_division_large_interval(bound: int) -> None:
     assert _domains_for(store, threshold=1)[result] == Domain(int_range=(-bound, bound))
 
 
+@pytest.mark.parametrize("op", (Operator.int_div, Operator.mod, Operator.real_div))
+@pytest.mark.parametrize("reverse", (False, True))
+def test_division_empty_product_does_not_enumerate(op: Operator, reverse: bool) -> None:
+    """Return empty without materializing an interval on the other product axis."""
+    operands = [Domain(int_range=(0, 10**12)), EMPTY_DOMAIN]
+    if reverse:
+        operands.reverse()
+    with patch.object(Domain, "iter_ints", side_effect=AssertionError("unexpected enumeration")):
+        evaluator = DomainOperationEvaluator(Diagnostics(), 10, 10)
+        assert evaluator.evaluate(op, operands, None) == EMPTY_DOMAIN
+
+
+def test_integer_division_mixed_domains_and_zero() -> None:
+    """Merge mixed numeric quotients as integers and diagnose zero divisors."""
+    diagnostics = Diagnostics()
+    evaluator = DomainOperationEvaluator(diagnostics, 4, 10)
+    result = evaluator.evaluate(
+        Operator.int_div,
+        [domain_from_values((2, 3.5)), domain_from_values((0, 2.0))],
+        None,
+    )
+    assert result == Domain(ints=frozenset({1}))
+    assert len(diagnostics.warnings) == 1
+
+
+def test_integer_division_overflow_discards_partial_results() -> None:
+    """Return unknown rather than partial integers after non-finite division."""
+    diagnostics = Diagnostics()
+    evaluator = DomainOperationEvaluator(diagnostics, 10, 10)
+    result = evaluator.evaluate(
+        Operator.int_div,
+        [domain_from_values((1.0, 1e308)), domain_from_values((0.5,))],
+        None,
+    )
+    assert result == UNKNOWN_DOMAIN
+    assert len(diagnostics.warnings) == 1
+
+
+@pytest.mark.parametrize(
+    ("base", "expected"),
+    (
+        (Domain(int_range=(0, 10**12)), Domain(ints=frozenset({1}))),
+        (Domain(reals=frozenset({2.5})), Domain(reals=frozenset({1.0}))),
+        (
+            Domain(ints=frozenset({2}), reals=frozenset({2.5})),
+            Domain(ints=frozenset({1}), reals=frozenset({1.0})),
+        ),
+    ),
+)
+def test_zero_power_preserves_numeric_type(base: Domain, expected: Domain) -> None:
+    """Preserve integer and real results in the zero-power shortcut."""
+    evaluator = DomainOperationEvaluator(Diagnostics(), 0, 10)
+    assert evaluator.evaluate(Operator.pow, [base, Domain(ints=frozenset({0}))], None) == expected
+
+
 @pytest.mark.parametrize("threshold", (1, DEFAULT_THRESHOLD))
 def test_set_boolean_numeric_collisions(threshold: int) -> None:
     """Never infer a smaller set after Python collapses Boolean/numeric members."""
@@ -159,15 +469,11 @@ def test_set_boolean_numeric_collisions(threshold: int) -> None:
     store.choose_from_iterator(source, (True, 1))
     store.define(result, Operation(Operator.set_make, (source, 1)))
     diagnostics = Diagnostics()
-    assert _domains_for(store, threshold=threshold, diagnostics=diagnostics)[
-        result
-    ].unknown
+    assert _domains_for(store, threshold=threshold, diagnostics=diagnostics)[result].unknown
     assert any("cannot distinguish" in item.message for item in diagnostics.items)
 
 
-@pytest.mark.parametrize(
-    "op", (Operator.set_isin, Operator.subset, Operator.inter, Operator.diff)
-)
+@pytest.mark.parametrize("op", (Operator.set_isin, Operator.subset, Operator.inter, Operator.diff))
 def test_set_operations_distinguish_booleans(op: Operator) -> None:
     """Use language equality rather than Python equality for set operations."""
     store = ConstraintStore()
@@ -177,21 +483,239 @@ def test_set_operations_distinguish_booleans(op: Operator) -> None:
     expected = (
         Domain(bools=frozenset({False}))
         if op in (Operator.set_isin, Operator.subset)
-        else Domain(
-            explicit_sets=frozenset(
-                {frozenset() if op == Operator.inter else frozenset({True})}
-            )
-        )
+        else Domain(explicit_sets=frozenset({frozenset() if op == Operator.inter else frozenset({True})}))
     )
     assert _domains_for(store)[result] == expected
+
+
+@pytest.mark.parametrize("implicit", (False, True))
+@pytest.mark.parametrize("threshold", (0, DEFAULT_THRESHOLD))
+@pytest.mark.parametrize("op", (Operator.union, Operator.inter, Operator.diff))
+def test_compound_set_operations(implicit: bool, threshold: int, op: Operator) -> None:
+    """Preserve compound typed equality in exact and implicit-universe paths."""
+    left: frozenset[SetValue] = frozenset({((True,),), ((2,),), "left"})
+    right: frozenset[SetValue] = frozenset({((1,),), ((2.0,),), "right"})
+    operands = [
+        Domain(implicit_set_elements=members) if implicit else Domain(explicit_sets=frozenset({members}))
+        for members in (left, right)
+    ]
+    diagnostics = Diagnostics()
+    result = DomainOperationEvaluator(diagnostics, threshold, 100).evaluate(op, operands, None)
+    if op == Operator.union:
+        assert result == UNKNOWN_DOMAIN
+        assert len(diagnostics.warnings) == 1
+        assert "cannot distinguish" in diagnostics.warnings[0].message
+        return
+    members = frozenset({((2,),)}) if op == Operator.inter else left
+    if threshold and not implicit and op == Operator.diff:
+        members = left - frozenset({((2,),)})
+    if not threshold:
+        expected = Domain(implicit_set_elements=members)
+    elif implicit:
+        expected = domain_from_values(
+            frozenset(combo) for size in range(len(members) + 1) for combo in combinations(members, size)
+        )
+    else:
+        expected = Domain(explicit_sets=frozenset({members}))
+    assert result == expected
+    assert not diagnostics.items
+
+
+@pytest.mark.parametrize("op", (Operator.set_isin, Operator.set_notin, Operator.subset))
+@pytest.mark.parametrize("value, inside", ((((True,),), False), (((1.0,),), True)))
+def test_compound_set_predicates(op: Operator, value: SetValue, inside: bool) -> None:
+    """Use recursive Boolean distinction and numeric equality in set predicates."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    left = frozenset({value}) if op == Operator.subset else value
+    store.define(result, Operation(op, (left, frozenset({((1,),)}))))
+    expected = not inside if op == Operator.set_notin else inside
+    assert _domains_for(store)[result] == Domain(bools=frozenset({expected}))
+
+
+@pytest.mark.parametrize("op", (Operator.inter, Operator.diff))
+def test_set_selection_indexes_right_members_once(op: Operator) -> None:
+    """Build one right-side typed index across multiple left set alternatives."""
+    left = domain_from_values((frozenset({1, 2}), frozenset({2, 3})))
+    right = domain_from_values((frozenset({2, 4, 5}),))
+    evaluator = DomainOperationEvaluator(Diagnostics(), 100, 10)
+    with patch.object(sets, "value_key", wraps=sets.value_key) as key:
+        result = evaluator.evaluate(op, [left, right], None)
+    assert key.call_count == 7
+    expected = (frozenset({2}),) if op == Operator.inter else (frozenset({1}), frozenset({3}))
+    assert result == domain_from_values(expected)
+
+
+@pytest.mark.parametrize("op", (Operator.union, Operator.inter, Operator.diff))
+@pytest.mark.parametrize("reverse", (False, True))
+def test_compound_set_fallback_universe_collisions(op: Operator, reverse: bool) -> None:
+    """Check raw fallback members before Python can merge Boolean tuple values."""
+    colliding = Domain(
+        explicit_sets=frozenset({frozenset({((True,),)})}),
+        implicit_set_elements=frozenset({((1,),)}),
+    )
+    plain = domain_from_values((frozenset({((2,),)}),))
+    operands = [plain, colliding] if reverse else [colliding, plain]
+    diagnostics = Diagnostics()
+    result = DomainOperationEvaluator(diagnostics, 0, 10).evaluate(op, operands, None)
+    if op == Operator.diff and reverse:
+        assert result == Domain(implicit_set_elements=frozenset({((2,),)}))
+        assert not diagnostics.items
+    else:
+        assert result == UNKNOWN_DOMAIN
+        assert len(diagnostics.warnings) == 1
+        assert "member universe" in diagnostics.warnings[0].message
+
+
+@pytest.mark.parametrize("threshold", (0, DEFAULT_THRESHOLD))
+def test_compound_numeric_union(threshold: int) -> None:
+    """Accept numerically equal tuple members without reporting a collision."""
+    operands = [
+        domain_from_values((frozenset({((1,),)}),)),
+        domain_from_values((frozenset({((1.0,),), "extra"}),)),
+    ]
+    diagnostics = Diagnostics()
+    result = DomainOperationEvaluator(diagnostics, threshold, 10).evaluate(Operator.union, operands, None)
+    members: frozenset[SetValue] = frozenset({((1,),), "extra"})
+    expected = Domain(explicit_sets=frozenset({members})) if threshold else Domain(implicit_set_elements=members)
+    assert result == expected
+    assert not diagnostics.items
 
 
 def test_compound_domain_collisions() -> None:
     """Preserve soundness when alternative tuples collide in Python collections."""
     assert domain_from_values(((True,), (1,))).unknown
-    assert union_domains(
-        (domain_from_values(((True,),)), domain_from_values(((1,),)))
-    ).unknown
+    assert join_domains((domain_from_values(((True,),)), domain_from_values(((1,),)))).unknown
+
+
+@pytest.mark.parametrize(
+    ("boolean", "integer", "real"),
+    (
+        (
+            Domain(tuples=frozenset({((True,),)})),
+            Domain(tuples=frozenset({((1,),)})),
+            Domain(tuples=frozenset({((1.0,),)})),
+        ),
+        (
+            Domain(explicit_sets=frozenset({frozenset({(True,)})})),
+            Domain(explicit_sets=frozenset({frozenset({(1,)})})),
+            Domain(explicit_sets=frozenset({frozenset({(1.0,)})})),
+        ),
+        (
+            Domain(implicit_set_elements=frozenset({(True,)})),
+            Domain(implicit_set_elements=frozenset({(1,)})),
+            Domain(implicit_set_elements=frozenset({(1.0,)})),
+        ),
+    ),
+)
+def test_compound_domain_identity(boolean: Domain, integer: Domain, real: Domain) -> None:
+    """Distinguish Boolean compounds in scope keys while retaining numeric equality."""
+    assert boolean != integer
+    assert integer == real
+    assert hash(integer) == hash(real)
+    assert len({boolean, integer, real}) == 2
+    parameter = VariableRef("parameter")
+    domains = DomainStore()
+    for domain in (boolean, integer):
+        domains.scoped_expressions[parameter, frozenset({(parameter, domain)})] = domain
+    for domain in (boolean, integer, real):
+        assert domains.lookup(parameter, scope=frozenset({(parameter, domain)})) == domain
+    assert Domain().__eq__(object()) is NotImplemented
+
+
+def test_domain_store_record() -> None:
+    """Route default, empty, and typed binding scopes exactly as lookup does."""
+    expression = VariableRef("expression")
+    parameter = VariableRef("parameter")
+    domains = DomainStore()
+    unscoped = domain_from_values((3,))
+    domains.record(expression, unscoped)
+    assert domains.lookup(expression) == unscoped
+    replacement = domain_from_values((4,))
+    domains.record(expression, replacement, scope=frozenset())
+    assert domains.lookup(expression) == replacement
+    for value in ((True,), (1,)):
+        domain = domain_from_values((value,))
+        scope = frozenset({(parameter, domain)})
+        domains.record(expression, domain, scope=scope)
+        assert domains.lookup(expression, scope=scope) == domain
+    assert len(domains.scoped_expressions) == 2
+    assert domains.lookup(expression) == replacement
+    updated = domain_from_values((5,))
+    scope = frozenset({(parameter, domain_from_values(((True,),)))})
+    domains.record(expression, updated, scope=scope)
+    assert domains.lookup(expression, scope=scope) == updated
+    assert len(domains.scoped_expressions) == 2
+
+
+def test_lambda_compound_binding_scopes() -> None:
+    """Keep shared lambda body metadata separate for Boolean and numeric tuples."""
+    store = ConstraintStore()
+    parameter = VariableRef("parameter")
+    callback = Lambda((parameter,), Operation(Operator.tuple_get, (parameter, 0)))
+    first, second = VariableRef("first"), VariableRef("second")
+    store.define(first, Operation(Operator.lambda_, (callback, (True,))))
+    store.define(second, Operation(Operator.lambda_, (callback, (1,))))
+    domains = _domains_for(store)
+    assert domains[first] == Domain(bools=frozenset({True}))
+    assert domains[second] == Domain(ints=frozenset({1}))
+    body = next(
+        expr
+        for expr, _scope in domains.scoped_expressions
+        if isinstance(expr, InternalOperation) and expr.op == Operator.tuple_get
+    )
+    for value, expected in ((True, domains[first]), (1, domains[second])):
+        scope = frozenset({(parameter, domain_from_values(((value,),)))})
+        assert domains.lookup(body, scope=scope) == expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        1e12,
+        math.pi / 2 + 1e-13,
+        math.nextafter(math.pi / 2, math.inf),
+        math.nextafter(math.pi / 2, -math.inf),
+    ),
+)
+def test_tangent_defined_values(value: float) -> None:
+    """Keep defined tangent values even beside represented poles or at large inputs."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    store.define(result, Operation(Operator.tan, (value,)))
+    diagnostics = Diagnostics()
+    assert _domains_for(store, diagnostics=diagnostics)[result] == Domain(reals=frozenset({math.tan(value)}))
+    assert not diagnostics.warnings
+
+
+@pytest.mark.parametrize("value", (math.pi / 2, -math.pi / 2, 3 * math.pi / 2))
+def test_tangent_represented_poles(value: float) -> None:
+    """Exclude exact represented half-pi poles with a diagnostic."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    store.define(result, Operation(Operator.tan, (value,)))
+    diagnostics = Diagnostics()
+    assert _domains_for(store, diagnostics=diagnostics)[result] == EMPTY_DOMAIN
+    assert len(diagnostics.warnings) == 1
+
+
+def test_multiplication_preserves_integer_prefix() -> None:
+    """Match math.prod rounding when integer factors precede a real factor."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    arguments = (2**53 + 1, 3, 0.5)
+    store.define(result, Operation(Operator.mult, arguments))
+    assert _domains_for(store)[result] == Domain(reals=frozenset({math.prod(arguments)}))
+
+
+def test_multiplication_overflow_is_unknown() -> None:
+    """Diagnose an integer prefix that cannot be converted to a real product."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    store.define(result, Operation(Operator.mult, (10**400, 0.5)))
+    diagnostics = Diagnostics()
+    assert _domains_for(store, diagnostics=diagnostics)[result].unknown
+    assert diagnostics.warnings
 
 
 @pytest.mark.parametrize(
@@ -224,15 +748,14 @@ def test_numeric_failures_are_diagnosed(op: Operator, value: float) -> None:
         (Operator.min, ("a", "b")),
         (Operator.max, ("a", "b")),
         (Operator.length, (1,)),
+        (Operator.length, (None,)),
         (Operator.concat, (1, "a")),
         (Operator.concat, (None, "a")),
         (Operator.lxor, (1, True)),
         (Operator.leqv, ("a", False)),
     ),
 )
-def test_unsupported_domain_inputs_are_diagnosed(
-    op: Operator, arguments: tuple[Expr, ...]
-) -> None:
+def test_unsupported_domain_inputs_are_diagnosed(op: Operator, arguments: tuple[Expr, ...]) -> None:
     """Reject string extrema and explain operators with no supported input values."""
     store = ConstraintStore()
     result = VariableRef("result")
@@ -285,7 +808,7 @@ def test_implicit_and_explicit_sets_use_typed_equality() -> None:
     )
     assert domain.cardinality() == 3
     assert len(list(domain.iter_values())) == 3
-    assert union_domains((domain,)) == domain
+    assert join_domains((domain,)) == domain
 
 
 def test_linear_set_term_reports_integer_error_only() -> None:
@@ -312,17 +835,13 @@ def test_undefined_variable_is_diagnosed() -> None:
 
 @pytest.mark.parametrize("op", (Operator.min, Operator.max))
 @pytest.mark.parametrize("threshold", (0, DEFAULT_THRESHOLD))
-def test_string_extrema_are_empty_at_any_threshold(
-    op: Operator, threshold: int
-) -> None:
+def test_string_extrema_are_empty_at_any_threshold(op: Operator, threshold: int) -> None:
     """Unsupported string extrema stay empty even when enumeration is disabled."""
     store = ConstraintStore()
     result = VariableRef("result")
     store.define(result, Operation(op, ("a", "b")))
     diagnostics = Diagnostics()
-    assert _domains_for(store, threshold=threshold, diagnostics=diagnostics)[
-        result
-    ].is_empty()
+    assert _domains_for(store, threshold=threshold, diagnostics=diagnostics)[result].is_empty()
     assert diagnostics.has_errors
 
 
@@ -333,10 +852,75 @@ def test_union_collision_is_diagnosed_once(threshold: int) -> None:
     result = VariableRef("result")
     store.define(result, Operation(Operator.union, (frozenset({True}), frozenset({1}))))
     diagnostics = Diagnostics()
-    assert _domains_for(store, threshold=threshold, diagnostics=diagnostics)[
-        result
-    ].unknown
+    assert _domains_for(store, threshold=threshold, diagnostics=diagnostics)[result].unknown
     assert len(diagnostics.warnings) == 1
+
+
+@pytest.mark.parametrize("operator", (Operator.floor, Operator.ceil, Operator.int_from_real))
+@pytest.mark.parametrize("threshold", (3, 20))
+def test_integer_conversion_range_overlap(operator: Operator, threshold: int) -> None:
+    """Preserve overlapping integers and normalize mapped reals at the threshold."""
+    source = Domain(
+        ints=frozenset({-2, 0, 5}),
+        int_range=(-2, 2),
+        reals=frozenset({-3.5, 1.5}),
+    )
+    mapped = {
+        Operator.floor: (-4, 1),
+        Operator.ceil: (-3, 2),
+        Operator.int_from_real: (-3, 1),
+    }[operator]
+    expected = join_domains(
+        (Domain(ints=source.ints | frozenset(mapped)), Domain(int_range=(-2, 2))),
+        threshold,
+    )
+    diagnostics = Diagnostics()
+    evaluator = DomainOperationEvaluator(diagnostics, threshold, DEFAULT_BOOLEAN_THRESHOLD)
+    assert evaluator.evaluate(operator, [source], None) == expected
+    assert not diagnostics.errors
+
+
+@pytest.mark.parametrize("operator", (Operator.floor, Operator.ceil, Operator.int_from_real))
+def test_integer_conversion_huge_range(operator: Operator) -> None:
+    """Map real values while preserving huge intervals without enumerating them."""
+    source = Domain(int_range=(-(10**100), 10**100), reals=frozenset({0.5}))
+    evaluator = DomainOperationEvaluator(Diagnostics(), 3, DEFAULT_BOOLEAN_THRESHOLD)
+    with patch.object(Domain, "iter_ints", side_effect=AssertionError("enumeration")):
+        assert evaluator.evaluate(operator, [source], None) == Domain(int_range=source.int_range)
+
+
+@pytest.mark.parametrize(
+    "source",
+    (
+        EMPTY_DOMAIN,
+        Domain(explicit_sets=frozenset({frozenset(), frozenset({1, 2})})),
+        Domain(implicit_set_elements=frozenset()),
+        Domain(implicit_set_elements=frozenset(range(40))),
+        Domain(
+            explicit_sets=frozenset({frozenset({1}), frozenset(range(5))}),
+            implicit_set_elements=frozenset({1, 2}),
+        ),
+    ),
+)
+def test_collection_length_cardinality_equivalence(source: Domain) -> None:
+    """Share set sizes without enumerating powersets and retain other lengths."""
+    evaluator = DomainOperationEvaluator(Diagnostics(), 3, DEFAULT_BOOLEAN_THRESHOLD)
+    sizes = {len(value) for value in source.explicit_sets}
+    if source.implicit_set_elements is not None:
+        sizes.update(range(len(source.implicit_set_elements) + 1))
+    expected = Domain(ints=frozenset(sizes))
+    mixed = Domain(
+        strings=frozenset({"abcdef"}),
+        tuples=frozenset({(1, 2, 3, 4, 5, 6, 7)}),
+        explicit_sets=source.explicit_sets,
+        implicit_set_elements=source.implicit_set_elements,
+    )
+    with patch.object(Domain, "iter_values", side_effect=AssertionError("enumeration")):
+        assert source.possible_set_sizes() == expected.ints
+        assert evaluator.evaluate(Operator.length, [source], None) == expected
+        assert evaluator.evaluate(Operator.cardinality, [source], None) == expected
+        assert evaluator.evaluate(Operator.length, [mixed], None) == Domain(ints=expected.ints | {6, 7})
+        assert evaluator.evaluate(Operator.cardinality, [mixed], None) == expected
 
 
 def test_numeric_conversion_domains() -> None:
@@ -348,9 +932,7 @@ def test_numeric_conversion_domains() -> None:
     store.define(VariableRef("to_real"), Operation(Operator.real_from_int, (source,)))
     domains = _domains_for(store)
     assert domains[VariableRef("to_int")] == Domain(ints=frozenset({-2, -1, 2, 3}))
-    assert domains[VariableRef("to_real")] == Domain(
-        reals=frozenset({-2.0, 3.0, -1.5, 2.5})
-    )
+    assert domains[VariableRef("to_real")] == Domain(reals=frozenset({-2.0, 3.0, -1.5, 2.5}))
     domains = _domains_for(store, threshold=2)
     assert domains[VariableRef("to_int")] == Domain(int_range=(-2, 3))
     assert domains[VariableRef("to_real")] == UNKNOWN_DOMAIN
@@ -432,7 +1014,17 @@ def test_python_eval_domains(source: str, expected: Domain) -> None:
 
 
 @pytest.mark.parametrize(
-    "source", ("lambda value: 1 / 0", "lambda value: [value]", "1", "invalid syntax!")
+    "source",
+    (
+        "lambda value: 1 / 0",
+        "lambda value: [value]",
+        "1",
+        "invalid syntax!",
+        "lambda value: float('inf')",
+        "lambda value: float('nan')",
+        "lambda value: (float('inf'),)",
+        "lambda value: frozenset({(float('nan'),)})",
+    ),
 )
 def test_python_eval_failures(source: str) -> None:
     """Keep failed, non-callable, and unsupported Python evaluations sound."""
@@ -443,11 +1035,41 @@ def test_python_eval_failures(source: str) -> None:
     assert _domains_for(store, diagnostics=diagnostics)[result] == UNKNOWN_DOMAIN
     assert len(diagnostics.warnings) == 1
     diagnostics = Diagnostics()
-    assert (
-        _domains_for(store, threshold=0, diagnostics=diagnostics)[result]
-        == UNKNOWN_DOMAIN
-    )
+    assert _domains_for(store, threshold=0, diagnostics=diagnostics)[result] == UNKNOWN_DOMAIN
     assert not diagnostics.warnings
+
+
+@pytest.mark.parametrize(
+    "value",
+    (math.inf, math.nan, (math.inf,), frozenset({(math.nan,)})),
+)
+def test_python_eval_nonfinite_inputs(value: Expr) -> None:
+    """Reject non-finite inputs before evaluating Python source or callbacks."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    store.define(result, Operation(Operator.python_eval, (Python("1 / 0"), value)))
+    diagnostics = Diagnostics()
+    assert _domains_for(store, diagnostics=diagnostics)[result] == UNKNOWN_DOMAIN
+    assert len(diagnostics.warnings) == 1
+    assert "non-finite real" in diagnostics.warnings[0].message
+
+
+def test_python_eval_nonfinite_discards_partial_results() -> None:
+    """Discard successful callback results when another result is non-finite."""
+    store = ConstraintStore()
+    argument, result = VariableRef("argument"), VariableRef("result")
+    store.choose_from_iterator(argument, (1, 2))
+    store.define(
+        result,
+        Operation(
+            Operator.python_eval,
+            (Python("lambda value: value if value == 1 else float('inf')"), argument),
+        ),
+    )
+    diagnostics = Diagnostics()
+    assert _domains_for(store, diagnostics=diagnostics)[result] == UNKNOWN_DOMAIN
+    assert len(diagnostics.warnings) == 1
+    assert "non-finite real result" in diagnostics.warnings[0].message
 
 
 def test_python_eval_empty_and_nullary() -> None:
@@ -459,9 +1081,7 @@ def test_python_eval_empty_and_nullary() -> None:
         VariableRef("empty"),
         Operation(Operator.python_eval, (Python("lambda value: 1 / 0"), argument)),
     )
-    store.define(
-        VariableRef("nullary"), Operation(Operator.python_eval, (Python("lambda: 42"),))
-    )
+    store.define(VariableRef("nullary"), Operation(Operator.python_eval, (Python("lambda: 42"),)))
     diagnostics = Diagnostics()
     domains = _domains_for(store, diagnostics=diagnostics)
     assert domains[VariableRef("empty")] == EMPTY_DOMAIN
@@ -475,9 +1095,7 @@ def test_python_eval_resource_failures(error_type: type[Exception]) -> None:
     """Do not hide interpreter resource failures as ordinary callback failures."""
     store = ConstraintStore()
     source = f"lambda: (_ for _ in ()).throw({error_type.__name__}())"
-    store.define(
-        VariableRef("result"), Operation(Operator.python_eval, (Python(source),))
-    )
+    store.define(VariableRef("result"), Operation(Operator.python_eval, (Python(source),)))
     with pytest.raises(error_type):
         _domains_for(store)
 
@@ -490,9 +1108,7 @@ def test_python_eval_resource_failures(error_type: type[Exception]) -> None:
         (Operator.diff, frozenset({1, 2})),
     ),
 )
-def test_set_operation_fallback_universes(
-    operator: Operator, members: frozenset[int]
-) -> None:
+def test_set_operation_fallback_universes(operator: Operator, members: frozenset[int]) -> None:
     """Approximate large set products using the tight potential-member universe."""
     store = ConstraintStore()
     left = VariableRef("left")
@@ -501,9 +1117,7 @@ def test_set_operation_fallback_universes(
     store.choose_from_iterator(left, (frozenset({1, 2}), frozenset({2})))
     store.choose_from_iterator(right, (frozenset({2, 3}), frozenset({3})))
     store.define(result, Operation(operator, (left, right)))
-    assert _domains_for(store, threshold=2)[result] == Domain(
-        implicit_set_elements=members
-    )
+    assert _domains_for(store, threshold=2)[result] == Domain(implicit_set_elements=members)
 
 
 def test_set_fold_uses_specified_repr_order() -> None:
@@ -519,9 +1133,7 @@ def test_set_fold_uses_specified_repr_order() -> None:
         ),
     )
     result = VariableRef("result")
-    store.define(
-        result, Operation(Operator.set_fold, (callback, frozenset({2, 10}), 0))
-    )
+    store.define(result, Operation(Operator.set_fold, (callback, frozenset({2, 10}), 0)))
     assert _domains_for(store)[result] == Domain(ints=frozenset({1002}))
 
 
@@ -530,18 +1142,14 @@ def test_set_fold_domains_and_fallbacks() -> None:
     store = ConstraintStore()
     accumulator = VariableRef("accumulator")
     element = VariableRef("element")
-    callback = Lambda(
-        (accumulator, element), Operation(Operator.add, (accumulator, element))
-    )
+    callback = Lambda((accumulator, element), Operation(Operator.add, (accumulator, element)))
     sets = VariableRef("sets")
     initial = VariableRef("initial")
     empty_domain = VariableRef("empty_domain")
     store.choose_from_iterator(sets, (frozenset({1, 2}), frozenset({3})))
     store.choose_from_iterator(initial, (10, 20))
     store.choose_from_iterator(empty_domain, ())
-    store.define(
-        VariableRef("folded"), Operation(Operator.set_fold, (callback, sets, initial))
-    )
+    store.define(VariableRef("folded"), Operation(Operator.set_fold, (callback, sets, initial)))
     store.define(
         VariableRef("empty_set"),
         Operation(Operator.set_fold, (callback, frozenset(), initial)),
@@ -552,9 +1160,7 @@ def test_set_fold_domains_and_fallbacks() -> None:
     )
     store.define(
         VariableRef("python_fold"),
-        Operation(
-            Operator.set_fold, (Python("lambda acc, elem: acc + elem"), sets, initial)
-        ),
+        Operation(Operator.set_fold, (Python("lambda acc, elem: acc + elem"), sets, initial)),
     )
     domains = _domains_for(store, threshold=4)
     assert domains[VariableRef("folded")] == Domain(ints=frozenset({13, 23}))
@@ -569,9 +1175,7 @@ def test_set_fold_without_set_members_is_diagnosed() -> None:
     store = ConstraintStore()
     accumulator = VariableRef("accumulator")
     element = VariableRef("element")
-    callback = Lambda(
-        (accumulator, element), Operation(Operator.add, (accumulator, element))
-    )
+    callback = Lambda((accumulator, element), Operation(Operator.add, (accumulator, element)))
     result = VariableRef("result")
     store.define(result, Operation(Operator.set_fold, (callback, 1, 0)))
     diagnostics = Diagnostics()
@@ -580,8 +1184,87 @@ def test_set_fold_without_set_members_is_diagnosed() -> None:
     assert diagnostics.errors[0].expr_id is not None
 
 
-def test_domain_methods_and_unions() -> None:
-    """Verify Domain helper methods, cardinality, iteration, and union_domains."""
+@pytest.mark.parametrize(
+    "domains",
+    (
+        (Domain(int_range=(1, 2)), Domain(int_range=(4, 5))),
+        (Domain(int_range=(1, 2)), Domain(ints=frozenset({5}))),
+    ),
+)
+def test_join_domains_fills_integer_gaps(domains: tuple[Domain, ...]) -> None:
+    """Joining intervals fills gaps even when an exact representation is available."""
+    original_values = {value for domain in domains for value in domain.iter_values()}
+    exact = domain_from_values(original_values)
+    joined = join_domains(domains, threshold=100)
+
+    assert set(exact.iter_values()) == original_values
+    assert 3 not in original_values
+    assert joined == Domain(int_range=(1, 5))
+    assert original_values < set(joined.iter_values())
+
+
+def test_join_domains_threshold_widening_differs_from_exact_construction() -> None:
+    """Exact construction keeps sparse values while joining can widen at threshold."""
+    exact_ints = domain_from_values((1, 5))
+    exact_reals = domain_from_values((1.5, 5.5))
+
+    assert exact_ints == Domain(ints=frozenset({1, 5}))
+    assert join_domains((exact_ints,), threshold=2) == exact_ints
+    widened = join_domains((exact_ints,), threshold=1)
+    assert widened == Domain(int_range=(1, 5))
+    assert set(exact_ints.iter_values()) < set(widened.iter_values())
+    assert exact_reals == Domain(reals=frozenset({1.5, 5.5}))
+    assert join_domains((exact_reals,), threshold=2) == exact_reals
+    assert join_domains((exact_reals,), threshold=1) == UNKNOWN_DOMAIN
+
+
+def test_join_domains_merges_powerset_universes_approximately() -> None:
+    """Merged powersets admit mixed-member sets absent from the exact input union."""
+    domains = (
+        Domain(implicit_set_elements=frozenset({1})),
+        Domain(implicit_set_elements=frozenset({2})),
+    )
+    original_values = {value for domain in domains for value in domain.iter_values()}
+    exact = domain_from_values(original_values)
+    joined = join_domains(domains)
+    mixed_set = frozenset({1, 2})
+
+    assert exact.implicit_set_elements is None
+    assert mixed_set not in original_values
+    assert set(exact.iter_values()) == original_values
+    assert join_domains((exact,)) == exact
+    assert joined == Domain(implicit_set_elements=frozenset({1, 2}))
+    assert set(joined.iter_values()) == original_values | {mixed_set}
+
+
+@pytest.mark.parametrize(
+    ("explicit", "alternative"),
+    (
+        (Domain(ints=frozenset({3})), Domain(int_range=(3, 3))),
+        (
+            Domain(ints=frozenset({3})),
+            Domain(ints=frozenset({3}), int_range=(3, 3)),
+        ),
+        (
+            Domain(explicit_sets=frozenset({frozenset(), frozenset({1})})),
+            Domain(implicit_set_elements=frozenset({1})),
+        ),
+    ),
+)
+def test_domain_equality_and_hashing_use_representations(explicit: Domain, alternative: Domain) -> None:
+    """Equal denotations need not be equal domain objects or interchangeable keys."""
+    assert set(explicit.iter_values()) == set(alternative.iter_values())
+    assert explicit != alternative
+    assert len({explicit, alternative}) == 2
+    assert {explicit: "explicit", alternative: "alternative"}[explicit] == "explicit"
+    duplicate = domain_from_values(explicit.iter_values())
+    assert duplicate == explicit
+    assert hash(duplicate) == hash(explicit)
+    assert {explicit: "explicit"}[duplicate] == "explicit"
+
+
+def test_domain_methods_and_joins() -> None:
+    """Verify Domain helper methods, cardinality, iteration, and join_domains."""
     assert EMPTY_DOMAIN.is_empty()
     assert not UNKNOWN_DOMAIN.is_empty()
     assert UNKNOWN_DOMAIN.cardinality() is None
@@ -603,19 +1286,17 @@ def test_domain_methods_and_unions() -> None:
     assert len(list(s_dom.iter_values())) == 5
     assert s_dom.potential_set_members() == frozenset({1, 2, 3})
 
-    u1 = union_domains((Domain(ints=frozenset({1, 2, 3, 4})),), threshold=2)
+    u1 = join_domains((Domain(ints=frozenset({1, 2, 3, 4})),), threshold=2)
     assert u1.int_range == (1, 4)
     assert not u1.ints
 
-    u2 = union_domains(
-        (Domain(int_range=(1, 3)), Domain(ints=frozenset({10}))), threshold=100
-    )
+    u2 = join_domains((Domain(int_range=(1, 3)), Domain(ints=frozenset({10}))), threshold=100)
     assert u2.int_range == (1, 10)
 
-    u_real = union_domains((Domain(reals=frozenset({1.0, 2.0, 3.0})),), threshold=2)
+    u_real = join_domains((Domain(reals=frozenset({1.0, 2.0, 3.0})),), threshold=2)
     assert u_real.unknown
 
-    u_set = union_domains(
+    u_set = join_domains(
         (
             Domain(implicit_set_elements=frozenset({1})),
             Domain(
@@ -655,13 +1336,9 @@ def test_basic_expressions_and_variables() -> None:
     assert doms[empty_v] == EMPTY_DOMAIN
     assert doms[empty_s] == Domain(explicit_sets=frozenset({frozenset()}))
     assert doms[store.expressions[store.constraints[0].expr]] == Domain(
-        explicit_sets=frozenset(
-            {frozenset({1, 5}), frozenset({2, 5}), frozenset({3, 5})}
-        )
+        explicit_sets=frozenset({frozenset({1, 5}), frozenset({2, 5}), frozenset({3, 5})})
     )
-    assert doms[store.expressions[store.constraints[1].expr]] == Domain(
-        tuples=frozenset({()})
-    )
+    assert doms[store.expressions[store.constraints[1].expr]] == Domain(tuples=frozenset({()}))
 
 
 def test_operator_registry_covers_value_operators() -> None:
@@ -699,15 +1376,11 @@ def test_operator_registry_covers_value_operators() -> None:
         [Domain(reals=frozenset({0.5})), EMPTY_DOMAIN],
     ),
 )
-def test_numeric_combinations(
-    domains: list[Domain], kind: Literal["integers", "reals", "all"]
-) -> None:
+def test_numeric_combinations(domains: list[Domain], kind: Literal["integers", "reals", "all"]) -> None:
     """Partition small numeric products exactly, including empty and real-only axes."""
     expected = [
         values
-        for values in product(
-            *([*domain.iter_ints(), *domain.reals] for domain in domains)
-        )
+        for values in product(*([*domain.iter_ints(), *domain.reals] for domain in domains))
         if kind == "all"
         or (kind == "integers" and all(isinstance(value, int) for value in values))
         or (kind == "reals" and any(isinstance(value, float) for value in values))
@@ -717,11 +1390,68 @@ def test_numeric_combinations(
     assert set(actual) == set(expected)
 
 
-@pytest.mark.parametrize("op", (Operator.add, Operator.sub, Operator.mult))
+@pytest.mark.parametrize(
+    ("domains", "int_count", "real_count"),
+    (
+        ([], 1, 0),
+        ([EMPTY_DOMAIN], 0, 0),
+        ([Domain(bools=frozenset({True}), strings=frozenset({"x"}))], 0, 0),
+        ([Domain(ints=frozenset({0, 1, 3}), int_range=(1, 2))], 4, 0),
+        ([Domain(reals=frozenset({1.0})), Domain(int_range=(1, 2))], 0, 2),
+        ([Domain(reals=frozenset({1.0})), EMPTY_DOMAIN], 0, 0),
+        (
+            [Domain(ints=frozenset({1}), reals=frozenset({1.0}))] * 3,
+            1,
+            7,
+        ),
+        (
+            [
+                Domain(ints=frozenset({0, 1, 3}), int_range=(1, 2), reals=frozenset({0.5})),
+                Domain(ints=frozenset({4}), reals=frozenset({1.5})),
+            ],
+            4,
+            6,
+        ),
+    ),
+)
+def test_numeric_product_partitions(domains: list[Domain], int_count: int, real_count: int) -> None:
+    """Match planned counts to disjoint typed partitions, including empty axes."""
+    numeric = NumericProduct(domains)
+    integers = list(numeric.integers())
+    reals = list(numeric.reals())
+    expected = list(numeric_combinations(domains, "all"))
+    typed_integers = {tuple((type(value), value) for value in row) for row in integers}
+    typed_reals = {tuple((type(value), value) for value in row) for row in reals}
+    assert numeric.int_count == len(integers) == len(typed_integers) == int_count
+    assert numeric.real_count == len(reals) == len(typed_reals) == real_count
+    assert numeric.total_count == len(expected) == int_count + real_count
+    assert all(all(type(value) is int for value in row) for row in integers)
+    assert all(any(type(value) is float for value in row) for row in reals)
+    assert typed_integers.isdisjoint(typed_reals)
+    assert typed_integers | typed_reals == {tuple((type(value), value) for value in row) for row in expected}
+
+
 @pytest.mark.parametrize("reverse", (False, True))
-def test_arithmetic_skips_large_integer_only_products(
-    op: Operator, reverse: bool
-) -> None:
+def test_numeric_product_plans_without_enumeration(reverse: bool) -> None:
+    """Count huge intervals and skip empty partitions without visiting integers."""
+    domains = [Domain(int_range=(0, 10**12), reals=frozenset({0.5}))]
+    with patch.object(Domain, "iter_ints", side_effect=AssertionError("unexpected enumeration")):
+        numeric = NumericProduct(domains)
+        assert numeric.int_count == 10**12 + 1
+        assert numeric.real_count == 1
+        assert numeric.total_count == 10**12 + 2
+        assert list(numeric.reals()) == [(0.5,)]
+        domains = [*domains, EMPTY_DOMAIN]
+        if reverse:
+            domains.reverse()
+        empty = NumericProduct(domains)
+        assert empty.int_count == empty.real_count == empty.total_count == 0
+        assert list(empty.integers()) == list(empty.reals()) == []
+
+
+@pytest.mark.parametrize("op", (Operator.add, Operator.sub, Operator.mult, Operator.int_div, Operator.mod))
+@pytest.mark.parametrize("reverse", (False, True))
+def test_arithmetic_skips_large_integer_only_products(op: Operator, reverse: bool) -> None:
     """Keep exact real results without visiting a million integer-only tuples."""
     large = Domain(int_range=(0, 10**6), reals=frozenset({0.5}))
     small = Domain(ints=frozenset({1}))
@@ -740,11 +1470,80 @@ def test_arithmetic_skips_large_integer_only_products(
         expected = Domain(int_range=(1, 10**6 + 1), reals=frozenset({1.5}))
     elif op == Operator.mult:
         expected = Domain(int_range=(0, 10**6), reals=frozenset({0.5}))
+    elif op == Operator.int_div:
+        expected = (
+            Domain(int_range=(-1, 1), ints=frozenset({2}))
+            if reverse
+            else Domain(int_range=(-(10**6), 10**6), ints=frozenset({0}))
+        )
+    elif op == Operator.mod:
+        expected = (
+            Domain(int_range=(-999999, 999999), reals=frozenset({0.0}))
+            if reverse
+            else Domain(int_range=(0, 0), reals=frozenset({0.5}))
+        )
     elif reverse:
         expected = Domain(int_range=(1 - 10**6, 1), reals=frozenset({0.5}))
     else:
         expected = Domain(int_range=(-1, 10**6 - 1), reals=frozenset({-0.5}))
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    ("operands", "expected"),
+    (
+        (
+            [
+                Domain(int_range=(1, 10**6), reals=frozenset({0.5})),
+                Domain(ints=frozenset({2})),
+            ],
+            Domain(int_range=(-(10**12), 10**12), reals=frozenset({0.25})),
+        ),
+        (
+            [Domain(ints=frozenset({1})), Domain(int_range=(-1, 10**6))],
+            Domain(int_range=(-1, 1), reals=frozenset({1.0})),
+        ),
+        (
+            [Domain(ints=frozenset({1})), Domain(int_range=(-(10**6), 1))],
+            UNKNOWN_DOMAIN,
+        ),
+        (
+            [Domain(reals=frozenset({0.5})), Domain(int_range=(0, 10**6))],
+            UNKNOWN_DOMAIN,
+        ),
+    ),
+)
+def test_power_skips_irrelevant_integer_ranges(operands: list[Domain], expected: Domain) -> None:
+    """Clip exponent signs and enumerate only real partitions within the budget."""
+    original_iter_ints = Domain.iter_ints
+
+    def bounded_iter_ints(domain: Domain) -> Iterator[int]:
+        """Reject enumeration of any unbudgeted integer interval."""
+        assert domain.int_count() <= 10
+        return original_iter_ints(domain)
+
+    with patch.object(Domain, "iter_ints", bounded_iter_ints):
+        evaluator = DomainOperationEvaluator(Diagnostics(), 10, 10)
+        assert evaluator.evaluate(Operator.pow, operands, None) == expected
+
+
+@pytest.mark.parametrize("threshold", (1, 10))
+@pytest.mark.parametrize("mixed", ("none", "exact", "interval"))
+def test_power_overflow_discards_partial_results(threshold: int, mixed: str) -> None:
+    """Treat overflow as numerical failure, never an undefined or partial domain."""
+    diagnostics = Diagnostics()
+    bases = Domain(reals=frozenset({1e308}))
+    if mixed == "exact":
+        bases = Domain(reals=frozenset({1.0, 1e308}))
+    elif mixed == "interval":
+        bases = Domain(int_range=(1, 100), reals=frozenset({1e308}))
+    evaluator = DomainOperationEvaluator(diagnostics, threshold, 10)
+    assert evaluator.evaluate(Operator.pow, [bases, Domain(ints=frozenset({2}))], None) == UNKNOWN_DOMAIN
+    if mixed == "exact" and threshold == 1:
+        assert not diagnostics.warnings
+    else:
+        assert len(diagnostics.warnings) == 1
+        assert "returning unknown" in diagnostics.warnings[0].message
 
 
 @pytest.mark.parametrize(
@@ -852,11 +1651,7 @@ def test_power_at_size_limit(threshold: int) -> None:
         ],
         None,
     )
-    assert result == (
-        Domain(int_range=(-bound, bound))
-        if threshold == 0
-        else Domain(ints=frozenset({bound}))
-    )
+    assert result == (Domain(int_range=(-bound, bound)) if threshold == 0 else Domain(ints=frozenset({bound})))
 
 
 @pytest.mark.parametrize("base", (-1, 0, 1))
@@ -904,7 +1699,7 @@ def test_divisions_mod_and_pow() -> None:
     assert 16 in doms[VariableRef("pow_xy")].ints
     assert 0.0625 in doms[VariableRef("pow_xy")].reals
     assert doms[VariableRef("pow_xf")] == Domain(reals=frozenset({0.0, 2.0}))
-    assert doms[VariableRef("idiv_f")] == Domain(reals=frozenset({-8.0, 0.0, 8.0}))
+    assert doms[VariableRef("idiv_f")] == Domain(ints=frozenset({-8, 0, 8}))
 
     # Range fallback for int_div, mod, and pow when threshold is small
     diag2 = Diagnostics()
@@ -1038,9 +1833,7 @@ def test_comparisons_equalities_and_conditionals() -> None:
     assert doms[VariableRef("hv_opt")] == TRUE_FALSE_DOMAIN
     assert doms[VariableRef("hv_a")] == Domain(bools=frozenset({True}))
     assert doms[VariableRef("if_true")] == Domain(ints=frozenset({1, 2}))
-    assert doms[VariableRef("if_false")] == Domain(
-        ints=frozenset({1, 2}), has_none=True
-    )
+    assert doms[VariableRef("if_false")] == Domain(ints=frozenset({1, 2}), has_none=True)
     assert doms[VariableRef("ite_t")] == Domain(ints=frozenset({1, 2}))
     assert doms[VariableRef("ite_f")] == Domain(ints=frozenset({3, 4}))
     assert doms[VariableRef("ite_both")] == Domain(ints=frozenset({1, 2, 3, 4}))
@@ -1110,9 +1903,7 @@ def test_logic_sets_lambdas_and_folds() -> None:
     assert doms[VariableRef("lxor_b")] == TRUE_FALSE_DOMAIN
     assert doms[VariableRef("leqv_b")] == TRUE_FALSE_DOMAIN
 
-    assert doms[VariableRef("u_s")] == Domain(
-        explicit_sets=frozenset({frozenset({1, 2, 3})})
-    )
+    assert doms[VariableRef("u_s")] == Domain(explicit_sets=frozenset({frozenset({1, 2, 3})}))
     assert doms[VariableRef("i_s")] == Domain(explicit_sets=frozenset({frozenset({2})}))
     assert doms[VariableRef("d_s")] == Domain(explicit_sets=frozenset({frozenset({1})}))
     assert doms[VariableRef("sub_s")] == Domain(bools=frozenset({False}))
@@ -1159,9 +1950,7 @@ def test_cycles_unknowns_and_error_diagnostics() -> None:
     store.define(VariableRef("u_isin"), Operation(Operator.set_isin, (1, unk)))
     store.define(VariableRef("u_union"), Operation(Operator.union, (unk, unk)))
     store.define(VariableRef("u_tget"), Operation(Operator.tuple_get, (unk, 0)))
-    store.define(
-        VariableRef("u_lin"), Operation(Operator.linear_integer, ((2, unk), 1))
-    )
+    store.define(VariableRef("u_lin"), Operation(Operator.linear_integer, ((2, unk), 1)))
 
     diag = Diagnostics()
     doms = _domains_for(store, diagnostics=diag)

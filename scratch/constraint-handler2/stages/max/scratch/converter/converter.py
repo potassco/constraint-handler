@@ -355,9 +355,7 @@ class _Parser:
         """Consume a token of the expected kind or raise ConversionError."""
         tok = self._peek()
         if tok.kind != kind:
-            raise ConversionError(
-                f"Expected {kind!r} but got {tok.value!r} at position {tok.pos}"
-            )
+            raise ConversionError(f"Expected {kind!r} but got {tok.value!r} at position {tok.pos}")
         return self._advance()
 
     def parse_program(self) -> list[RawRule]:
@@ -369,9 +367,7 @@ class _Parser:
                 self._parse_directive()
                 continue
             if tok.kind in ("{", "NUMBER"):
-                raise UnsupportedFeatureError(
-                    f"Choice rules are not supported (at position {tok.pos})"
-                )
+                raise UnsupportedFeatureError(f"Choice rules are not supported (at position {tok.pos})")
             rules.append(self._parse_rule())
         return rules
 
@@ -379,9 +375,7 @@ class _Parser:
         """Handle or skip `#`-prefixed ASP directives up to the terminating dot."""
         directive = self._advance().value
         if directive in ("#maximize", "#minimize", "#heuristic"):
-            raise UnsupportedFeatureError(
-                f"Directive {directive} is not supported in ConstraintStore"
-            )
+            raise UnsupportedFeatureError(f"Directive {directive} is not supported in ConstraintStore")
         while self._peek().kind not in (".", "EOF"):
             self._advance()
         self._expect(".")
@@ -401,9 +395,7 @@ class _Parser:
             self._expect(".")
             return RawRule(head_term, tuple(assignments))
         tok = self._peek()
-        raise ConversionError(
-            f"Unexpected token {tok.value!r} in rule at position {tok.pos}"
-        )
+        raise ConversionError(f"Unexpected token {tok.value!r} in rule at position {tok.pos}")
 
     def _parse_body_literal(self) -> RawAssignment:
         """Parse a ``VAR = TERM`` body literal or raise UnsupportedFeatureError."""
@@ -414,17 +406,13 @@ class _Parser:
                 self._advance()
                 rhs = self._parse_term()
                 return RawAssignment(var_name, rhs)
-        raise UnsupportedFeatureError(
-            f"General ASP rule bodies are not supported (at position {tok.pos})"
-        )
+        raise UnsupportedFeatureError(f"General ASP rule bodies are not supported (at position {tok.pos})")
 
     def _parse_atom(self) -> RawFuncTerm:
         """Parse a top-level predicate atom."""
         name_tok = self._expect("IDENT")
         if _is_logic_variable(name_tok.value):
-            raise ConversionError(
-                f"Predicate name cannot be a variable {name_tok.value!r} at {name_tok.pos}"
-            )
+            raise ConversionError(f"Predicate name cannot be a variable {name_tok.value!r} at {name_tok.pos}")
         if self._peek().kind != "(":
             return RawFuncTerm(name_tok.value, ())
         self._advance()
@@ -504,9 +492,7 @@ class _Parser:
                 items.append(self._parse_pool_term())
             self._expect(")")
             return RawFuncTerm("", tuple(items))
-        raise ConversionError(
-            f"Unexpected token {tok.value!r} ({tok.kind}) at position {tok.pos}"
-        )
+        raise ConversionError(f"Unexpected token {tok.value!r} ({tok.kind}) at position {tok.pos}")
 
 
 def _expand_raw_term(raw: RawTerm, bindings: dict[str, Term]) -> list[Term]:
@@ -524,9 +510,7 @@ def _expand_raw_term(raw: RawTerm, bindings: dict[str, Term]) -> list[Term]:
             results: list[Term] = []
             for low_term in lows:
                 for high_term in highs:
-                    if not isinstance(low_term, NumberTerm) or not isinstance(
-                        high_term, NumberTerm
-                    ):
+                    if not isinstance(low_term, NumberTerm) or not isinstance(high_term, NumberTerm):
                         raise ConversionError("Interval bounds must be integers")
                     for val in range(low_term.value, high_term.value + 1):
                         results.append(NumberTerm(val))
@@ -540,11 +524,7 @@ def _expand_raw_term(raw: RawTerm, bindings: dict[str, Term]) -> list[Term]:
             arg_choices: list[list[Term]] = [[]]
             for arg in args:
                 expanded_arg = _expand_raw_term(arg, bindings)
-                arg_choices = [
-                    [*prefix, choice]
-                    for prefix in arg_choices
-                    for choice in expanded_arg
-                ]
+                arg_choices = [[*prefix, choice] for prefix in arg_choices for choice in expanded_arg]
             return [FuncTerm(name, tuple(choice)) for choice in arg_choices]
 
 
@@ -582,10 +562,7 @@ def _ground_rule(rule: RawRule) -> list[FuncTerm]:
                 new_envs: list[dict[str, Term]] = []
                 for env in envs:
                     for val in _expand_raw_term(assignment.expr, env):
-                        if (
-                            assignment.var_name in env
-                            and env[assignment.var_name] != val
-                        ):
+                        if assignment.var_name in env and env[assignment.var_name] != val:
                             continue
                         next_env = dict(env)
                         next_env[assignment.var_name] = val
@@ -655,9 +632,7 @@ def _unnest_list(term: Term) -> list[Term]:
             items.append(curr.args[0])
             curr = curr.args[1]
         else:
-            raise ConversionError(
-                f"Expected right-nested list term, got {_term_to_str(term)}"
-            )
+            raise ConversionError(f"Expected right-nested list term, got {_term_to_str(term)}")
 
 
 def _parse_float_arg(term: Term) -> float:
@@ -697,11 +672,7 @@ def _convert_val(type_term: Term, val_term: Term) -> Expr:
                 return val_term.value
             raise ConversionError(f"Invalid string literal: {_term_to_str(val_term)}")
         case "none":
-            if (
-                isinstance(val_term, FuncTerm)
-                and val_term.name == "none"
-                and not val_term.args
-            ):
+            if isinstance(val_term, FuncTerm) and val_term.name == "none" and not val_term.args:
                 return None
             raise ConversionError(f"Invalid none literal: {_term_to_str(val_term)}")
         case _:
@@ -710,9 +681,7 @@ def _convert_val(type_term: Term, val_term: Term) -> Expr:
             )
 
 
-def _convert_lambda(
-    term: FuncTerm, env: dict[Term, VariableRef] | None = None
-) -> Lambda:
+def _convert_lambda(term: FuncTerm, env: dict[Term, VariableRef] | None = None) -> Lambda:
     """Convert ``lambda(VARS, BODY)`` into a ``python_input.Lambda``."""
     if len(term.args) != 2:
         raise ConversionError(f"Malformed lambda expression: {_term_to_str(term)}")
@@ -736,11 +705,7 @@ def _convert_arg(
     if isinstance(term, FuncTerm):
         if term.name == "lambda" and len(term.args) == 2:
             return _convert_lambda(term, env)
-        if (
-            term.name == "python"
-            and len(term.args) == 1
-            and isinstance(term.args[0], StringTerm)
-        ):
+        if term.name == "python" and len(term.args) == 1 and isinstance(term.args[0], StringTerm):
             return Python(term.args[0].value)
     return _convert_expr(term, env, default_prg)
 
@@ -780,9 +745,7 @@ def _convert_expr(
             return Operation(Operator.lambda_, (_convert_lambda(term, env),))
         case FuncTerm("operation", (op_term, args_list_term)):
             raw_args = _unnest_list(args_list_term)
-            converted_args = tuple(
-                _convert_arg(arg, env, default_prg) for arg in raw_args
-            )
+            converted_args = tuple(_convert_arg(arg, env, default_prg) for arg in raw_args)
             return _convert_operation(op_term, converted_args, env, default_prg)
         case FuncTerm("", args):
             return tuple(_convert_expr(a, env, default_prg) for a in args)
@@ -790,12 +753,8 @@ def _convert_expr(
             raise UnsupportedFeatureError(f"Symbol {name!r} is not supported")
         case FuncTerm(name, args):
             if name in _OPERATOR_MAP or name in _UNSUPPORTED_OPERATORS:
-                converted_args = tuple(
-                    _convert_arg(arg, env, default_prg) for arg in args
-                )
-                return _convert_operation(
-                    FuncTerm(name, ()), converted_args, env, default_prg
-                )
+                converted_args = tuple(_convert_arg(arg, env, default_prg) for arg in args)
+                return _convert_operation(FuncTerm(name, ()), converted_args, env, default_prg)
             raise ConversionError(f"Unrecognized expression term: {_term_to_str(term)}")
 
 
@@ -819,16 +778,12 @@ def _convert_operation(
             return Operation(Operator.lambda_, (var_ref, *converted_args))
         case FuncTerm(op_name, ()):
             if op_name in _UNSUPPORTED_OPERATORS:
-                raise UnsupportedFeatureError(
-                    f"Operator {op_name!r} is not supported in ConstraintStore"
-                )
+                raise UnsupportedFeatureError(f"Operator {op_name!r} is not supported in ConstraintStore")
             if op_name not in _OPERATOR_MAP:
                 raise UnsupportedFeatureError(f"Unknown operator {op_name!r}")
             return Operation(_OPERATOR_MAP[op_name], converted_args)
         case _:
-            raise ConversionError(
-                f"Invalid operator term in operation: {_term_to_str(op_term)}"
-            )
+            raise ConversionError(f"Invalid operator term in operation: {_term_to_str(op_term)}")
 
 
 def _parse_stmt(term: Term) -> Stmt:
@@ -848,9 +803,7 @@ def _parse_stmt(term: Term) -> Stmt:
             _analyze_python_code(code)
             return StmtPython(code)
         case FuncTerm("while", _):
-            raise UnsupportedFeatureError(
-                "While statements are not supported in ConstraintStore"
-            )
+            raise UnsupportedFeatureError("While statements are not supported in ConstraintStore")
         case _:
             raise ConversionError(f"Invalid statement term: {_term_to_str(term)}")
 
@@ -920,9 +873,7 @@ def _analyze_python_code(code: str) -> _PythonStmtAnalysis:
     return analyzer
 
 
-def _build_python_callable(
-    code: str, input_names: list[str], output_names: list[str]
-) -> str:
+def _build_python_callable(code: str, input_names: list[str], output_names: list[str]) -> str:
     """Build a Python callable expression that executes ``code`` and returns a tuple of ``output_names``."""
     params = ", ".join(input_names)
     tuple_elems = ", ".join(f"_loc[{name!r}]" for name in output_names)
@@ -1033,11 +984,7 @@ class _SSAConverter:
                 return seen
             case StmtPython(code):
                 analysis = _analyze_python_code(code)
-                return [
-                    StringTerm(name)
-                    for name in analysis.assigned
-                    if StringTerm(name) in live_after
-                ]
+                return [StringTerm(name) for name in analysis.assigned if StringTerm(name) in live_after]
 
     def convert(self, stmt: Stmt, is_running: bool) -> None:
         """Convert the execution statement and bind ``execution_output(PRG, X)`` variables."""
@@ -1106,9 +1053,7 @@ class _SSAConverter:
             case StmtSeq2(first, second):
                 live_mid = self._compute_live_before(second, live_after)
                 mid_env = self._convert_stmt(first, env, conds, scope + "l", live_mid)
-                return self._convert_stmt(
-                    second, mid_env, conds, scope + "r", live_after
-                )
+                return self._convert_stmt(second, mid_env, conds, scope + "r", live_after)
 
             case StmtIf(cond_term, then_branch, else_branch):
                 cond_expr = _convert_expr(cond_term, env, self._prg)
@@ -1116,12 +1061,8 @@ class _SSAConverter:
                 then_conds = (*conds, cond_expr)
                 else_conds = (*conds, neg_cond_expr)
 
-                then_env = self._convert_stmt(
-                    then_branch, env, then_conds, scope + "t", live_after
-                )
-                else_env = self._convert_stmt(
-                    else_branch, env, else_conds, scope + "e", live_after
-                )
+                then_env = self._convert_stmt(then_branch, env, then_conds, scope + "t", live_after)
+                else_env = self._convert_stmt(else_branch, env, else_conds, scope + "e", live_after)
 
                 modified = self._collect_modified(stmt, live_after)
                 merged_env = dict(env)
@@ -1146,20 +1087,14 @@ class _SSAConverter:
 
             case StmtPython(code):
                 analysis = _analyze_python_code(code)
-                string_vars = sorted(
-                    term.value for term in env if isinstance(term, StringTerm)
-                )
+                string_vars = sorted(term.value for term in env if isinstance(term, StringTerm))
                 input_args = tuple(env[StringTerm(name)] for name in string_vars)
-                needed_outputs = [
-                    name for name in analysis.assigned if StringTerm(name) in live_after
-                ]
+                needed_outputs = [name for name in analysis.assigned if StringTerm(name) in live_after]
                 cond_expr = _make_condition(conds)
 
                 if analysis.uses_integrity:
                     chk_fn = _build_python_integrity_callable(code, string_vars)
-                    chk_call: Expr = Operation(
-                        Operator.python_eval, (Python(chk_fn), *input_args)
-                    )
+                    chk_call: Expr = Operation(Operator.python_eval, (Python(chk_fn), *input_args))
                     if conds:
                         chk_call = Operation(Operator.limp, (cond_expr, chk_call))
                     self._store.check(chk_call, label=self._label)
@@ -1209,25 +1144,17 @@ def convert_string(source: str) -> ConstraintStore:
         if atom.name in _IGNORED_PREDICATES:
             continue
         if atom.name in _UNSUPPORTED_PREDICATES:
-            raise UnsupportedFeatureError(
-                f"Predicate {atom.name!r} is not supported in ConstraintStore"
-            )
+            raise UnsupportedFeatureError(f"Predicate {atom.name!r} is not supported in ConstraintStore")
         if atom.name == "variable_declare":
             if len(atom.args) not in (2, 3):
-                raise ConversionError(
-                    f"Invalid arity for variable_declare: {_term_to_str(atom)}"
-                )
+                raise ConversionError(f"Invalid arity for variable_declare: {_term_to_str(atom)}")
             var_term = atom.args[0]
             dom_term = atom.args[1]
             lbl = _label_term_to_str(atom.args[2] if len(atom.args) == 3 else None)
             if not isinstance(dom_term, FuncTerm) or dom_term.args:
-                raise ConversionError(
-                    f"Invalid domain in variable_declare: {_term_to_str(atom)}"
-                )
+                raise ConversionError(f"Invalid domain in variable_declare: {_term_to_str(atom)}")
             if dom_term.name == "multimap":
-                raise UnsupportedFeatureError(
-                    "Domain 'multimap' is not supported in ConstraintStore"
-                )
+                raise UnsupportedFeatureError("Domain 'multimap' is not supported in ConstraintStore")
             if dom_term.name not in (
                 "definition",
                 "boolDomain",
@@ -1235,16 +1162,12 @@ def convert_string(source: str) -> ConstraintStore:
                 "open",
                 "set",
             ):
-                raise ConversionError(
-                    f"Unknown variable domain {dom_term.name!r} in {_term_to_str(atom)}"
-                )
+                raise ConversionError(f"Unknown variable domain {dom_term.name!r} in {_term_to_str(atom)}")
             declared_labels[var_term] = lbl
             declared_domains[var_term] = (dom_term.name, lbl)
         elif atom.name == "execution_run":
             if len(atom.args) not in (1, 2):
-                raise ConversionError(
-                    f"Invalid arity for execution_run: {_term_to_str(atom)}"
-                )
+                raise ConversionError(f"Invalid arity for execution_run: {_term_to_str(atom)}")
             running_executions.add(atom.args[0])
 
     for var_term, (dom_name, lbl) in declared_domains.items():
@@ -1262,14 +1185,10 @@ def convert_string(source: str) -> ConstraintStore:
         match name:
             case "variable_domain":
                 if len(args) not in (2, 3):
-                    raise ConversionError(
-                        f"Invalid arity for variable_domain: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for variable_domain: {_term_to_str(atom)}")
                 var_term, expr_term = args[0], args[1]
                 default_lbl = declared_labels.get(var_term, LABEL_ANONYMOUS)
-                lbl = _label_term_to_str(
-                    args[2] if len(args) == 3 else None, default_lbl
-                )
+                lbl = _label_term_to_str(args[2] if len(args) == 3 else None, default_lbl)
                 store.variable_choice(
                     VariableRef(_var_term_to_name(var_term)),
                     (_convert_expr(expr_term),),
@@ -1279,14 +1198,10 @@ def convert_string(source: str) -> ConstraintStore:
 
             case "variable_choice":
                 if len(args) not in (2, 3):
-                    raise ConversionError(
-                        f"Invalid arity for variable_choice: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for variable_choice: {_term_to_str(atom)}")
                 var_term, expr_term = args[0], args[1]
                 default_lbl = declared_labels.get(var_term, LABEL_ANONYMOUS)
-                lbl = _label_term_to_str(
-                    args[2] if len(args) == 3 else None, default_lbl
-                )
+                lbl = _label_term_to_str(args[2] if len(args) == 3 else None, default_lbl)
                 store.variable_choice(
                     VariableRef(_var_term_to_name(var_term)),
                     (_convert_expr(expr_term),),
@@ -1296,14 +1211,10 @@ def convert_string(source: str) -> ConstraintStore:
 
             case "variable_define" | "variable_assign":
                 if len(args) not in (2, 3):
-                    raise ConversionError(
-                        f"Invalid arity for {name}: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for {name}: {_term_to_str(atom)}")
                 var_term, expr_term = args[0], args[1]
                 default_lbl = declared_labels.get(var_term, LABEL_ANONYMOUS)
-                lbl = _label_term_to_str(
-                    args[2] if len(args) == 3 else None, default_lbl
-                )
+                lbl = _label_term_to_str(args[2] if len(args) == 3 else None, default_lbl)
                 store.variable_define(
                     VariableRef(_var_term_to_name(var_term)),
                     _convert_expr(expr_term),
@@ -1313,22 +1224,16 @@ def convert_string(source: str) -> ConstraintStore:
 
             case "variable_default":
                 if len(args) not in (2, 3, 4, 5):
-                    raise ConversionError(
-                        f"Invalid arity for variable_default: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for variable_default: {_term_to_str(atom)}")
                 var_term, expr_term = args[0], args[1]
                 cond_expr: Expr = _convert_expr(args[2]) if len(args) >= 3 else True
                 prio = 0
                 if len(args) >= 4:
                     if not isinstance(args[3], NumberTerm):
-                        raise ConversionError(
-                            f"Priority in variable_default must be an integer: {_term_to_str(atom)}"
-                        )
+                        raise ConversionError(f"Priority in variable_default must be an integer: {_term_to_str(atom)}")
                     prio = args[3].value
                 default_lbl = declared_labels.get(var_term, LABEL_ANONYMOUS)
-                lbl = _label_term_to_str(
-                    args[4] if len(args) == 5 else None, default_lbl
-                )
+                lbl = _label_term_to_str(args[4] if len(args) == 5 else None, default_lbl)
                 store.variable_default(
                     VariableRef(_var_term_to_name(var_term)),
                     _convert_expr(expr_term),
@@ -1340,9 +1245,7 @@ def convert_string(source: str) -> ConstraintStore:
 
             case "set_baseDomain":
                 if len(args) not in (2, 3):
-                    raise ConversionError(
-                        f"Invalid arity for set_baseDomain: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for set_baseDomain: {_term_to_str(atom)}")
                 var_term, expr_term = args[0], args[1]
                 lbl = _label_term_to_str(args[2] if len(args) == 3 else None)
                 store.setvariable_base(
@@ -1354,9 +1257,7 @@ def convert_string(source: str) -> ConstraintStore:
 
             case "set_assign":
                 if len(args) not in (2, 3, 4):
-                    raise ConversionError(
-                        f"Invalid arity for set_assign: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for set_assign: {_term_to_str(atom)}")
                 var_term, expr_term = args[0], args[1]
                 cond_expr = _convert_expr(args[2]) if len(args) >= 3 else True
                 lbl = _label_term_to_str(args[3] if len(args) == 4 else None)
@@ -1370,17 +1271,13 @@ def convert_string(source: str) -> ConstraintStore:
 
             case "ensure":
                 if len(args) not in (1, 2):
-                    raise ConversionError(
-                        f"Invalid arity for ensure: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for ensure: {_term_to_str(atom)}")
                 lbl = _label_term_to_str(args[1] if len(args) == 2 else None)
                 store.check(_convert_expr(args[0]), label=lbl)
 
             case "evaluate":
                 if len(args) not in (1, 2):
-                    raise ConversionError(
-                        f"Invalid arity for evaluate: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for evaluate: {_term_to_str(atom)}")
                 lbl = _label_term_to_str(args[1] if len(args) == 2 else None)
                 eval_var = VariableRef(f"__evaluate_{eval_counter}")
                 eval_counter += 1
@@ -1388,9 +1285,7 @@ def convert_string(source: str) -> ConstraintStore:
 
             case "bool_evaluate":
                 if len(args) not in (1, 2):
-                    raise ConversionError(
-                        f"Invalid arity for bool_evaluate: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for bool_evaluate: {_term_to_str(atom)}")
                 lbl = _label_term_to_str(args[1] if len(args) == 2 else None)
                 bool_eval_var = VariableRef(f"__bool_evaluate_{bool_eval_counter}")
                 bool_eval_counter += 1
@@ -1398,23 +1293,17 @@ def convert_string(source: str) -> ConstraintStore:
 
             case "execution_declare":
                 if len(args) not in (4, 5):
-                    raise ConversionError(
-                        f"Invalid arity for execution_declare: {_term_to_str(atom)}"
-                    )
+                    raise ConversionError(f"Invalid arity for execution_declare: {_term_to_str(atom)}")
                 prg_term = args[0]
                 stmt = _parse_stmt(args[1])
                 ins = _unnest_list(args[2])
                 outs = _unnest_list(args[3])
                 default_lbl = _var_term_to_name(prg_term)
-                lbl = _label_term_to_str(
-                    args[4] if len(args) == 5 else None, default_lbl
-                )
+                lbl = _label_term_to_str(args[4] if len(args) == 5 else None, default_lbl)
                 executions.append((prg_term, stmt, ins, outs, lbl))
 
             case _:
-                raise UnsupportedFeatureError(
-                    f"Unknown or unsupported predicate {name!r} in {_term_to_str(atom)}"
-                )
+                raise UnsupportedFeatureError(f"Unknown or unsupported predicate {name!r} in {_term_to_str(atom)}")
 
     for var_term, (dom_name, lbl) in declared_domains.items():
         var_ref = VariableRef(_var_term_to_name(var_term))
