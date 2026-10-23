@@ -66,27 +66,20 @@ def _transfer_metadata[Metadata](
 ) -> None:
     """Copy known metadata only to renamed nodes and their new lambda scopes."""
     bindings = {target: metadata[source] for source, target in replacements.items()}
-    by_expression: dict[
-        Expr, list[tuple[frozenset[tuple[VariableRef, Metadata]], Metadata]]
-    ] = {}
+    by_expression: dict[Expr, list[tuple[frozenset[tuple[VariableRef, Metadata]], Metadata]]] = {}
     for (expr, scope), value in scoped.items():
         by_expression.setdefault(expr, []).append((scope, value))
     for source, target, shadowed in renamings:
         if not shadowed and source in metadata:
             if bindings:
-                scoped.setdefault(
-                    (target, frozenset(bindings.items())), metadata[source]
-                )
+                scoped.setdefault((target, frozenset(bindings.items())), metadata[source])
             else:
                 metadata.setdefault(target, metadata[source])
         for scope, value in by_expression.get(source, ()):
             if not shadowed <= {var for var, _ in scope}:
                 continue
             renamed_scope = dict(bindings)
-            renamed_scope.update(
-                (var if var in shadowed else replacements.get(var, var), kind)
-                for var, kind in scope
-            )
+            renamed_scope.update((var if var in shadowed else replacements.get(var, var), kind) for var, kind in scope)
             scoped.setdefault((target, frozenset(renamed_scope.items())), value)
 
 
@@ -115,11 +108,7 @@ class GroundingCost:
     def trivial_cost(self, expr: Operation) -> Cost:
         """Estimate the specialized encoding as if direct arguments were leaves."""
         op = expr.op
-        args = [
-            arg
-            for arg in self.parameters(expr)
-            if not isinstance(arg, (Lambda, Python))
-        ]
+        args = [arg for arg in self.parameters(expr) if not isinstance(arg, (Lambda, Python))]
         if op in {Operator.conj, Operator.disj}:
             return len(args) + 1
         if op == Operator.leqv:
@@ -128,11 +117,7 @@ class GroundingCost:
             return self.size(expr)
         if op == Operator.linear_integer:
             terms = args[:-1]
-            return (
-                self.size(expr)
-                if len(terms) > 2
-                else _product(self.size(term) for term in terms)
-            )
+            return self.size(expr) if len(terms) > 2 else _product(self.size(term) for term in terms)
         if op in {Operator.eq, Operator.neq}:
             if all(self.is_set(arg) for arg in args):
                 return _sum(self.members(arg) for arg in args)
@@ -147,26 +132,18 @@ class GroundingCost:
             return _sum(self.size(arg) for arg in args)
         if op in {Operator.set_isin, Operator.set_notin}:
             return self.size(args[0])
-        if op == Operator.cardinality or (
-            op == Operator.length and self.is_set(args[0])
-        ):
+        if op == Operator.cardinality or (op == Operator.length and self.is_set(args[0])):
             return self.size(expr) + self.members(args[0])
         return _product(self.size(arg) for arg in args)
 
     def is_set(self, expr: Expr) -> bool:
         """Recognize exclusively set-valued expressions from static types."""
         kind = self.types[expr]
-        return (
-            not isinstance(kind, UnknownType)
-            and bool(kind)
-            and all(isinstance(member, SetOf) for member in kind)
-        )
+        return not isinstance(kind, UnknownType) and bool(kind) and all(isinstance(member, SetOf) for member in kind)
 
     def complexity(self, expr: Expr) -> Cost:
         """Use specialized costs only when the expression has no nested operation."""
-        if isinstance(expr, Operation) and not any(
-            _contains_operation(arg) for arg in expr.args
-        ):
+        if isinstance(expr, Operation) and not any(_contains_operation(arg) for arg in expr.args):
             return self.trivial_cost(expr)
         return _product(self.size(var) for var in free_variables(expr))
 
@@ -234,38 +211,23 @@ class _Splitter(GroundingCost):
             case VariableRef():
                 renamed = replacements.get(expr, expr)
             case Lambda(parameters, body):
-                visible = {
-                    source: target
-                    for source, target in replacements.items()
-                    if source not in parameters
-                }
+                visible = {source: target for source, target in replacements.items() if source not in parameters}
                 return Lambda(
                     parameters,
                     cast(
                         Expr,
-                        self.rename(
-                            body, visible, renamings, shadowed | frozenset(parameters)
-                        ),
+                        self.rename(body, visible, renamings, shadowed | frozenset(parameters)),
                     ),
                 )
             case Operation(op, args):
                 renamed = Operation(
                     op,
-                    tuple(
-                        self.rename(arg, replacements, renamings, shadowed)
-                        for arg in args
-                    ),
+                    tuple(self.rename(arg, replacements, renamings, shadowed) for arg in args),
                 )
             case tuple():
-                renamed = tuple(
-                    cast(Expr, self.rename(item, replacements, renamings, shadowed))
-                    for item in expr
-                )
+                renamed = tuple(cast(Expr, self.rename(item, replacements, renamings, shadowed)) for item in expr)
             case frozenset():
-                renamed = frozenset(
-                    cast(Expr, self.rename(item, replacements, renamings, shadowed))
-                    for item in expr
-                )
+                renamed = frozenset(cast(Expr, self.rename(item, replacements, renamings, shadowed)) for item in expr)
             case Python():
                 return expr
             case ValueDef():
@@ -276,35 +238,24 @@ class _Splitter(GroundingCost):
     def best_subset(self, expr: Operation) -> tuple[int, ...]:
         """Search unchanged candidates using cached parameter costs and variables."""
         parameters = self.parameters(expr)
-        positions = tuple(
-            index for index, arg in enumerate(parameters) if _contains_operation(arg)
-        )
+        positions = tuple(index for index, arg in enumerate(parameters) if _contains_operation(arg))
         if not positions:
             return ()
         sizes = {index: self.size(cast(Expr, parameters[index])) for index in positions}
-        costs = {
-            index: self.complexity(cast(Expr, parameters[index])) for index in positions
-        }
+        costs = {index: self.complexity(cast(Expr, parameters[index])) for index in positions}
         variables = tuple(free_variables(arg) for arg in parameters)
         variable_sizes = {var: self.size(var) for group in variables for var in group}
         trivial = self.trivial_cost(expr)
         best: tuple[int, ...] = ()
         best_cost = self.complexity(expr)
         candidates = (
-            (
-                selected
-                for count in range(1, len(positions) + 1)
-                for selected in combinations(positions, count)
-            )
+            (selected for count in range(1, len(positions) + 1) for selected in combinations(positions, count))
             if len(positions) <= self.subset_limit
             else iter((positions,))
         )
         for selected in candidates:
             remaining = frozenset(
-                var
-                for index, group in enumerate(variables)
-                if index not in selected
-                for var in group
+                var for index, group in enumerate(variables) if index not in selected for var in group
             )
             outer = (
                 trivial
@@ -362,9 +313,7 @@ class _Splitter(GroundingCost):
                 )
                 rewritten = Operation(expr.op, rewritten_args)
                 if expr.op == Operator.linear_integer:
-                    for before, after in zip(
-                        expr.args[:-1], rewritten_args[:-1], strict=True
-                    ):
+                    for before, after in zip(expr.args[:-1], rewritten_args[:-1], strict=True):
                         before, after = cast(Expr, before), cast(Expr, after)
                         self.domains.setdefault(after, self.domains[before])
                         self.types.setdefault(after, self.types[before])
@@ -386,12 +335,8 @@ class _Splitter(GroundingCost):
             replacements = dict(zip(actual, bound, strict=True))
             renamings: list[Renaming] = []
             body = cast(Expr, self.rename(expr, replacements, renamings))
-            _transfer_metadata(
-                self.domains, self.domains.scoped_expressions, renamings, replacements
-            )
-            _transfer_metadata(
-                self.types, self.types.scoped_expressions, renamings, replacements
-            )
+            _transfer_metadata(self.domains, self.domains.scoped_expressions, renamings, replacements)
+            _transfer_metadata(self.types, self.types.scoped_expressions, renamings, replacements)
             call = Operation(Operator.lambda_, (Lambda(bound, body), *actual))
             self.store.replace_expression(expr_id, call)
             self.domains.setdefault(call, self.domains[expr])

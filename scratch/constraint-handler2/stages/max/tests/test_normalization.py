@@ -138,9 +138,7 @@ def test_real_coefficients_are_not_normalized() -> None:
 
 @pytest.mark.parametrize("relation", [False, True])
 @pytest.mark.parametrize("choices", [(1e-17,), (1,), (1, 1e-17)])
-def test_real_arithmetic_is_not_normalized(
-    relation: bool, choices: tuple[int | float, ...]
-) -> None:
+def test_real_arithmetic_is_not_normalized(relation: bool, choices: tuple[int | float, ...]) -> None:
     """Preserve real addition in arithmetic and relations without reassociation."""
     store = ConstraintStore()
     x = VariableRef("x")

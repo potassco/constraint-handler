@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from itertools import product
@@ -16,9 +17,15 @@ DEFAULT_THRESHOLD = 1000
 DEFAULT_BOOLEAN_THRESHOLD = 10
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Domain:
-    """Represent a sound domain of values or interval/set approximations."""
+    """Represent a sound domain of values or interval/set approximations.
+
+    Equality and hashing compare stored representations, not denotations.
+    For example, an explicit integer singleton and its singleton interval
+    denote the same values but compare unequal. Constructors do not canonicalize
+    equivalent representations. Compound keys preserve Boolean/numeric distinctions.
+    """
 
     bools: frozenset[bool] = frozenset()
     ints: frozenset[int] = frozenset()
@@ -30,6 +37,35 @@ class Domain:
     explicit_sets: frozenset[frozenset[SetValue]] = frozenset()
     implicit_set_elements: frozenset[SetValue] | None = None
     unknown: bool = False
+
+    def _identity(self) -> tuple[object, ...]:
+        """Key compound fields with language equality rather than Python equality."""
+        return (
+            self.bools,
+            self.ints,
+            self.int_range,
+            self.reals,
+            self.has_none,
+            self.strings,
+            frozenset(value_key(value) for value in self.tuples),
+            frozenset(value_key(value) for value in self.explicit_sets),
+            (
+                None
+                if self.implicit_set_elements is None
+                else frozenset(value_key(value) for value in self.implicit_set_elements)
+            ),
+            self.unknown,
+        )
+
+    def __eq__(self, other: object) -> bool:
+        """Compare representations, not denotations, preserving compound Booleans."""
+        if not isinstance(other, Domain):
+            return NotImplemented
+        return self._identity() == other._identity()
+
+    def __hash__(self) -> int:
+        """Hash the typed representation, consistently with representation equality."""
+        return hash(self._identity())
 
     def is_empty(self) -> bool:
         """Return True if the domain is known and contains no values."""
@@ -85,6 +121,54 @@ class Domain:
             candidates.append(self.int_range[1])
         return max(candidates) if candidates else None
 
+    def contains_int(self, value: int) -> bool:
+        """Test membership in the stored integer components, excluding Booleans."""
+        return type(value) is int and (
+            value in self.ints or (self.int_range is not None and self.int_range[0] <= value <= self.int_range[1])
+        )
+
+    def integer_bounds(self) -> tuple[int, int] | None:
+        """Return inclusive bounds of the stored integers, or None if absent."""
+        low, high = self.min_int(), self.max_int()
+        if low is None or high is None:
+            return None
+        return low, high
+
+    def restrict_integers(self, low: int | None, high: int | None) -> Domain:
+        """Clip the stored integer projection; None bounds are unbounded.
+
+        Drop all non-integer components without enumerating the interval or
+        removing explicit integers that overlap it.
+        """
+        int_range = None
+        if self.int_range is not None:
+            start, stop = self.int_range
+            if low is not None:
+                start = max(start, low)
+            if high is not None:
+                stop = min(stop, high)
+            if start <= stop:
+                int_range = (start, stop)
+        return Domain(
+            ints=frozenset(
+                value for value in self.ints if (low is None or low <= value) and (high is None or value <= high)
+            ),
+            int_range=int_range,
+        )
+
+    def min_nonzero_abs_int(self) -> int | None:
+        """Return the smallest nonzero integer magnitude without enumeration."""
+        candidates = [abs(value) for value in self.ints if value != 0]
+        if self.int_range is not None:
+            low, high = self.int_range
+            if low > 0:
+                candidates.append(low)
+            elif high < 0:
+                candidates.append(abs(high))
+            elif low < 0 or high > 0:
+                candidates.append(1)
+        return min(candidates) if candidates else None
+
     def cardinality(self) -> int | None:
         """Return the number of distinct values in the domain, or None if unknown."""
         if self.unknown:
@@ -102,11 +186,7 @@ class Domain:
         else:
             implicit_elems = self.implicit_set_elements
             implicit_keys = {value_key(value) for value in implicit_elems}
-            extra_sets = sum(
-                1
-                for s in self.explicit_sets
-                if not {value_key(value) for value in s} <= implicit_keys
-            )
+            extra_sets = sum(1 for s in self.explicit_sets if not {value_key(value) for value in s} <= implicit_keys)
             total += (1 << len(implicit_elems)) + extra_sets
         return total
 
@@ -125,14 +205,19 @@ class Domain:
             elems = tuple(self.implicit_set_elements)
             yielded: set[object] = set()
             for bits in product((False, True), repeat=len(elems)):
-                subset = frozenset(
-                    e for e, include in zip(elems, bits, strict=True) if include
-                )
+                subset = frozenset(e for e, include in zip(elems, bits, strict=True) if include)
                 yielded.add(value_key(subset))
                 yield subset
             for s in self.explicit_sets:
                 if value_key(s) not in yielded:
                     yield s
+
+    def possible_set_sizes(self) -> frozenset[int]:
+        """Return sizes of explicit and implicit sets without enumerating subsets."""
+        sizes = {len(value) for value in self.explicit_sets}
+        if self.implicit_set_elements is not None:
+            sizes.update(range(len(self.implicit_set_elements) + 1))
+        return frozenset(sizes)
 
     def potential_set_members(self) -> frozenset[SetValue]:
         """Return all potential set elements across explicit and implicit sets."""
@@ -142,6 +227,19 @@ class Domain:
         if self.implicit_set_elements is not None:
             members.update(self.implicit_set_elements)
         return frozenset(members)
+
+    def has_nonfinite_values(self) -> bool:
+        """Detect non-finite reals, including inside compound values."""
+        return any(
+            not is_finite_value(value)
+            for values in (
+                self.reals,
+                self.tuples,
+                self.explicit_sets,
+                self.implicit_set_elements or frozenset(),
+            )
+            for value in values
+        )
 
 
 UNKNOWN_DOMAIN = Domain(unknown=True)
@@ -177,30 +275,32 @@ def _is_set_value(value: object) -> TypeIs[SetValue]:
     """Recognize supported scalars and recursively supported tuple members."""
     if value is None or type(value) in (bool, int, float, str):
         return True
-    return isinstance(value, tuple) and all(
-        _is_set_value(item) for item in cast(tuple[object, ...], value)
-    )
+    return isinstance(value, tuple) and all(_is_set_value(item) for item in cast(tuple[object, ...], value))
 
 
 def is_domain_value(value: object) -> TypeIs[DomainValue]:
     """Recognize supported values without silently discarding Python results."""
     return _is_set_value(value) or (
-        isinstance(value, frozenset)
-        and all(_is_set_value(item) for item in cast(frozenset[object], value))
+        isinstance(value, frozenset) and all(_is_set_value(item) for item in cast(frozenset[object], value))
     )
+
+
+def is_finite_value(value: DomainValue) -> bool:
+    """Reject non-finite floats recursively without converting large integers."""
+    if isinstance(value, float):
+        return math.isfinite(value)
+    if isinstance(value, (tuple, frozenset)):
+        return all(is_finite_value(item) for item in value)
+    return True
 
 
 class DomainStore(dict[Expr, Domain]):
     """Map expressions, including variables, to their precomputed domains."""
 
-    def __init__(
-        self, expressions: Mapping[Expr, Domain] | Iterable[tuple[Expr, Domain]] = ()
-    ) -> None:
+    def __init__(self, expressions: Mapping[Expr, Domain] | Iterable[tuple[Expr, Domain]] = ()) -> None:
         """Initialize expression metadata and a separate lambda-context mapping."""
         super().__init__(expressions)
-        self.scoped_expressions: dict[
-            tuple[Expr, frozenset[tuple[VariableRef, Domain]]], Domain
-        ] = {}
+        self.scoped_expressions: dict[tuple[Expr, frozenset[tuple[VariableRef, Domain]]], Domain] = {}
 
     def lookup(
         self,
@@ -211,9 +311,26 @@ class DomainStore(dict[Expr, Domain]):
         """Look up an expression in its explicit lambda binding environment."""
         return self.scoped_expressions[expr, scope] if scope else self[expr]
 
+    def record(
+        self,
+        expr: Expr,
+        domain: Domain,
+        *,
+        scope: frozenset[tuple[VariableRef, Domain]] = frozenset(),
+    ) -> None:
+        """Record an expression in its explicit lambda binding environment."""
+        if scope:
+            self.scoped_expressions[expr, scope] = domain
+        else:
+            self[expr] = domain
+
 
 def domain_from_values(values: Iterable[DomainValue]) -> Domain:
-    """Construct an exact domain, or unknown if compound values would collapse."""
+    """Construct an exact domain, or unknown if compound values would collapse.
+
+    Unlike join_domains, this builder never fills integer gaps, merges powerset
+    universes, or widens at a threshold. It stores supplied values explicitly.
+    """
     bools: set[bool] = set()
     ints: set[int] = set()
     reals: set[float] = set()
@@ -254,10 +371,20 @@ def domain_from_values(values: Iterable[DomainValue]) -> Domain:
     )
 
 
-def union_domains(
-    domains: Iterable[Domain], threshold: int = DEFAULT_THRESHOLD
-) -> Domain:
-    """Combine multiple domains into a single sound Domain."""
+def join_domains(domains: Iterable[Domain], threshold: int = DEFAULT_THRESHOLD) -> Domain:
+    """Return a sound approximation containing every input domain's values.
+
+    This is neither exact runtime set union nor necessarily a least upper bound
+    in the full representation space. Existing integer intervals and explicit
+    integers are enclosed by one interval, filling gaps even below threshold.
+    Implicit set universes are merged into a powerset that can admit sets mixing
+    members from different inputs. Explicit sets outside that powerset remain.
+
+    Above threshold, explicit integers widen to their enclosing interval and
+    explicit reals widen to unknown. Unknown inputs and Boolean/numeric compound
+    collisions also yield unknown. Use domain_from_values for exact construction
+    from enumerated values, subject to its collision fallback.
+    """
     bools: set[bool] = set()
     ints: set[int] = set()
     int_ranges: list[tuple[int, int]] = []
@@ -313,11 +440,7 @@ def union_domains(
     final_implicit = frozenset(implicit_elems) if implicit_elems is not None else None
     if final_implicit is not None:
         implicit_keys = {value_key(value) for value in final_implicit}
-        explicit_sets = {
-            s
-            for s in explicit_sets
-            if not {value_key(value) for value in s} <= implicit_keys
-        }
+        explicit_sets = {s for s in explicit_sets if not {value_key(value) for value in s} <= implicit_keys}
 
     return Domain(
         bools=frozenset(bools),

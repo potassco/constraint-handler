@@ -17,9 +17,7 @@ from .python_input import Operator
 from .static_types import StaticTypeStore, UnknownType
 
 _NUMERIC = frozenset({ValueType.integer})
-_RELATIONS = frozenset(
-    {Operator.eq, Operator.neq, Operator.lt, Operator.leq, Operator.gt, Operator.geq}
-)
+_RELATIONS = frozenset({Operator.eq, Operator.neq, Operator.lt, Operator.leq, Operator.gt, Operator.geq})
 _ARITHMETIC = frozenset({Operator.add, Operator.sub, Operator.minus, Operator.mult})
 _ZERO = ValueDef(ValueType.integer, 0)
 
@@ -40,11 +38,7 @@ class _Normalizer:
                 if expr in bound:
                     return False
                 known = self._types.get(expr, UnknownType())
-                return (
-                    not isinstance(known, UnknownType)
-                    and bool(known)
-                    and known <= _NUMERIC
-                )
+                return not isinstance(known, UnknownType) and bool(known) and known <= _NUMERIC
             case Operation(Operator.linear_integer, args):
                 return (
                     bool(args)
@@ -60,11 +54,7 @@ class _Normalizer:
                 )
             case Operation(op, args) if op in _ARITHMETIC:
                 valid_arity = (
-                    len(args) == 2
-                    if op == Operator.sub
-                    else len(args) == 1
-                    if op == Operator.minus
-                    else bool(args)
+                    len(args) == 2 if op == Operator.sub else len(args) == 1 if op == Operator.minus else bool(args)
                 )
                 return valid_arity and all(self.is_numeric(arg, bound) for arg in args)
             case _:
@@ -83,9 +73,7 @@ class _Normalizer:
                 case Operation(Operator.add, args):
                     pending.extend((factor, cast(Expr, arg)) for arg in reversed(args))
                 case Operation(Operator.sub, (left, right)):
-                    pending.extend(
-                        ((-factor, cast(Expr, right)), (factor, cast(Expr, left)))
-                    )
+                    pending.extend(((-factor, cast(Expr, right)), (factor, cast(Expr, left))))
                 case Operation(Operator.minus, (arg,)):
                     pending.append((-factor, cast(Expr, arg)))
                 case Operation(Operator.linear_integer, args):
@@ -99,13 +87,9 @@ class _Normalizer:
         for term, coefficient in terms.items():
             if coefficient != 0:
                 pairs.append((ValueDef(ValueType.integer, coefficient), term))
-        return Operation(
-            Operator.linear_integer, (*pairs, ValueDef(ValueType.integer, offset))
-        )
+        return Operation(Operator.linear_integer, (*pairs, ValueDef(ValueType.integer, offset)))
 
-    def visit(
-        self, expr: OperationArg, bound: frozenset[VariableRef] = frozenset()
-    ) -> OperationArg:
+    def visit(self, expr: OperationArg, bound: frozenset[VariableRef] = frozenset()) -> OperationArg:
         """Normalize nested expressions, retaining lexical lambda boundaries."""
         match expr:
             case ValueDef() | VariableRef() | Python():
@@ -121,16 +105,10 @@ class _Normalizer:
                 return frozenset(cast(Expr, self.visit(item, bound)) for item in expr)
             case Operation(op, args):
                 rewritten = Operation(op, tuple(self.visit(arg, bound) for arg in args))
-                if (
-                    op in _RELATIONS
-                    and len(args) == 2
-                    and all(self.is_numeric(arg, bound) for arg in rewritten.args)
-                ):
+                if op in _RELATIONS and len(args) == 2 and all(self.is_numeric(arg, bound) for arg in rewritten.args):
                     difference = Operation(Operator.sub, rewritten.args)
                     return Operation(op, (self.linear_integer(difference), _ZERO))
-                if (
-                    op in _ARITHMETIC or op == Operator.linear_integer
-                ) and self.is_numeric(rewritten, bound):
+                if (op in _ARITHMETIC or op == Operator.linear_integer) and self.is_numeric(rewritten, bound):
                     if op == Operator.mult:
                         coefficient = 1
                         factors: list[Expr] = []
@@ -140,9 +118,7 @@ class _Normalizer:
                             else:
                                 factors.append(cast(Expr, arg))
                         if not factors:
-                            return self.linear_integer(
-                                ValueDef(ValueType.integer, coefficient)
-                            )
+                            return self.linear_integer(ValueDef(ValueType.integer, coefficient))
                         if len(factors) != 1 or isinstance(factors[0], Operation):
                             return rewritten
                         return self.linear_integer(

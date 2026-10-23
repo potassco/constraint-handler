@@ -48,25 +48,17 @@ type TypeMember = ValueType | SetOf | TupleType
 type Type = frozenset[TypeMember] | UnknownType
 
 _NUMERIC_TYPES: frozenset[ValueType] = frozenset({ValueType.integer, ValueType.real})
-_ORDERED_TYPES: frozenset[ValueType] = frozenset(
-    {ValueType.boolean, ValueType.integer, ValueType.real}
-)
-_BOOL_OR_NONE_TYPES: frozenset[ValueType] = frozenset(
-    {ValueType.boolean, ValueType.none}
-)
+_ORDERED_TYPES: frozenset[ValueType] = frozenset({ValueType.boolean, ValueType.integer, ValueType.real})
+_BOOL_OR_NONE_TYPES: frozenset[ValueType] = frozenset({ValueType.boolean, ValueType.none})
 
 
 class StaticTypeStore(dict[Expr, Type]):
     """Map expressions, including variables, to their precomputed static types."""
 
-    def __init__(
-        self, expressions: Mapping[Expr, Type] | Iterable[tuple[Expr, Type]] = ()
-    ) -> None:
+    def __init__(self, expressions: Mapping[Expr, Type] | Iterable[tuple[Expr, Type]] = ()) -> None:
         """Initialize expression metadata and a separate lambda-context mapping."""
         super().__init__(expressions)
-        self.scoped_expressions: dict[
-            tuple[Expr, frozenset[tuple[VariableRef, Type]]], Type
-        ] = {}
+        self.scoped_expressions: dict[tuple[Expr, frozenset[tuple[VariableRef, Type]]], Type] = {}
 
     def lookup(
         self,
@@ -179,18 +171,9 @@ class _StaticTypeComputer:
             set_var = self._store.set_variables[var]
             elem_types = union_types(
                 [
-                    *(
-                        self._result[self._store.expressions[b.value]]
-                        for b in set_var.bases
-                    ),
-                    *(
-                        self._result[self._store.expressions[a.value]]
-                        for a in set_var.assigns
-                    ),
-                    *(
-                        self._result[self._store.expressions[d.value]]
-                        for d in set_var.defaults
-                    ),
+                    *(self._result[self._store.expressions[b.value]] for b in set_var.bases),
+                    *(self._result[self._store.expressions[a.value]] for a in set_var.assigns),
+                    *(self._result[self._store.expressions[d.value]] for d in set_var.defaults),
                 ]
             )
             if isinstance(elem_types, UnknownType):
@@ -211,18 +194,12 @@ class _StaticTypeComputer:
 
         variable = self._store.variables[var]
         choices_type: Type = (
-            union_types(
-                self._result[self._store.expressions[c.value]] for c in variable.choices
-            )
+            union_types(self._result[self._store.expressions[c.value]] for c in variable.choices)
             if variable.choices
             else frozenset[TypeMember]()
         )
-        definition_type = union_types(
-            self._result[self._store.expressions[d.value]] for d in variable.definitions
-        )
-        defaults_type = union_types(
-            self._result[self._store.expressions[d.value]] for d in variable.defaults
-        )
+        definition_type = union_types(self._result[self._store.expressions[d.value]] for d in variable.definitions)
+        defaults_type = union_types(self._result[self._store.expressions[d.value]] for d in variable.defaults)
         self._result[var] = union_types((choices_type, definition_type, defaults_type))
 
     def _eval_expr(
@@ -256,9 +233,7 @@ class _StaticTypeComputer:
             case frozenset():
                 if not expr:
                     return frozenset({SetOf(frozenset(), True)})
-                item_types = union_types(
-                    self._eval_expr(item, env, expr_id) for item in expr
-                )
+                item_types = union_types(self._eval_expr(item, env, expr_id) for item in expr)
                 if isinstance(item_types, UnknownType):
                     return UnknownType()
                 if not _is_all_scalars(item_types):
@@ -273,9 +248,7 @@ class _StaticTypeComputer:
                 elem_types = tuple(self._eval_expr(item, env, expr_id) for item in expr)
                 if any(isinstance(t, UnknownType) for t in elem_types):
                     return UnknownType()
-                if any(
-                    len(t) == 0 for t in elem_types if not isinstance(t, UnknownType)
-                ):
+                if any(len(t) == 0 for t in elem_types if not isinstance(t, UnknownType)):
                     return frozenset()
                 return frozenset({TupleType(elem_types)})
             case Operation(op, args):
@@ -367,9 +340,7 @@ class _StaticTypeComputer:
                 arg_types = [self._eval_expr_arg(a, env, expr_id) for a in call_args]
                 if any(isinstance(t, UnknownType) for t in arg_types):
                     return UnknownType()
-                known_arg_types: list[frozenset[TypeMember]] = [
-                    t for t in arg_types if not isinstance(t, UnknownType)
-                ]
+                known_arg_types: list[frozenset[TypeMember]] = [t for t in arg_types if not isinstance(t, UnknownType)]
                 if any(len(t) == 0 for t in known_arg_types):
                     return frozenset()
                 results: list[Type] = []
@@ -389,9 +360,7 @@ class _StaticTypeComputer:
         arg_types = [self._eval_expr_arg(arg, env, expr_id) for arg in args]
         if any(isinstance(t, UnknownType) for t in arg_types):
             return UnknownType()
-        known_types: list[frozenset[TypeMember]] = [
-            t for t in arg_types if not isinstance(t, UnknownType)
-        ]
+        known_types: list[frozenset[TypeMember]] = [t for t in arg_types if not isinstance(t, UnknownType)]
         if any(len(t) == 0 for t in known_types):
             return frozenset()
 
@@ -408,10 +377,7 @@ class _StaticTypeComputer:
             case Operator.concat:
                 if not self._check_contract(
                     len(known_types) == 2
-                    and all(
-                        _is_subset_of_scalars(t, frozenset({ValueType.string}))
-                        for t in known_types
-                    ),
+                    and all(_is_subset_of_scalars(t, frozenset({ValueType.string})) for t in known_types),
                     "concat requires 2 string arguments",
                     expr_id,
                 ):
@@ -421,10 +387,11 @@ class _StaticTypeComputer:
             case Operator.length:
                 if not self._check_contract(
                     len(known_types) == 1
-                    and _is_subset_of_scalars(
-                        known_types[0], frozenset({ValueType.string})
+                    and all(
+                        member == ValueType.string or isinstance(member, (TupleType, SetOf))
+                        for member in known_types[0]
                     ),
-                    "length requires 1 string argument",
+                    "length requires 1 string, tuple, or set argument",
                     expr_id,
                 ):
                     return UnknownType()
@@ -432,10 +399,7 @@ class _StaticTypeComputer:
 
             case Operator.max | Operator.min:
                 if not self._check_contract(
-                    len(known_types) >= 1
-                    and all(
-                        _is_subset_of_scalars(t, _ORDERED_TYPES) for t in known_types
-                    ),
+                    len(known_types) >= 1 and all(_is_subset_of_scalars(t, _ORDERED_TYPES) for t in known_types),
                     f"{op} requires at least 1 boolean/integer/real argument",
                     expr_id,
                 ):
@@ -449,17 +413,12 @@ class _StaticTypeComputer:
                     expr_id,
                 ):
                     return UnknownType()
-                without_none = frozenset(
-                    m for m in known_types[0] if m != ValueType.none
-                )
+                without_none = frozenset(m for m in known_types[0] if m != ValueType.none)
                 return union_types((without_none, known_types[1]))
 
             case Operator.if_:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and _is_subset_of_scalars(
-                        known_types[0], frozenset({ValueType.boolean})
-                    ),
+                    len(known_types) == 2 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.boolean})),
                     "if_ requires (boolean, any) arguments",
                     expr_id,
                 ):
@@ -477,8 +436,7 @@ class _StaticTypeComputer:
 
             case Operator.abs | Operator.minus:
                 if not self._check_contract(
-                    len(known_types) == 1
-                    and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
+                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
                     f"{op} requires 1 numeric argument",
                     expr_id,
                 ):
@@ -495,8 +453,7 @@ class _StaticTypeComputer:
                 | Operator.atan
             ):
                 if not self._check_contract(
-                    len(known_types) == 1
-                    and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
+                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
                     f"{op} requires 1 numeric argument",
                     expr_id,
                 ):
@@ -505,8 +462,7 @@ class _StaticTypeComputer:
 
             case Operator.floor | Operator.ceil:
                 if not self._check_contract(
-                    len(known_types) == 1
-                    and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
+                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], _NUMERIC_TYPES),
                     f"{op} requires 1 numeric argument",
                     expr_id,
                 ):
@@ -515,10 +471,7 @@ class _StaticTypeComputer:
 
             case Operator.add | Operator.mult:
                 if not self._check_contract(
-                    len(known_types) >= 1
-                    and all(
-                        _is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types
-                    ),
+                    len(known_types) >= 1 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
                     f"{op} requires at least 1 numeric argument",
                     expr_id,
                 ):
@@ -527,10 +480,7 @@ class _StaticTypeComputer:
 
             case Operator.sub | Operator.mod:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and all(
-                        _is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types
-                    ),
+                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
                     f"{op} requires 2 numeric arguments",
                     expr_id,
                 ):
@@ -539,10 +489,7 @@ class _StaticTypeComputer:
 
             case Operator.int_div:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and all(
-                        _is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types
-                    ),
+                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
                     "int_div requires 2 numeric arguments",
                     expr_id,
                 ):
@@ -551,10 +498,7 @@ class _StaticTypeComputer:
 
             case Operator.real_div:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and all(
-                        _is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types
-                    ),
+                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
                     "real_div requires 2 numeric arguments",
                     expr_id,
                 ):
@@ -563,10 +507,7 @@ class _StaticTypeComputer:
 
             case Operator.pow:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and all(
-                        _is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types
-                    ),
+                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _NUMERIC_TYPES) for t in known_types),
                     "pow requires 2 numeric arguments",
                     expr_id,
                 ):
@@ -582,10 +523,7 @@ class _StaticTypeComputer:
 
             case Operator.leq | Operator.lt | Operator.geq | Operator.gt:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and all(
-                        _is_subset_of_scalars(t, _ORDERED_TYPES) for t in known_types
-                    ),
+                    len(known_types) == 2 and all(_is_subset_of_scalars(t, _ORDERED_TYPES) for t in known_types),
                     f"{op} requires 2 ordered arguments",
                     expr_id,
                 ):
@@ -594,10 +532,7 @@ class _StaticTypeComputer:
 
             case Operator.real_from_int:
                 if not self._check_contract(
-                    len(known_types) == 1
-                    and _is_subset_of_scalars(
-                        known_types[0], frozenset({ValueType.integer})
-                    ),
+                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.integer})),
                     "real_from_int requires 1 integer argument",
                     expr_id,
                 ):
@@ -606,10 +541,7 @@ class _StaticTypeComputer:
 
             case Operator.int_from_real:
                 if not self._check_contract(
-                    len(known_types) == 1
-                    and _is_subset_of_scalars(
-                        known_types[0], frozenset({ValueType.real})
-                    ),
+                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.real})),
                     "int_from_real requires 1 real argument",
                     expr_id,
                 ):
@@ -618,11 +550,7 @@ class _StaticTypeComputer:
 
             case Operator.conj | Operator.disj | Operator.lxor | Operator.leqv:
                 if not self._check_contract(
-                    len(known_types) >= 1
-                    and all(
-                        _is_subset_of_scalars(t, frozenset({ValueType.boolean}))
-                        for t in known_types
-                    ),
+                    all(_is_subset_of_scalars(t, frozenset({ValueType.boolean})) for t in known_types),
                     f"{op} requires boolean arguments",
                     expr_id,
                 ):
@@ -632,10 +560,7 @@ class _StaticTypeComputer:
             case Operator.limp:
                 if not self._check_contract(
                     len(known_types) == 2
-                    and all(
-                        _is_subset_of_scalars(t, frozenset({ValueType.boolean}))
-                        for t in known_types
-                    ),
+                    and all(_is_subset_of_scalars(t, frozenset({ValueType.boolean})) for t in known_types),
                     "limp requires 2 boolean arguments",
                     expr_id,
                 ):
@@ -644,10 +569,7 @@ class _StaticTypeComputer:
 
             case Operator.ite:
                 if not self._check_contract(
-                    len(known_types) == 3
-                    and _is_subset_of_scalars(
-                        known_types[0], frozenset({ValueType.boolean})
-                    ),
+                    len(known_types) == 3 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.boolean})),
                     "ite requires (boolean, any, any) arguments",
                     expr_id,
                 ):
@@ -656,10 +578,7 @@ class _StaticTypeComputer:
 
             case Operator.lnot:
                 if not self._check_contract(
-                    len(known_types) == 1
-                    and _is_subset_of_scalars(
-                        known_types[0], frozenset({ValueType.boolean})
-                    ),
+                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], frozenset({ValueType.boolean})),
                     "lnot requires 1 boolean argument",
                     expr_id,
                 ):
@@ -668,8 +587,7 @@ class _StaticTypeComputer:
 
             case Operator.snot | Operator.wnot:
                 if not self._check_contract(
-                    len(known_types) == 1
-                    and _is_subset_of_scalars(known_types[0], _BOOL_OR_NONE_TYPES),
+                    len(known_types) == 1 and _is_subset_of_scalars(known_types[0], _BOOL_OR_NONE_TYPES),
                     f"{op} requires 1 boolean or none argument",
                     expr_id,
                 ):
@@ -702,9 +620,7 @@ class _StaticTypeComputer:
 
             case Operator.set_isin | Operator.set_notin:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and _is_all_scalars(known_types[0])
-                    and _is_all_sets(known_types[1]),
+                    len(known_types) == 2 and _is_all_scalars(known_types[0]) and _is_all_sets(known_types[1]),
                     f"{op} requires (scalar, set) arguments",
                     expr_id,
                 ):
@@ -713,9 +629,7 @@ class _StaticTypeComputer:
 
             case Operator.union:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and _is_all_sets(known_types[0])
-                    and _is_all_sets(known_types[1]),
+                    len(known_types) == 2 and _is_all_sets(known_types[0]) and _is_all_sets(known_types[1]),
                     "union requires 2 set arguments",
                     expr_id,
                 ):
@@ -726,9 +640,7 @@ class _StaticTypeComputer:
 
             case Operator.inter:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and _is_all_sets(known_types[0])
-                    and _is_all_sets(known_types[1]),
+                    len(known_types) == 2 and _is_all_sets(known_types[0]) and _is_all_sets(known_types[1]),
                     "inter requires 2 set arguments",
                     expr_id,
                 ):
@@ -739,9 +651,7 @@ class _StaticTypeComputer:
 
             case Operator.diff:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and _is_all_sets(known_types[0])
-                    and _is_all_sets(known_types[1]),
+                    len(known_types) == 2 and _is_all_sets(known_types[0]) and _is_all_sets(known_types[1]),
                     "diff requires 2 set arguments",
                     expr_id,
                 ):
@@ -751,9 +661,7 @@ class _StaticTypeComputer:
 
             case Operator.subset:
                 if not self._check_contract(
-                    len(known_types) == 2
-                    and _is_all_sets(known_types[0])
-                    and _is_all_sets(known_types[1]),
+                    len(known_types) == 2 and _is_all_sets(known_types[0]) and _is_all_sets(known_types[1]),
                     "subset requires 2 set arguments",
                     expr_id,
                 ):
@@ -815,18 +723,13 @@ class _StaticTypeComputer:
     ) -> Type:
         """Compute the static type of Operation(Operator.linear_integer, ...)."""
         if not args:
-            self._diagnostics.error(
-                "linear_integer requires at least one argument", expr_id=expr_id
-            )
+            self._diagnostics.error("linear_integer requires at least one argument", expr_id=expr_id)
             return UnknownType()
         component_types: list[Type] = []
         for idx, arg in enumerate(args):
             if isinstance(arg, tuple) and len(arg) == 2:
                 coeff, term = arg
-                if (
-                    not isinstance(coeff, ValueDef)
-                    or coeff.value_type != ValueType.integer
-                ):
+                if not isinstance(coeff, ValueDef) or coeff.value_type != ValueType.integer:
                     self._diagnostics.error(
                         "linear_integer coefficient must be a constant integer literal",
                         expr_id=expr_id,
@@ -859,9 +762,7 @@ class _StaticTypeComputer:
         if any(len(t) == 0 for t in known):
             return frozenset()
         if not self._check_contract(
-            all(
-                _is_subset_of_scalars(t, frozenset({ValueType.integer})) for t in known
-            ),
+            all(_is_subset_of_scalars(t, frozenset({ValueType.integer})) for t in known),
             "linear_integer requires integer coefficients, terms, and constant offset",
             expr_id,
         ):

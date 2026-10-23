@@ -1,7 +1,5 @@
 """Table dispatch for value-based domain operator families."""
 
-import math
-
 from ..diagnostics import Diagnostics
 from ..internal_input import ExprId
 from ..python_input import Operator
@@ -27,20 +25,16 @@ DOMAIN_HANDLERS: dict[Operator, DomainHandler] = {
 class DomainOperationEvaluator:
     """Dispatch value operators to families sharing one evaluation context."""
 
-    def __init__(
-        self, diagnostics: Diagnostics, threshold: int, boolean_threshold: int
-    ) -> None:
+    def __init__(self, diagnostics: Diagnostics, threshold: int, boolean_threshold: int) -> None:
         """Retain diagnostics and enumeration limits without expression state."""
         self._context = EvaluationContext(diagnostics, threshold, boolean_threshold)
 
-    def evaluate(
-        self, op: Operator, doms: list[Domain], expr_id: ExprId | None
-    ) -> Domain:
+    def evaluate(self, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
         """Evaluate a value operator using its registered family handler."""
         handler = DOMAIN_HANDLERS.get(op)
         if handler is None:
             raise ValueError(f"{op} requires unevaluated expression arguments")
-        if any(not math.isfinite(value) for dom in doms for value in dom.reals):
+        if any(dom.has_nonfinite_values() for dom in doms):
             self._context.diagnostics.warn(
                 f"{op} domain contains non-finite real values; returning unknown",
                 expr_id=expr_id,
@@ -55,7 +49,7 @@ class DomainOperationEvaluator:
                 expr_id=expr_id,
             )
             return UNKNOWN_DOMAIN
-        if any(not math.isfinite(value) for value in result.reals):
+        if result.has_nonfinite_values():
             self._context.diagnostics.warn(
                 f"{op} produced non-finite real values; returning unknown",
                 expr_id=expr_id,
@@ -81,6 +75,4 @@ class DomainOperationEvaluator:
         expr_id: ExprId | None,
     ) -> Domain:
         """Evaluate a linear combination after the coordinator resolves its terms."""
-        return arithmetic.linear_integer(
-            self._context, coeffs, term_doms, offset, expr_id
-        )
+        return arithmetic.linear_integer(self._context, coeffs, term_doms, offset, expr_id)

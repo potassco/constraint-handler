@@ -13,13 +13,11 @@ from .values import (
     TRUE_FALSE_DOMAIN,
     UNKNOWN_DOMAIN,
     Domain,
-    union_domains,
+    join_domains,
 )
 
 
-def _eval_conj(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_conj(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for Operation(Conj, [x1, ..., xn])."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
@@ -33,9 +31,7 @@ def _eval_conj(
     return Domain(bools=frozenset(res))
 
 
-def _eval_disj(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_disj(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for Operation(Disj, [x1, ..., xn])."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
@@ -49,9 +45,7 @@ def _eval_disj(
     return Domain(bools=frozenset(res))
 
 
-def _eval_get_or_else(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_get_or_else(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for Operation(GetOrElse, [x, y])."""
     if len(doms) != 2:
         context.diagnostics.error(
@@ -65,17 +59,13 @@ def _eval_get_or_else(
     if not dx.has_none:
         return dx
     dx_without_none = replace(dx, has_none=False)
-    return union_domains((dx_without_none, dy), context.threshold)
+    return join_domains((dx_without_none, dy), context.threshold)
 
 
-def _eval_if(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_if(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for Operation(If, [c, x])."""
     if len(doms) != 2:
-        context.diagnostics.error(
-            f"if_ expects 2 arguments, got {len(doms)}", expr_id=expr_id
-        )
+        context.diagnostics.error(f"if_ expects 2 arguments, got {len(doms)}", expr_id=expr_id)
         return UNKNOWN_DOMAIN
     dc, dx = doms
     if dc.unknown or dx.unknown:
@@ -83,18 +73,14 @@ def _eval_if(
     if dc.is_empty():
         return EMPTY_DOMAIN
     if False in dc.bools or dc.has_none:
-        return union_domains((dx, Domain(has_none=True)), context.threshold)
+        return join_domains((dx, Domain(has_none=True)), context.threshold)
     return dx
 
 
-def _eval_ite(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_ite(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for Operation(Ite, [c, x, y])."""
     if len(doms) != 3:
-        context.diagnostics.error(
-            f"ite expects 3 arguments, got {len(doms)}", expr_id=expr_id
-        )
+        context.diagnostics.error(f"ite expects 3 arguments, got {len(doms)}", expr_id=expr_id)
         return UNKNOWN_DOMAIN
     dc, dx, dy = doms
     if dc.unknown or dx.unknown or dy.unknown:
@@ -103,12 +89,10 @@ def _eval_ite(
         return dx
     if dc == Domain(bools=frozenset({False})):
         return dy
-    return union_domains((dx, dy), context.threshold)
+    return join_domains((dx, dy), context.threshold)
 
 
-def _eval_logic_ops(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_logic_ops(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute domain for boolean and three-valued logic operators."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
@@ -159,9 +143,7 @@ def _eval_logic_ops(
                 )
                 return UNKNOWN_DOMAIN
             dx, dy = doms
-            return Domain(
-                bools=frozenset((not a) or b for a, b in product(dx.bools, dy.bools))
-            )
+            return Domain(bools=frozenset((not a) or b for a, b in product(dx.bools, dy.bools)))
         case Operator.lxor | Operator.leqv:
             if any(
                 d.int_count()
@@ -190,9 +172,7 @@ def _eval_logic_ops(
             return TRUE_FALSE_DOMAIN
 
 
-def _eval_has_value(
-    context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None
-) -> Domain:
+def _eval_has_value(context: EvaluationContext, op: Operator, doms: list[Domain], expr_id: ExprId | None) -> Domain:
     """Compute whether a value can be present or absent."""
     if len(doms) != 1:
         context.diagnostics.error(

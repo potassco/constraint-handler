@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterator
-from itertools import product
+from itertools import chain, product
 from typing import Literal
 
 from ..internal_input import ExprId
@@ -19,6 +19,29 @@ from .values import (
 )
 
 MAX_POWER_BITS = 65_536
+
+
+class NumericProduct:
+    """Plan numeric partitions without enumerating integer intervals."""
+
+    def __init__(self, domains: list[Domain]) -> None:
+        """Count integer-only and real-containing tuples, ignoring other values."""
+        self.domains = domains
+        self.int_count = math.prod(domain.int_count() for domain in domains)
+        self.total_count = math.prod(
+            domain.int_count() + len(domain.reals) for domain in domains
+        )
+        self.real_count = self.total_count - self.int_count
+
+    def integers(self) -> Iterator[tuple[int, ...]]:
+        """Yield integer-only tuples, skipping empty products before enumeration."""
+        if self.int_count:
+            yield from product(*(domain.iter_ints() for domain in self.domains))
+
+    def reals(self) -> Iterator[tuple[int | float, ...]]:
+        """Yield each tuple containing a real once, excluding integer-only tuples."""
+        if self.real_count:
+            yield from numeric_combinations(self.domains, "reals")
 
 
 def numeric_combinations(
@@ -46,58 +69,19 @@ def numeric_combinations(
 
 
 def _is_odd_multiple_of_half_pi(val: float) -> bool:
-    """Check whether a numeric value is an odd multiple of pi / 2."""
-    k = round((val - math.pi / 2) / math.pi)
-    pole = math.pi / 2 + k * math.pi
-    return math.isclose(val, pole, rel_tol=1e-12, abs_tol=1e-12)
-
-
-def _min_nonzero_abs_int(dom: Domain) -> int | None:
-    """Return the minimum |b| for non-zero integer b in dom, or None if none exist."""
-    candidates: list[int] = [abs(v) for v in dom.ints if v != 0]
-    if dom.int_range is not None:
-        lo, hi = dom.int_range
-        if lo > 0:
-            candidates.append(lo)
-        elif hi < 0:
-            candidates.append(abs(hi))
-        else:
-            if lo < 0 or hi > 0:
-                candidates.append(1)
-    return min(candidates) if candidates else None
-
-
-def _count_nonneg_ints(dom: Domain) -> int:
-    """Count non-negative integers in dom."""
-    if dom.int_range is None:
-        return sum(1 for v in dom.ints if v >= 0)
-    lo, hi = dom.int_range
-    range_count = max(0, hi - max(0, lo) + 1)
-    extra = sum(1 for v in dom.ints if v >= 0 and (v < lo or v > hi))
-    return range_count + extra
-
-
-def _iter_nonneg_ints(dom: Domain) -> Iterator[int]:
-    """Yield non-negative integers in dom."""
-    for v in dom.iter_ints():
-        if v >= 0:
-            yield v
-
-
-def _iter_neg_ints(dom: Domain) -> list[int]:
-    """Return negative integers in dom."""
-    return [v for v in dom.iter_ints() if v < 0]
+    """Recognize exact half-pi remainders without excluding neighboring floats."""
+    return abs(math.remainder(val, math.pi)) == math.pi / 2
 
 
 def _safe_pow(a: float, b: float) -> int | float | None:
-    """Evaluate a ** b safely, returning None if undefined or complex."""
+    """Filter undefined or complex powers, allowing numerical overflow to propagate."""
     if a == 0 and b < 0:
         return None
     if a < 0 and isinstance(b, float) and not b.is_integer():
         return None
     try:
         res = a**b
-    except ZeroDivisionError, OverflowError, ValueError:
+    except ZeroDivisionError, ValueError:
         return None
     if isinstance(res, complex):
         return None
@@ -223,28 +207,16 @@ def _eval_unary_math(
             return Domain(reals=frozenset(reals_out))
         case Operator.acos | Operator.asin:
             fn = math.acos if op == Operator.acos else math.asin
-            min_i, max_i = dx.min_int(), dx.max_int()
+            bounds = dx.integer_bounds()
             out_of_bounds = (
-                (min_i is not None and min_i < -1)
-                or (max_i is not None and max_i > 1)
-                or any(f < -1.0 or f > 1.0 for f in dx.reals)
-            )
+                bounds is not None and (bounds[0] < -1 or bounds[1] > 1)
+            ) or any(f < -1.0 or f > 1.0 for f in dx.reals)
             if out_of_bounds:
                 context.diagnostics.warn(
                     f"{op} domain contains values outside [-1, 1]",
                     expr_id=expr_id,
                 )
-            in_bounds_ints = [
-                v
-                for v in (-1, 0, 1)
-                if (
-                    v in dx.ints
-                    or (
-                        dx.int_range is not None
-                        and dx.int_range[0] <= v <= dx.int_range[1]
-                    )
-                )
-            ]
+            in_bounds_ints = [v for v in (-1, 0, 1) if dx.contains_int(v)]
             in_bounds_reals = [f for f in dx.reals if -1.0 <= f <= 1.0]
             if len(in_bounds_ints) + len(in_bounds_reals) > context.threshold:
                 return UNKNOWN_DOMAIN
@@ -268,25 +240,18 @@ def _eval_add(
         return UNKNOWN_DOMAIN
     if any(d.unknown for d in doms):
         return UNKNOWN_DOMAIN
-    int_counts = [d.int_count() for d in doms]
-    real_counts = [len(d.reals) for d in doms]
-    n_int = math.prod(int_counts)
-    n_total = math.prod(ic + fc for ic, fc in zip(int_counts, real_counts, strict=True))
-    n_real = n_total - n_int
-    if n_real > context.threshold:
+    numeric = NumericProduct(doms)
+    if numeric.real_count > context.threshold:
         return UNKNOWN_DOMAIN
 
     r_real: set[float] = set()
-    if n_real > 0:
-        for combo in numeric_combinations(doms, "reals"):
-            r_real.add(float(sum(combo)))
+    for combo in numeric.reals():
+        r_real.add(float(sum(combo)))
 
-    if n_int == 0:
+    if numeric.int_count == 0:
         return Domain(reals=frozenset(r_real))
-    if n_int + n_real <= context.threshold:
-        r_ints = frozenset(
-            int(sum(combo)) for combo in numeric_combinations(doms, "integers")
-        )
+    if numeric.total_count <= context.threshold:
+        r_ints = frozenset(int(sum(combo)) for combo in numeric.integers())
         return Domain(ints=r_ints, reals=frozenset(r_real))
 
     min_sum = sum(d.min_int() or 0 for d in doms)
@@ -306,30 +271,24 @@ def _eval_sub(
     dx, dy = doms
     if dx.unknown or dy.unknown:
         return UNKNOWN_DOMAIN
-    ix, iy = dx.int_count(), dy.int_count()
-    fx, fy = len(dx.reals), len(dy.reals)
-    n_int = ix * iy
-    n_real = (ix + fx) * (iy + fy) - n_int
-    if n_real > context.threshold:
+    numeric = NumericProduct(doms)
+    if numeric.real_count > context.threshold:
         return UNKNOWN_DOMAIN
 
     r_real: set[float] = set()
-    if n_real > 0:
-        for a, b in numeric_combinations(doms, "reals"):
-            r_real.add(float(a - b))
+    for a, b in numeric.reals():
+        r_real.add(float(a - b))
 
-    if n_int == 0:
+    if numeric.int_count == 0:
         return Domain(reals=frozenset(r_real))
-    if n_int + n_real <= context.threshold:
-        r_ints = frozenset(
-            int(a - b) for a, b in numeric_combinations(doms, "integers")
-        )
+    if numeric.total_count <= context.threshold:
+        r_ints = frozenset(int(a - b) for a, b in numeric.integers())
         return Domain(ints=r_ints, reals=frozenset(r_real))
 
-    min_x, max_x = dx.min_int(), dx.max_int()
-    min_y, max_y = dy.min_int(), dy.max_int()
-    assert min_x is not None and max_x is not None
-    assert min_y is not None and max_y is not None
+    bounds_x, bounds_y = dx.integer_bounds(), dy.integer_bounds()
+    assert bounds_x is not None and bounds_y is not None
+    min_x, max_x = bounds_x
+    min_y, max_y = bounds_y
     return Domain(
         int_range=(min_x - max_y, max_x - min_y),
         reals=frozenset(r_real),
@@ -345,36 +304,26 @@ def _eval_mult(
         return UNKNOWN_DOMAIN
     if any(d.unknown for d in doms):
         return UNKNOWN_DOMAIN
-    int_counts = [d.int_count() for d in doms]
-    real_counts = [len(d.reals) for d in doms]
-    n_int = math.prod(int_counts)
-    n_total = math.prod(ic + fc for ic, fc in zip(int_counts, real_counts, strict=True))
-    n_real = n_total - n_int
-    if n_real > context.threshold:
+    numeric = NumericProduct(doms)
+    if numeric.real_count > context.threshold:
         return UNKNOWN_DOMAIN
 
     r_real: set[float] = set()
-    if n_real > 0:
-        for combo in numeric_combinations(doms, "reals"):
-            prod_val = 1.0
-            for value in combo:
-                prod_val *= value
-            r_real.add(float(prod_val))
+    for combo in numeric.reals():
+        r_real.add(float(math.prod(combo)))
 
-    if n_int == 0:
+    if numeric.int_count == 0:
         return Domain(reals=frozenset(r_real))
-    if n_int + n_real <= context.threshold:
-        r_ints = frozenset(
-            int(math.prod(combo)) for combo in numeric_combinations(doms, "integers")
-        )
+    if numeric.total_count <= context.threshold:
+        r_ints = frozenset(int(math.prod(combo)) for combo in numeric.integers())
         return Domain(ints=r_ints, reals=frozenset(r_real))
 
     low, high = 1, 1
     for d in doms:
-        c = d.min_int()
-        dd = d.max_int()
-        assert c is not None and dd is not None
-        products = (low * c, low * dd, high * c, high * dd)
+        bounds = d.integer_bounds()
+        assert bounds is not None
+        minimum, maximum = bounds
+        products = (low * minimum, low * maximum, high * minimum, high * maximum)
         low, high = min(products), max(products)
     return Domain(int_range=(low, high), reals=frozenset(r_real))
 
@@ -392,45 +341,42 @@ def _eval_int_div_or_mod(
     if dx.unknown or dy.unknown:
         return UNKNOWN_DOMAIN
 
-    has_zero_y = (
-        0 in dy.ints
-        or (dy.int_range is not None and dy.int_range[0] <= 0 <= dy.int_range[1])
-        or 0.0 in dy.reals
-    )
+    has_zero_y = dy.contains_int(0) or 0.0 in dy.reals
     if has_zero_y:
         context.diagnostics.warn(f"{op} divisor domain contains 0", expr_id=expr_id)
 
-    ix, iy = dx.int_count(), dy.int_count()
-    fx, fy = len(dx.reals), len(dy.reals)
-    n_int = ix * iy
-    n_real = (ix + fx) * (iy + fy) - n_int
-    if n_real > context.threshold:
+    numeric = NumericProduct(doms)
+    if numeric.real_count > context.threshold:
         return UNKNOWN_DOMAIN
 
+    r_ints: set[int] = set()
     r_real: set[float] = set()
-    if n_real > 0:
-        nums_x = [*dx.iter_ints(), *dx.reals]
-        nums_y = [*dy.iter_ints(), *dy.reals]
-        for a, b in product(nums_x, nums_y):
-            if (isinstance(a, float) or isinstance(b, float)) and b != 0:
-                r_real.add(float(a // b if op == Operator.int_div else a % b))
+    for a, b in numeric.reals():
+        if b != 0:
+            if op == Operator.int_div:
+                r_ints.add(int(a // b))
+            else:
+                r_real.add(float(a % b))
 
-    if n_int + n_real <= context.threshold:
-        r_ints = frozenset(
+    if numeric.int_count == 0:
+        return Domain(ints=frozenset(r_ints), reals=frozenset(r_real))
+    if numeric.total_count <= context.threshold:
+        r_ints.update(
             (a // b if op == Operator.int_div else a % b)
-            for a, b in product(dx.iter_ints(), dy.iter_ints())
+            for a, b in numeric.integers()
             if b != 0
         )
-        return Domain(ints=r_ints, reals=frozenset(r_real))
+        return Domain(ints=frozenset(r_ints), reals=frozenset(r_real))
 
-    min_x, max_x = dx.min_int(), dx.max_int()
-    min_abs_y = _min_nonzero_abs_int(dy)
-    if min_x is None or max_x is None or min_abs_y is None:
-        return Domain(reals=frozenset(r_real))
+    bounds_x = dx.integer_bounds()
+    min_abs_y = dy.min_nonzero_abs_int()
+    if bounds_x is None or min_abs_y is None:
+        return Domain(ints=frozenset(r_ints), reals=frozenset(r_real))
+    min_x, max_x = bounds_x
     if op == Operator.int_div:
         m_bound = max(abs(min_x), abs(max_x))
         bound = -(-m_bound // min_abs_y)
-        return Domain(int_range=(-bound, bound), reals=frozenset(r_real))
+        return Domain(ints=frozenset(r_ints), int_range=(-bound, bound))
     max_abs_y = max(abs(dy.min_int() or 0), abs(dy.max_int() or 0))
     return Domain(
         int_range=(-(max_abs_y - 1), max_abs_y - 1),
@@ -451,11 +397,9 @@ def _eval_real_div(
     dx, dy = doms
     if dx.unknown or dy.unknown:
         return UNKNOWN_DOMAIN
-    has_zero_y = (
-        0 in dy.ints
-        or (dy.int_range is not None and dy.int_range[0] <= 0 <= dy.int_range[1])
-        or 0.0 in dy.reals
-    )
+    if any(d.int_count() + len(d.reals) == 0 for d in doms):
+        return EMPTY_DOMAIN
+    has_zero_y = dy.contains_int(0) or 0.0 in dy.reals
     if has_zero_y:
         context.diagnostics.warn("real_div divisor domain contains 0", expr_id=expr_id)
     cx, cy = dx.cardinality(), dy.cardinality()
@@ -483,13 +427,17 @@ def _eval_pow(
     if dx.is_empty() or dy.is_empty():
         return EMPTY_DOMAIN
     if dy == Domain(ints=frozenset({0})):
-        return Domain(ints=frozenset({1}))
+        return Domain(
+            ints=frozenset({1}) if dx.int_count() else frozenset(),
+            reals=frozenset({1.0}) if dx.reals else frozenset(),
+        )
     if dy == Domain(ints=frozenset({1})):
         return dx
 
-    min_base, max_base = dx.min_int(), dx.max_int()
+    base_bounds = dx.integer_bounds()
     max_exponent = dy.max_int()
-    if min_base is not None and max_base is not None and max_exponent is not None:
+    if base_bounds is not None and max_exponent is not None:
+        min_base, max_base = base_bounds
         magnitude = max(abs(min_base), abs(max_base))
         if (
             magnitude > 1
@@ -519,7 +467,8 @@ def _eval_pow(
                 reals_out.add(val)
         return Domain(ints=frozenset(ints_out), reals=frozenset(reals_out))
 
-    nonneg_count = _count_nonneg_ints(dy)
+    nonneg_ints_y = dy.restrict_integers(0, None)
+    nonneg_count = nonneg_ints_y.int_count()
     ix = dx.int_count()
     n_int = ix * nonneg_count
     assert cx is not None and cy is not None
@@ -529,41 +478,39 @@ def _eval_pow(
 
     r_real: set[float] = set()
     if n_real > 0:
-        nums_x = [*dx.iter_ints(), *dx.reals]
-        neg_ints_y = _iter_neg_ints(dy)
+        neg_ints_y = dy.restrict_integers(None, -1)
+        integer_pairs: Iterator[tuple[int | float, ...]] = iter(())
+        if ix and neg_ints_y.int_count():
+            integer_pairs = numeric_combinations(
+                [Domain(ints=dx.ints, int_range=dx.int_range), neg_ints_y], "integers"
+            )
         warned = False
-        for a in nums_x:
-            for b in (*neg_ints_y, *dy.reals):
-                val = _safe_pow(a, b)
-                if val is None:
-                    if not warned:
-                        context.diagnostics.warn(
-                            "pow domain contains undefined or non-real power",
-                            expr_id=expr_id,
-                        )
-                        warned = True
-                else:
-                    r_real.add(float(val))
-        if dx.reals and nonneg_count > 0:
-            for a in dx.reals:
-                for b in _iter_nonneg_ints(dy):
-                    val = _safe_pow(a, b)
-                    if val is not None:
-                        r_real.add(float(val))
+        for a, b in chain(NumericProduct(doms).reals(), integer_pairs):
+            val = _safe_pow(a, b)
+            if val is None:
+                if not warned:
+                    context.diagnostics.warn(
+                        "pow domain contains undefined or non-real power",
+                        expr_id=expr_id,
+                    )
+                    warned = True
+            else:
+                r_real.add(float(val))
 
     if n_int == 0:
         return Domain(reals=frozenset(r_real))
     if n_int + n_real <= context.threshold:
         r_ints: set[int] = set()
-        for a, b in product(dx.iter_ints(), _iter_nonneg_ints(dy)):
+        for a, b in product(dx.iter_ints(), nonneg_ints_y.iter_ints()):
             val = a**b
             assert isinstance(val, int)
             r_ints.add(val)
         return Domain(ints=frozenset(r_ints), reals=frozenset(r_real))
 
-    min_x, max_x = dx.min_int(), dx.max_int()
+    bounds_x = dx.integer_bounds()
     max_y = dy.max_int()
-    assert min_x is not None and max_x is not None and max_y is not None
+    assert bounds_x is not None and max_y is not None
+    min_x, max_x = bounds_x
     a_max = max(abs(min_x), abs(max_x))
     r_bound = max(1, int(a_max**max_y))
     return Domain(int_range=(-r_bound, r_bound), reals=frozenset(r_real))
@@ -609,8 +556,9 @@ def linear_integer(
     low_sum = offset
     high_sum = offset
     for c, d in zip(coeffs, term_doms, strict=True):
-        mi, ma = d.min_int(), d.max_int()
-        assert mi is not None and ma is not None
+        bounds = d.integer_bounds()
+        assert bounds is not None
+        mi, ma = bounds
         low_sum += min(c * mi, c * ma)
         high_sum += max(c * mi, c * ma)
     return Domain(int_range=(low_sum, high_sum))

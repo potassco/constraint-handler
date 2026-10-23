@@ -1,4 +1,9 @@
-"""Domain representations and topological domain computation."""
+"""Domain representations and topological domain computation.
+
+domain_from_values constructs exact explicit domains unless values would collide;
+join_domains combines domains soundly but may overapproximate their union.
+Domain equality and hashing compare representations rather than denotations.
+"""
 
 from .computer import compute_domains
 from .values import (
@@ -12,7 +17,7 @@ from .values import (
     DomainValue,
     SetValue,
     domain_from_values,
-    union_domains,
+    join_domains,
 )
 
 __all__ = [
@@ -27,5 +32,5 @@ __all__ = [
     "SetValue",
     "compute_domains",
     "domain_from_values",
-    "union_domains",
+    "join_domains",
 ]

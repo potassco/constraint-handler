@@ -92,18 +92,16 @@ def test_convert_float_string_and_none_values() -> None:
     variable_define(n, val(none, none)).
     """
     store = convert_string(source)
-    assert store._expressions[
-        store.variables[VariableRef("f1")].definitions[0].value
-    ] == ValueDef(ValueType.floating_point, 1.5)
-    assert store._expressions[
-        store.variables[VariableRef("f2")].definitions[0].value
-    ] == ValueDef(ValueType.floating_point, 2.0)
-    assert store._expressions[
-        store.variables[VariableRef("st")].definitions[0].value
-    ] == ValueDef(ValueType.string, "hello")
-    assert store._expressions[
-        store.variables[VariableRef("n")].definitions[0].value
-    ] == ValueDef(ValueType.none, None)
+    assert store._expressions[store.variables[VariableRef("f1")].definitions[0].value] == ValueDef(
+        ValueType.floating_point, 1.5
+    )
+    assert store._expressions[store.variables[VariableRef("f2")].definitions[0].value] == ValueDef(
+        ValueType.floating_point, 2.0
+    )
+    assert store._expressions[store.variables[VariableRef("st")].definitions[0].value] == ValueDef(
+        ValueType.string, "hello"
+    )
+    assert store._expressions[store.variables[VariableRef("n")].definitions[0].value] == ValueDef(ValueType.none, None)
 
 
 def test_convert_sets() -> None:
@@ -169,13 +167,9 @@ def test_ssa_conditional_if_and_seq2() -> None:
     assert len(defs) == 2
     cond_then = store._expressions[defs[0].condition]
     cond_else = store._expressions[defs[1].condition]
-    assert cond_then == internal_input.Operation(
-        Operator.geq, (in_ref, ValueDef(ValueType.integer, 0))
-    )
+    assert cond_then == internal_input.Operation(Operator.geq, (in_ref, ValueDef(ValueType.integer, 0)))
     assert cond_else == internal_input.Operation(Operator.lnot, (cond_then,))
-    assert (
-        store._expressions[store.variables[out_ref].definitions[0].value] == merged_ref
-    )
+    assert store._expressions[store.variables[out_ref].definitions[0].value] == merged_ref
 
 
 def test_ssa_swap_and_change() -> None:
@@ -202,9 +196,7 @@ def test_ssa_assert_and_conditional_assert() -> None:
         ),
     )
 
-    cond_assert_store = convert_file(
-        CORRECTNESS_DIR / "execution" / "conditional_assert.lp"
-    )
+    cond_assert_store = convert_file(CORRECTNESS_DIR / "execution" / "conditional_assert.lp")
     assert len(cond_assert_store.constraints) == 1
     cond_expr = cond_assert_store._expressions[cond_assert_store.constraints[0].expr]
     assert isinstance(cond_expr, internal_input.Operation)
@@ -224,19 +216,13 @@ def test_ssa_statement_python_tuple_and_internal_vars() -> None:
         # Internal variable 'l' must NOT be extracted into the store!
         assert all("_l_" not in v.name for v in list_store.variables)
 
-        tuple_def = list_store._expressions[
-            list_store.variables[tuple_ref].definitions[0].value
-        ]
+        tuple_def = list_store._expressions[list_store.variables[tuple_ref].definitions[0].value]
         assert isinstance(tuple_def, internal_input.Operation)
         assert tuple_def.op == Operator.python_eval
         assert isinstance(tuple_def.args[0], Python)
 
-        get_def = list_store._expressions[
-            list_store.variables[x_ssa_ref].definitions[0].value
-        ]
-        assert get_def == internal_input.Operation(
-            Operator.tuple_get, (tuple_ref, ValueDef(ValueType.integer, 0))
-        )
+        get_def = list_store._expressions[list_store.variables[x_ssa_ref].definitions[0].value]
+        assert get_def == internal_input.Operation(Operator.tuple_get, (tuple_ref, ValueDef(ValueType.integer, 0)))
 
 
 def test_ssa_statement_python_with_inputs_and_integrity() -> None:
@@ -248,27 +234,21 @@ def test_ssa_statement_python_with_inputs_and_integrity() -> None:
     aug_store = convert_file(CORRECTNESS_DIR / "execution" / "python_augassign.lp")
     assert VariableRef('execution_output(prg,"x")') in aug_store.variables
 
-    ign_store = convert_file(
-        CORRECTNESS_DIR / "execution" / "python_integrity_should_be_ignored.lp"
-    )
+    ign_store = convert_file(CORRECTNESS_DIR / "execution" / "python_integrity_should_be_ignored.lp")
     assert len(ign_store.constraints) == 5
     assert all(c.is_check for c in ign_store.constraints)
 
 
 def test_ssa_unrun_execution_and_implicit_variables() -> None:
     """Verify unrun executions define None outputs and implicit variables resolve cleanly."""
-    unrun_store = convert_string(
-        """
+    unrun_store = convert_string("""
         execution_declare(p, assign(y, val(int, 1)), (x, ()), (y, ())).
-        """
-    )
+        """)
     out_def = unrun_store.variables[VariableRef("execution_output(p,y)")].definitions[0]
     assert unrun_store._expressions[out_def.value] == ValueDef(ValueType.none, None)
 
     imp_store = convert_file(CORRECTNESS_DIR / "execution" / "implicit_variable.lp")
-    v5_def = imp_store.variables[
-        VariableRef("execution_output(miss_input,v5)")
-    ].definitions[0]
+    v5_def = imp_store.variables[VariableRef("execution_output(miss_input,v5)")].definitions[0]
     assert imp_store._expressions[v5_def.value] == ValueDef(ValueType.none, None)
 
 
@@ -279,14 +259,12 @@ def test_static_python_and_lambda_expressions() -> None:
     assert VariableRef("abs_value") in static_store.variables
     assert VariableRef("sum_value") in static_store.variables
 
-    lam_store = convert_string(
-        """
+    lam_store = convert_string("""
         variable_define(r, operation(lambda((x, ()), operation(add, (variable(x), (val(int, 1), ())))), (val(int, 5), ()))).
         variable_define(f, lambda((x, ()), variable(x))).
         variable_define(call_f, operation(variable(f), (val(int, 3), ()))).
         variable_define(tup, (val(int, 1), val(string, "a"))).
-        """
-    )
+        """)
     assert VariableRef("r") in lam_store.variables
     assert VariableRef("f") in lam_store.variables
     assert VariableRef("call_f") in lam_store.variables

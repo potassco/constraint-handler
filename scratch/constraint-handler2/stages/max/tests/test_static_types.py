@@ -24,9 +24,7 @@ from constraint_handler.static_types import (
 from constraint_handler.util import compute_evaluation_order
 
 
-def _static_types_for(
-    store: ConstraintStore, diagnostics: Diagnostics | None = None
-) -> StaticTypeStore:
+def _static_types_for(store: ConstraintStore, diagnostics: Diagnostics | None = None) -> StaticTypeStore:
     """Compute evaluation order and static types for a store."""
     diag = diagnostics if diagnostics is not None else Diagnostics()
     order = compute_evaluation_order(store, diag)
@@ -98,14 +96,10 @@ def test_set_variables_and_set_literals() -> None:
     diag = Diagnostics()
     types = _static_types_for(store, diag)
     assert not diag.has_errors
-    assert types[s1] == frozenset(
-        {SetOf(frozenset({ValueType.integer, ValueType.string}), True)}
-    )
+    assert types[s1] == frozenset({SetOf(frozenset({ValueType.integer, ValueType.string}), True)})
     assert types[s2] == frozenset({SetOf(frozenset({ValueType.integer}), False)})
     assert types[s_empty] == frozenset({SetOf(frozenset(), True)})
-    assert types[store.expressions[store.constraints[0].expr]] == frozenset(
-        {SetOf(frozenset(), True)}
-    )
+    assert types[store.expressions[store.constraints[0].expr]] == frozenset({SetOf(frozenset(), True)})
     assert types[store.expressions[store.constraints[1].expr]] == frozenset(
         {SetOf(frozenset({ValueType.integer, ValueType.real}), False)}
     )
@@ -144,9 +138,7 @@ def test_tuples_and_tuple_get() -> None:
     )
     assert types[VariableRef("t0")] == frozenset({ValueType.integer, ValueType.real})
     assert types[VariableRef("t1")] == frozenset({ValueType.string})
-    assert types[VariableRef("t_dyn")] == frozenset(
-        {ValueType.integer, ValueType.real, ValueType.string}
-    )
+    assert types[VariableRef("t_dyn")] == frozenset({ValueType.integer, ValueType.real, ValueType.string})
     assert types[VariableRef("t_empty")] == frozenset()
 
 
@@ -338,22 +330,14 @@ def test_set_operations_and_call_operations() -> None:
     types = _static_types_for(store, diag)
     assert not diag.has_errors
     assert types[VariableRef("u1")] == frozenset({SetOf(frozenset(), True)})
-    assert types[VariableRef("u2")] == frozenset(
-        {SetOf(frozenset({ValueType.integer}), False)}
-    )
-    assert types[VariableRef("inter")] == frozenset(
-        {SetOf(frozenset({ValueType.integer, ValueType.string}), True)}
-    )
-    assert types[VariableRef("diff")] == frozenset(
-        {SetOf(frozenset({ValueType.integer}), True)}
-    )
+    assert types[VariableRef("u2")] == frozenset({SetOf(frozenset({ValueType.integer}), False)})
+    assert types[VariableRef("inter")] == frozenset({SetOf(frozenset({ValueType.integer, ValueType.string}), True)})
+    assert types[VariableRef("diff")] == frozenset({SetOf(frozenset({ValueType.integer}), True)})
     assert types[VariableRef("subset")] == frozenset({ValueType.boolean})
     assert types[VariableRef("isin")] == frozenset({ValueType.boolean})
     assert types[VariableRef("notin")] == frozenset({ValueType.boolean})
     assert types[VariableRef("card")] == frozenset({ValueType.integer})
-    assert types[VariableRef("lam_res")] == frozenset(
-        {ValueType.integer, ValueType.real}
-    )
+    assert types[VariableRef("lam_res")] == frozenset({ValueType.integer, ValueType.real})
     assert types[VariableRef("py_res")] == UnknownType()
     assert types[VariableRef("fold_res")] == UnknownType()
     assert types[VariableRef("absorb")] == UnknownType()
