@@ -1,21 +1,17 @@
-import operator
-import sys
 from collections.abc import Iterable, Sequence
 from itertools import product
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import clingo
 from clingo import Symbol
 
 import constraint_handler.schemas.propagator_atom as prop_atom
 from constraint_handler import evaluator, multimap, myClorm
+from constraint_handler.optimization_modes import OptimizationModeHandler
 from constraint_handler.PropagatorConstants import (
-    OPTIMIZATION_HELPER_PROGRAM,
-    OPTIMIZATION_STAGE_ATOM,
     OTHER_ENGINE_VAR_NAME,
     PROPAGATOR_CHECK_MODE_ATOM,
     EvaluationResult,
-    OptimizationStrength,
     ValueStatus,
     propagator_warning_t,
 )
@@ -52,10 +48,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         symbol2var: Maps variable symbols to variable objects.
         literal2var: Maps solver literals to variable objects.
         evaluatevars: List of `EvaluateVariable` instances to evaluate.
-        optimization_sum: Optimization handler tracking objective sums.
-        best_value: Current best objective optimization vector.
-        using_optimization: Whether optimization is active.
-        optimization_strength: Whether equal quality solutions are allowed when optimizing.
+        optimization: Controller for objective sums, pruning, and optimal-model enumeration.
         environment: Evaluation environment built from solver identifier.
         check_only: If True, `propagate` becomes a no-op. Will only evaluate variables in `check`.
         errors: Warnings collected while evaluating variables or reading the input program.
@@ -81,11 +74,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.evaluatevars: list[EvaluateVariable] = []
 
-        self.optimization_sum: OptimizationHandler = OptimizationHandler()
+        self.optimization: OptimizationModeHandler = OptimizationModeHandler()
         self.shared_values: list[SharedValue] = []
-        self.best_value: list[int | float] = [-sys.maxsize]
-        self.using_optimization: bool = False
-        self.optimization_strength: OptimizationStrength = OptimizationStrength.STRICT
 
         self.environment: myClorm.ImmutableList[expression.constant] = myClorm.ImmutableList()
 
@@ -96,10 +86,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.reasoning_mode_handler = ReasoningModeHandler()
         self.python_model: set[result.ResultAtom] | None = None
 
-        self.optimization_stage_lits: dict[Literal[1, 2, 3], int] = {1: -1, 2: -1, 3: -1}
-        self.previously_opt_stage_2: bool = False
-        self.optimal_models_wanted: int = 0
-        self.optimal_models_found: int = 0
         self.nogood_queue: list[Iterable[int]] = []
 
         self.var_ranks: dict[Symbol, int] = {}
@@ -112,10 +98,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_configuration(self, ctl: clingo.Control):
         """
-        Read clingo configuration and initialize reasoning-mode settings.
+        Read clingo configuration and initialize reasoning and optimization settings.
 
-        For brave/cautious modes, this configures the solver heuristic and adds a
-        helper program to facilitate the reasoning stages.
+        The mode handlers configure their respective encodings and report incompatible heuristics.
 
         Args:
             ctl: Clingo control instance.
@@ -124,26 +109,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if reasoning_warning is not None:
             self.errors.append(reasoning_warning)
 
-        ctl.add("base", [], OPTIMIZATION_HELPER_PROGRAM)
-        self.optimal_models_wanted = 1
-
-        # TODO: we shoudln't be changing the ctl.configuration
-        if ctl.configuration.solve.opt_mode == "optN":  # ty:ignore[unresolved-attribute]
-            # if optN is used, then we get the amount of optimal models from the configuration
-            # unfortunately, here we have to change the configuration.
-            self.optimal_models_wanted: int = int(
-                ctl.configuration.solve.models
-            )  # ty:ignore[invalid-argument-type,unresolved-attribute]
-            ctl.configuration.solve.models = 0  # ty:ignore[invalid-assignment]
-
-            if ctl.configuration.solver.heuristic != "Domain":  # ty:ignore[unresolved-attribute]
-                self.errors.append(
-                    warning.Warning(
-                        warning.Propagator(),
-                        (),
-                        f"Optimization requires --heuristic=Domain, but {ctl.configuration.solver.heuristic} was set. This may lead to incorrect results.",  # ty:ignore[unresolved-attribute]
-                    )
-                )
+        optimization_warning = self.optimization.configure(ctl)
+        if optimization_warning is not None:
+            self.errors.append(optimization_warning)
 
     def init(self, init: clingo.PropagateInit) -> None:
         """
@@ -161,7 +129,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.var2expr.clear()
         self.lit2expr.clear()
         self.value_registry = VariableValueRegistry()
-        self.optimization_sum = OptimizationHandler()
+        self.optimization.reset()
         self.reasoning_mode_handler.reset()
         self.environment = {}
         self.errors.clear()
@@ -185,7 +153,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.set_parents()
 
         self.reasoning_mode_handler.add_helper_atoms(init, self.symbol2var.get_variables())
-        self.add_optimization_helper_atoms(init)
+        self.optimization.add_helper_atoms(init, self.add_watch)
 
         self.get_forbidden_warnings(init)
 
@@ -676,53 +644,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         return possible_values
 
-    def add_optimization_helper_atoms(self, ctl: clingo.PropagateInit) -> None:
-        """Register helper literals used to prune optimization candidates."""
-        if not self.using_optimization:
-            return
-
-        for atom in ctl.symbolic_atoms.by_signature(OPTIMIZATION_STAGE_ATOM, 1):
-            literal = ctl.solver_literal(atom.literal)
-            stage = atom.symbol.arguments[0].number
-
-            assert stage in (1, 2), f"Unknown optimization stage atom: {atom.symbol}"
-            self.optimization_stage_lits[stage] = literal
-            if stage == 2:
-                self.add_watch(literal)
-
-    def set_optimization_check_strength(self, strength: Literal["lt", "le"]) -> None:
-        """
-        Configure whether optimization pruning requires strict improvement.
-
-        Args:
-            strength: Comparison mode.
-                - `"lt"`: only strictly better solutions are accepted.
-                - `"le"`: better or equal solutions are accepted.
-
-        Raises:
-            ValueError: If `strength` is not one of `"lt"` or `"le"`.
-        """
-
-        assert strength in ("lt", "le"), f"Unknown optimization check strength: {strength}"
-
-        if strength == "lt":
-            self.optimization_check_func = operator.lt
-            self.optimization_strength = OptimizationStrength.STRICT
-        elif strength == "le":
-            self.optimization_check_func = operator.le
-            self.optimization_strength = OptimizationStrength.LENIENT
-        else:
-            raise ValueError(f"Unknown optimization check strength: {strength}")
-
-    def set_optimization_best_value(self, value: list[int | float]) -> None:
-        """
-        Set the best (incumbent) optimization value used for pruning.
-
-        Args:
-            value: Objective vector ordered by priority.
-        """
-        self.best_value = value
-
     def check(self, control: clingo.PropagateControl) -> None:
         """
         Perform a full consistency check using the current solver assignment.
@@ -743,12 +664,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # Hence, we undo stuff here
             # This is probably severly inefficient as we re-evaluate everything every time
             # maybe there is a way to do this more efficiently?
-            if not self.previously_opt_stage_2 and control.assignment.is_true(self.optimization_stage_lits[2]):
+            if self.optimization.activate_equal_stage(control.assignment):
                 # if we are now in the second stage of optimization,
                 # we can now look for equal valued solutions
-                self.set_optimization_check_strength("le")
                 print("Now in optimization stage 2, looking for equal or better solutions")
-                self.previously_opt_stage_2 = True
 
             for expr in self.value_registry.get_all():
                 if expr.reset(0):
@@ -761,7 +680,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     for expr in self.var2expr.get(var.var, []):
                         expr.vars_counter -= 1
 
-            self.optimization_sum.reset(0)
+            self.optimization.reset_sums(0)
 
             to_evaluate: set[VariableType] = set()
             to_evaluate_expressions: set[VariableValue] = set()
@@ -810,9 +729,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # if everything is good, we update the best value
         # TODO: Maybe we have to move this next stuff to the on_model function
         # in case there are multiple propagators?
-        if self.using_optimization and self.optimization_sum.get_value() > self.best_value:
-            print(f"New best optimization value found: {self.optimization_sum.get_value()} (old: {self.best_value})")
-            self.best_value = self.optimization_sum.get_value()
+        best_value_update = self.optimization.update_best_value()
+        if best_value_update is not None:
+            old_value, new_value = best_value_update
+            print(f"New best optimization value found: {new_value} (old: {old_value})")
 
     def handle_warning_ignore(self, ctl: clingo.PropagateControl) -> None:
         for __warning, (literal, observed) in self.ignored_warnings.items():
@@ -907,12 +827,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         to_evaluate: set[VariableType] = set()
         to_evaluate_expressions: set[VariableValue] = set()
         for rlit in changes:
-            if self.using_optimization and not self.previously_opt_stage_2 and rlit == self.optimization_stage_lits[2]:
-                # if we are now in the second stage of optimization,
-                # we can now look for equal valued solutions
-                self.set_optimization_check_strength("le")
-                print("Now in optimization stage 2, looking for equal or better solutions")
-                # continue  # this lit should not be present in any variable or expr
+            self.optimization.activate_equal_stage(control.assignment, rlit)
 
             to_evaluate.update(self.get_literal2var(rlit))
 
@@ -940,39 +855,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Returns:
             bool: True if a nogood was added requiring a backtrack.
         """
-        if not self.using_optimization:
+        extra_literals = self.optimization.evaluate_optimization_sums(ctl)
+        if extra_literals is None:
             return False
-        self.optimization_sum.evaluate(ctl)
-
-        for i, _sum in enumerate(self.optimization_sum.get_value()):
-            if _sum > self.best_value[i] or self.optimization_sum.has_unassigned(i):
-                # if the value is better already,
-                # rest of the priorities do not matter
-
-                # if the value is not yet better but has unassigned variables, we cannot be sure yet
-                # so we also break (since the behaviour for the rest of the priorities depends if this one is better, the same, or worse)
-                break
-            elif _sum == self.best_value[i]:
-                # value is the same and has been fully assigned, check next priority
-                # if this is the last value, all priorities were the same.
-                if i == len(self.best_value) - 1 and self.optimization_strength == OptimizationStrength.STRICT:
-                    # last priority and strict mode, add nogood to exclude this solution
-                    # here, we dont know if this solution is also optimal or not, so we include the optimization stage literal
-                    self.add_nogood_for_variable(
-                        ctl, self.optimization_sum, extra_literals=[self.optimization_stage_lits[1]]
-                    )
-                    return True
-                else:
-                    # not last priority or lenient mode, keep looking at next priority
-                    continue
-            elif _sum < self.best_value[i] and not self.optimization_sum.has_unassigned(i):
-                # if the value is worse and fully assigned, we can already add a nogood to exclude this solution
-                # we dont add the stage literal since it is worse than the current best,
-                # so it does not matter if we are looking for better or equal solutions to the optimal
-                self.add_nogood_for_variable(ctl, self.optimization_sum)
-                return True
-
-        return False
+        self.add_nogood_for_variable(ctl, self.optimization.sums, extra_literals=extra_literals)
+        return True
 
     def add_nogood_for_variable(
         self,
@@ -1240,7 +1127,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 for expr in self.var2expr.get(var.var, []):
                     expr.vars_counter -= 1
 
-        self.optimization_sum.reset(assignment.decision_level)
+        self.optimization.reset_sums(assignment.decision_level)
 
     def get_engine_variables(self, ctl: clingo.PropagateInit):
         """
@@ -1506,7 +1393,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def get_optimization_sums(self, ctl: clingo.PropagateInit):
         """
-        Load optimization sum declarations from ASP facts and create OptimizationSum instances.
+        Load optimization sum declarations from ASP facts into the optimization controller.
 
         Args:
             ctl: Clingo PropagateInit object.
@@ -1515,13 +1402,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         maxSums = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_optimize_maximizeSum)
 
         for (expr, symbol, priority, _), literal in maxSums.items():
-            self.using_optimization = True
             value = self.get_variable_value(expr, literal)
             self.add_watch(literal)
             self.add_watch(-literal)
-            self.optimization_sum.add_value(symbol, value, priority)
+            self.optimization.add_value(symbol, value, priority)
 
-        self.best_value = [-sys.maxsize] * self.optimization_sum.get_sum_count()
+        self.optimization.initialize_best_value()
 
     def get_set_declarations(self, ctl: clingo.PropagateInit):
         """
@@ -1711,8 +1597,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             self.handle_on_model_warning([warning.Warning(kind, (), msg) for kind, msg in errors])
 
-        if self.using_optimization:
-            self.handle_on_model_warning(self.optimization_sum.get_errors())
+        if self.optimization.enabled:
+            self.handle_on_model_warning(self.optimization.get_errors())
 
         self.handle_on_model_warning(self.errors)
 
@@ -1733,12 +1619,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 model.extend([clAtom])
 
         self.add_shared_values(model)
-        if self.using_optimization:
-            if clingo.Function(OPTIMIZATION_STAGE_ATOM, [clingo.Number(2)]) in model.symbols(atoms=True):
-                self.optimal_models_found += 1
-            if self.optimal_models_wanted > 0 and self.optimal_models_found >= self.optimal_models_wanted:
-                # Stop search once the desired number of optimal models is found by adding an empty clause to make the program unsat
-                model.context.add_clause([])
+        if self.optimization.record_model(model):
+            # Stop search once the requested number of optimal models is found.
+            model.context.add_clause([])
 
     def handle_on_model_value(self, var: Symbol, final_value: Any):
         """
