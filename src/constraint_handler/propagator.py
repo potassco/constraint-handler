@@ -145,8 +145,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.get_variables(init)
         self.get_set_declarations(init)
         self.get_multimap_declarations(init)
-        self.get_optimization_sums(init)
         self.get_engine_variables(init)
+        self.get_optimization_sums(init)
         self.get_evaluate(init)
         self.get_shared_values(init)
 
@@ -669,18 +669,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 # we can now look for equal valued solutions
                 print("Now in optimization stage 2, looking for equal or better solutions")
 
-            for expr in self.value_registry.get_all():
-                if expr.reset(0):
-                    for var in self.get_expr2var(expr):
-                        var.expressions_evaluated_counter -= 1
-
-            for var in self.symbol2var.get_variables():
-                if var.reset(0):
-                    self.evaluations.remove_var_from_evaluations(var)
-                    for expr in self.var2expr.get(var.var, []):
-                        expr.vars_counter -= 1
-
-            self.optimization.reset_sums(0)
+            self.reset_evaluations(0)
 
             to_evaluate: set[VariableType] = set()
             to_evaluate_expressions: set[VariableValue] = set()
@@ -1116,18 +1105,27 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             assignment: Current assignment after backtracking.
             changes: Literals undone by clingo.
         """
+        self.reset_evaluations(assignment.decision_level)
+
+    def reset_evaluations(self, decision_level: int) -> None:
+        """Reset evaluations and dependency counters at or above a decision level.
+
+        Args:
+            decision_level: Decision level threshold for resetting expressions,
+                variables, and optimization sums.
+        """
         for expr in self.value_registry.get_all():
-            if expr.reset(assignment.decision_level):
+            if expr.reset(decision_level):
                 for var in self.get_expr2var(expr):
                     var.expressions_evaluated_counter -= 1
 
         for var in self.symbol2var.get_variables():
-            if var.reset(assignment.decision_level):
+            if var.reset(decision_level):
                 self.evaluations.remove_var_from_evaluations(var)
                 for expr in self.var2expr.get(var.var, []):
                     expr.vars_counter -= 1
 
-        self.optimization.reset_sums(assignment.decision_level)
+        self.optimization.reset_sums(decision_level)
 
     def get_engine_variables(self, ctl: clingo.PropagateInit):
         """
