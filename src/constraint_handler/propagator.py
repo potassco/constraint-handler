@@ -6,7 +6,8 @@ import clingo
 from clingo import Symbol
 
 import constraint_handler.schemas.propagator_atom as prop_atom
-from constraint_handler import evaluator, multimap, myClorm
+from constraint_handler import evaluator, myClorm
+from constraint_handler.model_builder import ModelBuilder
 from constraint_handler.optimization_modes import OptimizationModeHandler
 from constraint_handler.PropagatorConstants import (
     OTHER_ENGINE_VAR_NAME,
@@ -22,9 +23,7 @@ from constraint_handler.PropagatorVariables import (
     EvaluateVariable,
     Evaluations,
     OptimizationHandler,
-    SetVariable,
     SharedValue,
-    Variable,
     VariableManager,
     VariableType,
     VariableValue,
@@ -32,7 +31,8 @@ from constraint_handler.PropagatorVariables import (
     is_evaluation_possible,
 )
 from constraint_handler.reasoning_modes import ReasoningModeHandler
-from constraint_handler.schemas import expression, internal, result, type_, warning
+from constraint_handler.schemas import expression, internal, result, warning
+from constraint_handler.variable_loader import VariableLoader
 
 
 class ConstraintHandlerPropagator(clingo.Propagator):
@@ -63,7 +63,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             check_only: If True, do not perform propagation (only allow checks).
         """
-        self.symbol2var: VariableManager = VariableManager()
+        self.variable_manager: VariableManager = VariableManager()
         self.literal2var: dict[int, list[VariableType]] = {}
         self.evaluations: Evaluations = Evaluations()
 
@@ -121,7 +121,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             init: Clingo PropagateInit object
         """
-        self.symbol2var = VariableManager()
+        self.variable_manager = VariableManager()
         self.evaluations = Evaluations()
         self.literal2var.clear()
         self.evaluatevars.clear()
@@ -141,18 +141,23 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_solver_identifier(init)
 
-        self.get_variable_interface(init)
-        self.get_variables(init)
-        self.get_set_declarations(init)
-        self.get_multimap_declarations(init)
-        self.get_engine_variables(init)
+        loader = VariableLoader(
+            self.variable_manager,
+            self.errors,
+            self.evaluatevars,
+            self.shared_values,
+            get_variable_value=self.get_variable_value,
+            register_variable_value=self.register_variable_value,
+            add_literal2var=self.add_literal2var,
+            add_watch=self.add_watch,
+        )
+        loader.load_variables(init)
         self.get_optimization_sums(init)
-        self.get_evaluate(init)
-        self.get_shared_values(init)
+        loader.load_evaluations(init)
 
         self.set_parents()
 
-        self.reasoning_mode_handler.add_helper_atoms(init, self.symbol2var.get_variables())
+        self.reasoning_mode_handler.add_helper_atoms(init, self.variable_manager.get_variables())
         self.optimization.add_helper_atoms(init, self.add_watch)
 
         self.get_forbidden_warnings(init)
@@ -168,7 +173,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         # self.apply_preprocessing(valuations, init)
 
-        self.evaluations.init(list(self.symbol2var.get_variables()))
+        self.evaluations.init(list(self.variable_manager.get_variables()))
 
         self.add_watches_to_ctl(init)
 
@@ -313,10 +318,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         while changed:
             changed = False
             vars_this_loop: set[Symbol] = set()
-            for var in self.symbol2var.keys():  # noqa: SIM118
+            for var in self.variable_manager.keys():  # noqa: SIM118
                 if var in known_vars:
                     continue
-                if self.symbol2var.get_dependencies(var).issubset(known_vars):
+                if self.variable_manager.get_dependencies(var).issubset(known_vars):
                     self.var_ranks[var] = rank
                     changed = True
                     vars_this_loop.add(var)
@@ -324,7 +329,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             known_vars.update(vars_this_loop)
             rank += 1
 
-        for v in set(self.symbol2var.keys()) - known_vars:
+        for v in set(self.variable_manager.keys()) - known_vars:
             # if a variable can't have its dependencies satisfied
             # (e.g., one of them does not exist)
             # then we just assign rank -1
@@ -368,7 +373,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         # TODO: parts of this are very similar to check_ensure. Maybe make the similar parts into a function?
         ensure_pairs = {}
-        for ensure_var in self.symbol2var.get_variables_by_type(EnsureVariable.__name__):
+        for ensure_var in self.variable_manager.get_variables_by_type(EnsureVariable.__name__):
             ensure_var = cast(EnsureVariable, ensure_var)
             if len(ensure_var.vars()) != 2:
                 continue
@@ -440,12 +445,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         changed = False
         for var in evaluation_order:
-            deps = list(self.symbol2var.get_dependencies(var))
+            deps = list(self.variable_manager.get_dependencies(var))
             if len(deps) == 0:
                 continue
 
             possible_values = set()
-            for _var in self.symbol2var[var].values():
+            for _var in self.variable_manager[var].values():
                 possible_values.update(_var.simple_evaluate(valuations, self.environment))
 
             if valuations[var].issubset(possible_values):
@@ -481,7 +486,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for var_symb in reversed(evaluation_order):
             if var_symb not in var_values:
                 var_values[var_symb] = valuations[var_symb]
-            for var in self.symbol2var[var_symb].values():
+            for var in self.variable_manager[var_symb].values():
                 for dep, values in var.asses_dependencies_values(valuations, self.environment).items():
                     var_values.setdefault(dep, set()).update(values)
 
@@ -509,11 +514,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             init: The clingo.PropagateInit instance used for setting possible values.
         """
         for var_symb, values in valuations.items():
-            for var in self.symbol2var[var_symb].values():
+            for var in self.variable_manager[var_symb].values():
                 var.set_possible_values(values, init)
 
         del_list = []
-        for ensure_var in self.symbol2var.get_variables_by_type(EnsureVariable.__name__):
+        for ensure_var in self.variable_manager.get_variables_by_type(EnsureVariable.__name__):
             ensure_var = cast(EnsureVariable, ensure_var)
 
             deps: list[Symbol] = list(ensure_var.vars())
@@ -535,7 +540,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 del_list.append(ensure_var)
 
         for ensure_var in del_list:
-            self.symbol2var.remove(ensure_var.var)
+            self.variable_manager.remove(ensure_var.var)
 
     def infer_domain(self, valuations: dict[Symbol, set[Any]], eval_order: list[Symbol]) -> None:
         """
@@ -548,14 +553,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         preprocessed_something = False
         current_vars = set(valuations.keys())
-        for var in self.symbol2var.keys():  # noqa: SIM118
+        for var in self.variable_manager.keys():  # noqa: SIM118
             if var in valuations:
                 continue
 
             if (
-                self.symbol2var.has_var_type(var, EnsureVariable.__name__)
-                or self.symbol2var.has_var_type(var, BoolEvaluateVariable.__name__)
-                or self.symbol2var.has_var_type(var, DictVariable.__name__)
+                self.variable_manager.has_var_type(var, EnsureVariable.__name__)
+                or self.variable_manager.has_var_type(var, BoolEvaluateVariable.__name__)
+                or self.variable_manager.has_var_type(var, DictVariable.__name__)
             ):
                 continue
             preprocessed = self.preprocess_variable(valuations, var, current_vars)
@@ -581,21 +586,21 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Returns:
             bool: True if the variable was preprocessed, False if var does not exist or is already in valuations.
         """
-        if var not in self.symbol2var:
+        if var not in self.variable_manager:
             return False
 
-        if self.symbol2var.has_var_type(var, EnsureVariable.__name__) or self.symbol2var.has_var_type(
+        if self.variable_manager.has_var_type(var, EnsureVariable.__name__) or self.variable_manager.has_var_type(
             var, BoolEvaluateVariable.__name__
         ):
             # Ensure variables are not preprocessed here, they are handled in check_ensures
             return False
 
-        deps = list(self.symbol2var.get_dependencies(var))
+        deps = list(self.variable_manager.get_dependencies(var))
 
         possible_values: set[Any] = set()
 
         if all(dep in current_vars for dep in deps):
-            for _var in self.symbol2var[var].values():
+            for _var in self.variable_manager[var].values():
                 possible_values.update(_var.simple_evaluate(valuations, self.environment))
         else:
             return False
@@ -616,7 +621,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
 
         possible_values: dict[Symbol, set[Any]] = {}
-        for ensure_var in self.symbol2var.get_variables_by_type(EnsureVariable.__name__):
+        for ensure_var in self.variable_manager.get_variables_by_type(EnsureVariable.__name__):
             ensure_var = cast(EnsureVariable, ensure_var)
             if ensure_var.expression.literal != 1:
                 # only ensures that are always active can prune values
@@ -673,7 +678,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             to_evaluate: set[VariableType] = set()
             to_evaluate_expressions: set[VariableValue] = set()
-            for var in self.symbol2var.get_variables():
+            for var in self.variable_manager.get_variables():
                 if var.get_value() == ValueStatus.NOT_SET:
                     # print("var checking in check: ", var)
                     to_evaluate.add(var)
@@ -749,7 +754,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         model, nogoods, enqueue_now = self.reasoning_mode_handler.process_model(
             self.python_model,
             ctl,
-            lambda symbol: self.symbol2var[symbol].values(),
+            lambda symbol: self.variable_manager[symbol].values(),
             self.get_reasons,
         )
         self.python_model = model
@@ -880,9 +885,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ng = ng.union(extra_literals)
         prop_stop = ctl.add_nogood(ng, lock=True)
         if conflict and prop_stop:
-            assert (
-                False
-            ), f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
+            assert False, (
+                f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
+            )
 
         return not prop_stop
 
@@ -1084,9 +1089,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             seen = set()
         reasons = var.active_literals
         for dvar in var.vars():
-            if dvar not in self.symbol2var:
+            if dvar not in self.variable_manager:
                 continue
-            for vartype in self.symbol2var[dvar].values():
+            for vartype in self.variable_manager[dvar].values():
                 if vartype not in seen:
                     seen.add(vartype)
                     reasons = reasons.union(self.get_reasons(vartype, seen))
@@ -1119,264 +1124,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 for var in self.get_expr2var(expr):
                     var.expressions_evaluated_counter -= 1
 
-        for var in self.symbol2var.get_variables():
+        for var in self.variable_manager.get_variables():
             if var.reset(decision_level):
                 self.evaluations.remove_var_from_evaluations(var)
                 for expr in self.var2expr.get(var.var, []):
                     expr.vars_counter -= 1
 
         self.optimization.reset_sums(decision_level)
-
-    def get_engine_variables(self, ctl: clingo.PropagateInit):
-        """
-        Load atoms that represent the values of variables from the input program.
-
-        This reads `_se_value`, `_set_contains`, and `Multimap_value` atoms and updates the
-        corresponding variables with the assigned values.
-        This is used for variables whose values are defined by other engines
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-        if len(self.symbol2var) == 0:
-            # if there are no variables, we can skip this part since propagator is not used
-            return
-        value_atoms = myClorm.findInPropagateInit(ctl, internal._se_value)
-        set_value_atoms = myClorm.findInPropagateInit(ctl, internal._set_contains)
-        multimap_value_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Multimap_value)
-
-        for (name, val), _literal in value_atoms.items():
-            if not isinstance(name, expression.Variable):
-                # ignore other stuff
-                continue
-
-            # if it is a variable, get the symbol for it
-            _name = myClorm.pytocl(name).arguments[0]
-            if _name not in self.symbol2var:
-                if isinstance(val, internal.Ref) and isinstance(val.expr, expression.Variable) and val.expr == name:
-                    # If the set references itself, it should get its values later from _set_contains,
-                    # Here, we make the set variable
-                    # TODO: make a difference for sets and multimaps,
-                    # currently, Ref is only implemented for sets so we do nothing for multimaps here
-                    self.symbol2var.add_variable(_name, SetVariable(OTHER_ENGINE_VAR_NAME, _name, _literal))
-                    self.add_watch(_literal)
-                    self.add_watch(-_literal)
-                    self.add_literal2var(_literal, self.symbol2var.get_variable(_name, SetVariable.__name__))
-                    continue
-                # If the value references something else, or it is not a reference,
-                # we make a normal variable and add the value to it,
-                self.symbol2var.add_variable(_name, Variable(OTHER_ENGINE_VAR_NAME, _name))
-
-            variable: Variable = cast(Variable, self.symbol2var.get_variable(_name, Variable.__name__))
-            expr: expression.Expr = val.expr if isinstance(val, internal.Ref) else val
-
-            value = self.get_variable_value(expr, _literal)
-            variable.add_value(value, _literal)
-            self.register_variable_value(variable, value)
-
-            self.add_watch(_literal)
-            self.add_watch(-_literal)
-            self.add_literal2var(_literal, self.symbol2var.get_variable(_name, Variable.__name__))
-
-        for (name, val_set), _literal in set_value_atoms.items():
-            if not isinstance(name, expression.Variable):
-                continue
-            _name = myClorm.pytocl(name).arguments[0]
-
-            if _name not in self.symbol2var:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.undeclared),  # ty:ignore[unresolved-attribute]
-                        (_name,),
-                        f"Warning: Got set value of another engine for variable that does not exist! Ignoring value {_name}, {val_set}.",
-                    )
-                )
-                continue
-
-            set_variable = cast(SetVariable, self.symbol2var.get_variable(_name, SetVariable.__name__))
-
-            expr: expression.Expr = val_set.expr if isinstance(val_set, internal.Ref) else val_set
-
-            value = self.get_variable_value(expr, _literal)
-            set_variable.add_value(value, None)
-            self.register_variable_value(set_variable, value)
-            self.add_watch(_literal)
-            self.add_watch(-_literal)
-
-        for (name, key, val), _literal in multimap_value_atoms.items():
-            if name not in self.symbol2var:
-                multimap_variable = DictVariable(OTHER_ENGINE_VAR_NAME, name, _literal)
-                self.symbol2var.add_variable(name, multimap_variable)
-            else:
-                if self.symbol2var.has_var_type(name, DictVariable.__name__):
-                    # TODO: fix issue where value(myvar, ref(dict...)) makes a variable when it should not
-                    multimap_variable = DictVariable(OTHER_ENGINE_VAR_NAME, name, _literal)
-                    self.symbol2var.add_variable(name, multimap_variable)
-                multimap_variable = cast(DictVariable, self.symbol2var.get_variable(name, DictVariable.__name__))
-
-            key_value = self.get_variable_value(key, 1)
-            value = self.get_variable_value(val, _literal)
-            multimap_variable.add_value(key_value, value)
-            self.register_variable_value(multimap_variable, key_value)
-            self.register_variable_value(multimap_variable, value)
-
-            self.add_watch(_literal)
-            self.add_watch(-_literal)
-            self.add_literal2var(_literal, self.symbol2var.get_variable(name, DictVariable.__name__))
-
-    def get_variable_interface(self, ctl: clingo.PropagateInit):
-
-        user_var_names = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_interface)
-
-        for (id, _), _ in user_var_names.items():
-            self.symbol2var.add_user_variable_name(id)
-
-    def get_variables(self, ctl: clingo.PropagateInit):
-        """
-        Load base variable declarations/definitions/domains from ASP facts.
-
-        Reads variable-related atoms and creates/extends `Variable` instances.
-        Note that nogoods are added to prevent True assignments to values that are parts of domains that are assigned False.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-        var_declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_declare)
-        var_defines = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_define)
-        var_domains = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_variable_domain)
-
-        from_facts_literals: dict[Symbol, int] = {}
-        for (symbol_var, domain, name), _literal in var_declares.items():
-            if not self.symbol2var.has_var_type(symbol_var, Variable.__name__):
-                self.symbol2var.add_variable(
-                    symbol_var, Variable(name, symbol_var, symbol_var in self.symbol2var.user_variable_names)
-                )
-            else:
-                print(
-                    f"Warning!!: Variable {symbol_var} was defined via declare at least 2 times! This may cause unexpected behavior."
-                )
-
-            variable: Variable = cast(Variable, self.symbol2var.get_variable(symbol_var, Variable.__name__))
-
-            self.add_watch(_literal)
-            self.add_watch(-_literal)
-
-            # TODO: make sure we dont need this literal being watched for Variables
-            self.add_literal2var(_literal, variable)
-
-            if isinstance(domain, prop_atom.FromFacts):
-                # values will be added from facts, nothing to do here
-                from_facts_literals[symbol_var] = _literal
-            else:
-                self.errors.append(
-                    warning.Warning(
-                        warning.Propagator(),
-                        (symbol_var,),
-                        f"Unknown domain type '{domain}' for variable '{symbol_var}'",
-                    )
-                )
-
-        for (symbol_var, expr, name), _literal in var_defines.items():
-            if not self.symbol2var.has_var_type(symbol_var, Variable.__name__):
-                define_variable = Variable(name, symbol_var, symbol_var in self.symbol2var.user_variable_names)
-                self.symbol2var.add_variable(symbol_var, define_variable)
-
-            define_variable: Variable = cast(Variable, self.symbol2var.get_variable(symbol_var, Variable.__name__))
-            value = self.get_variable_value(expr, _literal)
-            define_variable.add_value(value, _literal)
-            self.register_variable_value(define_variable, value)
-            self.add_watch(_literal)
-            self.add_watch(-_literal)
-
-            # TODO: make sure we dont need this literal being watched for Variables
-            # self.literal2var.setdefault(_literal, []).append(define_variable)
-            # here we dont add a nogood since its the same literal
-
-        for (symbol_var, domain_expr, name), _literal in var_domains.items():
-            # These values are assigned the "from_facts" domain literal for the given variable
-            if not self.symbol2var.has_var_type(symbol_var, Variable.__name__):
-                continue
-            domain_variable: Variable = cast(Variable, self.symbol2var.get_variable(symbol_var, Variable.__name__))
-
-            domain_literal = from_facts_literals[symbol_var]
-            value = self.get_variable_value(domain_expr, _literal)
-            domain_variable.add_value(value, _literal)
-            self.register_variable_value(domain_variable, value)
-            self.add_watch(_literal)
-            self.add_watch(-_literal)
-
-            ctl.add_clause([-_literal, domain_literal])
-            # literal defining the domain should also be included, not just the variable declaration literal!
-            # ctl.add_clause([-literal, _literal])
-
-            # self.literal2var.setdefault(_literal, []).append(domain_variable)
-
-        for var in self.symbol2var.get_variables_by_type(Variable.__name__):
-            var = cast(Variable, var)
-            if len(var.expressions) == 0:
-                value = self.get_variable_value(expression.Bad.bad, 1)
-                var.add_value(value, 1)
-                self.register_variable_value(var, value)
-
-    def get_shared_values(self, ctl: clingo.PropagateInit):
-        """
-        Load shared value declarations from ASP facts and create SharedValueVariable instances.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-
-        shared_values = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_share_value)
-        for (expr, name), literal in shared_values.items():
-            shared_value_var: SharedValue = SharedValue(expr, literal)
-
-            self.shared_values.append(shared_value_var)
-
-    def get_evaluate(self, ctl: clingo.PropagateInit):
-        """
-        Load `evaluate` atoms into `EvaluateVariable` instances.
-        Also load "bool_evaluate" atoms and create the corresponding variables.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-
-        evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_evaluate)
-        bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_bool_evaluate)
-        bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, internal._bool_evaluated)
-        for (ref, expr, _), literal in evaluate_atoms.items():
-            var = EvaluateVariable(ref, expr, literal)
-            self.evaluatevars.append(var)
-
-        true_val = expression.Val(type_.BaseType.bool, True)  # ty:ignore[unresolved-attribute]
-        false_val = expression.Val(type_.BaseType.bool, False)  # ty:ignore[unresolved-attribute]
-
-        for (expr, label), literal in bool_evaluate_atoms.items():
-            b_vals = {}
-            for (bexpr, value), b_literal in bool_evaluated_atoms.items():
-                if bexpr == expr:
-                    b_vals[value] = b_literal
-                    # self.add_watch(b_literal)
-                    # self.add_watch(-b_literal)
-
-            value = self.get_variable_value(expr, literal)
-            bool_var = BoolEvaluateVariable(
-                label,
-                value,
-                b_vals[true_val],
-                b_vals[false_val],
-                b_vals[expression.Bad.bad],
-            )
-            self.register_variable_value(bool_var, value)
-
-            self.add_watch(literal)
-            self.add_watch(-literal)
-            self.add_literal2var(literal, bool_var)
-            # for blit in b_vals.values():
-            #     self.literal2var.setdefault(blit, []).append(bool_var)
-            # Var name is given here so it works well with the rest of the system
-            # It should do nothing and also should never appear in any assignments!!
-            self.symbol2var.add_variable(bool_var.var, bool_var)
 
     def get_solver_identifier(self, ctl: clingo.PropagateInit):
         """
@@ -1406,75 +1160,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.optimization.add_value(symbol, value, priority)
 
         self.optimization.initialize_best_value()
-
-    def get_set_declarations(self, ctl: clingo.PropagateInit):
-        """
-        Load set declarations and assignments from ASP facts.
-
-        Args:
-            ctl: Clingo propagation initializer.
-        """
-
-        declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_declare)
-        for (symbol_var, name), literal in declares.items():
-            variable = SetVariable(
-                name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
-            )
-            self.symbol2var.add_variable(symbol_var, variable)
-            self.add_literal2var(literal, variable)
-
-            self.add_watch(literal)
-            self.add_watch(-literal)
-
-        assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_set_assign)
-        for (symbol_var, expr, condition, name), literal in assigns.items():
-            try:
-                setvar: SetVariable = cast(SetVariable, self.symbol2var.get_variable(symbol_var, SetVariable.__name__))
-            except KeyError:
-                continue
-            condition_value = self.get_variable_value(condition, literal)
-            value = self.get_variable_value(expr, literal)
-            setvar.add_value(value, condition_value)
-            self.register_variable_value(setvar, value)
-            self.register_variable_value(setvar, condition_value)
-
-            self.add_watch(literal)
-            self.add_watch(-literal)
-
-    def get_multimap_declarations(self, ctl: clingo.PropagateInit):
-        """
-        Load multimap (dict) declarations and assignments from ASP facts.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-        declares = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_multimap_declare)
-        for (symbol_var, name), literal in declares.items():
-            variable = DictVariable(
-                name, symbol_var, literal, is_user_variable=symbol_var in self.symbol2var.user_variable_names
-            )
-            self.symbol2var.add_variable(symbol_var, variable)
-            self.add_literal2var(literal, variable)
-
-            self.add_watch(literal)
-            self.add_watch(-literal)
-
-        assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_multimap_assign)
-        for (symbol_var, key_expr, expr, name), literal in assigns.items():
-            try:
-                dictvar: DictVariable = cast(
-                    DictVariable, self.symbol2var.get_variable(symbol_var, DictVariable.__name__)
-                )
-            except KeyError:
-                continue
-            key_value = self.get_variable_value(key_expr, 1)
-            value = self.get_variable_value(expr, literal)
-            dictvar.add_value(key_value, value)
-            self.register_variable_value(dictvar, key_value)
-            self.register_variable_value(dictvar, value)
-
-            self.add_watch(literal)
-            self.add_watch(-literal)
 
     def get_forbidden_warnings(self, ctl: clingo.PropagateInit) -> None:
         """
@@ -1513,25 +1198,25 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         useless_other_engine_vars: list[VariableType] = []
 
-        for var in self.symbol2var.get_variables():
+        for var in self.variable_manager.get_variables():
             for symbol_var in var.vars():
                 if symbol_var == var.var:
                     # don't add self as parent
                     # for self referencing variables
                     continue
-                if symbol_var not in self.symbol2var:
+                if symbol_var not in self.variable_manager:
                     continue
 
-                for dvar in self.symbol2var[symbol_var].values():
+                for dvar in self.variable_manager[symbol_var].values():
                     dvar.parents.append(var)
 
-        for var in self.symbol2var.get_variables():
+        for var in self.variable_manager.get_variables():
             if var.name == OTHER_ENGINE_VAR_NAME and var.parents == []:
                 useless_other_engine_vars.append(var)
 
         for var in useless_other_engine_vars:
             # Variable is an compile/ground engine variable with no parents, removing it since it is useless for us
-            self.symbol2var.delete_variable(var.var)
+            self.variable_manager.delete_variable(var.var)
 
             # Now we delete this variable from the literal2var mapping
             for lit in var.literals:
@@ -1552,53 +1237,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         evaluated atoms) and warning atoms. This is used by `on_model` to extend
         the clingo model and by brave/cautious reasoning to accumulate results.
         """
-        self.python_model = set()
-        for var in self.symbol2var.get_variables():
-            self.handle_on_model_warning(var.get_errors())
-            if isinstance(var, (EnsureVariable, BoolEvaluateVariable)):
-                continue
-            if var.name == OTHER_ENGINE_VAR_NAME:
-                # these variables are only used to get values from other engines, they should not be exported to the model
-                continue
-            final_value = var.get_value()
-            if final_value is ValueStatus.NOT_SET:
-                self.handle_on_model_warning(
-                    [warning.Warning(warning.Propagator(), (str(var),), "Variable has no value set in on_model!")]
-                )
-                continue
-
-            if final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
-                continue
-
-            self.handle_on_model_value(var.var, final_value)
-
-        for eval_var in self.evaluatevars:
-            self.handle_on_model_warning(eval_var.get_errors())
-            final_value = eval_var.get_value()
-            if final_value is ValueStatus.NOT_SET:
-                self.handle_on_model_warning(
-                    [
-                        warning.Warning(
-                            warning.Propagator(), (str(eval_var),), "Evaluate variable has no value set in on_model!"
-                        )
-                    ]
-                )
-                continue
-            elif final_value is ValueStatus.ASSIGNMENT_IS_FALSE:
-                continue
-            pyVal, errors = evaluator.reducedExpr(final_value)
-            pyAtom = result.Evaluated(
-                eval_var.ref,
-                pyVal,
-            )
-            self.python_model.add(pyAtom)
-
-            self.handle_on_model_warning([warning.Warning(kind, (), msg) for kind, msg in errors])
-
+        errors = []
         if self.optimization.enabled:
-            self.handle_on_model_warning(self.optimization.get_errors())
-
-        self.handle_on_model_warning(self.errors)
+            errors.extend(self.optimization.get_errors())
+        errors.extend(self.errors)
+        self.python_model = ModelBuilder(self.ignored_warnings).build(
+            self.variable_manager.get_variables(), self.evaluatevars, errors
+        )
 
     def on_model(self, model: clingo.Model):
         """
@@ -1620,145 +1265,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if self.optimization.record_model(model):
             # Stop search once the requested number of optimal models is found.
             model.context.add_clause([])
-
-    def handle_on_model_value(self, var: Symbol, final_value: Any):
-        """
-        Dispatch model export based on the final value type.
-
-        Args:
-            var: Variable symbol.
-            final_value: Evaluated value for the variable.
-        """
-        if final_value is ValueStatus.NOT_SET:
-            assert False, f"Variable {var} has no value set in on_model!"
-
-        if isinstance(final_value, expression.constant | expression.Bad | tuple):
-            self.handle_on_model_normal_type(var, final_value)
-
-        elif isinstance(final_value, (set, frozenset)):
-            self.handle_on_model_set(var, final_value)
-
-        elif isinstance(final_value, (dict, multimap.Multimap)):
-            self.handle_on_model_dict(var, final_value)
-
-        else:
-            # In here come Variable(Lambda) and others
-            print(f"Unknown variable type {type(final_value)} for variable {var} in on_model!")
-
-    def handle_on_model_set(self, var: Symbol, final_value: set | frozenset):
-        """
-        Add atoms for a set-typed variable to the python model.
-
-        Args:
-            var: Variable symbol.
-            final_value: Set/frozenset value.
-        """
-        assert self.python_model is not None
-
-        try:
-            pyVal = expression.Ref(evaluator.get_baseType(final_value), clingo.Function("variable", [var]))
-            pyAtoms = [result.Value(var, pyVal)]
-
-            for value in final_value:
-                if value is ValueStatus.NOT_SET:
-                    assert False, f"Set variable {var} has no value set in on_model!"
-
-                if value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
-                    set_pyVal = value
-                else:
-                    set_pyVal = expression.Val(evaluator.get_baseType(value), value)
-                set_pyAtom = result.Set_value(var, set_pyVal)
-                pyAtoms.append(set_pyAtom)
-            for pyAtom in pyAtoms:
-                self.python_model.add(pyAtom)
-        except Exception as exn:  # TODO: add warnings?
-            self.handle_on_model_warning(
-                [
-                    warning.Warning(
-                        warning.Variable(warning.VariableWarning.badValue),  # ty:ignore[unresolved-attribute]
-                        (),
-                        var,
-                    )
-                ]
-            )
-            self.python_model.add(result.Value(var, expression.Bad.bad))
-
-    def handle_on_model_dict(self, var: Symbol, final_value: dict):
-        """
-        Add atoms for a dict/multimap-typed variable to the python model.
-
-        Args:
-            var: Variable symbol.
-            final_value: Mapping value (may be a `multimap.Multimap`).
-        """
-        assert self.python_model is not None
-
-        if final_value == expression.Bad.bad:  # ty:ignore[unresolved-attribute]
-            pyVal = final_value
-        else:
-            try:
-                pyVal = expression.Val(evaluator.get_baseType(final_value), var)
-            except Exception:
-                pyVal = expression.Bad.bad
-        pyAtom = result.Value(var, pyVal)
-        self.python_model.add(pyAtom)
-
-        if pyVal != expression.Bad.bad:
-            errors = []
-            for key, value in final_value.items():
-                if value is ValueStatus.NOT_SET:
-                    assert False, f"Dict variable {var} has key {key} with no value set in on_model!"
-
-                for val in value:
-                    mm_pyKey, keyErrors = evaluator.reducedExpr(key)
-                    errors.extend(keyErrors)
-                    mm_pyVal, valErrors = evaluator.reducedExpr(val)
-                    errors.extend(valErrors)
-                    mm_pyAtom = result.Multimap_value(var, mm_pyKey, mm_pyVal)
-
-                    self.python_model.add(mm_pyAtom)
-
-            self.handle_on_model_warning([warning.Warning(kind, (), msg) for kind, msg in errors])
-
-    def handle_on_model_normal_type(
-        self,
-        var: Symbol,
-        final_value: (
-            bool | float | str | Symbol | tuple[Any, ...]
-        ),  # expression.Bad.bad should be in the types but it is crashing when I add it.
-    ):
-        """
-        Add atoms for a variable (bool/int/float/string/symbol) to the python model.
-
-        Args:
-            var: Variable symbol.
-            final_value: Scalar value.
-        """
-        assert self.python_model is not None
-        pyVal, errors = evaluator.reducedExpr(final_value)
-
-        self.handle_on_model_warning([warning.Warning(kind, (), msg) for kind, msg in errors])
-
-        pyAtom = result.Value(var, pyVal)
-        self.python_model.add(pyAtom)
-
-    def handle_on_model_warning(self, errors: propagator_warning_t):
-        """
-        Add warning atoms to the python model.
-
-        Args:
-            errors: Iterable of warning atoms.
-        """
-        assert self.python_model is not None
-
-        for __warning in errors:
-            if __warning.id in self.ignored_warnings:
-                assigned = self.ignored_warnings[__warning.id][1]
-                if not assigned:
-                    # if warning is not ignored, add to model
-                    self.python_model.add(__warning)
-            else:
-                self.python_model.add(__warning)
 
     def add_shared_values(self, model: clingo.Model):
         """
