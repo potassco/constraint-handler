@@ -1,4 +1,4 @@
-_variable_declared(X,D) :- _passed(sugar,LBL,variable_declare(X,D)).
+_variable_declared(X,D) :- _passed(sugar,LBL,variable_declare(X,D,C)).
 
 _variable_declareRequired(LBL,X,open) :- _passed(sugar,LBL,variable_assign(X,E)), not _variable_declared(X,open).
 _variable_declareRequired(LBL,X,open) :- _passed(sugar,LBL,variable_choice(X,E)), not _variable_declared(X,open).
@@ -10,7 +10,7 @@ _variable_declareRequired(LBL,X,set) :- _passed(sugar,LBL,set_assign(X,E,C)), no
 _variable_declareRequired(LBL,X,multimap) :- _passed(sugar,LBL,multimap_assign(X,K,V)), not _variable_declared(X,multimap).
 
 _warning(variable(undeclared),LBL,(X,D)) :- _variable_declareRequired(LBL,X,D), not _variable_declared(X,D).
-_passed(correction(undeclared,add),LBL,variable_declare(X,D)) :- _variable_declareRequired(LBL,X,D), not _variable_declared(X,D).
+_passed(correction(undeclared,add),LBL,variable_declare(X,D,val(bool,true))) :- _variable_declareRequired(LBL,X,D), not _variable_declared(X,D).
 
 _warning(variable(undeclared),(),X) :- _variable(sugar,X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).
-_passed(correction(undeclared,add),_internal,(variable_declare(X,definition);variable_define(X,bad,val(bool,true)))) :- _variable(sugar,X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).
+_passed(correction(undeclared,add),_internal,(variable_declare(X,definition,val(bool,true));variable_define(X,bad,val(bool,true)))) :- _variable(sugar,X), #false: _variable_declared(X,D); #false: _variable_declareRequired(LBL,X,D).

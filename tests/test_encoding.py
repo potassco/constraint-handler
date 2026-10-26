@@ -460,6 +460,7 @@ warning_tests = [
     "warning/forbid_labeled_match",
     "warning/ignore",
     "warning/ignore_labeled",
+    "warning/mutually_exclusive_declarations",
     "warning/python_extract/statement_error",
     "warning/python_extract/undeclared_variable",
     "warning/statement/control",
@@ -512,6 +513,7 @@ compile_xfail: set[str] = {
     "type/bool/with_none_unary",
     "unit/tuple_eq",
     "unit/tuple_neq",
+    "warning/mutually_exclusive_declarations",
 }
 
 compile2_skip: set[str] = {
@@ -559,6 +561,7 @@ compile2_xfail: set[str] = {
     "type/multimap/operations",
     "unit/float/float_max",
     "unit/float/float_min",
+    "warning/mutually_exclusive_declarations",
 }
 ground_skip: set[str] = {
     "core/python_set_bool_brave",
@@ -596,6 +599,7 @@ ground_xfail: set[str] = {
     "unit/tuple_eq",
     "unit/tuple_neq",
     "unit/unary/set_length",
+    "warning/mutually_exclusive_declarations",
 }
 
 propagator_skip: set[str] = {
@@ -627,6 +631,7 @@ propagator_xfail: set[str] = {
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "warning/bad_interface",
+    "warning/mutually_exclusive_declarations",
 }
 
 propagator_true_skip: set[str] = propagator_skip | {
@@ -824,6 +829,7 @@ choice_statistics_skip: set[str] = {
     "unit/unary/float_minus",
     "unit/unary/set_length",
     "warning/forbid_labeled_match",
+    "warning/mutually_exclusive_declarations",
     "warning/python_extract/statement_error",
 }
 choice_statistics_xfail: set[str] = {

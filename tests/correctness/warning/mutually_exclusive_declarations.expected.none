@@ -1,0 +1,3 @@
+value(x,bad)
+warning(variable(multipleDeclarations),left,(x,fromFacts,fromFacts))
+warning(variable(multipleDeclarations),right,(x,fromFacts,fromFacts))

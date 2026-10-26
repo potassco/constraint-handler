@@ -30,10 +30,10 @@ _default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), not -_defaul
 % Collect all variables that occur in check and ensure declarations.
 _default_ensureVariable(E,X) :- ch_core(check(E),LBL), _default_mode(depends), X=@pythonExpressionVariable(E).
 _default_ensureVariable(E,X) :- ch_core(ensure(E),LBL), _default_mode(depends), X=@pythonExpressionVariable(E).
-_default_dependVariable(E,X) :- _default_ensureVariable(E,X), ch_solve(variable_declare(X,open),LBL).
+_default_dependVariable(E,X) :- _default_ensureVariable(E,X), ch_solve(variable_declare(X,open,C),LBL), _se_value(C,val(bool,true)).
 
 _default_connect(X,Y) :- _default_dependVariable(E,X), _default_ensureVariable(E,Y), X != Y.
-_default_connect(X,X) :- ch_core(variable_declare(X,open),LBL), _default_mode(depends).
+_default_connect(X,X) :- ch_core(variable_declare(X,open,C),LBL), _default_mode(depends), _se_value(C,val(bool,true)).
 
 -_default_apply(X,D,C,P) :-
   ch_core(variable_default(X,D,C,P),LBL),
@@ -48,6 +48,6 @@ _se_value(variable(X),V) :- ch_core(variable_assign(X,E),LBL), _se_value(E,V).
 _se_value(variable(X),V) :- ch_core(variable_default(X,E,C,P),LBL), _se_value(E,V), _default_apply(X,E,C,P).
 
 { _se_value(variable(X),V) : ch_solve(variable_choice(X,E),LBL1), _se_value(E,V) } :-
-  ch_core(variable_declare(X,open),LBL).
+  ch_core(variable_declare(X,open,C),LBL), _se_value(C,val(bool,true)).
 
-:- ch_core(variable_declare(X,open),LBL), 1 != { _se_value(variable(X),V) }, _engine_grounding(LBL). % TODO change 1 != to 1 >
+:- ch_core(variable_declare(X,open,C),LBL), _se_value(C,val(bool,true)), 1 != { _se_value(variable(X),V) }, _engine_grounding(LBL). % TODO change 1 != to 1 >

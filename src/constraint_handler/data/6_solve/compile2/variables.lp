@@ -35,9 +35,10 @@ var_has_domain(Var) :- _passed(compile2, _, variable_domain(Var, Expr, Cond)), _
                       _se_value(Expr, Value) } 1.
 
 _se_value(variable(Var), bad) :-
-	_passed(compile2, _, variable_declare(Var, fromFacts)),
+	_passed(compile2, _, variable_declare(Var, fromFacts, Cond)),
 	not var_has_domain(Var),
-	not _variable_has_active_definition(Var).
+	not _variable_has_active_definition(Var),
+	_se_value(Cond, val(bool, true)).
 
 _se_value(variable(Var), bad) :-
 	_passed(compile2, _, variable_define(Var, Expr, Cond)),

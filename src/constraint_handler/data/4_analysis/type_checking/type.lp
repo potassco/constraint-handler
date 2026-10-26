@@ -14,8 +14,8 @@ _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_cho
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_default(X,E,C,P)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_define(X,E,C)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_domain(X,E,C)), _type_expression(E,T).
-_type_variable(X,set) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,set)).
-_type_variable(X,multimap) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,multimap)).
+_type_variable(X,set) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,set,C)).
+_type_variable(X,multimap) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,multimap,C)).
 type_variable(X,T) :- _type_variable(X,T).
 
 %%%%%%%%%%%%%%%%% _type_expression
@@ -78,7 +78,7 @@ _type_nonMinimal(E,W) :- _expression_operationIndex(type_check,E,IDX,ARG), _type
 _type_nonMinimal(E,W) :- _expression_tupleIndex(type_check,E,IDX,ARG), _type_warning(ARG,W).
 
 _warning(type(W),(),E) :- _type_warning(E,W), not _type_nonMinimal(E,W).
-_warning(type(W),LBL,variable(X)) :- _type_warning(variable(X),W), _passed(sugar,LBL,variable_declare(X,D)), #false: X=loc(V).
+_warning(type(W),LBL,variable(X)) :- _type_warning(variable(X),W), _passed(sugar,LBL,variable_declare(X,D,C)), #false: X=loc(V).
 
 type_expression(E,T) :- _type_expression(E,T), T != bot, not _type_expression(E,top).
 type_expression(E,top) :- _type_expression(E,top).

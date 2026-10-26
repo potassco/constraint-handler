@@ -1,5 +1,5 @@
 _set_assign(variable(X),E) :- _passed(compile,LBL,set_assign(X,E,C)), _se_value(C,val(bool,true)).
-_se_value(variable(X),ref(set,variable(X))) :- _passed(compile,LBL,variable_declare(X,set)).
+_se_value(variable(X),ref(set,variable(X))) :- _passed(compile,LBL,variable_declare(X,set,C)), _se_value(C,val(bool,true)).
 
 direct_query(E) :- _set_assign(X,E).
 

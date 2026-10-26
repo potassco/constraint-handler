@@ -24,7 +24,7 @@ _expression_tupleDomainAux(EXPR,N,()) :- _expression(sugar,EXPR), _expression_tu
 _expression_tupleDomainAux(EXPR,IDX,(V,L)) :- _expression_tupleDomainAux(EXPR,IDX+1,L), _expression_tupleIndex(sugar,EXPR,IDX,E), _expression_domain(E,V).
 _expression_domain(EXPR,TUPLE) :- _expression_tupleDomainAux(EXPR,0,L), TUPLE=@pythonReflect(function,(),L).
 
-_expression_setDomainQuery(EXPR,X) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_declare(X,set)), #false.
+_expression_setDomainQuery(EXPR,X) :- _expression(sugar,EXPR), EXPR=variable(X), _passed(sugar,LBL,variable_declare(X,set,C)), #false.
 _expression_setExpr(EXPR,X,assign,E) :- _expression_setDomainQuery(EXPR,X), _passed(sugar,LBL,set_assign(X,E,C)),
 	_expression_domain(C,val(bool,true)), #false : _expression_domain(C,V), V != val(bool,true).
 _expression_setExpr(EXPR,X,baseDomain,E) :- _expression_setDomainQuery(EXPR,X), _passed(sugar,LBL,set_assign(X,E,C)),

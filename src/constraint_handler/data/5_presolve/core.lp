@@ -1,7 +1,7 @@
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=bool_evaluate(E).
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_assign(X,E).
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_choice(X,E).
-ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_declare(X,D).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_declare(X,D,C).
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_default(X,D,C,P).
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_define(X,E,C).
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_domain(X,E,C).
