@@ -152,7 +152,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             add_watch=self.add_watch,
         )
         loader.load_variables(init)
-        self.get_optimization_sums(init)
+        self.optimization.get_optimization_sums(init, self.get_variable_value, self.add_watch)
         loader.load_evaluations(init)
 
         self.set_parents()
@@ -1142,24 +1142,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for id in myClorm.findInPropagateInit(ctl, internal.Main_solverIdentifiers):
             self.environment = id.id
-
-    def get_optimization_sums(self, ctl: clingo.PropagateInit):
-        """
-        Load optimization sum declarations from ASP facts into the optimization controller.
-
-        Args:
-            ctl: Clingo PropagateInit object.
-        """
-
-        maxSums = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_optimize_maximizeSum)
-
-        for (expr, symbol, priority, _), literal in maxSums.items():
-            value = self.get_variable_value(expr, literal)
-            self.add_watch(literal)
-            self.add_watch(-literal)
-            self.optimization.add_value(symbol, value, priority)
-
-        self.optimization.initialize_best_value()
 
     def get_forbidden_warnings(self, ctl: clingo.PropagateInit) -> None:
         """

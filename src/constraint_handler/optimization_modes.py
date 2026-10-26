@@ -5,6 +5,8 @@ from collections.abc import Callable
 
 import clingo
 
+import constraint_handler.schemas.propagator_atom as prop_atom
+from constraint_handler import myClorm
 from constraint_handler.PropagatorConstants import (
     OPTIMIZATION_HELPER_PROGRAM,
     OPTIMIZATION_STAGE_ATOM,
@@ -12,7 +14,7 @@ from constraint_handler.PropagatorConstants import (
     propagator_warning_t,
 )
 from constraint_handler.PropagatorVariables import OptimizationHandler, VariableValue
-from constraint_handler.schemas import warning
+from constraint_handler.schemas import expression, warning
 
 
 class OptimizationModeHandler:
@@ -115,6 +117,30 @@ class OptimizationModeHandler:
         This sets the best value to the lowest possible values based on the number of optimization sums.
         """
         self.best_value = [-sys.maxsize] * self.sums.get_sum_count()
+
+    def get_optimization_sums(
+        self,
+        ctl: clingo.PropagateInit,
+        get_variable_value: Callable[[expression.Expr, int], VariableValue],
+        add_watch: Callable[[int], None],
+    ) -> None:
+        """
+        Load optimization sum declarations from ASP facts.
+
+        Args:
+            ctl: Clingo propagation initializer.
+            get_variable_value: Callback to intern an expression value.
+            add_watch: Callback to register literals for watching.
+        """
+        max_sums = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_optimize_maximizeSum)
+
+        for (expr, symbol, priority, _), literal in max_sums.items():
+            value = get_variable_value(expr, literal)
+            add_watch(literal)
+            add_watch(-literal)
+            self.add_value(symbol, value, priority)
+
+        self.initialize_best_value()
 
     def reset_sums(self, decision_level: int) -> None:
         """
