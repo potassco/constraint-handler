@@ -408,7 +408,14 @@ class _DomainComputer:
             if not callable(callback):
                 raise TypeError("Python source must evaluate to a callable")
             for values in product(*(domain.iter_values() for domain in arg_domains)):
-                value = callback(*values)
+                try:
+                    value = callback(*values)
+                except (ArithmeticError, LookupError, TypeError, ValueError) as error:
+                    self._diagnostics.warn(
+                        f"python_eval domain evaluation failed: {error}",
+                        location=location,
+                    )
+                    continue
                 if isinstance(value, set):
                     value = frozenset(value)
                 if not is_domain_value(value):

@@ -131,7 +131,10 @@ def _complex_facts(
             for domain in argument_domains
         ]
         for values in product(*axes):
-            result = callback(*values)
+            try:
+                result = callback(*values)
+            except ArithmeticError, LookupError, TypeError, ValueError:
+                continue
             if isinstance(result, set):
                 result = frozenset(result)
             if not is_domain_value(result):

@@ -59,6 +59,11 @@ output(SolutionId, integer(43)).
 Solution IDs are unique across calls. Values use the same typed encoding as
 `value/2`, including `real("2.5")`, `boolean(true)`, and `none`. The rules
 in `encoding/complex.lp` derive a row's output only when all its inputs match.
+Candidate calls that raise `ArithmeticError`, `LookupError`, `TypeError`, or
+`ValueError` produce no row, leaving the expression undefined for those inputs.
+Dependent expressions therefore remain undefined unless their existing semantics
+can determine a result without that input. Python domain inference retains only
+successful candidate results; it reports evaluation failures as warnings.
 The solver loads `native.lp`, `boolean.lp`, `integer.lp`, `set.lp`, and `complex.lp` from
 the bundled `encoding/` directory. Shared value, variable, and constraint rules
 remain in `native.lp`.
@@ -144,9 +149,9 @@ Current limits:
 	cost estimates, which may underestimate the current Python-table cost.
 - Native weighted sums avoid Python tables, but aggregate result grounding can
 	still be large; this does not eliminate cryptarithm grounding limits.
-- Python evaluation errors, including division by zero on any candidate input
-	combination, propagate during fact generation. Calls should be pure because
-	domain analysis and repeated fact generation can execute them more than once.
+- Unexpected Python exceptions and errors setting up a callable still propagate.
+	Calls should be pure because domain analysis and repeated fact generation can
+	execute them more than once.
 - Unsupported Python return types and non-finite values raise errors. Integers
 	must fit Clingo's signed 32-bit representation.
 - Defaults remain unsupported by the native encoding.

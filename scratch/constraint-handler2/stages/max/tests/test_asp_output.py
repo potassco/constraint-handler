@@ -582,6 +582,139 @@ def test_asp_facts_declarations(lib: Library) -> None:
     assert parse_term(lib, 'ensure(7,"ensure")') in facts
 
 
+@pytest.mark.parametrize("operator", (Operator.int_div, Operator.real_div))
+@pytest.mark.parametrize("values", ((0, 1), (0,), (1,)))
+@pytest.mark.parametrize("exclude_zero", (False, True))
+def test_complex_division_by_zero(
+    lib: Library, operator: Operator, values: tuple[int, ...], exclude_zero: bool
+) -> None:
+    """Leave failed division and its dependents undefined without losing models."""
+    store = ConstraintStore()
+    divisor, quotient, downstream = (
+        VariableRef(name) for name in ("divisor", "quotient", "downstream")
+    )
+    store.choose_from_iterator(divisor, values)
+    store.ensure(Operation(Operator.geq, (divisor, 0)))
+    store.define(quotient, Operation(operator, (6, divisor)))
+    store.define(downstream, Operation(Operator.add, (quotient, 1)))
+    if exclude_zero:
+        store.ensure(Operation(Operator.neq, (divisor, 0)))
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    control = Control(lib, ["0"])
+    control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
+    for encoding in ("native.lp", "integer.lp", "complex.lp"):
+        control.parse_string(
+            files("constraint_handler").joinpath("encoding", encoding).read_text()
+        )
+    control.ground([("base", [])])
+    models: list[frozenset[str]] = []
+    control.solve(
+        on_model=lambda model: models.append(
+            frozenset(
+                str(atom)
+                for atom in model.symbols(atoms=True)
+                if atom.name == "value"
+                and atom.arguments[0].type == SymbolType.Function
+                and atom.arguments[0].name == "variable"
+            )
+        )
+    )
+    expected = set()
+    if 0 in values and not exclude_zero:
+        expected.add(frozenset({'value(variable("divisor"),integer(0))'}))
+    if 1 in values:
+        quotient_term, downstream_term = (
+            ("integer(6)", "integer(7)")
+            if operator == Operator.int_div
+            else ('real("6.0")', 'real("7.0")')
+        )
+        expected.add(
+            frozenset(
+                {
+                    'value(variable("divisor"),integer(1))',
+                    f'value(variable("quotient"),{quotient_term})',
+                    f'value(variable("downstream"),{downstream_term})',
+                }
+            )
+        )
+    assert len(models) == len(expected)
+    assert set(models) == expected
+
+
+@pytest.mark.parametrize(
+    ("source", "invalid", "valid"),
+    (
+        ("lambda value: 6 // value", 0, 1),
+        ("lambda value: int(value)", "bad", "6"),
+        ("lambda value: (6,)[value]", 1, 0),
+        ("lambda value: {1: 6}[value]", 0, 1),
+        ("lambda value: value + 1", "bad", 5),
+    ),
+)
+@pytest.mark.parametrize("all_invalid", (False, True))
+def test_complex_python_partial_evaluation(
+    source: str, invalid: Expr, valid: Expr, all_invalid: bool
+) -> None:
+    """Infer only successful Python results and allow fully undefined outputs."""
+    store = ConstraintStore()
+    argument, result, downstream = (
+        VariableRef(name) for name in ("argument", "result", "downstream")
+    )
+    store.choose(argument, invalid)
+    if not all_invalid:
+        store.choose(argument, valid)
+    store.define(result, Operation(Operator.python_eval, (Python(source), argument)))
+    store.define(downstream, Operation(Operator.add, (result, 1)))
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    assert problem.domains[result] == Domain(
+        ints=frozenset() if all_invalid else frozenset({6})
+    )
+    assert problem.domains[downstream] == Domain(
+        ints=frozenset() if all_invalid else frozenset({7})
+    )
+    assert sorted(
+        str(fact.arguments[1]) for fact in problem.asp_facts if fact.name == "output"
+    ) == ([] if all_invalid else ["integer(6)", "integer(7)"])
+    assert problem.create_solver(SolveOptions()).solve().satisfiable
+
+
+@pytest.mark.parametrize(
+    ("source", "error", "message"),
+    (
+        ("lambda value: [value]", TypeError, "unsupported Python result type"),
+        ("lambda value: float('inf')", ValueError, "finite values"),
+        ("missing_callback", NameError, "missing_callback"),
+        ("1", TypeError, "must evaluate to a callable"),
+        (
+            "lambda value: (_ for _ in ()).throw(RuntimeError('unexpected'))",
+            RuntimeError,
+            "unexpected",
+        ),
+    ),
+)
+def test_complex_unexpected_failures(
+    source: str, error: type[Exception], message: str
+) -> None:
+    """Keep setup errors, invalid outputs, and unexpected exceptions visible."""
+    store = ConstraintStore()
+    store.define(
+        VariableRef("result"),
+        Operation(Operator.python_eval, (Python(source), 1)),
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    with pytest.raises(error, match=message):
+        _ = problem.asp_facts
+
+
 def test_complex_solution_rows(lib: Library) -> None:
     """Match every input and keep rows from separate expressions isolated."""
     store = ConstraintStore()

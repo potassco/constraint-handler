@@ -1239,25 +1239,25 @@ def test_python_eval_domains(source: str, expected: Domain) -> None:
 
 
 @pytest.mark.parametrize(
-    "source",
+    ("source", "expected"),
     (
-        "lambda value: 1 / 0",
-        "lambda value: [value]",
-        "1",
-        "invalid syntax!",
-        "lambda value: float('inf')",
-        "lambda value: float('nan')",
-        "lambda value: (float('inf'),)",
-        "lambda value: frozenset({(float('nan'),)})",
+        ("lambda value: 1 / 0", EMPTY_DOMAIN),
+        ("lambda value: [value]", UNKNOWN_DOMAIN),
+        ("1", UNKNOWN_DOMAIN),
+        ("invalid syntax!", UNKNOWN_DOMAIN),
+        ("lambda value: float('inf')", UNKNOWN_DOMAIN),
+        ("lambda value: float('nan')", UNKNOWN_DOMAIN),
+        ("lambda value: (float('inf'),)", UNKNOWN_DOMAIN),
+        ("lambda value: frozenset({(float('nan'),)})", UNKNOWN_DOMAIN),
     ),
 )
-def test_python_eval_failures(source: str) -> None:
+def test_python_eval_failures(source: str, expected: Domain) -> None:
     """Keep failed, non-callable, and unsupported Python evaluations sound."""
     store = ConstraintStore()
     result = VariableRef("result")
     store.define(result, Operation(Operator.python_eval, (Python(source), 1)))
     diagnostics = Diagnostics()
-    assert _domains_for(store, diagnostics=diagnostics)[result] == UNKNOWN_DOMAIN
+    assert _domains_for(store, diagnostics=diagnostics)[result] == expected
     assert len(diagnostics.warnings) == 1
     diagnostics = Diagnostics()
     assert (
