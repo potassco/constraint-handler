@@ -292,6 +292,19 @@ def asp_facts(
         if (
             engines[expr_id] == Engine.native
             and isinstance(expr, Operation)
+            and expr.op == Operator.leqv
+        ):
+            facts.extend(
+                Function(
+                    lib,
+                    "boolean_equivalence_argument",
+                    [_number(lib, expr_id), _number(lib, index), _term(lib, arg)],
+                )
+                for index, arg in enumerate(expr.args)
+            )
+        if (
+            engines[expr_id] == Engine.native
+            and isinstance(expr, Operation)
             and expr.op in {Operator.linear_integer, Operator.linear_comparison}
         ):
             comparison = expr.op == Operator.linear_comparison

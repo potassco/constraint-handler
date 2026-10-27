@@ -4,17 +4,17 @@ Splitting introduces auxiliary variables for nested operations when doing so
 reduces the estimated grounding complexity of the enclosing expression. The
 estimate depends on the operation's encoding, not just on input combinations.
 
-For example, `concat(x, y)` enumerates pairs and costs `|D(x)| * |D(y)|`. An
-n-ary addition with more than two arguments can use an aggregate guarded by its
-result domain and costs `|D(add(...))|`. Set union uses membership rules and
+For example, `concat(x, y)` enumerates pairs and costs `|D(x)| * |D(y)|`. A
+`linear_integer` sum with more than two terms can use an aggregate guarded by its
+result domain and costs `|D(linear_integer(...))|`. Set union uses membership rules and
 costs the sum of the numbers of potential members in its two input sets,
 without enumerating pairs of complete sets.
 
-After splitting, compile every operation, including trivial operations, into a
-`python_eval` call. Also lower collections containing operations and existing
-lambda applications, even when their arguments are already leaves. Constants
-and direct variable references remain leaves. Specialized native operation
-encodings are not currently selected by this pipeline.
+After splitting, retain supported flat native operations, including `leqv`.
+Compile unsupported or still-nested operations into a `python_eval` call. Also
+lower collections containing operations and existing lambda applications, even
+when their arguments are already leaves. Constants and direct variable
+references remain leaves.
 
 ## Definitions
 
@@ -192,7 +192,7 @@ cost in each row.
 | -------------------------- | ------------------------ | ------- | ---------- | ----------- | ------- |
 | One replacement helps      | `add(add(a,b),c)`        | 1000    | **290**    | N/A         | N/A     |
 | All is best                | `sub(add(a,b),add(c,d))` | 10000   | 2000       | 2000        | **561** |
-| Only all helps             | `add(abs(a),abs(b),c)`   | 1000    | 1010       | 1010        | **48**  |
+| Only all helps             | `linear_integer((1,abs(a)),(1,abs(b)),(1,c),0)` | 1000 | 1010 | 1010 | **48** |
 | Only a proper subset helps | `sub(add(a,b),abs(c))`   | 40      | **34**     | 50          | 44      |
 | Shared variables           | `sub(add(a,b),add(a,b))` | **100** | 2000       | 2000        | 561     |
 
@@ -206,7 +206,7 @@ For the proper-subset row only, `D(a) = D(b) = {0, 1}`; `c` still ranges over
   one costs `100 + 19 * 10 * 10 = 2000`; replacing both costs
   `100 + 100 + 19 * 19 = 561`.
 - **Only all helps:** replacing one `abs` leaves the outer expression
-  non-trivial, costing `1000 + 10 = 1010`. Replacing both enables the n-ary sum
+  non-trivial, costing `1000 + 10 = 1010`. Replacing both enables the linear integer sum
   aggregate over the result domain `{0, ..., 27}`, costing `28 + 10 + 10 = 48`.
 - **Only a proper subset helps:** replacing `add(a,b)` costs `4 + 3 * 10 = 34`,
   compared with `2 * 2 * 10 = 40` unsplit. Replacing only `abs(c)` costs
@@ -219,8 +219,11 @@ For the proper-subset row only, `D(a) = D(b) = {0, 1}`; `c` still ranges over
 
 ### Final Step: Python Conversion
 
-After subset search, compile every operation and each collection containing
-operations, including auxiliary definitions, into a Python callable.
+After subset search, retain supported flat native operations. Native `leqv`
+counts false operands by argument position and returns true for an even count;
+all operands must be defined. Repeated operands retain their multiplicity.
+Native support never forces a split. Compile other operations and each
+collection containing operations, including auxiliary definitions, into a Python callable.
 Also compile every existing `lambda_` application, including calls with only
 leaf arguments, and operations with callable descriptors such as `set_fold`.
 An already-flat `python_eval` call remains unchanged. An existing call with
@@ -305,11 +308,10 @@ Callable bodies remain opaque; their internal runtime is not included.
 | `concat(x, y)`                                                                                                         | `d(x) * d(y)`                | Enumerate pairs of values.                                                                                           |
 | `length(x)` for a string or tuple                                                                                      | `d(x)`                       | One length per possible complete value.                                                                              |
 | `abs`, `sqrt`, `cos`, `sin`, `tan`, `acos`, `asin`, `atan`, `minus`, `floor`, `ceil`, `real_from_int`, `int_from_real` | `d(x)`                       | Unary value enumeration.                                                                                             |
-| `add(x1, ..., xn)`, `n > 2`                                                                                            | `d(e)`                       | Result-domain-guarded sum aggregate.                                                                                 |
 | `linear_integer((c1, x1), ..., (cn, xn), c)`, `n > 2`                                                                  | `d(e)`                       | Result-domain-guarded weighted sum aggregate.                                                                        |
 | `linear_integer((c1, x1), ..., (cn, xn), c)`, `n <= 2`                                                                 | `C(x1, ..., xn)`             | Direct argument enumeration.                                                                                         |
-| `add(x, y)`, `sub`, `int_div`, `real_div`, `pow`                                                                       | `d(x) * d(y)`                | Binary value enumeration.                                                                                            |
-| `add(x1, ..., xn)`, `n < 2`                                                                                            | `C(args)`                    | Degenerate argument enumeration.                                                                                     |
+| `sub`, `int_div`, `real_div`, `pow`                                                                                   | `d(x) * d(y)`                | Binary value enumeration.                                                                                            |
+| `add(x1, ..., xn)`                                                                                                    | `C(args)`                    | Enumerate input combinations; integer sums normalize to `linear_integer` before splitting.                           |
 | `mult(x1, ..., xn)`                                                                                                    | `C(args)`                    | No product aggregate is assumed.                                                                                     |
 | `min(x1, ..., xn)`, `max(x1, ..., xn)`                                                                                 | `C(args)`                    | Conservative enumeration until a specialized aggregate encoding is specified.                                        |
 | `eq(x, y)`, `neq(x, y)`                                                                                                | `2 * min(d(x), d(y))`        | Scan the smaller scalar domain, joining or negating membership in the other input; see the set specialization below. |

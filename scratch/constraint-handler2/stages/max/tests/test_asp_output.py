@@ -271,18 +271,20 @@ def test_native_linear_comparison_solves_send_more_money(lib: Library) -> None:
     assert models == [dict(zip("SENDMORY", (9, 5, 6, 7, 1, 0, 8, 2), strict=True))]
 
 
-@pytest.mark.parametrize("operator", (Operator.conj, Operator.disj))
-@pytest.mark.parametrize("arity", (0, 1, 2))
+@pytest.mark.parametrize("operator", (Operator.conj, Operator.disj, Operator.leqv))
+@pytest.mark.parametrize("arity", (0, 1, 2, 3))
+@pytest.mark.parametrize("repeat", (False, True))
 def test_native_boolean_short_circuit(
-    lib: Library, operator: Operator, arity: int
+    lib: Library, operator: Operator, arity: int, repeat: bool
 ) -> None:
-    """Determine Boolean results from decisive inputs despite absent operands."""
+    """Evaluate native Boolean operations with optional and repeated operands."""
     store = ConstraintStore()
     inputs = tuple(VariableRef(f"input{index}") for index in range(arity))
     for variable in inputs:
         store.choose_from_iterator(variable, (False, True))
+    arguments = inputs + inputs[:1] if repeat else inputs
     result_variable = VariableRef("result")
-    store.define(result_variable, Operation(operator, inputs))
+    store.define(result_variable, Operation(operator, arguments))
     preprocessor = Preprocessor(PreprocessOptions())
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
@@ -316,10 +318,17 @@ def test_native_boolean_short_circuit(
     assert len(models) == 3**arity
     decisive = operator == Operator.disj
     for model in models:
-        values = [model[variable.name] for variable in inputs if variable.name in model]
-        if decisive in values:
+        values = [
+            model[variable.name] for variable in arguments if variable.name in model
+        ]
+        if operator == Operator.leqv:
+            if len(values) == len(arguments):
+                assert model["result"] == (values.count(False) % 2 == 0)
+            else:
+                assert "result" not in model
+        elif decisive in values:
             assert model["result"] is decisive
-        elif len(values) == arity:
+        elif len(values) == len(arguments):
             assert model["result"] is not decisive
         else:
             assert "result" not in model
@@ -327,7 +336,13 @@ def test_native_boolean_short_circuit(
 
 @pytest.mark.parametrize(
     "operator",
-    (Operator.conj, Operator.disj, Operator.linear_integer, Operator.linear_comparison),
+    (
+        Operator.conj,
+        Operator.disj,
+        Operator.leqv,
+        Operator.linear_integer,
+        Operator.linear_comparison,
+    ),
 )
 def test_non_simple_native_operators_remain_complex(operator: Operator) -> None:
     """Use normal splitting costs rather than forcing native implementations."""
@@ -351,7 +366,8 @@ def test_non_simple_native_operators_remain_complex(operator: Operator) -> None:
     assert problem.engines[result_id] == Engine.complex
     assert set(problem.store.variables) == {variable, result}
     assert not any(
-        fact.name in {"boolean_argument", "linear_integer_term"}
+        fact.name
+        in {"boolean_argument", "boolean_equivalence_argument", "linear_integer_term"}
         for fact in problem.asp_facts
     )
 

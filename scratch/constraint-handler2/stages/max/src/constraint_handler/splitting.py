@@ -147,8 +147,6 @@ class GroundingCost:
             return 1
         if op == Operator.leqv:
             return len(args)
-        if op == Operator.add and len(args) > 2:
-            return self.size(expr)
         if op == Operator.linear_integer:
             terms = args[:-1]
             return (
@@ -429,6 +427,7 @@ class _Splitter(GroundingCost):
                         Operator.linear_comparison,
                         Operator.conj,
                         Operator.disj,
+                        Operator.leqv,
                         Operator.union,
                         Operator.inter,
                         Operator.diff,

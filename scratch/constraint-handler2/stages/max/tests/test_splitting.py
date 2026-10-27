@@ -351,11 +351,12 @@ def test_documented_subset_decisions(case: int, count: int) -> None:
         Operation(Operator.add, (inner, third)),
         Operation(Operator.sub, (inner, Operation(Operator.add, (third, fourth)))),
         Operation(
-            Operator.add,
+            Operator.linear_integer,
             (
-                Operation(Operator.abs, (first,)),
-                Operation(Operator.abs, (second,)),
-                third,
+                (1, Operation(Operator.abs, (first,))),
+                (1, Operation(Operator.abs, (second,))),
+                (1, third),
+                0,
             ),
         ),
         Operation(Operator.sub, (inner, Operation(Operator.abs, (third,)))),
@@ -554,10 +555,17 @@ def test_ties_and_repeated_occurrences() -> None:
     inputs = (variable, VariableRef("y"), VariableRef("z"))
     for item in inputs:
         store.choose_from_iterator(item, range(10))
-    inner = Operation(Operator.add, inputs)
+    arguments = (*((1, item) for item in inputs), 0)
+    inner = Operation(Operator.linear_integer, arguments)
     store.ensure(Operation(Operator.sub, (inner, inner)))
     domains, types = _metadata(store)
-    nested = InternalOperation(Operator.add, inputs)
+    nested = InternalOperation(
+        Operator.linear_integer,
+        (
+            *((ValueDef(ValueType.integer, 1), item) for item in inputs),
+            ValueDef(ValueType.integer, 0),
+        ),
+    )
     domains[nested] = Domain(ints=frozenset({1}))
     types[nested] = frozenset({ValueType.integer})
     _split(store, domains, types)
@@ -660,6 +668,21 @@ def test_specialized_costs(
     costs = GroundingCost(domains, types)
     assert costs.trivial_cost(expression) == expected
     assert costs.complexity(expression) == expected
+
+
+@pytest.mark.parametrize("arity", (1, 2, 3, 4))
+def test_real_addition_cost_enumerates_inputs(arity: int) -> None:
+    """Use Cartesian-product costs for every unnormalized addition arity."""
+    store = ConstraintStore()
+    inputs = tuple(VariableRef(f"input{index}") for index in range(arity))
+    for variable in inputs:
+        store.choose_from_iterator(variable, (0.0, 1.0, 2.0))
+    result = VariableRef("result")
+    store.define(result, Operation(Operator.add, inputs))
+    domains, types = _metadata(store)
+    expression = store.expressions[store.variables[result].definitions[0].value]
+    assert isinstance(expression, InternalOperation)
+    assert GroundingCost(domains, types).trivial_cost(expression) == 3**arity
 
 
 def test_length_cost_uses_static_set_kind() -> None:
