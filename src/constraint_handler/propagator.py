@@ -56,8 +56,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         reasoning_mode_handler: Handler for reasoning mode (standard, brave, cautious).
         python_model: Stores the python-level model for output.
         nogood_queue: Queue of nogoods to be added during propagation.
-        var_ranks: Mapping from solver symbols to their ranks.
-        var_ranks_expr: Mapping from interned expression values to their ranks.
         forbidden_warnings: Mapping from warning kinds to their literals.
         ignored_warnings: Mapping from warning kinds to their literal and truth value in the solver.
         watches: Set of solver literals being watched.
@@ -90,9 +88,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.python_model: set[result.ResultAtom] | None = None
 
         self.nogood_queue: list[Iterable[int]] = []
-
-        self.var_ranks: dict[Symbol, int] = {}
-        self.var_ranks_expr: dict[VariableValue, int] = {}
 
         self.forbidden_warnings: dict[warning.Kind, int] = {}
         self.ignored_warnings: dict[warning.Kind, tuple[int, bool]] = {}
@@ -141,8 +136,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.check_only = check_only
         self.shared_values.clear()
         self.nogood_queue.clear()
-        self.var_ranks.clear()
-        self.var_ranks_expr.clear()
         self.forbidden_warnings.clear()
         self.ignored_warnings.clear()
         self.watches.clear()
@@ -178,7 +171,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             for var in expr.vars():
                 self.variable_manager.add_var_expr(var, expr)
 
-        self.get_variable_ranks()
+        self.variable_manager.compute_ranks(self.variable_loader.get_all_expressions())
 
         # valuations = self.preprocess()
         # self.ensure_pairs_dict = self.ensure_pairs(valuations)
@@ -208,45 +201,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         for lit in self.watches:
             ctl.add_watch(lit)
-
-    def get_variable_ranks(self) -> None:
-        """
-        Variables get a rank based on rank of dependencies.
-        """
-
-        # loop over vars and get the ones without deps, those have rank 0
-        # loop again and get vars with satisfied deps based on known ranks
-        # those get rank +1
-        known_vars: set[Symbol] = set()
-        changed = True
-        rank = 0
-        while changed:
-            changed = False
-            vars_this_loop: set[Symbol] = set()
-            for var in self.variable_manager.keys():  # noqa: SIM118
-                if var in known_vars:
-                    continue
-                if self.variable_manager.get_dependencies(var).issubset(known_vars):
-                    self.var_ranks[var] = rank
-                    changed = True
-                    vars_this_loop.add(var)
-
-            known_vars.update(vars_this_loop)
-            rank += 1
-
-        for v in set(self.variable_manager.keys()) - known_vars:
-            # if a variable can't have its dependencies satisfied
-            # (e.g., one of them does not exist)
-            # then we just assign rank -1
-            # print(f"warning: Variable {v} can't have its dependencies satisfied.")
-            self.var_ranks[v] = -1
-
-        for expr in self.variable_loader.get_all_expressions():
-            try:
-                self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
-            except KeyError:
-                # print(f"Warning: Expression {expr} has unknown variable as dependency.")
-                self.var_ranks_expr[expr] = -1
 
     def ensure_pairs(
         self, valuations: dict[Symbol, set[Any]]
@@ -823,9 +777,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         eval_by_rank: dict[int, set[VariableType]] = {}
         eval_by_rank_expr: dict[int, set[VariableValue]] = {}
         for v in to_evaluate:
-            eval_by_rank.setdefault(self.var_ranks[v.var], set()).add(v)
+            eval_by_rank.setdefault(self.variable_manager.get_var_rank(v.var), set()).add(v)
         for expr in to_evaluate_expressions:
-            eval_by_rank_expr.setdefault(self.var_ranks_expr[expr], set()).add(expr)
+            eval_by_rank_expr.setdefault(self.variable_manager.get_expr_rank(expr), set()).add(expr)
 
         rank = 0
         max_rank = max(max(eval_by_rank.keys(), default=0), max(eval_by_rank_expr.keys(), default=0))
@@ -890,7 +844,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             for var in self.variable_manager.get_expr_owners(expr):
                 var.expressions_evaluated_counter += 1
                 if is_evaluation_possible(var):
-                    var_rank = self.var_ranks[var.var]
+                    var_rank = self.variable_manager.get_var_rank(var.var)
                     eval_by_rank.setdefault(var_rank, set()).add(var)
                     max_rank = max(max_rank, var_rank)
 
@@ -937,7 +891,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             for expr in self.variable_manager.get_var_exprs(var.var):
                 expr.vars_counter += 1
                 if is_evaluation_possible(expr):
-                    expr_rank = self.var_ranks_expr[expr]
+                    expr_rank = self.variable_manager.get_expr_rank(expr)
                     eval_by_rank_expr.setdefault(expr_rank, set()).add(expr)
                     max_rank = max(max_rank, expr_rank)
 

@@ -158,6 +158,8 @@ class VariableManager:
         self.var2expr: dict[clingo.Symbol, set[VariableValue]] = {}
         self.lit2expr: dict[int, set[VariableValue]] = {}
         self.literal2var: dict[int, list[VariableType]] = {}
+        self.var_ranks: dict[clingo.Symbol, int] = {}
+        self.var_ranks_expr: dict[VariableValue, int] = {}
 
     def add_literal_var(self, literal: int, variable: VariableType) -> None:
         """
@@ -434,6 +436,68 @@ class VariableManager:
         if variable not in self.variables:
             raise KeyError(f"Variable with name {variable} does not exist. Can not delete")
         del self.variables[variable]
+
+    def compute_ranks(self, expressions: Iterable[VariableValue]) -> None:
+        """
+        Assign ranks to variables based on the ranks of their dependencies,
+        then to expressions based on the variables they use.
+
+        Variables whose dependencies can never be satisfied get rank -1,
+        as do expressions that use an unknown variable.
+
+        Args:
+            expressions: All interned expression values.
+        """
+        # loop over vars and get the ones without deps, those have rank 0
+        # loop again and get vars with satisfied deps based on known ranks
+        # those get rank +1
+        known_vars: set[clingo.Symbol] = set()
+        changed = True
+        rank = 0
+        while changed:
+            changed = False
+            vars_this_loop: set[clingo.Symbol] = set()
+            for var in self.variables:
+                if var in known_vars:
+                    continue
+                if self.get_dependencies(var).issubset(known_vars):
+                    self.var_ranks[var] = rank
+                    changed = True
+                    vars_this_loop.add(var)
+
+            known_vars.update(vars_this_loop)
+            rank += 1
+
+        for v in set(self.variables) - known_vars:
+            self.var_ranks[v] = -1
+
+        for expr in expressions:
+            try:
+                self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
+            except KeyError:
+                self.var_ranks_expr[expr] = -1
+
+    def get_var_rank(self, var: clingo.Symbol) -> int:
+        """
+        Get the rank of a variable symbol.
+
+        Args:
+            var: Variable symbol.
+        Raises:
+            KeyError: If ranks were not computed for the variable.
+        """
+        return self.var_ranks[var]
+
+    def get_expr_rank(self, expr: VariableValue) -> int:
+        """
+        Get the rank of an expression value.
+
+        Args:
+            expr: Expression value.
+        Raises:
+            KeyError: If ranks were not computed for the expression.
+        """
+        return self.var_ranks_expr[expr]
 
     def __getitem__(self, name: clingo.Symbol) -> dict[VariableTypeNames, VariableType]:
         return self.variables[name]
