@@ -160,6 +160,36 @@ class VariableManager:
         self.literal2var: dict[int, list[VariableType]] = {}
         self.var_ranks: dict[clingo.Symbol, int] = {}
         self.var_ranks_expr: dict[VariableValue, int] = {}
+        self.value_registry = VariableValueRegistry()
+
+    def get_variable_value(self, expr: expression.Expr, literal: int) -> VariableValue:
+        """
+        Intern a value and index it by its solver literal.
+
+        Args:
+            expr: Expression object.
+            literal: Solver literal.
+        Returns:
+            VariableValue: Interned expression value.
+        """
+        value = self.value_registry.get(expr, literal)
+        self.add_literal_expr(literal, value)
+        return value
+
+    def get_all_expressions(self) -> list[VariableValue]:
+        """
+        Return a snapshot of all interned expression values.
+        Returns:
+            list[VariableValue]: All interned expression values.
+
+        """
+        return self.value_registry.get_all()
+
+    def build_var_exprs(self) -> None:
+        """Index every interned expression value by the variable symbols it uses."""
+        for expr in self.get_all_expressions():
+            for var in expr.vars():
+                self.add_var_expr(var, expr)
 
     def add_literal_var(self, literal: int, variable: VariableType) -> None:
         """
@@ -437,16 +467,13 @@ class VariableManager:
             raise KeyError(f"Variable with name {variable} does not exist. Can not delete")
         del self.variables[variable]
 
-    def compute_ranks(self, expressions: Iterable[VariableValue]) -> None:
+    def compute_ranks(self) -> None:
         """
         Assign ranks to variables based on the ranks of their dependencies,
-        then to expressions based on the variables they use.
+        then to interned expressions based on the variables they use.
 
         Variables whose dependencies can never be satisfied get rank -1,
         as do expressions that use an unknown variable.
-
-        Args:
-            expressions: All interned expression values.
         """
         # loop over vars and get the ones without deps, those have rank 0
         # loop again and get vars with satisfied deps based on known ranks
@@ -471,7 +498,7 @@ class VariableManager:
         for v in set(self.variables) - known_vars:
             self.var_ranks[v] = -1
 
-        for expr in expressions:
+        for expr in self.get_all_expressions():
             try:
                 self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
             except KeyError:

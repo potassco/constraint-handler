@@ -6,7 +6,7 @@ import clingo
 from clingo import Symbol
 
 import constraint_handler.schemas.propagator_atom as prop_atom
-from constraint_handler import evaluator, myClorm
+from constraint_handler import evaluator, myClorm, variable_loader
 from constraint_handler.model_builder import ModelBuilder
 from constraint_handler.optimization_modes import OptimizationModeHandler
 from constraint_handler.PropagatorConstants import (
@@ -31,7 +31,6 @@ from constraint_handler.PropagatorVariables import (
 )
 from constraint_handler.reasoning_modes import ReasoningModeHandler
 from constraint_handler.schemas import expression, internal, result, warning
-from constraint_handler.variable_loader import VariableLoader
 
 
 class ConstraintHandlerPropagator(clingo.Propagator):
@@ -59,7 +58,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         forbidden_warnings: Mapping from warning kinds to their literals.
         ignored_warnings: Mapping from warning kinds to their literal and truth value in the solver.
         watches: Set of solver literals being watched.
-        variable_loader: Loader for variables and their values during the current solve.
     """
 
     def __init__(self) -> None:
@@ -93,18 +91,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.ignored_warnings: dict[warning.Kind, tuple[int, bool]] = {}
 
         self.watches: set[int] = set()
-
-        self.variable_loader: VariableLoader = self._build_loader()
-
-    def _build_loader(self) -> VariableLoader:
-        """Create a loader (and fresh value registry) bound to the current solve state."""
-        return VariableLoader(
-            self.variable_manager,
-            self.errors,
-            self.evaluatevars,
-            self.shared_values,
-            add_watch=self.add_watch,
-        )
 
     def get_configuration(self, ctl: clingo.Control) -> None:
         """
@@ -140,7 +126,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.ignored_warnings.clear()
         self.watches.clear()
         self.python_model = None
-        self.variable_loader = self._build_loader()
 
     def init(self, init: clingo.PropagateInit) -> None:
         """
@@ -156,9 +141,11 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_solver_identifier(init)
 
-        self.variable_loader.load_variables(init)
-        self.optimization.get_optimization_sums(init, self.variable_loader.get_variable_value, self.add_watch)
-        self.variable_loader.load_evaluations(init)
+        variable_loader.load_variables(init, self.variable_manager, self.errors, self.add_watch)
+        self.optimization.get_optimization_sums(init, self.variable_manager.get_variable_value, self.add_watch)
+        variable_loader.load_evaluations(
+            init, self.variable_manager, self.evaluatevars, self.shared_values, self.add_watch
+        )
 
         self.set_parents()
 
@@ -167,11 +154,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_forbidden_warnings(init)
 
-        for expr in self.variable_loader.get_all_expressions():
-            for var in expr.vars():
-                self.variable_manager.add_var_expr(var, expr)
+        self.variable_manager.build_var_exprs()
 
-        self.variable_manager.compute_ranks(self.variable_loader.get_all_expressions())
+        self.variable_manager.compute_ranks()
 
         # valuations = self.preprocess()
         # self.ensure_pairs_dict = self.ensure_pairs(valuations)
@@ -542,7 +527,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     # print("var checking in check: ", var)
                     to_evaluate.add(var)
 
-            for expr in self.variable_loader.get_all_expressions():
+            for expr in self.variable_manager.get_all_expressions():
                 if expr.value == ValueStatus.NOT_SET:
                     to_evaluate_expressions.add(expr)
 
@@ -978,7 +963,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             decision_level: Decision level threshold for resetting expressions,
                 variables, and optimization sums.
         """
-        for expr in self.variable_loader.get_all_expressions():
+        for expr in self.variable_manager.get_all_expressions():
             if expr.reset(decision_level):
                 for var in self.variable_manager.get_expr_owners(expr):
                     var.expressions_evaluated_counter -= 1
