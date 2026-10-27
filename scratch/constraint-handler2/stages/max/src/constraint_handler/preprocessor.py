@@ -9,6 +9,7 @@ from pathlib import Path
 
 from clingo.control import Control
 from clingo.core import Library
+from clingo.script import enable_python
 from clingo.solve import SolveResult
 from clingo.symbol import Symbol
 
@@ -149,6 +150,7 @@ class Solver:
         self._problem = problem
         self._options = options
         self._library = Library()
+        enable_python(self._library)
         self._control = Control(self._library, list(options.arguments))
         self._control.parse_string(
             "\n".join(
@@ -162,6 +164,7 @@ class Solver:
             "native.lp",
             "boolean.lp",
             "integer.lp",
+            "eq.lp",
             "set.lp",
             "complex.lp",
         ):

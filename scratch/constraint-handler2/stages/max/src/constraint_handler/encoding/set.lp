@@ -23,7 +23,7 @@ set_value(Id, Member) :-
     set_value(Left, Member), not set_value(Right, Member).
 
 set_left_difference(Id) :-
-    set_operands(Id, Op, Left, Right), Op = (subset; eq; neq),
+    set_operands(Id, subset, Left, Right),
     set_value(Left, Member), not set_value(Right, Member).
 
 value(Id, boolean(false)) :-
@@ -32,10 +32,11 @@ value(Id, boolean(true)) :-
     set_operands(Id, subset, _, _), not set_left_difference(Id).
 
 set_unequal(Id) :-
-    set_operands(Id, Op, _, _), Op = (eq; neq), set_left_difference(Id).
+    set_operands(Id, Op, Left, Right), Op = (eq; neq),
+    equality_set_key(Left, Key), not equality_set_key(Right, Key).
 set_unequal(Id) :-
     set_operands(Id, Op, Left, Right), Op = (eq; neq),
-    set_value(Right, Member), not set_value(Left, Member).
+    equality_set_key(Right, Key), not equality_set_key(Left, Key).
 
 value(Id, boolean(true)) :- set_operands(Id, eq, _, _), not set_unequal(Id).
 value(Id, boolean(false)) :- set_operands(Id, eq, _, _), set_unequal(Id).

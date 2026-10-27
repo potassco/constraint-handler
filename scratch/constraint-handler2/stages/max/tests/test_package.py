@@ -17,6 +17,7 @@ def test_package_is_installed() -> None:
         "native.lp",
         "boolean.lp",
         "integer.lp",
+        "eq.lp",
         "complex.lp",
     ):
         assert files(constraint_handler).joinpath("encoding", encoding).is_file()

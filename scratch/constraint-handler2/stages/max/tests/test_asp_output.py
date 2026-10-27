@@ -8,6 +8,7 @@ from itertools import combinations, pairwise
 import pytest
 from clingo.control import Control
 from clingo.core import Library
+from clingo.script import enable_python
 from clingo.solve import Model
 from clingo.symbol import Function, Number, String, Symbol, SymbolType, parse_term
 
@@ -32,7 +33,9 @@ from constraint_handler.python_input import Expr, OperationArg
 @pytest.fixture
 def lib() -> Library:
     """Provide one Clingo library for constructing and parsing test symbols."""
-    return Library()
+    library = Library()
+    enable_python(library)
+    return library
 
 
 @pytest.mark.parametrize("values", ((3, 5), (-7, -2, 4, 23, 42)))
@@ -340,6 +343,8 @@ def test_native_boolean_short_circuit(
         Operator.conj,
         Operator.disj,
         Operator.leqv,
+        Operator.eq,
+        Operator.neq,
         Operator.linear_integer,
         Operator.linear_comparison,
     ),
@@ -700,7 +705,14 @@ def test_set_expression_outputs(
     assert not diagnostics.has_errors
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "integer.lp", "boolean.lp", "set.lp", "complex.lp"):
+    for encoding in (
+        "native.lp",
+        "integer.lp",
+        "boolean.lp",
+        "eq.lp",
+        "set.lp",
+        "complex.lp",
+    ):
         control.parse_string(
             files("constraint_handler").joinpath("encoding", encoding).read_text()
         )
@@ -738,7 +750,14 @@ def _variable_models(
     assert Engine.propagator not in problem.engines.values()
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "integer.lp", "boolean.lp", "set.lp", "complex.lp"):
+    for encoding in (
+        "native.lp",
+        "integer.lp",
+        "boolean.lp",
+        "eq.lp",
+        "set.lp",
+        "complex.lp",
+    ):
         control.parse_string(
             files("constraint_handler").joinpath("encoding", encoding).read_text()
         )
@@ -769,6 +788,112 @@ def _variable_models(
     outcome = control.solve(on_model=collect)
     assert outcome.exhausted
     return models
+
+
+@pytest.mark.parametrize(
+    "left, right, expected",
+    (
+        ("same", "same", True),
+        ("left", "right", False),
+        (True, True, True),
+        (True, False, False),
+        (True, 1, False),
+        (False, 0.0, False),
+        (None, None, True),
+        (None, "None", False),
+        (1, 1.0, True),
+        (1.0, 1, True),
+        (1, 1.5, False),
+        (1.5, 1.5, True),
+        (0, -0.0, True),
+        (1e30, 1e30, True),
+        ("1", 1, False),
+        ((1, (2.0,)), (1.0, (2,)), True),
+        ((True,), (1,), False),
+        ((1,), (1, 2), False),
+        (frozenset({1}), 1, False),
+        (1, frozenset({1}), False),
+        (frozenset(), frozenset(), True),
+        (frozenset(), frozenset({1.0}), False),
+        (frozenset({1}), frozenset({1.0}), True),
+        (frozenset({1.0}), frozenset({1}), True),
+        (frozenset({0}), frozenset({-0.0}), True),
+        (frozenset({1, 2.5}), frozenset({1.0, 2.5}), True),
+        (frozenset({1}), frozenset({1.5}), False),
+        (frozenset({1, 2}), frozenset({1.0}), False),
+        (frozenset({True}), frozenset({1}), False),
+        (frozenset({False}), frozenset({0.0}), False),
+        (frozenset({"1"}), frozenset({1}), False),
+    ),
+)
+def test_native_equality(lib: Library, left: Expr, right: Expr, expected: bool) -> None:
+    """Compare scalar and set values using typed keys and guarded absence."""
+    store = ConstraintStore()
+    first, second = VariableRef("left"), VariableRef("right")
+    store.choose(first, left)
+    store.choose(second, right)
+    for operation in (Operator.eq, Operator.neq):
+        store.define(
+            VariableRef(operation.value), Operation(operation, (first, second))
+        )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    assert set(problem.engines.values()) == {Engine.native}
+    assert not any(fact.name == "solution" for fact in problem.asp_facts)
+    assert problem.create_solver(SolveOptions()).solve().satisfiable
+    models = _variable_models(lib, store)
+    assert len(models) == 4
+    for model in models:
+        if "left" in model and "right" in model:
+            assert model["eq"] == f"boolean({str(expected).lower()})"
+            assert model["neq"] == f"boolean({str(not expected).lower()})"
+        else:
+            assert "eq" not in model and "neq" not in model
+
+
+@pytest.mark.parametrize("numeric", (False, True))
+@pytest.mark.parametrize("set_members", (False, True))
+def test_native_equality_grounding_is_linear(
+    lib: Library, numeric: bool, set_members: bool
+) -> None:
+    """Keep grounded rule counts and bodies linear as operand domains grow."""
+    sizes: list[int] = []
+    for size in (100, 200):
+        store = ConstraintStore()
+        left, right = VariableRef("left"), VariableRef("right")
+        choose = (
+            store.set_contain_choose_from_iterator
+            if set_members
+            else store.choose_from_iterator
+        )
+        choose(left, range(size) if numeric else (str(index) for index in range(size)))
+        choose(
+            right,
+            (float(index) for index in range(size))
+            if numeric
+            else (str(index) for index in range(size)),
+        )
+        for operation in (Operator.eq, Operator.neq):
+            store.define(
+                VariableRef(operation.value), Operation(operation, (left, right))
+            )
+        preprocessor = Preprocessor(PreprocessOptions())
+        preprocessor.add(store)
+        problem, diagnostics = preprocessor.preprocess()
+        assert not diagnostics.has_errors
+        assert not any(fact.name == "solution" for fact in problem.asp_facts)
+        control = Control(lib)
+        control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
+        for encoding in ("native.lp", "eq.lp", "set.lp"):
+            control.parse_string(
+                files("constraint_handler").joinpath("encoding", encoding).read_text()
+            )
+        control.ground([("base", [])])
+        control.write_aspif(preprocess=False)
+        sizes.append(sum(len(line.split()) for line in control.buffer.splitlines()))
+    assert 0 < sizes[0] < sizes[1] <= 2 * sizes[0]
 
 
 @pytest.mark.parametrize(

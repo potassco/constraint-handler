@@ -10,7 +10,8 @@ result domain and costs `|D(linear_integer(...))|`. Set union uses membership ru
 costs the sum of the numbers of potential members in its two input sets,
 without enumerating pairs of complete sets.
 
-After splitting, retain supported flat native operations, including `leqv`.
+After splitting, retain supported flat native operations, including `leqv`,
+`eq`, and `neq`.
 Compile unsupported or still-nested operations into a `python_eval` call. Also
 lower collections containing operations and existing lambda applications, even
 when their arguments are already leaves. Constants and direct variable
@@ -224,6 +225,20 @@ counts false operands by argument position and returns true for an even count;
 all operands must be defined. Repeated operands retain their multiplicity.
 Native support never forces a split. Compile other operations and each
 collection containing operations, including auxiliary definitions, into a Python callable.
+Flat `eq` and `neq` use native equality rules. Both operands must be defined;
+set/set equality compares normalized member keys in both directions, while a
+set and a scalar are unequal. Scalar matching joins the same keys instead of enumerating
+pairs. The Python `convert` function is embedded in `eq.lp`; `@convert` is
+called only for real payloads. An integral real in the ASP integer range
+uses the corresponding integer term; other reals keep their real term.
+Integers, Booleans, strings, and `None` remain unchanged. Tuple traversal
+applies the same conversion only to real members, including tuples in sets.
+Thus `1` and `1.0` are equal both as scalar values and as set members
+without rounding, while Booleans remain distinct from numbers and strings are
+not coerced. Stored set members and other set operations are unchanged.
+Loaders enable embedded Python on their Clingo library before
+parsing `eq.lp`; no external grounding context is needed. Pure integer relations still normalize to
+`linear_comparison` before splitting.
 Also compile every existing `lambda_` application, including calls with only
 leaf arguments, and operations with callable descriptors such as `set_fold`.
 An already-flat `python_eval` call remains unchanged. An existing call with
@@ -323,6 +338,11 @@ Callable bodies remain opaque; their internal runtime is not included.
 | `ite(condition, x, y)`                                                                                                 | `d(condition) * d(x) * d(y)` | Enumerate condition and branch values.                                                                               |
 | `limp`, `lxor`                                                                                                         | `d(x) * d(y)`                | Binary truth-table enumeration.                                                                                      |
 | `lnot`, `snot`, `wnot`                                                                                                 | `d(x)`                       | Unary truth-table enumeration.                                                                                       |
+
+The scalar equality estimate counts matching-value work, not shared
+definedness and canonical-key rules. Those rules add linear work in the sum of
+the input-domain sizes, never their Cartesian product. Tuples additionally
+require traversing their elements during conversion.
 
 ### Set Operations
 

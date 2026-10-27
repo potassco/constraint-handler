@@ -428,6 +428,8 @@ class _Splitter(GroundingCost):
                         Operator.conj,
                         Operator.disj,
                         Operator.leqv,
+                        Operator.eq,
+                        Operator.neq,
                         Operator.union,
                         Operator.inter,
                         Operator.diff,
@@ -437,7 +439,7 @@ class _Splitter(GroundingCost):
                         Operator.set_notin,
                         Operator.cardinality,
                     }
-                    or expr.op in {Operator.eq, Operator.neq, Operator.length}
+                    or expr.op == Operator.length
                     and all(self.is_set(cast(Expr, arg)) for arg in expr.args)
                 )
                 and not any(_contains_operation(arg) for arg in expr.args)

@@ -19,6 +19,7 @@ from pathlib import Path
 
 from clingo.control import Control
 from clingo.core import Library
+from clingo.script import enable_python
 from clingo.solve import Model
 from clingo.symbol import Function, Symbol, SymbolType, parse_term
 
@@ -283,6 +284,7 @@ def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
             return result
         checkpoint("facts")
         lib = Library()
+        enable_python(lib)
         facts = asp_facts(lib, problem.store, problem.engines, problem.domains)
         result["rows"] = sum(fact.name == "output" for fact in facts)
         result["sample_outputs"] = [
@@ -300,6 +302,7 @@ def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
             "native.lp",
             "boolean.lp",
             "integer.lp",
+            "eq.lp",
             "set.lp",
             "complex.lp",
         ):
