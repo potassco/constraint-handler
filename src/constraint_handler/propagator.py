@@ -82,6 +82,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.check_only = False
 
         self.errors: propagator_warning_t = []
+        self.configuration_errors: propagator_warning_t = []
 
         self.reasoning_mode_handler = ReasoningModeHandler()
         self.python_model: set[result.ResultAtom] | None = None
@@ -107,20 +108,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         reasoning_warning = self.reasoning_mode_handler.configure(ctl)
         if reasoning_warning is not None:
-            self.errors.append(reasoning_warning)
+            self.configuration_errors.append(reasoning_warning)
 
         optimization_warning = self.optimization.configure(ctl)
         if optimization_warning is not None:
-            self.errors.append(optimization_warning)
+            self.configuration_errors.append(optimization_warning)
 
-    def init(self, init: clingo.PropagateInit) -> None:
-        """
-        Function implementing the init method of a Propagator.
-        See clingo Propagator documentation for more details.
-
-        Args:
-            init: Clingo PropagateInit object
-        """
+    def _reset_init_state(self, check_only: bool) -> None:
+        """Reset state derived from the current solver initialization."""
         self.variable_manager = VariableManager()
         self.evaluations = Evaluations()
         self.literal2var.clear()
@@ -133,11 +128,28 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.reasoning_mode_handler.reset()
         self.environment = {}
         self.errors.clear()
+        self.errors.extend(self.configuration_errors)
+        self.check_only = check_only
+        self.shared_values.clear()
+        self.nogood_queue.clear()
+        self.var_ranks.clear()
+        self.var_ranks_expr.clear()
+        self.forbidden_warnings.clear()
+        self.ignored_warnings.clear()
+        self.watches.clear()
+        self.python_model = None
+
+    def init(self, init: clingo.PropagateInit) -> None:
+        """
+        Function implementing the init method of a Propagator.
+        See clingo Propagator documentation for more details.
+
+        Args:
+            init: Clingo PropagateInit object
+        """
+        self._reset_init_state(PROPAGATOR_CHECK_MODE_ATOM in init.symbolic_atoms)
 
         init.check_mode = clingo.PropagatorCheckMode.Total
-
-        if PROPAGATOR_CHECK_MODE_ATOM in init.symbolic_atoms:
-            self.check_only = True
 
         self.get_solver_identifier(init)
 
