@@ -1,7 +1,7 @@
 """Build a ground ASP fact base from a dispatched constraint store."""
 
 import math
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from itertools import pairwise, product
 from typing import assert_never, cast
 
@@ -99,7 +99,11 @@ def _term(lib: Library, expr: OperationArg) -> Symbol:
 
 
 def _complex_facts(
-    lib: Library, store: ConstraintStore, engines: DispatchStore, domains: DomainStore
+    lib: Library,
+    store: ConstraintStore,
+    engines: DispatchStore,
+    domains: DomainStore,
+    python_context: Mapping[str, object],
 ) -> Iterator[Symbol]:
     """Enumerate Python calls with exact scalar and set input/output rows."""
     solution_id = 0
@@ -116,7 +120,7 @@ def _complex_facts(
         argument_domains = [domains[cast(Expr, arg)] for arg in arguments]
         if any(domain.unknown for domain in argument_domains):
             raise ValueError("complex evaluation requires known input domains")
-        callback: object = eval(expr.args[0].fn, {"math": math})
+        callback: object = eval(expr.args[0].fn, {"math": math, **python_context})
         if not callable(callback):
             raise TypeError("Python source must evaluate to a callable")
         axes = [
@@ -190,6 +194,7 @@ def asp_facts(
     store: ConstraintStore,
     engines: DispatchStore,
     domains: DomainStore | None = None,
+    python_context: Mapping[str, object] | None = None,
 ) -> tuple[Symbol, ...]:
     """Return ground facts retaining every declaration, expression, and engine assignment."""
     if engines.keys() != store.expressions.keys():
@@ -388,5 +393,5 @@ def asp_facts(
                     )
                 )
     if domains is not None:
-        facts.extend(_complex_facts(lib, store, engines, domains))
+        facts.extend(_complex_facts(lib, store, engines, domains, python_context or {}))
     return tuple(facts)

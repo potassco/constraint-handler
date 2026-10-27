@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from itertools import product
 from typing import assert_never
 
@@ -60,12 +60,14 @@ class _DomainComputer:
         diagnostics: Diagnostics,
         threshold: int,
         boolean_threshold: int,
+        python_context: Mapping[str, object],
     ) -> None:
         """Initialize the domain computer with evaluation order, thresholds, and diagnostics."""
         self._store = store
         self._order = order
         self._diagnostics = diagnostics
         self._threshold = threshold
+        self._python_context = python_context
         self._result = DomainStore()
         self._operations = DomainOperationEvaluator(
             diagnostics, threshold, boolean_threshold
@@ -402,7 +404,7 @@ class _DomainComputer:
         try:
             if any(domain.has_nonfinite_values() for domain in arg_domains):
                 raise ValueError("non-finite real input")
-            callback: object = eval(args[0].fn, {"math": math})
+            callback: object = eval(args[0].fn, {"math": math, **self._python_context})
             if not callable(callback):
                 raise TypeError("Python source must evaluate to a callable")
             for values in product(*(domain.iter_values() for domain in arg_domains)):
@@ -494,8 +496,9 @@ def compute_domains(
     *,
     threshold: int = DEFAULT_THRESHOLD,
     boolean_threshold: int = DEFAULT_BOOLEAN_THRESHOLD,
+    python_context: Mapping[str, object] | None = None,
 ) -> DomainStore:
     """Compute a sound Domain for every variable and expression in the store."""
     return _DomainComputer(
-        store, order, diagnostics, threshold, boolean_threshold
+        store, order, diagnostics, threshold, boolean_threshold, python_context or {}
     ).run()

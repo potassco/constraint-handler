@@ -93,6 +93,42 @@ Set outputs use the same marker/membership representation and can feed later
 calls. Python callbacks may return `set` or `frozenset`; mutable results are
 converted to immutable sets during domain inference and fact generation.
 
+### Python Context
+
+Register external functions or namespace objects before preprocessing:
+
+```python
+from constraint_handler import (
+	ConstraintStore, Operation, Operator, PreprocessOptions, Preprocessor,
+	Python, SolveOptions, VariableRef,
+)
+
+store = ConstraintStore()
+store.define(
+	VariableRef("result"),
+	Operation(Operator.python_eval, (Python("lambda value: external_abs(value)"), -3)),
+)
+preprocessor = Preprocessor(PreprocessOptions())
+preprocessor.add_context("external_abs", abs)
+preprocessor.add(store)
+problem, diagnostics = preprocessor.preprocess()
+solver = problem.create_solver(SolveOptions())
+result = solver.solve()
+```
+
+`Python("external_abs")` can also reference the callable directly. A registered
+module or object is available through its bound name, such as
+`Python("lambda value: helpers.transform(value)")`. Bindings are globals, so they
+are visible inside lambdas and comprehensions; builtins and `math` remain available
+unless explicitly overridden. Only use trusted Python source and context objects.
+
+Each prepared problem snapshots the named bindings and uses them for domain
+analysis, fact generation, and all solver sessions. Later `add_context` calls
+affect only future preprocessing. This is a shallow snapshot: bound objects are
+not copied and should remain unchanged. Runtime rebinding through
+`Solver.add_context` is not supported because inferred domains depend on the
+preparation-time bindings.
+
 `ensure` requires a `boolean(true)` value to exist. `check` allows an absent
 value, but any existing value must be `boolean(true)`.
 

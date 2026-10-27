@@ -1,6 +1,7 @@
 """Tests for the Preprocessor, PreparedProblem, and Solver workflow interface."""
 
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import ANY, Mock
 
 import pytest
@@ -14,6 +15,7 @@ from constraint_handler import (
     PreparedProblem,
     PreprocessOptions,
     Preprocessor,
+    Python,
     SolveOptions,
     VariableRef,
     asp_facts,
@@ -22,6 +24,62 @@ from constraint_handler.domains import Domain
 from constraint_handler.internal_input import ValueType
 from constraint_handler.python_input import Expr
 from constraint_handler.static_types import SetOf
+
+
+@pytest.mark.parametrize(
+    "source",
+    (
+        "absolute",
+        "lambda value: absolute(value)",
+        "external.absolute",
+        "lambda value: sum(absolute(item) for item in (value,))",
+        "lambda value: external.absolute(value) + int(math.sqrt(0))",
+    ),
+)
+def test_python_context(source: str) -> None:
+    """Use external functions during domain inference, fact generation, and solving."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    store.define(result, Operation(Operator.python_eval, (Python(source), -6)))
+    store.ensure(Operation(Operator.eq, (result, 6)))
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    preprocessor.add_context("absolute", abs)
+    preprocessor.add_context("external", SimpleNamespace(absolute=abs))
+
+    prepared, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.items
+    assert prepared.domains[result] == Domain(ints=frozenset({6}))
+    assert any(
+        fact.name == "output" and str(fact).endswith(",integer(6))")
+        for fact in prepared.asp_facts
+    )
+    assert prepared.create_solver(SolveOptions()).solve().satisfiable
+
+
+def test_python_context_snapshot() -> None:
+    """Keep prepared bindings isolated from later additions and replacements."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    store.define(result, Operation(Operator.python_eval, (Python("convert"), -6)))
+    store.ensure(Operation(Operator.eq, (result, 6)))
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    preprocessor.add_context("convert", abs)
+    prepared, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.items
+    original_facts = tuple(map(str, prepared.asp_facts))
+
+    preprocessor.add_context("convert", int)
+    preprocessor.add_context("another", str)
+    updated, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.items
+    assert updated.domains[result] == Domain(ints=frozenset({-6}))
+    assert "another" not in prepared.python_context
+    assert tuple(map(str, prepared.asp_facts)) == original_facts
+    assert prepared.create_solver(SolveOptions()).solve().satisfiable
+    assert prepared.create_solver(SolveOptions()).solve().satisfiable
+    assert updated.create_solver(SolveOptions()).solve().unsatisfiable
 
 
 @pytest.mark.parametrize(
@@ -238,8 +296,6 @@ def test_prepared_problem_and_solver_skeleton_methods() -> None:
     assert solver.options == solve_opts
 
     with pytest.raises(NotImplementedError):
-        preprocessor.add_context("ctx", object())
-    with pytest.raises(NotImplementedError):
         prepared.dump(Path("problem.ch-prepared"))
     with pytest.raises(NotImplementedError):
         PreparedProblem.load(Path("problem.ch-prepared"))
@@ -273,7 +329,7 @@ def test_native_solver_fact_base(monkeypatch: pytest.MonkeyPatch) -> None:
         )
     )
     build_facts.assert_called_once_with(
-        ANY, prepared.store, prepared.engines, prepared.domains
+        ANY, prepared.store, prepared.engines, prepared.domains, prepared.python_context
     )
     first = prepared.create_solver(SolveOptions())
     second = prepared.create_solver(SolveOptions(arguments=("0",)))

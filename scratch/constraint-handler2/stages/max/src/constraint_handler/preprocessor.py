@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib.resources import files
 from pathlib import Path
+from types import MappingProxyType
 
 from clingo.control import Control
 from clingo.core import Library
@@ -55,11 +56,14 @@ class PreparedProblem:
     static_types: StaticTypeStore
     domains: DomainStore
     engines: DispatchStore
+    python_context: Mapping[str, object] = field(default_factory=dict)
 
     @property
     def asp_facts(self) -> tuple[Symbol, ...]:
         """Build the ASP fact base from the prepared store and dispatch assignments."""
-        return asp_facts(Library(), self.store, self.engines, self.domains)
+        return asp_facts(
+            Library(), self.store, self.engines, self.domains, self.python_context
+        )
 
     def dump(self, path: Path) -> None:
         """Serialize this PreparedProblem to the given path."""
@@ -84,6 +88,7 @@ class Preprocessor:
         """Initialize the preprocessor with preprocessing options."""
         self._options = options
         self._store = ConstraintStore()
+        self._python_context: dict[str, object] = {}
 
     @property
     def options(self) -> PreprocessOptions:
@@ -95,12 +100,13 @@ class Preprocessor:
         self._store.merge(store)
 
     def add_context(self, name: str, context: object) -> None:
-        """Bind preparation dependencies."""
-        raise NotImplementedError
+        """Bind a named function or namespace for Python expressions."""
+        self._python_context[name] = context
 
     def preprocess(self) -> tuple[PreparedProblem, Diagnostics]:
         """Snapshot, preprocess, and dispatch the store without building ASP facts."""
         snapshot = self._store.copy()
+        python_context = MappingProxyType(self._python_context.copy())
         diagnostics = Diagnostics()
         order = compute_evaluation_order(snapshot, diagnostics)
         static_types = compute_static_types(snapshot, order, diagnostics)
@@ -114,6 +120,7 @@ class Preprocessor:
             diagnostics,
             threshold=self._options.threshold,
             boolean_threshold=self._options.boolean_threshold,
+            python_context=python_context,
         )
         if not diagnostics.has_errors:
             split(
@@ -133,6 +140,7 @@ class Preprocessor:
                 static_types=static_types,
                 domains=domains,
                 engines=engines,
+                python_context=python_context,
             ),
             diagnostics,
         )
@@ -156,7 +164,11 @@ class Solver:
             "\n".join(
                 f"{fact}."
                 for fact in asp_facts(
-                    self._library, problem.store, problem.engines, problem.domains
+                    self._library,
+                    problem.store,
+                    problem.engines,
+                    problem.domains,
+                    problem.python_context,
                 )
             )
         )
