@@ -261,6 +261,7 @@ execution_tests = [
     "execution/python_set_empty_equality",
     "execution/run_condition",
     "execution/warning_spurious",
+    "execution/warning_spurious2",
 ]
 
 expression_tests = [
@@ -756,6 +757,7 @@ choice_statistics_skip: set[str] = {
     "execution/python_integrity_should_be_ignored",
     "execution/run_condition",
     "execution/warning_spurious",
+    "execution/warning_spurious2",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
     "optimization/label_int",
