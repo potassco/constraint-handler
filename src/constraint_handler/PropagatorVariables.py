@@ -174,6 +174,10 @@ class VariableManager:
         """
         value = self.value_registry.get(expr, literal)
         self.add_literal_expr(literal, value)
+        # maybe doing this is ineficient and it is better the way it was before
+        # of doing this once all expressions are interned.
+        for var in value.vars():
+            self.add_var_expr(var, value)
         return value
 
     def get_all_expressions(self) -> list[VariableValue]:
@@ -184,12 +188,6 @@ class VariableManager:
 
         """
         return self.value_registry.get_all()
-
-    def build_var_exprs(self) -> None:
-        """Index every interned expression value by the variable symbols it uses."""
-        for expr in self.get_all_expressions():
-            for var in expr.vars():
-                self.add_var_expr(var, expr)
 
     def add_literal_var(self, literal: int, variable: VariableType) -> None:
         """

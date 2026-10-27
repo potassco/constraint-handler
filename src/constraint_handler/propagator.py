@@ -154,8 +154,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_forbidden_warnings(init)
 
-        self.variable_manager.build_var_exprs()
-
         self.variable_manager.compute_ranks()
 
         # valuations = self.preprocess()
