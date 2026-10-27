@@ -151,7 +151,7 @@ class VariableManager:
         variables: Dictionary mapping variable names to VariableType instances.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.variables: dict[clingo.Symbol, dict[VariableTypeNames, VariableType]] = {}
         self.user_variable_names: set[clingo.Symbol] = set()
 
@@ -332,7 +332,7 @@ class VariableValue:
         errors: List of warnings or errors encountered during evaluation.
     """
 
-    def __init__(self, expr: expression.Expr, lit: int):
+    def __init__(self, expr: expression.Expr, lit: int) -> None:
         """
         Initialize a VariableValue.
 
@@ -469,7 +469,7 @@ class VariableValue:
 
         return set()
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, VariableValue):
             return False
         return self.expr == other.expr and self.literal == other.literal
@@ -537,7 +537,7 @@ class EvaluateVariable:
         errors: List of warnings or errors encountered during evaluation.
     """
 
-    def __init__(self, ref: expression.constant, expr: expression.Expr, literal: int = -1):
+    def __init__(self, ref: expression.constant, expr: expression.Expr, literal: int = -1) -> None:
         """
         Initialize an EvaluateVariable.
 
@@ -611,7 +611,7 @@ class EvaluateVariable:
         """
         return self.errors
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, EvaluateVariable):
             return False
         return self.ref == other.ref and self.expr == other.expr and self.literal == other.literal
@@ -631,7 +631,7 @@ class SharedValue:
     Represents a shared value that is used by other parts of the constraint handler.
     """
 
-    def __init__(self, expr: expression.Expr, literal: int = -1):
+    def __init__(self, expr: expression.Expr, literal: int = -1) -> None:
         """
         Initialize a SharedValue.
 
@@ -698,7 +698,7 @@ class SharedValue:
         """
         return self.errors
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, SharedValue):
             return False
         return self.expr == other.expr and self.literal == other.literal
@@ -730,7 +730,7 @@ class EnsureVariable:
     __var = "ensure"
     __c = 0
 
-    def __init__(self, name: str, expression_value: VariableValue):
+    def __init__(self, name: str, expression_value: VariableValue) -> None:
         """
         Initialize an EnsureVariable.
 
@@ -948,7 +948,7 @@ class EnsureVariable:
 
         return set()
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.name, self.expression))
 
     def __repr__(self) -> str:
@@ -975,7 +975,7 @@ class BoolEvaluateVariable:
         true_lit: int,
         false_lit: int,
         bad_lit: int,
-    ):
+    ) -> None:
         """
         Initialize a BoolEvaluateVariable.
 
@@ -1190,7 +1190,7 @@ class Variable:
         is_user_variable: Whether this variable is defined by the user or is an internal variable
     """
 
-    def __init__(self, name: str, var: clingo.Symbol, is_user_variable: bool = False):
+    def __init__(self, name: str, var: clingo.Symbol, is_user_variable: bool = False) -> None:
         """
         Initialize a Variable.
 
@@ -1463,7 +1463,7 @@ class Variable:
         ]
         return vals
 
-    def get_literals(self, active):
+    def get_literals(self, active: bool) -> set[int]:
         """
         Return the literal associated with this expression
 
@@ -1531,7 +1531,7 @@ class Variable:
         """
         return set()
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Variable):
             return False
         return self.var == other.var and self.expressions == other.expressions
@@ -1705,7 +1705,7 @@ class SetVariableValue:
             if condition_value is not None:
                 condition_value.reset(dl)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, SetVariableValue):
             return False
         return self.expressions_pairs == other.expressions_pairs
@@ -1742,7 +1742,7 @@ class SetVariable:
         is_user_variable: Whether this variable is defined by the user or is an internal variable
     """
 
-    def __init__(self, name: str, var: clingo.Symbol, lit: int, is_user_variable: bool = False):
+    def __init__(self, name: str, var: clingo.Symbol, lit: int, is_user_variable: bool = False) -> None:
         """
         Initialize a SetVariable.
 
@@ -2084,7 +2084,7 @@ class SetVariable:
 
         return set()
 
-    def __eq__(self, value) -> bool:
+    def __eq__(self, value: object) -> bool:
         if not isinstance(value, SetVariable):
             return False
         return self.var == value.var and self.set_expressions == value.set_expressions
@@ -2121,7 +2121,7 @@ class DictVariable:
         is_user_variable: Whether this variable is defined by the user or is an internal variable
     """
 
-    def __init__(self, name: str, var: clingo.Symbol, lit: int, is_user_variable: bool = False):
+    def __init__(self, name: str, var: clingo.Symbol, lit: int, is_user_variable: bool = False) -> None:
         """
         Initialize a DictVariable.
 
@@ -2499,7 +2499,7 @@ class DictVariable:
 
         return set()
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, DictVariable):
             return False
         return self.var == other.var and self.dict_expressions == other.dict_expressions
@@ -2670,7 +2670,7 @@ class OptimizationSum:
             vars.update(expr.vars())
         return vars
 
-    def reset(self, dl: int):
+    def reset(self, dl: int) -> None:
         """
         Reset the optimization sum if the decision level is greater than or equal to dl.
 
@@ -2704,7 +2704,7 @@ class OptimizationHandler:
               OptimizationSums are ordered by priority, with higher priority sums coming first.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize an OptimizationHandler.
         """
@@ -2781,7 +2781,7 @@ class OptimizationHandler:
             vars.update(_sum.vars())
         return vars
 
-    def reset(self, dl: int):
+    def reset(self, dl: int) -> None:
         """
         Reset all optimization sums.
 
@@ -2855,7 +2855,7 @@ class Evaluations:
         existing_vars: List of variables that exist in the current evaluation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize Evaluations with an empty dictionary.
         """
@@ -2865,7 +2865,7 @@ class Evaluations:
         # this is needed for the check to see if the variable is usable in the current evaluation.
         self.existing_vars: dict[clingo.Symbol, int] = {}
 
-    def init(self, variables: Iterable[VariableType]):
+    def init(self, variables: Iterable[VariableType]) -> None:
         """
         Initialize the existing variables list based on the provided variables.
         This method should be called before any evaluations are updated

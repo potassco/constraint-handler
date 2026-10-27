@@ -56,7 +56,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         python_model: Stores the python-level model for output.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the propagator.
 
@@ -97,7 +97,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.watches: set[int] = set()
 
-    def get_configuration(self, ctl: clingo.Control):
+    def get_configuration(self, ctl: clingo.Control) -> None:
         """
         Read clingo configuration and initialize reasoning and optimization settings.
 
@@ -792,7 +792,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         return False
 
-    def check_evaluate(self, ctl: clingo.PropagateControl):
+    def check_evaluate(self, ctl: clingo.PropagateControl) -> None:
         """
         Evaluate `evaluate` atoms against the current assignments.
 
@@ -802,7 +802,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for var in self.evaluatevars:
             var.evaluate(self.evaluations, ctl, self.environment)
 
-    def check_shared_values(self, ctl: clingo.PropagateControl):
+    def check_shared_values(self, ctl: clingo.PropagateControl) -> None:
         """
         Evaluate `evaluate` atoms against the current assignments.
 
@@ -1144,7 +1144,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.optimization.reset_sums(decision_level)
 
-    def get_solver_identifier(self, ctl: clingo.PropagateInit):
+    def get_solver_identifier(self, ctl: clingo.PropagateInit) -> None:
         """
         Initialize the Python evaluation environment using the solver identifier.
 
@@ -1183,7 +1183,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     ctl.add_clause([])
                     return
 
-    def set_parents(self):
+    def set_parents(self) -> None:
         """
         Populate parent relationships between variables.
 
@@ -1223,7 +1223,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 if var in owners:
                     owners.remove(var)
 
-    def update_python_model(self):
+    def update_python_model(self) -> None:
         """
         Build the python-side model representation from current variable values.
 
@@ -1239,7 +1239,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             self.variable_manager.get_variables(), self.evaluatevars, errors
         )
 
-    def on_model(self, model: clingo.Model):
+    def on_model(self, model: clingo.Model) -> None:
         """
         Extend the clingo model using python-side result atoms.
 
@@ -1260,7 +1260,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # Stop search once the requested number of optimal models is found.
             model.context.add_clause([])
 
-    def add_shared_values(self, model: clingo.Model):
+    def add_shared_values(self, model: clingo.Model) -> None:
         """
         Add optimization value atoms for optimization sums to the model.
         This uses the post_processor.py "_extend_optimize_values" function.
