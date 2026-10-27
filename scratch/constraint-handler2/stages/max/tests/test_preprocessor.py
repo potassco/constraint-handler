@@ -10,6 +10,7 @@ from clingo.core import Library
 from constraint_handler import (
     ConstraintStore,
     Engine,
+    FailIntegrityExn,
     Operation,
     Operator,
     PreparedProblem,
@@ -54,6 +55,53 @@ def test_python_context(source: str) -> None:
         fact.name == "output" and str(fact).endswith(",integer(6))")
         for fact in prepared.asp_facts
     )
+    assert prepared.create_solver(SolveOptions()).solve().satisfiable
+
+
+@pytest.mark.parametrize("all_invalid", (False, True))
+def test_python_context_integrity_failure(all_invalid: bool) -> None:
+    """Skip deliberate Python failures without rejecting otherwise valid models."""
+
+    def guarded(value: int) -> int:
+        """Return a value only for the nonzero candidate."""
+        if value == 0:
+            raise FailIntegrityExn
+        return 6
+
+    store = ConstraintStore()
+    argument, result, downstream = (
+        VariableRef(name) for name in ("argument", "result", "downstream")
+    )
+    store.choose_from_iterator(argument, (0,) if all_invalid else (0, 1))
+    store.ensure(Operation(Operator.eq, (argument, 0)))
+    store.define(result, Operation(Operator.python_eval, (Python("guarded"), argument)))
+    store.define(downstream, Operation(Operator.add, (result, 1)))
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add_context("guarded", guarded)
+    preprocessor.add(store)
+    prepared, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.items
+    assert prepared.domains[result] == Domain(
+        ints=frozenset() if all_invalid else frozenset({6})
+    )
+    assert prepared.domains[downstream] == Domain(
+        ints=frozenset() if all_invalid else frozenset({7})
+    )
+    assert not any(
+        fact.name == "input" and str(fact.arguments[2]) == "integer(0)"
+        for fact in prepared.asp_facts
+    )
+    assert prepared.create_solver(SolveOptions()).solve().satisfiable
+
+
+def test_failure_name_is_ordinary_core_variable() -> None:
+    """Keep the scratch converter's reserved failure name ordinary in the core API."""
+    store = ConstraintStore()
+    store.define(VariableRef("__fail"), True)
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    prepared, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.items
     assert prepared.create_solver(SolveOptions()).solve().satisfiable
 
 

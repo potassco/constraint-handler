@@ -15,6 +15,7 @@ from .preprocessor import (
 from .python_input import (
     LABEL_ANONYMOUS,
     Expr,
+    FailIntegrityExn,
     Lambda,
     Operation,
     OperationArg,
@@ -39,6 +40,7 @@ __all__ = [
     "Engine",
     "Expr",
     "ExpressionLocation",
+    "FailIntegrityExn",
     "Lambda",
     "Operation",
     "OperationArg",

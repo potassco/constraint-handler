@@ -22,7 +22,7 @@ from .internal_input import (
     Variable,
     _convert_expression,
 )
-from .python_input import Operator, Python, VariableRef
+from .python_input import FailIntegrityExn, Operator, Python, VariableRef
 
 
 def _number(lib: Library, value: int) -> Symbol:
@@ -133,6 +133,8 @@ def _complex_facts(
         for values in product(*axes):
             try:
                 result = callback(*values)
+            except FailIntegrityExn:
+                continue
             except ArithmeticError, LookupError, TypeError, ValueError:
                 continue
             if isinstance(result, set):

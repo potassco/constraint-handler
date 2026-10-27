@@ -25,7 +25,7 @@ from ..internal_input import (
     ValueType,
     VariableRef,
 )
-from ..python_input import Operator
+from ..python_input import FailIntegrityExn, Operator
 from ..util import EvaluationOrder
 from .evaluation import EnumerationDecision, bounded_product_decision
 from .operations import DomainOperationEvaluator
@@ -410,6 +410,8 @@ class _DomainComputer:
             for values in product(*(domain.iter_values() for domain in arg_domains)):
                 try:
                     value = callback(*values)
+                except FailIntegrityExn:
+                    continue
                 except (ArithmeticError, LookupError, TypeError, ValueError) as error:
                     self._diagnostics.warn(
                         f"python_eval domain evaluation failed: {error}",

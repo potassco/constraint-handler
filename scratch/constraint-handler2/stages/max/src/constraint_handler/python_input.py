@@ -6,6 +6,10 @@ from enum import StrEnum, auto
 LABEL_ANONYMOUS = ""
 
 
+class FailIntegrityExn(Exception):
+    """Leave a Python-operation candidate undefined without rejecting its model."""
+
+
 class Operator(StrEnum):
     """Enumerate the operators accepted by input expressions."""
 

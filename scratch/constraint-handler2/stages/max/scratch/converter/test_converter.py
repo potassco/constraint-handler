@@ -2,16 +2,19 @@
 
 # pyright: reportPrivateUsage=false
 
+import json
 from pathlib import Path
 
 import pytest
 
 from constraint_handler import (
     LABEL_ANONYMOUS,
+    FailIntegrityExn,
     Operator,
     PreprocessOptions,
     Preprocessor,
     Python,
+    SolveOptions,
     VariableRef,
     internal_input,
 )
@@ -226,7 +229,7 @@ def test_ssa_statement_python_tuple_and_internal_vars() -> None:
         assert isinstance(tuple_def.args[0], Python)
 
         get_def = list_store._expressions[list_store.variables[x_ssa_ref].definitions[0].value]
-        assert get_def == internal_input.Operation(Operator.tuple_get, (tuple_ref, ValueDef(ValueType.integer, 0)))
+        assert get_def == internal_input.Operation(Operator.tuple_get, (tuple_ref, ValueDef(ValueType.integer, 1)))
 
 
 def test_ssa_statement_python_with_inputs_and_integrity() -> None:
@@ -239,8 +242,111 @@ def test_ssa_statement_python_with_inputs_and_integrity() -> None:
     assert VariableRef('execution_output(prg,"x")') in aug_store.variables
 
     ign_store = convert_file(CORRECTNESS_DIR / "execution" / "python_integrity_should_be_ignored.lp")
-    assert len(ign_store.constraints) == 5
+    assert len(ign_store.constraints) == 2
     assert all(c.is_check for c in ign_store.constraints)
+
+
+@pytest.mark.parametrize("enabled", (False, True))
+@pytest.mark.parametrize(
+    "code",
+    (
+        "raise solver_environment.FailIntegrityExn",
+        "raise FailIntegrityExn()",
+        "solver_environment.constrain(False)",
+        "constrain(False)",
+        "reject()",
+        "y = 3\nraise solver_environment.FailIntegrityExn\ny = 4",
+    ),
+)
+def test_ssa_integrity_failure_models(enabled: bool, code: str) -> None:
+    """Reject reached failures while preserving models with inactive statements."""
+    def reject() -> None:
+        """Signal failure indirectly through a Python context function."""
+        raise FailIntegrityExn
+
+    source = f'''
+    variable_define(execution_input(p,"enabled"),val(bool,{str(enabled).lower()})).
+    execution_run(p).
+    execution_declare(p,
+        if(variable("enabled"),statement_python({json.dumps(code)}),assign("y",val(int,0))),
+        ("enabled",()),("y",())).
+    '''
+    store = convert_string(source)
+    assert VariableRef("__fail") in store.variables
+    assert len(store.constraints) == 1
+    assert store.constraints[0].is_check
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add_context("reject", reject)
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    result = problem.create_solver(SolveOptions()).solve()
+    assert result.unsatisfiable if enabled else result.satisfiable
+
+
+@pytest.mark.parametrize("separate_executions", (False, True))
+@pytest.mark.parametrize("failure_position", (None, 0, 1))
+def test_ssa_common_failure_flag(separate_executions: bool, failure_position: int | None) -> None:
+    """Keep one write-once failure flag across statements and executions."""
+    statements = [
+        f"statement_python({json.dumps('raise FailIntegrityExn' if index == failure_position else 'pass')})"
+        for index in range(2)
+    ]
+    if separate_executions:
+        source = "\n".join(
+            f"execution_run(p{index}). execution_declare(p{index},{statement},(),())."
+            for index, statement in enumerate(statements)
+        )
+    else:
+        source = f"execution_run(p). execution_declare(p,seq2({','.join(statements)}),(),())."
+    store = convert_string(source)
+    assert len(store.constraints) == 1
+    definitions = store.variables[VariableRef("__fail")].definitions
+    assert len(definitions) == 2
+    assert all(store.expressions[entry.value] == ValueDef(ValueType.boolean, True) for entry in definitions)
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    result = problem.create_solver(SolveOptions()).solve()
+    assert result.satisfiable if failure_position is None else result.unsatisfiable
+
+
+@pytest.mark.parametrize("enabled", (False, True))
+def test_ssa_python_internal_failure_condition(enabled: bool) -> None:
+    """Keep Python's internal control flow when producing the ordinary failure flag."""
+    code = "y = 3\nif enabled:\n    raise FailIntegrityExn\ny = 4"
+    source = f'''
+    variable_define(execution_input(p,"enabled"),val(bool,{str(enabled).lower()})).
+    execution_run(p).
+    execution_declare(p,statement_python({json.dumps(code)}),("enabled",()),("y",())).
+    '''
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(convert_string(source))
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    result = problem.create_solver(SolveOptions()).solve()
+    assert result.unsatisfiable if enabled else result.satisfiable
+    if not enabled:
+        assert problem.domains[VariableRef('execution_output(p,"y")')] == Domain(ints=frozenset({4}))
+
+
+@pytest.mark.parametrize(
+    "source",
+    (
+        'variable_define("__fail",val(bool,false)).',
+        'variable_declare(__fail,fromFacts).',
+        'execution_run(p). execution_declare(p,assign("__fail",val(bool,false)),(),()).',
+        'execution_run(p). execution_declare(p,statement_python("__fail = False"),(),()).',
+        'execution_run(p). execution_declare(p,statement_python("__fail += 1"),(),()).',
+        'execution_declare(p,noop,("__fail",()),()).',
+        'execution_declare(p,noop,(),("__fail",())).',
+    ),
+)
+def test_ssa_reserves_failure_variable(source: str) -> None:
+    """Prevent legacy input from assigning or supplying the converter's failure flag."""
+    with pytest.raises(ConversionError, match="__fail.*reserved"):
+        convert_string(source)
 
 
 def test_ssa_unrun_execution_and_implicit_variables() -> None:
@@ -433,6 +539,6 @@ def test_audit_distinguishes_unknown_input_domains() -> None:
         domains_only=True,
     )
     assert result["status"] == "domains_only"
-    assert len(result["unknown_input_calls"]) == 2
+    assert len(result["unknown_input_calls"]) == 3
     assert len(result["unknown_result_calls"]) == 3
     assert result["domain_summary"]["roots"]["unknown"] == 4

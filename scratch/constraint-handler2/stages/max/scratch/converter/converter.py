@@ -6,11 +6,13 @@ import ast
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
 
 from constraint_handler import (
     LABEL_ANONYMOUS,
     ConstraintStore,
     Expr,
+    FailIntegrityExn,
     Lambda,
     Operation,
     OperationArg,
@@ -603,6 +605,8 @@ def _term_to_str(term: Term) -> str:
 
 def _var_term_to_name(term: Term) -> str:
     """Convert an ASP variable identifier term into a VariableRef string name."""
+    if term in (StringTerm("__fail"), FuncTerm("__fail", ())):
+        raise ConversionError("Variable name '__fail' is reserved by the converter")
     match term:
         case StringTerm(val):
             return val
@@ -823,13 +827,12 @@ def _collect_expr_var_terms(term: Term) -> set[Term]:
 
 
 class _PythonStmtAnalysis(ast.NodeVisitor):
-    """Extract assigned names, loaded names, and integrity usage from Python code."""
+    """Extract assigned and loaded names from Python code."""
 
     def __init__(self) -> None:
         """Initialize analysis sets."""
         self.assigned: list[str] = []
         self.loaded: set[str] = set()
-        self.uses_integrity: bool = False
 
     def _record_assigned(self, name: str) -> None:
         """Record an assigned variable name in order of first appearance."""
@@ -838,25 +841,19 @@ class _PythonStmtAnalysis(ast.NodeVisitor):
 
     def visit_Name(self, node: ast.Name) -> None:
         """Track store and load variable contexts."""
+        if node.id == "__fail":
+            raise ConversionError("Variable name '__fail' is reserved by the converter")
         if isinstance(node.ctx, ast.Store):
             self._record_assigned(node.id)
         elif isinstance(node.ctx, ast.Load):
-            if node.id == "FailIntegrityExn":
-                self.uses_integrity = True
             self.loaded.add(node.id)
 
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         """Track augmented assignments (which both load and store their target)."""
         if isinstance(node.target, ast.Name):
+            self.visit(node.target)
             self.loaded.add(node.target.id)
-            self._record_assigned(node.target.id)
         self.visit(node.value)
-
-    def visit_Attribute(self, node: ast.Attribute) -> None:
-        """Detect ``solver_environment.constrain`` or ``solver_environment.FailIntegrityExn``."""
-        if node.attr in ("constrain", "FailIntegrityExn"):
-            self.uses_integrity = True
-        self.generic_visit(node)
 
 
 def _analyze_python_code(code: str) -> _PythonStmtAnalysis:
@@ -870,30 +867,36 @@ def _analyze_python_code(code: str) -> _PythonStmtAnalysis:
     return analyzer
 
 
+def _execute_python_statement(
+    code: str, inputs: dict[str, object], output_names: tuple[str, ...], context: dict[str, object]
+) -> tuple[object, ...]:
+    """Execute a legacy statement, returning a failure flag followed by its outputs."""
+    def constrain(condition: object) -> None:
+        """Signal a deliberate statement failure when the condition is false."""
+        if not condition:
+            raise FailIntegrityExn
+
+    environment = {
+        **context,
+        "FailIntegrityExn": FailIntegrityExn,
+        "constrain": constrain,
+        "solver_environment": SimpleNamespace(FailIntegrityExn=FailIntegrityExn, constrain=constrain),
+    }
+    try:
+        exec(code, environment, inputs)  # noqa: S102
+    except FailIntegrityExn:
+        return (True, *(None for _ in output_names))
+    return (False, *(inputs[name] for name in output_names))
+
+
 def _build_python_callable(code: str, input_names: list[str], output_names: list[str]) -> str:
-    """Build a Python callable expression that executes ``code`` and returns a tuple of ``output_names``."""
-    params = ", ".join(input_names)
-    tuple_elems = ", ".join(f"_loc[{name!r}]" for name in output_names)
-    if len(output_names) == 1:
-        tuple_expr = f"({tuple_elems},)"
-    else:
-        tuple_expr = f"({tuple_elems})"
-    dict_items = ", ".join(f"{name!r}: {name}" for name in input_names)
-    return (
-        f"(lambda {params}: "
-        f"(lambda _loc: (exec({code!r}, globals(), _loc), {tuple_expr})[1])"
-        f"({{{dict_items}}}))"
-    )
-
-
-def _build_python_integrity_callable(code: str, input_names: list[str]) -> str:
-    """Build a Python callable expression returning True iff ``code`` succeeds without integrity failure."""
+    """Build a statement callback returning its failure flag and live outputs."""
     params = ", ".join(input_names)
     dict_items = ", ".join(f"{name!r}: {name}" for name in input_names)
     return (
         f"(lambda {params}: "
-        f"__import__('constraint_handler.evaluator')"
-        f" or (lambda _loc: exec({code!r}, globals(), _loc) is None)({{{dict_items}}}))"
+        f"__import__('scratch.converter.converter', fromlist=['_execute_python_statement'])"
+        f"._execute_python_statement({code!r}, {{{dict_items}}}, {tuple(output_names)!r}, globals()))"
     )
 
 
@@ -926,6 +929,8 @@ class _SSAConverter:
         self._inputs = inputs
         self._outputs = outputs
         self._counter = 0
+        for variable in (*inputs, *outputs):
+            _var_term_to_name(variable)
 
     def _fresh_var(self, base: str, scope: str) -> VariableRef:
         """Create a unique SSA local VariableRef."""
@@ -1088,33 +1093,31 @@ class _SSAConverter:
                 input_args = tuple(env[StringTerm(name)] for name in string_vars)
                 needed_outputs = [name for name in analysis.assigned if StringTerm(name) in live_after]
                 cond_expr = _make_condition(conds)
-
-                if analysis.uses_integrity:
-                    chk_fn = _build_python_integrity_callable(code, string_vars)
-                    chk_call: Expr = Operation(Operator.python_eval, (Python(chk_fn), *input_args))
-                    if conds:
-                        chk_call = Operation(Operator.limp, (cond_expr, chk_call))
-                    self._store.check(chk_call, label=self._label)
-
+                fn_str = _build_python_callable(code, string_vars, needed_outputs)
+                tuple_var = self._fresh_var("_py_tuple", scope)
+                self._store.define(
+                    tuple_var,
+                    Operation(Operator.python_eval, (Python(fn_str), *input_args)),
+                    condition=cond_expr,
+                    label=self._label,
+                )
+                failed = Operation(Operator.tuple_get, (tuple_var, 0))
+                self._store.define(
+                    VariableRef("__fail"),
+                    True,
+                    condition=Operation(Operator.conj, (cond_expr, failed)),
+                    label=self._label,
+                )
                 next_env = dict(env)
-                if needed_outputs:
-                    fn_str = _build_python_callable(code, string_vars, needed_outputs)
-                    tuple_var = self._fresh_var("_py_tuple", scope)
+                for idx, out_name in enumerate(needed_outputs, start=1):
+                    out_ssa_var = self._fresh_var(out_name, scope)
                     self._store.define(
-                        tuple_var,
-                        Operation(Operator.python_eval, (Python(fn_str), *input_args)),
+                        out_ssa_var,
+                        Operation(Operator.tuple_get, (tuple_var, idx)),
                         condition=cond_expr,
                         label=self._label,
                     )
-                    for idx, out_name in enumerate(needed_outputs):
-                        out_ssa_var = self._fresh_var(out_name, scope)
-                        self._store.define(
-                            out_ssa_var,
-                            Operation(Operator.tuple_get, (tuple_var, idx)),
-                            condition=cond_expr,
-                            label=self._label,
-                        )
-                        next_env[StringTerm(out_name)] = out_ssa_var
+                    next_env[StringTerm(out_name)] = out_ssa_var
                 return next_env
 
 
@@ -1316,6 +1319,9 @@ def convert_string(source: str) -> ConstraintStore:
         is_running = prg_term in running_executions
         ssa = _SSAConverter(store, prg_term, lbl, ins, outs)
         ssa.convert(stmt, is_running)
+
+    if VariableRef("__fail") in store.variables:
+        store.check(Operation(Operator.lnot, (VariableRef("__fail"),)))
 
     return store
 

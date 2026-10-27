@@ -134,6 +134,21 @@ not copied and should remain unchanged. Runtime rebinding through
 `Solver.add_context` is not supported because inferred domains depend on the
 preparation-time bindings.
 
+Python callbacks can raise the public `constraint_handler.FailIntegrityExn` to
+leave an input combination undefined. Domain inference and complex enumeration
+skip that candidate without a warning; other candidates are still evaluated.
+This does not reject the model, and dependent expressions follow their existing
+undefined-input semantics.
+
+The scratch converter treats legacy Python statements differently: its callback
+wrapper catches `FailIntegrityExn` (including indirect calls), and supports
+`solver_environment.constrain(condition)` and `constrain(condition)`. A failed
+statement conditionally defines the ordinary variable `__fail` as true under
+its SSA path condition. One global `check(not __fail)` rejects those models.
+The converter reserves that name and never assigns it false. There is no special
+failure variable, value, or rule in the core handler. Generated statement callbacks
+use the scratch converter's execution helper, so that module must remain importable.
+
 `ensure` requires a `boolean(true)` value to exist. `check` allows an absent
 value, but any existing value must be `boolean(true)`.
 
