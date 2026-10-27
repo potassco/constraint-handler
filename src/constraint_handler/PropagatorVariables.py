@@ -154,6 +154,132 @@ class VariableManager:
     def __init__(self) -> None:
         self.variables: dict[clingo.Symbol, dict[VariableTypeNames, VariableType]] = {}
         self.user_variable_names: set[clingo.Symbol] = set()
+        self.expr2var: dict[VariableValue, list[VariableType]] = {}
+        self.var2expr: dict[clingo.Symbol, set[VariableValue]] = {}
+        self.lit2expr: dict[int, set[VariableValue]] = {}
+        self.literal2var: dict[int, list[VariableType]] = {}
+
+    def add_literal_var(self, literal: int, variable: VariableType) -> None:
+        """
+        Associate a variable with the positive form of a solver literal.
+
+        Args:
+            literal: Solver literal.
+            variable: Variable to associate with the literal.
+        """
+        self.literal2var.setdefault(abs(literal), []).append(variable)
+
+    def get_literal_vars(self, literal: int) -> list[VariableType]:
+        """
+        Get variables associated with a solver literal, regardless of sign.
+
+        Args:
+            literal: Solver literal.
+        Returns:
+            list[VariableType]: Associated variables.
+        """
+        return self.literal2var.get(abs(literal), [])
+
+    def delete_literal_var(self, literal: int, variable: VariableType) -> bool:
+        """
+        Remove a literal-variable association, returning whether it existed.
+
+        Args:
+            literal: Solver literal.
+            variable: Variable to disassociate from the literal.
+        Returns:
+            bool: True if the association existed and was removed, False otherwise.
+        """
+        key = abs(literal)
+        variables = self.literal2var.get(key)
+        if variables is None:
+            return False
+
+        try:
+            variables.remove(variable)
+        except ValueError:
+            return False
+
+        if not variables:
+            del self.literal2var[key]
+        return True
+
+    def add_expr_owner(self, value: VariableValue, variable: VariableType) -> None:
+        """
+        Associate an interned value with its owning variable.
+
+        Args:
+            value: Interned expression value.
+            variable: Owning variable.
+        """
+        owners = self.expr2var.setdefault(value, [])
+        if not any(owner is variable for owner in owners):
+            owners.append(variable)
+
+    def get_expr_owners(self, expr: VariableValue) -> list[VariableType]:
+        """
+        Get the variables owning an expression value, or an empty list.
+
+        Args:
+            expr: Expression value.
+        Returns:
+            list[VariableType]: Owning variables.
+        """
+        return self.expr2var.get(expr, [])
+
+    def remove_expr_owner(self, expr: VariableValue, variable: VariableType) -> None:
+        """
+        Remove a variable from the owners of an expression value, if present.
+
+        Args:
+            expr: Expression value.
+            variable: Owner to remove.
+        """
+        owners = self.expr2var.get(expr)
+        if owners is not None and variable in owners:
+            owners.remove(variable)
+
+    def add_var_expr(self, var: clingo.Symbol, expr: VariableValue) -> None:
+        """
+        Record that an expression value depends on a variable symbol.
+
+        Args:
+            var: Variable symbol used by the expression.
+            expr: Expression value using the variable.
+        """
+        self.var2expr.setdefault(var, set()).add(expr)
+
+    def get_var_exprs(self, var: clingo.Symbol) -> set[VariableValue]:
+        """
+        Get the expression values that depend on a variable symbol.
+
+        Args:
+            var: Variable symbol.
+        Returns:
+            set[VariableValue]: Dependent expression values.
+        """
+        return self.var2expr.get(var, set())
+
+    def add_literal_expr(self, literal: int, value: VariableValue) -> None:
+        """
+        Associate a value with the positive form of a solver literal.
+
+        Args:
+            literal: Solver literal.
+            value: Expression value to associate with the literal.
+        """
+        self.lit2expr.setdefault(abs(literal), set()).add(value)
+
+    def get_literal_exprs(self, literal: int) -> set[VariableValue]:
+        """
+        Get values associated with a solver literal, regardless of sign.
+
+        Args:
+            literal: Solver literal.
+        Returns:
+            set[VariableValue]: Associated expression values.
+        """
+        return self.lit2expr.get(abs(literal), set())
 
     def add_user_variable_name(self, name: clingo.Symbol) -> None:
         """

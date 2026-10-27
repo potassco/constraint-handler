@@ -19,6 +19,7 @@ from constraint_handler.PropagatorVariables import (
     VariableManager,
     VariableType,
     VariableValue,
+    VariableValueRegistry,
 )
 from constraint_handler.schemas import expression, internal, type_, warning
 
@@ -33,9 +34,6 @@ class VariableLoader:
         evaluate_variables: list[EvaluateVariable],
         shared_values: list[SharedValue],
         *,
-        get_variable_value: Callable[[expression.Expr, int], VariableValue],
-        register_variable_value: Callable[[VariableType, VariableValue], None],
-        add_literal2var: Callable[[int, VariableType], None],
         add_watch: Callable[[int], None],
     ) -> None:
         """Bind the current solve's state and registration operations.
@@ -45,19 +43,52 @@ class VariableLoader:
             errors: Collection receiving input warnings.
             evaluate_variables: Collection receiving explicit evaluations.
             shared_values: Collection receiving shared-value declarations.
-            get_variable_value: Intern and index an expression/literal pair.
-            register_variable_value: Associate a value with its owner.
-            add_literal2var: Register a normalized literal-variable association.
             add_watch: Register a watch while respecting check-only mode.
         """
         self.variable_manager = variables
         self.errors = errors
         self.evaluatevars = evaluate_variables
         self.shared_values = shared_values
-        self.get_variable_value = get_variable_value
-        self.register_variable_value = register_variable_value
-        self.add_literal2var = add_literal2var
+        self.value_registry = VariableValueRegistry()
         self.add_watch = add_watch
+
+    def add_literal2var(self, literal: int, variable: VariableType) -> None:
+        """
+        Associate a variable with a solver literal.
+
+        Args:
+            literal: Solver literal.
+            variable: Variable to associate with the literal.
+        """
+        self.variable_manager.add_literal_var(literal, variable)
+
+    def get_variable_value(self, expr: expression.Expr, literal: int) -> VariableValue:
+        """Intern a value and index it by its solver literal.
+
+        Args:
+            expr: Expression object.
+            literal: Solver literal.
+
+        Returns:
+            VariableValue: Interned expression value.
+        """
+        value = self.value_registry.get(expr, literal)
+        self.variable_manager.add_literal_expr(literal, value)
+        return value
+
+    def register_variable_value(self, variable: VariableType, value: VariableValue) -> None:
+        """
+        Associate an interned value with its owning variable.
+
+        Args:
+            variable: Owning variable.
+            value: Interned expression value.
+        """
+        self.variable_manager.add_expr_owner(value, variable)
+
+    def get_all_expressions(self) -> list[VariableValue]:
+        """Return a snapshot of all interned values."""
+        return self.value_registry.get_all()
 
     def load_variables(self, init: clingo.PropagateInit) -> None:
         """Load declarations and cross-engine values in dependency order.

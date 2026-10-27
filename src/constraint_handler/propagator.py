@@ -27,7 +27,6 @@ from constraint_handler.PropagatorVariables import (
     VariableManager,
     VariableType,
     VariableValue,
-    VariableValueRegistry,
     is_evaluation_possible,
 )
 from constraint_handler.reasoning_modes import ReasoningModeHandler
@@ -45,15 +44,24 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     and can add nogoods for conflicts or for pruning based on optimization or reasoning mode(brave/cautious).
 
     Attributes:
-        symbol2var: Maps variable symbols to variable objects.
-        literal2var: Maps solver literals to variable objects.
+        variable_manager: Manager for all variables and their associations.
+        evaluations: Collection of evaluated expressions and their results.
         evaluatevars: List of `EvaluateVariable` instances to evaluate.
         optimization: Controller for objective sums, pruning, and optimal-model enumeration.
+        shared_values: Collection of shared-value declarations.
         environment: Evaluation environment built from solver identifier.
         check_only: If True, `propagate` becomes a no-op. Will only evaluate variables in `check`.
         errors: Warnings collected while evaluating variables or reading the input program.
-        reasoning_mode: STANDARD/BRAVE/CAUTIOUS mode.
+        configuration_errors: Collection of configuration-related warnings.
+        reasoning_mode_handler: Handler for reasoning mode (standard, brave, cautious).
         python_model: Stores the python-level model for output.
+        nogood_queue: Queue of nogoods to be added during propagation.
+        var_ranks: Mapping from solver symbols to their ranks.
+        var_ranks_expr: Mapping from interned expression values to their ranks.
+        forbidden_warnings: Mapping from warning kinds to their literals.
+        ignored_warnings: Mapping from warning kinds to their literal and truth value in the solver.
+        watches: Set of solver literals being watched.
+        variable_loader: Loader for variables and their values during the current solve.
     """
 
     def __init__(self) -> None:
@@ -64,13 +72,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             check_only: If True, do not perform propagation (only allow checks).
         """
         self.variable_manager: VariableManager = VariableManager()
-        self.literal2var: dict[int, list[VariableType]] = {}
         self.evaluations: Evaluations = Evaluations()
-
-        self.expr2var: dict[VariableValue, list[VariableType]] = {}
-        self.var2expr: dict[Symbol, set[VariableValue]] = {}
-        self.lit2expr: dict[int, set[VariableValue]] = {}
-        self.value_registry = VariableValueRegistry()
 
         self.evaluatevars: list[EvaluateVariable] = []
 
@@ -97,6 +99,18 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.watches: set[int] = set()
 
+        self.variable_loader: VariableLoader = self._build_loader()
+
+    def _build_loader(self) -> VariableLoader:
+        """Create a loader (and fresh value registry) bound to the current solve state."""
+        return VariableLoader(
+            self.variable_manager,
+            self.errors,
+            self.evaluatevars,
+            self.shared_values,
+            add_watch=self.add_watch,
+        )
+
     def get_configuration(self, ctl: clingo.Control) -> None:
         """
         Read clingo configuration and initialize reasoning and optimization settings.
@@ -118,12 +132,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """Reset state derived from the current solver initialization."""
         self.variable_manager = VariableManager()
         self.evaluations = Evaluations()
-        self.literal2var.clear()
         self.evaluatevars.clear()
-        self.expr2var.clear()
-        self.var2expr.clear()
-        self.lit2expr.clear()
-        self.value_registry = VariableValueRegistry()
         self.optimization.reset()
         self.reasoning_mode_handler.reset()
         self.environment = {}
@@ -138,6 +147,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.ignored_warnings.clear()
         self.watches.clear()
         self.python_model = None
+        self.variable_loader = self._build_loader()
 
     def init(self, init: clingo.PropagateInit) -> None:
         """
@@ -153,19 +163,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_solver_identifier(init)
 
-        loader = VariableLoader(
-            self.variable_manager,
-            self.errors,
-            self.evaluatevars,
-            self.shared_values,
-            get_variable_value=self.get_variable_value,
-            register_variable_value=self.register_variable_value,
-            add_literal2var=self.add_literal2var,
-            add_watch=self.add_watch,
-        )
-        loader.load_variables(init)
-        self.optimization.get_optimization_sums(init, self.get_variable_value, self.add_watch)
-        loader.load_evaluations(init)
+        self.variable_loader.load_variables(init)
+        self.optimization.get_optimization_sums(init, self.variable_loader.get_variable_value, self.add_watch)
+        self.variable_loader.load_evaluations(init)
 
         self.set_parents()
 
@@ -174,9 +174,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.get_forbidden_warnings(init)
 
-        for expr in self.value_registry.get_all():
+        for expr in self.variable_loader.get_all_expressions():
             for var in expr.vars():
-                self.var2expr.setdefault(var, set()).add(expr)
+                self.variable_manager.add_var_expr(var, expr)
 
         self.get_variable_ranks()
 
@@ -198,113 +198,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         """
         if not self.check_only:
             self.watches.add(lit)
-
-    def add_literal2var(self, literal: int, variable: VariableType) -> None:
-        """
-        Associate a variable with the positive form of a solver literal.
-        Args:
-            literal: Solver literal.
-            variable: Variable to associate with the literal.
-        """
-        self.literal2var.setdefault(abs(literal), []).append(variable)
-
-    def get_literal2var(self, literal: int) -> list[VariableType]:
-        """
-        Get variables associated with a solver literal, regardless of sign.
-
-        Args:
-            literal: Solver literal.
-
-        Returns:
-            list[VariableType]: List of associated variables.
-        """
-        return self.literal2var.get(abs(literal), [])
-
-    def get_expr2var(self, expr: VariableValue) -> list[VariableType]:
-        """
-        Get variables associated with an expression, or an empty list.
-
-        Args:
-            expr: Expression value.
-
-        Returns:
-            list[VariableType]: List of associated variables.
-        """
-        return self.expr2var.get(expr, [])
-
-    def delete_literal2var(self, literal: int, variable: VariableType) -> bool:
-        """
-        Remove a literal-variable association, returning whether it existed.
-
-        Args:
-            literal: Solver literal.
-            variable: Variable to disassociate from the literal.
-
-        Returns:
-            bool: True if the association existed and was removed, False otherwise.
-        """
-        key = abs(literal)
-        variables = self.literal2var.get(key)
-        if variables is None:
-            return False
-
-        try:
-            variables.remove(variable)
-        except ValueError:
-            return False
-
-        if not variables:
-            del self.literal2var[key]
-        return True
-
-    def set_literal2expr(self, literal: int, value: VariableValue) -> None:
-        """
-        Associate a value with the positive form of a solver literal.
-
-        Args:
-            literal: Solver literal.
-            value: Expression value to associate with the literal.
-        """
-        self.lit2expr.setdefault(abs(literal), set()).add(value)
-
-    def get_literal2expr(self, literal: int) -> set[VariableValue]:
-        """
-        Get values associated with a solver literal, regardless of sign.
-
-        Args:
-            literal: Solver literal.
-
-        Returns:
-            set[VariableValue]: Set of associated expression values.
-        """
-        return self.lit2expr.get(abs(literal), set())
-
-    def get_variable_value(self, expr: expression.Expr, literal: int) -> VariableValue:
-        """
-        Intern a value and index it by its solver literal.
-
-        Args:
-            expr: Expression object.
-            literal: Solver literal.
-
-        Returns:
-            VariableValue: Interned expression value.
-        """
-        value = self.value_registry.get(expr, literal)
-        self.set_literal2expr(literal, value)
-        return value
-
-    def register_variable_value(self, variable: VariableType, value: VariableValue) -> None:
-        """
-        Associate an interned value with its owning variable.
-
-        Args:
-            variable: Owning variable.
-            value: Interned expression value.
-        """
-        owners = self.expr2var.setdefault(value, [])
-        if not any(owner is variable for owner in owners):
-            owners.append(variable)
 
     def add_watches_to_ctl(self, ctl: clingo.PropagateInit) -> None:
         """
@@ -348,7 +241,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             # print(f"warning: Variable {v} can't have its dependencies satisfied.")
             self.var_ranks[v] = -1
 
-        for expr in self.value_registry.get_all():
+        for expr in self.variable_loader.get_all_expressions():
             try:
                 self.var_ranks_expr[expr] = max((self.var_ranks[var] + 1 for var in expr.vars()), default=0)
             except KeyError:
@@ -695,7 +588,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                     # print("var checking in check: ", var)
                     to_evaluate.add(var)
 
-            for expr in self.value_registry.get_all():
+            for expr in self.variable_loader.get_all_expressions():
                 if expr.value == ValueStatus.NOT_SET:
                     to_evaluate_expressions.add(expr)
 
@@ -835,9 +728,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for rlit in changes:
             self.optimization.activate_equal_stage(control.assignment, rlit)
 
-            to_evaluate.update(self.get_literal2var(rlit))
+            to_evaluate.update(self.variable_manager.get_literal_vars(rlit))
 
-            to_evaluate_expressions.update(self.get_literal2expr(rlit))
+            to_evaluate_expressions.update(self.variable_manager.get_literal_exprs(rlit))
 
         backtrack = self.evaluated_solver_assignment(control, to_evaluate, to_evaluate_expressions)
         if backtrack:
@@ -994,7 +887,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             if not expr_result:
                 continue
 
-            for var in self.get_expr2var(expr):
+            for var in self.variable_manager.get_expr_owners(expr):
                 var.expressions_evaluated_counter += 1
                 if is_evaluation_possible(var):
                     var_rank = self.var_ranks[var.var]
@@ -1041,7 +934,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 continue
 
             self.evaluations.add_var_to_evaluations(var)
-            for expr in self.var2expr.get(var.var, set()):
+            for expr in self.variable_manager.get_var_exprs(var.var):
                 expr.vars_counter += 1
                 if is_evaluation_possible(expr):
                     expr_rank = self.var_ranks_expr[expr]
@@ -1131,15 +1024,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             decision_level: Decision level threshold for resetting expressions,
                 variables, and optimization sums.
         """
-        for expr in self.value_registry.get_all():
+        for expr in self.variable_loader.get_all_expressions():
             if expr.reset(decision_level):
-                for var in self.get_expr2var(expr):
+                for var in self.variable_manager.get_expr_owners(expr):
                     var.expressions_evaluated_counter -= 1
 
         for var in self.variable_manager.get_variables():
             if var.reset(decision_level):
                 self.evaluations.remove_var_from_evaluations(var)
-                for expr in self.var2expr.get(var.var, []):
+                for expr in self.variable_manager.get_var_exprs(var.var):
                     expr.vars_counter -= 1
 
         self.optimization.reset_sums(decision_level)
@@ -1214,14 +1107,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
             # Now we delete this variable from the literal2var mapping
             for lit in var.literals:
-                self.delete_literal2var(lit, var)
+                self.variable_manager.delete_literal_var(lit, var)
             for expr in var.expressions:
                 for lit in expr.literals:
                     # Might already be removed if the literal is shared with another expression.
-                    self.delete_literal2var(lit, var)
-                owners = self.get_expr2var(expr)
-                if var in owners:
-                    owners.remove(var)
+                    self.variable_manager.delete_literal_var(lit, var)
+                self.variable_manager.remove_expr_owner(expr, var)
 
     def update_python_model(self) -> None:
         """
