@@ -19,7 +19,7 @@ from constraint_handler import (
 from constraint_handler.internal_input import Lambda as InternalLambda
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueDef, ValueType
-from constraint_handler.python_input import Expr
+from constraint_handler.python_input import Expr, OperationArg
 from constraint_handler.static_types import (
     SetOf,
     StaticTypeStore,
@@ -44,6 +44,40 @@ def test_expression_location_is_immutable() -> None:
     for attribute in ("root_id", "expression"):
         with pytest.raises(FrozenInstanceError):
             setattr(location, attribute, None)
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    (
+        (),
+        ("bad", 0),
+        (VariableRef("input"), 0),
+        (True, 0),
+        ("eq",),
+        ("eq", (0.5, 1), 0),
+        ("eq", (True, 1), 0),
+        ("eq", (1, 1.5), 0),
+        ("eq", (1, True), 0),
+        ("eq", (1, "text"), 0),
+        ("eq", (VariableRef("input"), 1), 0),
+        ("eq", (1, 1), 0.5),
+        ("eq", (1, 1), VariableRef("input")),
+        ("eq", 1, 0),
+    ),
+)
+def test_linear_comparison_rejects_invalid_arguments(
+    arguments: tuple[OperationArg, ...],
+) -> None:
+    """Reject malformed relations and all noninteger linear components."""
+    store = ConstraintStore()
+    store.define(VariableRef("input"), 1)
+    store.ensure(Operation(Operator.linear_comparison, arguments))
+    diagnostics = Diagnostics()
+    types = compute_static_types(
+        store, compute_evaluation_order(store, diagnostics), diagnostics
+    )
+    assert diagnostics.has_errors
+    assert isinstance(types[store.expressions[store.constraints[0].expr]], UnknownType)
 
 
 @pytest.mark.parametrize("severity", list(DiagnosticSeverity))

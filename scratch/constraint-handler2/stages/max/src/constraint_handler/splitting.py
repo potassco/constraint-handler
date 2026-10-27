@@ -21,6 +21,7 @@ from .internal_input import (
     VariableDefinition,
     VariableRef,
 )
+from .python_conversion import convert
 from .python_input import Operator
 from .static_types import SetOf, StaticTypeStore, UnknownType
 from .util import EvaluationOrder, free_variables
@@ -142,6 +143,8 @@ class GroundingCost:
             )
         if op in {Operator.conj, Operator.disj}:
             return len(args) + 1
+        if op == Operator.linear_comparison:
+            return 1
         if op == Operator.leqv:
             return len(args)
         if op == Operator.add and len(args) > 2:
@@ -192,9 +195,14 @@ class GroundingCost:
 
     def parameters(self, expr: Operation) -> tuple[OperationArg, ...]:
         """Expose linear terms without detaching their literal coefficients."""
-        if expr.op == Operator.linear_integer:
+        if expr.op in {Operator.linear_integer, Operator.linear_comparison}:
+            pairs = (
+                expr.args[1:-1]
+                if expr.op == Operator.linear_comparison
+                else expr.args[:-1]
+            )
             return (
-                *(cast(tuple[Expr, Expr], pair)[1] for pair in expr.args[:-1]),
+                *(cast(tuple[Expr, Expr], pair)[1] for pair in pairs),
                 expr.args[-1],
             )
         return expr.args
@@ -369,39 +377,74 @@ class _Splitter(GroundingCost):
                 args[index] = auxiliary
                 worklist.append(definition_id)
             if best:
+                pairs = (
+                    expr.args[1:-1]
+                    if expr.op == Operator.linear_comparison
+                    else expr.args[:-1]
+                )
                 rewritten_args = (
                     (
                         *(
+                            (expr.args[0],)
+                            if expr.op == Operator.linear_comparison
+                            else ()
+                        ),
+                        *(
                             (cast(tuple[Expr, Expr], pair)[0], cast(Expr, arg))
-                            for pair, arg in zip(expr.args[:-1], args[:-1], strict=True)
+                            for pair, arg in zip(pairs, args[:-1], strict=True)
                         ),
                         args[-1],
                     )
-                    if expr.op == Operator.linear_integer
+                    if expr.op in {Operator.linear_integer, Operator.linear_comparison}
                     else tuple(args)
                 )
                 rewritten = Operation(expr.op, rewritten_args)
-                if expr.op == Operator.linear_integer:
-                    for before, after in zip(
-                        expr.args[:-1], rewritten_args[:-1], strict=True
-                    ):
+                if expr.op in {Operator.linear_integer, Operator.linear_comparison}:
+                    rewritten_pairs = (
+                        rewritten_args[1:-1]
+                        if expr.op == Operator.linear_comparison
+                        else rewritten_args[:-1]
+                    )
+                    for before, after in zip(pairs, rewritten_pairs, strict=True):
                         before, after = cast(Expr, before), cast(Expr, after)
                         self.domains.setdefault(after, self.domains[before])
                         self.types.setdefault(after, self.types[before])
                 self.store.replace_expression(expr_id, rewritten)
                 self.domains.setdefault(rewritten, self.domains[expr])
                 self.types.setdefault(rewritten, self.types[expr])
-        self.convert_lambdas()
+        self.convert_python_calls()
 
-    def convert_lambdas(self) -> None:
-        """Wrap residual nesting, including actual arguments of existing calls."""
+    def convert_python_calls(self) -> None:
+        """Retain supported flat native operations; lower others to Python."""
         domains = _MetadataTransfer(self.domains)
         types = _MetadataTransfer(self.types)
         for expr_id, expr in self.store.expressions.items():
-            if isinstance(expr, Operation):
-                if not any(_contains_operation(arg) for arg in expr.args):
-                    continue
-            elif not _contains_operation(expr):
+            if (
+                isinstance(expr, Operation)
+                and (
+                    expr.op
+                    in {
+                        Operator.python_eval,
+                        Operator.linear_integer,
+                        Operator.linear_comparison,
+                        Operator.conj,
+                        Operator.disj,
+                        Operator.union,
+                        Operator.inter,
+                        Operator.diff,
+                        Operator.subset,
+                        Operator.set_make,
+                        Operator.set_isin,
+                        Operator.set_notin,
+                        Operator.cardinality,
+                    }
+                    or expr.op in {Operator.eq, Operator.neq, Operator.length}
+                    and all(self.is_set(cast(Expr, arg)) for arg in expr.args)
+                )
+                and not any(_contains_operation(arg) for arg in expr.args)
+            ):
+                continue
+            if not isinstance(expr, Operation) and not _contains_operation(expr):
                 continue
             actual = tuple(sorted(free_variables(expr), key=lambda var: var.name))
             bound = tuple(self.fresh() for _ in actual)
@@ -410,7 +453,7 @@ class _Splitter(GroundingCost):
             body = cast(Expr, self.rename(expr, replacements, renamings))
             domains.transfer(renamings, replacements)
             types.transfer(renamings, replacements)
-            call = Operation(Operator.lambda_, (Lambda(bound, body), *actual))
+            call = Operation(Operator.python_eval, (convert(bound, body), *actual))
             self.store.replace_expression(expr_id, call)
             self.domains.setdefault(call, self.domains[expr])
             self.types.setdefault(call, self.types[expr])
@@ -425,7 +468,7 @@ def split(
     *,
     subset_limit: int = DEFAULT_SUBSET_LIMIT,
 ) -> None:
-    """Update store, domains, and types in place with splitting and lambda calls.
+    """Update store, domains, and types in place with splitting and Python calls.
 
     Require validated expressions and metadata and order for the current store.
     Linear integer operations must end with an explicit integer literal offset.

@@ -7,7 +7,11 @@ from collections.abc import Callable
 from itertools import product
 from typing import assert_never
 
-from ..analysis import lambda_call, linear_integer_arguments
+from ..analysis import (
+    lambda_call,
+    linear_comparison_arguments,
+    linear_integer_arguments,
+)
 from ..diagnostics import Diagnostics, ExpressionLocation
 from ..internal_input import (
     ConstraintStore,
@@ -72,6 +76,7 @@ class _DomainComputer:
             Operator.lambda_: self._visit_lambda_call,
             Operator.set_fold: self._visit_set_fold,
             Operator.linear_integer: self._visit_linear_integer,
+            Operator.linear_comparison: self._visit_linear_comparison,
         }
 
     def run(self) -> DomainStore:
@@ -286,6 +291,25 @@ class _DomainComputer:
 
         return self._operations.evaluate(op, doms, location)
 
+    def _visit_linear_comparison(
+        self,
+        args: tuple[OperationArg, ...],
+        env: dict[VariableRef, Domain],
+        location: ExpressionLocation,
+    ) -> Domain:
+        """Compare an integer linear domain against zero without storing a sum node."""
+        if linear_comparison_arguments(args, self._diagnostics, location) is None:
+            return UNKNOWN_DOMAIN
+        relation = args[0]
+        assert isinstance(relation, ValueDef) and isinstance(relation.value, str)
+        self._visit_expr(relation, env, location.root_id)
+        total = self._visit_linear_integer(args[1:], env, location)
+        if total.unknown:
+            return UNKNOWN_DOMAIN
+        return self._operations.evaluate(
+            Operator(relation.value), [total, domain_from_values([0])], location
+        )
+
     def _visit_linear_integer(
         self,
         args: tuple[OperationArg, ...],
@@ -383,6 +407,8 @@ class _DomainComputer:
                 raise TypeError("Python source must evaluate to a callable")
             for values in product(*(domain.iter_values() for domain in arg_domains)):
                 value = callback(*values)
+                if isinstance(value, set):
+                    value = frozenset(value)
                 if not is_domain_value(value):
                     raise TypeError(
                         f"unsupported Python result type: {type(value).__name__}"

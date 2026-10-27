@@ -47,16 +47,11 @@ def test_normalize_relations_and_repeatability(relation: Operator) -> None:
     normalize(store, types)
     expr_id = store.constraints[0].expr
     assert store.expressions[expr_id] == InternalOperation(
-        relation,
+        Operator.linear_comparison,
         (
-            InternalOperation(
-                Operator.linear_integer,
-                (
-                    (ValueDef(ValueType.integer, 2), x),
-                    ValueDef(ValueType.integer, -3),
-                ),
-            ),
-            ValueDef(ValueType.integer, 0),
+            ValueDef(ValueType.string, relation.value),
+            (ValueDef(ValueType.integer, 2), x),
+            ValueDef(ValueType.integer, -3),
         ),
     )
     first = dict(store.expressions)
@@ -188,13 +183,11 @@ def test_lambda_relation_uses_free_integer_variable() -> None:
     callback = result.args[0]
     assert isinstance(callback, InternalLambda)
     assert callback.expr == InternalOperation(
-        Operator.eq,
+        Operator.linear_comparison,
         (
-            InternalOperation(
-                Operator.linear_integer,
-                ((ValueDef(ValueType.integer, 1), x), ValueDef(ValueType.integer, -1)),
-            ),
-            ValueDef(ValueType.integer, 0),
+            ValueDef(ValueType.string, "eq"),
+            (ValueDef(ValueType.integer, 1), x),
+            ValueDef(ValueType.integer, -1),
         ),
     )
 
@@ -281,12 +274,10 @@ def test_relations_use_known_integer_expression_types(
     normalize(store, types)
     result = store.expressions[store.constraints[0].expr]
     assert isinstance(result, InternalOperation)
-    assert result.op == relation
-    assert result.args[1] == ValueDef(ValueType.integer, 0)
-    difference = result.args[0]
-    assert isinstance(difference, InternalOperation)
-    assert difference.op == Operator.linear_integer
-    assert difference.args[1] == (ValueDef(ValueType.integer, -1), y)
+    assert result.op == Operator.linear_comparison
+    assert result.args[0] == ValueDef(ValueType.string, relation.value)
+    assert result.args[-1] == ValueDef(ValueType.integer, 0)
+    assert result.args[2] == (ValueDef(ValueType.integer, -1), y)
     first = dict(store.expressions)
     normalize(store, types)
     assert store.expressions == first
@@ -360,10 +351,9 @@ def test_lambda_relations_keep_scoped_integer_expression_proofs(
     assert isinstance(callback, InternalLambda)
     relation = callback.expr
     assert isinstance(relation, InternalOperation)
-    assert relation.op == Operator.eq
-    assert relation.args[1] == ValueDef(ValueType.integer, 0)
-    assert isinstance(relation.args[0], InternalOperation)
-    assert relation.args[0].op == Operator.linear_integer
+    assert relation.op == Operator.linear_comparison
+    assert relation.args[0] == ValueDef(ValueType.string, "eq")
+    assert relation.args[-1] == ValueDef(ValueType.integer, 0)
     first = dict(store.expressions)
     normalize(store, types)
     assert store.expressions == first
@@ -543,16 +533,11 @@ def test_lambda_normalization_uses_bound_argument_types(
     assert isinstance(callback, InternalLambda)
     if all(type(value) is int for value in choices):
         assert callback.expr == InternalOperation(
-            Operator.eq,
+            Operator.linear_comparison,
             (
-                InternalOperation(
-                    Operator.linear_integer,
-                    (
-                        (ValueDef(ValueType.integer, 2), parameter),
-                        ValueDef(ValueType.integer, -4),
-                    ),
-                ),
-                ValueDef(ValueType.integer, 0),
+                ValueDef(ValueType.string, "eq"),
+                (ValueDef(ValueType.integer, 2), parameter),
+                ValueDef(ValueType.integer, -4),
             ),
         )
     else:

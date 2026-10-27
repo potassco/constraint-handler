@@ -21,8 +21,6 @@ def _eval_conj(context: EvaluationContext, op: Operator, doms: list[Domain], loc
     """Compute domain for Operation(Conj, [x1, ..., xn])."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
-    if any(d.is_empty() for d in doms):
-        return EMPTY_DOMAIN
     res: set[bool] = set()
     if any(False in d.bools for d in doms):
         res.add(False)
@@ -35,8 +33,6 @@ def _eval_disj(context: EvaluationContext, op: Operator, doms: list[Domain], loc
     """Compute domain for Operation(Disj, [x1, ..., xn])."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
-    if any(d.is_empty() for d in doms):
-        return EMPTY_DOMAIN
     res: set[bool] = set()
     if any(True in d.bools for d in doms):
         res.add(True)

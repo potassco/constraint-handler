@@ -4,9 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from importlib.resources import files
 from pathlib import Path
 
+from clingo.control import Control
+from clingo.core import Library
+from clingo.solve import SolveResult
+from clingo.symbol import Symbol
+
+from .asp_facts import asp_facts
 from .diagnostics import Diagnostics
+from .dispatching import DispatchStore, Engine, dispatch
 from .domains import (
     DEFAULT_BOOLEAN_THRESHOLD,
     DEFAULT_THRESHOLD,
@@ -45,6 +53,12 @@ class PreparedProblem:
     store: ConstraintStore
     static_types: StaticTypeStore
     domains: DomainStore
+    engines: DispatchStore
+
+    @property
+    def asp_facts(self) -> tuple[Symbol, ...]:
+        """Build the ASP fact base from the prepared store and dispatch assignments."""
+        return asp_facts(Library(), self.store, self.engines, self.domains)
 
     def dump(self, path: Path) -> None:
         """Serialize this PreparedProblem to the given path."""
@@ -57,6 +71,8 @@ class PreparedProblem:
 
     def create_solver(self, options: SolveOptions) -> Solver:
         """Create an isolated Solver session for this prepared problem."""
+        if self.engines.keys() != self.store.expressions.keys():
+            raise ValueError("cannot solve a problem with preprocessing errors")
         return Solver(self, options)
 
 
@@ -82,7 +98,7 @@ class Preprocessor:
         raise NotImplementedError
 
     def preprocess(self) -> tuple[PreparedProblem, Diagnostics]:
-        """Snapshot, type-check, normalize, compute domains, and split the store."""
+        """Snapshot, preprocess, and dispatch the store without building ASP facts."""
         snapshot = self._store.copy()
         diagnostics = Diagnostics()
         order = compute_evaluation_order(snapshot, diagnostics)
@@ -107,11 +123,15 @@ class Preprocessor:
                 diagnostics,
                 subset_limit=self._options.splitting_subset_limit,
             )
+        engines = DispatchStore()
+        if not diagnostics.has_errors:
+            engines = dispatch(snapshot, domains)
         return (
             PreparedProblem(
                 store=snapshot,
                 static_types=static_types,
                 domains=domains,
+                engines=engines,
             ),
             diagnostics,
         )
@@ -122,8 +142,33 @@ class Solver:
 
     def __init__(self, problem: PreparedProblem, options: SolveOptions) -> None:
         """Initialize an isolated solver session for the given PreparedProblem."""
+        if Engine.propagator in problem.engines.values():
+            raise NotImplementedError(
+                "solving with unknown input domains requires a propagator"
+            )
         self._problem = problem
         self._options = options
+        self._library = Library()
+        self._control = Control(self._library, list(options.arguments))
+        self._control.parse_string(
+            "\n".join(
+                f"{fact}."
+                for fact in asp_facts(
+                    self._library, problem.store, problem.engines, problem.domains
+                )
+            )
+        )
+        for encoding in (
+            "native.lp",
+            "boolean.lp",
+            "integer.lp",
+            "set.lp",
+            "complex.lp",
+        ):
+            self._control.parse_string(
+                files().joinpath("encoding", encoding).read_text(encoding="utf-8"),
+            )
+        self._control.ground([("base", [])])
 
     @property
     def problem(self) -> PreparedProblem:
@@ -147,6 +192,6 @@ class Solver:
         """Enforce an additional query constraint in this solver session."""
         raise NotImplementedError
 
-    def solve(self) -> object:
-        """Solve the prepared problem under current presets and queries."""
-        raise NotImplementedError
+    def solve(self) -> SolveResult:
+        """Solve the fact base using native declarations and complex expression rows."""
+        return self._control.solve()

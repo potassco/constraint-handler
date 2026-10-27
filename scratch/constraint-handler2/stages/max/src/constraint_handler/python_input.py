@@ -34,6 +34,7 @@ class Operator(StrEnum):
     sub = auto()
     mult = auto()
     linear_integer = auto()
+    linear_comparison = auto()
     int_div = auto()
     real_div = auto()
     pow = auto()

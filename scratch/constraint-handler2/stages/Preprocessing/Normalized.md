@@ -18,14 +18,14 @@ where the rewrite is valid for every possible binding. Nested calls retain
 captured parameter types, while inner parameters shadow outer bindings. Unknown
 binding types never inherit an unrelated outer variable's type.
 
-Relational expressions are also rewritten so that one side is the zero constant
-when both sides are known to be integer-valued. A relation is of the form
-`lhs relation 0`. Relations involving reals are not moved to zero.
+Relational expressions become `linear_comparison` when both sides are known to
+be integer-valued. They compare a weighted integer sum plus its offset against
+zero. Relations involving reals, mixed types, or unknown types are not fused.
 
 Normalization is useful because `10*a+b == 10*c+d` yields 100 combinations for
 each side, so comparing the sides directly would require `100*100 = 10000`
-combinations. Rewriting it as `(((10*a + b) - 10*c) - d) == 0` and splitting
-into intermediate sums reduces the number of combinations significantly.
+combinations. A fused comparison of `10*a + b - 10*c - d` against zero avoids
+materializing either numeric side, or the domain of their difference.
 
 ## ASP Format
 
@@ -56,22 +56,29 @@ As before, with two normalizations applied:
    )
    ```
 
-1. **Relational expressions** (`eq`, `neq`, `lt`, `leq`, `gt`, `geq`) are
-   rewritten so that one side is zero. For example, `a + b == c` would be
-   rewritten as `0 == c - a - b`, equally:
+2. **Integer relational expressions** (`eq`, `neq`, `lt`, `leq`, `gt`, `geq`)
+   become `Operation(Operator.linear_comparison, (relation, (c1, x1), ..., c))`.
+   The relation is a literal string `ValueDef`; coefficient/term pairs and the
+   required offset have the same integer-only contract as `linear_integer`.
+   The sum is always `lhs - rhs`, preserving the direction of ordered relations.
+   For example, `a + b == c` becomes:
 
-```python
-Expr(operator="eq", arguments=(Expr(operator="add", arguments=(a, b)), c))
-```
+   ```python
+   Operation(
+       Operator.linear_comparison,
+       (
+           ValueDef(ValueType.string, "eq"),
+           (ValueDef(ValueType.integer, 1), a),
+           (ValueDef(ValueType.integer, 1), b),
+           (ValueDef(ValueType.integer, -1), c),
+           ValueDef(ValueType.integer, 0),
+       ),
+   )
+   ```
 
-becomes
-
-```python
-Expr(operator="eq", arguments=(0, Expr(operator="sub", arguments=(c, Expr(operator="add", arguments=(a, b))))))
-```
-
-(or with `Operator.linear_integer` on the non-zero side after linear
-normalization).
+   Numeric results consumed elsewhere still use `linear_integer`. Normal
+   cost-based splitting decides whether nested terms become auxiliaries; a
+   non-simple comparison left unsplit uses the complex Python fallback.
 
 Canceling terms or dropping zero products is allowed even if eliminated
 expressions could be undefined. Such rewrites may suppress potential errors or

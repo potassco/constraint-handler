@@ -14,6 +14,28 @@ from .internal_input import (
 
 type LinearIntegerArg = tuple[ValueDef, Expr] | ValueDef
 
+LINEAR_RELATIONS = frozenset({"eq", "neq", "lt", "leq", "gt", "geq"})
+
+
+def linear_comparison_arguments(
+    args: tuple[OperationArg, ...],
+    diagnostics: Diagnostics,
+    location: ExpressionLocation,
+) -> list[LinearIntegerArg] | None:
+    """Validate a literal relation followed by integer linear arguments."""
+    if (
+        not args
+        or not isinstance(args[0], ValueDef)
+        or args[0].value_type != ValueType.string
+        or args[0].value not in LINEAR_RELATIONS
+    ):
+        diagnostics.error(
+            "linear_comparison requires a literal relation: eq, neq, lt, leq, gt, geq",
+            location=location,
+        )
+        return None
+    return linear_integer_arguments(args[1:], diagnostics, location)
+
 
 def lambda_call(
     args: tuple[OperationArg, ...],

@@ -1,11 +1,14 @@
 """Tests for the Preprocessor, PreparedProblem, and Solver workflow interface."""
 
 from pathlib import Path
+from unittest.mock import ANY, Mock
 
 import pytest
+from clingo.core import Library
 
 from constraint_handler import (
     ConstraintStore,
+    Engine,
     Operation,
     Operator,
     PreparedProblem,
@@ -13,6 +16,7 @@ from constraint_handler import (
     Preprocessor,
     SolveOptions,
     VariableRef,
+    asp_facts,
 )
 from constraint_handler.domains import Domain
 from constraint_handler.internal_input import ValueType
@@ -81,7 +85,8 @@ def test_preprocess_rejects_linear_integer_without_offset(term_count: int) -> No
     prepared, diagnostics = preprocessor.preprocess()
     assert diagnostics.has_errors
     assert any(
-        error.message == "linear_integer constant offset must be a constant integer literal"
+        error.message
+        == "linear_integer constant offset must be a constant integer literal"
         for error in diagnostics.errors
     )
     assert prepared.store == store
@@ -104,7 +109,9 @@ def test_preprocessor_workflow() -> None:
     store2.set_contain_default_to(s, 6)
     store2.ensure(Operation(Operator.lt, (x, y)))
 
-    options = PreprocessOptions(arguments=("--opt",), threshold=100, boolean_threshold=10)
+    options = PreprocessOptions(
+        arguments=("--opt",), threshold=100, boolean_threshold=10
+    )
     preprocessor = Preprocessor(options)
     assert preprocessor.options == options
 
@@ -120,11 +127,15 @@ def test_preprocessor_workflow() -> None:
 
     assert prepared.static_types[x] == frozenset({ValueType.integer})
     assert prepared.static_types[y] == frozenset({ValueType.integer})
-    assert prepared.static_types[s] == frozenset({SetOf(frozenset({ValueType.integer}), False)})
+    assert prepared.static_types[s] == frozenset(
+        {SetOf(frozenset({ValueType.integer}), False)}
+    )
 
     assert prepared.domains[x] == Domain(ints=frozenset({1, 2, 3}))
     assert prepared.domains[y] == Domain(ints=frozenset({11, 12, 13}))
-    assert prepared.domains[s] == Domain(implicit_set_elements=frozenset({1, 2, 3, 5, 6}))
+    assert prepared.domains[s] == Domain(
+        implicit_set_elements=frozenset({1, 2, 3, 5, 6})
+    )
 
     # Adding more to preprocessor after preprocess must not mutate prepared.store
     extra = ConstraintStore()
@@ -143,10 +154,14 @@ def test_preprocessor_workflow() -> None:
         ((1, 2), frozenset({0, 1, 2}), True),
     ),
 )
-def test_preprocess_collection_length(values: tuple[Expr, ...], lengths: frozenset[int], implicit: bool) -> None:
+def test_preprocess_collection_length(
+    values: tuple[Expr, ...], lengths: frozenset[int], implicit: bool
+) -> None:
     """Preserve length overload metadata through normalization and splitting."""
     store = ConstraintStore()
-    source, length, result, offset = (VariableRef(name) for name in ("source", "length", "result", "offset"))
+    source, length, result, offset = (
+        VariableRef(name) for name in ("source", "length", "result", "offset")
+    )
     if implicit:
         store.set_contain_choose_from_iterator(source, values)
     else:
@@ -163,8 +178,12 @@ def test_preprocess_collection_length(values: tuple[Expr, ...], lengths: frozens
     assert not diagnostics.items
     assert prepared.domains[length] == Domain(ints=lengths)
     assert prepared.static_types[length] == frozenset({ValueType.integer})
-    assert prepared.domains[result] == Domain(ints=frozenset(size + value for size in lengths for value in range(20)))
-    assert set(prepared.store.expressions.values()) <= (prepared.domains.keys() & prepared.static_types.keys())
+    assert prepared.domains[result] == Domain(
+        ints=frozenset(size + value for size in lengths for value in range(20))
+    )
+    assert set(prepared.store.expressions.values()) <= (
+        prepared.domains.keys() & prepared.static_types.keys()
+    )
 
 
 @pytest.mark.parametrize("value", (True, 1, 1.5, None))
@@ -196,7 +215,16 @@ def test_preprocess_collects_diagnostics_once_for_shared_order() -> None:
     assert diagnostics.has_errors
     undef_errors = [d for d in diagnostics.errors if d.variable == undef]
     assert len(undef_errors) == 1
-    assert len([error for error in diagnostics.errors if "dependency cycle" in error.message]) == 2
+    assert (
+        len(
+            [
+                error
+                for error in diagnostics.errors
+                if "dependency cycle" in error.message
+            ]
+        )
+        == 2
+    )
 
 
 def test_prepared_problem_and_solver_skeleton_methods() -> None:
@@ -221,5 +249,53 @@ def test_prepared_problem_and_solver_skeleton_methods() -> None:
         solver.preset({VariableRef("x"): 1})
     with pytest.raises(NotImplementedError):
         solver.enforce_query(True)
-    with pytest.raises(NotImplementedError):
-        solver.solve()
+    assert solver.solve().satisfiable
+
+
+def test_native_solver_fact_base(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Build facts on demand and enforce an unsatisfiable constant ensure."""
+    build_facts = Mock(wraps=asp_facts)
+    monkeypatch.setattr("constraint_handler.preprocessor.asp_facts", build_facts)
+    store = ConstraintStore()
+    store.choose_from_iterator(VariableRef("x"), (1, 2), label="input")
+    store.ensure(False, label="must be true")
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    prepared, diagnostics = preprocessor.preprocess()
+    build_facts.assert_not_called()
+    assert not diagnostics.has_errors
+    assert prepared.engines.keys() == prepared.store.expressions.keys()
+    assert set(prepared.engines.values()) == {Engine.native}
+    assert tuple(map(str, prepared.asp_facts)) == tuple(
+        map(
+            str,
+            asp_facts(Library(), prepared.store, prepared.engines, prepared.domains),
+        )
+    )
+    build_facts.assert_called_once_with(
+        ANY, prepared.store, prepared.engines, prepared.domains
+    )
+    first = prepared.create_solver(SolveOptions())
+    second = prepared.create_solver(SolveOptions(arguments=("0",)))
+    assert build_facts.call_count == 3
+    assert (
+        build_facts.call_args_list[1].args[0]
+        is not build_facts.call_args_list[2].args[0]
+    )
+    assert first.solve().unsatisfiable
+    assert second.solve().unsatisfiable
+    assert first.solve().unsatisfiable
+    assert build_facts.call_count == 3
+
+
+def test_solver_rejects_preprocessing_errors() -> None:
+    """Do not solve a fact base omitted because preprocessing failed."""
+    store = ConstraintStore()
+    store.ensure(VariableRef("undefined"))
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    prepared, diagnostics = preprocessor.preprocess()
+    assert diagnostics.has_errors
+    assert not prepared.engines
+    with pytest.raises(ValueError, match="preprocessing errors"):
+        prepared.create_solver(SolveOptions())

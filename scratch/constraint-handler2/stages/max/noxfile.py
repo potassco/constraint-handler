@@ -3,8 +3,9 @@
 import nox
 
 
-@nox.session(python="3.15", venv_backend="uv")
+@nox.session(python="3.14", venv_backend="uv")
 def tests(session: nox.Session) -> None:
     """Install the package and run pytest with forwarded session arguments."""
+    session.install("clingo>=6,<7", "--index-url", "https://test.pypi.org/simple")
     session.install(".", "pytest", "pytest-cov")
     session.run("pytest", *session.posargs)

@@ -56,6 +56,38 @@ from constraint_handler.static_types import SetOf, compute_static_types
 from constraint_handler.util import compute_evaluation_order
 
 
+@pytest.mark.parametrize("relation", ("eq", "neq", "lt", "leq", "gt", "geq"))
+@pytest.mark.parametrize("choices", ((-2, 3), (), (1.5,), (True,)))
+def test_linear_comparison_domains_and_types(
+    relation: str, choices: tuple[int | float, ...]
+) -> None:
+    """Infer Boolean/empty results and reject noninteger input domains."""
+    store = ConstraintStore()
+    variable = VariableRef("input")
+    store.choose_from_iterator(variable, choices)
+    store.ensure(Operation(Operator.linear_comparison, (relation, (2, variable), -1)))
+    root = store.expressions[store.constraints[0].expr]
+    diagnostics = Diagnostics()
+    order = compute_evaluation_order(store, diagnostics)
+    types = compute_static_types(store, order, diagnostics)
+    domains = compute_domains(store, order, diagnostics)
+    if choices and type(choices[0]) is not int:
+        assert diagnostics.has_errors
+        assert domains[root].unknown
+    elif not choices:
+        assert diagnostics.has_errors
+        assert not types[root]
+        assert domains[root].is_empty()
+    else:
+        assert not diagnostics.has_errors
+        assert types[root] == frozenset({ValueType.boolean})
+        assert domains[root].bools == (
+            frozenset({relation == "neq"})
+            if relation in {"eq", "neq"}
+            else frozenset({False, True})
+        )
+
+
 def _domains_for(
     store: ConstraintStore,
     *,
@@ -72,6 +104,22 @@ def _domains_for(
         diag,
         threshold=threshold,
         boolean_threshold=boolean_threshold,
+    )
+
+
+@pytest.mark.parametrize("operator", (Operator.conj, Operator.disj))
+@pytest.mark.parametrize("value", (False, True))
+def test_boolean_short_circuit_empty_domain(operator: Operator, value: bool) -> None:
+    """Retain decisive Boolean results even when an operand has no values."""
+    store = ConstraintStore()
+    empty, result = VariableRef("empty"), VariableRef("result")
+    store.choose_from_iterator(empty, ())
+    store.define(result, Operation(operator, (empty, value)))
+    domains = _domains_for(store)
+    assert domains[result] == (
+        Domain(bools=frozenset({value}))
+        if value == (operator == Operator.disj)
+        else EMPTY_DOMAIN
     )
 
 
@@ -1167,6 +1215,11 @@ def test_set_make_rejects_callable_members(argument: Lambda | Python) -> None:
             "lambda value: frozenset({value})",
             Domain(explicit_sets=frozenset({frozenset({1}), frozenset({2})})),
         ),
+        (
+            "lambda value: {value}",
+            Domain(explicit_sets=frozenset({frozenset({1}), frozenset({2})})),
+        ),
+        ("lambda value: set()", Domain(explicit_sets=frozenset({frozenset()}))),
         ("lambda value: None", Domain(has_none=True)),
         (
             "lambda value: math.sqrt(value)",
@@ -1556,6 +1609,7 @@ def test_operator_registry_covers_value_operators() -> None:
         Operator.lambda_,
         Operator.set_fold,
         Operator.linear_integer,
+        Operator.linear_comparison,
     }
     assert set(DOMAIN_HANDLERS) == set(Operator) - scoped
     assert sum(len(registry) for registry in registries) == len(DOMAIN_HANDLERS)

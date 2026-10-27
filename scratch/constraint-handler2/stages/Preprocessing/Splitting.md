@@ -10,8 +10,11 @@ result domain and costs `|D(add(...))|`. Set union uses membership rules and
 costs the sum of the numbers of potential members in its two input sets,
 without enumerating pairs of complete sets.
 
-After splitting, convert every remaining non-trivial expression into a lambda
-application. Trivial operations remain available for specialized encodings.
+After splitting, compile every operation, including trivial operations, into a
+`python_eval` call. Also lower collections containing operations and existing
+lambda applications, even when their arguments are already leaves. Constants
+and direct variable references remain leaves. Specialized native operation
+encodings are not currently selected by this pipeline.
 
 ## Definitions
 
@@ -31,6 +34,18 @@ pairs followed by an explicit integer literal offset. Each coefficient is also
 an integer literal. The offset is required even when it is zero; a final term
 pair is not an implicit zero offset. Shared input validation rejects malformed
 linear forms before splitting. The pass does not validate or repair them.
+
+`linear_comparison` has the same pairs and required offset, preceded by a
+literal relation string (`eq`, `neq`, `lt`, `leq`, `gt`, `geq`). Its relation and
+coefficients are structural constants, not split candidates. Parameter
+extraction and replacement preserve these constants and their pair metadata.
+
+The trivial cost of `linear_comparison` is `1`: one direct aggregate test,
+without enumerating a numeric result domain. This unit cost models the
+comparison itself, not the shared order-chain facts or weighted body size;
+actual grounding still grows with parameter-domain thresholds. Nested
+comparisons retain the ordinary Cartesian-product unsplit cost and compete
+with extracted-parameter costs. No native operator forces a split.
 
 The preprocessing pipeline runs normalization before computing the metadata
 used by splitting. Direct callers need not normalize other arithmetic
@@ -65,7 +80,7 @@ complexity(e) = product(|D(v)| for v in vars(e))   otherwise
 
 For a non-trivial operation, count each distinct free variable once, even if it
 occurs in several parameters. This matches evaluation of the expression as a
-lambda, rather than assuming intermediate results have already been computed.
+Python callable, rather than assuming intermediate results have already been computed.
 Collection-valued candidates also use the product over distinct free variables;
 their domain cardinality still counts complete tuple or set values.
 
@@ -84,7 +99,7 @@ leaves remain unchanged. Process newly introduced auxiliary definitions in the
 same way. Actual arguments of existing `lambda_` applications participate in
 this search; their callable bodies remain intact. Only operation roots undergo
 subset search. Tuple and set roots containing operations are retained for the
-final lambda conversion, without introducing auxiliaries for their elements.
+final Python conversion, without introducing auxiliaries for their elements.
 
 Let `trivial_cost(e)` be the encoding-specific cost from the tables below,
 computed from the existing domains as if all parameters were leaves. For a
@@ -153,7 +168,7 @@ The comparison requires a strict reduction in the combined estimated cost of
 the outer expression and the new definitions. Equality does not justify a
 split, including `infinity > infinity`, which is false. Unknown domains do not
 separately force splitting. These are local estimates; subsequent splitting and
-lambda conversion may change the eventual cost.
+Python conversion may change the eventual cost.
 
 For `n` parameters containing operations, test `2 ** n` subsets when
 `n <= subset_limit`. The default limit is 12, inclusive. Above the limit,
@@ -202,15 +217,20 @@ For the proper-subset row only, `D(a) = D(b) = {0, 1}`; `c` still ranges over
   costs `100 + 100 + 19 * 19 = 561`. This assumes separate auxiliaries per
   occurrence, without algebraic simplification or shared-expression reuse.
 
-### Final Step: Lambda Conversion
+### Final Step: Python Conversion
 
-After splitting, convert each remaining non-trivial store expression, including
-auxiliary definitions, into a lambda application. This also applies to an
-existing `lambda_` call whose actual arguments still contain operations: wrap
-the entire call, retaining its original callable inside the new body. Bind the
-expression's distinct free variables in deterministic name order, retain the
-expression as the body, and pass the corresponding variables as arguments.
-Respect existing lambda scopes; do not capture their bound variables.
+After subset search, compile every operation and each collection containing
+operations, including auxiliary definitions, into a Python callable.
+Also compile every existing `lambda_` application, including calls with only
+leaf arguments, and operations with callable descriptors such as `set_fold`.
+An already-flat `python_eval` call remains unchanged. An existing call with
+nested actual arguments is compiled as a whole. Translate
+nested lambdas recursively while preserving lexical scopes. No internal lambda
+application or descriptor remains in the output expression tree.
+
+Pass the expression's distinct free variables in deterministic name order as
+explicit actual inputs, including captured variables of existing lambdas.
+Generate fresh bound names without capturing existing lambda parameters.
 
 For example:
 
@@ -219,22 +239,26 @@ sub(add(a, b), add(a, b))
 
 becomes
 
-lambda_(Lambda((u, v), sub(add(u, v), add(u, v))), a, b)
+python_eval(Python("lambda u, v: (u + v) - (u + v)"), a, b)
 ```
 
-Here `u` and `v` are fresh bound variables. Constants and collection structure
-remain in the body. A closed expression uses a zero-argument lambda. Preserve
-the original result domain on the application.
+Here `u` and `v` stand for fresh Python parameter names. Constants and collection
+structure remain in the callable body. A closed expression uses a zero-argument
+Python callable. Preserve the original result domain and static type on the call.
 
 For example, a user-written `lambda_(Lambda((u,), u), add(abs(x), 1))` that
-does not benefit from auxiliary splitting becomes an outer lambda over `x`. The
-existing call and its nested argument remain inside that outer body, not as
-nested actual arguments in the final store expression.
+does not benefit from auxiliary splitting becomes a Python call over `x`.
+The existing lambda and its nested argument are compiled inside the callable,
+not retained as nested actual inputs of the final store expression. Even
+`lambda_(Lambda((u,), add(u, x)), y)` is lowered to a Python call over `x, y`.
 
 Treat the resulting application as an opaque call; do not split or wrap it
-again. Its body may remain nested. Its call cost is the product of the domains
+again. Its Python body may remain nested. Its call cost is the product of the domains
 of its distinct actual arguments, matching the free-variable cost used for
-non-trivial expressions above.
+non-trivial expressions above. Dispatch runs after this conversion: Python
+calls with known actual input domains select `complex`; an unknown actual
+input selects `propagator`. The callable descriptor itself needs no domain.
+
 
 ### Pass and Metadata Contract
 
@@ -246,7 +270,7 @@ preserved. If diagnostics already contain errors, leave the input unchanged. A
 negative subset limit is rejected.
 
 New auxiliaries and rewritten applications retain their source domain and
-static type. During lambda conversion, copy available metadata to renamed body
+static type. During Python conversion, copy available metadata to renamed body
 nodes under the new parameter bindings, using each actual argument's complete
 domain or static type. Preserve bindings of existing nested lambdas.
 

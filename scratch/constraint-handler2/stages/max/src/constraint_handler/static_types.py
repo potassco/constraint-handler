@@ -8,7 +8,12 @@ from itertools import product
 from math import inf
 from typing import Final, Literal, assert_never, final
 
-from .analysis import ExpressionStore, lambda_call, linear_integer_arguments
+from .analysis import (
+    ExpressionStore,
+    lambda_call,
+    linear_comparison_arguments,
+    linear_integer_arguments,
+)
 from .diagnostics import Diagnostics, ExpressionLocation
 from .internal_input import (
     ConstraintStore,
@@ -432,6 +437,20 @@ class _StaticTypeComputer:
 
             case Operator.linear_integer:
                 return self._eval_linear_integer(args, env, location)
+
+            case Operator.linear_comparison:
+                if (
+                    linear_comparison_arguments(args, self._diagnostics, location)
+                    is None
+                ):
+                    return UNKNOWN
+                self._eval_expr_arg(args[0], env, location)
+                kind = self._eval_linear_integer(args[1:], env, location)
+                return (
+                    kind
+                    if isinstance(kind, UnknownType) or not kind
+                    else frozenset({ValueType.boolean})
+                )
 
             case _:
                 pass

@@ -18,6 +18,7 @@ from constraint_handler import (
 from constraint_handler.domains import Domain
 from constraint_handler.internal_input import ValueDef, ValueType
 
+from .audit_complex import audit_case, current_value, legacy_value
 from .converter import (
     ConversionError,
     UnsupportedFeatureError,
@@ -366,3 +367,72 @@ def test_cli_main(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     captured = capsys.readouterr()
     assert "1 variables" in captured.out
     assert main([]) == 2
+
+
+def test_audit_clingo_six_value_decoding() -> None:
+    """Decode Clingo 6 functions, scalars, and tuples into typed comparison keys."""
+    from clingo.core import Library
+    from clingo.symbol import parse_term
+
+    lib = Library()
+    assert legacy_value(parse_term(lib, '(val(bool,true),val(int,1))')) == current_value(
+        parse_term(lib, 'tuple((boolean(true),integer(1)))')
+    )
+    assert legacy_value(parse_term(lib, 'val(float,float("2.5"))')) == ("real", 2.5)
+
+
+def test_audit_scalar_python_fixture() -> None:
+    """Verify model enumeration and all expected scalar values using Clingo 6."""
+    result = audit_case(CORRECTNESS_DIR / "python" / "static.lp")
+    assert result["status"] == "expectations_match"
+    assert result["checked_expectations"] == 3
+    assert result["model_count"] == 1
+    assert result["rows"] == 3
+
+
+def test_audit_set_fixture() -> None:
+    """Check set memberships while exposing optional legacy scalar choices."""
+    result = audit_case(CORRECTNESS_DIR / "set" / "conditional_assign.lp")
+    assert result["status"] == "value_mismatch"
+    assert result["ignored_expectations"] == []
+    assert result["model_count"] == 5
+    assert result["checked_expectations"] == 7
+    assert result["failures"] == [
+        {"kind": "model_count", "expected": 3, "actual": 5}
+    ]
+
+
+@pytest.mark.parametrize(
+    "fixture",
+    (
+        "from_domain",
+        "same_val_multi_expr",
+        "manipulation_flat",
+        "membership_decomposed",
+        "membership_python",
+        "missing_declare_repair",
+        "nondet_simple",
+    ),
+)
+def test_audit_supported_set_fixtures(fixture: str) -> None:
+    """Retain verified legacy set values without claiming diagnostic compatibility."""
+    result = audit_case(CORRECTNESS_DIR / "set" / f"{fixture}.lp")
+    assert result["status"] in {
+        "expectations_match",
+        "values_match_diagnostics_unchecked",
+    }
+    assert result["exhausted"]
+    assert result["checked_expectations"] > 0
+    assert result["failures"] == []
+
+
+def test_audit_distinguishes_unknown_input_domains() -> None:
+    """Expose unsupported tuple contents and downstream propagator requirements."""
+    result = audit_case(
+        CORRECTNESS_DIR / "type" / "statement_python" / "unknown_vs_untyped.lp",
+        domains_only=True,
+    )
+    assert result["status"] == "domains_only"
+    assert len(result["unknown_input_calls"]) == 2
+    assert len(result["unknown_result_calls"]) == 3
+    assert result["domain_summary"]["roots"]["unknown"] == 4

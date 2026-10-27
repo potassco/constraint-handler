@@ -1,9 +1,14 @@
-"""Behavioral tests for cost-guided splitting and lambda conversion."""
+"""Behavioral tests for cost-guided splitting and Python conversion."""
+
+import math
+from collections.abc import Callable
+from typing import cast
 
 import pytest
 
 from constraint_handler import (
     ConstraintStore,
+    Expr,
     Lambda,
     Operation,
     Operator,
@@ -22,6 +27,7 @@ from constraint_handler.domains import (
 from constraint_handler.internal_input import Lambda as InternalLambda
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueDef, ValueType
+from constraint_handler.python_conversion import convert
 from constraint_handler.splitting import DEFAULT_SUBSET_LIMIT, GroundingCost, split
 from constraint_handler.static_types import (
     SetOf,
@@ -29,7 +35,177 @@ from constraint_handler.static_types import (
     UnknownType,
     compute_static_types,
 )
-from constraint_handler.util import compute_evaluation_order, free_variables
+from constraint_handler.util import compute_evaluation_order
+
+
+def _callback(call: object) -> Callable[..., object]:
+    """Load a generated callable using the supported Python evaluation context."""
+    assert isinstance(call, InternalOperation) and call.op == Operator.python_eval
+    descriptor = call.args[0]
+    assert isinstance(descriptor, Python)
+    return cast(Callable[..., object], eval(descriptor.fn, {"math": math}))
+
+
+def test_cryptarithm_equality_remains_flat_linear_comparison() -> None:
+    """Avoid extracting a numeric sum solely to compare send + more with money."""
+    store = ConstraintStore()
+    send, more, money = (VariableRef(name) for name in ("send", "more", "money"))
+    for variable, bounds in (
+        (send, (1000, 1003)),
+        (more, (1000, 1003)),
+        (money, (2000, 2005)),
+    ):
+        store.choose_from_iterator(variable, range(*bounds))
+    store.ensure(Operation(Operator.eq, (Operation(Operator.add, (send, more)), money)))
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    root_id = problem.store.constraints[0].expr
+    root = problem.store.expressions[root_id]
+    assert isinstance(root, InternalOperation)
+    assert root.op == Operator.linear_comparison
+    assert root.args == (
+        ValueDef(ValueType.string, "eq"),
+        (ValueDef(ValueType.integer, 1), send),
+        (ValueDef(ValueType.integer, 1), more),
+        (ValueDef(ValueType.integer, -1), money),
+        ValueDef(ValueType.integer, 0),
+    )
+    assert set(problem.store.variables) == {send, more, money}
+    assert GroundingCost(problem.domains, problem.static_types).complexity(root) == 1
+    assert not any(
+        fact.name in {"solution", "linear_integer_base"} for fact in problem.asp_facts
+    )
+
+
+@pytest.mark.parametrize(
+    "expr, expected",
+    [
+        (Operation(Operator.linear_integer, ((2, 3), (-1, 4), 5)), 7),
+        (Operation(Operator.linear_comparison, ("eq", (2, 3), (-1, 4), -2)), True),
+        (Operation(Operator.linear_comparison, ("neq", (2, 3), (-1, 4), -2)), False),
+        (Operation(Operator.linear_comparison, ("lt", (2, 3), -7)), True),
+        (Operation(Operator.linear_comparison, ("leq", (2, 3), -6)), True),
+        (Operation(Operator.linear_comparison, ("gt", (2, 3), -5)), True),
+        (Operation(Operator.linear_comparison, ("geq", (2, 3), -6)), True),
+        (Operation(Operator.add, ()), 0),
+        (Operation(Operator.mult, (2, 3, 4)), 24),
+        (Operation(Operator.max, (2, 3)), 3),
+        (Operation(Operator.min, (2, 3)), 2),
+        (Operation(Operator.conj, (True, False)), False),
+        (Operation(Operator.disj, (True, False)), True),
+        (Operation(Operator.leqv, (False, False, True)), True),
+        (Operation(Operator.lxor, (True, True, True)), True),
+        (Operation(Operator.sqrt, (9,)), 3),
+        (Operation(Operator.floor, (1.5,)), 1),
+        (Operation(Operator.set_make, (1, 2)), frozenset({1, 2})),
+        (
+            Operation(
+                Operator.set_fold,
+                (
+                    Lambda(
+                        (VariableRef("acc"), VariableRef("item")),
+                        Operation(
+                            Operator.add, (VariableRef("acc"), VariableRef("item"))
+                        ),
+                    ),
+                    frozenset({1, 2}),
+                    3,
+                ),
+            ),
+            6,
+        ),
+        (Operation(Operator.get_or_else, (None, 4)), 4),
+        (Operation(Operator.get_or_else, (3, 4)), 3),
+        (Operation(Operator.if_, (False, 4)), None),
+        (Operation(Operator.ite, (True, 3, 4)), 3),
+        (Operation(Operator.tuple_get, ((1, 2), 1)), 2),
+        (Operation(Operator.python_eval, (Python("lambda: math.sqrt(9)"),)), 3),
+    ],
+)
+def test_python_conversion_executes_operator_families(
+    expr: Expr, expected: object
+) -> None:
+    """Execute generated source for collections, folds, arithmetic, and logic."""
+    store = ConstraintStore()
+    store.define(VariableRef("result"), expr)
+    body = store.expressions[
+        store.variables[VariableRef("result")].definitions[0].value
+    ]
+    descriptor = convert((), body)
+    callback = cast(Callable[[], object], eval(descriptor.fn, {"math": math}))
+    assert callback() == expected
+
+
+def test_python_conversion_evaluates_fallback_input_once() -> None:
+    """Avoid duplicating execution of an opaque Python input in a fallback."""
+    store = ConstraintStore()
+    store.define(
+        VariableRef("result"),
+        Operation(
+            Operator.get_or_else,
+            (
+                Operation(
+                    Operator.python_eval,
+                    (Python("lambda values: values.pop()"), VariableRef("x")),
+                ),
+                0,
+            ),
+        ),
+    )
+    body = store.expressions[
+        store.variables[VariableRef("result")].definitions[0].value
+    ]
+    descriptor = convert((VariableRef("x"),), body)
+    callback = cast(Callable[..., object], eval(descriptor.fn, {"math": math}))
+    values = [1, 2]
+    assert callback(values) == 2
+    assert values == [1]
+
+
+def test_python_descriptor_does_not_capture_generated_bindings() -> None:
+    """Keep Python descriptor globals separate from generated callable parameters."""
+    store = ConstraintStore()
+    store.define(
+        VariableRef("result"),
+        Operation(
+            Operator.add,
+            (
+                VariableRef("x"),
+                Operation(
+                    Operator.python_eval,
+                    (Python("lambda: globals().get('_value0', 7)"),),
+                ),
+            ),
+        ),
+    )
+    body = store.expressions[
+        store.variables[VariableRef("result")].definitions[0].value
+    ]
+    descriptor = convert((VariableRef("x"),), body)
+    callback = cast(Callable[..., object], eval(descriptor.fn, {"math": math}))
+    assert callback(3) == 10
+
+
+def test_split_lowers_python_fold_callbacks() -> None:
+    """Keep opaque fold descriptors out of the flat native-operation output."""
+    store = ConstraintStore()
+    store.define(
+        VariableRef("result"),
+        Operation(
+            Operator.set_fold,
+            (Python("lambda acc, item: acc + item"), frozenset({1, 2}), 3),
+        ),
+    )
+    domains, types = _metadata(store)
+    _split(store, domains, types)
+    definition = store.variables[VariableRef("result")].definitions[0]
+    call = store.expressions[definition.value]
+    assert _callback(call)() == 6
+    before = store.copy()
+    _split(store, domains, types)
+    assert store == before
 
 
 def _metadata(store: ConstraintStore) -> tuple[DomainStore, StaticTypeStore]:
@@ -205,23 +381,16 @@ def test_documented_subset_decisions(case: int, count: int) -> None:
     assert not diagnostics.has_errors
     if case == 3:
         definition = store.variables[next(iter(auxiliaries))].definitions[0]
-        assert store.expressions[definition.value] == InternalOperation(
-            Operator.add, (first, second)
-        )
+        call = store.expressions[definition.value]
+        assert isinstance(call, InternalOperation)
+        assert call.args[1:] == (first, second)
+        assert _callback(call)(2, 3) == 5
     if case == 4:
         definition = store.variables[result].definitions[0]
         call = store.expressions[definition.value]
-        assert isinstance(call, InternalOperation) and call.op == Operator.lambda_
-        callback = call.args[0]
-        assert isinstance(callback, InternalLambda)
-        assert len(callback.vars) == 2
+        assert isinstance(call, InternalOperation) and call.op == Operator.python_eval
         assert call.args[1:] == (first, second)
-        assert free_variables(callback) == frozenset()
-        scope = frozenset(
-            (parameter, domains[arg])
-            for parameter, arg in zip(callback.vars, (first, second), strict=True)
-        )
-        assert domains.lookup(callback.expr, scope=scope) == domains[call]
+        assert _callback(call)(3, 7) == 0
     before = store.copy()
     _split(store, domains, types)
     assert store == before
@@ -298,7 +467,7 @@ def test_expression_store_lookups_and_lambda_scopes() -> None:
 
 
 def test_preprocessor_splits_normalized_linear_terms() -> None:
-    """Split nonlinear terms while retaining valid weighted-sum structure."""
+    """Split nonlinear terms and retain the native sum with valid metadata."""
     store = ConstraintStore()
     variables = tuple(VariableRef(name) for name in "abc")
     for variable in variables:
@@ -320,16 +489,20 @@ def test_preprocessor_splits_normalized_linear_terms() -> None:
     expression = prepared.store.expressions[definition.value]
     assert isinstance(expression, InternalOperation)
     assert expression.op == Operator.linear_integer
-    assert all(isinstance(pair, tuple) for pair in expression.args[:-1])
+    assert expression.args[-1] == ValueDef(ValueType.integer, 1)
     for pair, variable in zip(expression.args[:-1], variables, strict=True):
         assert isinstance(pair, tuple)
+        coefficient, auxiliary = pair
+        assert coefficient == ValueDef(ValueType.integer, 1)
+        assert isinstance(auxiliary, VariableRef)
         original = (pair[0], InternalOperation(Operator.abs, (variable,)))
         assert prepared.domains[original].cardinality() == 10
         assert prepared.domains[pair] == prepared.domains[original]
         assert prepared.static_types[pair] == prepared.static_types[original]
     domains, types = _metadata(prepared.store)
     assert domains[result] == prepared.domains[result]
-    assert types[result] == prepared.static_types[result]
+    assert isinstance(types[result], UnknownType)
+    assert prepared.static_types[result] == frozenset({ValueType.integer})
 
 
 def test_implicit_set_membership_cost_and_metadata() -> None:
@@ -371,7 +544,7 @@ def test_unknown_and_empty_domains_do_not_force_splits() -> None:
         assert set(store.variables) == {first, second}
         expression = store.expressions[store.constraints[0].expr]
         assert isinstance(expression, InternalOperation)
-        assert expression.op == Operator.lambda_
+        assert expression.op == Operator.python_eval
 
 
 def test_ties_and_repeated_occurrences() -> None:
@@ -405,7 +578,7 @@ def test_ties_and_repeated_occurrences() -> None:
     assert set(tied.variables) == {variable}
 
 
-def test_collection_operations_closed_lambdas_and_fresh_names() -> None:
+def test_collection_operations_closed_calls_and_fresh_names() -> None:
     """Convert collection nesting and closed expressions without name capture."""
     store = ConstraintStore()
     variable = VariableRef("__split_0")
@@ -421,11 +594,9 @@ def test_collection_operations_closed_lambdas_and_fresh_names() -> None:
         definition = store.variables[VariableRef(name)].definitions[0]
         expression = store.expressions[definition.value]
         assert isinstance(expression, InternalOperation)
-        assert expression.op == Operator.lambda_
-        callback = expression.args[0]
-        assert isinstance(callback, InternalLambda)
-        assert len(callback.vars) == arity
-        assert variable not in callback.vars
+        assert expression.op == Operator.python_eval
+        assert len(expression.args[1:]) == arity
+        assert _callback(expression)(*([1] * arity)) == ((1,) if arity else 3)
 
 
 def test_wide_expression_guard_and_negative_limit() -> None:
@@ -545,9 +716,10 @@ def test_default_subset_limit_boundary(parameter_count: int, auxiliaries: int) -
     assert len(added) == auxiliaries
     for variable in added:
         definition = store.variables[variable].definitions[0]
-        assert store.expressions[definition.value] == InternalOperation(
-            Operator.add, (VariableRef("a"), VariableRef("b"))
-        )
+        call = store.expressions[definition.value]
+        assert isinstance(call, InternalOperation)
+        assert call.args[1:] == (VariableRef("a"), VariableRef("b"))
+        assert _callback(call)(2, 3) == 5
 
 
 @pytest.mark.parametrize("limit, auxiliaries", [(1, 0), (2, 1)])
@@ -582,12 +754,13 @@ def test_existing_lambda_arguments_are_split_and_converted(cardinality: int) -> 
     _split(store, domains, types)
     definition = store.variables[VariableRef("result")].definitions[0]
     call = store.expressions[definition.value]
-    assert isinstance(call, InternalOperation) and call.op == Operator.lambda_
+    assert isinstance(call, InternalOperation) and call.op == Operator.python_eval
     assert all(isinstance(arg, VariableRef) for arg in call.args[1:])
     assert domains[VariableRef("result")] == Domain(
         ints=frozenset(range(1, cardinality + 1))
     )
     assert set(store.variables) == {variable, VariableRef("result")}
+    assert _callback(call)(-2) == 3
     before = store.copy()
     _split(store, domains, types)
     assert store == before
@@ -665,7 +838,7 @@ def test_fold_cost_includes_captures() -> None:
 
 
 def test_existing_lambda_arguments_use_profitable_splits() -> None:
-    """Split actual parameters while preserving the existing callable descriptor."""
+    """Split actual parameters before compiling the existing callable descriptor."""
     store = ConstraintStore()
     first, second, third = (VariableRef(name) for name in "abc")
     for variable in (first, second, third):
@@ -684,20 +857,15 @@ def test_existing_lambda_arguments_use_profitable_splits() -> None:
     _split(store, domains, types)
     (auxiliary,) = set(store.variables) - {first, second, third, result}
     definition = store.variables[result].definitions[0]
-    assert store.expressions[definition.value] == InternalOperation(
-        Operator.lambda_,
-        (
-            InternalLambda(
-                (left, right), InternalOperation(Operator.add, (left, right))
-            ),
-            auxiliary,
-            third,
-        ),
-    )
+    call = store.expressions[definition.value]
+    assert isinstance(call, InternalOperation)
+    assert call.args[1:] == (auxiliary, third)
+    assert _callback(call)(3, 4) == 7
     auxiliary_definition = store.variables[auxiliary].definitions[0]
-    assert store.expressions[auxiliary_definition.value] == InternalOperation(
-        Operator.add, (first, second)
-    )
+    auxiliary_call = store.expressions[auxiliary_definition.value]
+    assert isinstance(auxiliary_call, InternalOperation)
+    assert auxiliary_call.args[1:] == (first, second)
+    assert _callback(auxiliary_call)(2, 3) == 5
 
 
 def test_collection_and_python_renaming() -> None:
@@ -721,20 +889,15 @@ def test_collection_and_python_renaming() -> None:
     for name in ("set_result", "python_result"):
         definition = store.variables[VariableRef(name)].definitions[0]
         call = store.expressions[definition.value]
-        assert isinstance(call, InternalOperation) and call.op == Operator.lambda_
-        body = call.args[0]
-        assert isinstance(body, InternalLambda)
-        assert free_variables(body) == frozenset()
+        assert isinstance(call, InternalOperation) and call.op == Operator.python_eval
+        assert call.args[1:] == (variable,)
         if name == "set_result":
-            assert isinstance(body.expr, frozenset)
+            assert _callback(call)(-2) == frozenset({2})
             assert domains[call] == Domain(
                 explicit_sets=frozenset({frozenset({1}), frozenset({2})})
             )
         else:
-            assert isinstance(body.expr, InternalOperation)
-            inner = body.expr.args[0]
-            assert isinstance(inner, InternalOperation)
-            assert inner.args[0] == callback
+            assert _callback(call)(2) == 0
 
 
 def test_store_preserves_unknown_and_set_metadata() -> None:
@@ -768,29 +931,20 @@ def test_lambda_conversion_preserves_existing_scopes_and_captures() -> None:
     definition = store.variables[VariableRef("result")].definitions[0]
     call = store.expressions[definition.value]
     assert isinstance(call, InternalOperation)
-    outer = call.args[0]
-    assert isinstance(outer, InternalLambda)
-    assert outer.vars != (shadowed,)
-    assert free_variables(outer) == frozenset()
-    body = outer.expr
-    assert isinstance(body, InternalOperation)
-    nested_call = body.args[0]
-    assert isinstance(nested_call, InternalOperation)
-    nested = nested_call.args[0]
-    assert isinstance(nested, InternalLambda)
-    assert nested.vars == (shadowed,)
-    assert free_variables(nested) == frozenset(outer.vars)
+    assert call.args[1:] == (captured,)
+    assert _callback(call)(4) == 1
+    renamed = VariableRef("__split_1")
+    nested = InternalOperation(Operator.add, (shadowed, renamed))
     domain_scope = frozenset(
         {
-            (outer.vars[0], domains[captured]),
+            (renamed, domains[captured]),
             (shadowed, Domain(ints=frozenset({1}))),
         }
     )
-    assert domains.lookup(nested.expr, scope=domain_scope) == Domain(
+    assert domains.lookup(nested, scope=domain_scope) == Domain(
         ints=frozenset(range(1, 11))
     )
     type_scope = frozenset(
-        (parameter, frozenset({ValueType.integer}))
-        for parameter in (outer.vars[0], shadowed)
+        (parameter, frozenset({ValueType.integer})) for parameter in (renamed, shadowed)
     )
-    assert types.lookup(nested.expr, scope=type_scope) == frozenset({ValueType.integer})
+    assert types.lookup(nested, scope=type_scope) == frozenset({ValueType.integer})

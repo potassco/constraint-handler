@@ -215,12 +215,22 @@ its set is empty. This pass does not infer a precise fold result, iteration
 count, or iteration order. Feedback checking is a conservative approximation,
 not proof that every runtime invocation succeeds.
 
+### `linear_comparison`
+
+The first argument is a literal string naming `eq`, `neq`, `lt`, `leq`, `gt`,
+or `geq`. The remaining arguments satisfy the `linear_integer` contract below:
+zero or more integer coefficient/term pairs and a required integer offset.
+The result is Boolean, representing `sum(ci * xi) + offset relation 0`.
+Real, Boolean, mixed, and other noninteger terms are rejected. Unknown terms
+give `UNKNOWN`; empty known terms give an empty result if none is unknown.
+Relation tags, pairs, and all their components retain scoped metadata.
+
 ### `linear_integer`
 
 At least one argument is required. Each term is a pair `(coefficient, value)`
-whose coefficient is a literal integer. An optional trailing offset must also
-be a literal integer; it is omitted rather than represented by a `None`
-parameter. Every value term must have only integer alternatives. Coefficients,
+whose coefficient is a literal integer. The required trailing offset must also
+be a literal integer, including an explicit zero when needed.
+Every value term must have only integer alternatives. Coefficients,
 terms, pair expressions, and offsets retain their visited types, including
 lambda-scoped entries. Unknown components propagate to `UNKNOWN`; an empty
 known component gives an empty result if no component is unknown.

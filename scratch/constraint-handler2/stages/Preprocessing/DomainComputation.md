@@ -325,8 +325,8 @@ else
 ### Operation(LinearInteger, [(c1, x1), ..., (cn, xn), c]):
 
 Each `(ci, xi)` pairs a constant integer coefficient `ci` with an
-integer-valued expression `xi`, followed by a constant offset `c` (defaulting
-to `0` if omitted). If any `D(xi)` is unknown, the domain is unknown.
+integer-valued expression `xi`, followed by a required constant integer offset
+`c` (explicitly `0` when needed). If any `D(xi)` is unknown, the domain is unknown.
 Coefficients and offsets must be integer literals; real or other noninteger
 term values are invalid and produce a diagnostic and an unknown domain.
 
@@ -338,6 +338,17 @@ else
     # Each term interval is [min(ci*min(I(xi)), ci*max(I(xi))), max(ci*min(I(xi)), ci*max(I(xi)))]
     int_range=(sum(l_i) + c, sum(u_i) + c)
 ```
+
+### Operation(LinearComparison, [relation, (c1, x1), ..., (cn, xn), c]):
+
+Validate a literal string relation from `eq`, `neq`, `lt`, `leq`, `gt`, `geq`,
+then apply the integer-only `LinearInteger` domain computation to the remaining
+arguments. Compare that domain with the singleton integer domain `{0}` using
+the corresponding comparison rules and Boolean enumeration threshold. Preserve
+an unknown linear domain as unknown, including after invalid noninteger terms.
+Empty inputs give an empty result; a constant-only form has one Boolean result.
+The inferred sum domain is analysis metadata only, not a stored numeric
+expression or a native result-domain enumeration.
 
 ### Operation(IntDiv, [x,y]):
 

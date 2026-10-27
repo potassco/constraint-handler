@@ -184,6 +184,7 @@ enum Operator {
     sub,
     mult,
     linear_integer,
+    linear_comparison,
     int_div,
     real_div,
     pow,

@@ -56,8 +56,8 @@ flowchart TD
 	Preprocessed -->|Flattening| PreprocessedFlattened
 	PreprocessedFlattened -->|Interning| PreprocessedInterned
 	PreprocessedInterned -->|Module Handling| SharedEngineInput
-	Components --> Dispatching
-	SharedEngineInput --> Dispatching
+	Domains --> Dispatching
+	Preprocessed --> Dispatching
 	Dispatching --> EngineInput
 	EngineInput -->|Computation| EngineOutput
 	EngineOutput -->|Module Handling 2| SharedEngineOutput

@@ -92,7 +92,7 @@ def compute_evaluation_order(store: ConstraintStore, diagnostics: Diagnostics) -
         for var in free_variables(expr):
             if var in defined_vars:
                 deps.update(defined_vars[var])
-            else:
+            elif var not in store.set_variables:
                 if var not in undefined:
                     diagnostics.error(
                         f"Variable {var.name!r} has no defining expressions",

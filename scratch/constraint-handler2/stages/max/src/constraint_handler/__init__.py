@@ -1,6 +1,8 @@
 """Constraint-handling library."""
 
+from .asp_facts import asp_facts
 from .diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity, ExpressionLocation
+from .dispatching import DispatchStore, Engine, dispatch
 from .domains import Domain, DomainStore
 from .internal_input import ConstraintStore
 from .preprocessor import (
@@ -31,8 +33,10 @@ __all__ = [
     "Diagnostic",
     "DiagnosticSeverity",
     "Diagnostics",
+    "DispatchStore",
     "Domain",
     "DomainStore",
+    "Engine",
     "Expr",
     "ExpressionLocation",
     "Lambda",
@@ -50,4 +54,6 @@ __all__ = [
     "Tuple",
     "Value",
     "VariableRef",
+    "asp_facts",
+    "dispatch",
 ]

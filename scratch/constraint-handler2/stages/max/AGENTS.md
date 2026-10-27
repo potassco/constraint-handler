@@ -1,6 +1,6 @@
 # constraint-handler
 
-Python 3.15+ library managed with uv. Import name: `constraint_handler`.
+Python 3.14+ library managed with uv. Import name: `constraint_handler`.
 
 ## Structure
 

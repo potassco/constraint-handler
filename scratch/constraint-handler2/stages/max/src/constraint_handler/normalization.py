@@ -209,7 +209,13 @@ class _Normalizer:
                     and all(self.is_numeric(arg, scopes) for arg in rewritten.args)
                 ):
                     difference = Operation(Operator.sub, rewritten.args)
-                    return Operation(op, (self.linear_integer(difference), _ZERO))
+                    return Operation(
+                        Operator.linear_comparison,
+                        (
+                            ValueDef(ValueType.string, op.value),
+                            *self.linear_integer(difference).args,
+                        ),
+                    )
                 if (
                     op in _ARITHMETIC or op == Operator.linear_integer
                 ) and self.is_numeric(rewritten, scopes):
