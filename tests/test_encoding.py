@@ -259,6 +259,7 @@ execution_tests = [
     "execution/python_integrity_should_be_ignored",
     "execution/python_list",
     "execution/python_set_empty_equality",
+    "execution/python_syntax_error",
     "execution/run_condition",
     "execution/warning_spurious",
     "execution/warning_spurious2",
