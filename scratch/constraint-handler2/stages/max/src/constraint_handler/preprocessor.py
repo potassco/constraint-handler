@@ -178,6 +178,7 @@ class Solver:
             "integer.lp",
             "eq.lp",
             "set.lp",
+            "tuples.lp",
             "complex.lp",
         ):
             self._control.parse_string(

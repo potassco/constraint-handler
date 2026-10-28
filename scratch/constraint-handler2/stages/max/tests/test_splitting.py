@@ -8,6 +8,7 @@ import pytest
 
 from constraint_handler import (
     ConstraintStore,
+    Engine,
     Expr,
     Lambda,
     Operation,
@@ -44,6 +45,45 @@ def _callback(call: object) -> Callable[..., object]:
     descriptor = call.args[0]
     assert isinstance(descriptor, Python)
     return cast(Callable[..., object], eval(descriptor.fn, {"math": math}))
+
+
+@pytest.mark.parametrize("explicit", (False, True))
+@pytest.mark.parametrize(
+    "members,expected_engine",
+    ((2, Engine.complex), (3, Engine.native), (100, Engine.native)),
+)
+def test_computed_tuple_slot_uses_ordinary_cost_splitting(
+    explicit: bool, members: int, expected_engine: Engine
+) -> None:
+    """Keep affordable nesting complex and split computed slots only when cheaper."""
+    store = ConstraintStore()
+    source, items, result = (
+        VariableRef(name) for name in ("source", "items", "result")
+    )
+    store.choose_from_iterator(source, (1, 2))
+    store.set_contain_choose_from_iterator(items, range(members))
+    slots = (Operation(Operator.add, (source, 1)), items)
+    store.define(result, Operation(Operator.make_tuple, slots) if explicit else slots)
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    root_id = problem.store.variables[result].definitions[0].value
+    root = problem.store.expressions[root_id]
+    assert isinstance(root, InternalOperation)
+    assert problem.engines[root_id] == expected_engine
+    auxiliaries = set(problem.store.variables) - {source, items, result}
+    if expected_engine == Engine.native:
+        assert len(auxiliaries) == 1
+        assert root.op == Operator.make_tuple
+        assert root.args[0] in auxiliaries
+        assert root.args[1] == items
+        assert set(problem.engines.values()) == {Engine.native}
+        assert not any(fact.name == "solution" for fact in problem.asp_facts)
+    else:
+        assert not auxiliaries
+        assert root.op == Operator.python_eval
+        assert sum(fact.name == "solution" for fact in problem.asp_facts) == 8
 
 
 def test_cryptarithm_equality_remains_flat_linear_comparison() -> None:

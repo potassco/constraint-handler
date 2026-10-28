@@ -174,7 +174,10 @@ class _Normalizer:
                     cast(Expr, self.visit(body, local_scopes)),
                 )
             case tuple():
-                return tuple(cast(Expr, self.visit(item, scopes)) for item in expr)
+                return Operation(
+                    Operator.make_tuple,
+                    tuple(self.visit(item, scopes) for item in expr),
+                )
             case frozenset():
                 return frozenset(cast(Expr, self.visit(item, scopes)) for item in expr)
             case Operation(op, args):
@@ -198,7 +201,15 @@ class _Normalizer:
                     )
                 else:
                     rewritten = Operation(
-                        op, tuple(self.visit(arg, scopes) for arg in args)
+                        op,
+                        tuple(
+                            tuple(self.visit(item, scopes) for item in arg)
+                            if isinstance(arg, tuple)
+                            and op
+                            in {Operator.linear_integer, Operator.linear_comparison}
+                            else self.visit(arg, scopes)
+                            for arg in args
+                        ),
                     )
                 for scope in scopes:
                     if (expr, scope) in self._integer_expressions:

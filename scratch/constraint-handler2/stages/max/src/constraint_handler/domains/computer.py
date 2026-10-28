@@ -124,6 +124,19 @@ class _DomainComputer:
                     for d in set_var.defaults
                 ),
             ]
+            if any(
+                d.tuples
+                or d.tuple_domains
+                or d.explicit_sets
+                or d.implicit_set_elements is not None
+                for d in elem_doms
+            ):
+                self._diagnostics.error(
+                    f"Set variable {var.name!r} requires scalar elements",
+                    variable=var,
+                )
+                self._result[var] = UNKNOWN_DOMAIN
+                return
             if any(d.unknown for d in elem_doms):
                 self._result[var] = UNKNOWN_DOMAIN
                 return
@@ -213,7 +226,7 @@ class _DomainComputer:
             case frozenset():
                 return self._visit_set_expr(tuple(expr), env, location)
             case tuple():
-                return self._visit_tuple_expr(expr, env, location)
+                return self._visit_operation(Operator.make_tuple, expr, env, location)
             case Operation(op, args):
                 return self._visit_operation(op, args, env, location)
         assert_never(expr)
@@ -227,40 +240,6 @@ class _DomainComputer:
         """Compute the domain of a set literal or set_make operation."""
         item_doms = [self._visit_expr(item, env, location.root_id) for item in items]
         return self._operations.evaluate(Operator.set_make, item_doms, location)
-
-    def _visit_tuple_expr(
-        self,
-        items: tuple[Expr, ...],
-        env: dict[VariableRef, Domain],
-        location: ExpressionLocation,
-    ) -> Domain:
-        """Compute the domain of a tuple expression {(v1,...,vn) | vi in D(ei)}."""
-        if not items:
-            return Domain(tuples=frozenset({()}))
-        item_doms = [self._visit_expr(item, env, location.root_id) for item in items]
-        decision = bounded_product_decision(item_doms, self._threshold)
-        if decision in (EnumerationDecision.UNKNOWN, EnumerationDecision.EXCESSIVE):
-            return UNKNOWN_DOMAIN
-        if decision == EnumerationDecision.EMPTY:
-            return EMPTY_DOMAIN
-        value_lists: list[list[SetValue]] = []
-        for d in item_doms:
-            vals: list[SetValue] = []
-            for v in d.iter_values():
-                if isinstance(v, frozenset):
-                    self._diagnostics.error(
-                        "Sets inside tuples are not supported", location=location
-                    )
-                    return UNKNOWN_DOMAIN
-                vals.append(v)
-            value_lists.append(vals)
-        result = domain_from_values(product(*value_lists))
-        if result.unknown:
-            self._diagnostics.warn(
-                "Tuple alternatives contain values that Python sets cannot distinguish; returning unknown",
-                location=location,
-            )
-        return result
 
     def _visit_arg(
         self,

@@ -71,7 +71,7 @@ def test_native_if_optional_operands(payload: Expr, python_reference: bool) -> N
         )
     control = Control(Library(), ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in prepared.asp_facts))
-    for encoding in ("native.lp", "boolean.lp", "complex.lp"):
+    for encoding in ("native.lp", "boolean.lp", "tuples.lp", "complex.lp"):
         control.parse_string(
             files("constraint_handler").joinpath("encoding", encoding).read_text()
         )
@@ -231,7 +231,9 @@ def test_python_context(source: str) -> None:
     assert not diagnostics.items
     assert prepared.domains[result] == Domain(ints=frozenset({6}))
     assert any(
-        fact.name == "output" and str(fact).endswith(",integer(6))")
+        fact.name == "value"
+        and fact.arguments[0].name == "__complex_output"
+        and str(fact).endswith(",integer(6))")
         for fact in prepared.asp_facts
     )
     assert prepared.create_solver(SolveOptions()).solve().satisfiable

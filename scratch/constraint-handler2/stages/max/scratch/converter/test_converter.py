@@ -21,7 +21,7 @@ from constraint_handler import (
 from constraint_handler.domains import Domain
 from constraint_handler.internal_input import ValueDef, ValueType
 
-from .audit_complex import audit_case, current_value, legacy_value
+from .audit_complex import audit_case, current_value, legacy_value, model_values
 from .converter import (
     ConversionError,
     UnsupportedFeatureError,
@@ -539,6 +539,98 @@ def test_audit_distinguishes_unknown_input_domains() -> None:
         domains_only=True,
     )
     assert result["status"] == "domains_only"
-    assert len(result["unknown_input_calls"]) == 3
-    assert len(result["unknown_result_calls"]) == 3
+    assert len(result["unknown_input_calls"]) == 2
+    assert len(result["unknown_result_calls"]) == 2
+    assert all(call["domain_sizes"] == [None] for call in result["unknown_input_calls"])
+    assert any(
+        not call["arguments"] and "y=[1,2,3]" in call["source"]
+        for call in result["unknown_result_calls"]
+    )
+    assert any(
+        item["expression"].startswith("tuple_get(")
+        for item in result["unknown_root_expressions"]
+    )
+    assert not any(
+        "tuple_get" in call["source"] for call in result["unknown_input_calls"]
+    )
     assert result["domain_summary"]["roots"]["unknown"] == 4
+
+
+def test_profile_tuple_payloads(tmp_path: Path) -> None:
+    """Compare nonempty decoded tuple outputs across both profiler variants."""
+    from clingo.core import Library
+    from clingo.symbol import parse_term
+
+    from scratch.kroco_regression.profile_grounding import (
+        profile_expression,
+        select_expression,
+    )
+
+    source = """solution(7,0).
+input(0,variable("arg"),tuple).
+input_tuple_size(0,variable("arg"),2).
+input(0,__tuple(variable("arg"),0),boolean(false)).
+input(0,__tuple(variable("arg"),1),set).
+set_input_include(0,__tuple(variable("arg"),1),string("a")).
+output(0,__complex_output(0)).
+value(__complex_output(0),tuple).
+tuple_size(__complex_output(0),2).
+value(__tuple(__complex_output(0),0),integer(1)).
+value(__tuple(__complex_output(0),1),set).
+set_value(__tuple(__complex_output(0),1),string("a")).
+solution(7,1).
+input(1,variable("arg"),tuple).
+input_tuple_size(1,variable("arg"),2).
+input(1,__tuple(variable("arg"),0),boolean(true)).
+input(1,__tuple(variable("arg"),1),set).
+set_input_exclude(1,__tuple(variable("arg"),1),string("a")).
+output(1,__complex_output(1)).
+value(__complex_output(1),tuple).
+tuple_size(__complex_output(1),0).
+"""
+    library = Library()
+    table, _setup = select_expression(library, source.splitlines(keepends=True), 7)
+    payloads = model_values(
+        [parse_term(library, line.rstrip().removesuffix(".")) for line in table]
+    )
+    assert payloads[parse_term(library, "__complex_output(0)")] == (
+        "tuple",
+        (("integer", 1), ("set", frozenset({("string", "a")}))),
+    )
+    assert payloads[parse_term(library, "__complex_output(1)")] == ("tuple", ())
+    (tmp_path / "ch_facts.lp").write_text(source)
+    profile_expression(tmp_path, 7)
+    report = json.loads((tmp_path / "expression_7_profile.json").read_text())
+    assert report["same_models"]
+    assert all(
+        variant["models"] == 2 and variant["exhausted"]
+        for variant in report["variants"].values()
+    )
+
+
+def test_audit_set_payload_semantics() -> None:
+    """Compare unordered numeric set payloads semantically without merging Booleans."""
+    from clingo.core import Library
+    from clingo.symbol import parse_term
+
+    library = Library()
+    payloads = model_values(
+        [
+            parse_term(library, fact)
+            for fact in (
+                "value(a,set)",
+                "set_value(a,integer(1))",
+                "set_value(a,integer(2))",
+                "value(b,set)",
+                'set_value(b,real("2.0"))',
+                'set_value(b,real("1.0"))',
+                "value(c,set)",
+                "set_value(c,boolean(true))",
+                "set_value(c,integer(2))",
+                "value(empty,set)",
+            )
+        ]
+    )
+    assert payloads[parse_term(library, "a")] == payloads[parse_term(library, "b")]
+    assert payloads[parse_term(library, "a")] != payloads[parse_term(library, "c")]
+    assert payloads[parse_term(library, "empty")] == ("set", frozenset())

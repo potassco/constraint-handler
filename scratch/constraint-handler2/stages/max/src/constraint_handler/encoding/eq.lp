@@ -31,7 +31,7 @@ equality_defined(Arg) :- equality_input(Arg), value(Arg, _).
 equality_set(Arg) :- equality_input(Arg), value(Arg, set).
 
 equality_value(Value) :-
-    equality_input(Arg), value(Arg, Value), Value != set.
+    equality_input(Arg), value(Arg, Value), Value != set, Value != tuple.
 equality_value(Member) :-
     equality_set(Arg), set_value(Arg, Member).
 equality_real(real(Real)) :- equality_value(real(Real)).
@@ -49,10 +49,12 @@ equality_set_key(Arg, Key) :-
 
 equality_scalar(Id, Op) :-
     equality_operands(Id, Op, Left, Right),
-    equality_defined(Left), equality_defined(Right), not equality_set(Left).
+    equality_defined(Left), equality_defined(Right), not equality_set(Left),
+    not equality_tuple_subject(Left).
 equality_scalar(Id, Op) :-
     equality_operands(Id, Op, Left, Right),
-    equality_defined(Left), equality_defined(Right), not equality_set(Right).
+    equality_defined(Left), equality_defined(Right), not equality_set(Right),
+    not equality_tuple_subject(Right).
 
 equality_match(Id) :-
     equality_operands(Id, _, Left, Right),

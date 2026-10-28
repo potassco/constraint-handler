@@ -97,12 +97,13 @@ def test_products_and_lambda_shadowing_are_not_distributed() -> None:
     )
     normalize(store, types)
     result = store.expressions[store.constraints[0].expr]
-    assert isinstance(result, tuple)
-    assert isinstance(result[0], InternalOperation)
-    assert result[0].op == Operator.mult
-    assert isinstance(result[0].args[1], InternalOperation)
-    assert result[0].args[1].op == Operator.linear_integer
-    call = result[1]
+    assert isinstance(result, InternalOperation)
+    assert result.op == Operator.make_tuple
+    assert isinstance(result.args[0], InternalOperation)
+    assert result.args[0].op == Operator.mult
+    assert isinstance(result.args[0].args[1], InternalOperation)
+    assert result.args[0].args[1].op == Operator.linear_integer
+    call = result.args[1]
     assert isinstance(call, InternalOperation)
     callback = call.args[0]
     assert isinstance(callback, InternalLambda)
@@ -110,6 +111,22 @@ def test_products_and_lambda_shadowing_are_not_distributed() -> None:
         Operator.eq,
         (x, ValueDef(ValueType.string, "text")),
     )
+
+
+def test_runtime_tuple_normalization_preserves_structural_pairs() -> None:
+    """Lower tuple values but retain linear coefficient/term structure."""
+    store = ConstraintStore()
+    variable = VariableRef("variable")
+    store.define(variable, (frozenset(), 3))
+    store.ensure(Operation(Operator.linear_integer, ((2, variable), 0)))
+    normalize(store, StaticTypeStore())
+    result = store.expressions[store.variables[variable].definitions[0].value]
+    assert result == InternalOperation(
+        Operator.make_tuple, (frozenset(), ValueDef(ValueType.integer, 3))
+    )
+    linear = store.expressions[store.constraints[0].expr]
+    assert isinstance(linear, InternalOperation)
+    assert isinstance(linear.args[0], tuple)
 
 
 def test_real_coefficients_are_not_normalized() -> None:
@@ -306,8 +323,9 @@ def test_shared_lambda_is_normalized_per_call() -> None:
     assert isinstance(before, tuple)
     normalize(store, types)
     result = store.expressions[expr_id]
-    assert isinstance(result, tuple)
-    call = result[0]
+    assert isinstance(result, InternalOperation)
+    assert result.op == Operator.make_tuple
+    call = result.args[0]
     assert isinstance(call, InternalOperation)
     normalized = call.args[0]
     assert isinstance(normalized, InternalLambda)
@@ -315,7 +333,7 @@ def test_shared_lambda_is_normalized_per_call() -> None:
         Operator.linear_integer,
         ((ValueDef(ValueType.integer, 2), parameter), ValueDef(ValueType.integer, 0)),
     )
-    assert result[1] == before[1]
+    assert result.args[1] == before[1]
     assert not diagnostics.has_errors
 
 
@@ -406,8 +424,9 @@ def test_nested_lambda_bindings_preserve_free_and_shadowed_types() -> None:
     assert isinstance(call, InternalOperation)
     callback = call.args[0]
     assert isinstance(callback, InternalLambda)
-    assert isinstance(callback.expr, tuple)
-    integer_call, real_call = callback.expr
+    assert isinstance(callback.expr, InternalOperation)
+    assert callback.expr.op == Operator.make_tuple
+    integer_call, real_call = callback.expr.args
     assert isinstance(integer_call, InternalOperation)
     integer_callback = integer_call.args[0]
     assert isinstance(integer_callback, InternalLambda)
@@ -490,9 +509,10 @@ def test_integer_expression_proofs_do_not_leak_into_lambda_scope() -> None:
     )
     normalize(store, types)
     result = store.expressions[expr_id]
-    assert isinstance(result, tuple)
-    assert result[0] != before[0]
-    assert result[1] == before[1]
+    assert isinstance(result, InternalOperation)
+    assert result.op == Operator.make_tuple
+    assert result.args[0] != before[0]
+    assert result.args[1] == before[1]
     assert not diagnostics.has_errors
 
 

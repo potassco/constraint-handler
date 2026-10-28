@@ -8,8 +8,14 @@ value(T, T) :- constant(T), not set_constant(T).
 value(T, set) :- set_constant(T).
 set_value(T, Value) :- constant_set_value(T, Value).
 
-value(Id, Value) :- native_expression(Id, Expr), value(Expr, Value).
-set_value(Id, Value) :- native_expression(Id, Expr), set_value(Expr, Value).
+payload_copy(Id, Expr) :- native_expression(Id, Expr).
+value(Target, Value) :- payload_copy(Target, Source), value(Source, Value).
+set_value(Target, Value) :- payload_copy(Target, Source), set_value(Source, Value).
+tuple_size(Target, Size) :- payload_copy(Target, Source), tuple_size(Source, Size).
+value(__tuple(Target, Index), Value) :- payload_copy(Target, Source),
+    tuple_size(Source, Size), Index = 0..Size-1, value(__tuple(Source, Index), Value).
+set_value(__tuple(Target, Index), Value) :- payload_copy(Target, Source),
+    tuple_size(Source, Size), Index = 0..Size-1, set_value(__tuple(Source, Index), Value).
 
 %%% defines
 
@@ -18,8 +24,26 @@ variable_value(Name, ExprId) :-
     value(ExprId, _),
     value(ConditionId, boolean(true)).
 
-value(variable(Name), Value) :- variable_value(Name, ExprId), value(ExprId, Value).
-set_value(variable(Name), Value) :- variable_value(Name, ExprId), set_value(ExprId, Value).
+payload_copy(variable(Name), ExprId) :- variable_value(Name, ExprId).
+payload_pair(variable(Name), ExprId) :- variable_value(Name, ExprId).
+:- variable_value(Name, ExprId), payload_difference(variable(Name), ExprId).
+
+payload_pair(__tuple(Left, Index), __tuple(Right, Index)) :-
+    payload_pair(Left, Right), tuple_size(Left, Size), Index = 0..Size-1.
+payload_difference(Left, Right) :- payload_pair(Left, Right),
+    value(Left, Value), not value(Right, Value).
+payload_difference(Left, Right) :- payload_pair(Left, Right),
+    value(Right, Value), not value(Left, Value).
+payload_difference(Left, Right) :- payload_pair(Left, Right),
+    set_value(Left, Member), not set_value(Right, Member).
+payload_difference(Left, Right) :- payload_pair(Left, Right),
+    set_value(Right, Member), not set_value(Left, Member).
+payload_difference(Left, Right) :- payload_pair(Left, Right),
+    tuple_size(Left, Size), not tuple_size(Right, Size).
+payload_difference(Left, Right) :- payload_pair(Left, Right),
+    tuple_size(Right, Size), not tuple_size(Left, Size).
+payload_difference(Left, Right) :- payload_pair(Left, Right),
+    payload_difference(__tuple(Left, Index), __tuple(Right, Index)).
 
 %%% choose
 
@@ -41,7 +65,7 @@ variable_value(Name, ExprId) :- variable_set_choice(Name, ExprId),
 
 % integer, real, string, etc....
 { value(variable(Name), Expr) } :- variable_choose(Name, ExprId, ConditionId, Label),
-    value(ExprId, Expr), Expr != set,
+    value(ExprId, Expr), Expr != set, Expr != tuple,
     value(ConditionId, boolean(true)).
 
 

@@ -66,6 +66,7 @@ class Operator(StrEnum):
     diff = auto()
     subset = auto()
     set_fold = auto()
+    make_tuple = auto()
     tuple_get = auto()
     python_eval = auto()
     lambda_ = auto()

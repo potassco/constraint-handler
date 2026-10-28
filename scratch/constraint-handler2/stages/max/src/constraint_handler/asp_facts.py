@@ -9,8 +9,8 @@ from clingo.core import Library
 from clingo.symbol import Function, Number, String, Symbol, Tuple_
 
 from .dispatching import DispatchStore, Engine
-from .domains import DomainStore
-from .domains.values import is_domain_value, is_finite_value
+from .domains import DEFAULT_THRESHOLD, DomainStore
+from .domains.values import DomainValue, is_domain_value, is_finite_value
 from .internal_input import (
     ConstraintStore,
     Expr,
@@ -98,6 +98,29 @@ def _term(lib: Library, expr: OperationArg) -> Symbol:
     assert_never(expr)
 
 
+def _payload_facts(
+    lib: Library, subject: Symbol, value: DomainValue
+) -> Iterator[Symbol]:
+    """Encode a complete scalar, flat set, or flat tuple under one subject."""
+    marker = (
+        Function(lib, "tuple")
+        if isinstance(value, tuple)
+        else Function(lib, "set")
+        if isinstance(value, frozenset)
+        else _term(lib, _convert_expression(value))
+    )
+    yield Function(lib, "value", [subject, marker])
+    if isinstance(value, tuple):
+        yield Function(lib, "tuple_size", [subject, _number(lib, len(value))])
+        for index, item in enumerate(value):
+            yield from _payload_facts(
+                lib, Function(lib, "__tuple", [subject, _number(lib, index)]), item
+            )
+    elif isinstance(value, frozenset):
+        for member in sorted(_term(lib, _convert_expression(item)) for item in value):
+            yield Function(lib, "set_value", [subject, member])
+
+
 def _complex_facts(
     lib: Library,
     store: ConstraintStore,
@@ -120,6 +143,11 @@ def _complex_facts(
         argument_domains = [domains[cast(Expr, arg)] for arg in arguments]
         if any(domain.unknown for domain in argument_domains):
             raise ValueError("complex evaluation requires known input domains")
+        count = 1
+        for domain in argument_domains:
+            count *= domain.cardinality() or 0
+        if count > DEFAULT_THRESHOLD:
+            raise ValueError("complex evaluation input product exceeds row budget")
         callback: object = eval(expr.args[0].fn, {"math": math, **python_context})
         if not callable(callback):
             raise TypeError("Python source must evaluate to a callable")
@@ -131,7 +159,7 @@ def _complex_facts(
             for domain in argument_domains
         ]
         argument_terms: list[Symbol | None] = [None] * len(arguments)
-        set_universes: list[frozenset[Symbol] | None] = [None] * len(arguments)
+        set_universes: dict[tuple[int, int | None], frozenset[Symbol]] = {}
         for values in product(*axes):
             try:
                 result = callback(*values)
@@ -151,54 +179,56 @@ def _complex_facts(
                 raise ValueError("complex evaluation requires finite values")
             solution = _number(lib, solution_id)
             yield Function(lib, "solution", [_number(lib, expr_id), solution])
-            for index, (arg, value, domain) in enumerate(
-                zip(arguments, values, argument_domains, strict=True)
-            ):
+            for index, (arg, value) in enumerate(zip(arguments, values, strict=True)):
                 argument = argument_terms[index]
                 if argument is None:
                     argument = _term(lib, arg)
                     argument_terms[index] = argument
-                yield Function(
-                    lib,
-                    "input",
-                    [
-                        solution,
-                        argument,
-                        Function(lib, "set")
-                        if isinstance(value, frozenset)
-                        else _term(lib, _convert_expression(value)),
-                    ],
+                for fact in _payload_facts(lib, argument, value):
+                    predicate = {
+                        "value": "input",
+                        "tuple_size": "input_tuple_size",
+                        "set_value": "set_input_include",
+                    }[fact.name]
+                    yield Function(lib, predicate, [solution, *fact.arguments])
+                slots = (
+                    enumerate(value) if isinstance(value, tuple) else ((None, value),)
                 )
-                if isinstance(value, frozenset):
-                    included = {_term(lib, _convert_expression(item)) for item in value}
-                    universe = set_universes[index]
-                    if universe is None:
-                        universe = frozenset(
-                            _term(lib, _convert_expression(item))
-                            for item in domain.potential_set_members()
+                for position, item in slots:
+                    if not isinstance(item, frozenset):
+                        continue
+                    subject = (
+                        argument
+                        if position is None
+                        else Function(
+                            lib, "__tuple", [argument, _number(lib, position)]
                         )
-                        set_universes[index] = universe
-                    for predicate, members in (
-                        ("set_input_include", included),
-                        ("set_input_exclude", universe - included),
-                    ):
-                        for member in sorted(members):
-                            yield Function(lib, predicate, [solution, argument, member])
-            yield Function(
-                lib,
-                "output",
-                [
-                    solution,
-                    Function(lib, "set")
-                    if isinstance(result, frozenset)
-                    else _term(lib, _convert_expression(result)),
-                ],
-            )
-            if isinstance(result, frozenset):
-                for member in sorted(
-                    _term(lib, _convert_expression(item)) for item in result
-                ):
-                    yield Function(lib, "set_output", [solution, member])
+                    )
+                    included = {
+                        _term(lib, _convert_expression(member)) for member in item
+                    }
+                    key = (index, position)
+                    if key not in set_universes:
+                        candidates = (
+                            alternative if position is None else alternative[position]
+                            for alternative in axes[index]
+                            if position is None
+                            or isinstance(alternative, tuple)
+                            and position < len(alternative)
+                        )
+                        set_universes[key] = frozenset(
+                            _term(lib, _convert_expression(member))
+                            for candidate in candidates
+                            if isinstance(candidate, frozenset)
+                            for member in candidate
+                        )
+                    for member in sorted(set_universes[key] - included):
+                        yield Function(
+                            lib, "set_input_exclude", [solution, subject, member]
+                        )
+            output = Function(lib, "__complex_output", [solution])
+            yield Function(lib, "output", [solution, output])
+            yield from _payload_facts(lib, output, result)
             solution_id += 1
 
 
@@ -292,6 +322,26 @@ def asp_facts(
                 [Function(lib, engines[expr_id].value), _number(lib, expr_id)],
             )
         )
+        if (
+            engines[expr_id] == Engine.native
+            and isinstance(expr, Operation)
+            and expr.op == Operator.make_tuple
+        ):
+            facts.append(
+                Function(
+                    lib,
+                    "tuple_arity",
+                    [_number(lib, expr_id), _number(lib, len(expr.args))],
+                )
+            )
+            facts.extend(
+                Function(
+                    lib,
+                    "tuple_argument",
+                    [_number(lib, expr_id), _number(lib, index), _term(lib, arg)],
+                )
+                for index, arg in enumerate(expr.args)
+            )
         if (
             engines[expr_id] == Engine.native
             and isinstance(expr, Operation)

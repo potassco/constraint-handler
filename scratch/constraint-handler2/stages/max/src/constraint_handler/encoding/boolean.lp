@@ -6,12 +6,7 @@ conditional_argument(Id, Argument) :-
     native_expression(Id, operation(if_, (Condition, Argument))),
     value(Condition, boolean(true)).
 
-value(Id, Value) :-
-    conditional_argument(Id, Argument), value(Argument, Value).
-
-set_value(Id, Value) :-
-    conditional_argument(Id, Argument), value(Argument, set),
-    set_value(Argument, Value).
+payload_copy(Id, Argument) :- conditional_argument(Id, Argument).
 
 value(Id, none) :-
     native_expression(Id, operation(if_, (Condition, Argument))),

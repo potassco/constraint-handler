@@ -50,6 +50,17 @@ def _eval_set_domains(
     context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
 ) -> Domain:
     """Construct sets from evaluated arguments without dropping invalid values."""
+    if any(
+        d.tuples
+        or d.tuple_domains
+        or d.explicit_sets
+        or d.implicit_set_elements is not None
+        for d in doms
+    ):
+        context.diagnostics.error(
+            "Set elements must be scalar values", location=location
+        )
+        return UNKNOWN_DOMAIN
     if not doms:
         return Domain(explicit_sets=frozenset({frozenset()}))
     decision = bounded_product_decision(doms, context.threshold)

@@ -23,7 +23,7 @@ from .internal_input import (
 )
 from .python_conversion import convert
 from .python_input import Operator
-from .static_types import SetOf, StaticTypeStore, UnknownType
+from .static_types import SetOf, StaticTypeStore, TupleType, UnknownType
 from .util import EvaluationOrder, free_variables
 
 DEFAULT_SUBSET_LIMIT = 12
@@ -154,7 +154,15 @@ class GroundingCost:
                 if len(terms) > 2
                 else _product(self.size(term) for term in terms)
             )
+        if op == Operator.make_tuple:
+            return len(args) + _sum(self.payload(arg) for arg in args)
+        if op == Operator.tuple_get:
+            return self.size(args[1]) + self.payload(args[0])
+        if op == Operator.length and self.is_tuple(args[0]):
+            return self.size(expr)
         if op in {Operator.eq, Operator.neq}:
+            if any(self.is_tuple(arg) for arg in args):
+                return _sum(self.payload(arg) for arg in args)
             if all(self.is_set(arg) for arg in args):
                 return _sum(self.members(arg) for arg in args)
             return 2 * min(self.size(arg) for arg in args)
@@ -182,6 +190,38 @@ class GroundingCost:
             and bool(kind)
             and all(isinstance(member, SetOf) for member in kind)
         )
+
+    def is_tuple(self, expr: Expr) -> bool:
+        """Recognize exclusively tuple-valued operands without inspecting syntax."""
+        kind = self.types[expr]
+        return (
+            not isinstance(kind, UnknownType)
+            and bool(kind)
+            and all(isinstance(member, TupleType) for member in kind)
+        )
+
+    def payload(self, expr: Expr) -> Cost:
+        """Estimate copied scalar keys, shapes, and members without tuple expansion."""
+        domain = self.domains[expr]
+        if domain.unknown:
+            return inf
+        if self.is_set(expr):
+            return 1 + self.members(expr)
+        if not self.is_tuple(expr):
+            return self.size(expr)
+        total: Cost = 1
+        for value in domain.tuples:
+            total += 1 + sum(
+                1 + len(item) if isinstance(item, frozenset) else 1 for item in value
+            )
+        for positions in domain.tuple_domains:
+            total += len(positions) + _sum(
+                len(position.potential_set_members()) + 1
+                if position.explicit_sets or position.implicit_set_elements is not None
+                else position.cardinality() or 0
+                for position in positions
+            )
+        return total
 
     def complexity(self, expr: Expr) -> Cost:
         """Use specialized costs only when the expression has no nested operation."""
@@ -439,9 +479,14 @@ class _Splitter(GroundingCost):
                         Operator.set_isin,
                         Operator.set_notin,
                         Operator.cardinality,
+                        Operator.make_tuple,
+                        Operator.tuple_get,
                     }
                     or expr.op == Operator.length
-                    and all(self.is_set(cast(Expr, arg)) for arg in expr.args)
+                    and all(
+                        self.is_set(cast(Expr, arg)) or self.is_tuple(cast(Expr, arg))
+                        for arg in expr.args
+                    )
                 )
                 and not any(_contains_operation(arg) for arg in expr.args)
             ):

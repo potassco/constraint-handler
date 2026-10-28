@@ -211,6 +211,14 @@ def _is_all_scalars(t: Type) -> bool:
     return all(isinstance(m, ValueType) for m in t)
 
 
+def _is_collection_expression(expr: OperationArg) -> bool:
+    """Recognize known collection constructors even when their slots are unknown."""
+    return isinstance(expr, (tuple, frozenset)) or (
+        isinstance(expr, Operation)
+        and expr.op in {Operator.make_tuple, Operator.set_make}
+    )
+
+
 def _extract_set_info(t: frozenset[TypeMember]) -> tuple[frozenset[ValueType], bool]:
     """Extract combined element types and can_be_empty flag from SetOf members."""
     elems: set[ValueType] = set()
@@ -351,7 +359,9 @@ class _StaticTypeComputer:
                 element_types = [
                     self._eval_expr(item, env, location.root_id) for item in expr
                 ]
-                if not all(_is_all_scalars(kind) for kind in element_types):
+                if any(_is_collection_expression(item) for item in expr) or not all(
+                    _is_all_scalars(kind) for kind in element_types
+                ):
                     self._diagnostics.error(
                         "Set literal elements must be scalar values",
                         location=location,
@@ -365,26 +375,12 @@ class _StaticTypeComputer:
                 scalars = frozenset(m for m in item_types if isinstance(m, ValueType))
                 return frozenset({SetOf(scalars, False)})
             case tuple():
-                elem_types = tuple(
+                elem_types = [
                     self._eval_expr(item, env, location.root_id) for item in expr
+                ]
+                return self._eval_value_operation(
+                    Operator.make_tuple, expr, elem_types, location
                 )
-                if any(
-                    isinstance(member, SetOf)
-                    for kind in elem_types
-                    if not isinstance(kind, UnknownType)
-                    for member in kind
-                ):
-                    self._diagnostics.error(
-                        "Sets inside tuples are not supported", location=location
-                    )
-                    return UNKNOWN
-                if any(isinstance(t, UnknownType) for t in elem_types):
-                    return UnknownType()
-                if any(
-                    len(t) == 0 for t in elem_types if not isinstance(t, UnknownType)
-                ):
-                    return frozenset()
-                return frozenset({TupleType(elem_types)})
             case Operation(op, args):
                 return self._eval_operation(op, args, env, location)
         assert_never(expr)
@@ -605,6 +601,19 @@ class _StaticTypeComputer:
         ]
         result: Type = UNKNOWN
         match op:
+            case Operator.make_tuple:
+                valid = all(
+                    not isinstance(member, TupleType)
+                    for kind in known
+                    for member in kind
+                ) and not any(
+                    isinstance(arg, tuple)
+                    or isinstance(arg, Operation)
+                    and arg.op == Operator.make_tuple
+                    for arg in args
+                )
+                message = "Nested tuples are not supported"
+                result = frozenset({TupleType(tuple(arg_types))})
             case Operator.eq | Operator.neq:
                 valid = len(arg_types) == 2
                 message = f"{op} expects 2 arguments, got {len(arg_types)}"
@@ -653,7 +662,9 @@ class _StaticTypeComputer:
                 message = "cardinality requires 1 set argument"
                 result = frozenset({ValueType.integer})
             case Operator.set_make:
-                valid = all(_is_all_scalars(kind) for kind in arg_types)
+                valid = not any(_is_collection_expression(arg) for arg in args) and all(
+                    _is_all_scalars(kind) for kind in arg_types
+                )
                 message = "set_make requires scalar arguments"
                 scalars = frozenset(
                     member
@@ -665,6 +676,7 @@ class _StaticTypeComputer:
             case Operator.set_isin | Operator.set_notin:
                 valid = (
                     len(arg_types) == 2
+                    and not _is_collection_expression(args[0])
                     and _is_all_scalars(arg_types[0])
                     and _is_all_sets(arg_types[1])
                 )

@@ -680,7 +680,9 @@ def test_complex_python_partial_evaluation(
         ints=frozenset() if all_invalid else frozenset({7})
     )
     assert sorted(
-        str(fact.arguments[1]) for fact in problem.asp_facts if fact.name == "output"
+        str(fact.arguments[1])
+        for fact in problem.asp_facts
+        if fact.name == "value" and fact.arguments[0].name == "__complex_output"
     ) == ([] if all_invalid else ["integer(6)", "integer(7)"])
     assert problem.create_solver(SolveOptions()).solve().satisfiable
 
@@ -737,7 +739,10 @@ def test_complex_solution_rows(lib: Library, with_engine: bool) -> None:
     for row, second_value in enumerate((1, 2)):
         assert f'input({row},variable("a"),integer(42))' in fact_text
         assert f'input({row},variable("b"),integer({second_value}))' in fact_text
-        assert f"output({row},integer({42 + second_value}))" in fact_text
+        assert f"output({row},__complex_output({row}))" in fact_text
+        assert (
+            f"value(__complex_output({row}),integer({42 + second_value}))" in fact_text
+        )
     outputs = [fact for fact in facts if fact.name == "output"]
     assert len(outputs) == 2
     assert len({fact.arguments[0] for fact in outputs}) == 2
@@ -798,7 +803,7 @@ def test_complex_solution_rows(lib: Library, with_engine: bool) -> None:
         (Operation(Operator.python_eval, (Python("lambda: 0"),)), "integer(0)"),
         (
             Operation(Operator.python_eval, (Python("lambda: (True, 1, 1.5)"),)),
-            'tuple((boolean(true),integer(1),real("1.5")))',
+            "tuple",
         ),
     ),
 )
@@ -810,7 +815,9 @@ def test_complex_operator_families(expression: Expr, term: str) -> None:
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
     assert not diagnostics.has_errors
-    assert f"output(0,{term})" in {str(fact) for fact in problem.asp_facts}
+    assert f"value(__complex_output(0),{term})" in {
+        str(fact) for fact in problem.asp_facts
+    }
     assert problem.create_solver(SolveOptions()).solve().satisfiable
 
 
@@ -881,11 +888,18 @@ def test_set_expression_outputs(
     ]
 
 
+type Payload = str | frozenset[str] | tuple[Payload, ...]
+
+
 def _variable_models(
-    lib: Library, store: ConstraintStore
-) -> list[dict[str, str | frozenset[str]]]:
-    """Solve a store and retain typed scalar values or exact set memberships."""
-    preprocessor = Preprocessor(PreprocessOptions())
+    lib: Library,
+    store: ConstraintStore,
+    options: PreprocessOptions | None = None,
+    *,
+    atom_models: list[list[Symbol]] | None = None,
+) -> list[dict[str, Payload]]:
+    """Solve a store and retain complete typed variable payloads, including empties."""
+    preprocessor = Preprocessor(options or PreprocessOptions())
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
     assert not diagnostics.has_errors
@@ -898,28 +912,50 @@ def _variable_models(
         "boolean.lp",
         "eq.lp",
         "set.lp",
+        "tuples.lp",
         "complex.lp",
     ):
         control.parse_string(
             files("constraint_handler").joinpath("encoding", encoding).read_text()
         )
     control.ground([("base", [])])
-    models: list[dict[str, str | frozenset[str]]] = []
+    models: list[dict[str, Payload]] = []
 
     def collect(model: Model) -> None:
         """Keep empty sets distinct from variables with no value."""
         atoms = model.symbols(atoms=True)
+        if atom_models is not None:
+            atom_models.append(list(atoms))
         members: dict[Symbol, set[str]] = {}
+        values = {
+            atom.arguments[0]: atom.arguments[1]
+            for atom in atoms
+            if atom.name == "value"
+        }
+        sizes = {
+            atom.arguments[0]: atom.arguments[1].number
+            for atom in atoms
+            if atom.name == "tuple_size"
+        }
         for atom in atoms:
             if atom.name == "set_value":
                 members.setdefault(atom.arguments[0], set()).add(str(atom.arguments[1]))
+
+        def payload(subject: Symbol) -> Payload:
+            """Decode one complete payload while preserving exact scalar encodings."""
+            marker = str(values[subject])
+            if marker == "tuple":
+                return tuple(
+                    payload(Function(lib, "__tuple", [subject, Number(lib, index)]))
+                    for index in range(sizes[subject])
+                )
+            if marker == "set":
+                return frozenset(members.get(subject, ()))
+            return marker
+
         models.append(
             {
-                subject.arguments[0].string: (
-                    frozenset(members.get(subject, ()))
-                    if str(value) == "set"
-                    else str(value)
-                )
+                subject.arguments[0].string: payload(subject)
                 for atom in atoms
                 if atom.name == "value"
                 for subject, value in (atom.arguments,)
@@ -930,6 +966,300 @@ def _variable_models(
     outcome = control.solve(on_model=collect)
     assert outcome.exhausted
     return models
+
+
+def test_tuple_choices_preserve_complete_alternatives(lib: Library) -> None:
+    """Choose whole heterogeneous tuples without mixing arities, slots, or members."""
+    store = ConstraintStore()
+    store.choose_from_iterator(
+        VariableRef("result"),
+        (
+            (),
+            (frozenset(),),
+            (1, frozenset({2, 3})),
+            (4, frozenset({5}), "tail"),
+            (frozenset({6}), 7),
+        ),
+    )
+    models = _variable_models(lib, store)
+    assert len(models) == 6
+    assert {model.get("result") for model in models} == {
+        None,
+        (),
+        (frozenset(),),
+        ("integer(1)", frozenset({"integer(2)", "integer(3)"})),
+        ("integer(4)", frozenset({"integer(5)"}), 'string("tail")'),
+        (frozenset({"integer(6)"}), "integer(7)"),
+    }
+
+
+@pytest.mark.parametrize(
+    "right,consistent",
+    (
+        ((7, frozenset({1, 2})), True),
+        ((8, frozenset({1, 2})), False),
+        ((7,), False),
+        ((7, frozenset({1, 2}), 3), False),
+        ((7, frozenset({1})), False),
+        ((7, frozenset({1, 2, 3})), False),
+        ((7, 1), False),
+        ((frozenset({7}), frozenset({1, 2})), False),
+    ),
+)
+def test_tuple_definitions_require_identical_payloads(
+    lib: Library, right: Expr, consistent: bool
+) -> None:
+    """Accept identical definitions and reject conflicting tuple shapes or contents."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    store.define(result, (7, frozenset({1, 2})))
+    store.define(result, right)
+    assert _variable_models(lib, store) == (
+        [{"result": ("integer(7)", frozenset({"integer(1)", "integer(2)"}))}]
+        if consistent
+        else []
+    )
+
+
+def test_tuple_if_copies_only_defined_true_payloads(lib: Library) -> None:
+    """Match Python conditionals and forbid false or absent tuple payload leakage."""
+    results: list[list[dict[str, Payload]]] = []
+    for residual in (False, True):
+        store = ConstraintStore()
+        condition, source, result = (
+            VariableRef(name) for name in ("condition", "source", "result")
+        )
+        store.choose_from_iterator(condition, (False, True))
+        store.choose_from_iterator(source, ((), (frozenset(),), (7, frozenset({1, 2}))))
+        store.define(
+            result,
+            Operation(
+                Operator.python_eval,
+                (
+                    Python("lambda condition, value: value if condition else None"),
+                    condition,
+                    source,
+                ),
+            )
+            if residual
+            else Operation(Operator.if_, (condition, source)),
+        )
+        atom_models: list[list[Symbol]] = []
+        models = _variable_models(lib, store, atom_models=atom_models)
+        results.append(models)
+        assert len(models) == 12
+        for model, atoms in zip(models, atom_models, strict=True):
+            expression_ids = {
+                atom.arguments[1]
+                for atom in atoms
+                if atom.name == "variable_define"
+                and atom.arguments[0] == String(lib, "result")
+            }
+            assert any(
+                atom.name == "engine"
+                and str(atom.arguments[0]) == ("complex" if residual else "native")
+                and atom.arguments[1] in expression_ids
+                for atom in atoms
+            )
+            if "condition" in model and "source" in model:
+                assert model["result"] == (
+                    model["source"] if model["condition"] == "boolean(true)" else "none"
+                )
+            else:
+                assert "result" not in model
+            if model.get("result") in (None, "none"):
+                subjects = expression_ids | {
+                    Function(lib, "variable", [String(lib, "result")])
+                }
+                assert not any(
+                    (
+                        atom.name in {"tuple_size", "set_value"}
+                        and atom.arguments[0] in subjects
+                    )
+                    or (
+                        atom.name in {"value", "set_value"}
+                        and atom.arguments[0].type == SymbolType.Function
+                        and atom.arguments[0].name == "__tuple"
+                        and atom.arguments[0].arguments[0] in subjects
+                    )
+                    for atom in atoms
+                )
+    assert {frozenset(model.items()) for model in results[0]} == {
+        frozenset(model.items()) for model in results[1]
+    }
+
+
+def test_computed_tuple_slot_grounding_growth_is_linear(lib: Library) -> None:
+    """Ground large set slots after cost-selected splitting without enumerating subsets."""
+    sizes: list[int] = []
+    for members in (100, 200):
+        store = ConstraintStore()
+        source, items, result = (
+            VariableRef(name) for name in ("source", "items", "result")
+        )
+        store.choose_from_iterator(source, (1, 2))
+        store.set_contain_choose_from_iterator(items, range(members))
+        store.define(result, (Operation(Operator.add, (source, 1)), items))
+        processor = Preprocessor(PreprocessOptions())
+        processor.add(store)
+        problem, diagnostics = processor.preprocess()
+        assert not diagnostics.has_errors
+        assert set(problem.engines.values()) == {Engine.native}
+        assert not any(fact.name == "solution" for fact in problem.asp_facts)
+        control = Control(lib)
+        control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
+        for encoding in ("native.lp", "integer.lp", "tuples.lp"):
+            control.parse_string(
+                files("constraint_handler").joinpath("encoding", encoding).read_text()
+            )
+        control.ground([("base", [])])
+        control.write_aspif(preprocess=False)
+        sizes.append(sum(len(line.split()) for line in control.buffer.splitlines()))
+    assert 0 < sizes[0] < sizes[1] <= 2 * sizes[0]
+
+
+@pytest.mark.parametrize("layout", ("literal", "variables", "nested"))
+@pytest.mark.parametrize(
+    "left,right,expected",
+    (
+        ((True,), (1,), False),
+        ((1,), (1.0,), True),
+        ((frozenset({True}),), (frozenset({1}),), False),
+        ((frozenset({1}),), (frozenset({1.0}),), True),
+        ((), (), True),
+        ((frozenset(),), (), False),
+        ((frozenset(),), (frozenset(),), True),
+        ((1, frozenset({2})), (1.0, frozenset({2.0})), True),
+    ),
+)
+def test_tuple_equality_is_independent_of_layout(
+    lib: Library, layout: str, left: Expr, right: Expr, expected: bool
+) -> None:
+    """Match typed tuple equality for literals, flat native variables, and residual nesting."""
+    store = ConstraintStore()
+    first, second = VariableRef("left"), VariableRef("right")
+    store.define(first, left)
+    store.define(second, right)
+    for relation in (Operator.eq, Operator.neq):
+        expression = Operation(
+            relation, (first, second) if layout == "variables" else (left, right)
+        )
+        if layout == "nested":
+            expression = Operation(Operator.if_, (True, expression))
+        store.define(VariableRef(relation.value), expression)
+    models = _variable_models(lib, store)
+    assert len(models) == 1
+    assert models[0]["eq"] == f"boolean({str(expected).lower()})"
+    assert models[0]["neq"] == f"boolean({str(not expected).lower()})"
+
+
+@pytest.mark.parametrize("alternatives", ((1, 1.0), (True, 1)))
+@pytest.mark.parametrize("set_slot", (False, True))
+def test_tuple_callback_rows_preserve_exact_representations(
+    lib: Library, alternatives: tuple[Expr, ...], set_slot: bool
+) -> None:
+    """Match each low-threshold tuple callback row by exact scalar and set payloads."""
+    store = ConstraintStore()
+    source, compound, result = (
+        VariableRef(name) for name in ("source", "compound", "result")
+    )
+    store.choose_from_iterator(
+        source,
+        (frozenset({item}) for item in alternatives) if set_slot else alternatives,
+    )
+    store.define(compound, (source, frozenset()))
+    store.define(
+        result,
+        Operation(
+            Operator.python_eval,
+            (
+                Python(
+                    "lambda value: (type(next(iter(value[0]))).__name__ if isinstance(value[0], frozenset) else type(value[0]).__name__, value[0])"
+                ),
+                compound,
+            ),
+        ),
+    )
+    models = _variable_models(lib, store, PreprocessOptions(threshold=1))
+    assert len(models) == 3
+    present = [model for model in models if "source" in model]
+    assert len(present) == 2
+    for model in present:
+        expected = model["source"]
+        scalar = next(iter(expected)) if isinstance(expected, frozenset) else expected
+        name = {"integer": "int", "real": "float", "boolean": "bool"}[
+            scalar.partition("(")[0]
+        ]
+        assert model["compound"] == (expected, frozenset())
+        assert model["result"] == (f'string("{name}")', expected)
+
+
+@pytest.mark.parametrize("residual", (False, True))
+def test_tuple_indices_are_nonnegative_and_bounded(
+    lib: Library, residual: bool
+) -> None:
+    """Leave negative and oversized projections undefined in both execution paths."""
+    store = ConstraintStore()
+    index, source, result = (
+        VariableRef(name) for name in ("index", "source", "result")
+    )
+    store.choose_from_iterator(index, (-1, 0, 2))
+    store.define(source, (7,))
+    expression = Operation(Operator.tuple_get, (source, index))
+    store.define(
+        result,
+        Operation(Operator.make_tuple, (expression,)) if residual else expression,
+    )
+    models = _variable_models(lib, store)
+    assert len(models) == 4
+    for model in models:
+        if model.get("index") == "integer(0)":
+            assert model["result"] == (("integer(7)",) if residual else "integer(7)")
+        else:
+            assert "result" not in model
+
+
+@pytest.mark.parametrize("set_slot", (False, True))
+@pytest.mark.parametrize("numeric", (False, True))
+def test_tuple_equality_aspif_growth_is_linear(
+    lib: Library, set_slot: bool, numeric: bool
+) -> None:
+    """Measure actual ground bodies across three sizes, catching all-pairs slot mismatches."""
+    sizes: list[int] = []
+    for size in (20, 40, 80):
+        store = ConstraintStore()
+        for name in ("left", "right"):
+            source = VariableRef(f"{name}_source")
+            choose = (
+                store.set_contain_choose_from_iterator
+                if set_slot
+                else store.choose_from_iterator
+            )
+            choose(
+                source,
+                range(size) if numeric else (str(index) for index in range(size)),
+            )
+            store.define(VariableRef(name), (source,))
+        store.define(
+            VariableRef("result"),
+            Operation(Operator.eq, (VariableRef("left"), VariableRef("right"))),
+        )
+        processor = Preprocessor(PreprocessOptions())
+        processor.add(store)
+        problem, diagnostics = processor.preprocess()
+        assert not diagnostics.has_errors
+        assert set(problem.engines.values()) == {Engine.native}
+        control = Control(lib)
+        control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
+        for encoding in ("native.lp", "eq.lp", "set.lp", "tuples.lp"):
+            control.parse_string(
+                files("constraint_handler").joinpath("encoding", encoding).read_text()
+            )
+        control.ground([("base", [])])
+        control.write_aspif(preprocess=False)
+        sizes.append(sum(len(line.split()) for line in control.buffer.splitlines()))
+    assert 0 < sizes[0] < sizes[1] <= 2.2 * sizes[0]
+    assert sizes[1] < sizes[2] <= 2.2 * sizes[1]
 
 
 @pytest.mark.parametrize(
@@ -950,7 +1280,7 @@ def _variable_models(
         (0, -0.0, True),
         (1e30, 1e30, True),
         ("1", 1, False),
-        ((1, (2.0,)), (1.0, (2,)), True),
+        ((1, 2.0), (1.0, 2), True),
         ((True,), (1,), False),
         ((1,), (1, 2), False),
         (frozenset({1}), 1, False),
@@ -1342,10 +1672,10 @@ def test_complex_set_universe_shared_between_rows(
                         for member in sorted(elements)
                     )
             expected.append(f'input({row},variable("offset"),integer({offset_value}))')
-            expected.append(f"output({row},integer({offset_value}))")
+            expected.append(f"output({row},__complex_output({row}))")
             row += 1
     assert actual == expected
-    assert calls == [problem.domains[source]]
+    assert not calls
 
 
 def test_complex_mixed_set_and_scalar_inputs(lib: Library) -> None:

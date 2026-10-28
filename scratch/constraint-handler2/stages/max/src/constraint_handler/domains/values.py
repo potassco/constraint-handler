@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Iterator
+from collections.abc import Collection, Iterable, Iterator
 from dataclasses import dataclass
 from itertools import product
 from typing import TypeIs, cast
 
 from ..analysis import ExpressionStore
 
-type SetValue = bool | int | float | str | None | tuple[SetValue, ...]
-type DomainValue = SetValue | frozenset[SetValue]
+type SetValue = bool | int | float | str | None
+type TupleValue = tuple[SetValue | frozenset[SetValue], ...]
+type DomainValue = SetValue | frozenset[SetValue] | TupleValue
 
 DEFAULT_THRESHOLD = 50000
 DEFAULT_BOOLEAN_THRESHOLD = 10
@@ -33,13 +34,14 @@ class Domain:
     reals: frozenset[float] = frozenset()
     has_none: bool = False
     strings: frozenset[str] = frozenset()
-    tuples: frozenset[tuple[SetValue, ...]] = frozenset()
-    explicit_sets: frozenset[frozenset[SetValue]] = frozenset()
+    tuples: Collection[TupleValue] = ()
+    explicit_sets: Collection[frozenset[SetValue]] = ()
+    tuple_domains: frozenset[tuple[Domain, ...]] = frozenset()
     implicit_set_elements: frozenset[SetValue] | None = None
     unknown: bool = False
 
     def _identity(self) -> tuple[object, ...]:
-        """Key compound fields with language equality rather than Python equality."""
+        """Retain exact compound representations independently of language equality."""
         return (
             self.bools,
             self.ints,
@@ -47,12 +49,15 @@ class Domain:
             self.reals,
             self.has_none,
             self.strings,
-            frozenset(value_key(value) for value in self.tuples),
-            frozenset(value_key(value) for value in self.explicit_sets),
+            frozenset(representation_key(value) for value in self.tuples),
+            frozenset(representation_key(value) for value in self.explicit_sets),
+            self.tuple_domains,
             (
                 None
                 if self.implicit_set_elements is None
-                else frozenset(value_key(value) for value in self.implicit_set_elements)
+                else frozenset(
+                    representation_key(value) for value in self.implicit_set_elements
+                )
             ),
             self.unknown,
         )
@@ -79,6 +84,7 @@ class Domain:
             and not self.has_none
             and not self.strings
             and not self.tuples
+            and not self.tuple_domains
             and not self.explicit_sets
             and self.implicit_set_elements is None
         )
@@ -176,7 +182,7 @@ class Domain:
         return min(candidates) if candidates else None
 
     def cardinality(self) -> int | None:
-        """Return the number of distinct values in the domain, or None if unknown."""
+        """Return a value-count upper bound, or None if unknown."""
         if self.unknown:
             return None
         total = (
@@ -187,15 +193,23 @@ class Domain:
             + len(self.strings)
             + len(self.tuples)
         )
+        for positions in self.tuple_domains:
+            count = 1
+            for position in positions:
+                size = position.cardinality()
+                if size is None:
+                    return None
+                count *= size
+            total += count
         if self.implicit_set_elements is None:
             total += len(self.explicit_sets)
         else:
             implicit_elems = self.implicit_set_elements
-            implicit_keys = {value_key(value) for value in implicit_elems}
+            implicit_keys = {representation_key(value) for value in implicit_elems}
             extra_sets = sum(
                 1
                 for s in self.explicit_sets
-                if not {value_key(value) for value in s} <= implicit_keys
+                if not {representation_key(value) for value in s} <= implicit_keys
             )
             total += (1 << len(implicit_elems)) + extra_sets
         return total
@@ -209,6 +223,13 @@ class Domain:
             yield None
         yield from self.strings
         yield from self.tuples
+        yielded_tuples = {representation_key(value) for value in self.tuples}
+        for positions in self.tuple_domains:
+            for value in product(*(position.iter_values() for position in positions)):
+                key = representation_key(value)
+                if key not in yielded_tuples:
+                    yielded_tuples.add(key)
+                    yield value
         if self.implicit_set_elements is None:
             yield from self.explicit_sets
         else:
@@ -218,10 +239,10 @@ class Domain:
                 subset = frozenset(
                     e for e, include in zip(elems, bits, strict=True) if include
                 )
-                yielded.add(value_key(subset))
+                yielded.add(representation_key(subset))
                 yield subset
             for s in self.explicit_sets:
-                if value_key(s) not in yielded:
+                if representation_key(s) not in yielded:
                     yield s
 
     def possible_set_sizes(self) -> frozenset[int]:
@@ -243,6 +264,10 @@ class Domain:
     def has_nonfinite_values(self) -> bool:
         """Detect non-finite reals, including inside compound values."""
         return any(
+            position.has_nonfinite_values()
+            for positions in self.tuple_domains
+            for position in positions
+        ) or any(
             not is_finite_value(value)
             for values in (
                 self.reals,
@@ -272,6 +297,15 @@ def value_key(value: DomainValue) -> object:
     return (type(value), value)
 
 
+def representation_key(value: DomainValue) -> object:
+    """Identify exact callback values, retaining integer/real and Boolean payloads."""
+    if isinstance(value, tuple):
+        return (tuple, tuple(representation_key(item) for item in value))
+    if isinstance(value, frozenset):
+        return (frozenset, frozenset(representation_key(item) for item in value))
+    return (type(value), repr(value))
+
+
 def has_value_collisions(values: Iterable[DomainValue]) -> bool:
     """Detect distinct language values that Python hashed collections conflate."""
     keys: dict[DomainValue, object] = {}
@@ -284,19 +318,27 @@ def has_value_collisions(values: Iterable[DomainValue]) -> bool:
 
 
 def _is_set_value(value: object) -> TypeIs[SetValue]:
-    """Recognize supported scalars and recursively supported tuple members."""
-    if value is None or type(value) in (bool, int, float, str):
-        return True
-    return isinstance(value, tuple) and all(
-        _is_set_value(item) for item in cast(tuple[object, ...], value)
-    )
+    """Recognize scalar members of flat sets."""
+    return value is None or type(value) in (bool, int, float, str)
 
 
 def is_domain_value(value: object) -> TypeIs[DomainValue]:
     """Recognize supported values without silently discarding Python results."""
-    return _is_set_value(value) or (
-        isinstance(value, frozenset)
-        and all(_is_set_value(item) for item in cast(frozenset[object], value))
+    return (
+        _is_set_value(value)
+        or (
+            isinstance(value, frozenset)
+            and all(_is_set_value(item) for item in cast(frozenset[object], value))
+        )
+        or (
+            isinstance(value, tuple)
+            and all(
+                _is_set_value(item)
+                or isinstance(item, frozenset)
+                and all(_is_set_value(member) for member in item)
+                for item in cast(tuple[object, ...], value)
+            )
+        )
     )
 
 
@@ -314,7 +356,7 @@ class DomainStore(ExpressionStore[Domain]):
 
 
 def domain_from_values(values: Iterable[DomainValue]) -> Domain:
-    """Construct an exact domain, or unknown if compound values would collapse.
+    """Construct an exact domain, retaining representation-distinct alternatives.
 
     Unlike join_domains, this builder never fills integer gaps, merges powerset
     universes, or widens at a threshold. It stores supplied values explicitly.
@@ -324,15 +366,11 @@ def domain_from_values(values: Iterable[DomainValue]) -> Domain:
     reals: set[float] = set()
     has_none = False
     strings: set[str] = set()
-    tuples: set[tuple[SetValue, ...]] = set()
-    explicit_sets: set[frozenset[SetValue]] = set()
-    compound_keys: dict[DomainValue, object] = {}
+    tuples: dict[object, TupleValue] = {}
+    explicit_sets: dict[object, frozenset[SetValue]] = {}
     for val in values:
-        if isinstance(val, (tuple, frozenset)):
-            key = value_key(val)
-            if val in compound_keys and compound_keys[val] != key:
-                return UNKNOWN_DOMAIN
-            compound_keys[val] = key
+        if not is_domain_value(val):
+            return UNKNOWN_DOMAIN
         match val:
             case bool():
                 bools.add(val)
@@ -345,17 +383,17 @@ def domain_from_values(values: Iterable[DomainValue]) -> Domain:
             case str():
                 strings.add(val)
             case tuple():
-                tuples.add(val)
+                tuples[representation_key(val)] = val
             case frozenset():
-                explicit_sets.add(val)
+                explicit_sets[representation_key(val)] = val
     return Domain(
         bools=frozenset(bools),
         ints=frozenset(ints),
         reals=frozenset(reals),
         has_none=has_none,
         strings=frozenset(strings),
-        tuples=frozenset(tuples),
-        explicit_sets=frozenset(explicit_sets),
+        tuples=tuple(tuples.values()),
+        explicit_sets=tuple(explicit_sets.values()),
     )
 
 
@@ -371,9 +409,8 @@ def join_domains(
     members from different inputs. Explicit sets outside that powerset remain.
 
     Above threshold, explicit integers widen to their enclosing interval and
-    explicit reals widen to unknown. Unknown inputs and Boolean/numeric compound
-    collisions also yield unknown. Use domain_from_values for exact construction
-    from enumerated values, subject to its collision fallback.
+    explicit reals widen to unknown. Unknown inputs and Boolean/numeric implicit
+    member collisions also yield unknown. Exact alternatives retain their types.
     """
     bools: set[bool] = set()
     ints: set[int] = set()
@@ -381,8 +418,8 @@ def join_domains(
     reals: set[float] = set()
     has_none = False
     strings: set[str] = set()
-    tuples: set[tuple[SetValue, ...]] = set()
-    explicit_sets: set[frozenset[SetValue]] = set()
+    tuple_domains: set[tuple[Domain, ...]] = set()
+    explicit_sets: list[frozenset[SetValue]] = []
     implicit_elems: set[SetValue] | None = None
     compound_values: list[DomainValue] = []
     member_values: list[SetValue] = []
@@ -399,8 +436,8 @@ def join_domains(
         strings.update(dom.strings)
         compound_values.extend(dom.tuples)
         compound_values.extend(dom.explicit_sets)
-        tuples.update(dom.tuples)
-        explicit_sets.update(dom.explicit_sets)
+        tuple_domains.update(dom.tuple_domains)
+        explicit_sets.extend(dom.explicit_sets)
         if dom.implicit_set_elements is not None:
             member_values.extend(dom.implicit_set_elements)
             if implicit_elems is None:
@@ -408,7 +445,7 @@ def join_domains(
             else:
                 implicit_elems.update(dom.implicit_set_elements)
 
-    if has_value_collisions(compound_values) or has_value_collisions(member_values):
+    if has_value_collisions(member_values):
         return UNKNOWN_DOMAIN
 
     merged_range: tuple[int, int] | None = None
@@ -429,12 +466,17 @@ def join_domains(
 
     final_implicit = frozenset(implicit_elems) if implicit_elems is not None else None
     if final_implicit is not None:
-        implicit_keys = {value_key(value) for value in final_implicit}
-        explicit_sets = {
+        implicit_keys = {representation_key(value) for value in final_implicit}
+        explicit_sets = [
             s
             for s in explicit_sets
-            if not {value_key(value) for value in s} <= implicit_keys
-        }
+            if not {representation_key(value) for value in s} <= implicit_keys
+        ]
+
+    compounds = domain_from_values(
+        value for value in compound_values if isinstance(value, tuple)
+    )
+    sets = domain_from_values(explicit_sets)
 
     return Domain(
         bools=frozenset(bools),
@@ -443,7 +485,8 @@ def join_domains(
         reals=frozenset(reals),
         has_none=has_none,
         strings=frozenset(strings),
-        tuples=frozenset(tuples),
-        explicit_sets=frozenset(explicit_sets),
+        tuples=compounds.tuples,
+        tuple_domains=frozenset(tuple_domains),
+        explicit_sets=sets.explicit_sets,
         implicit_set_elements=final_implicit,
     )

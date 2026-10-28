@@ -437,10 +437,10 @@ def test_invalid_set_element_does_not_produce_partial_type(
 
 @pytest.mark.parametrize("nested", [False, True])
 @pytest.mark.parametrize("with_unknown", [False, True])
-def test_tuple_rejects_sets_before_unknown_propagation(
+def test_tuple_sets_and_nesting_before_unknown_propagation(
     nested: bool, with_unknown: bool
 ) -> None:
-    """Reject direct and nested set positions without losing sibling metadata."""
+    """Accept scalar/set slots but reject nesting even when a sibling is unknown."""
     store = ConstraintStore()
     member = VariableRef("member")
     store.choose_from_iterator(member, (1, frozenset({1})))
@@ -456,11 +456,20 @@ def test_tuple_rejects_sets_before_unknown_propagation(
     assert isinstance(rejected, tuple)
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert types[root] is UnknownType()
     assert all(item in types for item in rejected)
-    assert len(diagnostics.errors) == 1
-    assert diagnostics.errors[0].message == "Sets inside tuples are not supported"
-    assert diagnostics.errors[0].location == ExpressionLocation(root_id, rejected)
+    if nested:
+        assert types[root] is UnknownType()
+        assert len(diagnostics.errors) == 1
+        assert diagnostics.errors[0].message == "Nested tuples are not supported"
+        assert diagnostics.errors[0].location == ExpressionLocation(root_id, root)
+    else:
+        assert not diagnostics.has_errors
+        if with_unknown:
+            assert types[root] is UnknownType()
+        else:
+            assert types[root] == frozenset(
+                {TupleType((types[rejected[0]], types[rejected[1]]))}
+            )
 
 
 @pytest.mark.parametrize(
@@ -477,6 +486,25 @@ def test_length_supports_strings_sets_and_tuples(
     types = _static_types_for(store, diagnostics)
     assert not diagnostics.has_errors
     assert types[result] == frozenset({ValueType.integer})
+
+
+@pytest.mark.parametrize(
+    "operator", (Operator.set_make, Operator.set_isin, Operator.set_notin)
+)
+@pytest.mark.parametrize("explicit", (False, True))
+def test_unknown_tuple_cannot_be_a_set_member(
+    operator: Operator, explicit: bool
+) -> None:
+    """Reject known compound members even when a tuple position has unknown type."""
+    store = ConstraintStore()
+    unknown = Operation(Operator.python_eval, (Python("lambda: 1"),))
+    member = Operation(Operator.make_tuple, (unknown,)) if explicit else (unknown,)
+    arguments = (member,) if operator == Operator.set_make else (member, frozenset({1}))
+    store.ensure(Operation(operator, arguments))
+    diagnostics = Diagnostics()
+    _static_types_for(store, diagnostics)
+    assert len(diagnostics.errors) == 1
+    assert "scalar" in diagnostics.errors[0].message
 
 
 def test_fold_checks_lambda_body_and_nested_error_location() -> None:
@@ -553,7 +581,11 @@ def test_fold_empty_sets_and_type_growth(
     store.define(result, Operation(Operator.set_fold, (callback, members, initial)))
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert not diagnostics.has_errors
+    if isinstance(initial, tuple):
+        assert len(diagnostics.errors) == 1
+        assert diagnostics.errors[0].message == "Nested tuples are not supported"
+    else:
+        assert not diagnostics.has_errors
     assert types[result] is UnknownType()
 
 

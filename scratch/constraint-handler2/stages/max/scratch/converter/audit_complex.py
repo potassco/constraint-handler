@@ -71,12 +71,51 @@ def current_value(symbol: Symbol) -> object:
         return ("boolean", str(symbol.arguments[0]) == "true")
     if symbol.name == "none":
         return ("none", None)
-    if symbol.name == "tuple":
+    if symbol.name == "tuple" and symbol.arguments:
         return (
             "tuple",
             tuple(current_value(item) for item in symbol.arguments[0].arguments),
         )
     return ("unsupported", str(symbol))
+
+
+def model_values(atoms: list[Symbol]) -> dict[Symbol, object]:
+    """Decode complete scalar, set, and tuple payloads keyed by their subjects."""
+    values = {
+        atom.arguments[0]: atom.arguments[1] for atom in atoms if atom.name == "value"
+    }
+    sizes = {
+        atom.arguments[0]: atom.arguments[1].number
+        for atom in atoms
+        if atom.name == "tuple_size"
+    }
+    members: dict[Symbol, set[object]] = {}
+    slots: dict[Symbol, dict[int, Symbol]] = {}
+    for atom in atoms:
+        if atom.name == "set_value":
+            subject, member = atom.arguments
+            key = current_value(member)
+            members.setdefault(subject, set()).add(
+                ("number", key[1]) if key[0] in {"integer", "real"} else key
+            )
+    for subject in values:
+        if subject.type == SymbolType.Function and subject.name == "__tuple":
+            parent, index = subject.arguments
+            slots.setdefault(parent, {})[index.number] = subject
+
+    def decode(subject: Symbol) -> object:
+        """Require every tuple slot and preserve defined empty collections."""
+        value = values[subject]
+        if value.name == "set":
+            return ("set", frozenset(members.get(subject, ())))
+        if value.name == "tuple" and not value.arguments:
+            return (
+                "tuple",
+                tuple(decode(slots[subject][index]) for index in range(sizes[subject])),
+            )
+        return current_value(value)
+
+    return {subject: decode(subject) for subject in values}
 
 
 def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
@@ -304,6 +343,7 @@ def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
             "integer.lp",
             "eq.lp",
             "set.lp",
+            "tuples.lp",
             "complex.lp",
         ):
             control.parse_string(
@@ -318,14 +358,22 @@ def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
             """Capture variable values and stop explicitly at the audit model cap."""
             values: set[tuple[str, str, object]] = set()
             raw: list[str] = []
-            for atom in model.symbols(atoms=True):
+            atoms = model.symbols(atoms=True)
+            payloads = model_values(atoms)
+            for atom in atoms:
                 if atom.name not in {"value", "set_value"}:
                     continue
                 subject, value = atom.arguments
                 if subject.type != SymbolType.Function or subject.name != "variable":
                     continue
                 values.add(
-                    (atom.name, subject.arguments[0].string, current_value(value))
+                    (
+                        atom.name,
+                        subject.arguments[0].string,
+                        payloads[subject]
+                        if atom.name == "value"
+                        else current_value(value),
+                    )
                 )
                 raw.append(str(atom))
             models.append(values)

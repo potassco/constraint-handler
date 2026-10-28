@@ -27,8 +27,8 @@ class _Substitute(ast.NodeTransformer):
 
 
 _TEMPLATES: dict[Operator, str] = {
-    Operator.eq: "_arg0 == _arg1",
-    Operator.neq: "_arg0 != _arg1",
+    Operator.eq: "(lambda _key: _key(_arg0) == _key(_arg1))(__import__('constraint_handler.domains.values', fromlist=('value_key',)).value_key)",
+    Operator.neq: "(lambda _key: _key(_arg0) != _key(_arg1))(__import__('constraint_handler.domains.values', fromlist=('value_key',)).value_key)",
     Operator.concat: "_arg0 + _arg1",
     Operator.length: "len(_arg0)",
     Operator.cardinality: "len(_arg0)",
@@ -59,7 +59,7 @@ _TEMPLATES: dict[Operator, str] = {
     Operator.inter: "_arg0 & _arg1",
     Operator.diff: "_arg0 - _arg1",
     Operator.subset: "_arg0 <= _arg1",
-    Operator.tuple_get: "_arg0[_arg1]",
+    Operator.tuple_get: "_arg0[_arg1] if _arg1 >= 0 else ()[0]",
     Operator.set_fold: "__import__('functools').reduce(_arg0, sorted(_arg1, key=repr), _arg2)",
 }
 
@@ -135,6 +135,8 @@ class _Converter:
                 )
             case Operation(op, arguments):
                 args = [self.expression(arg, bindings) for arg in arguments]
+                if op == Operator.make_tuple:
+                    return ast.Tuple(elts=args, ctx=ast.Load())
                 if op in {Operator.python_eval, Operator.lambda_}:
                     return ast.Call(func=args[0], args=args[1:], keywords=[])
                 if op in {Operator.linear_integer, Operator.linear_comparison}:
