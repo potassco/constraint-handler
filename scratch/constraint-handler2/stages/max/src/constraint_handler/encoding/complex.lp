@@ -1,5 +1,5 @@
 complex_solution(Id, SolutionId) :-
-    engine(complex, Id),
+    %engine(complex, Id) % makes grounding slow
     solution(Id, SolutionId),
     value(Arg, Input) : input(SolutionId, Arg, Input);
     set_value(Arg, IncludedValue) : set_input_include(SolutionId, Arg, IncludedValue);

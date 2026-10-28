@@ -13,7 +13,7 @@ from ..analysis import ExpressionStore
 type SetValue = bool | int | float | str | None | tuple[SetValue, ...]
 type DomainValue = SetValue | frozenset[SetValue]
 
-DEFAULT_THRESHOLD = 1000
+DEFAULT_THRESHOLD = 50000
 DEFAULT_BOOLEAN_THRESHOLD = 10
 
 

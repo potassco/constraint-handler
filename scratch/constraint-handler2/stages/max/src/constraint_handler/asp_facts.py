@@ -130,6 +130,8 @@ def _complex_facts(
             )
             for domain in argument_domains
         ]
+        argument_terms: list[Symbol | None] = [None] * len(arguments)
+        set_universes: list[frozenset[Symbol] | None] = [None] * len(arguments)
         for values in product(*axes):
             try:
                 result = callback(*values)
@@ -149,10 +151,13 @@ def _complex_facts(
                 raise ValueError("complex evaluation requires finite values")
             solution = _number(lib, solution_id)
             yield Function(lib, "solution", [_number(lib, expr_id), solution])
-            for arg, value, domain in zip(
-                arguments, values, argument_domains, strict=True
+            for index, (arg, value, domain) in enumerate(
+                zip(arguments, values, argument_domains, strict=True)
             ):
-                argument = _term(lib, arg)
+                argument = argument_terms[index]
+                if argument is None:
+                    argument = _term(lib, arg)
+                    argument_terms[index] = argument
                 yield Function(
                     lib,
                     "input",
@@ -166,10 +171,13 @@ def _complex_facts(
                 )
                 if isinstance(value, frozenset):
                     included = {_term(lib, _convert_expression(item)) for item in value}
-                    universe = {
-                        _term(lib, _convert_expression(item))
-                        for item in domain.potential_set_members()
-                    }
+                    universe = set_universes[index]
+                    if universe is None:
+                        universe = frozenset(
+                            _term(lib, _convert_expression(item))
+                            for item in domain.potential_set_members()
+                        )
+                        set_universes[index] = universe
                     for predicate, members in (
                         ("set_input_include", included),
                         ("set_input_exclude", universe - included),

@@ -428,6 +428,7 @@ class _Splitter(GroundingCost):
                         Operator.conj,
                         Operator.disj,
                         Operator.leqv,
+                        Operator.if_,
                         Operator.eq,
                         Operator.neq,
                         Operator.union,

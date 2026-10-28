@@ -1,10 +1,12 @@
 """Tests for the Preprocessor, PreparedProblem, and Solver workflow interface."""
 
+from importlib.resources import files
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import ANY, Mock
 
 import pytest
+from clingo.control import Control
 from clingo.core import Library
 
 from constraint_handler import (
@@ -25,6 +27,183 @@ from constraint_handler.domains import Domain
 from constraint_handler.internal_input import ValueType
 from constraint_handler.python_input import Expr
 from constraint_handler.static_types import SetOf
+
+
+@pytest.mark.parametrize("python_reference", (False, True))
+@pytest.mark.parametrize(
+    "payload",
+    (7, 1.5, "text", True, None, (1, "text"), frozenset(), frozenset({1, 2})),
+)
+def test_native_if_optional_operands(payload: Expr, python_reference: bool) -> None:
+    """Match Python tables for defined scalars/sets and absent optional operands."""
+    store = ConstraintStore()
+    condition, argument, result = (
+        VariableRef(name) for name in ("condition", "argument", "result")
+    )
+    store.choose_from_iterator(condition, (False, True))
+    store.choose(argument, payload)
+    store.define(
+        result,
+        Operation(
+            Operator.python_eval,
+            (
+                Python(
+                    "lambda condition, argument: argument if condition is True else None"
+                ),
+                condition,
+                argument,
+            ),
+        )
+        if python_reference
+        else Operation(Operator.if_, (condition, argument)),
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    prepared, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    result_id = prepared.store.variables[result].definitions[0].value
+    assert prepared.engines[result_id] == (
+        Engine.complex if python_reference else Engine.native
+    )
+    if not python_reference:
+        assert not any(
+            fact.name in {"solution", "input", "output"} for fact in prepared.asp_facts
+        )
+    control = Control(Library(), ["0"])
+    control.parse_string("\n".join(f"{fact}." for fact in prepared.asp_facts))
+    for encoding in ("native.lp", "boolean.lp", "complex.lp"):
+        control.parse_string(
+            files("constraint_handler").joinpath("encoding", encoding).read_text()
+        )
+    control.ground([("base", [])])
+    models: list[set[str]] = []
+    assert control.solve(
+        on_model=lambda model: models.append(
+            {str(atom) for atom in model.symbols(atoms=True)}
+        )
+    ).satisfiable
+    assert len(models) == 6
+    for model in models:
+        argument_values = {
+            atom.replace('variable("argument")', 'variable("result")')
+            for atom in model
+            if atom.startswith(
+                ('value(variable("argument"),', 'set_value(variable("argument"),')
+            )
+        }
+        actual = {
+            atom
+            for atom in model
+            if atom.startswith(
+                ('value(variable("result"),', 'set_value(variable("result"),')
+            )
+        }
+        if not argument_values or not any(
+            atom.startswith('value(variable("condition"),') for atom in model
+        ):
+            assert not actual
+        elif 'value(variable("condition"),boolean(true))' in model:
+            assert actual == argument_values
+        else:
+            assert actual == {'value(variable("result"),none)'}
+
+
+@pytest.mark.parametrize("condition", (None, 0, "true"))
+def test_native_if_rejects_nonboolean_condition(condition: Expr) -> None:
+    """Preserve Boolean-only validation despite the broader Python template."""
+    store = ConstraintStore()
+    store.define(VariableRef("condition"), condition)
+    store.define(
+        VariableRef("result"),
+        Operation(Operator.if_, (VariableRef("condition"), 7)),
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    _, diagnostics = preprocessor.preprocess()
+    assert diagnostics.has_errors
+
+
+@pytest.mark.parametrize("nested", (False, True))
+def test_native_if_retains_cost_based_splitting(nested: bool) -> None:
+    """Keep inexpensive nesting complex without forcing native auxiliary inputs."""
+    store = ConstraintStore()
+    condition, argument, result = (
+        VariableRef(name) for name in ("condition", "argument", "result")
+    )
+    store.choose_from_iterator(condition, (False, True))
+    store.choose_from_iterator(argument, (-2, -1))
+    store.define(
+        result,
+        Operation(
+            Operator.if_,
+            (condition, Operation(Operator.abs, (argument,)) if nested else argument),
+        ),
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    prepared, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    assert set(prepared.store.variables) == {condition, argument, result}
+    result_id = prepared.store.variables[result].definitions[0].value
+    assert prepared.engines[result_id] == (Engine.complex if nested else Engine.native)
+    assert prepared.create_solver(SolveOptions()).solve().satisfiable
+
+
+def test_native_if_set_grounding_is_linear() -> None:
+    """Copy optional set members without enumerating the set's solution space."""
+    sizes: list[int] = []
+    for size in (100, 200):
+        store = ConstraintStore()
+        condition, argument = VariableRef("condition"), VariableRef("argument")
+        store.choose_from_iterator(condition, (False, True))
+        store.set_contain_choose_from_iterator(argument, range(size))
+        store.define(
+            VariableRef("result"), Operation(Operator.if_, (condition, argument))
+        )
+        preprocessor = Preprocessor(PreprocessOptions())
+        preprocessor.add(store)
+        prepared, diagnostics = preprocessor.preprocess()
+        assert not diagnostics.has_errors
+        assert set(prepared.engines.values()) == {Engine.native}
+        assert not any(fact.name == "solution" for fact in prepared.asp_facts)
+        control = Control(Library())
+        control.parse_string("\n".join(f"{fact}." for fact in prepared.asp_facts))
+        for encoding in ("native.lp", "boolean.lp"):
+            control.parse_string(
+                files("constraint_handler").joinpath("encoding", encoding).read_text()
+            )
+        control.ground([("base", [])])
+        control.write_aspif(preprocess=False)
+        sizes.append(sum(len(line.split()) for line in control.buffer.splitlines()))
+    assert 0 < sizes[0] < sizes[1] <= 2 * sizes[0]
+
+
+@pytest.mark.parametrize("empty_operand", ("condition", "argument"))
+def test_native_if_empty_choices_are_rejected(empty_operand: str) -> None:
+    """Preserve rejection of variables with no defining choices."""
+    store = ConstraintStore()
+    condition, argument = VariableRef("condition"), VariableRef("argument")
+    store.choose_from_iterator(
+        condition, () if empty_operand == "condition" else (False,)
+    )
+    store.choose_from_iterator(argument, () if empty_operand == "argument" else (7,))
+    store.define(VariableRef("result"), Operation(Operator.if_, (condition, argument)))
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    _, diagnostics = preprocessor.preprocess()
+    assert diagnostics.has_errors
+
+
+def test_native_if_undeclared_argument_is_rejected() -> None:
+    """Keep rejecting undeclared operands even under a false condition."""
+    store = ConstraintStore()
+    store.define(
+        VariableRef("result"), Operation(Operator.if_, (False, VariableRef("missing")))
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    _, diagnostics = preprocessor.preprocess()
+    assert diagnostics.has_errors
 
 
 @pytest.mark.parametrize(

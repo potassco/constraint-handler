@@ -26,6 +26,7 @@ from constraint_handler import (
 from constraint_handler.asp_facts import asp_facts
 from constraint_handler.dispatching import DispatchStore
 from constraint_handler.domains import Domain, DomainStore
+from constraint_handler.domains.values import SetValue
 from constraint_handler.internal_input import SetVariable
 from constraint_handler.python_input import Expr, OperationArg
 
@@ -715,7 +716,8 @@ def test_complex_unexpected_failures(
         _ = problem.asp_facts
 
 
-def test_complex_solution_rows(lib: Library) -> None:
+@pytest.mark.parametrize("with_engine", (False, True))
+def test_complex_solution_rows(lib: Library, with_engine: bool) -> None:
     """Match every input and keep rows from separate expressions isolated."""
     store = ConstraintStore()
     first, second = VariableRef("a"), VariableRef("b")
@@ -740,7 +742,15 @@ def test_complex_solution_rows(lib: Library) -> None:
     assert len(outputs) == 2
     assert len({fact.arguments[0] for fact in outputs}) == 2
     control = Control(lib, ["0"])
-    control.parse_string("\n".join(f"{fact}." for fact in facts))
+    control.parse_string(
+        "\n".join(
+            f"{fact}."
+            for fact in facts
+            if with_engine
+            or fact.name != "engine"
+            or fact.arguments[0].name != "complex"
+        )
+    )
     for encoding in ("native.lp", "integer.lp", "complex.lp"):
         control.parse_string(
             files("constraint_handler").joinpath("encoding", encoding).read_text()
@@ -784,7 +794,6 @@ def test_complex_solution_rows(lib: Library) -> None:
         (Operation(Operator.int_div, (-3.5, 2)), "integer(-2)"),
         (Operation(Operator.concat, ("a", "b")), 'string("ab")'),
         (Operation(Operator.lt, (1.0, 2.0)), "boolean(true)"),
-        (Operation(Operator.if_, (False, 3)), "none"),
         (Operation(Operator.tuple_get, ((1, 2), 1)), "integer(2)"),
         (Operation(Operator.python_eval, (Python("lambda: 0"),)), "integer(0)"),
         (
@@ -1260,6 +1269,83 @@ def test_split_set_operations_become_native() -> None:
     assert set(problem.engines.values()) == {Engine.native}
     assert not any(fact.name == "solution" for fact in problem.asp_facts)
     assert problem.create_solver(SolveOptions()).solve().satisfiable
+
+
+@pytest.mark.parametrize("kind", ("implicit", "explicit", "mixed", "empty"))
+def test_complex_set_universe_shared_between_rows(
+    lib: Library, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    """Share argument universes without changing scalar, empty, or set row facts."""
+    store = ConstraintStore()
+    source, offset = VariableRef("source"), VariableRef("offset")
+    members = set() if kind == "empty" else {1, 2}
+    values: list[int | frozenset[int]] = [frozenset(), frozenset(members)]
+    if kind == "implicit":
+        store.set_contain_choose_from_iterator(source, sorted(members))
+        values = [frozenset(), frozenset({1}), frozenset({2}), frozenset(members)]
+    else:
+        if kind == "mixed":
+            values.append(9)
+        store.choose_from_iterator(source, values)
+    store.choose_from_iterator(offset, (10, 20))
+    store.define(
+        VariableRef("result"),
+        Operation(
+            Operator.python_eval,
+            (Python("lambda items, offset: offset"), source, offset),
+        ),
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    original = Domain.potential_set_members
+    calls: list[Domain] = []
+
+    def counted_members(domain: Domain) -> frozenset[SetValue]:
+        """Count universe construction during fact emission only."""
+        calls.append(domain)
+        return original(domain)
+
+    monkeypatch.setattr(Domain, "potential_set_members", counted_members)
+    facts = asp_facts(lib, problem.store, problem.engines, problem.domains)
+    predicates = {
+        "solution",
+        "input",
+        "output",
+        "set_input_include",
+        "set_input_exclude",
+        "set_output",
+    }
+    actual = [str(fact) for fact in facts if fact.name in predicates]
+    expected: list[str] = []
+    expression_id = next(
+        expr_id
+        for expr_id, engine in problem.engines.items()
+        if engine == Engine.complex
+    )
+    row = 0
+    for value in sorted(
+        set(values), key=lambda value: (type(value).__name__, repr(value))
+    ):
+        for offset_value in (10, 20):
+            expected.append(f"solution({expression_id},{row})")
+            input_value = "set" if isinstance(value, frozenset) else f"integer({value})"
+            expected.append(f'input({row},variable("source"),{input_value})')
+            if isinstance(value, frozenset):
+                for predicate, elements in (
+                    ("set_input_include", value),
+                    ("set_input_exclude", members - value),
+                ):
+                    expected.extend(
+                        f'{predicate}({row},variable("source"),integer({member}))'
+                        for member in sorted(elements)
+                    )
+            expected.append(f'input({row},variable("offset"),integer({offset_value}))')
+            expected.append(f"output({row},integer({offset_value}))")
+            row += 1
+    assert actual == expected
+    assert calls == [problem.domains[source]]
 
 
 def test_complex_mixed_set_and_scalar_inputs(lib: Library) -> None:
