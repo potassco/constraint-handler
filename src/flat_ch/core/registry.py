@@ -72,7 +72,10 @@ class ProgramRegistry:
         self.sequential_inputs.append(IVariableDeclare(name, domain_extensions, self.current_registration_id))
 
     def update_set(
-        self, name: str, base_domain: tuple[Expression, ...] = (), assignment: tuple[Expression, ...] = ()
+        self,
+        name: str,
+        base_domain: tuple[Expression, ...] = (),
+        assignment: tuple[tuple[Expression, Expression], ...] = (),
     ) -> None:
         key = (RegistryKind.SET.value, name)
         current = self.registry.get(key)

@@ -117,7 +117,9 @@ class Flattener:
             case ProgramInputKind.SET_DECLARE:
                 set_decl: ISetDeclare = node  # type: ignore
                 base_ids = tuple(self._intern_expr(expr) for expr in set_decl.base_domain)
-                assignment_ids = tuple(self._intern_expr(expr) for expr in set_decl.assignment)
+                assignment_ids = tuple(
+                    (self._intern_expr(expr), self._intern_expr(condition)) for expr, condition in set_decl.assignment
+                )
                 self.interned_program.append((ProgramInputKind.SET_DECLARE, (set_decl.name, base_ids, assignment_ids)))
 
             case ProgramInputKind.ENSURE_CONSTRAINT:
@@ -517,11 +519,11 @@ class Flattener:
                             [set_sym, Number(expr_id)],
                         )
                     )
-                for expr_id in assignment_ids:
+                for expr_id, condition_id in assignment_ids:
                     self._emit_fact(
                         Function(
                             FlatFact.SET_ASSIGN.value,
-                            [set_sym, Number(expr_id)],
+                            [set_sym, Number(expr_id), Number(condition_id)],
                         )
                     )
 

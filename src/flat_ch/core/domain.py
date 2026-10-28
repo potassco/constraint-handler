@@ -81,7 +81,7 @@ _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.BOOL_EVALUATE: ("EXPR", "EXPR_ID"),
     FlatFact.SET: ("NAME",),
     FlatFact.SET_BASE_DOMAIN: ("NAME", "EXPR_ID"),
-    FlatFact.SET_ASSIGN: ("NAME", "EXPR_ID"),
+    FlatFact.SET_ASSIGN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.PAIR: ("ID", "KEY_EXPR_ID", "VALUE_EXPR_ID"),
     FlatFact.OPTIMIZE_SUM: ("ID", "ELEM", "PRIO", "COND_EXPR_ID"),
     FlatFact.OPTIMIZE_LABEL: ("LABEL", "EXPR_ID", "PRIO", "COND_EXPR_ID"),
@@ -250,7 +250,7 @@ class BoolEvaluateInput:
 class ISetDeclare:
     name: str | Symbol
     base_domain: tuple[Expression, ...] = ()
-    assignment: tuple[Expression, ...] = ()
+    assignment: tuple[tuple[Expression, Expression], ...] = ()
     kind: ProgramInputKind = ProgramInputKind.SET_DECLARE
 
 

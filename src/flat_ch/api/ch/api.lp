@@ -75,8 +75,10 @@ _fch_input(set_baseDomain(LABEL, NAME, EXPR)) :- set_baseDomain(NAME, EXPR, LABE
 
 #defined set_assign/2.
 #defined set_assign/3.
-_fch_input(set_assign(_fch_label, NAME, EXPR)) :- set_assign(NAME, EXPR).
-_fch_input(set_assign(LABEL, NAME, EXPR)) :- set_assign(NAME, EXPR, LABEL).
+#defined set_assign/4.
+_fch_input(set_assign(_fch_label, NAME, EXPR, val(bool, true))) :- set_assign(NAME, EXPR).
+_fch_input(set_assign(_fch_label, NAME, EXPR, CONDITION)) :- set_assign(NAME, EXPR, CONDITION).
+_fch_input(set_assign(LABEL, NAME, EXPR, CONDITION)) :- set_assign(NAME, EXPR, CONDITION, LABEL).
 
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.

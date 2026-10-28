@@ -326,6 +326,7 @@ python_tests = [
 
 set_tests = [
     "set/conditional_assign",
+    "set/conditional_assign_dynamic",
     "set/comparisons",
     "set/diff_flat",
     "set/eq_neq_flat",
@@ -784,6 +785,7 @@ choice_statistics_skip: set[str] = {
     "optimization/label_string",
     "optimization/optional_absent_linked_value",
     "set/conditional_assign",
+    "set/conditional_assign_dynamic",
     "python/dynamic",
     "type/bool/has_value",
     "type/warning/python",

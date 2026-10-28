@@ -153,14 +153,17 @@ Args:
 #defined set_baseDomain/2.
 _fch_input(set_baseDomain(NAME, EXPR))   :- set_baseDomain(NAME, EXPR).
 
-%*! set_assign(SetName, Expression)
-Explicitly assigns concrete elements to a target set, constraining variable membership choices.
+%*! set_assign(SetName, Expression[, Condition])
+Assigns concrete elements to a target set when Condition evaluates to Boolean true.
 Args:
  - SetName: The identifier string for the targeted collection asset.
  - Expression: The literal element or structural set operation to enforce assignment.
+ - Condition: An optional Boolean expression, defaulting to true.
 *%
 #defined set_assign/2.
-_fch_input(set_assign(NAME, EXPR))       :- set_assign(NAME, EXPR).
+#defined set_assign/3.
+_fch_input(set_assign(NAME, EXPR, val(bool, true))) :- set_assign(NAME, EXPR).
+_fch_input(set_assign(NAME, EXPR, CONDITION)) :- set_assign(NAME, EXPR, CONDITION).
 
 
 #defined optimize_maximizeSum/3.
