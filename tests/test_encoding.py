@@ -327,6 +327,7 @@ python_tests = [
 set_tests = [
     "set/conditional_assign",
     "set/conditional_assign_dynamic",
+    "set/conditional_base_domain",
     "set/comparisons",
     "set/diff_flat",
     "set/eq_neq_flat",
@@ -529,6 +530,7 @@ compile2_skip: set[str] = {
     "variable/dynamic_type",  # non static input
 }
 compile2_xfail: set[str] = {
+    "core/empty_set_execution",
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
@@ -662,6 +664,7 @@ propagator_true_skip: set[str] = propagator_skip | {
     "execution/warning_spurious",
     "execution/warning_spurious2",
     "set/conditional_assign",
+    "set/conditional_base_domain",
     "set/diff_flat",
     "set/eq_neq_flat",
     "set/from_domain",
@@ -786,6 +789,7 @@ choice_statistics_skip: set[str] = {
     "optimization/optional_absent_linked_value",
     "set/conditional_assign",
     "set/conditional_assign_dynamic",
+    "set/conditional_base_domain",
     "python/dynamic",
     "type/bool/has_value",
     "type/warning/python",

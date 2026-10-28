@@ -271,8 +271,10 @@ class Registration(BaseRegistration):
             self.reg.update_set(args[1])
 
     def _handle_set_base_domain(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 3:
-            self.reg.update_set(args[1], base_domain=(self.parse_expression(args[2]),))
+        if len(args) == 4:
+            self.reg.update_set(
+                args[1], base_domain=((self.parse_expression(args[2]), self.parse_expression(args[3])),)
+            )
 
     def _handle_set_assign(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:

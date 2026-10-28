@@ -74,6 +74,7 @@ class Set_assign(NamedTuple):
 class Set_baseDomain(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 

@@ -181,8 +181,11 @@ class Registration(BaseRegistration):
                 )
             case self._ui_set_decl if args_len == 1:
                 self.reg.update_set(self.to_str(args[0]))
-            case self._ui_set_base if args_len == 2:
-                self.reg.update_set(self.to_str(args[0]), base_domain=(self.parse_expression(args[1]),))
+            case self._ui_set_base if args_len == 3:
+                self.reg.update_set(
+                    self.to_str(args[0]),
+                    base_domain=((self.parse_expression(args[1]), self.parse_expression(args[2])),),
+                )
             case self._ui_set_assign if args_len == 3:
                 self.reg.update_set(
                     self.to_str(args[0]), assignment=((self.parse_expression(args[1]), self.parse_expression(args[2])),)

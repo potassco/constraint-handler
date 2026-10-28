@@ -15,7 +15,7 @@ _passed(correction(multipleDeclarations,rem),LBL,DECL) :- _variable_multiple(LBL
 _passed(correction(multipleDeclarations,rem),LBL,DECL) :- _variable_multiple(LBL,X), _passed(sugar,LBL,DECL), DECL=variable_define(X,D,C).
 _passed(correction(multipleDeclarations,rem),LBL,DECL) :- _variable_multiple(LBL,X), _passed(sugar,LBL,DECL), DECL=variable_domain(X,D,C).
 _passed(correction(multipleDeclarations,rem),LBL,DECL) :- _variable_multiple(LBL,X), _passed(sugar,LBL,DECL), DECL=set_assign(X,D,C).
-_passed(correction(multipleDeclarations,rem),LBL,DECL) :- _variable_multiple(LBL,X), _passed(sugar,LBL,DECL), DECL=set_baseDomain(X,D).
+_passed(correction(multipleDeclarations,rem),LBL,DECL) :- _variable_multiple(LBL,X), _passed(sugar,LBL,DECL), DECL=set_baseDomain(X,D,C).
 _passed(correction(multipleDeclarations,rem),LBL,DECL) :- _variable_multiple(LBL,X), _passed(sugar,LBL,DECL), DECL=multimap_assign(X,D,E).
 _passed(correction(multipleDeclarations,add),LBL,variable_declare(X,definition,val(bool,true))) :- _variable_multiple(LBL,X).
 _passed(correction(multipleDeclarations,add),LBL,variable_define(X,bad,val(bool,true))) :- _variable_multiple(LBL,X).

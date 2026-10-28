@@ -70,8 +70,10 @@ _fch_input(set_declare(LABEL, NAME)) :- set_declare(NAME, LABEL).
 
 #defined set_baseDomain/2.
 #defined set_baseDomain/3.
-_fch_input(set_baseDomain(_fch_label, NAME, EXPR)) :- set_baseDomain(NAME, EXPR).
-_fch_input(set_baseDomain(LABEL, NAME, EXPR)) :- set_baseDomain(NAME, EXPR, LABEL).
+#defined set_baseDomain/4.
+_fch_input(set_baseDomain(_fch_label, NAME, EXPR, val(bool, true))) :- set_baseDomain(NAME, EXPR).
+_fch_input(set_baseDomain(_fch_label, NAME, EXPR, CONDITION)) :- set_baseDomain(NAME, EXPR, CONDITION).
+_fch_input(set_baseDomain(LABEL, NAME, EXPR, CONDITION)) :- set_baseDomain(NAME, EXPR, CONDITION, LABEL).
 
 #defined set_assign/2.
 #defined set_assign/3.

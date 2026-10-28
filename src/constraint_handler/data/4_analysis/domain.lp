@@ -29,7 +29,7 @@ _expression_setExpr(EXPR,X,assign,E) :- _expression_setDomainQuery(EXPR,X), _pas
 	_expression_domain(C,val(bool,true)), #false : _expression_domain(C,V), V != val(bool,true).
 _expression_setExpr(EXPR,X,baseDomain,E) :- _expression_setDomainQuery(EXPR,X), _passed(sugar,LBL,set_assign(X,E,C)),
 	_expression_domain(C,val(bool,true)), _expression_domain(C,V), V != val(bool,true).
-_expression_setExpr(EXPR,X,baseDomain,E) :- _expression_setDomainQuery(EXPR,X), _passed(sugar,LBL,set_baseDomain(X,E)), not _expression_setExpr(EXPR,X,assign,E).
+_expression_setExpr(EXPR,X,baseDomain,E) :- _expression_setDomainQuery(EXPR,X), _passed(sugar,LBL,set_baseDomain(X,E,C)), not _expression_setExpr(EXPR,X,assign,E).
 _expression_setExprIndex(EXPR,X,-1,assign,#inf) :- _expression_setDomainQuery(EXPR,X).
 _expression_setExprIndex(EXPR,X,N,baseDomain,#sup) :- _expression_setDomainQuery(EXPR,X), N=#count { E : _expression_setExpr(EXPR,X,KIND,E) }.
 _expression_setExprIndex(EXPR,X,N+1,KF,F) :- _expression_setExprIndex(EXPR,X,N,KE,E), _expression_setExpr(EXPR,X,KF,F), (KE,E)<(KF,F), 0=#count { G : _expression_setExpr(EXPR,X,KG,G), (KE,E)<(KG,G), (KG,G)<(KF,F) }.

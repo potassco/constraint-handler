@@ -140,7 +140,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "set_assign" "(" <variable> "," <expression> "," <expression> ")"
     | "set_assign" "(" <variable> "," <expression> "," <expression> "," <label> ")"
     | "set_baseDomain" "(" <variable> "," <expression> ")"
-    | "set_baseDomain" "(" <variable> "," <expression> "," <label> ")"
+    | "set_baseDomain" "(" <variable> "," <expression> "," <expression> ")"
+    | "set_baseDomain" "(" <variable> "," <expression> "," <expression> "," <label> ")"
 
 <execution-atom> ::=
     | "execution_declare" "(" <term> "," <statement> "," <variable-list> "," <variable-list> ")"

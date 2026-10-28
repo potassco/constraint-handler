@@ -127,7 +127,7 @@ set_value(Name, Value)
 
 ### Base Domain
 
-To declare a set and specify a base domain of candidate values from which elements may be chosen, use the `set_baseDomain/2` predicate together with `set_declare/1`.
+To declare a set and specify a base domain of candidate values from which elements may be chosen, use `set_baseDomain` together with `set_declare/1`.
 
 #### Input
 
@@ -136,14 +136,20 @@ To declare a set and specify a base domain of candidate values from which elemen
 ```prolog
 set_declare(Name).
 set_baseDomain(Name, Value).
+set_baseDomain(Name, Value, Condition).
+set_baseDomain(Name, Value, Condition, Label).
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Name` | The unique identifier of the set. |
 | `Value` | A candidate value that may be included in the set. |
+| `Condition` | An expression that must evaluate to Boolean true for this declaration to contribute a candidate. Defaults to `val(bool,true)`. |
+| `Label` | An optional label identifying the declaration. |
 
-Each `set_baseDomain/2` fact introduces one candidate value. The solver may include or exclude each candidate independently.
+Each active `set_baseDomain` fact introduces one candidate value. The solver may include or exclude each candidate independently. An inactive declaration does not prevent the same value from being included through another declaration.
+
+For example, `set_baseDomain(s,val(int,1),variable(enabled))` makes `1` a candidate only when `enabled` evaluates to true. A labeled declaration formerly written as `set_baseDomain(Name,Value,Label)` must now include a condition: `set_baseDomain(Name,Value,val(bool,true),Label)`.
 
 !!! Example
     `set_assign` and `set_baseDomain` can be used together on the same set. Here, `my_set` has a base domain of candidates `1`, `2`, `3` (each optionally included by the solver), while `2` and `4` are always explicitly included via `set_assign`, and `1` is forced to appear via an `ensure` constraint:

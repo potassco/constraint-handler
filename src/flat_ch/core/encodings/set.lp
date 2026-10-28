@@ -10,7 +10,8 @@ _fch_set_member_assigned(SET_NAME, TYPE, VAL) :-
 
 % Every statically evaluated set base domain that is not already assigned is a candidate member of the set.
 _fch_set_candidate(SET_NAME, TYPE, VAL) :-
-    _fch_set_base_domain(SET_NAME, EXPR_ID),
+    _fch_set_base_domain(SET_NAME, EXPR_ID, COND_EXPR_ID),
+    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true),
     _fch_static_expr_val(EXPR_ID, TYPE, VAL),
     not _fch_set_member_assigned(SET_NAME, TYPE, VAL).
 

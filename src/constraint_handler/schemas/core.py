@@ -55,6 +55,7 @@ class Set_assign(NamedTuple):
 class Set_baseDomain(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr
 
 
 class Multimap_assign(NamedTuple):

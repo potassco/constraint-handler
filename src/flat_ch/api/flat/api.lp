@@ -144,14 +144,17 @@ Args:
 #defined set_declare/1.
 _fch_input(set_declare(NAME))            :- set_declare(NAME).
 
-%*! set_baseDomain(SetName, Expression)
-Statically defines the full background pool of allowed candidates for a specific set asset.
+%*! set_baseDomain(SetName, Expression[, Condition])
+Defines candidate members when Condition evaluates to Boolean true.
 Args:
  - SetName: The identifier string for the targeted collection asset.
  - Expression: The background literal generation bounds expression.
+ - Condition: An optional Boolean expression, defaulting to true.
 *%
 #defined set_baseDomain/2.
-_fch_input(set_baseDomain(NAME, EXPR))   :- set_baseDomain(NAME, EXPR).
+#defined set_baseDomain/3.
+_fch_input(set_baseDomain(NAME, EXPR, val(bool, true))) :- set_baseDomain(NAME, EXPR).
+_fch_input(set_baseDomain(NAME, EXPR, CONDITION)) :- set_baseDomain(NAME, EXPR, CONDITION).
 
 %*! set_assign(SetName, Expression[, Condition])
 Assigns concrete elements to a target set when Condition evaluates to Boolean true.

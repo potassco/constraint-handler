@@ -74,7 +74,7 @@ class ProgramRegistry:
     def update_set(
         self,
         name: str,
-        base_domain: tuple[Expression, ...] = (),
+        base_domain: tuple[tuple[Expression, Expression], ...] = (),
         assignment: tuple[tuple[Expression, Expression], ...] = (),
     ) -> None:
         key = (RegistryKind.SET.value, name)

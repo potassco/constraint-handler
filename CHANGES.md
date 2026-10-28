@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - update `set_baseDomain` to take a condition argument.
 - introduce a staged python interface
 
 ## v0.0.9
