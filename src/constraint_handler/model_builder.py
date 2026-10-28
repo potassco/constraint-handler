@@ -7,7 +7,7 @@ import clingo
 
 from constraint_handler import evaluator, multimap
 from constraint_handler.PropagatorConstants import OTHER_ENGINE_VAR_NAME, ValueStatus
-from constraint_handler.PropagatorVariables import BoolEvaluateVariable, EnsureVariable, EvaluateVariable, VariableType
+from constraint_handler.PropagatorVariables import BoolEvaluateVariable, EvaluateVariable, VariableType
 from constraint_handler.schemas import expression, result, warning
 
 
@@ -42,7 +42,7 @@ class ModelBuilder:
         self.atoms = set()
         for variable in variables:
             self.add_warnings(variable.get_errors())
-            if isinstance(variable, (EnsureVariable, BoolEvaluateVariable)):
+            if isinstance(variable, BoolEvaluateVariable):
                 continue
             if variable.name == OTHER_ENGINE_VAR_NAME:
                 continue

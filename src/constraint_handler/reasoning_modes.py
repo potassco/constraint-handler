@@ -7,7 +7,7 @@ import clingo
 from clingo import Symbol
 
 from constraint_handler.PropagatorConstants import REASONING_MODE_PROGRAM, REASONING_STAGE_ATOM, ReasoningMode
-from constraint_handler.PropagatorVariables import BoolEvaluateVariable, EnsureVariable, VariableType
+from constraint_handler.PropagatorVariables import BoolEvaluateVariable, VariableType
 from constraint_handler.schemas import result, warning
 
 
@@ -138,7 +138,7 @@ class _StagedReasoningStrategy(_ReasoningStrategy):
                 self.stage_literals[stage] = init.solver_literal(atom.literal)
 
         for variable in variables:
-            if isinstance(variable, (EnsureVariable, BoolEvaluateVariable)):
+            if isinstance(variable, BoolEvaluateVariable):
                 continue
             self.variable_literals[variable] = init.add_literal(freeze=True)
 
