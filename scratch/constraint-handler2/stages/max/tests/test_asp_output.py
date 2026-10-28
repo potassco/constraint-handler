@@ -913,6 +913,7 @@ def _variable_models(
         "eq.lp",
         "set.lp",
         "tuples.lp",
+        "none.lp",
         "complex.lp",
     ):
         control.parse_string(
@@ -966,6 +967,69 @@ def _variable_models(
     outcome = control.solve(on_model=collect)
     assert outcome.exhausted
     return models
+
+
+@pytest.mark.parametrize("python_reference", (False, True))
+@pytest.mark.parametrize(
+    "payload",
+    (None, False, 0, 1.5, "", "None", frozenset(), frozenset({1, 2}), (), (None, 7)),
+)
+def test_native_has_value_optional_operands(
+    lib: Library, payload: Expr, python_reference: bool
+) -> None:
+    """Distinguish None, false-like payloads, and an absent optional operand."""
+    store = ConstraintStore()
+    source, result = VariableRef("source"), VariableRef("result")
+    store.choose(source, payload)
+    store.define(
+        result,
+        Operation(Operator.python_eval, (Python("lambda value: value is not None"), source))
+        if python_reference
+        else Operation(Operator.has_value, (source,)),
+    )
+    models = _variable_models(lib, store)
+    assert len(models) == 2
+    for model in models:
+        if "source" not in model:
+            assert "result" not in model
+        else:
+            assert model["result"] == (
+                "boolean(false)" if payload is None else "boolean(true)"
+            )
+
+
+@pytest.mark.parametrize("members", (1, 15, 50))
+def test_native_has_value_grounds_two_rules_for_nullable_sets(
+    lib: Library, members: int
+) -> None:
+    """Ground only two result rules regardless of the set's powerset size."""
+    control = Control(lib)
+    control.parse_string(
+        'expr(1,operation(has_value,(variable("source"),))). engine(native,1). '
+        '1 { value(variable("source"),none); value(variable("source"),set) } 1. '
+        f'{{ set_value(variable("source"),integer(0..{members - 1})) }} '
+        ':- value(variable("source"),set).'
+    )
+    for encoding in ("native.lp", "none.lp"):
+        control.parse_string(
+            files("constraint_handler").joinpath("encoding", encoding).read_text()
+        )
+    control.ground()
+    result_literals = {
+        atom.literal
+        for symbol, atom in control.base[("value", 2, True)].items()
+        if str(symbol.arguments[0]) == "1"
+    }
+    assert len(result_literals) == 2
+    control.write_aspif(preprocess=False)
+    result_rules = []
+    for line in control.buffer.splitlines():
+        fields = line.split()
+        if fields[0] == "1":
+            heads = {int(literal) for literal in fields[3 : 3 + int(fields[2])]}
+            if heads & result_literals:
+                result_rules.append(line)
+    assert len(result_rules) == 2
 
 
 def test_tuple_choices_preserve_complete_alternatives(lib: Library) -> None:

@@ -29,6 +29,23 @@ from constraint_handler.python_input import Expr
 from constraint_handler.static_types import SetOf
 
 
+@pytest.mark.parametrize("payload", (None, False, 0, "", frozenset()))
+def test_native_has_value_solver_loads_encoding(payload: Expr) -> None:
+    """Load none.lp through the public solver and enforce the expected Boolean."""
+    store = ConstraintStore()
+    source, result = VariableRef("source"), VariableRef("result")
+    store.define(source, payload)
+    store.define(result, Operation(Operator.has_value, (source,)))
+    store.ensure(Operation(Operator.eq, (result, payload is not None)))
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    result_id = problem.store.variables[result].definitions[0].value
+    assert problem.engines[result_id] == Engine.native
+    assert problem.create_solver(SolveOptions()).solve().satisfiable
+
+
 @pytest.mark.parametrize("python_reference", (False, True))
 @pytest.mark.parametrize(
     "payload",
@@ -71,7 +88,7 @@ def test_native_if_optional_operands(payload: Expr, python_reference: bool) -> N
         )
     control = Control(Library(), ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in prepared.asp_facts))
-    for encoding in ("native.lp", "boolean.lp", "tuples.lp", "complex.lp"):
+    for encoding in ("native.lp", "boolean.lp", "tuples.lp", "none.lp", "complex.lp"):
         control.parse_string(
             files("constraint_handler").joinpath("encoding", encoding).read_text()
         )

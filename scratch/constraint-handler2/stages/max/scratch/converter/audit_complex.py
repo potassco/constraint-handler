@@ -344,6 +344,7 @@ def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
             "eq.lp",
             "set.lp",
             "tuples.lp",
+            "none.lp",
             "complex.lp",
         ):
             control.parse_string(

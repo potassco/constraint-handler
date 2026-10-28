@@ -174,6 +174,7 @@ class Solver:
         )
         for encoding in (
             "native.lp",
+            "none.lp",
             "boolean.lp",
             "integer.lp",
             "eq.lp",

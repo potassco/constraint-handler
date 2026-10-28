@@ -141,6 +141,8 @@ class GroundingCost:
                     *(self.size(var) for var in captures if var not in args),
                 )
             )
+        if op == Operator.has_value:
+            return 2
         if op in {Operator.conj, Operator.disj}:
             return len(args) + 1
         if op == Operator.linear_comparison:
@@ -469,6 +471,7 @@ class _Splitter(GroundingCost):
                         Operator.disj,
                         Operator.leqv,
                         Operator.if_,
+                        Operator.has_value,
                         Operator.eq,
                         Operator.neq,
                         Operator.union,

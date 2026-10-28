@@ -86,6 +86,35 @@ def test_computed_tuple_slot_uses_ordinary_cost_splitting(
         assert sum(fact.name == "solution" for fact in problem.asp_facts) == 8
 
 
+@pytest.mark.parametrize("members", (15, 30))
+def test_has_value_large_set_uses_ordinary_cost_splitting(members: int) -> None:
+    """Split nullable-set presence tests cheaply without enumerating powersets."""
+    store = ConstraintStore()
+    items, source, active, result = (
+        VariableRef(name) for name in ("items", "source", "active", "result")
+    )
+    store.set_contain_choose_from_iterator(items, range(members))
+    store.choose(source, None)
+    store.choose(source, items)
+    store.choose_from_iterator(active, (False, True))
+    store.define(
+        result,
+        Operation(Operator.eq, (Operation(Operator.has_value, (source,)), active)),
+    )
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    assert problem.domains[source].cardinality() == (1 << members) + 1
+    assert set(problem.engines.values()) == {Engine.native}
+    assert any(
+        isinstance(expression, InternalOperation)
+        and expression.op == Operator.has_value
+        for expression in problem.store.expressions.values()
+    )
+    assert not any(fact.name == "solution" for fact in problem.asp_facts)
+
+
 def test_cryptarithm_equality_remains_flat_linear_comparison() -> None:
     """Avoid extracting a numeric sum solely to compare send + more with money."""
     store = ConstraintStore()
