@@ -25,6 +25,7 @@ from ..internal_input import (
     ValueType,
     VariableRef,
 )
+from ..python_conversion import compile_python
 from ..python_input import FailIntegrityExn, Operator
 from ..util import EvaluationOrder
 from .evaluation import EnumerationDecision, bounded_product_decision
@@ -68,7 +69,7 @@ class _DomainComputer:
         self._diagnostics = diagnostics
         self._threshold = threshold
         self._python_context = python_context
-        self._result = DomainStore()
+        self._result = DomainStore(python_context=python_context)
         self._operations = DomainOperationEvaluator(
             diagnostics, threshold, boolean_threshold
         )
@@ -380,10 +381,13 @@ class _DomainComputer:
         if decision == EnumerationDecision.EMPTY:
             return EMPTY_DOMAIN
         results: list[DomainValue] = []
+        rows: list[tuple[tuple[DomainValue, ...], DomainValue]] = []
         try:
             if any(domain.has_nonfinite_values() for domain in arg_domains):
                 raise ValueError("non-finite real input")
-            callback: object = eval(args[0].fn, {"math": math, **self._python_context})
+            callback: object = eval(
+                compile_python(args[0].fn), {"math": math, **self._python_context}
+            )
             if not callable(callback):
                 raise TypeError("Python source must evaluate to a callable")
             for values in product(*(domain.iter_values() for domain in arg_domains)):
@@ -406,6 +410,7 @@ class _DomainComputer:
                 if not is_finite_value(value):
                     raise ValueError("non-finite real result")
                 results.append(value)
+                rows.append((values, value))
         except Exception as error:
             if isinstance(error, (MemoryError, RecursionError)):
                 raise
@@ -413,6 +418,14 @@ class _DomainComputer:
                 f"python_eval domain evaluation failed: {error}", location=location
             )
             return UNKNOWN_DOMAIN
+        self._result.python_tables[args[0].fn, tuple(arg_domains)] = tuple(
+            sorted(
+                rows,
+                key=lambda row: tuple(
+                    (type(value).__name__, repr(value)) for value in row[0]
+                ),
+            )
+        )
         return join_domains((domain_from_values(results),), self._threshold)
 
     def _visit_set_fold(

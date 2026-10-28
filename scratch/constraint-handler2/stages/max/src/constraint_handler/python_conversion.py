@@ -1,6 +1,8 @@
 """Lower internal expressions to closed Python callable source."""
 
 import ast
+from functools import lru_cache
+from types import CodeType
 
 from .internal_input import (
     Expr,
@@ -12,6 +14,12 @@ from .internal_input import (
     VariableRef,
 )
 from .python_input import Operator
+
+
+@lru_cache(maxsize=1024)
+def compile_python(source: str) -> CodeType:
+    """Compile reusable Python code without retaining context-bound callbacks."""
+    return compile(source, "<python_eval>", "eval")
 
 
 class _Substitute(ast.NodeTransformer):
@@ -111,7 +119,15 @@ class _Converter:
                 return ast.Call(
                     func=ast.Name(id="eval", ctx=ast.Load()),
                     args=[
-                        ast.Constant(value=source),
+                        ast.Call(
+                            func=ast.parse(
+                                "__import__('constraint_handler.python_conversion', "
+                                "fromlist=('compile_python',)).compile_python",
+                                mode="eval",
+                            ).body,
+                            args=[ast.Constant(value=source)],
+                            keywords=[],
+                        ),
                         ast.Dict(
                             keys=[ast.Constant(value="math")],
                             values=[ast.Name(id="math", ctx=ast.Load())],

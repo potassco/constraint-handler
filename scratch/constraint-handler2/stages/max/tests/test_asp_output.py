@@ -687,6 +687,91 @@ def test_complex_python_partial_evaluation(
     assert problem.create_solver(SolveOptions()).solve().satisfiable
 
 
+@pytest.mark.parametrize("warm_cache", (False, True))
+@pytest.mark.parametrize("all_invalid", (False, True))
+@pytest.mark.parametrize("payload", (None, True, 1, 1.0, (True, frozenset({"x"}))))
+def test_complex_python_tables_reused(
+    payload: Expr, warm_cache: bool, all_invalid: bool
+) -> None:
+    """Reuse valid and skipped rows across domains and library-local fact builds."""
+    calls: list[int] = []
+
+    def recorded(value: int) -> Expr:
+        """Record evaluation and leave one recoverably invalid input row."""
+        calls.append(value)
+        if value == 0 or all_invalid:
+            raise ValueError("invalid row")
+        return payload
+
+    store = ConstraintStore()
+    argument = VariableRef("argument")
+    store.choose_from_iterator(argument, (0, 1))
+    store.define(
+        VariableRef("result"),
+        Operation(Operator.python_eval, (Python("recorded"), argument)),
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add_context("recorded", recorded)
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    assert sorted(calls) == [0, 1]
+    if not warm_cache:
+        problem.domains.python_tables.clear()
+    calls.clear()
+    first = tuple(map(str, problem.asp_facts))
+    assert sorted(calls) == ([] if warm_cache else [0, 1])
+    calls.clear()
+    assert tuple(map(str, problem.asp_facts)) == first
+    assert not calls
+
+
+def test_complex_python_table_context_isolation(lib: Library) -> None:
+    """Never reuse a prepared table for different callback bindings."""
+    store = ConstraintStore()
+    store.define(
+        VariableRef("result"), Operation(Operator.python_eval, (Python("callback"),))
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add_context("callback", lambda: 1)
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    facts = asp_facts(
+        lib,
+        problem.store,
+        problem.engines,
+        problem.domains,
+        {"callback": lambda: 2},
+    )
+    assert "value(__complex_output(0),integer(2))" in set(map(str, facts))
+    assert "value(__complex_output(0),integer(1))" in set(map(str, problem.asp_facts))
+
+
+def test_complex_python_table_input_types() -> None:
+    """Keep Boolean, integer, and real input domains distinct in table keys."""
+    store = ConstraintStore()
+    for name, value in (("boolean", True), ("integer", 1), ("real", 1.0)):
+        argument = VariableRef(name)
+        store.choose(argument, value)
+        store.define(
+            VariableRef(f"{name}_type"),
+            Operation(
+                Operator.python_eval,
+                (Python("lambda value: type(value).__name__"), argument),
+            ),
+        )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    assert {
+        str(fact.arguments[1])
+        for fact in problem.asp_facts
+        if fact.name == "value" and fact.arguments[0].name == "__complex_output"
+    } == {'string("bool")', 'string("int")', 'string("float")'}
+
+
 @pytest.mark.parametrize(
     ("source", "error", "message"),
     (

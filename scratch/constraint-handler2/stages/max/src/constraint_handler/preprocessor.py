@@ -56,7 +56,7 @@ class SolveOptions:
 
 @dataclass(frozen=True, slots=True)
 class PreparedProblem:
-    """Logically immutable, shareable artifact produced by Preprocessor."""
+    """Share prepared metadata, treating Python callbacks as pure for fixed inputs."""
 
     store: ConstraintStore
     static_types: StaticTypeStore

@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Collection, Iterable, Iterator
+from collections.abc import Collection, Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from itertools import product
 from typing import TypeIs, cast
 
 from ..analysis import ExpressionStore
+from ..internal_input import Expr
 
 type SetValue = bool | int | float | str | None
 type TupleValue = tuple[SetValue | frozenset[SetValue], ...]
 type DomainValue = SetValue | frozenset[SetValue] | TupleValue
+type PythonTable = tuple[tuple[tuple[DomainValue, ...], DomainValue], ...]
 
 DEFAULT_THRESHOLD = 60000
 DEFAULT_BOOLEAN_THRESHOLD = 10
@@ -352,7 +354,18 @@ def is_finite_value(value: DomainValue) -> bool:
 
 
 class DomainStore(ExpressionStore[Domain]):
-    """Map expressions, including variables, to their precomputed domains."""
+    """Own domains and validated Python tables for one set of context bindings."""
+
+    def __init__(
+        self,
+        expressions: Mapping[Expr, Domain] | Iterable[tuple[Expr, Domain]] = (),
+        *,
+        python_context: Mapping[str, object] | None = None,
+    ) -> None:
+        """Keep table caches local to the domain computation and its context."""
+        super().__init__(expressions)
+        self.python_context = dict(python_context or {})
+        self.python_tables: dict[tuple[str, tuple[Domain, ...]], PythonTable] = {}
 
 
 def domain_from_values(values: Iterable[DomainValue]) -> Domain:

@@ -52,6 +52,8 @@ from constraint_handler.domains.operations import (
 from constraint_handler.domains.values import SetValue, representation_key
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueDef, ValueType
+from constraint_handler.python_conversion import compile_python
+from constraint_handler.python_conversion import convert as convert_python
 from constraint_handler.python_input import Expr
 from constraint_handler.static_types import SetOf, UnknownType, compute_static_types
 from constraint_handler.util import compute_evaluation_order
@@ -1393,6 +1395,33 @@ def test_python_eval_nonfinite_discards_partial_results() -> None:
     assert _domains_for(store, diagnostics=diagnostics)[result] == UNKNOWN_DOMAIN
     assert len(diagnostics.warnings) == 1
     assert "non-finite real result" in diagnostics.warnings[0].message
+
+
+def test_python_compilation_reuses_code_without_binding_context() -> None:
+    """Reuse compiled source while keeping callback bindings context-local."""
+    compile_python.cache_clear()
+    source = "lambda: injected"
+    compiled = compile_python(source)
+    assert compile_python(source) is compiled
+    assert compile_python.cache_info().misses == 1
+    assert eval(compiled, {"injected": 1})() == 1
+    assert eval(compiled, {"injected": 2})() == 2
+
+
+def test_nested_python_compilation_reuses_code() -> None:
+    """Compile nested Python source once rather than once per callback row."""
+    compile_python.cache_clear()
+    argument = VariableRef("argument")
+    expression = convert_python(
+        (argument,),
+        InternalOperation(
+            Operator.python_eval, (Python("lambda value: value + 1"), argument)
+        ),
+    )
+    callback = eval(compile_python(expression.fn), {"math": math})
+    assert [callback(value) for value in range(5)] == [1, 2, 3, 4, 5]
+    assert compile_python.cache_info().misses == 2
+    assert compile_python.cache_info().hits == 4
 
 
 def test_python_eval_empty_and_nullary() -> None:

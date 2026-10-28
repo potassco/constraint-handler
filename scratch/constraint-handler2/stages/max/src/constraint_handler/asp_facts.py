@@ -22,6 +22,7 @@ from .internal_input import (
     Variable,
     _convert_expression,
 )
+from .python_conversion import compile_python
 from .python_input import FailIntegrityExn, Operator, Python, VariableRef
 
 
@@ -130,6 +131,9 @@ def _complex_facts(
 ) -> Iterator[Symbol]:
     """Enumerate Python calls with exact scalar and set input/output rows."""
     solution_id = 0
+    same_context = python_context.keys() == domains.python_context.keys() and all(
+        value is domains.python_context[name] for name, value in python_context.items()
+    )
     for expr_id, expr in sorted(store.expressions.items()):
         if engines[expr_id] != Engine.complex:
             continue
@@ -148,9 +152,6 @@ def _complex_facts(
             count *= domain.cardinality() or 0
         if count > DEFAULT_THRESHOLD:
             raise ValueError("complex evaluation input product exceeds row budget")
-        callback: object = eval(expr.args[0].fn, {"math": math, **python_context})
-        if not callable(callback):
-            raise TypeError("Python source must evaluate to a callable")
         axes = [
             sorted(
                 domain.iter_values(),
@@ -158,25 +159,39 @@ def _complex_facts(
             )
             for domain in argument_domains
         ]
+        key = (expr.args[0].fn, tuple(argument_domains))
+        rows = domains.python_tables.get(key) if same_context else None
+        if rows is None:
+            callback: object = eval(
+                compile_python(expr.args[0].fn), {"math": math, **python_context}
+            )
+            if not callable(callback):
+                raise TypeError("Python source must evaluate to a callable")
+            evaluated: list[tuple[tuple[DomainValue, ...], DomainValue]] = []
+            for values in product(*axes):
+                try:
+                    result = callback(*values)
+                except FailIntegrityExn:
+                    continue
+                except ArithmeticError, LookupError, TypeError, ValueError:
+                    continue
+                if isinstance(result, set):
+                    result = frozenset(result)
+                if not is_domain_value(result):
+                    raise TypeError(
+                        f"unsupported Python result type: {type(result).__name__}"
+                    )
+                if not is_finite_value(result) or not all(
+                    is_finite_value(value) for value in values
+                ):
+                    raise ValueError("complex evaluation requires finite values")
+                evaluated.append((values, result))
+            rows = tuple(evaluated)
+            if same_context:
+                domains.python_tables[key] = rows
         argument_terms: list[Symbol | None] = [None] * len(arguments)
         set_universes: dict[tuple[int, int | None], frozenset[Symbol]] = {}
-        for values in product(*axes):
-            try:
-                result = callback(*values)
-            except FailIntegrityExn:
-                continue
-            except ArithmeticError, LookupError, TypeError, ValueError:
-                continue
-            if isinstance(result, set):
-                result = frozenset(result)
-            if not is_domain_value(result):
-                raise TypeError(
-                    f"unsupported Python result type: {type(result).__name__}"
-                )
-            if not is_finite_value(result) or not all(
-                is_finite_value(value) for value in values
-            ):
-                raise ValueError("complex evaluation requires finite values")
+        for values, result in rows:
             solution = _number(lib, solution_id)
             yield Function(lib, "solution", [_number(lib, expr_id), solution])
             for index, (arg, value) in enumerate(zip(arguments, values, strict=True)):

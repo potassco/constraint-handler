@@ -134,6 +134,15 @@ not copied and should remain unchanged. Runtime rebinding through
 `Solver.add_context` is not supported because inferred domains depend on the
 preparation-time bindings.
 
+Python callbacks must be deterministic for fixed inputs and unchanged context
+bindings. Compiled code is cached by source without retaining bound callbacks.
+Validated Python input/output tables are retained with the domain metadata and
+reused during fact generation and later solver construction. Table keys preserve
+exact input representations, including Boolean, integer, and real distinctions.
+Clingo symbols are still created independently for each library. Reusing tables
+does not repeat callback side effects, and changing bound objects invalidates the
+assumptions of the prepared problem.
+
 Python callbacks can raise the public `constraint_handler.FailIntegrityExn` to
 leave an input combination undefined. Domain inference and complex enumeration
 skip that candidate without a warning; other candidates are still evaluated.
