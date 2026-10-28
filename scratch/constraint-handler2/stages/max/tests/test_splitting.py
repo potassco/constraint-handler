@@ -2,9 +2,14 @@
 
 import math
 from collections.abc import Callable
+from importlib.resources import files
+from itertools import combinations
 from typing import cast
 
 import pytest
+from clingo.control import Control
+from clingo.core import Library
+from clingo.script import enable_python
 
 from constraint_handler import (
     ConstraintStore,
@@ -29,7 +34,12 @@ from constraint_handler.internal_input import Lambda as InternalLambda
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueDef, ValueType
 from constraint_handler.python_conversion import convert
-from constraint_handler.splitting import DEFAULT_SUBSET_LIMIT, GroundingCost, split
+from constraint_handler.splitting import (
+    DEFAULT_SUBSET_LIMIT,
+    GroundingCost,
+    _Splitter,
+    split,
+)
 from constraint_handler.static_types import (
     SetOf,
     StaticTypeStore,
@@ -403,6 +413,343 @@ def _split(
     order = compute_evaluation_order(store, diagnostics)
     split(store, domains, types, order, diagnostics, subset_limit=subset_limit)
     assert not diagnostics.has_errors
+
+
+def _membership_chain(members: int, depth: int, condition: bool) -> ConstraintStore:
+    """Build the filler-shaped Boolean chain over an implicit set domain."""
+    store = ConstraintStore()
+    caps = VariableRef("caps")
+    store.set_contain_choose_from_iterator(
+        caps, ("natural_cork", *(f"cap_{index}" for index in range(members - 1)))
+    )
+    store.define(VariableRef("condition"), condition)
+    expression = Operation(
+        Operator.disj,
+        (
+            VariableRef("condition"),
+            Operation(Operator.set_notin, ("natural_cork", caps)),
+        ),
+    )
+    for _ in range(depth):
+        expression = Operation(Operator.lnot, (expression,))
+    store.ensure(Operation(Operator.limp, (expression, False)))
+    return store
+
+
+@pytest.mark.parametrize(
+    "members, depth, expected_cost, auxiliaries",
+    (
+        (1, 1, 2, 0),
+        (2, 1, 4, 0),
+        (3, 1, 8, 0),
+        (15, 1, 8, 3),
+        (15, 4, 14, 6),
+        (15, 8, 22, 10),
+    ),
+)
+def test_recursive_plan_cost_matches_materialization(
+    members: int, depth: int, expected_cost: int, auxiliaries: int
+) -> None:
+    """Realize cached recursive costs while leaving small and tied chains unsplit."""
+    store = _membership_chain(members, depth, False)
+    domains, types = _metadata(store)
+    diagnostics = Diagnostics()
+    order = compute_evaluation_order(store, diagnostics)
+    root = store.expressions[store.constraints[0].expr]
+    splitter = _Splitter(store, domains, types, DEFAULT_SUBSET_LIMIT)
+    assert splitter.complexity(root) == 1 << members
+    plan = splitter.best_plan(root)
+    assert plan == ((0,) if auxiliaries else (), expected_cost)
+    original = set(store.variables)
+    splitter.run(order)
+    assert splitter.best_plan(root) is plan
+    assert len(set(store.variables) - original) == auxiliaries
+    costs = GroundingCost(domains, types)
+    assert (
+        sum(
+            costs.complexity(expression)
+            for expression in store.expressions.values()
+            if isinstance(expression, InternalOperation)
+        )
+        == expected_cost
+    )
+
+
+@pytest.mark.parametrize("members", (15, 30))
+@pytest.mark.parametrize("depth", (1, 4, 8))
+def test_nested_membership_chain_bounds_python_rows(members: int, depth: int) -> None:
+    """Keep powerset inputs native while allowing tiny Boolean Python tables."""
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(_membership_chain(members, depth, False))
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    assert problem.domains[VariableRef("caps")].cardinality() == 1 << members
+    membership_ids = [
+        expr_id
+        for expr_id, expression in problem.store.expressions.items()
+        if isinstance(expression, InternalOperation)
+        and expression.op == Operator.set_notin
+    ]
+    assert len(membership_ids) == 1
+    assert problem.engines[membership_ids[0]] == Engine.native
+    assert sum(fact.name == "solution" for fact in problem.asp_facts) == 2 * (depth + 1)
+    for expression in problem.store.expressions.values():
+        if (
+            isinstance(expression, InternalOperation)
+            and expression.op == Operator.python_eval
+        ):
+            assert all(
+                problem.domains[cast(VariableRef, argument)].cardinality() == 2
+                for argument in expression.args[1:]
+            )
+
+
+@pytest.mark.parametrize("condition", (False, True))
+@pytest.mark.parametrize("depth", (1, 2, 4))
+def test_nested_membership_chain_exhaustive_models(condition: bool, depth: int) -> None:
+    """Compare every small-domain solver model with the original Boolean chain."""
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(_membership_chain(4, depth, condition))
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    library = Library()
+    enable_python(library)
+    control = Control(library, ["0"])
+    control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
+    for encoding in ("native.lp", "boolean.lp", "set.lp", "complex.lp"):
+        control.parse_string(
+            files("constraint_handler").joinpath("encoding", encoding).read_text()
+        )
+    control.ground([("base", [])])
+    models: list[frozenset[str]] = []
+    outcome = control.solve(
+        on_model=lambda model: models.append(
+            frozenset(
+                atom.arguments[1].arguments[0].string
+                for atom in model.symbols(atoms=True)
+                if atom.name == "set_value"
+                and str(atom.arguments[0]) == 'variable("caps")'
+            )
+        )
+    )
+    members = ("natural_cork", "cap_0", "cap_1", "cap_2")
+    expected: set[frozenset[str]] = set()
+    for count in range(len(members) + 1):
+        for selected in combinations(members, count):
+            value = condition or "natural_cork" not in selected
+            for _ in range(depth):
+                value = not value
+            if not value:
+                expected.add(frozenset(selected))
+    assert outcome.satisfiable == bool(expected)
+    assert len(models) == len(expected)
+    assert set(models) == expected
+
+
+@pytest.mark.parametrize("condition", (False, True))
+@pytest.mark.parametrize("depth", (1, 2, 4, 8))
+@pytest.mark.parametrize("contradiction", (False, True))
+def test_recursive_splitting_preserves_complete_solution_sets(
+    monkeypatch: pytest.MonkeyPatch,
+    condition: bool,
+    depth: int,
+    contradiction: bool,
+) -> None:
+    """Preserve every projected model and UNSAT across recursive split plans."""
+    members = ("natural_cork", *(f"cap_{index}" for index in range(5)))
+    expected: set[frozenset[str]] = set()
+    for count in range(len(members) + 1):
+        for selected in combinations(members, count):
+            value = condition or "natural_cork" not in selected
+            for _ in range(depth):
+                value = not value
+            if not value and not contradiction:
+                expected.add(frozenset(selected))
+    auxiliary_counts = []
+    for recursive in (False, True):
+        store = _membership_chain(len(members), depth, condition)
+        if contradiction:
+            store.ensure(
+                Operation(Operator.set_isin, ("natural_cork", VariableRef("caps")))
+            )
+            store.ensure(
+                Operation(Operator.set_notin, ("natural_cork", VariableRef("caps")))
+            )
+        with monkeypatch.context() as context:
+            if not recursive:
+                context.setattr(
+                    _Splitter,
+                    "best_plan",
+                    lambda splitter, expression: ((), splitter.complexity(expression)),
+                )
+            processor = Preprocessor(PreprocessOptions())
+            processor.add(store)
+            problem, diagnostics = processor.preprocess()
+        assert not diagnostics.has_errors
+        auxiliary_counts.append(
+            len(set(problem.store.variables) - set(store.variables))
+        )
+        library = Library()
+        enable_python(library)
+        control = Control(library, ["0"])
+        control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
+        for encoding in ("native.lp", "boolean.lp", "set.lp", "complex.lp"):
+            control.parse_string(
+                files("constraint_handler").joinpath("encoding", encoding).read_text()
+            )
+        control.ground()
+        models: list[frozenset[str]] = []
+        outcome = control.solve(
+            on_model=lambda model, models=models: models.append(
+                frozenset(
+                    atom.arguments[1].arguments[0].string
+                    for atom in model.symbols(atoms=True)
+                    if atom.name == "set_value"
+                    and str(atom.arguments[0]) == 'variable("caps")'
+                )
+            )
+        )
+        assert outcome.exhausted
+        assert outcome.satisfiable == bool(expected)
+        assert len(models) == len(expected)
+        assert set(models) == expected
+    assert auxiliary_counts[0] == 0
+    assert auxiliary_counts[1] > 0
+
+
+@pytest.mark.parametrize(
+    ("recursive", "explicit_none"),
+    (
+        pytest.param(
+            False,
+            False,
+            marks=pytest.mark.xfail(
+                strict=True,
+                reason="Whole-expression Python tables require inactive inputs that native Booleans can skip",
+            ),
+        ),
+        (True, False),
+        (False, True),
+        (True, True),
+    ),
+)
+@pytest.mark.parametrize("inactive_only", (False, True))
+def test_recursive_splitting_preserves_inactive_branch_models(
+    monkeypatch: pytest.MonkeyPatch,
+    recursive: bool,
+    explicit_none: bool,
+    inactive_only: bool,
+) -> None:
+    """Expose missing-input eagerness without confusing absence with explicit None."""
+    store = ConstraintStore()
+    source, active, port = (VariableRef(name) for name in ("source", "active", "port"))
+    store.choose_from_iterator(source, range(32))
+    store.choose_from_iterator(active, (False, True))
+    store.ensure(Operation(Operator.has_value, (source,)))
+    store.ensure(Operation(Operator.has_value, (active,)))
+    store.define(port, source, active)
+    if explicit_none:
+        store.define(port, None, Operation(Operator.lnot, (active,)))
+    store.ensure(
+        Operation(
+            Operator.limp,
+            (
+                Operation(Operator.conj, (active, Operation(Operator.eq, (port, 0)))),
+                False,
+            ),
+        )
+    )
+    if inactive_only:
+        store.ensure(Operation(Operator.lnot, (active,)))
+    with monkeypatch.context() as context:
+        if not recursive:
+            context.setattr(
+                _Splitter,
+                "best_plan",
+                lambda splitter, expression: ((), splitter.complexity(expression)),
+            )
+        processor = Preprocessor(PreprocessOptions())
+        processor.add(store)
+        problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    library = Library()
+    enable_python(library)
+    control = Control(library, ["0"])
+    control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
+    for encoding in (
+        "native.lp",
+        "boolean.lp",
+        "integer.lp",
+        "eq.lp",
+        "set.lp",
+        "tuples.lp",
+        "none.lp",
+        "complex.lp",
+    ):
+        control.parse_string(
+            files("constraint_handler").joinpath("encoding", encoding).read_text()
+        )
+    control.ground()
+    models: list[frozenset[str]] = []
+    outcome = control.solve(
+        on_model=lambda model: models.append(
+            frozenset(
+                str(atom)
+                for atom in model.symbols(atoms=True)
+                if atom.name == "value"
+                and str(atom.arguments[0])
+                in {'variable("source")', 'variable("active")'}
+            )
+        )
+    )
+    expected = {
+        frozenset(
+            (
+                f'value(variable("source"),integer({source_value}))',
+                f'value(variable("active"),boolean({str(active_value).lower()}))',
+            )
+        )
+        for source_value in range(32)
+        for active_value in (False, True)
+        if not (active_value and source_value == 0)
+        and not (inactive_only and active_value)
+    }
+    assert outcome.exhausted
+    assert outcome.satisfiable
+    assert len(models) == len(expected)
+    assert set(models) == expected
+
+
+@pytest.mark.parametrize("subset_limit", (0, 2, DEFAULT_SUBSET_LIMIT))
+def test_recursive_children_in_all_or_nothing_fallback(subset_limit: int) -> None:
+    """Price repeated recursive children cheaply even when proper subsets are banned."""
+    store = _membership_chain(15, 1, False)
+    root_id = store.constraints[0].expr
+    root = store.expressions[root_id]
+    assert isinstance(root, InternalOperation)
+    child = root.args[0]
+    store.replace_expression(
+        root_id, InternalOperation(Operator.disj, (child, child, child))
+    )
+    domains, types = _metadata(store)
+    splitter = _Splitter(store, domains, types, subset_limit)
+    root = store.expressions[root_id]
+    assert splitter.best_plan(root) == ((0, 1, 2), 22)
+    assert len(splitter.plans) == 4
+    original = set(store.variables)
+    diagnostics = Diagnostics()
+    splitter.run(compute_evaluation_order(store, diagnostics))
+    assert len(set(store.variables) - original) == 9
+    assert len(splitter.plans) == 4
+    costs = GroundingCost(domains, types)
+    assert (
+        sum(
+            costs.complexity(expression)
+            for expression in store.expressions.values()
+            if isinstance(expression, InternalOperation)
+        )
+        == 22
+    )
 
 
 @pytest.mark.parametrize("case, count", [(0, 1), (1, 2), (2, 2), (3, 1), (4, 0)])

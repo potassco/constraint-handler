@@ -249,7 +249,7 @@ class GroundingCost:
 
 
 class _Splitter(GroundingCost):
-    """Estimate unchanged candidates and commit only the best local replacement."""
+    """Memoize recursive split costs and materialize their chosen replacements."""
 
     def __init__(
         self,
@@ -262,6 +262,7 @@ class _Splitter(GroundingCost):
         super().__init__(domains, static_types)
         self.store = store
         self.subset_limit = subset_limit
+        self.plans: dict[Expr, tuple[tuple[int, ...], Cost]] = {}
         self.names = {var.name for var in (*store.variables, *store.set_variables)}
         pending: list[OperationArg] = list(store.expressions.values())
         while pending:
@@ -341,23 +342,30 @@ class _Splitter(GroundingCost):
         renamings.append((expr, renamed, shadowed))
         return renamed
 
-    def best_subset(self, expr: Operation) -> tuple[int, ...]:
-        """Search unchanged candidates using cached parameter costs and variables."""
+    def best_plan(self, expr: Expr) -> tuple[tuple[int, ...], Cost]:
+        """Cache the cheapest legal subset and its recursively realizable cost."""
+        if expr in self.plans:
+            return self.plans[expr]
+        best: tuple[int, ...] = ()
+        best_cost = self.complexity(expr)
+        if not isinstance(expr, Operation):
+            self.plans[expr] = best, best_cost
+            return self.plans[expr]
         parameters = self.parameters(expr)
         positions = tuple(
             index for index, arg in enumerate(parameters) if _contains_operation(arg)
         )
         if not positions:
-            return ()
+            self.plans[expr] = best, best_cost
+            return self.plans[expr]
         sizes = {index: self.size(cast(Expr, parameters[index])) for index in positions}
         costs = {
-            index: self.complexity(cast(Expr, parameters[index])) for index in positions
+            index: self.best_plan(cast(Expr, parameters[index]))[1]
+            for index in positions
         }
         variables = tuple(free_variables(arg) for arg in parameters)
         variable_sizes = {var: self.size(var) for group in variables for var in group}
         trivial = self.trivial_cost(expr)
-        best: tuple[int, ...] = ()
-        best_cost = self.complexity(expr)
         candidates = (
             (
                 selected
@@ -387,7 +395,8 @@ class _Splitter(GroundingCost):
             cost = _sum((outer, _sum(costs[index] for index in selected)))
             if cost < best_cost:
                 best, best_cost = selected, cost
-        return best
+        self.plans[expr] = best, best_cost
+        return self.plans[expr]
 
     def run(self, order: EvaluationOrder) -> None:
         """Split store expressions and auxiliaries, then convert remaining nesting."""
@@ -396,7 +405,7 @@ class _Splitter(GroundingCost):
             expr = self.store.expressions[expr_id]
             if not isinstance(expr, Operation):
                 continue
-            best = self.best_subset(expr)
+            best, _ = self.best_plan(expr)
             parameters = self.parameters(expr)
             args = list(parameters)
             for index in best:

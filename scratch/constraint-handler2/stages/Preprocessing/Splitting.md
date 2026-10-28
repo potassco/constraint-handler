@@ -118,15 +118,21 @@ outer_cost(e, selected) = (
      * product(|D(p)| for p in selected)
 )
 split_cost(e, selected) = outer_cost(e, selected) + sum(
-  complexity(p) for p in selected
+  plan_cost(p) for p in selected
 )
 ```
 
 If the outer expression remains non-trivial, each selected parameter
 contributes one fresh auxiliary with domain `D(p)`. The unselected parameters
 contribute their distinct free variables. If every nested parameter is
-selected, use the specialized trivial-operation cost instead. The sum includes
-all new auxiliary definitions. The empty subset costs `complexity(e)`.
+selected, use the specialized trivial-operation cost instead. The sum prices all
+new auxiliary definitions at their plan costs. The empty subset costs
+`complexity(e)`.
+
+`plan_cost(p)` is the cheapest cost at which `p` can be realized: the minimum of
+`complexity(p)` and `split_cost(p, S)` over the subsets `S` of its nested
+operation parameters, under the same subset limit, computed recursively. An
+auxiliary for `p` is charged this value, not the unsplit `complexity(p)`.
 
 ```text
 worklist = expression_ids(store)
@@ -178,9 +184,13 @@ expression with 12 nested parameters receives exhaustive search, while one with
 13 receives all-or-nothing search.
 
 This search is local to the direct parameters of one expression, not a global
-search over recursive splitting decisions. Cache each parameter's complexity,
-domain size, and free variables before enumerating subsets. Only mutate the
-store after selecting the winning subset.
+search over subsets of all descendants. Because each selected parameter is
+charged its `plan_cost`, nested splits compose bottom-up. Cache each parameter's
+plan cost, domain size, and free variables before enumerating subsets, and
+memoize plans per expression value so a shared subexpression is searched once.
+Plan all expressions against the unchanged store, then mutate it only after
+selecting the winning subset. An auxiliary created for a parameter reuses that
+parameter's memoized plan when it is processed.
 
 ### Examples
 
