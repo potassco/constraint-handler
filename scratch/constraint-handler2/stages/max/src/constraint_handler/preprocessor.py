@@ -33,12 +33,18 @@ from .util import compute_evaluation_order
 
 @dataclass(frozen=True, slots=True)
 class PreprocessOptions:
-    """Configuration options for preprocessing a ConstraintStore."""
+    """Configure preprocessing of a ConstraintStore.
+
+    continue_on_errors enables best-effort normalization, splitting, and dispatch
+    despite error diagnostics. Diagnostics remain errors, ordinary operator and
+    engine selection is preserved, and processing exceptions still propagate.
+    """
 
     arguments: tuple[str, ...] = ()
     threshold: int = DEFAULT_THRESHOLD
     boolean_threshold: int = DEFAULT_BOOLEAN_THRESHOLD
     splitting_subset_limit: int = DEFAULT_SUBSET_LIMIT
+    continue_on_errors: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,7 +116,7 @@ class Preprocessor:
         diagnostics = Diagnostics()
         order = compute_evaluation_order(snapshot, diagnostics)
         static_types = compute_static_types(snapshot, order, diagnostics)
-        if not diagnostics.has_errors:
+        if self._options.continue_on_errors or not diagnostics.has_errors:
             normalize(snapshot, static_types)
             order = compute_evaluation_order(snapshot, diagnostics)
             static_types = compute_static_types(snapshot, order, diagnostics)
@@ -122,7 +128,7 @@ class Preprocessor:
             boolean_threshold=self._options.boolean_threshold,
             python_context=python_context,
         )
-        if not diagnostics.has_errors:
+        if self._options.continue_on_errors or not diagnostics.has_errors:
             split(
                 snapshot,
                 domains,
@@ -130,9 +136,10 @@ class Preprocessor:
                 order,
                 diagnostics,
                 subset_limit=self._options.splitting_subset_limit,
+                continue_on_errors=self._options.continue_on_errors,
             )
         engines = DispatchStore()
-        if not diagnostics.has_errors:
+        if self._options.continue_on_errors or not diagnostics.has_errors:
             engines = dispatch(snapshot, domains)
         return (
             PreparedProblem(

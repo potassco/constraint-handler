@@ -14,7 +14,7 @@ type SetValue = bool | int | float | str | None
 type TupleValue = tuple[SetValue | frozenset[SetValue], ...]
 type DomainValue = SetValue | frozenset[SetValue] | TupleValue
 
-DEFAULT_THRESHOLD = 50000
+DEFAULT_THRESHOLD = 60000
 DEFAULT_BOOLEAN_THRESHOLD = 10
 
 

@@ -526,6 +526,7 @@ def split(
     diagnostics: Diagnostics,
     *,
     subset_limit: int = DEFAULT_SUBSET_LIMIT,
+    continue_on_errors: bool = False,
 ) -> None:
     """Update store, domains, and types in place with splitting and Python calls.
 
@@ -534,9 +535,10 @@ def split(
     Above subset_limit nested arguments, consider only all-or-nothing splitting.
     Use the supplied evaluation order only for traversal. Only new nodes and
     scopes receive metadata; existing entries and diagnostics are preserved.
+    continue_on_errors bypasses the diagnostic gate, not processing exceptions.
     """
     if subset_limit < 0:
         raise ValueError("subset_limit must be nonnegative")
-    if diagnostics.has_errors:
+    if diagnostics.has_errors and not continue_on_errors:
         return
     _Splitter(store, domains, static_types, subset_limit).run(order)

@@ -1,6 +1,7 @@
 """Tests for the Preprocessor, PreparedProblem, and Solver workflow interface."""
 
 from importlib.resources import files
+from itertools import combinations
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import ANY, Mock
@@ -24,9 +25,76 @@ from constraint_handler import (
     asp_facts,
 )
 from constraint_handler.domains import Domain
+from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueType
 from constraint_handler.python_input import Expr
 from constraint_handler.static_types import SetOf
+
+
+@pytest.mark.parametrize("continue_on_errors", (False, True))
+def test_continue_on_errors_preserves_native_nullable_subset(
+    continue_on_errors: bool,
+) -> None:
+    """Continue normal splitting and dispatch without suppressing nullable errors."""
+    store = ConstraintStore()
+    source, result = VariableRef("source"), VariableRef("result")
+    members = ("o3", "without_devices", "other1", "other2")
+    store.choose_from_iterator(
+        source,
+        (
+            None,
+            *(
+                frozenset(selection)
+                for size in range(len(members) + 1)
+                for selection in combinations(members, size)
+            ),
+        ),
+    )
+    store.define(
+        result,
+        Operation(
+            Operator.subset,
+            (source, Operation(Operator.set_make, ("o3", "without_devices"))),
+        ),
+    )
+    processor = Preprocessor(PreprocessOptions(continue_on_errors=continue_on_errors))
+    processor.add(store)
+    prepared, diagnostics = processor.preprocess()
+    assert diagnostics.has_errors
+    assert any(
+        item.message == "subset requires 2 set arguments" for item in diagnostics.items
+    )
+    if not continue_on_errors:
+        assert not prepared.engines
+        with pytest.raises(ValueError, match="preprocessing errors"):
+            prepared.create_solver(SolveOptions())
+        return
+    result_id = prepared.store.variables[result].definitions[0].value
+    expression = prepared.store.expressions[result_id]
+    assert (
+        isinstance(expression, InternalOperation) and expression.op == Operator.subset
+    )
+    assert len(prepared.store.variables) == 3
+    assert prepared.engines[result_id] == Engine.native
+    assert prepared.engines.keys() == prepared.store.expressions.keys()
+    assert not any(fact.name == "solution" for fact in prepared.asp_facts)
+    assert prepared.create_solver(SolveOptions()).solve().satisfiable
+
+
+def test_continue_on_errors_propagates_pipeline_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Do not swallow a processing exception when error continuation is enabled."""
+    monkeypatch.setattr(
+        "constraint_handler.preprocessor.split",
+        Mock(side_effect=RuntimeError("cannot split")),
+    )
+    store = ConstraintStore()
+    store.define(VariableRef("result"), 1)
+    processor = Preprocessor(PreprocessOptions(continue_on_errors=True))
+    processor.add(store)
+    with pytest.raises(RuntimeError, match="cannot split"):
+        processor.preprocess()
 
 
 @pytest.mark.parametrize("payload", (None, False, 0, "", frozenset()))
