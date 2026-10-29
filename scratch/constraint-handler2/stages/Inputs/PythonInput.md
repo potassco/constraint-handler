@@ -6,6 +6,9 @@ declared and defined with expressions, rather than represented as executable
 statements. A possible internal storage representation is described in
 [InternalInput](InternalInput.md).
 
+Operator meanings are shared across input formats; see
+[Operator Semantics](../OperatorSemantics.md).
+
 ```python
 from python_input import Operation, Operator, VariableRef
 
