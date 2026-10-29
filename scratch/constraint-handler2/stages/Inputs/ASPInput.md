@@ -193,7 +193,6 @@ example(tuple_condition,((variable(x),variable(enabled)),((val(int,1),val(bool,t
     | <operator>(<expression>_1,..,<expression>_n)
     | expressiontuple
 <expressiontuple> ::=
-    | expression
     | (expression,expressiontuple)
     | (expressionlist)
 <expressionlist> ::=
