@@ -1,0 +1,5 @@
+- defaults implementation
+- hasValue should be isNotNone to avoid confusion with undefined
+- figure out all places where kroco would need to change to adopt to new undefined variables behaviour
+- propagator implementation
+- float comparisons could be done linear with order encoding instead of quadratic
