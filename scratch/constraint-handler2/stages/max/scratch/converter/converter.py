@@ -228,7 +228,6 @@ _UNSUPPORTED_OPERATORS: frozenset[str] = frozenset(
 _UNSUPPORTED_PREDICATES: frozenset[str] = frozenset(
     {
         "multimap_assign",
-        "optimize_maximizeSum",
         "optimize_precision",
         "preference_maximizeScore",
         "preference_holds",
@@ -1203,6 +1202,7 @@ def convert_string(source: str) -> ConstraintStore:
     running_executions: set[Term] = set()
     executions: list[tuple[Term, Stmt, list[Term], list[Term], str]] = []
     eval_counter = 0
+    objective_counter = 0
     bool_eval_counter = 0
 
     for atom in atoms:
@@ -1385,6 +1385,25 @@ def convert_string(source: str) -> ConstraintStore:
                 eval_var = VariableRef(f"__evaluate_{eval_counter}")
                 eval_counter += 1
                 store.define(eval_var, _convert_expr(args[0]), label=lbl)
+
+            case "optimize_maximizeSum":
+                if len(args) != 4:
+                    raise ConversionError(
+                        f"Invalid arity for optimize_maximizeSum: {_term_to_str(atom)}"
+                    )
+                if not isinstance(args[2], NumberTerm):
+                    raise ConversionError(
+                        f"Priority in optimize_maximizeSum must be an integer: {_term_to_str(atom)}"
+                    )
+                lbl = _label_term_to_str(args[3])
+                objective_var = VariableRef(f"__objective_{objective_counter}")
+                objective_counter += 1
+                store.define(objective_var, _convert_expr(args[0]), label=lbl)
+                store.minimize(
+                    Operation(Operator.minus, (objective_var,)),
+                    priority=args[2].value,
+                    label=lbl,
+                )
 
             case "bool_evaluate":
                 if len(args) not in (1, 2):

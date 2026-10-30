@@ -467,7 +467,6 @@ def test_preprocess_renamed_operators(
         "variable_declare(m, multimap).",
         "multimap_assign(m, val(int, 1), val(int, 2)).",
         "variable_define(x, operation(find, (variable(m), (val(int, 1), ())))).",
-        "optimize_maximizeSum(variable(x), 0, 0).",
         "optimize_precision(val(int, 1), 0).",
         "preference_maximizeScore.",
         "preference_holds(val(bool, true), 1).",
@@ -487,6 +486,22 @@ def test_unsupported_features_raise_error(bad_source: str) -> None:
     """Verify unsupported atoms, operators, and directives raise UnsupportedFeatureError."""
     with pytest.raises(UnsupportedFeatureError):
         convert_string(bad_source)
+
+
+def test_optimize_maximize_sum_becomes_native_minimization() -> None:
+    """Negate legacy maximize objectives into native minimize statements."""
+    store = convert_string(
+        "variable_define(x, val(int, 2)).\n"
+        "optimize_maximizeSum(variable(x), 0, 3, criterion).\n"
+    )
+    objective = VariableRef("__objective_0")
+    assert objective in store.variables
+    (optimization,) = store.optimizations
+    assert optimization.priority == 3
+    assert optimization.label == "criterion"
+    expression = store.expressions[optimization.expr]
+    assert isinstance(expression, internal_input.Operation)
+    assert expression.op == Operator.minus
 
 
 @pytest.mark.parametrize(
