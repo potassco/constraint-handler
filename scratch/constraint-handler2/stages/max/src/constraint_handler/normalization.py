@@ -29,7 +29,9 @@ _ZERO = ValueDef(ValueType.integer, 0)
 class _Normalizer:
     """Rewrite integer expressions using the previously computed variable types."""
 
-    def __init__(self, static_types: StaticTypeStore, *, preserve_undefined: bool = False) -> None:
+    def __init__(
+        self, static_types: StaticTypeStore, *, preserve_undefined: bool = False
+    ) -> None:
         """Retain type information used to guard arithmetic rewrites."""
         self._types = static_types
         self._preserve_undefined = preserve_undefined
@@ -205,7 +207,7 @@ class _Normalizer:
                     rewritten = Operation(
                         op,
                         tuple(
-                            tuple(self.visit(item, scopes) for item in arg)
+                            tuple(cast(Expr, self.visit(item, scopes)) for item in arg)
                             if isinstance(arg, tuple)
                             and op
                             in {Operator.linear_integer, Operator.linear_comparison}
@@ -256,7 +258,11 @@ class _Normalizer:
                                     factors.append(arg)
                             else:
                                 factors.append(cast(Expr, arg))
-                        if not factors or coefficient == 0 and not self._preserve_undefined:
+                        if (
+                            not factors
+                            or coefficient == 0
+                            and not self._preserve_undefined
+                        ):
                             return self.linear_integer(
                                 ValueDef(ValueType.integer, coefficient)
                             )

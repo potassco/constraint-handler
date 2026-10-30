@@ -248,7 +248,7 @@ class GroundingCost:
         return expr.args
 
 
-class _Splitter(GroundingCost):
+class Splitter(GroundingCost):
     """Memoize recursive split costs and materialize their chosen replacements."""
 
     def __init__(
@@ -541,4 +541,4 @@ def split(
         raise ValueError("subset_limit must be nonnegative")
     if diagnostics.has_errors and not continue_on_errors:
         return
-    _Splitter(store, domains, static_types, subset_limit).run(order)
+    Splitter(store, domains, static_types, subset_limit).run(order)

@@ -277,7 +277,7 @@ def test_native_linear_comparison_solves_send_more_money(lib: Library) -> None:
         store.ensure(Operation(Operator.geq, (variable, 1 if name in "SM" else 0)))
     for left, right in combinations(digits.values(), 2):
         store.ensure(Operation(Operator.neq, (left, right)))
-    words = []
+    words: list[Operation] = []
     for word in ("SEND", "MORE", "MONEY"):
         words.append(
             Operation(
@@ -673,7 +673,7 @@ def test_complex_division_by_zero(
             )
         )
     )
-    expected = set()
+    expected: set[frozenset[str]] = set()
     if 0 in values and not exclude_zero:
         expected.add(frozenset({'value(variable("divisor"),integer(0))'}))
     if 1 in values:
@@ -960,7 +960,7 @@ def test_complex_operator_families(expression: Expr, term: str) -> None:
     "expression, expected",
     (
         (frozenset({1, 2}), frozenset({1, 2})),
-        (frozenset(), frozenset()),
+        (frozenset[int](), frozenset[int]()),
         (Operation(Operator.cardinality, (frozenset({1, 2}),)), 2),
         (Operation(Operator.set_make, (1, 2)), frozenset({1, 2})),
         (
@@ -973,7 +973,7 @@ def test_complex_operator_families(expression: Expr, term: str) -> None:
         ),
         (
             Operation(Operator.python_eval, (Python("lambda: frozenset()"),)),
-            frozenset(),
+            frozenset[int](),
         ),
     ),
 )
@@ -1094,7 +1094,7 @@ def _variable_models(
                 subject.arguments[0].string: payload(subject)
                 for atom in atoms
                 if atom.name == "value"
-                for subject, value in (atom.arguments,)
+                for subject, _value in (atom.arguments,)
                 if subject.type == SymbolType.Function and subject.name == "variable"
             }
         )
@@ -1107,7 +1107,18 @@ def _variable_models(
 @pytest.mark.parametrize("python_reference", (False, True))
 @pytest.mark.parametrize(
     "payload",
-    (None, False, 0, 1.5, "", "None", frozenset(), frozenset({1, 2}), (), (None, 7)),
+    (
+        None,
+        False,
+        0,
+        1.5,
+        "",
+        "None",
+        frozenset[int](),
+        frozenset({1, 2}),
+        (),
+        (None, 7),
+    ),
 )
 def test_native_has_value_optional_operands(
     lib: Library, payload: Expr, python_reference: bool
@@ -1118,7 +1129,9 @@ def test_native_has_value_optional_operands(
     store.choose(source, payload)
     store.define(
         result,
-        Operation(Operator.python_eval, (Python("lambda value: value is not None"), source))
+        Operation(
+            Operator.python_eval, (Python("lambda value: value is not None"), source)
+        )
         if python_reference
         else Operation(Operator.has_value, (source,)),
     )
@@ -1157,7 +1170,7 @@ def test_native_has_value_grounds_two_rules_for_nullable_sets(
     }
     assert len(result_literals) == 2
     control.write_aspif(preprocess=False)
-    result_rules = []
+    result_rules: list[str] = []
     for line in control.buffer.splitlines():
         fields = line.split()
         if fields[0] == "1":
@@ -1326,8 +1339,8 @@ def test_computed_tuple_slot_grounding_growth_is_linear(lib: Library) -> None:
         ((frozenset({True}),), (frozenset({1}),), False),
         ((frozenset({1}),), (frozenset({1.0}),), True),
         ((), (), True),
-        ((frozenset(),), (), False),
-        ((frozenset(),), (frozenset(),), True),
+        ((frozenset[int](),), (), False),
+        ((frozenset[int](),), (frozenset[int](),), True),
         ((1, frozenset({2})), (1.0, frozenset({2.0})), True),
     ),
 )
@@ -1386,6 +1399,7 @@ def test_tuple_callback_rows_preserve_exact_representations(
     for model in present:
         expected = model["source"]
         scalar = next(iter(expected)) if isinstance(expected, frozenset) else expected
+        assert isinstance(scalar, str)
         name = {"integer": "int", "real": "float", "boolean": "bool"}[
             scalar.partition("(")[0]
         ]
@@ -1484,8 +1498,8 @@ def test_tuple_equality_aspif_growth_is_linear(
         ((1,), (1, 2), False),
         (frozenset({1}), 1, False),
         (1, frozenset({1}), False),
-        (frozenset(), frozenset(), True),
-        (frozenset(), frozenset({1.0}), False),
+        (frozenset[int](), frozenset[int](), True),
+        (frozenset[int](), frozenset({1.0}), False),
         (frozenset({1}), frozenset({1.0}), True),
         (frozenset({1.0}), frozenset({1}), True),
         (frozenset({0}), frozenset({-0.0}), True),
@@ -1567,51 +1581,53 @@ def test_native_equality_grounding_is_linear(
     assert 0 < sizes[0] < sizes[1] <= 2 * sizes[0]
 
 
-@pytest.mark.parametrize(
-    "expression, reference",
+type _SetInputReference = Callable[[frozenset[int]], str | frozenset[str]]
+
+_SET_INPUT_ROWS: tuple[tuple[Expr, _SetInputReference], ...] = (
     (
-        (
-            Operation(Operator.cardinality, (VariableRef("s"),)),
-            lambda items: f"integer({len(items)})",
-        ),
-        (
-            Operation(Operator.length, (VariableRef("s"),)),
-            lambda items: f"integer({len(items)})",
-        ),
-        (
-            Operation(Operator.union, (VariableRef("s"), frozenset({2, 3}))),
-            lambda items: frozenset(f"integer({item})" for item in items | {2, 3}),
-        ),
-        (
-            Operation(Operator.inter, (VariableRef("s"), frozenset({2, 3}))),
-            lambda items: frozenset(f"integer({item})" for item in items & {2, 3}),
-        ),
-        (
-            Operation(Operator.diff, (VariableRef("s"), frozenset({2, 3}))),
-            lambda items: frozenset(f"integer({item})" for item in items - {2, 3}),
-        ),
-        (
-            Operation(Operator.subset, (VariableRef("s"), frozenset({2, 3}))),
-            lambda items: f"boolean({str(items <= {2, 3}).lower()})",
-        ),
-        (
-            Operation(Operator.eq, (VariableRef("s"), frozenset({2}))),
-            lambda items: f"boolean({str(items == {2}).lower()})",
-        ),
-        (
-            Operation(Operator.neq, (VariableRef("s"), frozenset({2}))),
-            lambda items: f"boolean({str(items != {2}).lower()})",
-        ),
-        (
-            Operation(Operator.set_isin, (2, VariableRef("s"))),
-            lambda items: f"boolean({str(2 in items).lower()})",
-        ),
-        (
-            Operation(Operator.set_notin, (2, VariableRef("s"))),
-            lambda items: f"boolean({str(2 not in items).lower()})",
-        ),
+        Operation(Operator.cardinality, (VariableRef("s"),)),
+        lambda items: f"integer({len(items)})",
+    ),
+    (
+        Operation(Operator.length, (VariableRef("s"),)),
+        lambda items: f"integer({len(items)})",
+    ),
+    (
+        Operation(Operator.union, (VariableRef("s"), frozenset({2, 3}))),
+        lambda items: frozenset(f"integer({item})" for item in items | {2, 3}),
+    ),
+    (
+        Operation(Operator.inter, (VariableRef("s"), frozenset({2, 3}))),
+        lambda items: frozenset(f"integer({item})" for item in items & {2, 3}),
+    ),
+    (
+        Operation(Operator.diff, (VariableRef("s"), frozenset({2, 3}))),
+        lambda items: frozenset(f"integer({item})" for item in items - {2, 3}),
+    ),
+    (
+        Operation(Operator.subset, (VariableRef("s"), frozenset({2, 3}))),
+        lambda items: f"boolean({str(items <= {2, 3}).lower()})",
+    ),
+    (
+        Operation(Operator.eq, (VariableRef("s"), frozenset({2}))),
+        lambda items: f"boolean({str(items == frozenset({2})).lower()})",
+    ),
+    (
+        Operation(Operator.neq, (VariableRef("s"), frozenset({2}))),
+        lambda items: f"boolean({str(items != frozenset({2})).lower()})",
+    ),
+    (
+        Operation(Operator.set_isin, (2, VariableRef("s"))),
+        lambda items: f"boolean({str(2 in items).lower()})",
+    ),
+    (
+        Operation(Operator.set_notin, (2, VariableRef("s"))),
+        lambda items: f"boolean({str(2 not in items).lower()})",
     ),
 )
+
+
+@pytest.mark.parametrize("expression, reference", _SET_INPUT_ROWS)
 def test_native_set_input_rows(
     lib: Library,
     expression: Expr,
@@ -1641,28 +1657,32 @@ def test_native_set_input_rows(
         assert model["result"] == reference(inputs)
 
 
-@pytest.mark.parametrize(
-    "operation, reference",
-    (
-        (Operator.union, operator.or_),
-        (Operator.inter, operator.and_),
-        (Operator.diff, operator.sub),
-        (Operator.subset, operator.le),
-        (Operator.eq, operator.eq),
-        (Operator.neq, operator.ne),
-    ),
+type _SetOperationReference = Callable[
+    [frozenset[str], frozenset[str]], frozenset[str] | bool
+]
+
+_SET_OPERATION_ROWS: tuple[tuple[Operator, _SetOperationReference], ...] = (
+    (Operator.union, lambda left, right: left | right),
+    (Operator.inter, lambda left, right: left & right),
+    (Operator.diff, lambda left, right: left - right),
+    (Operator.subset, lambda left, right: left <= right),
+    (Operator.eq, lambda left, right: left == right),
+    (Operator.neq, lambda left, right: left != right),
 )
+
+
+@pytest.mark.parametrize("operation, reference", _SET_OPERATION_ROWS)
 def test_native_set_optional_operands(
     lib: Library,
     operation: Operator,
-    reference: Callable[[frozenset[str], frozenset[str]], frozenset[str] | bool],
+    reference: _SetOperationReference,
 ) -> None:
     """Require both optional sets and compare whole sets rather than chosen members."""
     store = ConstraintStore()
     left, right, result = (VariableRef(name) for name in ("left", "right", "result"))
     for variable, choices in (
-        (left, (frozenset(), frozenset({1}), frozenset({1, 2}))),
-        (right, (frozenset(), frozenset({2}), frozenset({1, 2}), frozenset({3}))),
+        (left, (frozenset[int](), frozenset({1}), frozenset({1, 2}))),
+        (right, (frozenset[int](), frozenset({2}), frozenset({1, 2}), frozenset({3}))),
     ):
         store.choose_from_iterator(variable, choices)
     store.define(result, Operation(operation, (left, right)))
@@ -1807,7 +1827,7 @@ def test_complex_set_universe_shared_between_rows(
     """Share argument universes without changing scalar, empty, or set row facts."""
     store = ConstraintStore()
     source, offset = VariableRef("source"), VariableRef("offset")
-    members = set() if kind == "empty" else {1, 2}
+    members: set[int] = set() if kind == "empty" else {1, 2}
     values: list[int | frozenset[int]] = [frozenset(), frozenset(members)]
     if kind == "implicit":
         store.set_contain_choose_from_iterator(source, sorted(members))
@@ -1936,7 +1956,7 @@ def test_native_set_choices(lib: Library) -> None:
     assert len(models) == 4
     assert {frozenset(model.items()) for model in models} == {
         frozenset(),
-        frozenset({("s", frozenset()), ("size", "integer(0)")}),
+        frozenset({("s", frozenset[str]()), ("size", "integer(0)")}),
         frozenset({("s", frozenset({"integer(1)"})), ("size", "integer(1)")}),
         frozenset(
             {("s", frozenset({"integer(1)", "integer(2)"})), ("size", "integer(2)")}
@@ -2005,7 +2025,7 @@ def test_complex_set_and_scalar_output_rows(lib: Library) -> None:
     assert len(models) == 3
     assert {frozenset(model.items()) for model in models} == {
         frozenset(),
-        frozenset({("flag", "boolean(true)"), ("result", frozenset())}),
+        frozenset({("flag", "boolean(true)"), ("result", frozenset[str]())}),
         frozenset({("flag", "boolean(false)"), ("result", "integer(7)")}),
     }
 

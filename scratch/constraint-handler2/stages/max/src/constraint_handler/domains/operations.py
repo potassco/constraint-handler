@@ -24,11 +24,15 @@ DOMAIN_HANDLERS: dict[Operator, DomainHandler] = {
 class DomainOperationEvaluator:
     """Dispatch value operators to families sharing one evaluation context."""
 
-    def __init__(self, diagnostics: Diagnostics, threshold: int, boolean_threshold: int) -> None:
+    def __init__(
+        self, diagnostics: Diagnostics, threshold: int, boolean_threshold: int
+    ) -> None:
         """Retain diagnostics and enumeration limits without expression state."""
         self._context = EvaluationContext(diagnostics, threshold, boolean_threshold)
 
-    def evaluate(self, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
+    def evaluate(
+        self, op: Operator, doms: list[Domain], location: ExpressionLocation
+    ) -> Domain:
         """Evaluate a value operator using its registered family handler."""
         handler = DOMAIN_HANDLERS.get(op)
         if handler is None:
@@ -74,4 +78,6 @@ class DomainOperationEvaluator:
         location: ExpressionLocation,
     ) -> Domain:
         """Evaluate a linear combination after the coordinator resolves its terms."""
-        return arithmetic.linear_integer(self._context, coeffs, term_doms, offset, location)
+        return arithmetic.linear_integer(
+            self._context, coeffs, term_doms, offset, location
+        )

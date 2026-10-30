@@ -61,7 +61,7 @@ from constraint_handler.util import compute_evaluation_order
 
 @pytest.mark.parametrize("alternatives", [(1, 1.0), (True, 1)])
 def test_factored_tuple_domains_preserve_exact_alternatives(
-    alternatives: tuple[Expr, ...],
+    alternatives: tuple[SetValue, ...],
 ) -> None:
     """Retain representation-distinct tuple axes even at threshold one."""
     store = ConstraintStore()
@@ -72,7 +72,7 @@ def test_factored_tuple_domains_preserve_exact_alternatives(
     domains = _domains_for(store, threshold=1)
     assert domains[result].tuple_domains
     assert {representation_key(value) for value in domains[result].iter_values()} == {
-        representation_key((value, frozenset())) for value in alternatives
+        representation_key((value, frozenset[SetValue]())) for value in alternatives
     }
 
 
@@ -82,8 +82,8 @@ def test_factored_tuple_domains_preserve_exact_alternatives(
     [
         ((-(10**12), 10**12), frozenset({7}), 2),
         ((0, 0), frozenset({7}), 0),
-        ((1, 10**12), frozenset(), 2),
-        ((-(10**12), -1), frozenset(), 2),
+        ((1, 10**12), frozenset[int](), 2),
+        ((-(10**12), -1), frozenset[int](), 2),
     ],
 )
 def test_tuple_projection_does_not_enumerate_indices(
@@ -104,7 +104,7 @@ def test_tuple_projection_does_not_enumerate_indices(
     with patch.object(
         Domain, "iter_ints", side_effect=AssertionError("index enumeration")
     ):
-        result = conversions._eval_tuple_get(
+        result = conversions.eval_tuple_get(
             context, Operator.tuple_get, [source, indices], ExpressionLocation(0, ())
         )
     assert result == Domain(ints=expected)
@@ -814,7 +814,9 @@ def test_compound_domain_collisions() -> None:
     """Retain all exact tuple alternatives despite Python equality collisions."""
     expected = domain_from_values(((True,), (1,), (1.0,)))
     assert expected.cardinality() == 3
-    assert {type(value[0]) for value in expected.iter_values()} == {bool, int, float}
+    assert {
+        type(value[0]) for value in expected.iter_values() if isinstance(value, tuple)
+    } == {bool, int, float}
     assert (
         join_domains(domain_from_values((value,)) for value in ((True,), (1,), (1.0,)))
         == expected

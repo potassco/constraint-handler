@@ -19,7 +19,9 @@ from .internal_input import (
 )
 
 
-def free_variables(expr: OperationArg, bound: frozenset[VariableRef] = frozenset()) -> frozenset[VariableRef]:
+def free_variables(
+    expr: OperationArg, bound: frozenset[VariableRef] = frozenset()
+) -> frozenset[VariableRef]:
     """Return all free VariableRefs read by an expression or operation argument."""
     match expr:
         case ValueDef() | Python():
@@ -27,7 +29,9 @@ def free_variables(expr: OperationArg, bound: frozenset[VariableRef] = frozenset
         case VariableRef():
             return frozenset() if expr in bound else frozenset({expr})
         case frozenset() | tuple():
-            return frozenset(var for item in expr for var in free_variables(item, bound))
+            return frozenset(
+                var for item in expr for var in free_variables(item, bound)
+            )
         case Lambda(params, body):
             return free_variables(body, bound | frozenset(params))
         case Operation(_, args):
@@ -35,7 +39,9 @@ def free_variables(expr: OperationArg, bound: frozenset[VariableRef] = frozenset
     assert_never(expr)
 
 
-def defining_expr_ids_for_variable(store: ConstraintStore, var: VariableRef) -> tuple[ExprId, ...]:
+def defining_expr_ids_for_variable(
+    store: ConstraintStore, var: VariableRef
+) -> tuple[ExprId, ...]:
     """Collect all value expression IDs that define a scalar or set variable."""
     ids: list[ExprId] = []
     if var in store.variables:
@@ -76,7 +82,9 @@ class EvaluationOrder:
             yield expr_id, tuple(ready)
 
 
-def compute_evaluation_order(store: ConstraintStore, diagnostics: Diagnostics) -> EvaluationOrder:
+def compute_evaluation_order(
+    store: ConstraintStore, diagnostics: Diagnostics
+) -> EvaluationOrder:
     """Order expressions with graphlib.TopologicalSorter and report undefined or cyclic dependencies."""
     defined_vars = {
         var: defs

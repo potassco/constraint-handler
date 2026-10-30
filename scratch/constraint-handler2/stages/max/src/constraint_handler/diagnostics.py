@@ -45,7 +45,9 @@ class Diagnostics:
         location: ExpressionLocation | None = None,
     ) -> None:
         """Append a warning diagnostic."""
-        self.items.append(Diagnostic(DiagnosticSeverity.warning, message, variable, location))
+        self.items.append(
+            Diagnostic(DiagnosticSeverity.warning, message, variable, location)
+        )
 
     def error(
         self,
@@ -55,17 +57,23 @@ class Diagnostics:
         location: ExpressionLocation | None = None,
     ) -> None:
         """Append an error diagnostic."""
-        self.items.append(Diagnostic(DiagnosticSeverity.error, message, variable, location))
+        self.items.append(
+            Diagnostic(DiagnosticSeverity.error, message, variable, location)
+        )
 
     @property
     def warnings(self) -> tuple[Diagnostic, ...]:
         """Return all collected warning diagnostics."""
-        return tuple(item for item in self.items if item.severity == DiagnosticSeverity.warning)
+        return tuple(
+            item for item in self.items if item.severity == DiagnosticSeverity.warning
+        )
 
     @property
     def errors(self) -> tuple[Diagnostic, ...]:
         """Return all collected error diagnostics."""
-        return tuple(item for item in self.items if item.severity == DiagnosticSeverity.error)
+        return tuple(
+            item for item in self.items if item.severity == DiagnosticSeverity.error
+        )
 
     @property
     def has_errors(self) -> bool:

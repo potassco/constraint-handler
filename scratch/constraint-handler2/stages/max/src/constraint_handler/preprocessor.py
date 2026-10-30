@@ -62,7 +62,7 @@ class PreparedProblem:
     static_types: StaticTypeStore
     domains: DomainStore
     engines: DispatchStore
-    python_context: Mapping[str, object] = field(default_factory=dict)
+    python_context: Mapping[str, object] = field(default_factory=dict[str, object])
 
     @property
     def asp_facts(self) -> tuple[Symbol, ...]:

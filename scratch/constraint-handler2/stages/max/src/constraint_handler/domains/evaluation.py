@@ -18,7 +18,9 @@ class EnumerationDecision(Enum):
     ENUMERABLE = auto()
 
 
-def bounded_product_decision(domains: Sequence[Domain], threshold: int) -> EnumerationDecision:
+def bounded_product_decision(
+    domains: Sequence[Domain], threshold: int
+) -> EnumerationDecision:
     """Check whole-domain counts, with unknown before empty and nullary size one."""
     counts = [domain.cardinality() for domain in domains]
     if any(count is None for count in counts):
@@ -45,4 +47,6 @@ class EvaluationContext:
     boolean_threshold: int
 
 
-type DomainHandler = Callable[[EvaluationContext, Operator, list[Domain], ExpressionLocation], Domain]
+type DomainHandler = Callable[
+    [EvaluationContext, Operator, list[Domain], ExpressionLocation], Domain
+]

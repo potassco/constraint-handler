@@ -17,7 +17,12 @@ from .values import (
 )
 
 
-def _eval_conj(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
+def _eval_conj(
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
+) -> Domain:
     """Compute domain for Operation(Conj, [x1, ..., xn])."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
@@ -29,7 +34,12 @@ def _eval_conj(context: EvaluationContext, op: Operator, doms: list[Domain], loc
     return Domain(bools=frozenset(res))
 
 
-def _eval_disj(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
+def _eval_disj(
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
+) -> Domain:
     """Compute domain for Operation(Disj, [x1, ..., xn])."""
     if any(d.unknown for d in doms):
         return TRUE_FALSE_DOMAIN
@@ -42,7 +52,10 @@ def _eval_disj(context: EvaluationContext, op: Operator, doms: list[Domain], loc
 
 
 def _eval_get_or_else(
-    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
 ) -> Domain:
     """Compute domain for Operation(GetOrElse, [x, y])."""
     if len(doms) != 2:
@@ -60,10 +73,17 @@ def _eval_get_or_else(
     return join_domains((dx_without_none, dy), context.threshold)
 
 
-def _eval_if(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
+def _eval_if(
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
+) -> Domain:
     """Compute domain for Operation(If, [c, x])."""
     if len(doms) != 2:
-        context.diagnostics.error(f"if_ expects 2 arguments, got {len(doms)}", location=location)
+        context.diagnostics.error(
+            f"if_ expects 2 arguments, got {len(doms)}", location=location
+        )
         return UNKNOWN_DOMAIN
     dc, dx = doms
     if dc.unknown or dx.unknown:
@@ -75,10 +95,17 @@ def _eval_if(context: EvaluationContext, op: Operator, doms: list[Domain], locat
     return dx
 
 
-def _eval_ite(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
+def _eval_ite(
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
+) -> Domain:
     """Compute domain for Operation(Ite, [c, x, y])."""
     if len(doms) != 3:
-        context.diagnostics.error(f"ite expects 3 arguments, got {len(doms)}", location=location)
+        context.diagnostics.error(
+            f"ite expects 3 arguments, got {len(doms)}", location=location
+        )
         return UNKNOWN_DOMAIN
     dc, dx, dy = doms
     if dc.unknown or dx.unknown or dy.unknown:
@@ -91,7 +118,10 @@ def _eval_ite(context: EvaluationContext, op: Operator, doms: list[Domain], loca
 
 
 def _eval_logic_ops(
-    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
 ) -> Domain:
     """Compute domain for boolean and three-valued logic operators."""
     if any(d.unknown for d in doms):
@@ -143,7 +173,9 @@ def _eval_logic_ops(
                 )
                 return UNKNOWN_DOMAIN
             dx, dy = doms
-            return Domain(bools=frozenset((not a) or b for a, b in product(dx.bools, dy.bools)))
+            return Domain(
+                bools=frozenset((not a) or b for a, b in product(dx.bools, dy.bools))
+            )
         case Operator.lxor | Operator.leqv:
             if any(
                 d.int_count()
@@ -173,7 +205,10 @@ def _eval_logic_ops(
 
 
 def _eval_has_value(
-    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
 ) -> Domain:
     """Compute whether a value can be present or absent."""
     if len(doms) != 1:

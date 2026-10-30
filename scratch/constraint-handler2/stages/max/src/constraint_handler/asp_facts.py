@@ -1,7 +1,7 @@
 """Build a ground ASP fact base from a dispatched constraint store."""
 
 import math
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from itertools import pairwise, product
 from typing import assert_never, cast
 
@@ -20,7 +20,7 @@ from .internal_input import (
     ValueDef,
     ValueType,
     Variable,
-    _convert_expression,
+    convert_expression,
 )
 from .python_conversion import compile_python
 from .python_input import FailIntegrityExn, Operator, Python, VariableRef
@@ -108,7 +108,7 @@ def _payload_facts(
         if isinstance(value, tuple)
         else Function(lib, "set")
         if isinstance(value, frozenset)
-        else _term(lib, _convert_expression(value))
+        else _term(lib, convert_expression(value))
     )
     yield Function(lib, "value", [subject, marker])
     if isinstance(value, tuple):
@@ -118,7 +118,7 @@ def _payload_facts(
                 lib, Function(lib, "__tuple", [subject, _number(lib, index)]), item
             )
     elif isinstance(value, frozenset):
-        for member in sorted(_term(lib, _convert_expression(item)) for item in value):
+        for member in sorted(_term(lib, convert_expression(item)) for item in value):
             yield Function(lib, "set_value", [subject, member])
 
 
@@ -143,7 +143,7 @@ def _complex_facts(
             and isinstance(expr.args[0], Python)
         ):
             raise TypeError("complex evaluation requires a converted Python call")
-        arguments = cast(tuple[OperationArg, ...], expr.args[1:])
+        arguments = expr.args[1:]
         argument_domains = [domains[cast(Expr, arg)] for arg in arguments]
         if any(domain.unknown for domain in argument_domains):
             raise ValueError("complex evaluation requires known input domains")
@@ -162,7 +162,7 @@ def _complex_facts(
         key = (expr.args[0].fn, tuple(argument_domains))
         rows = domains.python_tables.get(key) if same_context else None
         if rows is None:
-            callback: object = eval(
+            callback: Callable[..., object] = eval(
                 compile_python(expr.args[0].fn), {"math": math, **python_context}
             )
             if not callable(callback):
@@ -176,7 +176,7 @@ def _complex_facts(
                 except ArithmeticError, LookupError, TypeError, ValueError:
                     continue
                 if isinstance(result, set):
-                    result = frozenset(result)
+                    result = frozenset(cast(set[object], result))
                 if not is_domain_value(result):
                     raise TypeError(
                         f"unsupported Python result type: {type(result).__name__}"
@@ -220,19 +220,20 @@ def _complex_facts(
                         )
                     )
                     included = {
-                        _term(lib, _convert_expression(member)) for member in item
+                        _term(lib, convert_expression(member)) for member in item
                     }
                     key = (index, position)
                     if key not in set_universes:
-                        candidates = (
-                            alternative if position is None else alternative[position]
-                            for alternative in axes[index]
-                            if position is None
-                            or isinstance(alternative, tuple)
-                            and position < len(alternative)
-                        )
+                        candidates: list[DomainValue] = []
+                        for alternative in axes[index]:
+                            if position is None:
+                                candidates.append(alternative)
+                            elif isinstance(alternative, tuple) and position < len(
+                                alternative
+                            ):
+                                candidates.append(alternative[position])
                         set_universes[key] = frozenset(
-                            _term(lib, _convert_expression(member))
+                            _term(lib, convert_expression(member))
                             for candidate in candidates
                             if isinstance(candidate, frozenset)
                             for member in candidate
@@ -484,7 +485,9 @@ def asp_facts(
                     if baseline is not None and minimum is not None
                     else None
                 )
-            if (comparison or len(pairs) != 1 or expr_id in objectives) and baseline is not None:
+            if (
+                comparison or len(pairs) != 1 or expr_id in objectives
+            ) and baseline is not None:
                 facts.append(
                     Function(
                         lib,

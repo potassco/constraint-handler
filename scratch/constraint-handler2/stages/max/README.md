@@ -104,14 +104,20 @@ Register external functions or namespace objects before preprocessing:
 
 ```python
 from constraint_handler import (
-	ConstraintStore, Operation, Operator, PreprocessOptions, Preprocessor,
-	Python, SolveOptions, VariableRef,
+    ConstraintStore,
+    Operation,
+    Operator,
+    PreprocessOptions,
+    Preprocessor,
+    Python,
+    SolveOptions,
+    VariableRef,
 )
 
 store = ConstraintStore()
 store.define(
-	VariableRef("result"),
-	Operation(Operator.python_eval, (Python("lambda value: external_abs(value)"), -3)),
+    VariableRef("result"),
+    Operation(Operator.python_eval, (Python("lambda value: external_abs(value)"), -3)),
 )
 preprocessor = Preprocessor(PreprocessOptions())
 preprocessor.add_context("external_abs", abs)

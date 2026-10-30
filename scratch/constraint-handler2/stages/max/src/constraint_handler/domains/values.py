@@ -227,7 +227,10 @@ class Domain:
         yield from self.tuples
         yielded_tuples = {representation_key(value) for value in self.tuples}
         for positions in self.tuple_domains:
-            for value in product(*(position.iter_values() for position in positions)):
+            for value in cast(
+                Iterator[TupleValue],
+                product(*(position.iter_values() for position in positions)),
+            ):
                 key = representation_key(value)
                 if key not in yielded_tuples:
                     yielded_tuples.add(key)
@@ -319,7 +322,7 @@ def has_value_collisions(values: Iterable[DomainValue]) -> bool:
     return False
 
 
-def _is_set_value(value: object) -> TypeIs[SetValue]:
+def is_set_value(value: object) -> TypeIs[SetValue]:
     """Recognize scalar members of flat sets."""
     return value is None or type(value) in (bool, int, float, str)
 
@@ -327,17 +330,19 @@ def _is_set_value(value: object) -> TypeIs[SetValue]:
 def is_domain_value(value: object) -> TypeIs[DomainValue]:
     """Recognize supported values without silently discarding Python results."""
     return (
-        _is_set_value(value)
+        is_set_value(value)
         or (
             isinstance(value, frozenset)
-            and all(_is_set_value(item) for item in cast(frozenset[object], value))
+            and all(is_set_value(item) for item in cast(frozenset[object], value))
         )
         or (
             isinstance(value, tuple)
             and all(
-                _is_set_value(item)
+                is_set_value(item)
                 or isinstance(item, frozenset)
-                and all(_is_set_value(member) for member in item)
+                and all(
+                    is_set_value(member) for member in cast(frozenset[object], item)
+                )
                 for item in cast(tuple[object, ...], value)
             )
         )

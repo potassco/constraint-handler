@@ -30,14 +30,16 @@ from constraint_handler.domains import (
     DomainStore,
     compute_domains,
 )
+from constraint_handler.internal_input import Expr as InternalExpr
 from constraint_handler.internal_input import Lambda as InternalLambda
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueDef, ValueType
 from constraint_handler.python_conversion import convert
 from constraint_handler.splitting import (
     DEFAULT_SUBSET_LIMIT,
+    Cost,
     GroundingCost,
-    _Splitter,
+    Splitter,
     split,
 )
 from constraint_handler.static_types import (
@@ -47,6 +49,13 @@ from constraint_handler.static_types import (
     compute_static_types,
 )
 from constraint_handler.util import compute_evaluation_order
+
+
+def _unsplit_plan(
+    splitter: Splitter, expression: InternalExpr
+) -> tuple[tuple[int, ...], Cost]:
+    """Keep the whole expression as one unit while still reporting its complexity."""
+    return (), splitter.complexity(expression)
 
 
 def _callback(call: object) -> Callable[..., object]:
@@ -456,7 +465,7 @@ def test_recursive_plan_cost_matches_materialization(
     diagnostics = Diagnostics()
     order = compute_evaluation_order(store, diagnostics)
     root = store.expressions[store.constraints[0].expr]
-    splitter = _Splitter(store, domains, types, DEFAULT_SUBSET_LIMIT)
+    splitter = Splitter(store, domains, types, DEFAULT_SUBSET_LIMIT)
     assert splitter.complexity(root) == 1 << members
     plan = splitter.best_plan(root)
     assert plan == ((0,) if auxiliaries else (), expected_cost)
@@ -565,7 +574,7 @@ def test_recursive_splitting_preserves_complete_solution_sets(
                 value = not value
             if not value and not contradiction:
                 expected.add(frozenset(selected))
-    auxiliary_counts = []
+    auxiliary_counts: list[int] = []
     for recursive in (False, True):
         store = _membership_chain(len(members), depth, condition)
         if contradiction:
@@ -578,9 +587,9 @@ def test_recursive_splitting_preserves_complete_solution_sets(
         with monkeypatch.context() as context:
             if not recursive:
                 context.setattr(
-                    _Splitter,
+                    Splitter,
                     "best_plan",
-                    lambda splitter, expression: ((), splitter.complexity(expression)),
+                    _unsplit_plan,
                 )
             processor = Preprocessor(PreprocessOptions())
             processor.add(store)
@@ -664,9 +673,9 @@ def test_recursive_splitting_preserves_inactive_branch_models(
     with monkeypatch.context() as context:
         if not recursive:
             context.setattr(
-                _Splitter,
+                Splitter,
                 "best_plan",
-                lambda splitter, expression: ((), splitter.complexity(expression)),
+                _unsplit_plan,
             )
         processor = Preprocessor(PreprocessOptions())
         processor.add(store)
@@ -732,7 +741,7 @@ def test_recursive_children_in_all_or_nothing_fallback(subset_limit: int) -> Non
         root_id, InternalOperation(Operator.disj, (child, child, child))
     )
     domains, types = _metadata(store)
-    splitter = _Splitter(store, domains, types, subset_limit)
+    splitter = Splitter(store, domains, types, subset_limit)
     root = store.expressions[root_id]
     assert splitter.best_plan(root) == ((0, 1, 2), 22)
     assert len(splitter.plans) == 4

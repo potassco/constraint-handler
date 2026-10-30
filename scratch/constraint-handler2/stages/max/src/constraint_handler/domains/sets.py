@@ -21,6 +21,7 @@ from .values import (
     SetValue,
     domain_from_values,
     has_value_collisions,
+    is_set_value,
     join_domains,
     value_key,
 )
@@ -35,7 +36,9 @@ def _select_members(
     members: Iterable[SetValue], keys: frozenset[object], *, exclude: bool = False
 ) -> frozenset[SetValue]:
     """Select intersection or difference members against a precomputed index."""
-    return frozenset(member for member in members if (value_key(member) in keys) != exclude)
+    return frozenset(
+        member for member in members if (value_key(member) in keys) != exclude
+    )
 
 
 def _checked_members(members: Iterable[SetValue]) -> frozenset[SetValue] | None:
@@ -47,7 +50,10 @@ def _checked_members(members: Iterable[SetValue]) -> frozenset[SetValue] | None:
 
 
 def _eval_set_domains(
-    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
 ) -> Domain:
     """Construct sets from evaluated arguments without dropping invalid values."""
     if any(
@@ -73,8 +79,10 @@ def _eval_set_domains(
         for d in doms:
             vals: list[SetValue] = []
             for v in d.iter_values():
-                if isinstance(v, frozenset):
-                    context.diagnostics.error("Nested sets are not supported", location=location)
+                if not is_set_value(v):
+                    context.diagnostics.error(
+                        "Nested sets are not supported", location=location
+                    )
                     return UNKNOWN_DOMAIN
                 vals.append(v)
             value_lists.append(vals)
@@ -94,7 +102,7 @@ def _eval_set_domains(
         return UNKNOWN_DOMAIN
     all_scalars: list[SetValue] = []
     for v in merged.iter_values():
-        if isinstance(v, frozenset):
+        if not is_set_value(v):
             return UNKNOWN_DOMAIN
         all_scalars.append(v)
     members = _checked_members(all_scalars)
@@ -107,7 +115,12 @@ def _eval_set_domains(
     return Domain(implicit_set_elements=members)
 
 
-def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
+def _eval_set_ops(
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
+) -> Domain:
     """Compute domain for set operations."""
     if any(d.unknown for d in doms):
         if op in (Operator.set_isin, Operator.set_notin, Operator.subset):
@@ -135,9 +148,16 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
                 )
                 return UNKNOWN_DOMAIN
             dx, ds = doms
-            if bounded_product_decision(doms, context.boolean_threshold) == EnumerationDecision.ENUMERABLE:
+            if (
+                bounded_product_decision(doms, context.boolean_threshold)
+                == EnumerationDecision.ENUMERABLE
+            ):
                 bools: set[bool] = set()
-                sets = [_member_keys(s) for s in ds.iter_values() if isinstance(s, frozenset)]
+                sets = [
+                    _member_keys(s)
+                    for s in ds.iter_values()
+                    if isinstance(s, frozenset)
+                ]
                 scalars = [v for v in dx.iter_values() if not isinstance(v, frozenset)]
                 scalar_keys = [value_key(value) for value in scalars]
                 for key, keys in product(scalar_keys, sets):
@@ -154,7 +174,10 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
                 )
                 return UNKNOWN_DOMAIN
             da, db = doms
-            if bounded_product_decision(doms, context.threshold) == EnumerationDecision.ENUMERABLE:
+            if (
+                bounded_product_decision(doms, context.threshold)
+                == EnumerationDecision.ENUMERABLE
+            ):
                 sets_a = [s for s in da.iter_values() if isinstance(s, frozenset)]
                 sets_b = [s for s in db.iter_values() if isinstance(s, frozenset)]
                 res_sets: list[frozenset[SetValue]] = []
@@ -204,7 +227,9 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
                     return UNKNOWN_DOMAIN
                 return Domain(implicit_set_elements=members)
             if op == Operator.inter:
-                return Domain(implicit_set_elements=_select_members(pa, _member_keys(pb)))
+                return Domain(
+                    implicit_set_elements=_select_members(pa, _member_keys(pb))
+                )
             return Domain(implicit_set_elements=pa)
 
         case Operator.subset:
@@ -215,10 +240,23 @@ def _eval_set_ops(context: EvaluationContext, op: Operator, doms: list[Domain], 
                 )
                 return UNKNOWN_DOMAIN
             da, db = doms
-            if bounded_product_decision(doms, context.boolean_threshold) == EnumerationDecision.ENUMERABLE:
-                sets_a = [_member_keys(s) for s in da.iter_values() if isinstance(s, frozenset)]
-                sets_b = [_member_keys(s) for s in db.iter_values() if isinstance(s, frozenset)]
-                return Domain(bools=frozenset(sa <= sb for sa, sb in product(sets_a, sets_b)))
+            if (
+                bounded_product_decision(doms, context.boolean_threshold)
+                == EnumerationDecision.ENUMERABLE
+            ):
+                sets_a = [
+                    _member_keys(s)
+                    for s in da.iter_values()
+                    if isinstance(s, frozenset)
+                ]
+                sets_b = [
+                    _member_keys(s)
+                    for s in db.iter_values()
+                    if isinstance(s, frozenset)
+                ]
+                return Domain(
+                    bools=frozenset(sa <= sb for sa, sb in product(sets_a, sets_b))
+                )
             return TRUE_FALSE_DOMAIN
 
         case _:  # pragma: no cover

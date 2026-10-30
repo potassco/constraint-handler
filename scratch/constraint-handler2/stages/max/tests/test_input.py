@@ -80,7 +80,9 @@ def test_documented_usage() -> None:
     store = ConstraintStore()
     name = VariableRef("x")
     store.choose_from_iterator(name, (1, 2), label="input")
-    store.define(VariableRef("y"), Operation(Operator.add, (name, 1)), label="definition")
+    store.define(
+        VariableRef("y"), Operation(Operator.add, (name, 1)), label="definition"
+    )
     store.ensure(Operation(Operator.eq, (name, 2)), "required")
     store.check(Operation(Operator.gt, (name, 9)), "diagnostic")
 
@@ -125,7 +127,9 @@ def test_choices_and_definitions_retain_conditions() -> None:
     assert store._expressions[defined.condition] == internal_input.Operation(
         Operator.eq, (VariableRef("y"), ValueDef(ValueType.integer, 1))
     )
-    assert store._expressions[unconditional.condition] == ValueDef(ValueType.boolean, True)
+    assert store._expressions[unconditional.condition] == ValueDef(
+        ValueType.boolean, True
+    )
 
 
 @pytest.mark.parametrize(
@@ -226,7 +230,9 @@ def test_recursive_collections_and_calls_are_not_evaluated() -> None:
         (
             internal_input.Lambda(
                 (name,),
-                internal_input.Operation(Operator.add, (name, ValueDef(ValueType.integer, 1))),
+                internal_input.Operation(
+                    Operator.add, (name, ValueDef(ValueType.integer, 1))
+                ),
             ),
             (
                 ValueDef(ValueType.boolean, True),
@@ -297,4 +303,6 @@ def test_set_variable_bases_and_assigns() -> None:
         Operator.eq, (VariableRef("x"), ValueDef(ValueType.integer, 1))
     )
     assert store._expressions[second_assign.value] == ValueDef(ValueType.integer, 4)
-    assert store._expressions[second_assign.condition] == ValueDef(ValueType.boolean, True)
+    assert store._expressions[second_assign.condition] == ValueDef(
+        ValueType.boolean, True
+    )

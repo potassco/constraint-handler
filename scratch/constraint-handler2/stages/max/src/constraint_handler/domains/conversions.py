@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterator
 from itertools import product
+from typing import cast
 
 from ..diagnostics import ExpressionLocation
 from ..python_input import Operator
@@ -12,6 +14,7 @@ from .values import (
     EMPTY_DOMAIN,
     UNKNOWN_DOMAIN,
     Domain,
+    TupleValue,
     domain_from_values,
     join_domains,
 )
@@ -36,13 +39,24 @@ def _eval_make_tuple(
         size *= domain.cardinality() or 0
     if size > context.threshold and doms:
         return Domain(tuple_domains=frozenset({tuple(doms)}))
-    return domain_from_values(product(*(domain.iter_values() for domain in doms)))
+    rows = cast(
+        Iterator[TupleValue],
+        product(*(domain.iter_values() for domain in doms)),
+    )
+    return domain_from_values(rows)
 
 
-def _eval_concat(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
+def _eval_concat(
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
+) -> Domain:
     """Compute domain for Operation(Concat, [x, y])."""
     if len(doms) != 2:
-        context.diagnostics.error(f"concat expects 2 arguments, got {len(doms)}", location=location)
+        context.diagnostics.error(
+            f"concat expects 2 arguments, got {len(doms)}", location=location
+        )
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -66,10 +80,17 @@ def _eval_concat(context: EvaluationContext, op: Operator, doms: list[Domain], l
     return Domain(strings=frozenset(a + b for a, b in product(dx.strings, dy.strings)))
 
 
-def _eval_length(context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation) -> Domain:
+def _eval_length(
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
+) -> Domain:
     """Compute domain for Operation(Length, [x])."""
     if len(doms) != 1:
-        context.diagnostics.error(f"length expects 1 argument, got {len(doms)}", location=location)
+        context.diagnostics.error(
+            f"length expects 1 argument, got {len(doms)}", location=location
+        )
         return UNKNOWN_DOMAIN
     dx = doms[0]
     if dx.unknown:
@@ -88,7 +109,7 @@ def _eval_length(context: EvaluationContext, op: Operator, doms: list[Domain], l
     return Domain(ints=frozenset(lengths))
 
 
-def _eval_tuple_get(
+def eval_tuple_get(
     context: EvaluationContext,
     op: Operator,
     doms: list[Domain],
@@ -137,7 +158,9 @@ def _eval_conversion(
 ) -> Domain:
     """Compute domains for numeric rounding and type conversions."""
     if len(doms) != 1:
-        context.diagnostics.error(f"{op} expects 1 argument, got {len(doms)}", location=location)
+        context.diagnostics.error(
+            f"{op} expects 1 argument, got {len(doms)}", location=location
+        )
         return UNKNOWN_DOMAIN
     dx = doms[0]
     if dx.unknown:
@@ -162,7 +185,9 @@ def _eval_conversion(
     if op == Operator.real_from_int:
         if dx.int_count() + len(dx.reals) > context.threshold:
             return UNKNOWN_DOMAIN
-        return Domain(reals=dx.reals | frozenset(float(value) for value in dx.iter_ints()))
+        return Domain(
+            reals=dx.reals | frozenset(float(value) for value in dx.iter_ints())
+        )
     return UNKNOWN_DOMAIN
 
 
@@ -170,7 +195,7 @@ HANDLERS: dict[Operator, DomainHandler] = {
     Operator.make_tuple: _eval_make_tuple,
     Operator.concat: _eval_concat,
     Operator.length: _eval_length,
-    Operator.tuple_get: _eval_tuple_get,
+    Operator.tuple_get: eval_tuple_get,
     Operator.real_from_int: _eval_conversion,
     Operator.floor: _eval_conversion,
     Operator.ceil: _eval_conversion,

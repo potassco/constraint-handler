@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Mapping
 from itertools import product
-from typing import assert_never
+from typing import assert_never, cast
 
 from ..analysis import (
     lambda_call,
@@ -43,6 +43,7 @@ from .values import (
     has_value_collisions,
     is_domain_value,
     is_finite_value,
+    is_set_value,
     join_domains,
 )
 
@@ -147,7 +148,7 @@ class _DomainComputer:
                 return
             scalars: list[SetValue] = []
             for val in combined_elems.iter_values():
-                if isinstance(val, frozenset):
+                if not is_set_value(val):
                     self._diagnostics.error(
                         f"Nested sets are not supported in set variable {var.name!r}",
                         variable=var,
@@ -327,7 +328,7 @@ class _DomainComputer:
                     pair_domain = domain_from_values(
                         (c_val, value)
                         for value in term_domain.iter_values()
-                        if not isinstance(value, frozenset)
+                        if is_set_value(value)
                     )
                 self._result.record(arg, pair_domain, scope=scope)
             else:
@@ -385,7 +386,7 @@ class _DomainComputer:
         try:
             if any(domain.has_nonfinite_values() for domain in arg_domains):
                 raise ValueError("non-finite real input")
-            callback: object = eval(
+            callback: Callable[..., object] = eval(
                 compile_python(args[0].fn), {"math": math, **self._python_context}
             )
             if not callable(callback):
@@ -402,7 +403,7 @@ class _DomainComputer:
                     )
                     continue
                 if isinstance(value, set):
-                    value = frozenset(value)
+                    value = frozenset(cast(set[object], value))
                 if not is_domain_value(value):
                     raise TypeError(
                         f"unsupported Python result type: {type(value).__name__}"

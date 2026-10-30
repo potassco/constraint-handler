@@ -316,7 +316,7 @@ def test_continue_on_errors_propagates_pipeline_failure(
         processor.preprocess()
 
 
-@pytest.mark.parametrize("payload", (None, False, 0, "", frozenset()))
+@pytest.mark.parametrize("payload", (None, False, 0, "", frozenset[int]()))
 def test_native_has_value_solver_loads_encoding(payload: Expr) -> None:
     """Load none.lp through the public solver and enforce the expected Boolean."""
     store = ConstraintStore()
@@ -336,7 +336,7 @@ def test_native_has_value_solver_loads_encoding(payload: Expr) -> None:
 @pytest.mark.parametrize("python_reference", (False, True))
 @pytest.mark.parametrize(
     "payload",
-    (7, 1.5, "text", True, None, (1, "text"), frozenset(), frozenset({1, 2})),
+    (7, 1.5, "text", True, None, (1, "text"), frozenset[int](), frozenset({1, 2})),
 )
 def test_native_if_optional_operands(payload: Expr, python_reference: bool) -> None:
     """Match Python tables for defined scalars/sets and absent optional operands."""

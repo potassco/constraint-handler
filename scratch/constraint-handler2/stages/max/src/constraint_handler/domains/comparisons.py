@@ -46,11 +46,16 @@ def _ordered_bounds(dom: Domain) -> tuple[float | int, float | int] | None:
 
 
 def _eval_equality(
-    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
 ) -> Domain:
     """Compute domain for eq and neq."""
     if len(doms) != 2:
-        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", location=location)
+        context.diagnostics.error(
+            f"{op} expects 2 arguments, got {len(doms)}", location=location
+        )
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
@@ -71,11 +76,16 @@ def _eval_equality(
 
 
 def _eval_comparison(
-    context: EvaluationContext, op: Operator, doms: list[Domain], location: ExpressionLocation
+    context: EvaluationContext,
+    op: Operator,
+    doms: list[Domain],
+    location: ExpressionLocation,
 ) -> Domain:
     """Compute domain for leq, lt, geq, gt."""
     if len(doms) != 2:
-        context.diagnostics.error(f"{op} expects 2 arguments, got {len(doms)}", location=location)
+        context.diagnostics.error(
+            f"{op} expects 2 arguments, got {len(doms)}", location=location
+        )
         return UNKNOWN_DOMAIN
     dx, dy = doms
     if dx.unknown or dy.unknown:
