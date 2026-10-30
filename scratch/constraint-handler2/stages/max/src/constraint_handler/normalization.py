@@ -101,13 +101,14 @@ class _Normalizer:
         for scope in scopes:
             alternatives: list[tuple[Type, ...]] = []
             for arg in arguments:
-                known = (
-                    UnknownType()
-                    if isinstance(arg, (Lambda, Python))
-                    else self._types.scoped_expressions.get((arg, scope), UnknownType())
-                    if scope
-                    else self._types.get(arg, UnknownType())
-                )
+                if isinstance(arg, (Lambda, Python)):
+                    known = UnknownType()
+                elif scope:
+                    known = self._types.scoped_expressions.get(
+                        (arg, scope), UnknownType()
+                    )
+                else:
+                    known = self._types.get(arg, UnknownType())
                 if isinstance(known, UnknownType) and self.is_numeric(
                     arg, frozenset({scope})
                 ):
