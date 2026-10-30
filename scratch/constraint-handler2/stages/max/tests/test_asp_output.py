@@ -1,7 +1,7 @@
 """Tests for lossless ground ASP fact generation."""
 
 import operator
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import replace
 from importlib.resources import files
 from itertools import combinations, pairwise
@@ -27,7 +27,7 @@ from constraint_handler import (
 from constraint_handler.asp_facts import asp_facts
 from constraint_handler.dispatching import DispatchStore
 from constraint_handler.domains import Domain, DomainStore
-from constraint_handler.domains.values import SetValue
+from constraint_handler.domains.values import DomainValue, SetValue
 from constraint_handler.internal_input import SetVariable
 from constraint_handler.python_input import Expr, OperationArg
 
@@ -1895,6 +1895,50 @@ def test_complex_set_universe_shared_between_rows(
             row += 1
     assert actual == expected
     assert not calls
+
+
+@pytest.mark.parametrize("warm_cache", (False, True))
+def test_complex_tuple_input_axis_enumerated_once(
+    lib: Library, monkeypatch: pytest.MonkeyPatch, warm_cache: bool
+) -> None:
+    """Reuse a tuple axis across set slots, retaining members from rejected rows."""
+    store = ConstraintStore()
+    source = VariableRef("source")
+    store.choose_from_iterator(
+        source,
+        (
+            (frozenset({1}), frozenset({2})),
+            (frozenset({3}), frozenset({4})),
+        ),
+    )
+    store.define(
+        VariableRef("result"),
+        Operation(
+            Operator.python_eval,
+            (Python("lambda items: 1 if 1 in items[0] else 1 // 0"), source),
+        ),
+    )
+    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add(store)
+    problem, diagnostics = preprocessor.preprocess()
+    assert not diagnostics.has_errors
+    if not warm_cache:
+        problem.domains.python_tables.clear()
+    original = Domain.iter_values
+    enumerations = 0
+
+    def counted_values(domain: Domain) -> Iterator[DomainValue]:
+        """Count enumeration of the source domain during fact generation."""
+        nonlocal enumerations
+        if domain is problem.domains[source]:
+            enumerations += 1
+        yield from original(domain)
+
+    monkeypatch.setattr(Domain, "iter_values", counted_values)
+    facts = set(map(str, asp_facts(lib, problem.store, problem.engines, problem.domains)))
+    assert enumerations == 1
+    assert 'set_input_exclude(0,__tuple(variable("source"),0),integer(3))' in facts
+    assert 'set_input_exclude(0,__tuple(variable("source"),1),integer(4))' in facts
 
 
 def test_complex_mixed_set_and_scalar_inputs(lib: Library) -> None:
