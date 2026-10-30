@@ -89,6 +89,9 @@ class ConstraintStore:
     def ensure(self, expr: Expr, label: str = LABEL_ANONYMOUS): ...
     def check(self, expr: Expr, label: str = LABEL_ANONYMOUS): ...
 
+    # Minimize a guarded integer expression; larger priorities are optimized first.
+    def minimize(self, expr: Expr, condition: Expr = True, priority: int = DEFAULT_PRIORITY, label: str = LABEL_ANONYMOUS): ...
+
 # Examples
 from python_input import Operation, Operator, VariableRef
 
@@ -115,6 +118,31 @@ store.set_contain_choose_from_iterator(VariableRef("s"), (1, 2))
 
 
 ```
+
+### Optimization Statements
+
+`DEFAULT_PRIORITY = 0`, matching Clingo's default optimization level. The
+objective must be integer-valued (not real or Boolean), and the condition must
+be Boolean. Any Boolean expression can serve as the condition. Integer constants
+are valid objectives. Coefficients belong inside the expression, for example
+`store.minimize(Operation(Operator.add, (Operation(Operator.mult, (3, x)), 5)))`.
+There is no separate weight. To maximize an expression, minimize its `minus`.
+
+Each statement contributes its expression's value only when the condition is
+defined and true and the whole expression is defined; otherwise it contributes
+zero, including its constant offset. Undefined objectives are silently ignored,
+not reported as modeling errors. This means absence of a value in a model;
+undeclared variable references still produce ordinary preprocessing diagnostics.
+Statements at equal priority sum, including duplicate statements. Higher
+priorities are optimized first, lexicographically. Negative priorities and
+coefficients are allowed. Optimization restricts returned models to optima.
+
+Objectives require known finite integer domains and native order encoding after
+ordinary cost-based splitting. Unknown/infinite domains and objectives assigned
+to the complex or propagator engine produce diagnostics. Conditions retain
+ordinary dispatch behavior. The current backend rejects integer literals,
+priorities, and encoded bases outside signed 32-bit range; optimization does not
+introduce overflow handling or unbounded integer support.
 
 ### Expressions
 

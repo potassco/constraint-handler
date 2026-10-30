@@ -268,6 +268,19 @@ class _StaticTypeComputer:
             if var not in self._result:
                 self._result[var] = UnknownType()
 
+        for item in self._store.optimizations:
+            for expr_id, required, role in (
+                (item.expr, ValueType.integer, "expression"),
+                (item.condition, ValueType.boolean, "condition"),
+            ):
+                expr = self._store.expressions[expr_id]
+                kind = self._result.get(expr, UnknownType())
+                if not _is_subset_of_scalars(kind, frozenset({required})):
+                    self._diagnostics.error(
+                        f"Optimization {role} must be {required}",
+                        location=ExpressionLocation(expr_id, expr),
+                    )
+
         return self._result
 
     def _compute_variable_type(self, var: VariableRef) -> None:

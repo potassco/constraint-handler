@@ -2,6 +2,7 @@
 
 import operator
 from collections.abc import Callable
+from dataclasses import replace
 from importlib.resources import files
 from itertools import combinations, pairwise
 
@@ -37,6 +38,55 @@ def lib() -> Library:
     library = Library()
     enable_python(library)
     return library
+
+
+def test_optimization_facts_include_single_term_and_constant_bases() -> None:
+    """Export statement identities, single-term order gaps, and constant bases."""
+    store = ConstraintStore()
+    variable = VariableRef("objective")
+    store.choose_from_iterator(variable, (-3, 2, 8))
+    store.minimize(
+        Operation(Operator.add, (Operation(Operator.mult, (-2, variable)), 5)),
+        priority=3,
+    )
+    store.minimize(7)
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    first, second = problem.store.optimizations
+    facts = {str(fact) for fact in problem.asp_facts}
+    assert f"minimize_statement(0,{first.expr},{first.condition},3)" in facts
+    assert f"minimize_statement(1,{second.expr},{second.condition},0)" in facts
+    assert f"linear_integer_base({first.expr},11)" in facts
+    assert f"linear_integer_base({second.expr},7)" in facts
+    assert (
+        f'linear_integer_term({first.expr},0,integer(-2),variable("objective"))'
+        in facts
+    )
+    assert 'order_min(variable("objective"),-3)' in facts
+    assert 'order_next(variable("objective"),-3,2)' in facts
+    assert 'order_next(variable("objective"),2,8)' in facts
+
+
+def test_optimization_shared_expression_statements_do_not_collapse() -> None:
+    """Use statement identity even when expression ID, priority, and guard are shared."""
+    store = ConstraintStore()
+    variable = VariableRef("objective")
+    store.define(variable, -3)
+    store.minimize(Operation(Operator.add, (variable, 1)))
+    store.minimize(Operation(Operator.add, (variable, 1)))
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    first, second = problem.store.optimizations
+    problem.store.optimizations[1] = replace(
+        second, expr=first.expr, condition=first.condition
+    )
+    solver = problem.create_solver(SolveOptions())
+    assert solver.solve().satisfiable
+    assert solver.cost == (-4,)
 
 
 @pytest.mark.parametrize("values", ((3, 5), (-7, -2, 4, 23, 42)))

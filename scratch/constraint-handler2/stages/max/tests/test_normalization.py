@@ -4,12 +4,46 @@ import pytest
 
 from constraint_handler import ConstraintStore, Lambda, Operation, Operator, VariableRef
 from constraint_handler.diagnostics import Diagnostics
+from constraint_handler.internal_input import Constraint, ValueDef, ValueType
 from constraint_handler.internal_input import Lambda as InternalLambda
 from constraint_handler.internal_input import Operation as InternalOperation
-from constraint_handler.internal_input import ValueDef, ValueType
 from constraint_handler.normalization import normalize
 from constraint_handler.static_types import StaticTypeStore, compute_static_types
 from constraint_handler.util import compute_evaluation_order
+
+
+@pytest.mark.parametrize(
+    "expr", (5, VariableRef("x"), Operation(Operator.add, (VariableRef("x"), 5)))
+)
+def test_normalize_objectives_use_fresh_linear_roots(
+    expr: int | VariableRef | Operation,
+) -> None:
+    """Wrap each objective independently without replacing another role's shared root."""
+    store = ConstraintStore()
+    variable = VariableRef("x")
+    store.choose(variable, 2)
+    store.minimize(expr, priority=3, label="cost")
+    original = store.optimizations[0]
+    internal_constraint = Constraint(original.expr, True, "shared")
+    store.constraints.append(internal_constraint)
+    diagnostics = Diagnostics()
+    types = compute_static_types(
+        store, compute_evaluation_order(store, diagnostics), diagnostics
+    )
+    normalize(store, types)
+    objective = store.optimizations[0]
+    assert objective.expr != original.expr
+    assert store.constraints[0] == internal_constraint
+    assert (objective.condition, objective.priority, objective.label) == (
+        original.condition,
+        3,
+        "cost",
+    )
+    linear = store.expressions[objective.expr]
+    assert isinstance(linear, InternalOperation)
+    assert linear.op == Operator.linear_integer
+    assert linear.args[-1] == ValueDef(ValueType.integer, 5 if expr != variable else 0)
+    assert len(linear.args) == (1 if expr == 5 else 2)
 
 
 def test_normalize_linear_expression_preserves_store_ids() -> None:

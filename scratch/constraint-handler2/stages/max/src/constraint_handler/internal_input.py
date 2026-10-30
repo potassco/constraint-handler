@@ -7,7 +7,13 @@ from types import MappingProxyType
 from typing import ClassVar, assert_never
 
 from . import python_input
-from .python_input import LABEL_ANONYMOUS, Operator, Python, VariableRef
+from .python_input import (
+    DEFAULT_PRIORITY,
+    LABEL_ANONYMOUS,
+    Operator,
+    Python,
+    VariableRef,
+)
 
 
 class ValueType(StrEnum):
@@ -141,6 +147,16 @@ class Constraint:
     label: str
 
 
+@dataclass(frozen=True, slots=True)
+class Optimization:
+    """Reference a guarded integer objective with its priority and source label."""
+
+    expr: ExprId
+    condition: ExprId
+    priority: int
+    label: str
+
+
 def _convert_expression(expr: python_input.Expr) -> Expr:
     """Convert input recursively, preserving scalar types without evaluation."""
     match expr:
@@ -183,6 +199,7 @@ class ConstraintStore:
     variables: dict[VariableRef, Variable] = field(default_factory=dict[VariableRef, Variable], init=False)
     set_variables: dict[VariableRef, SetVariable] = field(default_factory=dict[VariableRef, SetVariable], init=False)
     constraints: list[Constraint] = field(default_factory=list[Constraint], init=False)
+    optimizations: list[Optimization] = field(default_factory=list[Optimization], init=False)
     _expressions: dict[ExprId, Expr] = field(default_factory=dict[ExprId, Expr], init=False)
 
     @property
@@ -348,6 +365,7 @@ class ConstraintStore:
                 defaults=list(set_variable.defaults),
             )
         clone.constraints.extend(self.constraints)
+        clone.optimizations.extend(self.optimizations)
         clone._expressions.update(self._expressions)
         return clone
 
@@ -382,6 +400,29 @@ class ConstraintStore:
                 for d in set_variable.defaults
             )
         self.constraints.extend(Constraint(id_map[c.expr], c.is_check, c.label) for c in other.constraints)
+        self.optimizations.extend(
+            Optimization(
+                id_map[item.expr], id_map[item.condition], item.priority, item.label
+            )
+            for item in other.optimizations
+        )
+
+    def minimize(
+        self,
+        expr: python_input.Expr,
+        condition: python_input.Expr = True,
+        priority: int = DEFAULT_PRIORITY,
+        label: str = LABEL_ANONYMOUS,
+    ) -> None:
+        """Minimize a guarded integer expression, with higher priorities optimized first."""
+        self.optimizations.append(
+            Optimization(
+                self._store_expression(expr),
+                self._store_expression(condition),
+                priority,
+                label,
+            )
+        )
 
     def __str__(self) -> str:
         """Group entries by category, one indented block per category."""
@@ -428,4 +469,14 @@ class ConstraintStore:
         text += "\nConstraints:\n"
         for c in self.constraints:
             text += f"  {'check' if c.is_check else 'ensure'} {self._expressions[c.expr]}\n"
+        if self.optimizations:
+            text += "\nOptimizations:\n"
+            for item in self.optimizations:
+                condition = self._expressions[item.condition]
+                guard = (
+                    ""
+                    if condition == ValueDef(ValueType.boolean, True)
+                    else f" if {condition}"
+                )
+                text += f"  minimize {self._expressions[item.expr]}{guard} (priority {item.priority})\n"
         return text.rstrip()

@@ -119,6 +119,16 @@ unknown operand cannot hide a known invalid operand. An empty tuple or set
 value is not an empty type and does not trigger this propagation rule. Nullary
 operators have their explicit table rules.
 
+### Optimization Statements
+
+For every `Optimization`, validate the objective root against the integer-only
+contract and the condition root against the Boolean-only contract. Reals,
+Booleans as objectives, and mixed known unions violate the integer contract.
+Empty known types remain valid (the expression has no possible value). Unknown
+types follow the ordinary unknown policy; later domain/dispatch validation must
+reject objectives that cannot use known finite native integer order encoding.
+Diagnostics identify the offending expression or condition root.
+
 ## Operator Type Table
 
 | Operator(s)                                                                | Input type contract                                                      | Result type                                                                                                                                                                          |

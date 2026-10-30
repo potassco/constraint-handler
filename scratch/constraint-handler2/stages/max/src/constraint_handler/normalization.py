@@ -9,6 +9,7 @@ from .internal_input import (
     Lambda,
     Operation,
     OperationArg,
+    Optimization,
     Python,
     ValueDef,
     ValueType,
@@ -28,9 +29,10 @@ _ZERO = ValueDef(ValueType.integer, 0)
 class _Normalizer:
     """Rewrite integer expressions using the previously computed variable types."""
 
-    def __init__(self, static_types: StaticTypeStore) -> None:
+    def __init__(self, static_types: StaticTypeStore, *, preserve_undefined: bool = False) -> None:
         """Retain type information used to guard arithmetic rewrites."""
         self._types = static_types
+        self._preserve_undefined = preserve_undefined
         self._integer_expressions: set[tuple[Expr, TypeScope]] = {
             (expr, frozenset())
             for expr, known in static_types.items()
@@ -147,7 +149,7 @@ class _Normalizer:
                     terms[term] = terms.get(term, 0) + factor
         pairs: list[OperationArg] = []
         for term, coefficient in terms.items():
-            if coefficient != 0:
+            if coefficient != 0 or self._preserve_undefined:
                 pairs.append((ValueDef(ValueType.integer, coefficient), term))
         return Operation(
             Operator.linear_integer, (*pairs, ValueDef(ValueType.integer, offset))
@@ -254,7 +256,7 @@ class _Normalizer:
                                     factors.append(arg)
                             else:
                                 factors.append(cast(Expr, arg))
-                        if coefficient == 0 or not factors:
+                        if not factors or coefficient == 0 and not self._preserve_undefined:
                             return self.linear_integer(
                                 ValueDef(ValueType.integer, coefficient)
                             )
@@ -279,5 +281,20 @@ class _Normalizer:
 def normalize(store: ConstraintStore, static_types: StaticTypeStore) -> None:
     """Rewrite store expressions in place, preserving IDs and declaration metadata."""
     normalizer = _Normalizer(static_types)
+    objective_normalizer = _Normalizer(static_types, preserve_undefined=True)
+    objectives = [store.expressions[item.expr] for item in store.optimizations]
     for expr_id, expr in store.expressions.items():
         store.replace_expression(expr_id, cast(Expr, normalizer.visit(expr)))
+    store.optimizations[:] = [
+        Optimization(
+            store.add_expression(
+                objective_normalizer.linear_integer(
+                    cast(Expr, objective_normalizer.visit(expr))
+                )
+            ),
+            item.condition,
+            item.priority,
+            item.label,
+        )
+        for item, expr in zip(store.optimizations, objectives, strict=True)
+    ]

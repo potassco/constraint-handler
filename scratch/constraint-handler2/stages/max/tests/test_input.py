@@ -8,6 +8,7 @@ from dataclasses import FrozenInstanceError
 import pytest
 
 from constraint_handler import (
+    DEFAULT_PRIORITY,
     LABEL_ANONYMOUS,
     ConstraintStore,
     Lambda,
@@ -19,6 +20,41 @@ from constraint_handler import (
     python_input,
 )
 from constraint_handler.internal_input import ValueDef, ValueType
+
+
+def test_optimization_storage_copy_and_merge() -> None:
+    """Preserve objective IDs, guards, priorities, and labels across store operations."""
+    store = ConstraintStore()
+    store.minimize(5)
+    store.minimize(VariableRef("x"), False, 3, "objective")
+    first, second = store.optimizations
+    assert store.expressions[first.expr] == ValueDef(ValueType.integer, 5)
+    assert store.expressions[first.condition] == ValueDef(ValueType.boolean, True)
+    assert (first.priority, first.label) == (DEFAULT_PRIORITY, LABEL_ANONYMOUS)
+    assert (second.priority, second.label) == (3, "objective")
+    clone = store.copy()
+    assert clone.optimizations == store.optimizations
+    assert clone.optimizations is not store.optimizations
+    merged = ConstraintStore()
+    merged.ensure(True)
+    merged.merge(store)
+    for original, remapped in zip(
+        store.optimizations, merged.optimizations, strict=True
+    ):
+        assert remapped.expr != original.expr
+        assert merged.expressions[remapped.expr] == store.expressions[original.expr]
+        assert (
+            merged.expressions[remapped.condition]
+            == store.expressions[original.condition]
+        )
+        assert (remapped.priority, remapped.label) == (
+            original.priority,
+            original.label,
+        )
+    clone.minimize(7)
+    assert len(store.optimizations) == 2
+    assert "minimize 5 (priority 0)" in str(store)
+    assert "minimize x if False (priority 3)" in str(store)
 
 
 @pytest.mark.parametrize(

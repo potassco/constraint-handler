@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from importlib.resources import files
 from pathlib import Path
@@ -11,11 +11,11 @@ from types import MappingProxyType
 from clingo.control import Control
 from clingo.core import Library
 from clingo.script import enable_python
-from clingo.solve import SolveResult
+from clingo.solve import Model, SolveResult
 from clingo.symbol import Symbol
 
 from .asp_facts import asp_facts
-from .diagnostics import Diagnostics
+from .diagnostics import Diagnostics, ExpressionLocation
 from .dispatching import DispatchStore, Engine, dispatch
 from .domains import (
     DEFAULT_BOOLEAN_THRESHOLD,
@@ -141,6 +141,19 @@ class Preprocessor:
         engines = DispatchStore()
         if self._options.continue_on_errors or not diagnostics.has_errors:
             engines = dispatch(snapshot, domains)
+            for item in snapshot.optimizations:
+                expr = snapshot.expressions[item.expr]
+                if domains[expr].unknown:
+                    diagnostics.error(
+                        "Optimization requires a known finite integer domain",
+                        location=ExpressionLocation(item.expr, expr),
+                    )
+                if engines[item.expr] != Engine.native:
+                    diagnostics.error(
+                        "Optimization requires the native engine, not "
+                        + engines[item.expr],
+                        location=ExpressionLocation(item.expr, expr),
+                    )
         return (
             PreparedProblem(
                 store=snapshot,
@@ -167,6 +180,10 @@ class Solver:
         self._library = Library()
         enable_python(self._library)
         self._control = Control(self._library, list(options.arguments))
+        self._cost: tuple[int, ...] | None = None
+        self._optimality_proven = False
+        if problem.store.optimizations:
+            self._control.config.solve.opt_mode = "optN"
         self._control.parse_string(
             "\n".join(
                 f"{fact}."
@@ -188,6 +205,7 @@ class Solver:
             "set.lp",
             "tuples.lp",
             "complex.lp",
+            "optimize.lp",
         ):
             self._control.parse_string(
                 files().joinpath("encoding", encoding).read_text(encoding="utf-8"),
@@ -216,6 +234,31 @@ class Solver:
         """Enforce an additional query constraint in this solver session."""
         raise NotImplementedError
 
-    def solve(self) -> SolveResult:
-        """Solve the fact base using native declarations and complex expression rows."""
-        return self._control.solve()
+    @property
+    def cost(self) -> tuple[int, ...] | None:
+        """Return the latest model's cost in descending priority order, or None."""
+        return self._cost
+
+    @property
+    def optimality_proven(self) -> bool:
+        """Report whether the latest solve proved an optimum."""
+        return self._optimality_proven
+
+    def solve(
+        self, on_model: Callable[[Model], bool | None] | None = None
+    ) -> SolveResult:
+        """Solve, exposing only proven optimal models when objectives are present."""
+        self._cost = None
+        self._optimality_proven = False
+
+        def receive(model: Model) -> bool | None:
+            """Record solver metadata and hide improving incumbents from callers."""
+            self._cost = tuple(model.cost)
+            self._optimality_proven = model.optimality_proven
+            if on_model is not None and (
+                not self._problem.store.optimizations or model.optimality_proven
+            ):
+                return on_model(model)
+            return None
+
+        return self._control.solve(on_model=receive)

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum, auto
 
 LABEL_ANONYMOUS = ""
+DEFAULT_PRIORITY = 0
 
 
 class FailIntegrityExn(Exception):

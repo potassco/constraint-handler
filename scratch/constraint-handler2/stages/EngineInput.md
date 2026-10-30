@@ -64,6 +64,43 @@ cost-based splitting and Python lowering rather than forced native execution.
 Python source is retained as data, never executed by the exporter or the empty
 native encoding. No domains or static type facts are emitted in this first step.
 
+### Optimization Encoding
+
+Optimization roots must be native `linear_integer` expressions with known
+finite integer domains. Fact generation rejects unsupported objectives with
+`ValueError`; preprocessing also emits diagnostics for unknown domains and
+complex/propagator objectives. Ordinary splitting is not overridden.
+
+For objectives, emit indexed `linear_integer_term/4`, sorted `order_min/2` and
+`order_next/3` argument facts even for single-term sums, and
+`linear_integer_base(E, Base)` with `Base = offset + sum(ci * min(D(xi)))`.
+Constant objectives have no terms and use their offset as base. An empty input
+domain suppresses the base because the objective cannot be defined.
+
+The packaged `encoding/optimize.lp` uses statement identity, not expression
+identity, to keep identical statements additive:
+
+```asp
+minimize_defined(S) :- minimize_statement(S, E, Cond, _),
+	value(Cond, boolean(true)), value(E, integer(_)).
+
+#minimize {
+	0@P : minimize_statement(_, _, _, P);
+	Base@P, S : minimize_statement(S, E, _, P), minimize_defined(S),
+				linear_integer_base(E, Base);
+	C*(U-L)@P, S, I, U : minimize_statement(S, E, _, P), minimize_defined(S),
+						 linear_integer_term(E, I, integer(C), A),
+						 order_next(A, L, U), order(A, U)
+}.
+```
+
+`encoding/integer.lp` derives `value(E, integer(_))` only when every retained
+integer input is defined. Both the base and gaps have the same statement-level
+guard, so an undefined sum contributes zero rather than its remaining terms.
+Base and gap tuple keys have different arities and cannot collide. Zero-weight
+elements keep every declared priority present, even when all guards are false
+or objectives undefined, and permit optimality proof in that case.
+
 ### Example
 
 Given a store with `choose(x, 1, label="input")` and

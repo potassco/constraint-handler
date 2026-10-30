@@ -13,6 +13,7 @@ from .preprocessor import (
     Solver,
 )
 from .python_input import (
+    DEFAULT_PRIORITY,
     LABEL_ANONYMOUS,
     Expr,
     FailIntegrityExn,
@@ -29,6 +30,7 @@ from .python_input import (
 from .static_types import StaticTypeStore
 
 __all__ = [
+    "DEFAULT_PRIORITY",
     "LABEL_ANONYMOUS",
     "ConstraintStore",
     "Diagnostic",

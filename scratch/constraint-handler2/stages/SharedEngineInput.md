@@ -14,6 +14,7 @@ variable_default_to(var_name, expr_id, condition_id, priority, label).
 
 check(expr_id, label).
 ensure(expr_id, label).
+minimize_statement(statement_id, expr_id, condition_id, priority).
 
 set_contain_choose(var_name, expr_id, condition_id, label).
 set_contain(var_name, expr_id, condition_id, label).
@@ -29,6 +30,12 @@ Each scalar variable choice, definition, or default produces the corresponding
 `variable_*` fact. Each set-variable base candidate, assigned element, or default
 produces the corresponding `set_contain*` fact. Each constraint produces exactly
 one `check` or `ensure` fact according to `Constraint.is_check`.
+
+Each optimization produces one `minimize_statement/4` fact. Its statement ID is
+its zero-based position in `ConstraintStore.optimizations`, independent of its
+expression ID. This identity prevents duplicate objective contributions from
+collapsing under Clingo's weighted-tuple set semantics. Labels remain available
+in the optimization records; they do not participate in objective tuple keys.
 
 Values and conditions can be assigned to different engines. Their declaration
 stays intact and refers to both IDs; it is not split or filtered by engine.

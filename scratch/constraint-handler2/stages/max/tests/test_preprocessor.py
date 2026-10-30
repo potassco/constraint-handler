@@ -1,7 +1,7 @@
 """Tests for the Preprocessor, PreparedProblem, and Solver workflow interface."""
 
 from importlib.resources import files
-from itertools import combinations
+from itertools import combinations, product
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import ANY, Mock
@@ -9,6 +9,7 @@ from unittest.mock import ANY, Mock
 import pytest
 from clingo.control import Control
 from clingo.core import Library
+from clingo.solve import Model
 
 from constraint_handler import (
     ConstraintStore,
@@ -29,6 +30,224 @@ from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueType
 from constraint_handler.python_input import Expr
 from constraint_handler.static_types import SetOf
+
+
+def test_minimize_solver_reports_optimal_models_and_cost() -> None:
+    """Hide improving incumbents and expose the guarded objective's optimal cost."""
+    store = ConstraintStore()
+    variable = VariableRef("objective")
+    store.choose_from_iterator(variable, (-3, 2, 8))
+    store.ensure(Operation(Operator.has_value, (variable,)))
+    store.minimize(
+        Operation(Operator.add, (Operation(Operator.mult, (-2, variable)), 5))
+    )
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    solver = problem.create_solver(SolveOptions(arguments=("0",)))
+    assert solver.cost is None
+    assert not solver.optimality_proven
+    models: list[tuple[int, ...]] = []
+    assert solver.solve(
+        on_model=lambda model: models.append(tuple(model.cost))
+    ).satisfiable
+    assert models == [(-11,)]
+    assert solver.cost == (-11,)
+    assert solver.optimality_proven
+
+
+@pytest.mark.parametrize(
+    "coefficients, offset", (((1, 1), 0), ((-2, 3), 5), ((3, -2), -7))
+)
+def test_minimize_matches_exhaustive_optional_reference(
+    coefficients: tuple[int, int],
+    offset: int,
+) -> None:
+    """Compare all optima with exhaustive arithmetic including absent inputs and guards."""
+    store = ConstraintStore()
+    left, right, guard = (VariableRef(name) for name in ("left", "right", "guard"))
+    store.choose_from_iterator(left, (-3, 1, 7))
+    store.choose_from_iterator(right, (-2, 4))
+    store.choose_from_iterator(guard, (False, True))
+    store.minimize(
+        Operation(
+            Operator.add,
+            (
+                Operation(Operator.mult, (coefficients[0], left)),
+                Operation(Operator.mult, (coefficients[1], right)),
+                offset,
+            ),
+        ),
+        guard,
+    )
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    actual: set[tuple[int | bool | None, ...]] = set()
+
+    def receive(model: Model) -> None:
+        """Read public optional variable values from each proven optimum."""
+        assert model.optimality_proven
+        values: dict[str, int | bool] = {}
+        for atom in model.symbols(atoms=True):
+            if atom.name != "value" or not str(atom.arguments[0]).startswith(
+                "variable("
+            ):
+                continue
+            name = atom.arguments[0].arguments[0].string
+            payload = atom.arguments[1]
+            values[name] = (
+                payload.arguments[0].number
+                if payload.name == "integer"
+                else payload.arguments[0].name == "true"
+            )
+        actual.add(tuple(values.get(name) for name in ("left", "right", "guard")))
+
+    candidates = {
+        (left_value, right_value, condition): (
+            coefficients[0] * left_value + coefficients[1] * right_value + offset
+            if left_value is not None and right_value is not None and condition is True
+            else 0
+        )
+        for left_value, right_value, condition in product(
+            (None, -3, 1, 7), (None, -2, 4), (None, False, True)
+        )
+    }
+    minimum = min(candidates.values())
+    solver = problem.create_solver(SolveOptions(arguments=("0",)))
+    assert solver.solve(on_model=receive).exhausted
+    assert actual == {values for values, cost in candidates.items() if cost == minimum}
+    assert solver.cost == (minimum,)
+    assert solver.optimality_proven
+
+
+@pytest.mark.parametrize("condition", (True, False, VariableRef("guard")))
+@pytest.mark.parametrize("expr", (5, Operation(Operator.minus, (5,))))
+def test_minimize_guarded_constants(expr: Expr, condition: Expr) -> None:
+    """Include a constant base only under a defined true condition."""
+    store = ConstraintStore()
+    store.choose(VariableRef("guard"), True, False)
+    store.minimize(expr, condition)
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    solver = problem.create_solver(SolveOptions(arguments=("0",)))
+    assert solver.solve().satisfiable
+    expected = (5 if expr == 5 else -5) if condition is True else 0
+    assert solver.cost == (expected,)
+    assert solver.optimality_proven
+
+
+@pytest.mark.parametrize("cancelled", (False, True))
+def test_minimize_retains_undefined_zero_dependencies(cancelled: bool) -> None:
+    """Do not turn an undefined zero-valued term into a defined constant penalty."""
+    store = ConstraintStore()
+    variable = VariableRef("optional")
+    store.choose(variable, 2)
+    zero = (
+        Operation(Operator.sub, (variable, variable))
+        if cancelled
+        else Operation(Operator.mult, (0, variable))
+    )
+    store.minimize(Operation(Operator.add, (zero, 5)))
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    solver = problem.create_solver(SolveOptions(arguments=("0",)))
+    models: list[set[str]] = []
+    solver.solve(
+        on_model=lambda model: models.append(
+            {str(atom) for atom in model.symbols(atoms=True)}
+        )
+    )
+    assert solver.cost == (0,)
+    assert len(models) == 1
+    assert 'value(variable("optional"),integer(2))' not in models[0]
+
+
+def test_minimize_duplicate_statements_and_priorities() -> None:
+    """Sum duplicate statements and optimize higher priorities first, including negatives."""
+    store = ConstraintStore()
+    variable = VariableRef("x")
+    store.choose_from_iterator(variable, (-2, 3))
+    store.ensure(Operation(Operator.has_value, (variable,)))
+    store.minimize(variable, priority=-1)
+    store.minimize(variable, priority=-1)
+    store.minimize(Operation(Operator.minus, (variable,)), priority=4)
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    solver = problem.create_solver(SolveOptions(arguments=("0", "--opt-mode=ignore")))
+    assert solver.solve().satisfiable
+    assert solver.cost == (-3, 6)
+    assert solver.optimality_proven
+
+
+def test_minimize_undefined_sum_excludes_remaining_terms_and_base() -> None:
+    """Drop the entire sum, including its negative defined term and positive offset."""
+    store = ConstraintStore()
+    optional, defined = VariableRef("optional"), VariableRef("defined")
+    store.choose(optional, 10)
+    store.define(defined, -4)
+    store.minimize(
+        Operation(Operator.add, (optional, defined, 3)),
+        Operation(Operator.eq, (defined, -4)),
+    )
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    solver = problem.create_solver(SolveOptions(arguments=("0",)))
+    models: list[set[str]] = []
+    solver.solve(
+        on_model=lambda model: models.append(
+            {str(atom) for atom in model.symbols(atoms=True)}
+        )
+    )
+    assert solver.cost == (0,)
+    assert len(models) == 1
+    assert 'value(variable("optional"),integer(10))' not in models[0]
+
+
+def test_minimize_unsatisfiable_and_repeated_solves() -> None:
+    """Reset metadata each solve and never report an optimum for an unsatisfiable problem."""
+    store = ConstraintStore()
+    store.minimize(5)
+    store.ensure(False)
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert not diagnostics.has_errors
+    solver = problem.create_solver(SolveOptions())
+    for _ in range(2):
+        assert solver.solve().unsatisfiable
+        assert solver.cost is None
+        assert not solver.optimality_proven
+
+
+@pytest.mark.parametrize("unknown", (False, True))
+def test_minimize_rejects_non_native_or_unknown_objectives(unknown: bool) -> None:
+    """Diagnose unsupported objective engines and unknown domains before fact generation."""
+    store = ConstraintStore()
+    variable = VariableRef("x")
+    store.choose_from_iterator(variable, (1, 2))
+    store.minimize(
+        Operation(Operator.python_eval, (Python("lambda: float('inf')"),))
+        if unknown
+        else Operation(Operator.mult, (variable, variable))
+    )
+    processor = Preprocessor(PreprocessOptions())
+    processor.add(store)
+    problem, diagnostics = processor.preprocess()
+    assert diagnostics.has_errors
+    assert any("Optimization requires" in item.message for item in diagnostics.items)
+    with pytest.raises(ValueError, match="optimization"):
+        problem.create_solver(SolveOptions())
 
 
 @pytest.mark.parametrize("continue_on_errors", (False, True))

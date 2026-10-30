@@ -32,6 +32,30 @@ from constraint_handler.static_types import (
 from constraint_handler.util import compute_evaluation_order
 
 
+@pytest.mark.parametrize(
+    ("expr", "condition", "valid"),
+    (
+        (5, True, True),
+        (5, False, True),
+        (1.5, True, False),
+        (True, True, False),
+        ("cost", True, False),
+        (5, 1, False),
+        (5, None, False),
+    ),
+)
+def test_optimization_statement_types(expr: Expr, condition: Expr, valid: bool) -> None:
+    """Require integer objectives and Boolean guards without conflating scalar types."""
+    store = ConstraintStore()
+    store.minimize(expr, condition)
+    diagnostics = Diagnostics()
+    compute_static_types(
+        store, compute_evaluation_order(store, diagnostics), diagnostics
+    )
+    assert diagnostics.has_errors is not valid
+    assert all(item.location is not None for item in diagnostics.items)
+
+
 def test_expression_location_is_immutable() -> None:
     """Keep a root ID and analysis node together in an immutable value."""
     store = ConstraintStore()

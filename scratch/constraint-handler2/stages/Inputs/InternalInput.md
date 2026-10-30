@@ -62,10 +62,19 @@ class Constraint:
 	label: str
 
 
+@dataclass(frozen=True)
+class Optimization:
+	expr: ExprId
+	condition: ExprId
+	priority: int
+	label: str
+
+
 @dataclass
 class ConstraintStore:
 	variables: dict[VariableRef, Variable]
 	constraints: list[Constraint]
+	optimizations: list[Optimization]
 	_expressions: dict[ExprId, Expr]
 
 
@@ -89,6 +98,12 @@ Python(fn: str)
 ```
 
 ## Usage
+
+Optimization statements remain separate ordered records, even when expression,
+condition, and priority coincide. `copy()` detaches the optimization list while
+preserving expression IDs; `merge()` remaps both expression and condition IDs.
+The store's string representation includes objectives, guards, and priorities.
+Expression replacement preserves IDs and therefore all optimization references.
 
 Stages that consume this representation can import its types explicitly:
 

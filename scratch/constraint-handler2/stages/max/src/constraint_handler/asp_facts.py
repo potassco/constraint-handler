@@ -257,6 +257,17 @@ def asp_facts(
     """Return ground facts retaining every declaration, expression, and engine assignment."""
     if engines.keys() != store.expressions.keys():
         raise ValueError("dispatch must classify exactly the stored expression IDs")
+    objectives = {item.expr for item in store.optimizations}
+    for expr_id in objectives:
+        expr = store.expressions[expr_id]
+        if (
+            engines[expr_id] != Engine.native
+            or not isinstance(expr, Operation)
+            or expr.op != Operator.linear_integer
+        ):
+            raise ValueError("optimization requires a native linear integer objective")
+        if domains is None or domains[expr].unknown:
+            raise ValueError("optimization requires known finite integer domains")
     facts: list[Symbol] = [
         Function(lib, "set_variable", [String(lib, variable.name)])
         for variable in store.set_variables
@@ -314,6 +325,19 @@ def asp_facts(
             [_number(lib, constraint.expr), String(lib, constraint.label)],
         )
         for constraint in store.constraints
+    )
+    facts.extend(
+        Function(
+            lib,
+            "minimize_statement",
+            [
+                _number(lib, statement),
+                _number(lib, item.expr),
+                _number(lib, item.condition),
+                _number(lib, item.priority),
+            ],
+        )
+        for statement, item in enumerate(store.optimizations)
     )
     constants = {
         _term(lib, subterm)
@@ -419,7 +443,7 @@ def asp_facts(
                         ],
                     )
                 )
-                if not comparison and len(pairs) == 1:
+                if not comparison and len(pairs) == 1 and expr_id not in objectives:
                     continue
                 if argument not in order_minima:
                     if isinstance(argument, ValueDef):
@@ -460,7 +484,7 @@ def asp_facts(
                     if baseline is not None and minimum is not None
                     else None
                 )
-            if (comparison or len(pairs) != 1) and baseline is not None:
+            if (comparison or len(pairs) != 1 or expr_id in objectives) and baseline is not None:
                 facts.append(
                     Function(
                         lib,
