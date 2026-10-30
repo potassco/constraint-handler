@@ -3,6 +3,7 @@
 from enum import StrEnum, auto
 from typing import cast
 
+from .analysis import linear_operands
 from .domains import DomainStore
 from .internal_input import (
     ConstraintStore,
@@ -37,14 +38,8 @@ def dispatch(store: ConstraintStore, domains: DomainStore) -> DispatchStore:
                 raise TypeError("lambda applications must be converted before dispatch")
             case Operation(Operator.python_eval, (Python(), *actual)):
                 parameters = tuple(actual)
-            case Operation(Operator.linear_integer | Operator.linear_comparison, args):
-                pairs = (
-                    args[1:-1] if expr.op == Operator.linear_comparison else args[:-1]
-                )
-                parameters = (
-                    *(cast(tuple[Expr, Expr], pair)[1] for pair in pairs),
-                    args[-1],
-                )
+            case Operation(Operator.linear_integer | Operator.linear_comparison):
+                parameters = linear_operands(expr)
             case Operation(_, args):
                 parameters = args
             case tuple() | frozenset():

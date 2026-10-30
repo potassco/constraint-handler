@@ -22,6 +22,7 @@ from constraint_handler import (
     Preprocessor,
     Python,
     VariableRef,
+    dispatch,
 )
 from constraint_handler.diagnostics import Diagnostics
 from constraint_handler.domains import (
@@ -49,6 +50,39 @@ from constraint_handler.static_types import (
     compute_static_types,
 )
 from constraint_handler.util import compute_evaluation_order
+
+
+@pytest.mark.parametrize(
+    "operator", (Operator.linear_integer, Operator.linear_comparison)
+)
+@pytest.mark.parametrize("offset_only", (False, True))
+def test_linear_operands_preserve_terms_and_offset(
+    operator: Operator, offset_only: bool
+) -> None:
+    """Share ordered terms and offset without coefficients or comparison relations."""
+    coefficient = ValueDef(ValueType.integer, -3)
+    offset = ValueDef(ValueType.integer, 7)
+    first, second = VariableRef("first"), VariableRef("second")
+    expression = InternalOperation(
+        operator,
+        (offset,)
+        if offset_only
+        else ((coefficient, first), (coefficient, second), offset),
+    )
+    if operator == Operator.linear_comparison:
+        expression = InternalOperation(
+            operator, (ValueDef(ValueType.string, "leq"), *expression.args)
+        )
+    domains = DomainStore({first: UNKNOWN_DOMAIN, second: Domain(ints=frozenset({1}))})
+    cost = GroundingCost(domains, StaticTypeStore())
+    assert cost.parameters(expression) == (
+        (offset,) if offset_only else (first, second, offset)
+    )
+    store = ConstraintStore()
+    expr_id = store.add_expression(expression)
+    assert dispatch(store, domains)[expr_id] == (
+        Engine.native if offset_only else Engine.propagator
+    )
 
 
 def _unsplit_plan(

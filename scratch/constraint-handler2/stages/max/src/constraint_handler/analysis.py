@@ -1,20 +1,32 @@
 """Shared expression metadata and structural contracts for analysis passes."""
 
 from collections.abc import Hashable, Iterable, Mapping
+from typing import cast
 
 from .diagnostics import Diagnostics, ExpressionLocation
 from .internal_input import (
     Expr,
     Lambda,
+    Operation,
     OperationArg,
     ValueDef,
     ValueType,
     VariableRef,
 )
+from .python_input import Operator
 
 type LinearIntegerArg = tuple[ValueDef, Expr] | ValueDef
 
 LINEAR_RELATIONS = frozenset({"eq", "neq", "lt", "leq", "gt", "geq"})
+
+
+def linear_operands(expr: Operation) -> tuple[OperationArg, ...]:
+    """Extract terms and the final offset from a validated linear operation."""
+    pairs = expr.args[1:-1] if expr.op == Operator.linear_comparison else expr.args[:-1]
+    return (
+        *(cast(tuple[Expr, Expr], pair)[1] for pair in pairs),
+        expr.args[-1],
+    )
 
 
 def linear_comparison_arguments(

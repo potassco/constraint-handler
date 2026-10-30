@@ -5,7 +5,7 @@ from itertools import combinations
 from math import inf
 from typing import cast
 
-from .analysis import ExpressionStore
+from .analysis import ExpressionStore, linear_operands
 from .diagnostics import Diagnostics
 from .domains import Domain, DomainStore
 from .internal_input import (
@@ -236,15 +236,7 @@ class GroundingCost:
     def parameters(self, expr: Operation) -> tuple[OperationArg, ...]:
         """Expose linear terms without detaching their literal coefficients."""
         if expr.op in {Operator.linear_integer, Operator.linear_comparison}:
-            pairs = (
-                expr.args[1:-1]
-                if expr.op == Operator.linear_comparison
-                else expr.args[:-1]
-            )
-            return (
-                *(cast(tuple[Expr, Expr], pair)[1] for pair in pairs),
-                expr.args[-1],
-            )
+            return linear_operands(expr)
         return expr.args
 
 
