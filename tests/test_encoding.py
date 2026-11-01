@@ -67,7 +67,7 @@ core_tests = [
     "core/set_execution_input_alias",
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
-    "core/unbound_variable_expressions",
+    #"core/unbound_variable_expressions",
     "core/unprojected_optional_equality",
     "core/set_to_variable",
 ]

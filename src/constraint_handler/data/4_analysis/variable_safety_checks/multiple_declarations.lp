@@ -1,6 +1,6 @@
 _variable_multipleDeclarations(LBL1,X,D1) :-
-  _passed(defaultArgs,LBL1,variable_declare(X,D1)),
-  1 = #count { LBL0,D0 : _passed(defaultArgs,LBL0,variable_declare(X,D0)), (LBL0,D0) < (LBL1,D1) }.
+  _passed(defaultArgs,LBL1,variable_declare(X,D1,C1)),
+  1 = #count { LBL0,D0 : _passed(defaultArgs,LBL0,variable_declare(X,D0,C0)), (LBL0,D0) < (LBL1,D1) }.
 
 _variable_multipleAssignments(LBL1,X,D1) :-
   _passed(defaultArgs,LBL1,variable_assign(X,D1)),
@@ -22,7 +22,7 @@ _passed(correction(multipleDeclarations,add),LBL,variable_define(X,bad,val(bool,
 
 _warning(variable(multipleDeclarations),(LBL0;LBL1),(X,D0,D1)) :-
   _variable_multipleDeclarations(LBL1,X,D1),
-  _passed(defaultArgs,LBL0,variable_declare(X,D0)), (LBL0,D0) < (LBL1,D1).
+  _passed(defaultArgs,LBL0,variable_declare(X,D0,C0)), (LBL0,D0) < (LBL1,D1).
 
 _warning(variable(multipleAssignments),(LBL0;LBL1),(X,E0,E1)) :-
   _variable_multipleAssignments(LBL1,X,E1),

@@ -23,8 +23,8 @@ _passed(defaultArgs,LBL,evaluate(E)) :- evaluate(E,LBL).
 
 _defaultArgs_variableDeclared(X) :- variable_declare(X,E).
 _defaultArgs_variableDeclared(X) :- variable_declare(X,E,LBL).
-_passed(defaultArgs,_label_anonymous,variable_declare(X,E)) :- variable_declare(X,E).
-_passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(X,D,LBL).
+_passed(defaultArgs,_label_anonymous,variable_declare(X,E,val(bool,true))) :- variable_declare(X,E).
+_passed(defaultArgs,LBL,variable_declare(X,D,val(bool,true))) :- variable_declare(X,D,LBL).
 
 %%%%%% variable fromFacts
 #defined variable_domain/2.
@@ -32,7 +32,7 @@ _passed(defaultArgs,LBL,variable_declare(X,D)) :- variable_declare(X,D,LBL).
 #defined variable_domain/4.
 
 _passed(defaultArgs,_label_anonymous,variable_domain(X,E,val(bool,true))) :- variable_domain(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_domain(X,E,val(bool,true))) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_domain(X,E,val(bool,true))) :- variable_domain(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
 _passed(defaultArgs,_label_anonymous,variable_domain(X,E,C)) :- variable_domain(X,E,C).
 _passed(defaultArgs,LBL,variable_domain(X,E,C)) :- variable_domain(X,E,C,LBL).
 
@@ -47,19 +47,19 @@ _passed(defaultArgs,LBL,variable_domain(X,E,C)) :- variable_domain(X,E,C,LBL).
 #defined variable_default/5.
 
 _passed(defaultArgs,_label_anonymous,variable_default(X,E,val(bool,true),0)) :- variable_default(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_default(X,E,val(bool,true),0)) :- variable_default(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_default(X,E,val(bool,true),0)) :- variable_default(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
 _passed(defaultArgs,_label_anonymous,variable_default(X,E,C,0)) :- variable_default(X,E,C), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_default(X,E,C,0)) :- variable_default(X,E,C), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_default(X,E,C,0)) :- variable_default(X,E,C), _passed(defaultArgs,LBL,variable_declare(X,D,COND)).
 _passed(defaultArgs,_label_anonymous,variable_default(X,E,C,P)) :- variable_default(X,E,C,P), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(X,E,C,P), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(X,E,C,P), _passed(defaultArgs,LBL,variable_declare(X,D,COND)).
 _passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(X,E,C,P,LBL).
 
 _passed(defaultArgs,_label_anonymous,variable_assign(X,E)) :- variable_assign(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
 _passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E,LBL).
 
 _passed(defaultArgs,_label_anonymous,variable_choice(X,E)) :- variable_choice(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
 _passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E,LBL).
 
 %%%%%% variable definition
@@ -68,7 +68,7 @@ _passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E,LBL).
 #defined variable_define/4.
 
 _passed(defaultArgs,_label_anonymous,variable_define(X,E,val(bool,true))) :- variable_define(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_define(X,E,val(bool,true))) :- variable_define(X,E), _passed(defaultArgs,LBL,variable_declare(X,D)).
+_passed(defaultArgs,LBL,variable_define(X,E,val(bool,true))) :- variable_define(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
 _passed(defaultArgs,_label_anonymous,variable_define(X,E,C)) :- variable_define(X,E,C).
 _passed(defaultArgs,LBL,variable_define(X,E,C)) :- variable_define(X,E,C,LBL).
 

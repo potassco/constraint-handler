@@ -35,7 +35,7 @@ _passed(defaultArgs,LBL,bool_evaluate/1).
 _passed(defaultArgs,LBL,check/1).
 _passed(defaultArgs,LBL,ensure/1).
 _passed(defaultArgs,LBL,evaluate/2).
-_passed(defaultArgs,LBL,variable_declare/2).
+_passed(defaultArgs,LBL,variable_declare/3).
 _passed(defaultArgs,LBL,variable_define/3).
 _passed(defaultArgs,LBL,variable_default/4).
 _passed(defaultArgs,LBL,variable_domain/3).
