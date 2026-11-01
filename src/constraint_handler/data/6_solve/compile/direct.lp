@@ -69,6 +69,7 @@ _expression_pythonEval(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _d
 
 _expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), RES=@pythonEvalExpr(E,(),ID), _main_solverIdentifiers(ID).
 _computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,valid(val(TYPE,V))).
+_computedIdx(E,bad) :- _expression_eval_exec(E,valid(bad)).
 _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
@@ -92,7 +93,7 @@ _expression_pythonEval(E,operation(O,L)) :- _direct_resortToPython(E), _direct_i
 %_se_value(operation(OP,ARGS),bad) :- _direct_bad_operation(OP,ARGS).
 %_se_value(bad,bad) :- direct_query(bad).
 _se_value(bad,bad).
-%_direct_imploded(bad,bad).
+_direct_imploded(bad,bad) :- _direct_implode(bad).
 
 %%%%%%%%%%%%%%%%% implode
 _direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), _type_representation(T,extensional).
