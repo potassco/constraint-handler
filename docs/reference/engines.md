@@ -67,16 +67,16 @@ can help preserve these correlations during grounding, leading to more efficient
     Given is the following simple problem:
     ```prolog
     max_depth(15).
-    variable_declare(declare_x, x, fromFacts).
-    variable_domain(x, val(int, 0..1)).
+    variable_declare(x,fromFacts,val(bool,true),declare_x).
+    variable_domain(x,val(int,0..1)).
 
     expression(1, variable(x)).
     expression(N+1, NEXT) :-
         expression(N, PREV), max_depth(MAX), N < MAX,
-        MULT = operation(mult, (val(int, 2), (PREV, ()))),
-        NEXT = operation(add, (variable(x), (MULT, ()))).
+        MULT = operation(mult,(val(int,2),(PREV,()))),
+        NEXT = operation(add,(variable(x),(MULT,()))).
 
-    variable_define(define_y, y, E) :- expression(N, E), max_depth(N).
+    variable_define(y,E,define_y) :- expression(N,E), max_depth(N).
     ```
     Here, the variable `y` is defined in terms of `x` through a series of correlated expressions.
 
@@ -93,7 +93,7 @@ can help preserve these correlations during grounding, leading to more efficient
 
     To use the `ground` engine for this problem, we can add the following line:
     ```prolog
-    requestEngine(define_y, ground).
+    requestEngine(define_y,ground).
     ```
     This tells the solver to ground the entire definition of `y`, including all sub-expressions, as a whole.
 
@@ -106,13 +106,13 @@ using the `compile` engine can be more efficient.
     Given the following problem:
     ```prolog
     num_variables(3).
-    variable_declare(declare_x, x(1..MAX), fromFacts) :- num_variables(MAX).
-    variable_domain(x(1..MAX), val(int, 1..10)):- num_variables(MAX).
+    variable_declare(x(1..MAX),fromFacts,val(bool,true),declare_x) :- num_variables(MAX).
+    variable_domain(x(1..MAX),val(int, 1..10)):- num_variables(MAX).
 
-    expression(1, variable(x(1))).
-    expression(N+1, NEXT) :-
-        expression(N, PREV), num_variables(MAX), N < MAX,
-        NEXT = operation(max, (variable(x(N+1)), (PREV, ()))).
+    expression(1,variable(x(1))).
+    expression(N+1,NEXT) :-
+        expression(N,PREV), num_variables(MAX), N < MAX,
+        NEXT = operation(max,(variable(x(N+1)),(PREV,()))).
 
     variable_define(define_y, y, E) :- expression(N, E), num_variables(N).
     ```
@@ -121,7 +121,7 @@ using the `compile` engine can be more efficient.
 
     For this reason, if we added the `ground` engine here:
     ```prolog
-    requestEngine(define_y, ground).
+    requestEngine(define_y,ground).
     ```
     All variables would be grounded together. But since they are not correlated, we end up with all possible combinations of their values, leading to a combinatorial explosion.
 

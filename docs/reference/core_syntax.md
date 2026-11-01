@@ -160,19 +160,31 @@ The result is a single `value/2` atom in the model.
 
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-A more advanced technique is to declare variables using the `variable_declare/2` predicate. Instead of creating a single variable with a specific value, this declares possible values from a given set of possible values (domain).
+A more advanced technique is to declare variables using the `variable_declare` predicate. Instead of creating a single variable with a specific value, this declares possible values from a given set of possible values (domain).
 
 !!! Note
     While [Define](#define) creates a single `value/2` atom in all models. The [Declare](#declare) approach creates multiple models with different `value/2` atoms based on the domain.
 
 ```prolog
 variable_declare(Name, Domain).
+variable_declare(Name, Domain, Condition).
+variable_declare(Name, Domain, Condition, Label).
 ```
 
 | Name | Description |
 | :--- | :--- |
 | `Name` | A unique identifier for the variable. |
 | `Domain` | An [Expression] that evaluates to a domain of possible values. |
+| `Condition` | A Boolean [Expression] that activates the declaration when true. Defaults to `val(bool,true)`. |
+| `Label` | An optional label for the declaration. |
+
+An inactive declaration contributes no value or domain choice, even if domain
+entries are specified separately.
+References to a variable with no active declaration evaluate to `bad`, including
+execution inputs and outputs, but produce no public `value/2` or `set_value/2`
+atoms. An active `definition` declaration with no active `variable_define`
+also evaluates to `bad`; because the declaration is active, its `value(Name,bad)`
+atom is included in the output.
 
 !!! Example
     Declaring a variable `x` that can take the boolean values `true` or `false`:

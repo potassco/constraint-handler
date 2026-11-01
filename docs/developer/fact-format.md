@@ -121,7 +121,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "variable_choice" "(" <variable> "," <expression> ")"
     | "variable_choice" "(" <variable> "," <expression> "," <label> ")"
     | "variable_declare" "(" <variable> "," <domain> ")"
-    | "variable_declare" "(" <variable> "," <domain> "," <label> ")"
+    | "variable_declare" "(" <variable> "," <domain> "," <expression> ")"
+    | "variable_declare" "(" <variable> "," <domain> "," <expression> "," <label> ")"
     | "variable_default" "(" <variable> "," <expression> ")"
     | ...
     | "variable_default" "(" <variable> "," <expression> "," <expression> "," <int> "," <label> ")"
