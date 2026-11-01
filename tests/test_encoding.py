@@ -49,6 +49,7 @@ core_tests = [
     "core/conditional_declare_set",
     "core/conditional_define",
     "core/conditional_domain",
+    "core/conditional_domain_shared_entry",
     "core/conditional_definitions",
     "core/conj_bad_none_recovery",
     "core/custom_globals",
@@ -66,6 +67,7 @@ core_tests = [
     "core/set_execution_input_alias",
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
+    "core/unbound_variable_expressions",
     "core/unprojected_optional_equality",
     "core/set_to_variable",
 ]
@@ -680,6 +682,7 @@ propagator_true_skip: set[str] = propagator_skip | {
     "core/reasoning_modes",
     "core/reasoning_modes_with_show",
     "core/conditional_domain",
+    "core/unbound_variable_expressions",
     "execution/conditional_input_domain",
     "execution/conditional_input_domain_dynamic",
     "execution/python_integrity_should_be_ignored",

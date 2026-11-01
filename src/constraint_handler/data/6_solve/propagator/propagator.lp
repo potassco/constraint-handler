@@ -7,7 +7,8 @@ _bool_evaluate(C,LBL) :- _passed(propagator,LBL,(variable_declare(X,D,C);variabl
     _variable_emptyDomain(X)
 } 1 :- propagator_variable_declare(X,fromFacts,LBL).
 
-:- propagator_variable_domain(X,D,DOMAIN_LBL), _passed(propagator,DOMAIN_LBL,variable_domain(X,D,C)), not _bool_evaluated(C,val(bool,true)).
+:- propagator_variable_domain(X,D,DOMAIN_LBL),
+    #false : _passed(propagator,DOMAIN_LBL,variable_domain(X,D,C)), _bool_evaluated(C,val(bool,true)).
 
 :- _variable_emptyDomain(X),
     _passed(propagator,_,variable_domain(X,_,C)),
