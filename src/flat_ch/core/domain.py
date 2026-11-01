@@ -38,6 +38,8 @@ class ProgramInputKind(IntEnum):
     PYTHON_EVALUATE_INPUT = auto()
     BOOL_EVALUATE_INPUT = auto()
     SET_DECLARE = auto()
+    SET_BASE_DOMAIN = auto()
+    SET_ASSIGN = auto()
     OPTIMIZE_MAXIMIZE_SUM = auto()
     OPTIMIZE_PRECISION = auto()
     EXECUTION_DECLARE = auto()
@@ -258,9 +260,23 @@ class BoolEvaluateInput:
 @dataclass(frozen=True, slots=True)
 class ISetDeclare:
     name: str | Symbol
-    base_domain: tuple[tuple[Expression, Expression], ...] = ()
-    assignment: tuple[tuple[Expression, Expression], ...] = ()
     kind: ProgramInputKind = ProgramInputKind.SET_DECLARE
+
+
+@dataclass(frozen=True, slots=True)
+class ISetBaseDomain:
+    name: str | Symbol
+    expression: Expression
+    condition: Expression = IValue(Type.BOOL, True)
+    kind: ProgramInputKind = ProgramInputKind.SET_BASE_DOMAIN
+
+
+@dataclass(frozen=True, slots=True)
+class ISetAssign:
+    name: str | Symbol
+    expression: Expression
+    condition: Expression = IValue(Type.BOOL, True)
+    kind: ProgramInputKind = ProgramInputKind.SET_ASSIGN
 
 
 @dataclass(frozen=True, slots=True)
@@ -302,6 +318,8 @@ ProgramInput: TypeAlias = (
     | PythonEvaluateInput
     | BoolEvaluateInput
     | ISetDeclare
+    | ISetBaseDomain
+    | ISetAssign
     | OptimizeMaximizeSum
     | OptimizePrecision
     | ExecutionDeclare

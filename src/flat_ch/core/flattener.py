@@ -19,6 +19,8 @@ from flat_ch.core.domain import (
     IOperation,
     IPair,
     IPythonOperation,
+    ISetAssign,
+    ISetBaseDomain,
     ISetDeclare,
     IValue,
     IVariableDeclare,
@@ -114,13 +116,13 @@ class Flattener:
 
             case ProgramInputKind.SET_DECLARE:
                 set_decl: ISetDeclare = node  # type: ignore
-                base_ids = tuple(
-                    (self._intern_expr(expr), self._intern_expr(condition)) for expr, condition in set_decl.base_domain
-                )
-                assignment_ids = tuple(
-                    (self._intern_expr(expr), self._intern_expr(condition)) for expr, condition in set_decl.assignment
-                )
-                self.interned_program.append((ProgramInputKind.SET_DECLARE, (set_decl.name, base_ids, assignment_ids)))
+                self.interned_program.append((ProgramInputKind.SET_DECLARE, (set_decl.name,)))
+
+            case ProgramInputKind.SET_BASE_DOMAIN | ProgramInputKind.SET_ASSIGN:
+                set_input: ISetBaseDomain | ISetAssign = node  # type: ignore
+                expr_id = self._intern_expr(set_input.expression)
+                condition_id = self._intern_expr(set_input.condition)
+                self.interned_program.append((node.kind, (set_input.name, expr_id, condition_id)))
 
             case ProgramInputKind.ENSURE_CONSTRAINT:
                 ens: EnsureConstraint = node  # type: ignore
@@ -509,23 +511,29 @@ class Flattener:
                 self._emit_fact(Function(FlatFact.VARIABLE_DOMAIN.value, fact_args))
 
             case ProgramInputKind.SET_DECLARE:
-                name, base_ids, assignment_ids = payload
+                (name,) = payload
                 set_sym = name if isinstance(name, Symbol) else Function(name, [])
                 self._emit_fact(Function(FlatFact.SET.value, [set_sym]))
-                for expr_id, condition_id in base_ids:
-                    self._emit_fact(
-                        Function(
-                            FlatFact.SET_BASE_DOMAIN.value,
-                            [set_sym, Number(expr_id), Number(condition_id)],
-                        )
+
+            case ProgramInputKind.SET_BASE_DOMAIN:
+                name, expr_id, condition_id = payload
+                set_sym = name if isinstance(name, Symbol) else Function(name, [])
+                self._emit_fact(
+                    Function(
+                        FlatFact.SET_BASE_DOMAIN.value,
+                        [set_sym, Number(expr_id), Number(condition_id)],
                     )
-                for expr_id, condition_id in assignment_ids:
-                    self._emit_fact(
-                        Function(
-                            FlatFact.SET_ASSIGN.value,
-                            [set_sym, Number(expr_id), Number(condition_id)],
-                        )
+                )
+
+            case ProgramInputKind.SET_ASSIGN:
+                name, expr_id, condition_id = payload
+                set_sym = name if isinstance(name, Symbol) else Function(name, [])
+                self._emit_fact(
+                    Function(
+                        FlatFact.SET_ASSIGN.value,
+                        [set_sym, Number(expr_id), Number(condition_id)],
                     )
+                )
 
             case ProgramInputKind.ENSURE_CONSTRAINT:
                 label_str, expr_id, registration_id = payload

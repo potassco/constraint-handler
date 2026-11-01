@@ -10,6 +10,8 @@ from clingo import Function
 from flat_ch.core.domain import (
     ExecutionDeclare,
     Expression,
+    ISetAssign,
+    ISetBaseDomain,
     ISetDeclare,
     IValue,
     IVariableDeclare,
@@ -79,18 +81,20 @@ class ProgramRegistry:
     def update_domain(self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)) -> None:
         self.sequential_inputs.append(IVariableDomain(name, expression, condition, self.current_registration_id))
 
-    def update_set(
-        self,
-        name: str,
-        base_domain: tuple[tuple[Expression, Expression], ...] = (),
-        assignment: tuple[tuple[Expression, Expression], ...] = (),
+    def update_set(self, name: str) -> None:
+        self.registry[(RegistryKind.SET.value, name)] = ISetDeclare(name)
+
+    def update_set_base_domain(
+        self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)
     ) -> None:
-        key = (RegistryKind.SET.value, name)
-        current = self.registry.get(key)
-        if current is not None and isinstance(current, ISetDeclare):
-            self.registry[key] = ISetDeclare(name, current.base_domain + base_domain, current.assignment + assignment)
-        else:
-            self.registry[key] = ISetDeclare(name, base_domain, assignment)
+        self.registry.setdefault((RegistryKind.SET.value, name), ISetDeclare(name))
+        self.sequential_inputs.append(ISetBaseDomain(name, expression, condition))
+
+    def update_set_assign(
+        self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)
+    ) -> None:
+        self.registry.setdefault((RegistryKind.SET.value, name), ISetDeclare(name))
+        self.sequential_inputs.append(ISetAssign(name, expression, condition))
 
     def add_execution(self, execution: ExecutionDeclare) -> None:
         """Pipes an execution block directly through SSA and appends pure IR nodes."""

@@ -272,13 +272,11 @@ class Registration(BaseRegistration):
 
     def _handle_set_base_domain(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:
-            self.reg.update_set(
-                args[1], base_domain=((self.parse_expression(args[2]), self.parse_expression(args[3])),)
-            )
+            self.reg.update_set_base_domain(args[1], self.parse_expression(args[2]), self.parse_expression(args[3]))
 
     def _handle_set_assign(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:
-            self.reg.update_set(args[1], assignment=((self.parse_expression(args[2]), self.parse_expression(args[3])),))
+            self.reg.update_set_assign(args[1], self.parse_expression(args[2]), self.parse_expression(args[3]))
 
     def parse_expression(self, symbol: clingo.Symbol) -> Expression:
         cached = self._expression_cache.get(symbol)
