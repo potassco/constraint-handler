@@ -1,0 +1,9 @@
+variable_declare(s,set).
+variable_declare(enabled,boolDomain).
+set_baseDomain(s,val(int,1)).
+set_baseDomain(s,val(int,2),val(bool,false)).
+set_baseDomain(s,val(int,3),val(bool,true)).
+set_baseDomain(s,val(int,4),val(bool,true),named).
+set_baseDomain(s,val(int,5),variable(enabled)).
+set_assign(s,val(int,6)).
+set_baseDomain(s,val(int,6),val(bool,false)).
