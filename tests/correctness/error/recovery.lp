@@ -4,6 +4,7 @@ variable_define(add_three_twos,operation(add,(val(int,2),(val(int,2),(val(int,2)
 variable_define(six_minus_six,operation(sub,(val(int,6),(variable(add_three_twos),())))).
 variable_define(div_bad,operation(int_div,(val(int,6),(variable(six_minus_six),())))).
 variable_define(mult_bad,operation(mult,(variable(div_bad),(val(int,2),())))).
+variable_define(mult_bad_reversed,operation(mult,(val(int,2),(variable(div_bad),())))).
 
 % Make sure bad also works with evaluate
 evaluate(operation(lt,(variable(mult_bad),(val(int,2),())))).

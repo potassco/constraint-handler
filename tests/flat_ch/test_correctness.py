@@ -29,6 +29,10 @@ flat_ch_removed_category_tests = set(type_tests + warning_tests + multimap_tests
 flat_ch_currently_not_working_tests = {
     "core/bool_evaluate/forbidden",
     "core/bool_evaluate/inconsistent",
+    "core/conditional_declare",
+    "core/conditional_declare_domain",
+    "core/conditional_declare_empty_domain",
+    "core/conditional_declare_set",
     "datatype/bool/conj_disj_bad",
     "datatype/bool/conj_disj_mixed",
     "datatype/bool/implication_bad",

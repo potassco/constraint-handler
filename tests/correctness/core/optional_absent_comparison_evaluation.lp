@@ -1,7 +1,7 @@
 % Regression for compile2 emitting multiple stable models when two hidden
 % comparisons are evaluated on an absent optional value.
 
-variable_declare(prop,fromFacts,prop).
+variable_declare(prop,fromFacts).
 variable_domain(prop,val(none,none)).
 variable_domain(prop,val(int,5)).
 

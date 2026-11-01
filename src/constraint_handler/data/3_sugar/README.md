@@ -6,7 +6,7 @@ _passed(defaultArgs,LBL,ensure/1).
 _passed(defaultArgs,LBL,evaluate/2).
 _passed(defaultArgs,LBL,variable_assign/2).
 _passed(defaultArgs,LBL,variable_choice/2).
-_passed(defaultArgs,LBL,variable_declare/2).
+_passed(defaultArgs,LBL,variable_declare/3).
 _passed(defaultArgs,LBL,variable_default/4).
 _passed(defaultArgs,LBL,variable_define/3).
 _passed(defaultArgs,LBL,variable_domain/3).
@@ -35,7 +35,7 @@ _passed(sugar,LBL,evaluate/1).
 _passed(sugar,LBL,share_value(E)).
 _passed(sugar,LBL,variable_assign/2).
 _passed(sugar,LBL,variable_choice/2).
-_passed(sugar,LBL,variable_declare/2).
+_passed(sugar,LBL,variable_declare/3).
 _passed(sugar,LBL,variable_default/4).
 _passed(sugar,LBL,variable_define/3).
 _passed(sugar,LBL,variable_domain/3).

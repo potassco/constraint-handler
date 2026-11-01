@@ -1,4 +1,4 @@
-variable_declare(prop,fromFacts,prop).
+variable_declare(prop,fromFacts).
 variable_domain(prop,val(none,none)).
 variable_domain(prop,val(string,"wrapped")).
 

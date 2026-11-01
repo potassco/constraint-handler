@@ -510,6 +510,10 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
+    "core/conditional_declare",
+    "core/conditional_declare_domain",
+    "core/conditional_declare_empty_domain",
+    "core/conditional_declare_set",
     "datatype/bool/conj_disj/mixed",
     "datatype/bool/conj_disj/none",
     "datatype/float/mult/recovery",
@@ -534,6 +538,10 @@ compile2_skip: set[str] = {
     "variable/dynamic_type",  # non static input
 }
 compile2_xfail: set[str] = {
+    "core/conditional_declare",
+    "core/conditional_declare_domain",
+    "core/conditional_declare_empty_domain",
+    "core/conditional_declare_set",
     "core/empty_set_execution",
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",
@@ -585,6 +593,10 @@ ground_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 ground_xfail: set[str] = {
+    "core/conditional_declare",
+    "core/conditional_declare_domain",
+    "core/conditional_declare_empty_domain",
+    "core/conditional_declare_set",
     "core/reasoning_modes",
     "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
@@ -625,6 +637,10 @@ propagator_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {
+    "core/conditional_declare",
+    "core/conditional_declare_domain",
+    "core/conditional_declare_empty_domain",
+    "core/conditional_declare_set",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",

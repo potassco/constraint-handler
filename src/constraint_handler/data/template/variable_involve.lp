@@ -1,4 +1,4 @@
-_variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_declare(X,D).
+_variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_declare(X,D,C).
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_assign(X,D).
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_choice(X,D).
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_default(X,D,C,P).
