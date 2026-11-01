@@ -120,7 +120,7 @@ class Registration(BaseRegistration):
     def _handle_domain(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:
             var_sym = self._lower_variable_symbol(args[1])
-            self.reg.update_var(var_sym, ((self.parse_expression(args[2]), self.parse_expression(args[3])),))
+            self.reg.update_domain(var_sym, self.parse_expression(args[2]), self.parse_expression(args[3]))
 
     def _handle_define(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:

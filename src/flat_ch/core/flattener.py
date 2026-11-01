@@ -23,6 +23,7 @@ from flat_ch.core.domain import (
     IValue,
     IVariableDeclare,
     IVariableDefine,
+    IVariableDomain,
     IVariableRef,
     OptimizeMaximizeSum,
     OptimizePrecision,
@@ -99,19 +100,16 @@ class Flattener:
         match node.kind:
             case ProgramInputKind.VARIABLE_DECLARE:
                 var_decl: IVariableDeclare = node  # type: ignore
-                dom_ids = tuple(
-                    (self._intern_expr(expr), self._intern_expr(condition)) for expr, condition in var_decl.domain
-                )
                 self.interned_program.append(
-                    (ProgramInputKind.VARIABLE_DECLARE, (var_decl.name, dom_ids, var_decl.registration_id))
+                    (ProgramInputKind.VARIABLE_DECLARE, (var_decl.name, var_decl.registration_id))
                 )
 
-            case ProgramInputKind.VARIABLE_DEFINE:
-                var_def: IVariableDefine = node  # type: ignore
-                expr_id = self._intern_expr(var_def.expression)
-                condition_id = self._intern_expr(var_def.condition)
+            case ProgramInputKind.VARIABLE_DEFINE | ProgramInputKind.VARIABLE_DOMAIN:
+                var_input: IVariableDefine | IVariableDomain = node  # type: ignore
+                expr_id = self._intern_expr(var_input.expression)
+                condition_id = self._intern_expr(var_input.condition)
                 self.interned_program.append(
-                    (ProgramInputKind.VARIABLE_DEFINE, (var_def.name, expr_id, condition_id, var_def.registration_id))
+                    (node.kind, (var_input.name, expr_id, condition_id, var_input.registration_id))
                 )
 
             case ProgramInputKind.SET_DECLARE:
@@ -484,31 +482,31 @@ class Flattener:
     def _emit_program_input_fact(self, kind: ProgramInputKind, payload: tuple) -> None:
         match kind:
             case ProgramInputKind.VARIABLE_DECLARE:
-                name, dom_ids, registration_id = payload
+                name, registration_id = payload
                 var_sym = name if isinstance(name, Symbol) else Function(name, [])
                 decl_args = [var_sym]
                 if registration_id is not None:
                     decl_args.insert(0, Number(registration_id))
                 self._emit_fact(Function(FlatFact.VARIABLE_DECLARE.value, decl_args))
-                for expr_id, condition_id in dom_ids:
-                    dom_args = [var_sym, Number(expr_id), Number(condition_id)]
-                    if registration_id is not None:
-                        dom_args.insert(0, Number(registration_id))
-                    self._emit_fact(
-                        Function(
-                            FlatFact.VARIABLE_DOMAIN.value,
-                            dom_args,
-                        )
-                    )
 
             case ProgramInputKind.VARIABLE_DEFINE:
                 name, expr_id, condition_id, registration_id = payload
                 var_sym = name if isinstance(name, Symbol) else Function(name, [])
-                fact_name = FlatFact.VARIABLE_DEFINE.value
                 fact_args = [var_sym, Number(expr_id), Number(condition_id)]
                 if registration_id is not None:
                     fact_args.insert(0, Number(registration_id))
-                self._emit_fact(Function(fact_name, fact_args))
+                self._emit_fact(Function(FlatFact.VARIABLE_DEFINE.value, fact_args))
+
+            case ProgramInputKind.VARIABLE_DOMAIN:
+                name, expr_id, condition_id, registration_id = payload
+                var_sym = name if isinstance(name, Symbol) else Function(name, [])
+                decl_args = [var_sym]
+                fact_args = [var_sym, Number(expr_id), Number(condition_id)]
+                if registration_id is not None:
+                    decl_args.insert(0, Number(registration_id))
+                    fact_args.insert(0, Number(registration_id))
+                self._emit_fact(Function(FlatFact.VARIABLE_DECLARE.value, decl_args))
+                self._emit_fact(Function(FlatFact.VARIABLE_DOMAIN.value, fact_args))
 
             case ProgramInputKind.SET_DECLARE:
                 name, base_ids, assignment_ids = payload

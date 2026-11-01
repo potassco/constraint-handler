@@ -29,6 +29,7 @@ class StatementKind(IntEnum):
 
 class ProgramInputKind(IntEnum):
     VARIABLE_DECLARE = auto()
+    VARIABLE_DOMAIN = auto()
     VARIABLE_DEFINE = auto()
     VARIABLE_DEFAULT = auto()
     ENSURE_CONSTRAINT = auto()
@@ -177,9 +178,17 @@ ExecutionStatement: TypeAlias = IAssignStatement | IAssertStatement | IIfStateme
 @dataclass(frozen=True, slots=True)
 class IVariableDeclare:
     name: str | Symbol
-    domain: tuple[tuple[Expression, Expression], ...] = ()
     registration_id: int | None = None
     kind: ProgramInputKind = ProgramInputKind.VARIABLE_DECLARE
+
+
+@dataclass(frozen=True, slots=True)
+class IVariableDomain:
+    name: str | Symbol
+    expression: Expression
+    condition: Expression = IValue(Type.BOOL, True)
+    registration_id: int | None = None
+    kind: ProgramInputKind = ProgramInputKind.VARIABLE_DOMAIN
 
 
 @dataclass(frozen=True, slots=True)
@@ -284,6 +293,7 @@ class ExecutionDeclare:
 
 ProgramInput: TypeAlias = (
     IVariableDeclare
+    | IVariableDomain
     | IVariableDefine
     | VariableDefault
     | EnsureConstraint

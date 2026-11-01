@@ -11,11 +11,14 @@ from flat_ch.core.domain import (
     ExecutionDeclare,
     Expression,
     ISetDeclare,
+    IValue,
     IVariableDeclare,
+    IVariableDomain,
     ProgramInput,
 )
 from flat_ch.core.serialization import SerializerProtocol
 from flat_ch.core.ssa import SSA
+from flat_ch.core.types import Type
 
 
 class RegistrationProtocol(Protocol):
@@ -69,7 +72,12 @@ class ProgramRegistry:
             print(f"[FCH IR:{mode}] {decl}")
 
     def update_var(self, name: str, domain_extensions: tuple[tuple[Expression, Expression], ...]) -> None:
-        self.sequential_inputs.append(IVariableDeclare(name, domain_extensions, self.current_registration_id))
+        self.sequential_inputs.append(IVariableDeclare(name, self.current_registration_id))
+        for expression, condition in domain_extensions:
+            self.update_domain(name, expression, condition)
+
+    def update_domain(self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)) -> None:
+        self.sequential_inputs.append(IVariableDomain(name, expression, condition, self.current_registration_id))
 
     def update_set(
         self,
