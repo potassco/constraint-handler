@@ -31,6 +31,7 @@ class Variable_choice(NamedTuple):
 class Variable_declare(NamedTuple):
     name: expression.constant
     domain: domain.Domain
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 
