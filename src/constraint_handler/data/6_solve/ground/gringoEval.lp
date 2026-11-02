@@ -24,6 +24,7 @@ _expression(ground,EXPR) :- _ge_assign(X,EXPR).
 
 _se_value(variable(X),val(T,V)) :- ge_value(X,val(T,V)).
 _se_value(variable(X),bad) :- ge_value(X,bad).
+_se_value(variable(X),bad) :- ge_result(variable(X),bad).
 _se_value(variable(X),ref(set,variable(X))) :- ge_value(X,set(S)).
 _set_assign(variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
 _se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).

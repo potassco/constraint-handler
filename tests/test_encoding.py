@@ -516,9 +516,7 @@ other_tests = [
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "core/conditional_declare",
-    "core/conditional_declare_domain",
     "core/conditional_declare_empty_domain",
-    "core/conditional_declare_set",
     "datatype/bool/conj_disj/mixed",
     "datatype/bool/conj_disj/none",
     "datatype/float/mult/recovery",
@@ -536,7 +534,6 @@ compile_xfail: set[str] = {
     "warning/forbid_labeled",
     "warning/forbid_labeled_match",
     "warning/ignore_labeled",
-    "warning/mutually_exclusive_declarations",
     "warning/variables",
 }
 
@@ -548,9 +545,6 @@ compile2_skip: set[str] = {
 }
 compile2_xfail: set[str] = {
     "core/conditional_declare",
-    "core/conditional_declare_domain",
-    "core/conditional_declare_empty_domain",
-    "core/conditional_declare_set",
     "core/empty_set_execution",
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",
@@ -597,7 +591,6 @@ compile2_xfail: set[str] = {
     "warning/forbid_labeled",
     "warning/forbid_labeled_match",
     "warning/ignore_labeled",
-    "warning/mutually_exclusive_declarations",
     "warning/variables",
 }
 ground_skip: set[str] = {
@@ -607,10 +600,6 @@ ground_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 ground_xfail: set[str] = {
-    "core/conditional_declare",
-    "core/conditional_declare_domain",
-    "core/conditional_declare_empty_domain",
-    "core/conditional_declare_set",
     "core/reasoning_modes",
     "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
@@ -646,7 +635,6 @@ ground_xfail: set[str] = {
     "warning/forbid_labeled",
     "warning/forbid_labeled_match",
     "warning/ignore_labeled",
-    "warning/mutually_exclusive_declarations",
     "warning/variables",
 }
 
@@ -655,10 +643,6 @@ propagator_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {
-    "core/conditional_declare",
-    "core/conditional_declare_domain",
-    "core/conditional_declare_empty_domain",
-    "core/conditional_declare_set",
     "core/conditional_declare_set_multiple",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
