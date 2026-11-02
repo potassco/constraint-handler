@@ -68,7 +68,7 @@ core_tests = [
     "core/set_execution_input_alias",
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
-    #"core/unbound_variable_expressions",
+    # "core/unbound_variable_expressions",
     "core/unprojected_optional_equality",
     "core/set_to_variable",
 ]
@@ -533,7 +533,11 @@ compile_xfail: set[str] = {
     "type/bool/with_none_unary",
     "unit/tuple_eq",
     "unit/tuple_neq",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
+    "warning/ignore_labeled",
     "warning/mutually_exclusive_declarations",
+    "warning/variables",
 }
 
 compile2_skip: set[str] = {
@@ -590,7 +594,11 @@ compile2_xfail: set[str] = {
     "type/multimap/operations",
     "unit/float/float_max",
     "unit/float/float_min",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
+    "warning/ignore_labeled",
     "warning/mutually_exclusive_declarations",
+    "warning/variables",
 }
 ground_skip: set[str] = {
     "core/python_set_bool_brave",
@@ -635,7 +643,11 @@ ground_xfail: set[str] = {
     "unit/tuple_eq",
     "unit/tuple_neq",
     "unit/unary/set_length",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
+    "warning/ignore_labeled",
     "warning/mutually_exclusive_declarations",
+    "warning/variables",
 }
 
 propagator_skip: set[str] = {
@@ -647,6 +659,7 @@ propagator_xfail: set[str] = {
     "core/conditional_declare_domain",
     "core/conditional_declare_empty_domain",
     "core/conditional_declare_set",
+    "core/conditional_declare_set_multiple",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
@@ -674,7 +687,11 @@ propagator_xfail: set[str] = {
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "warning/bad_interface",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
+    "warning/ignore_labeled",
     "warning/mutually_exclusive_declarations",
+    "warning/variables",
 }
 
 propagator_true_skip: set[str] = propagator_skip | {
@@ -985,6 +1002,7 @@ tightness_statistics_skip: set[str] = {
 }
 tightness_statistics_xfail: set[str] = {
     "default/define/single",
+    "execution/warning_spurious",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",

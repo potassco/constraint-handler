@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - drop static warning for multiple declarations
 - - update `variable_declare` to take a condition argument.
 - - update `set_baseDomain` to take a condition argument.
 - introduce a staged python interface

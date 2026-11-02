@@ -1,22 +1,4 @@
 _passed(presolve,LBL,DECL) :- _passed(sugar,LBL,DECL), #false : _passed(correction(REASON,rem),LBL,DECL).
 _passed(presolve,LBL,DECL) :- _passed(correction(REASON,add),LBL,DECL).
 
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=variable_assign(X,D).
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=variable_choice(X,D).
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=variable_declare(X,D,C).
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=variable_default(X,V,COND,PRIO).
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=variable_define(X,D,C).
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=variable_domain(X,D,C).
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=set_assign(X,D,C).
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=set_baseDomain(X,D,C).
-_variable_involve(presolve,LBL,X,DECL) :- _passed(presolve,LBL,DECL), DECL=multimap_assign(X,D,E).
-
-_solve_conflictVariable(X) :- _variable(sugar,X),
-  1 < #count { LBL0,DECL : _passed(presolve,LBL0,DECL),
-               DECL=variable_declare(X,(fromFacts;open;set;multimap),C) }.
-
-ch_core(DECL,LBL) :- _passed(presolve,LBL,DECL), #false : _variable_involve(presolve,LBL,X,DECL), _solve_conflictVariable(X).
-
-_solve_firstLabel(X,LBL) :-_solve_conflictVariable(X), _variable_involve(presolve,LBL,X,DECL), 0 = #count { LBL2 : _variable_involve(presolve,LBL2,X,DECL2), LBL2 < LBL }.
-ch_core(variable_declare(X,definition,val(bool,true)),LBL) :- _solve_firstLabel(X,LBL).
-ch_core(variable_define(X,bad,val(bool,true)),LBL) :- _solve_firstLabel(X,LBL).
+ch_core(DECL,LBL) :- _passed(presolve,LBL,DECL).
