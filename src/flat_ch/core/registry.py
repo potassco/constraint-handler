@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import itertools
-from enum import Enum
 from typing import Callable, Protocol
 
 import clingo
@@ -27,11 +26,6 @@ class RegistrationProtocol(Protocol):
     def register(self, term: clingo.Symbol) -> clingo.Number: ...
 
 
-class RegistryKind(str, Enum):
-    VARIABLE = "var"
-    SET = "set"
-
-
 def native_static_result() -> clingo.Symbol:
     return Function("registered_ir_ready", [])
 
@@ -47,7 +41,6 @@ class ProgramRegistry:
         registration_factory: Callable[[ProgramRegistry, SerializerProtocol], RegistrationProtocol],
         serializer: SerializerProtocol,
     ) -> None:
-        self.registry: dict[tuple[str, str], ProgramInput] = {}
         self.sequential_inputs: list[ProgramInput] = []
         self.serializer = serializer
         self.current_registration_id: int | None = None
@@ -65,7 +58,7 @@ class ProgramRegistry:
         return clingo.Number(reg_id)
 
     def get_program_ir(self) -> list[ProgramInput]:
-        return list(self.registry.values()) + self.sequential_inputs
+        return list(self.sequential_inputs)
 
     def debug_print(self, mode: str) -> None:
         program_ir = self.get_program_ir()
@@ -87,18 +80,16 @@ class ProgramRegistry:
         self.sequential_inputs.append(IVariableDomain(name, expression, condition, self.current_registration_id))
 
     def update_set(self, name: str, condition: Expression = IValue(Type.BOOL, True)) -> None:
-        self.registry[(RegistryKind.SET.value, name)] = ISetDeclare(name, condition)
+        self.sequential_inputs.append(ISetDeclare(name, condition))
 
     def update_set_base_domain(
         self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)
     ) -> None:
-        self.registry.setdefault((RegistryKind.SET.value, name), ISetDeclare(name))
         self.sequential_inputs.append(ISetBaseDomain(name, expression, condition))
 
     def update_set_assign(
         self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)
     ) -> None:
-        self.registry.setdefault((RegistryKind.SET.value, name), ISetDeclare(name))
         self.sequential_inputs.append(ISetAssign(name, expression, condition))
 
     def add_execution(self, execution: ExecutionDeclare) -> None:
