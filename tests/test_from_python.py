@@ -16,7 +16,6 @@ from constraint_handler.schemas.operators import ArithmeticOperator, ComparisonO
 from constraint_handler.schemas.result import (
     Optimize_modelValue,
     Optimize_value,
-    Value,
 )
 from constraint_handler.schemas.statement import Assign
 from constraint_handler.schemas.type_ import BaseType
@@ -35,12 +34,12 @@ def test_det():
     ctrl.ground()
     with ctrl.solve(yield_=True) as solve_handle:
         model = solve_handle.model()
-        values = set(constraint_handler.find_values(model).values())
+        values = constraint_handler.find_python_values(model)
 
     assert values == {
-        Value("x", Val(BaseType.int, 5)),
-        Value("y", Val(BaseType.int, 5)),
-        Value("z", Val(BaseType.int, 10)),
+        "x": 5,
+        "y": 5,
+        "z": 10,
     }
 
 
@@ -59,13 +58,13 @@ def test_nondet():
     constraint_handler.add_declarations(ctrl, instance)
     ctrl.ground()
     with ctrl.solve(yield_=True) as solve_handle:
-        models = {frozenset(constraint_handler.find_values(model).values()) for model in solve_handle}
+        models = {frozenset(constraint_handler.find_python_values(model).items()) for model in solve_handle}
 
     assert models == {
-        frozenset({Value("x", Val(BaseType.int, 0)), Value("y", Val(BaseType.int, 3))}),
-        frozenset({Value("x", Val(BaseType.int, 1)), Value("y", Val(BaseType.int, 4))}),
-        frozenset({Value("x", Val(BaseType.int, 2)), Value("y", Val(BaseType.int, 5))}),
-        frozenset({Value("x", Val(BaseType.int, 4)), Value("y", Val(BaseType.int, 7))}),
+        frozenset({("x", 0), ("y", 3)}),
+        frozenset({("x", 1), ("y", 4)}),
+        frozenset({("x", 2), ("y", 5)}),
+        frozenset({("x", 4), ("y", 7)}),
     }
 
 
@@ -83,15 +82,13 @@ def test_optimization():
     with ctrl.solve(yield_=True) as solve_handle:
         for model in solve_handle:
             pass
+        best_assignment = constraint_handler.find_python_values(model)
         results = constraint_handler.find_values(model).values()
 
-    best_assignment = {}
     opt_value = {}
     actual_value = {}
     for x in results:
         match x:
-            case Value():
-                best_assignment[x.name] = x.val.value
             case Optimize_value():
                 opt_value[x.label] = x.total.value
             case Optimize_modelValue():

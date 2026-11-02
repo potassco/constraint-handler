@@ -15,6 +15,7 @@
     * [Engines](reference/engines.md)
     * [Preference](reference/preference.md)
     * [Execution](reference/execution.md)
+    * [Staged Python Interface](reference/python_interface.md)
     * [Python Integration](reference/python_integration.md)
     * [Error Handling](reference/error_handling.md)
 * Developer Reference

@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- introduce a staged python interface
+
 ## v0.0.9
 
 - - update `variable_domain` to take an optional condition argument.
