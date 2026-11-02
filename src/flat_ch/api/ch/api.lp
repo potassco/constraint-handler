@@ -5,8 +5,10 @@
 
 #defined variable_declare/2.
 #defined variable_declare/3.
-_fch_input(variable_declare(_fch_label, NAME, DOMAIN)) :- variable_declare(NAME, DOMAIN).
-_fch_input(variable_declare(LABEL, NAME, DOMAIN)) :- variable_declare(NAME, DOMAIN, LABEL).
+#defined variable_declare/4.
+_fch_input(variable_declare(_fch_label, NAME, DOMAIN, val(bool, true))) :- variable_declare(NAME, DOMAIN).
+_fch_input(variable_declare(_fch_label, NAME, DOMAIN, CONDITION)) :- variable_declare(NAME, DOMAIN, CONDITION).
+_fch_input(variable_declare(LABEL, NAME, DOMAIN, CONDITION)) :- variable_declare(NAME, DOMAIN, CONDITION, LABEL).
 
 #defined variable_define/2.
 #defined variable_define/3.

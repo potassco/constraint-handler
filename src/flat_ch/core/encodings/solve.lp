@@ -31,6 +31,14 @@ _fch_static_expr_val(ID, TYPE_ID, VALUE) :-
 _fch_dynamic_expr_val(ID, TYPE, VAL) :-
     _fch_static_expr_val(ID, TYPE, VAL).
 
+_fch_var_decl(NAME) :-
+    _fch_var_decl(NAME, COND_EXPR_ID),
+    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
+
+_fch_var_decl(NAME) :-
+    _fch_var_dom(NAME, _, _),
+    not _fch_var_decl(NAME, _).
+
 _fch_var_def(NAME, EXPR_ID) :-
     _fch_var_def(NAME, EXPR_ID, COND_EXPR_ID),
     _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
@@ -110,14 +118,12 @@ _fch_dynamic_expr_val(ID, _fch_type_fail_id, empty_domain(NAME)) :-
     _fch_expr_var(ID, NAME),
     _fch_empty_var_domain(NAME).
 
-% Referencing a variable that has neither a declaration nor a definition is a failure.
-_fch_dynamic_expr_val(ID, _fch_type_fail_id, undefined_variable(NAME)) :-
+% References without an active declaration or definition evaluate to bad.
+_fch_dynamic_expr_val(ID, _fch_type_fail_id, "bad") :-
     _fch_expr_var(ID, NAME),
     not _fch_var_decl(NAME),
-    not _fch_var_has_definition(NAME),
+    not _fch_var_def(NAME, _),
     not _fch_set_decl(NAME).
-
-_fch_var_has_definition(NAME) :- _fch_var_def(NAME, _, _).
 
 % Failures on strict child expressions propagate to the parent expression.
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
@@ -209,15 +215,7 @@ _fch_dynamic_expr_val(ID, TYPE_ID, VALUE) :-
 
 % It cannot be the case that some integrity fail was thrown from python.
 :- _fch_dynamic_expr_needed(ID),
-    _fch_dynamic_expr_val(ID, _fch_type_fail_id, _),
-    not _fch_python_error(ID).
-
-_fch_python_error(ID) :-
-    _fch_dynamic_expr_val(ID, _fch_type_fail_id, pythonError(_)).
-
-% Undefined references are always fatal, even if they only occur on a branch
-% that would otherwise be skippable.
-:- _fch_dynamic_expr_val(_, _fch_type_fail_id, undefined_variable(_)).
+    _fch_dynamic_expr_val(ID, _fch_type_fail_id, integrityError(_)).
 
 % =============================================================================
 % OPTIMIZATION OBJECTIVES

@@ -72,7 +72,7 @@ class FlatFact(str, Enum):
 
 
 _FLAT_FACT_VARIABLE_MAP = {
-    FlatFact.VARIABLE_DECLARE: ("NAME",),
+    FlatFact.VARIABLE_DECLARE: ("NAME", "COND_EXPR_ID"),
     FlatFact.VARIABLE_DOMAIN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.VARIABLE_DEFINE: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.EXPRESSION_VALUE: ("ID", "TYPE_ID", "VALUE"),
@@ -82,7 +82,7 @@ _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.VARIABLE_DEFAULT: ("NAME", "EXPR_ID", "COND_EXPR_ID", "PRIORITY"),
     FlatFact.EVALUATE: ("EXPR", "EXPR_ID"),
     FlatFact.BOOL_EVALUATE: ("EXPR", "EXPR_ID"),
-    FlatFact.SET: ("NAME",),
+    FlatFact.SET: ("NAME", "COND_EXPR_ID"),
     FlatFact.SET_BASE_DOMAIN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.SET_ASSIGN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.PAIR: ("ID", "KEY_EXPR_ID", "VALUE_EXPR_ID"),
@@ -180,6 +180,7 @@ ExecutionStatement: TypeAlias = IAssignStatement | IAssertStatement | IIfStateme
 @dataclass(frozen=True, slots=True)
 class IVariableDeclare:
     name: str | Symbol
+    condition: Expression = IValue(Type.BOOL, True)
     registration_id: int | None = None
     kind: ProgramInputKind = ProgramInputKind.VARIABLE_DECLARE
 
@@ -260,6 +261,7 @@ class BoolEvaluateInput:
 @dataclass(frozen=True, slots=True)
 class ISetDeclare:
     name: str | Symbol
+    condition: Expression = IValue(Type.BOOL, True)
     kind: ProgramInputKind = ProgramInputKind.SET_DECLARE
 
 

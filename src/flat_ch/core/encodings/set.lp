@@ -2,6 +2,10 @@
 % ASSIGN & BASE DOMAIN
 % =============================================================================
 
+_fch_set_decl(NAME) :-
+    _fch_set_decl(NAME, COND_EXPR_ID),
+    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
+
 % Every active set assignment assigns its evaluated value as a member of the set.
 _fch_set_member_assigned(SET_NAME, TYPE, VAL) :-
     _fch_set_assign(SET_NAME, EXPR_ID, COND_EXPR_ID),

@@ -73,16 +73,21 @@ class ProgramRegistry:
         for decl in program_ir:
             print(f"[FCH IR:{mode}] {decl}")
 
-    def update_var(self, name: str, domain_extensions: tuple[tuple[Expression, Expression], ...]) -> None:
-        self.sequential_inputs.append(IVariableDeclare(name, self.current_registration_id))
-        for expression, condition in domain_extensions:
-            self.update_domain(name, expression, condition)
+    def update_var(
+        self,
+        name: str,
+        domain_extensions: tuple[tuple[Expression, Expression], ...],
+        condition: Expression = IValue(Type.BOOL, True),
+    ) -> None:
+        self.sequential_inputs.append(IVariableDeclare(name, condition, self.current_registration_id))
+        for expression, domain_condition in domain_extensions:
+            self.update_domain(name, expression, domain_condition)
 
     def update_domain(self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)) -> None:
         self.sequential_inputs.append(IVariableDomain(name, expression, condition, self.current_registration_id))
 
-    def update_set(self, name: str) -> None:
-        self.registry[(RegistryKind.SET.value, name)] = ISetDeclare(name)
+    def update_set(self, name: str, condition: Expression = IValue(Type.BOOL, True)) -> None:
+        self.registry[(RegistryKind.SET.value, name)] = ISetDeclare(name, condition)
 
     def update_set_base_domain(
         self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)
