@@ -8,146 +8,1473 @@ either format. Input-specific spellings are listed where they are known.
 
 An operator is applied to the values of its arguments. The contracts below
 describe valid argument types and the value produced for valid inputs.
-Expressions may also be undefined, have an unknown domain, or produce
-diagnostics during evaluation; these cases are described by the consuming
-stage, not by changing the operator's mathematical meaning. See
-[StaticTypeChecking](Preprocessing/StaticTypeChecking.md) for static type
-contracts and [DomainComputation](Preprocessing/DomainComputation.md) for
-domain approximations, diagnostics, and threshold behavior.
+Expressions may also be undefined, and/or produce
+diagnostics during evaluation and runtime.
 
-## Equality and generic comparisons
+General Rules:
+ - An error is raised if an invalid arity is supplied to an operator.
+ - Type Errors depend only on argument types and arity
+ - Runtime Errors depend on argument values
+ - Any float that is equivalent to an integer can be converted to an integer
 
-| Operator | Arguments | Meaning |
-| --- | --- | --- |
-| `eq(x, y)` | Any values | True iff `x` and `y` are equal. Integers and reals compare by numeric value; booleans are distinct from numbers. Values of different other types are unequal. |
-| `neq(x, y)` | Any values | Logical negation of `eq(x, y)`. |
-| `max(x1, ..., xn)` | One or more booleans or numbers | Greatest argument under the ordering below. |
-| `min(x1, ..., xn)` | One or more booleans or numbers | Least argument under the ordering below. |
+Definitions:
+ - Parameters are denoted as x1, x2, ..., xn for n arguments.
+ - out denotes the output of an operator.
+ - defined(X) is true if all x in X are defined, false otherwise.
+ - number(x) denotes the numeric value of `x` if `x` is an integer or float, x otherwise
+ - ANY_TYPE = {bool, None, int, float, string, tuple, set} % no lambda
+ - The comparison `==` (and `in`, set construction) in the formulas below is mathematical equality, not Python's: values of different types are unequal (`1 == true` is false), int and float compare by numeric value, and tuples and sets compare element-wise under the same rule.
 
-Booleans are ordered `false < true`; integers and reals use numeric ordering.
-Mixed integer/real comparisons use numeric values. `max` and `min` preserve the
-type of the selected value.
+# Types:
 
-## Strings and generic values
+bool: {true, false}
+None: {None}
+int: the set of all integers
+float: the set of all floats
+string: the set of all strings
+tuple: a tuple of bool, None, int, float, string, set % not nested
+set: a set of bool, None, int, float, string
+lambda: a callable operation
 
-| Operator | Arguments | Meaning |
-| --- | --- | --- |
-| `concat(x, y)` | Two strings | String formed by appending `y` to `x`. |
-| `length(x)` | String, tuple, or set | Number of characters, tuple elements, or set elements, respectively. |
+# Comparison Operators
 
-The ASP draft also lists `trunc(string, integer)` and
-`substring(string, integer, integer)`. Their precise behavior (including
-indexing, negative indices, and out-of-range arguments) is not yet specified
-and must be settled before they can be given portable semantics.
+## eq
 
-`mod(x, y)` appears in the static type table but not in either input operator
-list, and its remainder convention is not specified. `tuple_get(t, index)`
-also appears in the static type table without a corresponding input-list entry
-or a defined indexing convention. These operators need their input exposure
-and edge-case behavior settled before they can be specified here.
+### Arity:
+n=2
 
-## Conditional and optional-value operations
+### Types:
+x1, ..., xn in ANY_TYPE
 
-`None` is an ordinary value in the expression model. These operators inspect
-whether an argument is `None`; they do not treat every false-like value as
-missing.
+out in {bool}
 
-| Operator | Arguments | Meaning |
-| --- | --- | --- |
-| `get_or_else(x, fallback)` | Any values | Return `fallback` if `x` is `None`; otherwise return `x`. |
-| `if_(condition, x)` | Boolean, any value | Return `x` when `condition` is true; return `None` when it is false. |
-| `has_value(x)` | Any value | Return true iff `x` is not `None`. |
-| `ite(condition, if_true, if_false)` | Boolean, any values | Return `if_true` when the condition is true, otherwise `if_false`. |
+### Semantics:
+```
+if defined({x1, x2})
+  out = (number(x1) == number(x2))
+else
+  out = undefined
+```
 
-## Arithmetic and numeric comparisons
+### Warnings:
+```
+if type(x1) != type(x2) and not {type(x1), type(x2)} <= {int, float}
+  warn("Comparing values of different types")
+```
 
-| Operator | Arguments | Meaning |
-| --- | --- | --- |
-| `abs(x)` | Integer or real | Absolute value of `x`. |
-| `minus(x)` | Integer or real | Additive inverse of `x`. |
-| `add(x1, ..., xn)` | One or more numbers | Sum of the arguments. |
-| `sub(x, y)` | Two numbers | `x - y`. |
-| `mult(x1, ..., xn)` | One or more numbers | Product of the arguments. |
-| `linear_integer((c1, x1), ..., (cn, xn), c)` | Integer coefficients, integer-valued terms, optional integer offset | Sum `c1*x1 + ... + cn*xn + c`; omitted offset is zero. |
-| `int_div(x, y)` | Two numbers, `y != 0` | Floor division, rounded toward negative infinity; result is an integer. |
-| `real_div(x, y)` | Two numbers, `y != 0` | Real quotient `x / y`. |
-| `pow(base, exponent)` | Two numbers | Exponentiation when the result is defined and real. |
-| `sqrt(x)` | Number, `x >= 0` | Nonnegative square root, returned as a real. |
-| `sin(x)`, `cos(x)`, `tan(x)` | Number | Corresponding trigonometric function; input is in radians. |
-| `asin(x)`, `acos(x)` | Number in `[-1, 1]` | Inverse trigonometric function, returned in radians. |
-| `atan(x)` | Number | Inverse tangent, returned in radians. |
-| `floor(x)`, `ceil(x)` | Number | Greatest integer no greater than `x`, or least integer no less than `x`, respectively. |
-| `real_from_int(x)` | Integer | Convert `x` to a real. |
-| `int_from_real(x)` | Real | Convert to an integer by truncating toward zero. |
-| `lt(x, y)`, `leq(x, y)`, `gt(x, y)`, `geq(x, y)` | Booleans or numbers | Strict/non-strict ordering comparisons; return a boolean. |
+## neq
 
-Integer-only `add`, `sub`, and `mult` return integers; if any operand is real,
-their result is real. `pow` may return either integer or real for integer
-inputs (for example, a negative exponent can produce a real); otherwise its
-result is real. Division by zero and mathematically undefined or non-real
-results are excluded from the value semantics and reported by the evaluating
-stage.
+### Arity:
+n=2
 
-## Boolean logic
+### Types:
+x1, ..., xn in ANY_TYPE
 
-The ordinary boolean operators require boolean operands:
+out in {bool}
 
-| Operator | Arguments | Meaning |
-| --- | --- | --- |
-| `lnot(x)` | Boolean | Logical negation. |
-| `conj(x1, ..., xn)` | Zero or more booleans | Conjunction; the empty conjunction is true. |
-| `disj(x1, ..., xn)` | Zero or more booleans | Disjunction; the empty disjunction is false. |
-| `limp(x, y)` | Two booleans | Material implication: false only when `x` is true and `y` is false. |
-| `lxor(x1, ..., xn)` | Zero or more booleans | True iff an odd number of arguments are true; the empty parity is false. |
-| `leqv(x1, ..., xn)` | Zero or more booleans | True iff an even number of arguments are false; the empty parity is true. |
+### Semantics:
+```
+if defined({x1, x2})
+  out = (number(x1) != number(x2))
+else
+  out = undefined
+```
 
-`snot` and `wnot` implement distinct three-valued negations over `true`,
-`false`, and `None`:
+### Warnings:
+```
+if type(x1) != type(x2) and not {type(x1), type(x2)} <= {int, float}
+  warn("Comparing values of different types")
+```
 
-| Input | `snot(input)` | `wnot(input)` |
-| --- | --- | --- |
-| `true` | `false` | `false` |
-| `false` | `true` | `true` |
-| `None` | `false` | `true` |
+## lt
 
-## Sets, tuples, and folds
+### Arity:
+n=2
 
-Sets are finite, unordered collections of distinct values. Tuples are finite,
-ordered sequences and may contain nested tuples.
+### Types:
+x1, ..., xn in {int, float}
 
-| Operator | Arguments | Meaning |
-| --- | --- | --- |
-| `set_make(x1, ..., xn)` | Zero or more scalar values | Construct the set of the arguments; duplicate elements occur once. |
-| `cardinality(s)` | Set | Number of distinct elements in `s`. |
-| `set_isin(x, s)` | Scalar value and set | True iff `x` is an element of `s`. |
-| `set_notin(x, s)` | Scalar value and set | Logical negation of `set_isin(x, s)`. |
-| `union(a, b)` | Two sets | Set containing elements that occur in `a` or `b`. |
-| `inter(a, b)` | Two sets | Set containing elements that occur in both `a` and `b`. |
-| `diff(a, b)` | Two sets | Set containing elements of `a` that do not occur in `b`. |
-| `subset(a, b)` | Two sets | True iff every element of `a` is also in `b`. |
-| `set_fold(f, s, initial)` | Binary callback, set, initial accumulator | Visit the elements of `s` in deterministic `repr` order, repeatedly replacing the accumulator with `f(accumulator, element)`, then return the final accumulator. The empty set returns `initial`. |
+out in {bool}
 
-The set-valued `union`, `inter`, and `diff` operate on whole sets. `set_make`
-and the membership operators require scalar elements; nested sets are not
-elements in the current type model.
+### Semantics:
+```
+if defined({x1, x2})
+  out = (number(x1) < number(x2))
+else
+  out = undefined
+```
 
-## Calls and callbacks
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported comparison type")
+```
 
-| Operator | Arguments | Meaning |
-| --- | --- | --- |
-| `lambda_(lambda, a1, ..., an)` | Lambda and one argument per parameter | Evaluate the lambda body with its parameters bound to the corresponding argument values. |
-| `python_eval(fn, a1, ..., an)` | Python callable and its arguments | Invoke `fn(a1, ..., an)` and return its result. |
+## leq
 
+### Arity:
+n=2
+
+### Types:
+x1, ..., xn in {int, float}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = (number(x1) <= number(x2))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported comparison type")
+```
+
+## gt
+
+### Arity:
+n=2
+
+### Types:
+x1, ..., xn in {int, float}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = (number(x1) > number(x2))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported comparison type")
+```
+
+## geq
+
+### Arity:
+n=2
+
+### Types:
+x1, ..., xn in {int, float}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = (number(x1) >= number(x2))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported comparison type")
+```
+
+# None operators
+
+## hasValue
+
+### Arity:
+n=1
+
+### Types:
+x1 in ANY_TYPE
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1})
+  out = (x1 != None)
+else
+  out = undefined
+```
+
+## get_or_else
+
+### Arity:
+n=2
+
+### Types:
+x1, x2 in ANY_TYPE
+
+out in ANY_TYPE
+
+### Semantics:
+```
+if defined({x1, x2})
+  if x1 != None
+    out = x1
+  else
+    out = x2
+else
+  out = undefined
+```
+
+## if_
+
+### Arity:
+n=2
+
+### Types:
+x1 in {bool}
+x2 in ANY_TYPE
+
+out in {type(x2), None}
+
+### Semantics:
+```
+if defined({x1})
+  if x1 == true
+    out = x2
+  else
+    out = None
+else
+  out = undefined
+```
+
+# Arithmetic operators
+
+## abs
+
+### Arity:
+n=1
+
+### Types:
+x1 in {int, float}
+
+out in {int, float}
+
+### Semantics:
+```
+if defined({x1})
+  out = abs(number(x1))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## minus
+**should we support this, could be mult(x, -1)**
+
+### Arity:
+n=1
+
+### Types:
+x1 in {int, float}
+
+out in {int, float}
+
+### Semantics:
+```
+if defined({x1})
+  out = -number(x1)
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## add
+**should we support more than two arguments?**
+
+### Arity:
+n=2
+
+### Types:
+x1, x2 in {int, float}
+
+out in {int, float}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = number(x1) + number(x2)
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## sub
+**should we support more than two arguments?**
+
+### Arity:
+n=2
+
+### Types:
+x1, x2 in {int, float}
+
+out in {int, float}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = number(x1) - number(x2)
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## mult
+
+### Arity:
+n=2
+
+### Types:
+x1, x2 in {int, float}
+
+out in {int, float}
+
+### Semantics:
+```
+if x1 == 0 or x2 == 0
+  out = 0
+elif defined({x1, x2})
+  out = number(x1) * number(x2)
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## int_div
+
+### Arity:
+n=2
+
+### Types:
+x1, x2 in {int, float}
+
+out in {int}
+
+### Semantics:
+```
+if x2 == 0
+  out = undefined
+elif defined({x1, x2})
+  out = number(x1) // number(x2)    % floor division, rounded towards negative infinity
+else
+  out = undefined
+```
+
+### Warnings:
+```
+if x2 == 0
+  warning("Division by zero")
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## mod
+
+### Arity:
+n=2
+
+### Types:
+x1, x2 in {int, float}
+
+out in {int, float}
+
+### Semantics:
+```
+if x2 == 0
+  out = undefined
+elif defined({x1, x2})
+  if type(x1) == int and type(x2) == int
+    out = x1 - x2 * (x1 // x2)    % floored remainder; sign follows x2
+  else
+    out = number(x1) - number(x2) * floor(number(x1) / number(x2))
+else
+  out = undefined
+```
+
+### Warnings:
+```
+if x2 == 0
+  warning("Division by zero")
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## float_div
+
+### Arity:
+n=2
+
+### Types:
+x1, x2 in {int, float}
+
+out in {float, int}
+
+### Semantics:
+```
+if x2 == 0
+  out = undefined
+elif defined({x1, x2})
+  out = number(x1) / number(x2)    % true division
+else
+  out = undefined
+```
+
+### Warnings:
+```
+if x2 == 0
+  warning("Division by zero")
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## pow
+
+### Arity:
+n=2
+
+### Types:
+x1, x2 in {int, float}
+
+out in {int, float}
+
+### Semantics:
+```
+if (x1 == 0 and x2 < 0)
+  out = undefined
+elif (x1 < 0 and x2 != floor(x2))
+  out = undefined
+elif defined({x1, x2})
+  out = number(x1) ** number(x2)
+else
+  out = undefined
+```
+
+### Warnings:
+```
+if (x1 == 0 and x2 < 0)
+  warning("Zero to a negative power")
+elif (x1 < 0 and x2 != floor(x2))
+  warning("Negative number to a non-integer power")
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## max/min
+
+### Arity:
+n>=1
+
+### Types:
+x1, ..., xn in {int, float}
+
+out in {int, float}
+
+### Semantics:
+```
+if defined({x1, ..., xn})
+  out = max/min(number(x1), ..., number(xn))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), ..., type(xn)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## sqrt
+
+### Arity:
+n=1
+
+### Types:
+x1 in {int, float}
+
+out in {float, int}
+
+### Semantics:
+```
+if x1 < 0
+  out = undefined
+elif defined({x1})
+  out = sqrt(number(x1))
+else
+  out = undefined
+```
+
+### Warnings:
+```
+if x1 < 0
+  warning("Square root of a negative number")
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## sin/cos/tan
+
+### Arity:
+n=1
+
+### Types:
+x1 in {int, float}
+
+out in {float, int}
+
+### Semantics:
+```
+if defined({x1})
+  out = sin/cos/tan(number(x1))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## atan
+
+### Arity:
+n=1
+
+### Types:
+x1 in {int, float}
+
+out in {float, int}
+
+### Semantics:
+```
+if defined({x1})
+  out = atan(number(x1))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## asin/acos
+
+### Arity:
+n=1
+
+### Types:
+x1 in {int, float}
+
+out in {float, int}
+
+### Semantics:
+```
+if x1 < -1 or x1 > 1
+  out = undefined
+elif defined({x1})
+  out = asin/acos(number(x1))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+### Runtime Errors:
+```
+if x1 < -1 or x1 > 1
+  error("asin/acos requires -1 <= x1 <= 1")
+```
+
+## floor
+
+### Arity:
+n=1
+
+### Types:
+x1 in {int, float}
+
+out in {int}
+
+### Semantics:
+```
+if defined({x1})
+  out = floor(number(x1))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+## ceil
+
+### Arity:
+n=1
+
+### Types:
+x1 in {int, float}
+
+out in {int}
+
+### Semantics:
+```
+if defined({x1})
+  out = ceil(number(x1))
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {int, float}
+  error("Unsupported arithmetic type")
+```
+
+# Boolean logic operators
+
+## lnot
+
+### Arity:
+n=1
+
+### Types:
+x1 in {bool}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1})
+  out = true if x1==false else false
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {bool}
+  error("Unsupported boolean type")
+```
+
+## conj
+
+### Arity:
+n >= 0
+
+### Types:
+x1, ..., xn in {bool}
+
+out in {bool}
+
+### Semantics:
+```
+if n == 0
+  out = true
+elif false in {x1, ..., xn}
+  out = false
+elif defined({x1, ..., xn})
+  out = x1 and x2 and ... and xn
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), ..., type(xn)} <= {bool}
+  error("Unsupported boolean type")
+```
+
+## disj
+
+### Arity:
+n >= 0
+
+### Types:
+x1, ..., xn in {bool}
+
+out in {bool}
+
+### Semantics:
+```
+if n == 0
+  out = false
+elif true in {x1, ..., xn}
+  out = true
+elif defined({x1, ..., xn})
+  out = x1 or x2 or ... or xn
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), ..., type(xn)} <= {bool}
+  error("Unsupported boolean type")
+```
+
+## limp
+
+### Arity:
+n = 2
+
+### Types:
+x1, x2 in {bool}
+
+out in {bool}
+
+### Semantics:
+```
+if x1 == false or x2 == true
+  out = true
+elif defined({x1, x2})
+  out = (not x1) or x2
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {bool}
+  error("Unsupported boolean type")
+```
+
+## lxor
+
+### Arity:
+n >= 0
+
+### Types:
+x1, ..., xn in {bool}
+
+out in {bool}
+
+### Semantics:
+```
+if n == 0
+  out = false
+elif n == 1
+  out = x1
+elif defined({x1, ..., xn})
+  out = x1 xor x2 xor ... xor xn
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), ..., type(xn)} <= {bool}
+  error("Unsupported boolean type")
+```
+
+## leqv
+
+### Arity:
+n >= 0
+
+### Types:
+x1, ..., xn in {bool}
+
+out in {bool}
+
+### Semantics:
+```
+% true iff the number of false operands is even (covers n == 0 and n == 1)
+if defined({x1, ..., xn})
+  out = (count of i where xi == false) % 2 == 0
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), ..., type(xn)} <= {bool}
+  error("Unsupported boolean type")
+```
+
+## snot
+
+### Arity:
+n = 1
+
+### Types:
+x1 in {bool, None}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1})
+  if x1 == true or x1 == None
+    out = false
+  elif x1 == false
+    out = true
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {bool, None}
+  error("Unsupported boolean or None type")
+```
+
+## wnot
+
+### Arity:
+n = 1
+
+### Types:
+x1 in {bool, None}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1})
+  if x1 == false
+    out = false
+  elif x1 == true or x1 == None
+    out = true
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {bool, None}
+  error("Unsupported boolean or None type")
+```
+
+## ite
+
+### Arity:
+n=3
+
+### Types:
+x1 in {bool}
+x2, x3 in ANY_TYPE
+
+out in {type(x2), type(x3)}
+
+### Semantics:
+```
+if defined({x1})
+  if x1 == true
+    out = x2
+  else
+    out = x3
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1)} <= {bool}
+  error("Unsupported boolean type")
+```
+
+# String Operators
+
+## concat
+
+### Arity:
+n == 2
+
+### Types:
+x1, x2 in {string}
+
+out in {string}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = x1 + x2
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {string}
+  error("Unsupported string type")
+```
+
+# Mixed Operators
+
+## length
+
+### Arity:
+n = 1
+
+### Types:
+x1 in {string, set, tuple}
+
+out in {int}
+
+### Semantics:
+```
+if defined({x1})
+  if type(x1) == string
+    out = len(x1)
+  elif type(x1) == set
+    out = |x1|
+  elif type(x1) == tuple
+    out = |x1|
+  else
+    out = undefined
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not type(x1) in {string, set, tuple}
+  error("Unsupported type for length operator")
+```
+
+# Tuple Operators
+
+## make_tuple
+
+### Arity:
+n >= 0
+
+### Types:
+x1, ..., xn in {int, float, bool, string, None, set}
+
+out in {tuple}
+
+### Semantics:
+```
+if defined({x1, ..., xn})
+  out = (x1, ..., xn)
+else
+  out = undefined
+```
+
+## tuple_index
+
+### Arity:
+n = 2
+
+### Types:
+x1 in {tuple}
+x2 in {int}
+
+out in ANY_TYPE
+
+### Semantics:
+```
+if defined({x1, x2})
+  if 0 <= x2 < |x1|
+    out = x1[x2]
+  else
+    out = undefined
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not type(x1) == tuple
+  error("Unsupported type for tuple_index operator")
+if not type(x2) == int
+  error("Index must be an integer")
+```
+
+### Runtime Errors:
+```
+if x2 < 0 or x2 >= |x1|
+  error("Index out of bounds")
+```
+
+# Set Operators
+
+## set_make
+
+### Arity:
+n >= 0
+
+### Types:
+x1, ..., xn in {int, float, bool, string, None}
+
+out in {set}
+
+### Semantics:
+```
+if defined({x1, ..., xn})
+  out = {x1, ..., xn}
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), ..., type(xn)} <= {int, float, bool, string}
+  error("Unsupported type for set_make operator")
+```
+
+## set_isin
+
+### Arity:
+n = 2
+
+### Types:
+x1 in {int, float, bool, string}
+x2 in {set}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = x1 in x2
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not type(x1) in {int, float, bool, string}
+  error("Unsupported type for set_isin operator")
+if not type(x2) == set
+  error("Second argument must be a set")
+```
+
+## set_notin
+**do we really need this, could be expressed as `not set_isin(x1, x2)`**
+
+### Arity:
+n = 2
+
+### Types:
+x1 in {int, float, bool, string}
+x2 in {set}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = x1 not in x2
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not type(x1) in {int, float, bool, string}
+  error("Unsupported type for set_notin operator")
+if not type(x2) == set
+  error("Second argument must be a set")
+```
+
+## union
+
+### Arity:
+n >= 0
+
+### Types:
+x1, ..., xn in {set}
+
+out in {set}
+
+### Semantics:
+```
+if n == 0
+  out = {}
+elif defined({x1, ..., xn})
+  out = union({x1, ..., xn})
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), ..., type(xn)} <= {set}
+  error("Unsupported type for union operator")
+```
+
+## inter
+
+### Arity:
+n >= 1
+
+### Types:
+x1, ..., xn in {set}
+
+out in {set}
+
+### Semantics:
+```
+if defined({x1, ..., xn})
+  out = inter({x1, ..., xn})
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), ..., type(xn)} <= {set}
+  error("Unsupported type for inter operator")
+```
+
+## diff
+
+### Arity:
+n = 2
+
+### Types:
+x1, x2 in {set}
+
+out in {set}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = x1 - x2
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {set}
+  error("Unsupported type for diff operator")
+```
+
+## subset
+
+### Arity:
+n = 2
+
+### Types:
+x1, x2 in {set}
+
+out in {bool}
+
+### Semantics:
+```
+if defined({x1, x2})
+  out = x1 <= x2
+else
+  out = undefined
+```
+
+### Type Errors:
+```
+if not {type(x1), type(x2)} <= {set}
+  error("Unsupported type for subset operator")
+```
+
+# Callables
+
+## set_fold
+The lambda's first parameter is bound to the set element and its second
+parameter to the accumulator. The iteration order over the set is not specified,
+so the lambda must give the same result for every order.
+
+### Arity:
+n = 3
+
+### Types:
+x1 in {lambda}
+x2 in {set}
+x3 in ANY_TYPE
+
+out in ANY_TYPE
+
+### Semantics:
+```
+% m = number of parameters of x1; requires m == 2
+if defined({x1, x2, x3})
+  acc = x3
+  for each e in x2
+    acc = body(x1) evaluated with p1 bound to e and p2 bound to acc
+    if acc is undefined
+      out = undefined
+      stop
+  out = acc
+else
+  out = undefined
+```
+Any undefined step makes `out` undefined.
+
+### Type Errors:
+```
+if type(x1) != lambda
+  error("set_fold requires a Lambda as first argument")
+if type(x2) != set
+  error("set_fold requires a set as second argument")
+```
+
+### Runtime Errors:
+```
+if m != 2
+  error("set_fold requires a Lambda with 2 parameters")
+```
+
+### Example:
+```
+% set_fold(lambda x, acc: x + acc, {1, 2, 3}, 0)
+%   f(1, 0) = 1, f(2, 1) = 3, f(3, 3) = 6
+out = 6
+```
+
+## lambda_call
 Lambda parameters are local to the call and shadow variables of the same name
-in outer scopes. Python callbacks must be deterministic and side-effect-free
+in outer scopes.
+
+### Arity:
+n >= 1 (x1 is the lambda, followed by one argument per lambda parameter)
+
+### Types:
+x1 in {lambda}
+x2, ..., xn in ANY_TYPE
+
+out in ANY_TYPE
+
+### Semantics:
+```
+% m = number of parameters of x1; requires n - 1 == m
+if defined({x1, ..., xn})
+  out = body(x1) evaluated with parameter p_i bound to x_(i+1)
+else
+  out = undefined
+```
+The body's own result may be undefined, which makes `out` undefined.
+
+### Type Errors:
+```
+if type(x1) != lambda
+  error("lambda_call requires a Lambda as first argument")
+```
+
+### Runtime Errors:
+```
+if n - 1 != m
+  error("Lambda expects m arguments, got n - 1")
+```
+
+### Example:
+```
+% lambda_call(lambda x: x + 1, 5)
+%   body(x1) = x + 1, with x bound to 5
+out = 5 + 1 = 6
+```
+
+## python_call
+Python callbacks must be deterministic and side-effect-free
 for domain computation to remain sound. Python source is trusted executable
 input, not sandboxed code.
 
-The ASP draft also lists `python_execute(source, result_name)`. This form does
-not match the expression-valued `python_eval` operation, and its execution
-scope, side effects, and result-binding behavior are not specified here.
+### Arity:
+n >= 1 (x1 is the Python source, followed by the arguments passed to the callable)
 
-## Input spelling
+### Types:
+fn = x1 in {string}
+x2, ..., xn in ANY_TYPE
+
+out in ANY_TYPE
+
+### Semantics:
+```
+% fn = eval(x1)
+% fn is called positionally; parameter names inside the source are not used
+if defined({x2, ..., xn})
+  out = fn(x2, ..., xn)
+else
+  out = undefined
+```
+A set result is converted to a frozenset.
+
+### Warnings:
+```
+if fn raises ArithmeticError, LookupError, TypeError or ValueError for defined arguments
+  warning("Python callable failed")
+  out = undefined for this input
+if fn raises FailIntegrityExn for defined arguments
+  out = undefined for this input
+```
+
+### Runtime Errors:
+```
+if fn is not callable
+  error("Python source must evaluate to a callable")
+if fn does not accept n - 1 positional arguments
+  error("Python callable arity mismatch")
+if type(out) not in ANY_TYPE
+  error("Unsupported Python result type")
+```
+
+### Example:
+```
+% python_call("lambda value: external_abs(value)", -3)
+%   fn = eval("lambda value: external_abs(value)")
+%   out = fn(-3) = abs(-3) = 3
+```
+
+# Internal operators
+**should we make them available for general use?**
+
+## linear_integer
+This operator denotes a linear combination of integer-valued terms with integer coefficients and an integer offset.
+
+### Arity and Types:
+n = number of terms (including the offset)
+each term xi is a tuple of the form (coefficient, variable) where the coefficient is an integer (constant) and the variable of type int.
+
+out in {int}
+
+### Semantics:
+```
+if n == 0
+    offset = 0
+else
+    offset = xn
+
+for i in {1, ..., n-1}
+    if xi_1 == 0
+        pi = 0
+    elif defined({xi_1, xi_2})
+        pi = xi_1 * xi_2
+    else
+        pi = undefined
+
+if defined({p1, ..., p(n-1), offset})
+    out = p1 + p2 + ... + p(n-1) + offset
+else
+    out = undefined
+```
+
+### Type Errors:
+```
+if not all({type(xi_1)} is integer constant for i in {1, ..., n-1})
+    error("Coefficient must be an integer constant")
+if not all({type(xi_2)} <= {int} for i in {1, ..., n-1})
+    error("Variable must be of type int")
+if not offset is integer constant
+    error("Offset must be an integer constant")
+```
+
+## linear_comparison
+This operator denotes a linear combination of integer-valued terms with integer coefficients and an integer offset and a comparison relation against 0.
+
+### Arity and Types:
+n >= 3
+n = number of terms (including the offset and the relation symbol)
+each term xi is a tuple of the form (coefficient, variable) where the coefficient is an integer (constant) and the variable of type int.
+the last term xn is the relation symbol, which must be one of {"<", "<=", "=", "!=", ">=", ">"} as a constant string.
+
+out in {bool}
+
+### Semantics:
+```
+offset = xn-1
+relation = xn
+
+for i in {1, ..., n-2}
+    if xi_1 == 0
+        pi = 0
+    elif defined({xi_1, xi_2})
+        pi = xi_1 * xi_2
+    else
+        pi = undefined
+
+if defined({p1, ..., p(n-2), offset})
+    lhs = p1 + p2 + ... + p(n-2) + offset
+    if relation == "<"
+        out = lhs < 0
+    elif relation == "<="
+        out = lhs <= 0
+    elif relation == "="
+        out = lhs == 0
+    elif relation == "!="
+        out = lhs != 0
+    elif relation == ">="
+        out = lhs >= 0
+    elif relation == ">"
+        out = lhs > 0
+    else
+        out = undefined
+else
+    out = undefined
+```
+
+### Type Errors:
+```
+if not all({type(xi_1)} is integer constant for i in {1, ..., n-2})
+    error("Coefficient must be an integer constant")
+if not all({type(xi_2)} <= {int} for i in {1, ..., n-2})
+    error("Variable must be of type int")
+if not offset is integer constant
+    error("Offset must be an integer constant")
+if not relation in {"<", "<=", "=", "!=", ">=", ">"}
+    error("Relation must be one of {<, <=, =, !=, >=, >}")
+```
+
+## TODO: Input spelling
 
 These are surface spellings for the same operation where both input drafts
 provide names:
@@ -161,9 +1488,3 @@ provide names:
 | Set membership | `in` | `set_isin` |
 | Greater than or equal | `ge` | `geq` |
 | Less than or equal | `le` | `leq` |
-
-The ASP draft uses `val(type, value)` wrappers and `variable(name)` terms;
-Python input uses Python scalar values and `VariableRef` objects. These are
-encoding differences only. A mapping above is a proposed correspondence for
-the input drafts, not a claim that every spelling is currently implemented by
-every input adapter.
