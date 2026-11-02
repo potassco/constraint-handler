@@ -99,10 +99,6 @@ class ProgramRegistry:
     def update_domain(self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)) -> None:
         self.sequential_inputs.append(IVariableDomain(name, expression, condition, self.current_registration_id))
 
-    # TODO: Resolve missing registration scoping, then route set declarations through update_var and remove this method.
-    def update_set(self, name: str, condition: Expression = IValue(Type.BOOL, True)) -> None:
-        self.sequential_inputs.append(IVariableDeclare(name, condition, declaration_kind=DeclarationKind.SET))
-
     def update_set_base_domain(
         self, name: str, expression: Expression, condition: Expression = IValue(Type.BOOL, True)
     ) -> None:

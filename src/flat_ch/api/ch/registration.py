@@ -102,7 +102,7 @@ class Registration(BaseRegistration):
             condition = self.parse_expression(args[3])
 
             if domain_kind == "set":
-                self.reg.update_set(var_sym, condition=condition)
+                self.reg.update_var(var_sym, (), condition=condition, declaration_kind=DeclarationKind.SET)
             elif domain_kind == "boolDomain":
                 self.reg.update_var(
                     var_sym,
@@ -273,7 +273,7 @@ class Registration(BaseRegistration):
 
     def _handle_set_declare(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 2:
-            self.reg.update_set(args[1])
+            self.reg.update_var(args[1], (), declaration_kind=DeclarationKind.SET)
 
     def _handle_set_base_domain(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:

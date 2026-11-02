@@ -240,6 +240,10 @@ flat_ch_currently_not_working_tests = {
     "variable/missing_domain_bad",
 }.intersection(base_tests)
 
+# FCH requires statically determined program structure. Both CH and FCH support
+# expression-controlled activation of fixed declarations. ASP choices determining
+# input statement presence are CH-only; such fixtures belong here, not in
+# flat_ch_currently_not_working_tests.
 flat_ch_unsupported_tests = {
     "core/custom_globals",
     "core/python_set_bool_brave",
@@ -260,6 +264,8 @@ flat_ch_unsupported_tests = {
     "optimization/preferences",
     "python/dynamic",
     "python/set_output",
+    "variable/dynamic_type",
+    "variable/parallel_declaration",
 }.intersection(base_tests)
 
 flat_ch_supported_tests = [

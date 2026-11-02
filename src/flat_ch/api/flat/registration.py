@@ -9,6 +9,7 @@ from flat_ch.core.base_registration import BaseRegistration, parse_operator, par
 from flat_ch.core.domain import (
     BoolEvaluateInput,
     CheckConstraint,
+    DeclarationKind,
     EnsureConstraint,
     EvaluateInput,
     ExecutionDeclare,
@@ -180,7 +181,7 @@ class Registration(BaseRegistration):
                     )
                 )
             case self._ui_set_decl if args_len == 1:
-                self.reg.update_set(self.to_str(args[0]))
+                self.reg.update_var(self.to_str(args[0]), (), declaration_kind=DeclarationKind.SET)
             case self._ui_set_base if args_len == 3:
                 self.reg.update_set_base_domain(
                     self.to_str(args[0]), self.parse_expression(args[1]), self.parse_expression(args[2])
