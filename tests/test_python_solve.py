@@ -19,18 +19,18 @@ def test_python_layer_handoffs():
     instance = [
         Variable_declare("x", Definition()),
         Variable_define("x", Val(BaseType.int, 5)),
-        Variable_declare("y", Definition(), derived_label),
+        Variable_declare("y", Definition(), label=derived_label),
         Variable_define("y", y_definition, label=derived_label),
         Ensure(ensure_expression),
     ]
     anonymous_core_declarations = {
         core.Engine_request(clingo.Function("compile")),
-        core.Variable_declare("x", Definition()),
+        core.Variable_declare("x", Definition(), TRUE),
         core.Variable_define("x", Val(BaseType.int, 5), TRUE),
         core.Ensure(ensure_expression),
     }
     derived_core_declarations = {
-        core.Variable_declare("y", Definition()),
+        core.Variable_declare("y", Definition(), TRUE),
         core.Variable_define("y", y_definition, TRUE),
     }
     expected_core_declarations = anonymous_core_declarations | derived_core_declarations
@@ -48,12 +48,12 @@ def test_python_layer_handoffs():
     assert actual_derived_core == derived_core_declarations
 
     anonymous_solve_declarations = {
-        core.Variable_declare("x", Definition()),
+        core.Variable_declare("x", Definition(), TRUE),
         core.Variable_define("x", Val(BaseType.int, 5), TRUE),
         solve.Share_value(ensure_expression),
     }
     derived_solve_declarations = {
-        core.Variable_declare("y", Definition()),
+        core.Variable_declare("y", Definition(), TRUE),
         core.Variable_define("y", y_definition, TRUE),
     }
     expected_solve_declarations = anonymous_solve_declarations | derived_solve_declarations

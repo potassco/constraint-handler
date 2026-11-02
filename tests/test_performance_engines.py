@@ -39,6 +39,8 @@ def run_benchmark_program(benchmark_case: PerformanceBenchmark, engine: Engine) 
 
 
 def assert_benchmark_threshold(benchmark, benchmark_case: PerformanceBenchmark, engine: Engine) -> None:
+    if benchmark.disabled:
+        return
     durations = benchmark.stats.stats.data
     average_runtime = benchmark.stats["mean"]
     assert average_runtime <= benchmark_case.max_average_seconds, (

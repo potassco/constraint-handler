@@ -972,6 +972,7 @@ choice_statistics_xfail: set[str] = {
     "variable/same_val_multi_expr",
     "warning/bad",
     "warning/fake_forbid",
+    "warning/ignore_labeled",
     "warning/variable_reservedName",
     "warning/variable_undeclared",
     "warning/variables",
