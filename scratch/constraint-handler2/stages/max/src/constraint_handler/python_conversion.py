@@ -128,9 +128,10 @@ class _Converter:
                             args=[ast.Constant(value=source)],
                             keywords=[],
                         ),
-                        ast.Dict(
-                            keys=[ast.Constant(value="math")],
-                            values=[ast.Name(id="math", ctx=ast.Load())],
+                        ast.Call(
+                            func=ast.Name(id="globals", ctx=ast.Load()),
+                            args=[],
+                            keywords=[],
                         ),
                     ],
                     keywords=[],

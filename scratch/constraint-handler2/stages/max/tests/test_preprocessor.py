@@ -520,12 +520,15 @@ def test_native_if_undeclared_argument_is_rejected() -> None:
         "lambda value: external.absolute(value) + int(math.sqrt(0))",
     ),
 )
-def test_python_context(source: str) -> None:
+@pytest.mark.parametrize("nested", (False, True))
+def test_python_context(source: str, nested: bool) -> None:
     """Use external functions during domain inference, fact generation, and solving."""
     store = ConstraintStore()
     result = VariableRef("result")
-    store.define(result, Operation(Operator.python_eval, (Python(source), -6)))
-    store.ensure(Operation(Operator.eq, (result, 6)))
+    call = Operation(Operator.python_eval, (Python(source), -6))
+    expected = 7 if nested else 6
+    store.define(result, Operation(Operator.add, (call, 1)) if nested else call)
+    store.ensure(Operation(Operator.eq, (result, expected)))
     preprocessor = Preprocessor(PreprocessOptions())
     preprocessor.add(store)
     preprocessor.add_context("absolute", abs)
@@ -533,11 +536,11 @@ def test_python_context(source: str) -> None:
 
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert prepared.domains[result] == Domain(ints=frozenset({6}))
+    assert prepared.domains[result] == Domain(ints=frozenset({expected}))
     assert any(
         fact.name == "value"
         and fact.arguments[0].name == "__complex_output"
-        and str(fact).endswith(",integer(6))")
+        and str(fact).endswith(f",integer({expected}))")
         for fact in prepared.asp_facts
     )
     assert prepared.create_solver(SolveOptions()).solve().satisfiable
@@ -590,12 +593,14 @@ def test_failure_name_is_ordinary_core_variable() -> None:
     assert prepared.create_solver(SolveOptions()).solve().satisfiable
 
 
-def test_python_context_snapshot() -> None:
+@pytest.mark.parametrize("nested", (False, True))
+def test_python_context_snapshot(nested: bool) -> None:
     """Keep prepared bindings isolated from later additions and replacements."""
     store = ConstraintStore()
     result = VariableRef("result")
-    store.define(result, Operation(Operator.python_eval, (Python("convert"), -6)))
-    store.ensure(Operation(Operator.eq, (result, 6)))
+    call = Operation(Operator.python_eval, (Python("convert"), -6))
+    store.define(result, Operation(Operator.add, (call, 1)) if nested else call)
+    store.ensure(Operation(Operator.eq, (result, 7 if nested else 6)))
     preprocessor = Preprocessor(PreprocessOptions())
     preprocessor.add(store)
     preprocessor.add_context("convert", abs)
@@ -607,7 +612,7 @@ def test_python_context_snapshot() -> None:
     preprocessor.add_context("another", str)
     updated, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert updated.domains[result] == Domain(ints=frozenset({-6}))
+    assert updated.domains[result] == Domain(ints=frozenset({-5 if nested else -6}))
     assert "another" not in prepared.python_context
     assert tuple(map(str, prepared.asp_facts)) == original_facts
     assert prepared.create_solver(SolveOptions()).solve().satisfiable
