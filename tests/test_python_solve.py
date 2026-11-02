@@ -9,7 +9,6 @@ from constraint_handler.schemas.atom import Ensure, Variable_declare, Variable_d
 from constraint_handler.schemas.domain import Definition
 from constraint_handler.schemas.expression import TRUE, Operation, Val, Variable
 from constraint_handler.schemas.operators import ArithmeticOperator, ComparisonOperator
-from constraint_handler.schemas.result import Value
 from constraint_handler.schemas.type_ import BaseType
 
 
@@ -92,9 +91,9 @@ def test_python_layer_handoffs():
     constraint_handler.add_core(ctrl, [core.Engine_request(clingo.Function("compile"))], derived_label)
     ctrl.ground()
     with ctrl.solve(yield_=True) as solve_handle:
-        actual_values = set(constraint_handler.find_values(solve_handle.model()).values())
+        actual_values = constraint_handler.find_python_values(solve_handle.model())
 
     assert actual_values == {
-        Value("x", Val(BaseType.int, 5)),
-        Value("y", Val(BaseType.int, 7)),
+        "x": 5,
+        "y": 7,
     }

@@ -10,12 +10,14 @@ import constraint_handler.post_processor as post_processor
 import constraint_handler.propagator as propagator
 import constraint_handler.schemas.atom as atom
 import constraint_handler.schemas.core as core
+import constraint_handler.schemas.expression as expression
 import constraint_handler.schemas.post as post
 import constraint_handler.schemas.result as result
 import constraint_handler.schemas.solve as solve
 import constraint_handler.solver_environment as solver_environment
 import flat_ch.main as flat_main
 from constraint_handler.engine import Engine, compile
+from constraint_handler.schemas.type_ import BaseType
 
 module_main = [
     "main",
@@ -271,6 +273,23 @@ def add_post(ctrl: clingo.Control, declarations, label=atom.LABEL_ANONYMOUS):
 
 def find_values(model: clingo.Model):
     return myClorm.findInModel(model, result.ResultAtom)
+
+
+def find_python_values(model: clingo.Model) -> typing.Mapping[expression.constant, expression.constant]:
+    """Map variable names directly to native scalars; collection conversion is not implemented."""
+    values = {}
+    for symbol, record in find_values(model).items():
+        if not isinstance(record, result.Value):
+            continue
+        if not isinstance(record.val, expression.Val) or record.val.type_ in (
+            BaseType.set,
+            BaseType.multimap,
+        ):
+            raise NotImplementedError("Native set and multimap conversion is not implemented")
+        values[record.name] = (
+            symbol.arguments[1].arguments[1] if record.val.type_ == BaseType.symbol else record.val.value
+        )
+    return values
 
 
 def find_core(model: clingo.Model, label=None):

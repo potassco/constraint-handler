@@ -12,8 +12,7 @@ from constraint_handler import (
     SolveOptions,
     Solver,
 )
-from constraint_handler.schemas.expression import Val, Variable
-from constraint_handler.schemas.type_ import BaseType
+from constraint_handler.schemas.expression import Variable
 
 
 @pytest.fixture(scope="module")
@@ -38,10 +37,10 @@ def test_preparation_snapshots_inputs():
     original_model = Solver(original).solve()
     updated_model = Solver(updated).solve()
 
-    assert original_model.values == {Variable("x"): Val(BaseType.int, 1)}
+    assert original_model.values == {"x": 1}
     assert updated_model.values == {
-        Variable("x"): Val(BaseType.int, 1),
-        Variable("y"): Val(BaseType.int, 2),
+        "x": 1,
+        "y": 2,
     }
 
 
@@ -54,7 +53,7 @@ def test_load_snapshots_file_contents(tmp_path):
 
     prepared, _ = PreparedProblem.from_preprocessor(preprocessor)
 
-    assert Solver(prepared).solve().values == {Variable("x"): Val(BaseType.int, 7)}
+    assert Solver(prepared).solve().values == {"x": 7}
 
 
 def test_prepared_problem_is_immutable(prepared_problem):
@@ -69,16 +68,16 @@ def test_enumeration_returns_detached_models(prepared_problem):
     models = list(solver.enumerate())
 
     assert {frozenset(model.values.items()) for model in models} == {
-        frozenset({(Variable("x"), Val(BaseType.int, 1))}),
-        frozenset({(Variable("x"), Val(BaseType.int, 2))}),
+        frozenset({("x", 1)}),
+        frozenset({("x", 2)}),
     }
     assert all(model.diagnostics == () for model in models)
     assert all(model.optimization_value == () for model in models)
     assert all(isinstance(model.optimality_proven, bool) for model in models)
     with pytest.raises(TypeError):
-        models[0].values[Variable("x")] = Val(BaseType.int, 99)
+        models[0].values["x"] = 99
     assert len(list(solver.enumerate())) == 2
-    assert {model.values[Variable("x")].value for model in models} == {1, 2}
+    assert {model.values["x"] for model in models} == {1, 2}
 
 
 def test_solve_returns_one_model(prepared_problem):
@@ -87,7 +86,7 @@ def test_solve_returns_one_model(prepared_problem):
     for _ in range(2):
         model = solver.solve()
         assert model is not None
-        assert model.values[Variable("x")] in {Val(BaseType.int, 1), Val(BaseType.int, 2)}
+        assert model.values["x"] in {1, 2}
         assert not hasattr(model, "optimality_proven")
         assert repr(model)
 
@@ -108,9 +107,9 @@ def test_visibility_is_session_local(prepared_problem, show_by_default):
     first.hide(Variable("x"))
     assert all(model.values == {} for model in first.enumerate())
     first.show(Variable("x"))
-    assert all(Variable("x") in model.values for model in first.enumerate())
+    assert all("x" in model.values for model in first.enumerate())
     first.hide(Variable("x"))
-    assert all(Variable("x") in model.values for model in second.enumerate())
+    assert all("x" in model.values for model in second.enumerate())
 
 
 def test_solver_unsat(prepared_problem):

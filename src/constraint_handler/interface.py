@@ -8,9 +8,8 @@ from types import MappingProxyType
 import clingo
 
 from constraint_handler.engine import none
-from constraint_handler.main import add_to_control, find_values
-from constraint_handler.schemas.expression import ReducedExpr, Variable
-from constraint_handler.schemas.result import Value
+from constraint_handler.main import add_to_control, find_python_values
+from constraint_handler.schemas.expression import Variable, constant
 
 type Diagnostics = tuple[clingo.Symbol, ...]
 
@@ -91,7 +90,7 @@ class SolveOptions:
 
 @dataclass
 class Model:
-    values: Mapping[Variable, ReducedExpr]
+    values: Mapping[constant, constant]
     diagnostics: Diagnostics
     optimization_value: tuple[int, ...]
     optimality_proven: bool = field(init=False, repr=False, compare=False)
@@ -103,22 +102,22 @@ class Solver:
         options = options or SolveOptions()
         self._model_limit = options.model_limit
         self._show_by_default = options.show_by_default
-        self._visibility: dict[Variable, bool] = {}
+        self._visibility: dict[constant, bool] = {}
 
     def add_context(self, name: str, context: Context) -> None:
         raise NotImplementedError("Runtime contexts are not implemented")
 
-    def preset(self, values: Mapping[Variable, ReducedExpr]) -> None:
+    def preset(self, values: Mapping[Variable, constant]) -> None:
         raise NotImplementedError("Presets are not implemented")
 
     def enforce_query(self, query: Query) -> None:
         raise NotImplementedError("Enforced queries are not implemented")
 
     def show(self, variable: Variable) -> None:
-        self._visibility[variable] = True
+        self._visibility[variable.arg] = True
 
     def hide(self, variable: Variable) -> None:
-        self._visibility[variable] = False
+        self._visibility[variable.arg] = False
 
     def solve(self) -> Model | None:
         solution = None
@@ -136,9 +135,9 @@ class Solver:
         with control.solve(yield_=True) as handle:
             for model in handle:
                 values = {
-                    Variable(result.name): result.val
-                    for result in find_values(model).values()
-                    if isinstance(result, Value) and self._visibility.get(Variable(result.name), self._show_by_default)
+                    variable: value
+                    for variable, value in find_python_values(model).items()
+                    if self._visibility.get(variable, self._show_by_default)
                 }
                 diagnostics = self._problem.diagnostics + tuple(
                     atom for atom in model.symbols(atoms=True) if atom.name == "warning"
