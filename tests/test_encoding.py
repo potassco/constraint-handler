@@ -46,6 +46,7 @@ core_tests = [
     "core/conditional_declare",
     "core/conditional_declare_domain",
     "core/conditional_declare_empty_domain",
+    "core/conditional_declare_inactive_domain",
     "core/conditional_declare_set",
     "core/conditional_declare_set_multiple",
     "core/conditional_define",

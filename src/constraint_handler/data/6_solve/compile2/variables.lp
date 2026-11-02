@@ -57,7 +57,8 @@ _se_value(variable(Var), bad) :-
 	not _expression_is_value(Expr),
 	not _se_is_set(Expr),
 	#false : Expr = variable(Var), _passed(compile2, _, variable_declare(Var, _, _)), not _variable_has_active_declaration(Var);
-	#false : Expr = variable(Var), _passed(compile2, _, variable_define(Var, _, _)), not _variable_has_active_definition(Var).
+	#false : Expr = variable(Var), _passed(compile2, _, variable_define(Var, _, _)), not _variable_has_active_definition(Var);
+	#false : Expr = variable(Var), _passed(compile2, _, variable_declare(Var, fromFacts, Cond)), _se_value(Cond, val(bool, true)), not var_has_domain(Var), not _variable_has_active_definition(Var).
 
 _set_choice_value(Expr, set) :-
 	_se_is_set(Expr),

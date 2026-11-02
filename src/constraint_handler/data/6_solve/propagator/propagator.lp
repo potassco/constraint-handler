@@ -1,7 +1,7 @@
 propagator_variable_declare(X,fromFacts,LBL) :- _passed(propagator,LBL,variable_declare(X,fromFacts,C)), _bool_evaluated(C,val(bool,true)).
 propagator_variable_declare(X,open,LBL) :- _passed(propagator,LBL,variable_declare(X,open,C)), _bool_evaluated(C,val(bool,true)).
 
-_bool_evaluate(C,LBL) :- _passed(propagator,LBL,(variable_declare(X,D,C);variable_domain(X,D,C))).
+_bool_evaluate(C,LBL) :- _passed(propagator,LBL,variable_domain(X,D,C)).
 1 { propagator_variable_domain(X,D,DOMAIN_LBL) :
         _passed(propagator,DOMAIN_LBL,variable_domain(X,D,C));
     _variable_emptyDomain(X)

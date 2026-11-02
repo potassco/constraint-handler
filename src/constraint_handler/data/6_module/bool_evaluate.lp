@@ -9,5 +9,6 @@ _bool_evaluated(val(bool,true),val(bool,true)).
 
 :- bool_evaluated(E,V), V!=bad, V!=val(bool,true), V!=val(bool,false).
 
+_bool_evaluate(C,LBL) :- _phase_active(solve), ch_core(variable_declare(X,D,C),LBL).
 _bool_evaluate(E,LBL) :- _phase_active(solve), ch_core(bool_evaluate(E),LBL).
 bool_evaluated(E,V) :- ch_core(bool_evaluate(E),LBL), _bool_evaluated(E,V).
