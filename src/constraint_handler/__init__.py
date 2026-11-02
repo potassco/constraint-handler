@@ -2,6 +2,16 @@
 The constraint-handler project.
 """
 
+from constraint_handler.interface import (
+    Context,
+    Model,
+    PreparedProblem,
+    PreprocessOptions,
+    Preprocessor,
+    Query,
+    SolveOptions,
+    Solver,
+)
 from constraint_handler.main import (
     add_core,
     add_declarations,
