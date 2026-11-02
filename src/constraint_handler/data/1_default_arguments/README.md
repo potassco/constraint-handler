@@ -6,7 +6,7 @@ ensure/1. ensure/2.
 evaluate/2. evaluate/3.
 variable_assign/2. variable_assign/3.
 variable_choice/2. variable_choice/3.
-variable_declare/2. variable_declare/3.
+variable_declare/2. variable_declare/3. variable_declare/4.
 variable_define/2. variable_define/3. variable_define/4.
 variable_domain/2. variable_domain/3. variable_domain/4.
 variable_default/2. variable_default/3. variable_default/4. variable_default/5.

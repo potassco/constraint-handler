@@ -20,11 +20,14 @@ _passed(defaultArgs,LBL,evaluate(E)) :- evaluate(E,LBL).
 %%%%%% variable declare
 #defined variable_declare/2.
 #defined variable_declare/3.
+#defined variable_declare/4.
 
-_defaultArgs_variableDeclared(X) :- variable_declare(X,E).
-_defaultArgs_variableDeclared(X) :- variable_declare(X,E,LBL).
+_defaultArgs_variableDeclared(X) :- variable_declare(X,D).
+_defaultArgs_variableDeclared(X) :- variable_declare(X,D,C).
+_defaultArgs_variableDeclared(X) :- variable_declare(X,D,C,LBL).
 _passed(defaultArgs,_label_anonymous,variable_declare(X,E,val(bool,true))) :- variable_declare(X,E).
-_passed(defaultArgs,LBL,variable_declare(X,D,val(bool,true))) :- variable_declare(X,D,LBL).
+_passed(defaultArgs,_label_anonymous,variable_declare(X,D,C)) :- variable_declare(X,D,C).
+_passed(defaultArgs,LBL,variable_declare(X,D,C)) :- variable_declare(X,D,C,LBL).
 
 %%%%%% variable fromFacts
 #defined variable_domain/2.

@@ -2,7 +2,7 @@
 
 #const int_domain_size = 10000.
 
-variable_declare(x, fromFacts, assign_x).
+variable_declare(x, fromFacts).
 variable_domain(x, val(int, 1..int_domain_size)).
 
 variable_define(y, operation(add, (variable(x), (val(int, 1), ()))), val(bool,true), assign_y).

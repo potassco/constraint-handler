@@ -1,8 +1,8 @@
-variable_declare(odd0,set,odd0).
+variable_declare(odd0,set,val(bool,true),odd0).
 set_assign(odd0,val(int,1),val(bool,true),odd0).
 set_assign(odd0,val(int,3),val(bool,true),odd0).
 
-variable_declare(sma0,set,sma0).
+variable_declare(sma0,set,val(bool,true),sma0).
 set_assign(sma0,val(int,1),val(bool,true),sma0).
 set_assign(sma0,val(int,2),val(bool,true),sma0).
 
