@@ -9,6 +9,7 @@ from flat_ch.core.base_registration import BaseRegistration, parse_operator, par
 from flat_ch.core.domain import (
     BoolEvaluateInput,
     CheckConstraint,
+    DeclarationKind,
     EnsureConstraint,
     EvaluateInput,
     ExecutionDeclare,
@@ -113,6 +114,8 @@ class Registration(BaseRegistration):
                 )
             elif domain_kind == "fromFacts":
                 self.reg.update_var(var_sym, (), condition=condition)
+            elif domain_kind == "definition":
+                self.reg.update_var(var_sym, (), condition=condition, declaration_kind=DeclarationKind.DEFINITION)
             elif domain_kind == "open":
                 self.reg.update_var(var_sym, (), condition=condition)
             elif domain_kind == "fromList":

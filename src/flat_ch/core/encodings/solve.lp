@@ -31,31 +31,37 @@ _fch_static_expr_val(ID, TYPE_ID, VALUE) :-
 _fch_dynamic_expr_val(ID, TYPE, VAL) :-
     _fch_static_expr_val(ID, TYPE, VAL).
 
-_fch_var_decl(NAME) :-
-    _fch_var_decl(NAME, COND_EXPR_ID),
-    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
+_fch_variable_declaration(NAME, KIND, COND_ID) :- _fch_var_decl(NAME, KIND, COND_ID).
 
-_fch_var_decl(NAME) :-
-    _fch_var_dom(NAME, _, _),
-    not _fch_var_decl(NAME, _).
+_fch_var_active(NAME, KIND) :-
+    _fch_variable_declaration(NAME, KIND, COND_ID),
+    _fch_dynamic_expr_val(COND_ID, _fch_type_bool_id, true).
+
+_fch_var_active(NAME) :- _fch_var_active(NAME, _).
+
+_fch_domain_var_active(NAME) :- _fch_var_active(NAME, domain).
 
 _fch_var_def(NAME, EXPR_ID) :-
     _fch_var_def(NAME, EXPR_ID, COND_EXPR_ID),
-    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
+    _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true),
+    _fch_var_active(NAME).
+
+_fch_dynamic_var_def(NAME, EXPR_ID) :- _fch_var_def(NAME, EXPR_ID).
+_fch_dynamic_var_def(NAME, EXPR_ID) :- _fch_selected_var_def(NAME, EXPR_ID).
 
 % For each declared variable we pick exactly one expression from its domain to define it.
 % This must also happen for variables that are only observed via public output.
 % Variables with a declared default (see variable_default) get a soft (0-or-1) choice instead,
 % since the default may supply the value; variables that are already forced via _fch_var_def
 % (e.g. variable_assign) skip domain choice entirely.
-1{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
-    _fch_var_decl(NAME),
+1{_fch_selected_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
+    _fch_domain_var_active(NAME),
 	_fch_var_has_domain(NAME),
     not _fch_var_def(NAME, _),
     not _fch_var_has_default(NAME).
 
-{_fch_dynamic_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
-    _fch_var_decl(NAME),
+{_fch_selected_var_def(NAME, EXPR_ID) : _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true)}1 :-
+    _fch_domain_var_active(NAME),
     _fch_var_dom(NAME, _, _),
     not _fch_var_def(NAME, _),
     _fch_var_has_default(NAME).
@@ -66,19 +72,19 @@ _fch_var_has_default(NAME) :- _fch_var_default(NAME, _, _, _).
 % it comes from a direct assignment/definition, the (now optional) domain choice, or an
 % applying default.
 :- _fch_var_has_default(NAME),
+    _fch_var_active(NAME),
     #count{
-        TYPE, VAL : _fch_var_def(NAME, EXPR_ID), _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL);
         TYPE, VAL : _fch_dynamic_var_def(NAME, EXPR_ID), _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL)
     } != 1.
 
 _fch_dynamic_var_def_val(NAME, EXPR_ID, TYPE, VAL) :-
-    _fch_dynamic_var_def(NAME, EXPR_ID),
+    _fch_selected_var_def(NAME, EXPR_ID),
     _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL).
 
 _fch_dynamic_expr_resolved(EXPR_ID) :- _fch_dynamic_expr_val(EXPR_ID, _, _).
 
 % A chosen domain entry must resolve to an actual value.
-:- _fch_dynamic_var_def(NAME, EXPR_ID),
+:- _fch_selected_var_def(NAME, EXPR_ID),
     not _fch_dynamic_expr_resolved(EXPR_ID).
 
 _fch_dynamic_dom_val(NAME, DOM_EXPR_ID, TYPE, VAL) :-
@@ -98,18 +104,12 @@ _fch_dynamic_expr_val(ID, TYPE, VAL) :-
     _fch_dynamic_var_def(NAME, EXPR_ID),
     _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL).
 
-% The value of a defined variable is the dynamic value of its defining expression.
-_fch_dynamic_expr_val(ID, TYPE, VAL) :-
-    _fch_expr_var(ID, NAME),
-    _fch_var_def(NAME, EXPR_ID),
-    _fch_dynamic_expr_val(EXPR_ID, TYPE, VAL).
-
 _fch_var_has_domain(NAME) :- _fch_var_dom(NAME, _, COND_EXPR_ID), _fch_dynamic_expr_val(COND_EXPR_ID, _fch_type_bool_id, true).
 
 % Declared variables without any domain entries are treated as invalid inputs,
 % unless a declared default or a direct assignment/definition can supply their value instead.
 _fch_empty_var_domain(NAME) :-
-    _fch_var_decl(NAME),
+    _fch_domain_var_active(NAME),
     not _fch_var_has_domain(NAME),
     not _fch_var_has_default(NAME),
     not _fch_var_def(NAME, _).
@@ -118,12 +118,15 @@ _fch_dynamic_expr_val(ID, _fch_type_fail_id, empty_domain(NAME)) :-
     _fch_expr_var(ID, NAME),
     _fch_empty_var_domain(NAME).
 
-% References without an active declaration or definition evaluate to bad.
+% References without an active declaration evaluate to bad.
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, "bad") :-
     _fch_expr_var(ID, NAME),
-    not _fch_var_decl(NAME),
-    not _fch_var_def(NAME, _),
-    not _fch_set_decl(NAME).
+    not _fch_var_active(NAME).
+
+_fch_dynamic_expr_val(ID, _fch_type_fail_id, "bad") :-
+    _fch_expr_var(ID, NAME),
+    _fch_var_active(NAME, definition),
+    not _fch_dynamic_var_def(NAME, _).
 
 % Failures on strict child expressions propagate to the parent expression.
 _fch_dynamic_expr_val(ID, _fch_type_fail_id, VALUE) :-
@@ -158,11 +161,6 @@ _fch_dynamic_expr_needed(EXPR_ID) :-
     _fch_dynamic_expr_needed(ID),
     _fch_expr_var(ID, NAME),
     _fch_dynamic_var_def(NAME, EXPR_ID).
-
-_fch_dynamic_expr_needed(EXPR_ID) :-
-    _fch_dynamic_expr_needed(ID),
-    _fch_expr_var(ID, NAME),
-    _fch_var_def(NAME, EXPR_ID).
 
 _fch_dynamic_expr_needed(FIRST_ID) :-
     _fch_dynamic_expr_needed(ID),

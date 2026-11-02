@@ -206,9 +206,9 @@ Args:
  - Size: The total number of elements contained within the set.
 *%
 % Declared sets get their size directly
-set_size(NAME, SIZE)           :- _fch_set_decl(NAME), _fch_set_size(NAME, SIZE).
+set_size(NAME, SIZE)           :- _fch_set_handle(NAME), _fch_set_size(NAME, SIZE).
 % Variables defined as sets get their size from the target set definition
-set_size(VAR_NAME, SIZE)       :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_decl(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
+set_size(VAR_NAME, SIZE)       :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_handle(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
 
 %*! bool_evaluated(Expression, Value)
 

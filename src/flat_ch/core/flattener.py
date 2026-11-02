@@ -21,7 +21,6 @@ from flat_ch.core.domain import (
     IPythonOperation,
     ISetAssign,
     ISetBaseDomain,
-    ISetDeclare,
     IValue,
     IVariableDeclare,
     IVariableDefine,
@@ -105,7 +104,12 @@ class Flattener:
                 self.interned_program.append(
                     (
                         ProgramInputKind.VARIABLE_DECLARE,
-                        (var_decl.name, self._intern_expr(var_decl.condition), var_decl.registration_id),
+                        (
+                            var_decl.name,
+                            var_decl.declaration_kind,
+                            self._intern_expr(var_decl.condition),
+                            var_decl.registration_id,
+                        ),
                     )
                 )
 
@@ -115,12 +119,6 @@ class Flattener:
                 condition_id = self._intern_expr(var_input.condition)
                 self.interned_program.append(
                     (node.kind, (var_input.name, expr_id, condition_id, var_input.registration_id))
-                )
-
-            case ProgramInputKind.SET_DECLARE:
-                set_decl: ISetDeclare = node  # type: ignore
-                self.interned_program.append(
-                    (ProgramInputKind.SET_DECLARE, (set_decl.name, self._intern_expr(set_decl.condition)))
                 )
 
             case ProgramInputKind.SET_BASE_DOMAIN | ProgramInputKind.SET_ASSIGN:
@@ -489,9 +487,9 @@ class Flattener:
     def _emit_program_input_fact(self, kind: ProgramInputKind, payload: tuple) -> None:
         match kind:
             case ProgramInputKind.VARIABLE_DECLARE:
-                name, declaration_condition_id, registration_id = payload
+                name, declaration_kind, declaration_condition_id, registration_id = payload
                 var_sym = name if isinstance(name, Symbol) else Function(name, [])
-                decl_args = [var_sym, Number(declaration_condition_id)]
+                decl_args = [var_sym, Function(declaration_kind.value, []), Number(declaration_condition_id)]
                 if registration_id is not None:
                     decl_args.insert(0, Number(registration_id))
                 self._emit_fact(Function(FlatFact.VARIABLE_DECLARE.value, decl_args))
@@ -511,11 +509,6 @@ class Flattener:
                 if registration_id is not None:
                     fact_args.insert(0, Number(registration_id))
                 self._emit_fact(Function(FlatFact.VARIABLE_DOMAIN.value, fact_args))
-
-            case ProgramInputKind.SET_DECLARE:
-                name, declaration_condition_id = payload
-                set_sym = name if isinstance(name, Symbol) else Function(name, [])
-                self._emit_fact(Function(FlatFact.SET.value, [set_sym, Number(declaration_condition_id)]))
 
             case ProgramInputKind.SET_BASE_DOMAIN:
                 name, expr_id, condition_id = payload

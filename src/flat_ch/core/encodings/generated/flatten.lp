@@ -10,8 +10,8 @@ _fch_expr_val(ID, TYPE_ID, VALUE) :- _fch_flat(expr_val(ID, TYPE_ID, VALUE)).
 _fch_expr_var(ID, NAME) :- _fch_flat(expr_var(ID, NAME)).
 _fch_var_def(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_def(ID, NAME, EXPR_ID, COND_EXPR_ID)).
 _fch_var_def(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_flat(var_def(NAME, EXPR_ID, COND_EXPR_ID)).
-_fch_var_decl(NAME, COND_EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_decl(ID, NAME, COND_EXPR_ID)).
-_fch_var_decl(NAME, COND_EXPR_ID) :- _fch_flat(var_decl(NAME, COND_EXPR_ID)).
+_fch_var_decl(NAME, DECL_KIND, COND_EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_decl(ID, NAME, DECL_KIND, COND_EXPR_ID)).
+_fch_var_decl(NAME, DECL_KIND, COND_EXPR_ID) :- _fch_flat(var_decl(NAME, DECL_KIND, COND_EXPR_ID)).
 _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_registered(_, ID), _fch_flat(var_dom(ID, NAME, EXPR_ID, COND_EXPR_ID)).
 _fch_var_dom(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_flat(var_dom(NAME, EXPR_ID, COND_EXPR_ID)).
 _fch_var_default(NAME, EXPR_ID, COND_EXPR_ID, PRIORITY) :- _fch_registered(_, ID), _fch_flat(var_default(ID, NAME, EXPR_ID, COND_EXPR_ID, PRIORITY)).
@@ -24,7 +24,6 @@ _fch_evaluate(EXPR, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(evaluate(ID, E
 _fch_evaluate(EXPR, EXPR_ID) :- _fch_flat(evaluate(EXPR, EXPR_ID)).
 _fch_bool_evaluate(EXPR, EXPR_ID) :- _fch_registered(_, ID), _fch_flat(bool_evaluate(ID, EXPR, EXPR_ID)).
 _fch_bool_evaluate(EXPR, EXPR_ID) :- _fch_flat(bool_evaluate(EXPR, EXPR_ID)).
-_fch_set_decl(NAME, COND_EXPR_ID) :- _fch_flat(set_decl(NAME, COND_EXPR_ID)).
 _fch_set_base_domain(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_flat(set_base_domain(NAME, EXPR_ID, COND_EXPR_ID)).
 _fch_set_assign(NAME, EXPR_ID, COND_EXPR_ID) :- _fch_flat(set_assign(NAME, EXPR_ID, COND_EXPR_ID)).
 _fch_optimize_sum(ID, ELEM, PRIO, COND_EXPR_ID) :- _fch_flat(optimize_sum(ID, ELEM, PRIO, COND_EXPR_ID)).

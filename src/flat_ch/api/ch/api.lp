@@ -156,10 +156,10 @@ _fch_default_ensure_var(ENSURE_EXPR_ID, VAR_NAME) :-
 _fch_default_connect(X, Y) :-
     _fch_default_ensure_var(ENSURE_EXPR_ID, X),
     _fch_default_ensure_var(ENSURE_EXPR_ID, Y),
-    _fch_var_decl(X),
+	_fch_domain_var_active(X),
     X != Y.
 
-_fch_default_connect(X, X) :- _fch_var_decl(X), _fch_default_mode(depends).
+_fch_default_connect(X, X) :- _fch_domain_var_active(X), _fch_default_mode(depends).
 
 _fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
     _fch_var_default(NAME, DEFAULT_ID, COND_ID, PRIORITY),
@@ -169,17 +169,18 @@ _fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
 
 _fch_default_apply(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
     _fch_var_default(NAME, DEFAULT_ID, COND_ID, PRIORITY),
+	_fch_var_active(NAME),
 	not _fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY).
 
 % A variable subject to an applying default is defined by the default expression.
-_fch_dynamic_var_def(NAME, DEFAULT_ID) :- _fch_default_apply(NAME, DEFAULT_ID, _, _).
+_fch_selected_var_def(NAME, DEFAULT_ID) :- _fch_default_apply(NAME, DEFAULT_ID, _, _).
 
 %
 % CH-facing output compatibility.
 %
 
-set_size(NAME, SIZE) :- _fch_set_decl(NAME), _fch_set_size(NAME, SIZE).
-set_size(VAR_NAME, SIZE) :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_decl(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
+set_size(NAME, SIZE) :- _fch_set_handle(NAME), _fch_set_size(NAME, SIZE).
+set_size(VAR_NAME, SIZE) :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_handle(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
 
 bool_evaluated(EXPR, val(bool, true)) :-
 	_fch_bool_evaluate(EXPR, EXPR_ID),
@@ -277,10 +278,6 @@ set_value(NAME, val(bool, VALUE)) :-
 
 set_value(execution_input(EXEC, VAR), VALUE) :- set_value((EXEC, VAR, in), VALUE).
 set_value(execution_output(EXEC, VAR), VALUE) :- set_value((EXEC, VAR, out), VALUE).
-
-value(NAME, bad) :-
-	_fch_var_def(NAME, EXPR_ID),
-	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
 
 value(NAME, bad) :-
 	_fch_dynamic_var_def(NAME, EXPR_ID),

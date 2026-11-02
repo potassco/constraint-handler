@@ -37,12 +37,17 @@ class ProgramInputKind(IntEnum):
     EVALUATE_INPUT = auto()
     PYTHON_EVALUATE_INPUT = auto()
     BOOL_EVALUATE_INPUT = auto()
-    SET_DECLARE = auto()
     SET_BASE_DOMAIN = auto()
     SET_ASSIGN = auto()
     OPTIMIZE_MAXIMIZE_SUM = auto()
     OPTIMIZE_PRECISION = auto()
     EXECUTION_DECLARE = auto()
+
+
+class DeclarationKind(str, Enum):
+    DOMAIN = "domain"
+    DEFINITION = "definition"
+    SET = "set"
 
 
 class FlatFact(str, Enum):
@@ -58,7 +63,6 @@ class FlatFact(str, Enum):
     CHECK = "check"
     EVALUATE = "evaluate"
     BOOL_EVALUATE = "bool_evaluate"
-    SET = "set_decl"
     SET_BASE_DOMAIN = "set_base_domain"
     SET_ASSIGN = "set_assign"
     OPTIMIZE_SUM = "optimize_sum"
@@ -72,7 +76,7 @@ class FlatFact(str, Enum):
 
 
 _FLAT_FACT_VARIABLE_MAP = {
-    FlatFact.VARIABLE_DECLARE: ("NAME", "COND_EXPR_ID"),
+    FlatFact.VARIABLE_DECLARE: ("NAME", "DECL_KIND", "COND_EXPR_ID"),
     FlatFact.VARIABLE_DOMAIN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.VARIABLE_DEFINE: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.EXPRESSION_VALUE: ("ID", "TYPE_ID", "VALUE"),
@@ -82,7 +86,6 @@ _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.VARIABLE_DEFAULT: ("NAME", "EXPR_ID", "COND_EXPR_ID", "PRIORITY"),
     FlatFact.EVALUATE: ("EXPR", "EXPR_ID"),
     FlatFact.BOOL_EVALUATE: ("EXPR", "EXPR_ID"),
-    FlatFact.SET: ("NAME", "COND_EXPR_ID"),
     FlatFact.SET_BASE_DOMAIN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.SET_ASSIGN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.PAIR: ("ID", "KEY_EXPR_ID", "VALUE_EXPR_ID"),
@@ -182,6 +185,7 @@ class IVariableDeclare:
     name: str | Symbol
     condition: Expression = IValue(Type.BOOL, True)
     registration_id: int | None = None
+    declaration_kind: DeclarationKind = DeclarationKind.DOMAIN
     kind: ProgramInputKind = ProgramInputKind.VARIABLE_DECLARE
 
 
@@ -259,13 +263,6 @@ class BoolEvaluateInput:
 
 
 @dataclass(frozen=True, slots=True)
-class ISetDeclare:
-    name: str | Symbol
-    condition: Expression = IValue(Type.BOOL, True)
-    kind: ProgramInputKind = ProgramInputKind.SET_DECLARE
-
-
-@dataclass(frozen=True, slots=True)
 class ISetBaseDomain:
     name: str | Symbol
     expression: Expression
@@ -319,7 +316,6 @@ ProgramInput: TypeAlias = (
     | EvaluateInput
     | PythonEvaluateInput
     | BoolEvaluateInput
-    | ISetDeclare
     | ISetBaseDomain
     | ISetAssign
     | OptimizeMaximizeSum
