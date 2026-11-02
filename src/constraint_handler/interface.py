@@ -1,6 +1,6 @@
 """Experimental staged interface for declarative constraint-handler input."""
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
@@ -9,6 +9,8 @@ import clingo
 
 from constraint_handler.engine import none
 from constraint_handler.main import add_to_control, find_python_values
+from constraint_handler.myClorm import pytocl
+from constraint_handler.schemas.atom import Atom
 from constraint_handler.schemas.expression import Variable, constant
 
 type Diagnostics = tuple[clingo.Symbol, ...]
@@ -33,7 +35,12 @@ class Preprocessor:
         self._programs: list[str] = []
 
     def add(self, program: str) -> None:
+        """Collect source text for preparation."""
         self._programs.append(program)
+
+    def join(self, atoms: Iterable[Atom]) -> None:
+        """Collect Python atoms for preparation."""
+        self.add("\n".join(f"{pytocl(atom)}." for atom in atoms))
 
     def load(self, path: Path) -> None:
         self.add(path.read_text(encoding="utf-8"))

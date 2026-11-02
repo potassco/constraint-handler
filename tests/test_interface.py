@@ -12,14 +12,21 @@ from constraint_handler import (
     SolveOptions,
     Solver,
 )
-from constraint_handler.schemas.expression import Variable
+from constraint_handler.schemas.atom import Variable_declare, Variable_define, Variable_domain
+from constraint_handler.schemas.domain import FromFacts
+from constraint_handler.schemas.expression import Val, Variable
+from constraint_handler.schemas.type_ import BaseType
 
 
-@pytest.fixture(scope="module")
-def prepared_problem():
+@pytest.fixture(scope="module", params=("add", "join"))
+def prepared_problem(request):
     preprocessor = Preprocessor()
-    preprocessor.add('variable_declare("x",fromFacts). variable_domain("x",val(int,1)).')
-    preprocessor.add('variable_domain("x",val(int,2)).')
+    if request.param == "add":
+        preprocessor.add('variable_declare("x",fromFacts).')
+        preprocessor.add('variable_domain("x",val(int,1)). variable_domain("x",val(int,2)).')
+    else:
+        preprocessor.join((Variable_declare("x", FromFacts()),))
+        preprocessor.join(Variable_domain("x", Val(BaseType.int, value)) for value in (1, 2))
     prepared, diagnostics = PreparedProblem.from_preprocessor(preprocessor)
     assert diagnostics == prepared.diagnostics == ()
     return prepared
@@ -27,7 +34,10 @@ def prepared_problem():
 
 def test_preparation_snapshots_inputs():
     preprocessor = Preprocessor()
-    preprocessor.add('variable_define("x",val(int,1)).')
+    program = [Variable_define("x", Val(BaseType.int, 1))]
+    preprocessor.join(program)
+    # Verify that join snapshots the input before the caller mutates it.
+    program.clear()
     original, _ = PreparedProblem.from_preprocessor(preprocessor)
     repeated, _ = PreparedProblem.from_preprocessor(preprocessor)
     assert repeated == original
