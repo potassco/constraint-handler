@@ -91,12 +91,6 @@ _TEMPLATES: dict[Operator, str] = {
     Operator.set_fold: "__import__('functools').reduce(_arg0, sorted(_arg1, key=repr), _arg2)",
 }
 
-_COMPILE_PYTHON = ast.parse(
-    "__import__('constraint_handler.python_conversion', "
-    "fromlist=('compile_python',)).compile_python",
-    mode="eval",
-).body
-
 
 class _Converter:
     """Generate lexical bindings independent of caller variable names."""
@@ -142,22 +136,7 @@ class _Converter:
             case Lambda(parameters, body):
                 return self.callable(parameters, body, bindings)
             case Python(source):
-                return ast.Call(
-                    func=ast.Name(id="eval", ctx=ast.Load()),
-                    args=[
-                        ast.Call(
-                            func=_COMPILE_PYTHON,
-                            args=[ast.Constant(value=source)],
-                            keywords=[],
-                        ),
-                        ast.Call(
-                            func=ast.Name(id="globals", ctx=ast.Load()),
-                            args=[],
-                            keywords=[],
-                        ),
-                    ],
-                    keywords=[],
-                )
+                return ast.parse(source, mode="eval").body
             case tuple():
                 return ast.Tuple(
                     elts=[self.expression(item, bindings) for item in expr],
