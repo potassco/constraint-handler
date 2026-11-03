@@ -13,6 +13,7 @@ from clingo.script import enable_python
 
 from constraint_handler import (
     ConstraintStore,
+    DomainCache,
     Engine,
     Expr,
     Lambda,
@@ -28,8 +29,6 @@ from constraint_handler.diagnostics import Diagnostics
 from constraint_handler.domains import (
     UNKNOWN_DOMAIN,
     Domain,
-    DomainStore,
-    compute_domains,
 )
 from constraint_handler.internal_input import Expr as InternalExpr
 from constraint_handler.internal_input import Lambda as InternalLambda
@@ -49,6 +48,8 @@ from constraint_handler.type_checking import (
     UnknownType,
 )
 from constraint_handler.util import compute_evaluation_order
+
+from .domain_helpers import compute_domains, seeded_domains
 
 
 @pytest.mark.parametrize(
@@ -72,7 +73,9 @@ def test_linear_operands_preserve_terms_and_offset(
         expression = InternalOperation(
             operator, (ValueDef(ValueType.string, "leq"), *expression.args)
         )
-    domains = DomainStore({first: UNKNOWN_DOMAIN, second: Domain(ints=frozenset({1}))})
+    domains = seeded_domains(
+        {first: UNKNOWN_DOMAIN, second: Domain(ints=frozenset({1}))}
+    )
     cost = GroundingCost(domains, TypeCache(ConstraintStore()))
     assert cost.parameters(expression) == (
         (offset,) if offset_only else (first, second, offset)
@@ -157,7 +160,7 @@ def test_has_value_large_set_uses_ordinary_cost_splitting(members: int) -> None:
     processor.add(store)
     problem, diagnostics = processor.preprocess()
     assert not diagnostics.has_errors
-    assert problem.domains[source].cardinality() == (1 << members) + 1
+    assert problem.domains.get_domain(source).cardinality() == (1 << members) + 1
     assert set(problem.engines.values()) == {Engine.native}
     assert any(
         isinstance(expression, InternalOperation)
@@ -329,7 +332,7 @@ def test_split_lowers_python_fold_callbacks() -> None:
     assert store == before
 
 
-def _metadata(store: ConstraintStore) -> tuple[DomainStore, TypeCache]:
+def _metadata(store: ConstraintStore) -> tuple[DomainCache, TypeCache]:
     """Compute metadata without applying normalization or splitting."""
     diagnostics = Diagnostics()
     order = compute_evaluation_order(store, diagnostics)
@@ -371,10 +374,6 @@ def test_splitting_does_not_recompute_metadata(
         pytest.fail("splitting must only transfer metadata")
 
     monkeypatch.setattr(
-        "constraint_handler.domains.computer._DomainComputer.run",
-        unexpected_computation,
-    )
-    monkeypatch.setattr(
         "constraint_handler.type_checking.TypeChecker.check",
         unexpected_computation,
     )
@@ -382,22 +381,24 @@ def test_splitting_does_not_recompute_metadata(
     order = compute_evaluation_order(store, diagnostics)
     diagnostics.warn("existing warning")
     original_diagnostics = tuple(diagnostics.items)
-    original_domains = dict(domains)
+    original_domains = {
+        expression: domains.get_domain(expression)
+        for expression in (*store.expressions.values(), *store.variables)
+    }
     original_types = {
         expression: types.get_type(expression)
         for expression in (*store.expressions.values(), *store.variables)
     }
-    original_scoped_domains = dict(domains.scoped_expressions)
-    assert original_scoped_domains
     monkeypatch.setattr(
         "constraint_handler.util.compute_evaluation_order", unexpected_computation
     )
     split(store, domains, types, order, diagnostics)
     assert not diagnostics.has_errors
     assert tuple(diagnostics.items) == original_diagnostics
-    assert all(domains[expr] is value for expr, value in original_domains.items())
+    assert all(
+        domains.get_domain(expr) == value for expr, value in original_domains.items()
+    )
     assert all(types.get_type(expr) is value for expr, value in original_types.items())
-    assert original_scoped_domains.items() <= domains.scoped_expressions.items()
 
 
 def test_lambda_metadata_scopes_do_not_combine_independent_calls() -> None:
@@ -416,20 +417,15 @@ def test_lambda_metadata_scopes_do_not_combine_independent_calls() -> None:
         Operation(Operator.lambda_, (Lambda((parameter,), 0), "text")),
     )
     domains, types = _metadata(store)
-    original_domains = set(domains.scoped_expressions)
     _split(store, domains, types)
     zero = ValueDef(ValueType.integer, 0)
-    scopes = [
-        scope
-        for expr, scope in domains.scoped_expressions.keys() - original_domains
-        if expr == zero
-    ]
-    assert len(scopes) == 12
-    assert all(len(scope) == 1 for scope in scopes)
-    assert all(parameter not in dict(scope) for scope in scopes)
-    for scope in scopes:
-        bindings = {variable: frozenset({ValueType.integer}) for variable, _ in scope}
-        assert types.get_type(zero, bindings) == frozenset({ValueType.integer})
+    assert domains.get_domain(zero, {parameter: Domain(strings=("text",))}) == Domain(
+        ints=(0,)
+    )
+    assert domains.get_domain(zero, {variable: Domain(ints=(0, 1))}) == Domain(
+        ints=(0,)
+    )
+    assert types.get_type(zero) == frozenset({ValueType.integer})
 
 
 def test_split_preserves_input_with_existing_errors() -> None:
@@ -439,15 +435,15 @@ def test_split_preserves_input_with_existing_errors() -> None:
     diagnostics = Diagnostics()
     order = compute_evaluation_order(store, diagnostics)
     before = store.copy()
-    domains, types = DomainStore(), TypeCache(ConstraintStore())
+    domains, types = DomainCache(store), TypeCache(store)
     split(store, domains, types, order, diagnostics)
     assert store == before
-    assert not domains
+    assert domains.get_domain(VariableRef("undefined")) == UNKNOWN_DOMAIN
 
 
 def _split(
     store: ConstraintStore,
-    domains: DomainStore,
+    domains: DomainCache,
     types: TypeCache,
     *,
     subset_limit: int = DEFAULT_SUBSET_LIMIT,
@@ -527,7 +523,7 @@ def test_nested_membership_chain_bounds_python_rows(members: int, depth: int) ->
     processor.add(_membership_chain(members, depth, False))
     problem, diagnostics = processor.preprocess()
     assert not diagnostics.has_errors
-    assert problem.domains[VariableRef("caps")].cardinality() == 1 << members
+    assert problem.domains.get_domain(VariableRef("caps")).cardinality() == 1 << members
     membership_ids = [
         expr_id
         for expr_id, expression in problem.store.expressions.items()
@@ -543,7 +539,8 @@ def test_nested_membership_chain_bounds_python_rows(members: int, depth: int) ->
             and expression.op == Operator.python_eval
         ):
             assert all(
-                problem.domains[cast(VariableRef, argument)].cardinality() == 2
+                problem.domains.get_domain(cast(VariableRef, argument)).cardinality()
+                == 2
                 for argument in expression.args[1:]
             )
 
@@ -826,18 +823,20 @@ def test_documented_subset_decisions(case: int, count: int) -> None:
     store.define(result, examples[case], label="source")
     domains, types = _metadata(store)
     original_ids = set(store.expressions)
-    original_domain = domains[result]
+    original_domain = domains.get_domain(result)
     _split(store, domains, types)
     auxiliaries = set(store.variables) - {*variables, result}
     assert len(auxiliaries) == count
-    assert domains[result] == original_domain
-    assert set(store.expressions.values()) <= domains.keys()
+    assert domains.get_domain(result) == original_domain
     for expression in store.expressions.values():
+        domains.get_domain(expression)
         types.get_type(expression)
     for auxiliary in auxiliaries:
         definition = store.variables[auxiliary].definitions[0]
         assert definition.value not in original_ids
-        assert domains[auxiliary] == domains[store.expressions[definition.value]]
+        assert domains.get_domain(auxiliary) == domains.get_domain(
+            store.expressions[definition.value]
+        )
         assert types.get_type(auxiliary) == types.get_type(
             store.expressions[definition.value]
         )
@@ -875,21 +874,27 @@ def test_metadata_stores_share_root_nested_and_variable_keys() -> None:
     root = store.expressions[root_id]
     nested = InternalOperation(Operator.minus, (variable,))
     assert root == nested
-    assert domains[root] == Domain(ints=frozenset({-1, -2}))
+    assert domains.get_domain(root) == Domain(ints=frozenset({-1, -2}))
     assert types.get_type(root) == frozenset({ValueType.integer})
-    assert root_id not in domains
-    domains[root] = Domain(ints=frozenset({-3}))
+    with pytest.raises(ValueError):
+        domains.set_domain(root, Domain(ints=frozenset({-3})))
     with pytest.raises(ValueError):
         types.set_type(root, frozenset({ValueType.none}))
-    assert domains.lookup(nested) == domains.get(root) == Domain(ints=frozenset({-3}))
+    assert (
+        domains.get_domain(nested)
+        == domains.get_domain(root)
+        == Domain(ints=frozenset({-1, -2}))
+    )
     assert (
         types.get_type(nested) == types.get_type(root) == frozenset({ValueType.integer})
     )
     alias_id = store.variables[VariableRef("alias")].definitions[0].value
     assert store.expressions[alias_id] == variable
-    assert domains[store.expressions[alias_id]] == domains[variable]
+    assert domains.get_domain(store.expressions[alias_id]) == domains.get_domain(
+        variable
+    )
     assert types.get_type(store.expressions[alias_id]) == types.get_type(variable)
-    assert domains[variable] == Domain(ints=frozenset({1, 2}))
+    assert domains.get_domain(variable) == Domain(ints=frozenset({1, 2}))
     assert types.get_type(variable) == frozenset({ValueType.integer})
 
 
@@ -908,29 +913,26 @@ def test_expression_store_lookups_and_lambda_scopes() -> None:
     )
     domains, types = _metadata(store)
     nested = InternalOperation(Operator.minus, (variable,))
-    assert domains[nested] == Domain(ints=frozenset({-1, -2}))
+    assert domains.get_domain(nested) == Domain(ints=frozenset({-1, -2}))
     assert types.get_type(nested) == frozenset({ValueType.integer})
-    assert domains[variable] == Domain(ints=frozenset({1, 2}))
+    assert domains.get_domain(variable) == Domain(ints=frozenset({1, 2}))
     assert types.get_type(variable) == frozenset({ValueType.integer})
     text_domain = Domain(strings=frozenset({"text"}))
     text_type = frozenset({ValueType.string})
-    assert (
-        domains.lookup(variable, scope=frozenset({(variable, text_domain)}))
-        == text_domain
-    )
+    assert domains.get_domain(variable, {variable: text_domain}) == text_domain
     assert types.get_type(variable, {variable: text_type}) == text_type
     root = store.variables[VariableRef("nested")].definitions[0].value
     expression = store.expressions[root]
-    assert domains[expression] == Domain(ints=frozenset({1, 2}))
+    assert domains.get_domain(expression) == Domain(ints=frozenset({1, 2}))
     assert types.get_type(expression) == frozenset({ValueType.integer})
     missing = VariableRef("missing")
-    with pytest.raises(KeyError):
-        domains[missing]
+    assert domains.get_domain(missing) == UNKNOWN_DOMAIN
     assert isinstance(types.get_type(missing), UnknownType)
-    domains[missing] = text_domain
+    domains = DomainCache(store)
+    domains.set_domain(missing, text_domain)
     types = TypeCache(store)
     types.set_type(missing, text_type)
-    assert domains.lookup(missing) == text_domain
+    assert domains.get_domain(missing) == text_domain
     assert types.get_type(missing) == text_type
 
 
@@ -964,13 +966,15 @@ def test_preprocessor_splits_normalized_linear_terms() -> None:
         assert coefficient == ValueDef(ValueType.integer, 1)
         assert isinstance(auxiliary, VariableRef)
         original = (pair[0], InternalOperation(Operator.abs, (variable,)))
-        assert prepared.domains[original].cardinality() == 10
-        assert prepared.domains[pair] == prepared.domains[original]
+        assert prepared.domains.get_domain(original).cardinality() == 10
+        assert prepared.domains.get_domain(pair) == prepared.domains.get_domain(
+            original
+        )
         assert prepared.static_types.get_type(pair) == prepared.static_types.get_type(
             original
         )
     domains, types = _metadata(prepared.store)
-    assert domains[result] == prepared.domains[result]
+    assert domains.get_domain(result) == prepared.domains.get_domain(result)
     assert types.get_type(result) == frozenset({ValueType.integer})
     assert prepared.static_types.get_type(result) == frozenset({ValueType.integer})
 
@@ -989,8 +993,8 @@ def test_implicit_set_membership_cost_and_metadata() -> None:
     domains, types = _metadata(store)
     _split(store, domains, types)
     (auxiliary,) = set(store.variables) - {result}
-    assert domains[auxiliary].implicit_set_elements == frozenset(range(20))
-    assert domains[auxiliary].cardinality() == 2**20
+    assert domains.get_domain(auxiliary).set_base == Domain(int_range=(0, 19))
+    assert domains.get_domain(auxiliary).cardinality() == 2**20
     assert types.get_type(auxiliary) == frozenset(
         {SetOf(frozenset({ValueType.integer}), True)}
     )
@@ -1007,11 +1011,12 @@ def test_unknown_and_empty_domains_do_not_force_splits() -> None:
             Operation(Operator.add, (Operation(Operator.abs, (first,)), second))
         )
         domains, types = _metadata(store)
+        domains = DomainCache(store)
         if empty:
-            domains[second] = Domain()
-        domains[first] = UNKNOWN_DOMAIN
+            domains.set_domain(second, Domain())
+        domains.set_domain(first, UNKNOWN_DOMAIN)
         nested = InternalOperation(Operator.abs, (first,))
-        domains[nested] = UNKNOWN_DOMAIN
+        domains.set_domain(nested, UNKNOWN_DOMAIN)
         _split(store, domains, types)
         assert set(store.variables) == {first, second}
         expression = store.expressions[store.constraints[0].expr]
@@ -1037,7 +1042,8 @@ def test_ties_and_repeated_occurrences() -> None:
             ValueDef(ValueType.integer, 0),
         ),
     )
-    domains[nested] = Domain(ints=frozenset({1}))
+    domains = DomainCache(store)
+    domains.set_domain(nested, Domain(ints=frozenset({1})))
     types.set_type(nested, frozenset({ValueType.integer}))
     _split(store, domains, types)
     auxiliaries = set(store.variables) - set(inputs)
@@ -1051,8 +1057,9 @@ def test_ties_and_repeated_occurrences() -> None:
     nested = InternalOperation(Operator.abs, (variable,))
     tied.ensure(Operation(Operator.add, (inner, 0)))
     domains, types = _metadata(tied)
-    domains[variable] = Domain(ints=frozenset({1, 2}))
-    domains[nested] = Domain(ints=frozenset({1}))
+    domains = DomainCache(tied)
+    domains.set_domain(variable, Domain(ints=frozenset({1, 2})))
+    domains.set_domain(nested, Domain(ints=frozenset({1})))
     _split(tied, domains, types)
     assert set(tied.variables) == {variable}
 
@@ -1160,9 +1167,9 @@ def test_length_cost_uses_static_set_kind() -> None:
     """Check the cost-table overload independently of string-only validation."""
     variable = VariableRef("set")
     expression = InternalOperation(Operator.length, (variable,))
-    domains = DomainStore(
+    domains = seeded_domains(
         {
-            variable: Domain(implicit_set_elements=frozenset({0, 1, 2})),
+            variable: Domain(set_base=Domain(ints=(0, 1, 2))),
             expression: Domain(ints=frozenset(range(4))),
         }
     )
@@ -1253,7 +1260,7 @@ def test_existing_lambda_arguments_are_split_and_converted(cardinality: int) -> 
     call = store.expressions[definition.value]
     assert isinstance(call, InternalOperation) and call.op == Operator.python_eval
     assert all(isinstance(arg, VariableRef) for arg in call.args[1:])
-    assert domains[VariableRef("result")] == Domain(
+    assert domains.get_domain(VariableRef("result")) == Domain(
         ints=frozenset(range(1, cardinality + 1))
     )
     assert set(store.variables) == {variable, VariableRef("result")}
@@ -1324,10 +1331,10 @@ def test_fold_cost_includes_captures() -> None:
     )
     callback = InternalLambda((accumulator, item), captured)
     expression = InternalOperation(Operator.set_fold, (callback, values, initial))
-    domains = DomainStore(
+    domains = seeded_domains(
         {
             captured: Domain(ints=frozenset(range(10))),
-            values: Domain(implicit_set_elements=frozenset({0, 1})),
+            values: Domain(set_base=Domain(ints=(0, 1))),
             initial: Domain(ints=frozenset({0, 1, 2})),
         }
     )
@@ -1393,9 +1400,7 @@ def test_collection_and_python_renaming() -> None:
         assert call.args[1:] == (variable,)
         if name == "set_result":
             assert _callback(call)(-2) == frozenset({2})
-            assert domains[call] == Domain(
-                explicit_sets=frozenset({frozenset({1}), frozenset({2})})
-            )
+            assert domains.get_domain(call) == Domain(set_base=Domain(ints=(1, 2)))
         else:
             assert _callback(call)(2) == 0
 
@@ -1403,16 +1408,16 @@ def test_collection_and_python_renaming() -> None:
 def test_store_preserves_unknown_and_set_metadata() -> None:
     """Distinguish recorded unknown results from missing metadata."""
     variable = VariableRef("x")
-    domains = DomainStore()
+    domains = DomainCache(ConstraintStore())
     types = TypeCache(ConstraintStore())
-    domains[variable] = UNKNOWN_DOMAIN
+    domains.set_domain(variable, UNKNOWN_DOMAIN)
     types.set_type(variable, UnknownType())
-    assert domains[variable].unknown
+    assert domains.get_domain(variable).unknown
     assert isinstance(types.get_type(variable), UnknownType)
     literal = ValueDef(ValueType.integer, 1)
-    domains[literal] = Domain(ints=frozenset({1}))
+    domains.set_domain(literal, Domain(ints=frozenset({1})))
     types.set_type(literal, frozenset({ValueType.integer}))
-    assert domains[literal].cardinality() == 1
+    assert domains.get_domain(literal).cardinality() == 1
 
 
 def test_lambda_conversion_preserves_existing_scopes_and_captures() -> None:
@@ -1437,11 +1442,11 @@ def test_lambda_conversion_preserves_existing_scopes_and_captures() -> None:
     nested = InternalOperation(Operator.add, (shadowed, renamed))
     domain_scope = frozenset(
         {
-            (renamed, domains[captured]),
+            (renamed, domains.get_domain(captured)),
             (shadowed, Domain(ints=frozenset({1}))),
         }
     )
-    assert domains.lookup(nested, scope=domain_scope) == Domain(
+    assert domains.get_domain(nested, dict(domain_scope)) == Domain(
         ints=frozenset(range(1, 11))
     )
     type_scope = frozenset(

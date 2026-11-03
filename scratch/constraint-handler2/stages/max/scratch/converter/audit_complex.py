@@ -202,75 +202,37 @@ def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
         ]
         domain_groups = {
             "roots": [
-                (str(expr_id), problem.domains.get(expression))
+                (str(expr_id), problem.domains.get_domain(expression))
                 for expr_id, expression in problem.store.expressions.items()
             ],
             "variables": [
-                (variable.name, problem.domains.get(variable))
+                (variable.name, problem.domains.get_domain(variable))
                 for variable in (*problem.store.variables, *problem.store.set_variables)
-            ],
-            "metadata": [
-                (str(index), domain)
-                for index, domain in enumerate(problem.domains.values())
             ],
         }
         result["domain_summary"] = {}
         for group, entries in domain_groups.items():
             categories = {
-                "unknown": [
-                    name
-                    for name, domain in entries
-                    if domain is not None and domain.unknown
+                "unknown": [name for name, domain in entries if domain.unknown],
+                "empty": [name for name, domain in entries if domain.is_empty()],
+                "integer": [name for name, domain in entries if domain.int_count()],
+                "set": [
+                    name for name, domain in entries if domain.set_base is not None
                 ],
-                "empty": [
-                    name
-                    for name, domain in entries
-                    if domain is not None and domain.is_empty()
-                ],
-                "integer_interval": [
-                    name
-                    for name, domain in entries
-                    if domain is not None and domain.int_range is not None
-                ],
-                "implicit_set": [
-                    name
-                    for name, domain in entries
-                    if domain is not None and domain.implicit_set_elements is not None
-                ],
-                "explicit_set": [
-                    name
-                    for name, domain in entries
-                    if domain is not None and domain.explicit_sets
-                ],
-                "nullable": [
-                    name
-                    for name, domain in entries
-                    if domain is not None and domain.has_none
-                ],
-                "tuple": [
-                    name
-                    for name, domain in entries
-                    if domain is not None and domain.tuples
-                ],
-                "missing_metadata": [
-                    name for name, domain in entries if domain is None
-                ],
+                "nullable": [name for name, domain in entries if domain.has_none],
+                "tuple": [name for name, domain in entries if domain.tuple_domains],
             }
             result["domain_summary"][group] = {
                 "total": len(entries),
                 **{category: len(names) for category, names in categories.items()},
             }
-            if group != "metadata":
-                result[f"{group}_domain_examples"] = {
-                    category: names[:30]
-                    for category, names in categories.items()
-                    if names
-                }
+            result[f"{group}_domain_examples"] = {
+                category: names[:30] for category, names in categories.items() if names
+            }
         result["unknown_root_expressions"] = [
             {"id": expr_id, "expression": str(expression)[:600]}
             for expr_id, expression in problem.store.expressions.items()
-            if problem.domains.get(expression) is not None
-            and problem.domains[expression].unknown
+            if problem.domains.get_domain(expression).unknown
         ][:30]
         if diagnostics.has_errors:
             result["status"] = "preprocessing_errors"
@@ -291,13 +253,16 @@ def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
                 or expression.op != Operator.python_eval
             ):
                 continue
-            counts = [problem.domains[arg].cardinality() for arg in expression.args[1:]]
+            counts = [
+                problem.domains.get_domain(arg).cardinality()
+                for arg in expression.args[1:]
+            ]
             calls.append(
                 {
                     "id": expr_id,
                     "arguments": [str(arg) for arg in expression.args[1:]],
                     "domain_sizes": counts,
-                    "result_unknown": problem.domains[expression].unknown,
+                    "result_unknown": problem.domains.get_domain(expression).unknown,
                     "estimated_rows": None if None in counts else math.prod(counts),
                     "source": str(expression.args[0])[:500],
                 }

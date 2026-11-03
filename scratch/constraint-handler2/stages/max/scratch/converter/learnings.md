@@ -39,3 +39,16 @@
   = `bad` even though `x` does not use `l`.
 - Unbound output gives `bad` with a `NameError` pythonError. `Bad` input gives
   `bad` with no warning. `__succeeds` is False after `FailIntegrityExn`.
+
+## Current scratch audit
+
+The observations above describe the legacy implementation. The current audit
+queries `DomainCache.get_domain()` for expression roots and variables rather
+than inspecting cached metadata. Its domain summaries count unknown, empty,
+integer, set, nullable, and tuple domains. Set domains describe possible members,
+not exact set alternatives. Unsupported exported Python results, including lists,
+now produce preprocessing diagnostics and unknown domains.
+
+Run the scratch tests from `stages/max` with
+`uv run --locked python -m pytest scratch/converter/test_converter.py --no-cov`.
+Using `python -m pytest` keeps the project root importable by generated callbacks.

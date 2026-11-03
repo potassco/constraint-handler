@@ -1,13 +1,13 @@
 """Split nested expressions when auxiliary definitions reduce grounding costs."""
 
-from collections.abc import Hashable, Iterable
+from collections.abc import Iterable
 from itertools import combinations
 from math import inf
 from typing import cast
 
-from .analysis import ExpressionStore, linear_operands
+from .analysis import linear_operands
 from .diagnostics import Diagnostics
-from .domains import Domain, DomainStore
+from .domains import Domain, DomainCache
 from .internal_input import (
     ConstraintStore,
     Expr,
@@ -60,50 +60,12 @@ def _contains_operation(expr: OperationArg) -> bool:
     return False
 
 
-class _MetadataTransfer[Metadata: Hashable]:
-    """Transfer renamed metadata from a fixed index of original lexical scopes."""
-
-    def __init__(self, metadata: ExpressionStore[Metadata]) -> None:
-        """Index source scopes once, excluding scopes created during conversion."""
-        self.metadata = metadata
-        self.by_expression: dict[
-            Expr, list[tuple[frozenset[tuple[VariableRef, Metadata]], Metadata]]
-        ] = {}
-        for (expr, scope), value in metadata.scoped_expressions.items():
-            self.by_expression.setdefault(expr, []).append((scope, value))
-
-    def transfer(
-        self,
-        renamings: list[Renaming],
-        replacements: dict[VariableRef, VariableRef],
-    ) -> None:
-        """Copy available metadata only from the node's active lexical bindings."""
-        metadata = self.metadata
-        bindings = {target: metadata[source] for source, target in replacements.items()}
-        for source, target, shadowed in renamings:
-            if not shadowed and source in metadata:
-                if bindings:
-                    metadata.scoped_expressions.setdefault(
-                        (target, frozenset(bindings.items())), metadata[source]
-                    )
-                else:
-                    metadata.setdefault(target, metadata[source])
-            for scope, value in self.by_expression.get(source, ()):
-                if shadowed != frozenset(var for var, _ in scope):
-                    continue
-                renamed_scope = dict(bindings)
-                renamed_scope.update(scope)
-                metadata.scoped_expressions.setdefault(
-                    (target, frozenset(renamed_scope.items())), value
-                )
-
-
 class GroundingCost:
     """Estimate expression grounding costs from precomputed domains and types."""
 
     def __init__(
         self,
-        domains: DomainStore,
+        domains: DomainCache,
         static_types: TypeCache,
     ) -> None:
         """Retain the metadata used by the encoding-specific estimates."""
@@ -112,13 +74,16 @@ class GroundingCost:
 
     def size(self, expr: Expr) -> Cost:
         """Read cardinality without enumerating an unknown or implicit domain."""
-        count = self.domains[expr].cardinality()
+        count = self.domains.get_domain(expr).cardinality()
         return inf if count is None else count
 
     def members(self, expr: Expr) -> Cost:
         """Count potential members without enumerating complete set values."""
-        domain = self.domains[expr]
-        return inf if domain.unknown else len(domain.potential_set_members())
+        domain = self.domains.get_domain(expr)
+        if domain.unknown or domain.set_base is None:
+            return inf
+        count = domain.set_base.cardinality()
+        return inf if count is None else count
 
     def trivial_cost(self, expr: Operation) -> Cost:
         """Estimate the specialized encoding as if direct arguments were leaves."""
@@ -204,7 +169,7 @@ class GroundingCost:
 
     def payload(self, expr: Expr) -> Cost:
         """Estimate copied scalar keys, shapes, and members without tuple expansion."""
-        domain = self.domains[expr]
+        domain = self.domains.get_domain(expr)
         if domain.unknown:
             return inf
         if self.is_set(expr):
@@ -212,14 +177,12 @@ class GroundingCost:
         if not self.is_tuple(expr):
             return self.size(expr)
         total: Cost = 1
-        for value in domain.tuples:
-            total += 1 + sum(
-                1 + len(item) if isinstance(item, frozenset) else 1 for item in value
-            )
         for positions in domain.tuple_domains:
             total += len(positions) + _sum(
-                len(position.potential_set_members()) + 1
-                if position.explicit_sets or position.implicit_set_elements is not None
+                (position.set_base.cardinality() or 0) + 1
+                if position.set_base is not None and not position.set_base.unknown
+                else inf
+                if position.set_base is not None
                 else position.cardinality() or 0
                 for position in positions
             )
@@ -246,7 +209,7 @@ class Splitter(GroundingCost):
     def __init__(
         self,
         store: ConstraintStore,
-        domains: DomainStore,
+        domains: DomainCache,
         static_types: TypeCache,
         subset_limit: int,
     ) -> None:
@@ -409,10 +372,10 @@ class Splitter(GroundingCost):
                 self.store.variables[auxiliary] = Variable(
                     definitions=[VariableDefinition(definition_id, condition_id, "")]
                 )
-                domain = self.domains[parameter]
+                domain = self.domains.get_domain(parameter)
                 kind = self.types.get_type(parameter)
-                self.domains[auxiliary] = domain
-                self.domains.setdefault(condition, Domain(bools=frozenset({True})))
+                self.domains.set_domain(auxiliary, domain)
+                self.domains.set_domain(condition, Domain(bools=frozenset({True})))
                 self.types.set_type(auxiliary, kind)
                 args[index] = auxiliary
                 worklist.append(definition_id)
@@ -447,16 +410,15 @@ class Splitter(GroundingCost):
                     )
                     for before, after in zip(pairs, rewritten_pairs, strict=True):
                         before, after = cast(Expr, before), cast(Expr, after)
-                        self.domains.setdefault(after, self.domains[before])
+                        self.domains.set_domain(after, self.domains.get_domain(before))
                         self.types.set_type(after, self.types.get_type(before))
                 self.store.replace_expression(expr_id, rewritten)
-                self.domains.setdefault(rewritten, self.domains[expr])
+                self.domains.set_domain(rewritten, self.domains.get_domain(expr))
                 self.types.set_type(rewritten, self.types.get_type(expr))
         self.convert_python_calls()
 
     def convert_python_calls(self) -> None:
         """Retain supported flat native operations; lower others to Python."""
-        domains = _MetadataTransfer(self.domains)
         for expr_id, expr in self.store.expressions.items():
             if (
                 isinstance(expr, Operation)
@@ -500,16 +462,15 @@ class Splitter(GroundingCost):
             replacements = dict(zip(actual, bound, strict=True))
             renamings: list[Renaming] = []
             body = cast(Expr, self.rename(expr, replacements, renamings))
-            domains.transfer(renamings, replacements)
             call = Operation(Operator.python_eval, (convert(bound, body), *actual))
             self.store.replace_expression(expr_id, call)
-            self.domains.setdefault(call, self.domains[expr])
+            self.domains.set_domain(call, self.domains.get_domain(expr))
             self.types.set_type(call, self.types.get_type(expr))
 
 
 def split(
     store: ConstraintStore,
-    domains: DomainStore,
+    domains: DomainCache,
     static_types: TypeCache,
     order: EvaluationOrder,
     diagnostics: Diagnostics,

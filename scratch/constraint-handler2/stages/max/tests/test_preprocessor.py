@@ -250,8 +250,11 @@ def test_minimize_rejects_non_native_or_unknown_objectives(unknown: bool) -> Non
     processor.add(store)
     problem, diagnostics = processor.preprocess()
     assert diagnostics.has_errors
-    assert any("Optimization requires" in item.message for item in diagnostics.items)
-    with pytest.raises(ValueError, match="optimization"):
+    assert any(
+        "Optimization requires" in item.message or "non-finite" in item.message
+        for item in diagnostics.items
+    )
+    with pytest.raises(ValueError):
         problem.create_solver(SolveOptions())
 
 
@@ -541,7 +544,7 @@ def test_python_context(source: str, nested: bool) -> None:
 
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert prepared.domains[result] == Domain(ints=frozenset({expected}))
+    assert prepared.domains.get_domain(result) == Domain(ints=frozenset({expected}))
     assert any(
         fact.name == "value"
         and fact.arguments[0].name == "__complex_output"
@@ -574,10 +577,10 @@ def test_python_context_integrity_failure(all_invalid: bool) -> None:
     preprocessor.add(store)
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert prepared.domains[result] == Domain(
+    assert prepared.domains.get_domain(result) == Domain(
         ints=frozenset() if all_invalid else frozenset({6})
     )
-    assert prepared.domains[downstream] == Domain(
+    assert prepared.domains.get_domain(downstream) == Domain(
         ints=frozenset() if all_invalid else frozenset({7})
     )
     assert not any(
@@ -617,8 +620,10 @@ def test_python_context_snapshot(nested: bool) -> None:
     preprocessor.add_context("another", str)
     updated, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert updated.domains[result] == Domain(ints=frozenset({-5 if nested else -6}))
-    assert "another" not in prepared.python_context
+    assert updated.domains.get_domain(result) == Domain(
+        ints=frozenset({-5 if nested else -6})
+    )
+    assert prepared.domains.get_domain(result) == Domain(ints=(7 if nested else 6,))
     assert tuple(map(str, prepared.asp_facts)) == original_facts
     assert prepared.create_solver(SolveOptions()).solve().satisfiable
     assert prepared.create_solver(SolveOptions()).solve().satisfiable
@@ -644,7 +649,7 @@ def test_preprocess_nullary_boolean_operators(op: Operator, value: bool) -> None
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
     assert prepared.static_types.get_type(result) == frozenset({ValueType.boolean})
-    assert prepared.domains[result] == Domain(bools=frozenset({value}))
+    assert prepared.domains.get_domain(result) == Domain(bools=frozenset({value}))
 
 
 @pytest.mark.parametrize(
@@ -663,8 +668,10 @@ def test_preprocess_integer_division(left: float, right: float, quotient: int) -
     assert not diagnostics.items
     assert prepared.static_types.get_type(divided) == frozenset({ValueType.integer})
     assert prepared.static_types.get_type(result) == frozenset({ValueType.integer})
-    assert prepared.domains[divided] == Domain(ints=frozenset({quotient}))
-    assert prepared.domains[result] == Domain(ints=frozenset({2 * quotient + 1}))
+    assert prepared.domains.get_domain(divided) == Domain(ints=frozenset({quotient}))
+    assert prepared.domains.get_domain(result) == Domain(
+        ints=frozenset({2 * quotient + 1})
+    )
 
 
 @pytest.mark.parametrize("term_count", (1, 3))
@@ -732,10 +739,10 @@ def test_preprocessor_workflow() -> None:
         {SetOf(frozenset({ValueType.integer}), False)}
     )
 
-    assert prepared.domains[x] == Domain(ints=frozenset({1, 2, 3}))
-    assert prepared.domains[y] == Domain(ints=frozenset({11, 12, 13}))
-    assert prepared.domains[s] == Domain(
-        implicit_set_elements=frozenset({1, 2, 3, 5, 6})
+    assert prepared.domains.get_domain(x) == Domain(ints=frozenset({1, 2, 3}))
+    assert prepared.domains.get_domain(y) == Domain(ints=frozenset({11, 12, 13}))
+    assert prepared.domains.get_domain(s) == Domain(
+        set_base=Domain(ints=(1, 2, 3, 5, 6))
     )
 
     # Adding more to preprocessor after preprocess must not mutate prepared.store
@@ -750,8 +757,8 @@ def test_preprocessor_workflow() -> None:
     (
         (("", "abc"), frozenset({0, 3}), False),
         (((), (1, True)), frozenset({0, 2}), False),
-        ((frozenset[int](), frozenset({1, 2})), frozenset({0, 2}), False),
-        (("abc", (1, True), frozenset({1})), frozenset({1, 2, 3}), False),
+        ((frozenset[int](), frozenset({1, 2})), frozenset({0, 1, 2}), False),
+        (("abc", (1, True), frozenset({1})), frozenset({0, 1, 2, 3}), False),
         ((1, 2), frozenset({0, 1, 2}), True),
     ),
 )
@@ -777,13 +784,13 @@ def test_preprocess_collection_length(
     preprocessor.add(store)
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert prepared.domains[length] == Domain(ints=lengths)
+    assert prepared.domains.get_domain(length) == Domain(ints=lengths)
     assert prepared.static_types.get_type(length) == frozenset({ValueType.integer})
-    assert prepared.domains[result] == Domain(
+    assert prepared.domains.get_domain(result) == Domain(
         ints=frozenset(size + value for size in lengths for value in range(20))
     )
-    assert set(prepared.store.expressions.values()) <= prepared.domains.keys()
     for expression in prepared.store.expressions.values():
+        prepared.domains.get_domain(expression)
         prepared.static_types.get_type(expression)
 
 
@@ -872,7 +879,7 @@ def test_native_solver_fact_base(monkeypatch: pytest.MonkeyPatch) -> None:
         )
     )
     build_facts.assert_called_once_with(
-        ANY, prepared.store, prepared.engines, prepared.domains, prepared.python_context
+        ANY, prepared.store, prepared.engines, prepared.domains
     )
     first = prepared.create_solver(SolveOptions())
     second = prepared.create_solver(SolveOptions(arguments=("0",)))

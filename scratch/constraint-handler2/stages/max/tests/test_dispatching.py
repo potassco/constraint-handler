@@ -12,7 +12,7 @@ from constraint_handler import (
     VariableRef,
     dispatch,
 )
-from constraint_handler.domains import UNKNOWN_DOMAIN, Domain, DomainStore
+from constraint_handler.domains import UNKNOWN_DOMAIN, Domain
 from constraint_handler.internal_input import (
     Expr,
     Lambda,
@@ -21,6 +21,8 @@ from constraint_handler.internal_input import (
     ValueType,
 )
 from constraint_handler.python_input import Operator
+
+from .domain_helpers import seeded_domains
 
 
 def test_dispatch_partitions_roots_without_mutation() -> None:
@@ -44,34 +46,37 @@ def test_dispatch_partitions_roots_without_mutation() -> None:
     )
     for root in roots:
         store.add_expression(root)
-    domains = DomainStore(
+    domains = seeded_domains(
         {
             known: Domain(ints=frozenset({1})),
             unknown: UNKNOWN_DOMAIN,
-            collection: Domain(explicit_sets=frozenset({frozenset({1})})),
+            collection: Domain(set_base=Domain(ints=(1,))),
         }
     )
-    before, metadata = store.copy(), dict(domains)
+    before = store.copy()
+    metadata = {expr: domains.get_domain(expr) for expr in (known, unknown, collection)}
     engines = dispatch(store, domains)
     assert isinstance(engines, DispatchStore)
     assert list(engines) == list(store.expressions)
     assert list(engines.values()) == [Engine.native] * 6 + [Engine.complex] * 2 + [
         Engine.propagator
     ] * 2 + [Engine.native]
-    assert store == before and dict(domains) == metadata
+    assert store == before
+    assert all(domains.get_domain(expr) == bound for expr, bound in metadata.items())
     assert list(dispatch(store, domains).items()) == list(engines.items())
-    assert dispatch(ConstraintStore(), DomainStore()) == {}
+    assert dispatch(ConstraintStore(), seeded_domains()) == {}
 
 
 def test_dispatch_requires_all_input_metadata() -> None:
-    """Raise on a missing domain even after encountering an unknown input."""
+    """Resolve missing references conservatively without requiring prefilled metadata."""
     store = ConstraintStore()
     unknown, missing = VariableRef("unknown"), VariableRef("missing")
     store.add_expression(
         Operation(Operator.python_eval, (Python("lambda *values: 1"), unknown, missing))
     )
-    with pytest.raises(KeyError):
-        dispatch(store, DomainStore({unknown: UNKNOWN_DOMAIN}))
+    assert set(dispatch(store, seeded_domains({unknown: UNKNOWN_DOMAIN})).values()) == {
+        Engine.propagator
+    }
 
 
 @pytest.mark.parametrize("operator", (Operator.conj, Operator.disj))
@@ -83,7 +88,7 @@ def test_dispatch_native_boolean_unknown_input(operator: Operator) -> None:
         Operation(operator, (unknown, ValueDef(ValueType.boolean, True)))
     )
     assert (
-        dispatch(store, DomainStore({unknown: UNKNOWN_DOMAIN}))[expr_id]
+        dispatch(store, seeded_domains({unknown: UNKNOWN_DOMAIN}))[expr_id]
         == Engine.native
     )
 
@@ -108,7 +113,7 @@ def test_dispatch_rejects_unconverted_expressions(root: Expr) -> None:
     store = ConstraintStore()
     store.add_expression(root)
     with pytest.raises(TypeError):
-        dispatch(store, DomainStore())
+        dispatch(store, seeded_domains())
 
 
 def test_preprocessed_store_can_be_dispatched() -> None:

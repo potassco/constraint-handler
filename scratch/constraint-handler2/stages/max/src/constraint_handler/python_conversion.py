@@ -3,6 +3,7 @@
 import ast
 from functools import lru_cache
 from types import CodeType
+from typing import cast
 
 from .internal_input import (
     Expr,
@@ -14,6 +15,25 @@ from .internal_input import (
     VariableRef,
 )
 from .python_input import Operator
+
+
+def value_key(value: object) -> object:
+    """Apply language equality recursively, separating Booleans from numeric values."""
+    if isinstance(value, bool):
+        return (bool, value)
+    if isinstance(value, (int, float)):
+        return (int, value)
+    if isinstance(value, tuple):
+        return (
+            tuple,
+            tuple(value_key(item) for item in cast(tuple[object, ...], value)),
+        )
+    if isinstance(value, frozenset):
+        return (
+            frozenset,
+            frozenset(value_key(item) for item in cast(frozenset[object], value)),
+        )
+    return (type(value), value)
 
 
 @lru_cache(maxsize=1024)
@@ -35,8 +55,8 @@ class _Substitute(ast.NodeTransformer):
 
 
 _TEMPLATES: dict[Operator, str] = {
-    Operator.eq: "(lambda _key: _key(_arg0) == _key(_arg1))(__import__('constraint_handler.domains.values', fromlist=('value_key',)).value_key)",
-    Operator.neq: "(lambda _key: _key(_arg0) != _key(_arg1))(__import__('constraint_handler.domains.values', fromlist=('value_key',)).value_key)",
+    Operator.eq: "(lambda _key: _key(_arg0) == _key(_arg1))(__import__('constraint_handler.python_conversion', fromlist=('value_key',)).value_key)",
+    Operator.neq: "(lambda _key: _key(_arg0) != _key(_arg1))(__import__('constraint_handler.python_conversion', fromlist=('value_key',)).value_key)",
     Operator.concat: "_arg0 + _arg1",
     Operator.length: "len(_arg0)",
     Operator.cardinality: "len(_arg0)",

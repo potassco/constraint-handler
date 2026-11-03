@@ -4,7 +4,7 @@ from enum import StrEnum, auto
 from typing import cast
 
 from .analysis import linear_operands
-from .domains import DomainStore
+from .domains import DomainCache
 from .internal_input import (
     ConstraintStore,
     Expr,
@@ -29,7 +29,7 @@ class DispatchStore(dict[ExprId, Engine]):
     """Map every stored expression ID to exactly one execution engine."""
 
 
-def dispatch(store: ConstraintStore, domains: DomainStore) -> DispatchStore:
+def dispatch(store: ConstraintStore, domains: DomainCache) -> DispatchStore:
     """Classify flat roots without evaluating expressions or changing metadata."""
     engines = DispatchStore()
     for expr_id, expr in sorted(store.expressions.items()):
@@ -56,7 +56,7 @@ def dispatch(store: ConstraintStore, domains: DomainStore) -> DispatchStore:
             if isinstance(arg, (tuple, frozenset)):
                 pending.extend(arg)
         unknown = [
-            domains[cast(Expr, arg)].unknown
+            domains.get_domain(cast(Expr, arg)).unknown
             for arg in parameters
             if not isinstance(arg, ValueDef)
         ]

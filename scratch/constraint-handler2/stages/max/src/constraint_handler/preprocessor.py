@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path
-from types import MappingProxyType
 
 from clingo.control import Control
 from clingo.core import Library
@@ -20,8 +19,7 @@ from .dispatching import DispatchStore, Engine, dispatch
 from .domains import (
     DEFAULT_BOOLEAN_THRESHOLD,
     DEFAULT_THRESHOLD,
-    DomainStore,
-    compute_domains,
+    DomainCache,
 )
 from .internal_input import ConstraintStore
 from .normalization import normalize
@@ -60,16 +58,13 @@ class PreparedProblem:
 
     store: ConstraintStore
     static_types: TypeCache
-    domains: DomainStore
+    domains: DomainCache
     engines: DispatchStore
-    python_context: Mapping[str, object] = field(default_factory=dict[str, object])
 
     @property
     def asp_facts(self) -> tuple[Symbol, ...]:
         """Build the ASP fact base from the prepared store and dispatch assignments."""
-        return asp_facts(
-            Library(), self.store, self.engines, self.domains, self.python_context
-        )
+        return asp_facts(Library(), self.store, self.engines, self.domains)
 
     def dump(self, path: Path) -> None:
         """Serialize this PreparedProblem to the given path."""
@@ -112,22 +107,24 @@ class Preprocessor:
     def preprocess(self) -> tuple[PreparedProblem, Diagnostics]:
         """Snapshot, preprocess, and dispatch the store without building ASP facts."""
         snapshot = self._store.copy()
-        python_context = MappingProxyType(self._python_context.copy())
         diagnostics = Diagnostics()
         order = compute_evaluation_order(snapshot, diagnostics)
         static_types = TypeCache(snapshot)
         diagnostics.items.extend(TypeChecker(static_types).check(snapshot))
+        domains = DomainCache(
+            snapshot,
+            threshold=self._options.threshold,
+            boolean_threshold=self._options.boolean_threshold,
+            python_context=self._python_context,
+            diagnostics=diagnostics,
+        )
         if self._options.continue_on_errors or not diagnostics.has_errors:
             normalize(snapshot, static_types)
             order = compute_evaluation_order(snapshot, diagnostics)
-        domains = compute_domains(
-            snapshot,
-            order,
-            diagnostics,
-            threshold=self._options.threshold,
-            boolean_threshold=self._options.boolean_threshold,
-            python_context=python_context,
-        )
+        for variable in (*snapshot.variables, *snapshot.set_variables):
+            domains.get_domain(variable)
+        for expression in snapshot.expressions.values():
+            domains.get_domain(expression)
         if self._options.continue_on_errors or not diagnostics.has_errors:
             split(
                 snapshot,
@@ -143,7 +140,7 @@ class Preprocessor:
             engines = dispatch(snapshot, domains)
             for item in snapshot.optimizations:
                 expr = snapshot.expressions[item.expr]
-                if domains[expr].unknown:
+                if domains.get_domain(expr).unknown:
                     diagnostics.error(
                         "Optimization requires a known finite integer domain",
                         location=ExpressionLocation(item.expr, expr),
@@ -160,7 +157,6 @@ class Preprocessor:
                 static_types=static_types,
                 domains=domains,
                 engines=engines,
-                python_context=python_context,
             ),
             diagnostics,
         )
@@ -192,7 +188,6 @@ class Solver:
                     problem.store,
                     problem.engines,
                     problem.domains,
-                    problem.python_context,
                 )
             )
         )

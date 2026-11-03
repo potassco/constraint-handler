@@ -26,12 +26,26 @@ class ValueType(StrEnum):
     none = auto()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class ValueDef:
     """Pair a scalar literal with its explicit internal type."""
 
     value_type: ValueType
     value: python_input.Value
+
+    def __eq__(self, other: object) -> bool:
+        """Preserve literal representation, including signed floating-point zero."""
+        if not isinstance(other, ValueDef):
+            return NotImplemented
+        return (self.value_type, type(self.value), repr(self.value)) == (
+            other.value_type,
+            type(other.value),
+            repr(other.value),
+        )
+
+    def __hash__(self) -> int:
+        """Hash the same typed literal representation used by equality."""
+        return hash((self.value_type, type(self.value), repr(self.value)))
 
     def __str__(self) -> str:
         """Format scalar literal for display."""

@@ -1,21 +1,14 @@
 """Build a ground ASP fact base from a dispatched constraint store."""
 
-import math
-from collections.abc import Callable, Iterator, Mapping
-from itertools import pairwise, product
+from collections.abc import Iterator
+from itertools import pairwise
 from typing import assert_never, cast
 
 from clingo.core import Library
 from clingo.symbol import Function, Number, String, Symbol, Tuple_
 
 from .dispatching import DispatchStore, Engine
-from .domains import DEFAULT_THRESHOLD, DomainStore
-from .domains.values import (
-    DomainValue,
-    PythonTable,
-    is_domain_value,
-    is_finite_value,
-)
+from .domains import DomainCache, DomainValue
 from .internal_input import (
     ConstraintStore,
     Expr,
@@ -27,8 +20,7 @@ from .internal_input import (
     Variable,
     convert_expression,
 )
-from .python_conversion import compile_python
-from .python_input import FailIntegrityExn, Operator, Python, VariableRef
+from .python_input import Operator, Python, VariableRef
 
 
 def _number(lib: Library, value: int) -> Symbol:
@@ -127,47 +119,14 @@ def _payload_facts(
             yield Function(lib, "set_value", [subject, member])
 
 
-def _python_rows(
-    source: str,
-    axes: list[list[DomainValue]],
-    python_context: Mapping[str, object],
-) -> PythonTable:
-    """Evaluate finite input axes, skipping undefined rows and validating results."""
-    callback: Callable[..., object] = eval(
-        compile_python(source), {"math": math, **python_context}
-    )
-    if not callable(callback):
-        raise TypeError("Python source must evaluate to a callable")
-    evaluated: list[tuple[tuple[DomainValue, ...], DomainValue]] = []
-    for values in product(*axes):
-        try:
-            result = callback(*values)
-        except FailIntegrityExn, ArithmeticError, LookupError, TypeError, ValueError:
-            continue
-        if isinstance(result, set):
-            result = frozenset(cast(set[object], result))
-        if not is_domain_value(result):
-            raise TypeError(f"unsupported Python result type: {type(result).__name__}")
-        if not is_finite_value(result) or not all(
-            is_finite_value(value) for value in values
-        ):
-            raise ValueError("complex evaluation requires finite values")
-        evaluated.append((values, result))
-    return tuple(evaluated)
-
-
 def _complex_facts(
     lib: Library,
     store: ConstraintStore,
     engines: DispatchStore,
-    domains: DomainStore,
-    python_context: Mapping[str, object],
+    domains: DomainCache,
 ) -> Iterator[Symbol]:
     """Encode Python rows with exact scalar, set, and tuple input/output payloads."""
     solution_id = 0
-    same_context = python_context.keys() == domains.python_context.keys() and all(
-        value is domains.python_context[name] for name, value in python_context.items()
-    )
     for expr_id, expr in sorted(store.expressions.items()):
         if engines[expr_id] != Engine.complex:
             continue
@@ -177,15 +136,13 @@ def _complex_facts(
             and isinstance(expr.args[0], Python)
         ):
             raise TypeError("complex evaluation requires a converted Python call")
-        arguments = expr.args[1:]
-        argument_domains = tuple(domains[cast(Expr, arg)] for arg in arguments)
-        if any(domain.unknown for domain in argument_domains):
-            raise ValueError("complex evaluation requires known input domains")
-        if (
-            math.prod(domain.cardinality() or 0 for domain in argument_domains)
-            > DEFAULT_THRESHOLD
-        ):
-            raise ValueError("complex evaluation input product exceeds row budget")
+        table = domains.get_table(expr)
+        if table is None:
+            raise ValueError(
+                "complex evaluation table is unavailable within row budget"
+            )
+        arguments = table.inputs
+        argument_domains = table.input_domains
         axes = [
             sorted(
                 domain.iter_values(),
@@ -193,15 +150,9 @@ def _complex_facts(
             )
             for domain in argument_domains
         ]
-        key = (expr.args[0].fn, argument_domains)
-        rows = domains.python_tables.get(key) if same_context else None
-        if rows is None:
-            rows = _python_rows(expr.args[0].fn, axes, python_context)
-            if same_context:
-                domains.python_tables[key] = rows
         argument_terms: list[Symbol | None] = [None] * len(arguments)
         set_universes: dict[tuple[int, int | None], frozenset[Symbol]] = {}
-        for values, result in rows:
+        for values, result in table.rows:
             solution = _number(lib, solution_id)
             yield Function(lib, "solution", [_number(lib, expr_id), solution])
             for index, (arg, value) in enumerate(zip(arguments, values, strict=True)):
@@ -262,8 +213,7 @@ def asp_facts(
     lib: Library,
     store: ConstraintStore,
     engines: DispatchStore,
-    domains: DomainStore | None = None,
-    python_context: Mapping[str, object] | None = None,
+    domains: DomainCache | None = None,
 ) -> tuple[Symbol, ...]:
     """Return ground facts retaining every declaration, expression, and engine assignment."""
     if engines.keys() != store.expressions.keys():
@@ -277,7 +227,7 @@ def asp_facts(
             or expr.op != Operator.linear_integer
         ):
             raise ValueError("optimization requires a native linear integer objective")
-        if domains is None or domains[expr].unknown:
+        if domains is None or domains.get_domain(expr).unknown:
             raise ValueError("optimization requires known finite integer domains")
     facts: list[Symbol] = [
         Function(lib, "set_variable", [String(lib, variable.name)])
@@ -462,7 +412,7 @@ def asp_facts(
                     elif domains is None:
                         raise ValueError("native multi-term sums require input domains")
                     else:
-                        domain = domains[argument]
+                        domain = domains.get_domain(argument)
                         if domain.unknown:
                             raise ValueError(
                                 "native order encoding requires known domains"
@@ -508,5 +458,5 @@ def asp_facts(
                     )
                 )
     if domains is not None:
-        facts.extend(_complex_facts(lib, store, engines, domains, python_context or {}))
+        facts.extend(_complex_facts(lib, store, engines, domains))
     return tuple(facts)

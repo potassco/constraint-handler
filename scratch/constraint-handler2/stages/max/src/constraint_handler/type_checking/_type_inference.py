@@ -145,6 +145,8 @@ class _TypeInference:
                 fixed = _RULES[op].result
                 if fixed is not None:
                     return fixed
+                if not operation_arity(op, len(args)):
+                    return UNKNOWN
                 if op == Operator.python_eval or op == Operator.set_fold:
                     return UNKNOWN
                 if op == Operator.lambda_:
@@ -165,18 +167,18 @@ class _TypeInference:
                 if op == Operator.set_make:
                     return self._set(args, bindings)
                 if op in {Operator.ite, Operator.if_, Operator.get_or_else}:
-                    if op == Operator.if_ and len(args) == 2:
+                    if op == Operator.if_:
                         return union_types(
                             (
                                 self.argument_type(args[1], bindings),
                                 frozenset({ValueType.none}),
                             )
                         )
-                    if op == Operator.ite and len(args) == 3:
+                    if op == Operator.ite:
                         return union_types(
                             self.argument_type(arg, bindings) for arg in args[1:]
                         )
-                    if op == Operator.get_or_else and len(args) == 2:
+                    if op == Operator.get_or_else:
                         first = self.argument_type(args[0], bindings)
                         if isinstance(first, UnknownType):
                             return UNKNOWN
@@ -204,16 +206,17 @@ class _TypeInference:
                     Operator.min,
                     Operator.max,
                 }:
-                    if not known or any(not kind <= _NUMERIC for kind in known):
+                    if not known or any(
+                        not _operand_accepts(op, index, kind)
+                        for index, kind in enumerate(known)
+                    ):
                         return UNKNOWN
                     if any(not kind for kind in known):
                         return frozenset()
                     if op in {Operator.abs, Operator.minus}:
-                        return known[0] if len(known) == 1 else UNKNOWN
+                        return known[0]
                     if op in {Operator.min, Operator.max}:
                         return union_types(known)
-                    if len(known) != 2:
-                        return UNKNOWN
                     if op == Operator.pow:
                         return _NUMERIC
                     members: set[ValueType] = set()
@@ -232,9 +235,8 @@ class _TypeInference:
                     if any(not kind for kind in known):
                         return frozenset()
                     if any(
-                        not isinstance(member, SetOf)
-                        for kind in known
-                        for member in kind
+                        not _operand_accepts(op, index, kind)
+                        for index, kind in enumerate(known)
                     ):
                         return UNKNOWN
                     sets = [
@@ -247,8 +249,6 @@ class _TypeInference:
                         element for member in sets for element in member.elements
                     )
                     if op == Operator.diff:
-                        if len(known) != 2:
-                            return UNKNOWN
                         elements = frozenset(
                             element
                             for member in known[0]
@@ -265,12 +265,13 @@ class _TypeInference:
                         }
                     )
                 if op == Operator.tuple_get:
-                    if len(known) != 2 or not known[1] <= _INTEGER:
+                    if any(
+                        not _operand_accepts(op, index, kind)
+                        for index, kind in enumerate(known)
+                    ):
                         return UNKNOWN
                     if any(not kind for kind in known):
                         return frozenset()
-                    if any(not isinstance(member, TupleType) for member in known[0]):
-                        return UNKNOWN
                     tuples = [
                         member for member in known[0] if isinstance(member, TupleType)
                     ]
@@ -425,28 +426,75 @@ def scalar_subset(kind: Type, allowed: frozenset[ValueType]) -> bool:
     )
 
 
+def operation_arity(op: Operator, count: int) -> bool:
+    """Apply the shared arity contract independently of types or evaluation."""
+    rule = _RULES[op]
+    return count >= rule.minimum and (rule.maximum is None or count <= rule.maximum)
+
+
+def operand_contract(op: Operator, index: int) -> frozenset[ValueType | str]:
+    """Describe admissible alternatives for checking, inference, and filtering."""
+    rule = _RULES[op]
+    if rule.scalars is not None:
+        return frozenset(rule.scalars)
+    scalars: frozenset[ValueType | str] = frozenset(ValueType)
+    all_values = scalars | {"set", "tuple"}
+    if op in {Operator.if_, Operator.ite} and index == 0:
+        return frozenset(_BOOLEAN)
+    if op == Operator.make_tuple:
+        return scalars | {"set"}
+    if op == Operator.set_make:
+        return scalars
+    if op in {
+        Operator.union,
+        Operator.inter,
+        Operator.diff,
+        Operator.subset,
+        Operator.cardinality,
+    }:
+        return frozenset({"set"})
+    if op in {Operator.set_isin, Operator.set_notin}:
+        return scalars if index == 0 else frozenset({"set"})
+    if op == Operator.length:
+        return frozenset({ValueType.string, "set", "tuple"})
+    if op == Operator.tuple_get:
+        return frozenset({"tuple"}) if index == 0 else frozenset(_INTEGER)
+    if op == Operator.set_fold and index == 1:
+        return frozenset({"set"})
+    return all_values
+
+
+def _operand_accepts(op: Operator, index: int, kind: Type) -> bool:
+    """Accept unknowns, requiring every known alternative to meet its contract."""
+    if isinstance(kind, UnknownType):
+        return True
+    allowed = operand_contract(op, index)
+    return all(
+        (
+            member
+            if isinstance(member, ValueType)
+            else "set"
+            if isinstance(member, SetOf)
+            else "tuple"
+        )
+        in allowed
+        for member in kind
+    )
+
+
 def operation_errors(expression: Operation, kinds: list[Type]) -> Iterable[str]:
     """Validate operator contracts independently of their inferred result types."""
     op, args = expression.op, expression.args
     rule = _RULES[op]
-    if (
-        len(args) < rule.minimum
-        or rule.maximum is not None
-        and len(args) > rule.maximum
-    ):
+    if not operation_arity(op, len(args)):
         yield f"{op} has invalid arity: got {len(args)}"
-    if rule.scalars is not None and any(
-        not scalar_subset(kind, rule.scalars) for kind in kinds
-    ):
+    accepted = [_operand_accepts(op, index, kind) for index, kind in enumerate(kinds)]
+    if rule.scalars is not None and not all(accepted):
         yield f"{op} requires {'/'.join(sorted(rule.scalars))} arguments"
     known: list[frozenset[TypeMember]] = [
         frozenset() if isinstance(kind, UnknownType) else kind for kind in kinds
     ]
-    if (
-        op in {Operator.if_, Operator.ite}
-        and kinds
-        and not scalar_subset(kinds[0], _BOOLEAN)
-    ):
+    if op in {Operator.if_, Operator.ite} and kinds and not accepted[0]:
         yield f"{op} requires a Boolean condition"
     shapes = [
         "tuple"
@@ -458,14 +506,10 @@ def operation_errors(expression: Operation, kinds: list[Type]) -> Iterable[str]:
         else None
         for arg in args
     ]
-    if op == Operator.make_tuple and (
-        "tuple" in shapes
-        or any(isinstance(member, TupleType) for kind in known for member in kind)
-    ):
+    if op == Operator.make_tuple and ("tuple" in shapes or not all(accepted)):
         yield "Nested tuples are not supported"
     if op == Operator.set_make and (
-        any(shape is not None for shape in shapes)
-        or any(not isinstance(member, ValueType) for kind in known for member in kind)
+        any(shape is not None for shape in shapes) or not all(accepted)
     ):
         yield "set_make requires scalar arguments"
     if op in {
@@ -474,39 +518,26 @@ def operation_errors(expression: Operation, kinds: list[Type]) -> Iterable[str]:
         Operator.diff,
         Operator.subset,
         Operator.cardinality,
-    } and any(not isinstance(member, SetOf) for kind in known for member in kind):
+    } and not all(accepted):
         yield f"{op} requires set arguments"
     if op in {Operator.set_isin, Operator.set_notin}:
-        if known and (
-            shapes[0] is not None or not scalar_subset(kinds[0], frozenset(ValueType))
-        ):
+        if known and (shapes[0] is not None or not accepted[0]):
             yield f"{op} requires a scalar element"
-        if len(known) > 1 and any(not isinstance(member, SetOf) for member in known[1]):
+        if len(known) > 1 and not accepted[1]:
             yield f"{op} requires a set as second argument"
-    if (
-        op == Operator.length
-        and known
-        and any(
-            member != ValueType.string and not isinstance(member, (SetOf, TupleType))
-            for member in known[0]
-        )
-    ):
+    if op == Operator.length and known and not accepted[0]:
         yield "length requires a string, tuple, or set argument"
     if op == Operator.tuple_get:
-        if known and any(not isinstance(member, TupleType) for member in known[0]):
+        if known and not accepted[0]:
             yield "tuple_get first argument must be a tuple"
-        if len(kinds) > 1 and not scalar_subset(kinds[1], _INTEGER):
+        if len(kinds) > 1 and not accepted[1]:
             yield "tuple_get index must be an integer"
     if op in {Operator.lambda_, Operator.set_fold} and args:
         if not isinstance(args[0], Lambda):
             yield f"{op} requires a Lambda as first argument"
         elif len(set(args[0].vars)) != len(args[0].vars):
             yield "Lambda parameter names must be distinct"
-        if (
-            op == Operator.set_fold
-            and len(known) > 1
-            and any(not isinstance(member, SetOf) for member in known[1])
-        ):
+        if op == Operator.set_fold and len(known) > 1 and not accepted[1]:
             yield "set_fold requires a set as second argument"
     if op == Operator.python_eval and args and not isinstance(args[0], Python):
         yield "python_eval requires a Python callable as first argument"

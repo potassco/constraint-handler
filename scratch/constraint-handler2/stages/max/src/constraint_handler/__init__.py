@@ -3,7 +3,7 @@
 from .asp_facts import asp_facts
 from .diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity, ExpressionLocation
 from .dispatching import DispatchStore, Engine, dispatch
-from .domains import Domain, DomainStore
+from .domains import Domain, DomainCache, DomainTable
 from .internal_input import ConstraintStore
 from .preprocessor import (
     PreparedProblem,
@@ -38,7 +38,8 @@ __all__ = [
     "Diagnostics",
     "DispatchStore",
     "Domain",
-    "DomainStore",
+    "DomainCache",
+    "DomainTable",
     "Engine",
     "Expr",
     "ExpressionLocation",

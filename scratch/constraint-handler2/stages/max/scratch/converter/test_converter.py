@@ -350,9 +350,9 @@ def test_ssa_python_internal_failure_condition(enabled: bool) -> None:
     result = problem.create_solver(SolveOptions()).solve()
     assert result.unsatisfiable if enabled else result.satisfiable
     if not enabled:
-        assert problem.domains[VariableRef('execution_output(p,"y")')] == Domain(
-            ints=frozenset({4})
-        )
+        assert problem.domains.get_domain(
+            VariableRef('execution_output(p,"y")')
+        ) == Domain(ints=frozenset({4}))
 
 
 @pytest.mark.parametrize(
@@ -421,7 +421,9 @@ def test_preprocess_python_expressions(fixture: str, expected: dict[str, int]) -
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
     for name, value in expected.items():
-        assert prepared.domains[VariableRef(name)] == Domain(ints=frozenset({value}))
+        assert prepared.domains.get_domain(VariableRef(name)) == Domain(
+            ints=frozenset({value})
+        )
 
 
 @pytest.mark.parametrize(
@@ -457,7 +459,7 @@ def test_preprocess_renamed_operators(
     preprocessor.add(store)
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert prepared.domains[result] == domain
+    assert prepared.domains.get_domain(result) == domain
 
 
 @pytest.mark.parametrize(
@@ -549,6 +551,8 @@ def test_audit_scalar_python_fixture() -> None:
     assert result["checked_expectations"] == 3
     assert result["model_count"] == 1
     assert result["rows"] == 3
+    assert set(result["domain_summary"]) == {"roots", "variables"}
+    assert result["domain_summary"]["roots"]["integer"] > 0
 
 
 def test_audit_set_fixture() -> None:
@@ -559,6 +563,7 @@ def test_audit_set_fixture() -> None:
     assert result["model_count"] == 5
     assert result["checked_expectations"] == 7
     assert result["failures"] == [{"kind": "model_count", "expected": 3, "actual": 5}]
+    assert result["domain_summary"]["variables"]["set"] > 0
 
 
 @pytest.mark.parametrize(
@@ -585,26 +590,21 @@ def test_audit_supported_set_fixtures(fixture: str) -> None:
     assert result["failures"] == []
 
 
-def test_audit_distinguishes_unknown_input_domains() -> None:
-    """Expose unsupported tuple contents and downstream propagator requirements."""
+def test_audit_reports_unsupported_python_results() -> None:
+    """Report unsupported callback values as errors while retaining unknown domains."""
     result = audit_case(
         CORRECTNESS_DIR / "type" / "statement_python" / "unknown_vs_untyped.lp",
         domains_only=True,
     )
-    assert result["status"] == "domains_only"
-    assert len(result["unknown_input_calls"]) == 2
-    assert len(result["unknown_result_calls"]) == 2
-    assert all(call["domain_sizes"] == [None] for call in result["unknown_input_calls"])
+    assert result["status"] == "preprocessing_errors"
     assert any(
-        not call["arguments"] and "y=[1,2,3]" in call["source"]
-        for call in result["unknown_result_calls"]
+        item["severity"] == "error"
+        and "Unsupported or non-finite evaluation result" in item["message"]
+        for item in result["diagnostics"]
     )
     assert any(
         item["expression"].startswith("tuple_get(")
         for item in result["unknown_root_expressions"]
-    )
-    assert not any(
-        "tuple_get" in call["source"] for call in result["unknown_input_calls"]
     )
     assert result["domain_summary"]["roots"]["unknown"] == 4
 

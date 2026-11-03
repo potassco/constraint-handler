@@ -26,10 +26,11 @@ from constraint_handler import (
 )
 from constraint_handler.asp_facts import asp_facts
 from constraint_handler.dispatching import DispatchStore
-from constraint_handler.domains import Domain, DomainStore
-from constraint_handler.domains.values import SetValue
+from constraint_handler.domains import Domain
 from constraint_handler.internal_input import SetVariable
 from constraint_handler.python_input import Expr, OperationArg
+
+from .domain_helpers import seeded_domains
 
 
 @pytest.fixture
@@ -175,7 +176,7 @@ def test_native_linear_integer_unfolded(
                 lib,
                 store,
                 engines,
-                DomainStore({VariableRef("input"): Domain(ints=frozenset({3}))}),
+                seeded_domains({VariableRef("input"): Domain(ints=frozenset({3}))}),
             )
         )
     )
@@ -649,10 +650,10 @@ def test_complex_division_by_zero(
     store.define(downstream, Operation(Operator.add, (quotient, 1)))
     if exclude_zero:
         store.ensure(Operation(Operator.neq, (divisor, 0)))
-    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor = Preprocessor(PreprocessOptions(continue_on_errors=True))
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
-    assert not diagnostics.has_errors
+    assert diagnostics.has_errors == (0 in values)
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
     for encoding in ("native.lp", "integer.lp", "complex.lp"):
@@ -718,14 +719,14 @@ def test_complex_python_partial_evaluation(
         store.choose(argument, valid)
     store.define(result, Operation(Operator.python_eval, (Python(source), argument)))
     store.define(downstream, Operation(Operator.add, (result, 1)))
-    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor = Preprocessor(PreprocessOptions(continue_on_errors=True))
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
-    assert not diagnostics.has_errors
-    assert problem.domains[result] == Domain(
+    assert diagnostics.has_errors
+    assert problem.domains.get_domain(result) == Domain(
         ints=frozenset() if all_invalid else frozenset({6})
     )
-    assert problem.domains[downstream] == Domain(
+    assert problem.domains.get_domain(downstream) == Domain(
         ints=frozenset() if all_invalid else frozenset({7})
     )
     assert sorted(
@@ -759,17 +760,20 @@ def test_complex_python_tables_reused(
         VariableRef("result"),
         Operation(Operator.python_eval, (Python("recorded"), argument)),
     )
-    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor = Preprocessor(PreprocessOptions(continue_on_errors=True))
     preprocessor.add_context("recorded", recorded)
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
-    assert not diagnostics.has_errors
+    assert diagnostics.has_errors
     assert sorted(calls) == [0, 1]
-    if not warm_cache:
-        problem.domains.python_tables.clear()
+    if warm_cache:
+        definition = problem.store.variables[VariableRef("result")].definitions[0].value
+        assert (
+            problem.domains.get_table(problem.store.expressions[definition]) is not None
+        )
     calls.clear()
     first = tuple(map(str, problem.asp_facts))
-    assert sorted(calls) == ([] if warm_cache else [0, 1])
+    assert calls == []
     calls.clear()
     assert tuple(map(str, problem.asp_facts)) == first
     assert not calls
@@ -786,12 +790,13 @@ def test_complex_python_table_context_isolation(lib: Library) -> None:
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
     assert not diagnostics.has_errors
+    from constraint_handler import DomainCache
+
     facts = asp_facts(
         lib,
         problem.store,
         problem.engines,
-        problem.domains,
-        {"callback": lambda: 2},
+        DomainCache(problem.store, python_context={"callback": lambda: 2}),
     )
     assert "value(__complex_output(0),integer(2))" in set(map(str, facts))
     assert "value(__complex_output(0),integer(1))" in set(map(str, problem.asp_facts))
@@ -847,9 +852,11 @@ def test_complex_unexpected_failures(
     preprocessor = Preprocessor(PreprocessOptions())
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
-    assert not diagnostics.has_errors
-    with pytest.raises(error, match=message):
-        _ = problem.asp_facts
+    assert diagnostics.has_errors
+    expression = problem.store.expressions[
+        problem.store.variables[VariableRef("result")].definitions[0].value
+    ]
+    assert problem.domains.get_table(expression) is None
 
 
 @pytest.mark.parametrize("with_engine", (False, True))
@@ -1369,7 +1376,7 @@ def test_tuple_equality_is_independent_of_layout(
 def test_tuple_callback_rows_preserve_exact_representations(
     lib: Library, alternatives: tuple[Expr, ...], set_slot: bool
 ) -> None:
-    """Match each low-threshold tuple callback row by exact scalar and set payloads."""
+    """Match exact tuple rows, or reject Python-inexpressible typed set axes."""
     store = ConstraintStore()
     source, compound, result = (
         VariableRef(name) for name in ("source", "compound", "result")
@@ -1385,13 +1392,25 @@ def test_tuple_callback_rows_preserve_exact_representations(
             Operator.python_eval,
             (
                 Python(
-                    "lambda value: (type(next(iter(value[0]))).__name__ if isinstance(value[0], frozenset) else type(value[0]).__name__, value[0])"
+                    "lambda value: (('empty' if not value[0] else type(next(iter(value[0]))).__name__) if isinstance(value[0], frozenset) else type(value[0]).__name__, value[0])"
                 ),
                 compound,
             ),
         ),
     )
-    models = _variable_models(lib, store, PreprocessOptions(threshold=1))
+    if set_slot and type(alternatives[0]) is bool:
+        processor = Preprocessor(
+            PreprocessOptions(threshold=8, continue_on_errors=True)
+        )
+        processor.add(store)
+        problem, diagnostics = processor.preprocess()
+        assert diagnostics.has_errors
+        expression = problem.store.expressions[
+            problem.store.variables[result].definitions[0].value
+        ]
+        assert problem.domains.get_table(expression) is None
+        return
+    models = _variable_models(lib, store, PreprocessOptions(threshold=8))
     assert len(models) == 3
     present = [model for model in models if "source" in model]
     assert len(present) == 2
@@ -1844,9 +1863,7 @@ def test_split_set_operations_become_native() -> None:
 
 
 @pytest.mark.parametrize("kind", ("implicit", "explicit", "mixed", "empty"))
-def test_complex_set_universe_shared_between_rows(
-    lib: Library, monkeypatch: pytest.MonkeyPatch, kind: str
-) -> None:
+def test_complex_set_universe_shared_between_rows(lib: Library, kind: str) -> None:
     """Share argument universes without changing scalar, empty, or set row facts."""
     store = ConstraintStore()
     source, offset = VariableRef("source"), VariableRef("offset")
@@ -1860,26 +1877,26 @@ def test_complex_set_universe_shared_between_rows(
             values.append(9)
         store.choose_from_iterator(source, values)
     store.choose_from_iterator(offset, (10, 20))
+    calls: list[tuple[object, int]] = []
+
+    def callback(items: object, offset: int) -> int:
+        """Record each finite input combination without changing its output."""
+        calls.append((items, offset))
+        return offset
+
     store.define(
         VariableRef("result"),
         Operation(
             Operator.python_eval,
-            (Python("lambda items, offset: offset"), source, offset),
+            (Python("callback"), source, offset),
         ),
     )
     preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor.add_context("callback", callback)
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
     assert not diagnostics.has_errors
-    original = Domain.potential_set_members
-    calls: list[Domain] = []
-
-    def counted_members(domain: Domain) -> frozenset[SetValue]:
-        """Count universe construction during fact emission only."""
-        calls.append(domain)
-        return original(domain)
-
-    monkeypatch.setattr(Domain, "potential_set_members", counted_members)
+    computed = tuple(calls)
     facts = asp_facts(lib, problem.store, problem.engines, problem.domains)
     predicates = {
         "solution",
@@ -1897,17 +1914,20 @@ def test_complex_set_universe_shared_between_rows(
         if engine == Engine.complex
     )
     row = 0
-    for value in sorted(
-        set(values), key=lambda value: (type(value).__name__, repr(value))
-    ):
+    for value in problem.domains.get_domain(source).iter_values():
+        assert isinstance(value, (int, frozenset))
         for offset_value in (10, 20):
             expected.append(f"solution({expression_id},{row})")
             input_value = "set" if isinstance(value, frozenset) else f"integer({value})"
             expected.append(f'input({row},variable("source"),{input_value})')
             if isinstance(value, frozenset):
+                assert all(type(member) is int for member in value)
+                included = frozenset(
+                    member for member in value if isinstance(member, int)
+                )
                 for predicate, elements in (
-                    ("set_input_include", value),
-                    ("set_input_exclude", members - value),
+                    ("set_input_include", included),
+                    ("set_input_exclude", members - included),
                 ):
                     expected.extend(
                         f'{predicate}({row},variable("source"),integer({member}))'
@@ -1917,7 +1937,7 @@ def test_complex_set_universe_shared_between_rows(
             expected.append(f"output({row},__complex_output({row}))")
             row += 1
     assert actual == expected
-    assert not calls
+    assert tuple(calls) == computed
 
 
 def test_complex_mixed_set_and_scalar_inputs(lib: Library) -> None:
@@ -2061,10 +2081,10 @@ def test_complex_rejects_unknown_inputs() -> None:
         unknown, Operation(Operator.python_eval, (Python("lambda: object()"),))
     )
     store.define(VariableRef("result"), Operation(Operator.abs, (unknown,)))
-    preprocessor = Preprocessor(PreprocessOptions())
+    preprocessor = Preprocessor(PreprocessOptions(continue_on_errors=True))
     preprocessor.add(store)
     problem, diagnostics = preprocessor.preprocess()
-    assert not diagnostics.has_errors
+    assert diagnostics.has_errors
     assert Engine.propagator in problem.engines.values()
     with pytest.raises(NotImplementedError, match="unknown input domains"):
         problem.create_solver(SolveOptions())
