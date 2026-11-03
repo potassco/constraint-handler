@@ -251,7 +251,7 @@ def get_variables(
 
         domain_literal = from_facts_literals[symbol_var]
         value = manager.get_variable_value(domain_expr, _literal)
-        domain_variable.add_value(value, domain_literal)
+        domain_variable.add_value(value, _literal)
         manager.add_expr_owner(value, domain_variable)
         add_watch(_literal)
         add_watch(-_literal)
