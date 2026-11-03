@@ -1071,7 +1071,7 @@ else
 
 ### Type Errors:
 ```
-if not {type(x1), ..., type(xn)} <= {int, float, bool, string}
+if not {type(x1), ..., type(xn)} <= {int, float, bool, string, None}
   error("Unsupported type for set_make operator")
 ```
 
@@ -1081,7 +1081,7 @@ if not {type(x1), ..., type(xn)} <= {int, float, bool, string}
 n = 2
 
 ### Types:
-x1 in {int, float, bool, string}
+x1 in {int, float, bool, string, None}
 x2 in {set}
 
 out in {bool}
@@ -1096,7 +1096,7 @@ else
 
 ### Type Errors:
 ```
-if not type(x1) in {int, float, bool, string}
+if not type(x1) in {int, float, bool, string, None}
   error("Unsupported type for set_isin operator")
 if not type(x2) == set
   error("Second argument must be a set")
@@ -1109,7 +1109,7 @@ if not type(x2) == set
 n = 2
 
 ### Types:
-x1 in {int, float, bool, string}
+x1 in {int, float, bool, string, None}
 x2 in {set}
 
 out in {bool}
@@ -1124,7 +1124,7 @@ else
 
 ### Type Errors:
 ```
-if not type(x1) in {int, float, bool, string}
+if not type(x1) in {int, float, bool, string, None}
   error("Unsupported type for set_notin operator")
 if not type(x2) == set
   error("Second argument must be a set")
@@ -1422,19 +1422,20 @@ if not offset is integer constant
 This operator denotes a linear combination of integer-valued terms with integer coefficients and an integer offset and a comparison relation against 0.
 
 ### Arity and Types:
-n >= 3
+n >= 2
 n = number of terms (including the offset and the relation symbol)
-each term xi is a tuple of the form (coefficient, variable) where the coefficient is an integer (constant) and the variable of type int.
-the last term xn is the relation symbol, which must be one of {"<", "<=", "=", "!=", ">=", ">"} as a constant string.
+the first term x1 is the relation symbol, which must be one of {"lt", "leq", "eq", "neq", "geq", "gt"} as a constant string.
+each term xi for i in {2, ..., n-1} is a tuple of the form (coefficient, variable) where the coefficient is an integer (constant) and the variable of type int.
+the last term xn is the integer constant offset.
 
 out in {bool}
 
 ### Semantics:
 ```
-offset = xn-1
-relation = xn
+relation = x1
+offset = xn
 
-for i in {1, ..., n-2}
+for i in {2, ..., n-1}
     if xi_1 == 0
         pi = 0
     elif defined({xi_1, xi_2})
@@ -1442,19 +1443,19 @@ for i in {1, ..., n-2}
     else
         pi = undefined
 
-if defined({p1, ..., p(n-2), offset})
-    lhs = p1 + p2 + ... + p(n-2) + offset
-    if relation == "<"
+if defined({p2, ..., p(n-1), offset})
+  lhs = p2 + ... + p(n-1) + offset
+  if relation == "lt"
         out = lhs < 0
-    elif relation == "<="
+  elif relation == "leq"
         out = lhs <= 0
-    elif relation == "="
+  elif relation == "eq"
         out = lhs == 0
-    elif relation == "!="
+  elif relation == "neq"
         out = lhs != 0
-    elif relation == ">="
+  elif relation == "geq"
         out = lhs >= 0
-    elif relation == ">"
+  elif relation == "gt"
         out = lhs > 0
     else
         out = undefined
@@ -1464,14 +1465,14 @@ else
 
 ### Type Errors:
 ```
-if not all({type(xi_1)} is integer constant for i in {1, ..., n-2})
+if not all({type(xi_1)} is integer constant for i in {2, ..., n-1})
     error("Coefficient must be an integer constant")
-if not all({type(xi_2)} <= {int} for i in {1, ..., n-2})
+if not all({type(xi_2)} <= {int} for i in {2, ..., n-1})
     error("Variable must be of type int")
 if not offset is integer constant
     error("Offset must be an integer constant")
-if not relation in {"<", "<=", "=", "!=", ">=", ">"}
-    error("Relation must be one of {<, <=, =, !=, >=, >}")
+if not relation in {"lt", "leq", "eq", "neq", "geq", "gt"}
+  error("Relation must be one of {lt, leq, eq, neq, geq, gt}")
 ```
 
 ## TODO: Input spelling
