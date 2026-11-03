@@ -239,8 +239,8 @@ def test_checker_boolean_statement_contracts(statement: str) -> None:
     assert store == before
 
 
-def test_checker_deduplicates_bindings_but_not_roots() -> None:
-    """Collapse repeated binding diagnostics while preserving distinct stored roots."""
+def test_checker_keeps_binding_messages_at_shared_expression() -> None:
+    """Keep each binding's message while sharing one located expression across roots."""
     store = ConstraintStore()
     parameter, argument = VariableRef("parameter"), VariableRef("argument")
     store.choose_from_iterator(argument, (1, 1.5))
@@ -248,13 +248,8 @@ def test_checker_deduplicates_bindings_but_not_roots() -> None:
     for name, value in (("first", argument), ("second", 2)):
         store.define(VariableRef(name), Operation(Operator.lambda_, (callback, value)))
     diagnostics = TypeChecker(TypeCache(store)).check(store)
-    assert len(diagnostics) == 2
-    assert (
-        len(
-            {item.location.root_id for item in diagnostics if item.location is not None}
-        )
-        == 2
-    )
+    locations = {item.location for item in diagnostics if item.location is not None}
+    assert len(locations) == 1
 
 
 @pytest.mark.parametrize(
@@ -314,15 +309,13 @@ def test_optimization_statement_types(expr: Expr, condition: Expr, valid: bool) 
 
 
 def test_expression_location_is_immutable() -> None:
-    """Keep a root ID and analysis node together in an immutable value."""
+    """Keep an analysis node in an immutable location value."""
     store = ConstraintStore()
     store.ensure(True)
-    root_id = store.constraints[0].expr
-    expression = store.expressions[root_id]
-    location = ExpressionLocation(root_id, expression)
-    assert location.root_id == root_id
+    expression = store.expressions[store.constraints[0].expr]
+    location = ExpressionLocation(expression)
     assert location.expression is expression
-    for attribute in ("root_id", "expression"):
+    for attribute in ("expression",):
         with pytest.raises(FrozenInstanceError):
             setattr(location, attribute, None)
 
@@ -372,7 +365,7 @@ def test_diagnostic_subjects(
     store.ensure(True)
     root_id = store.constraints[0].expr
     location = (
-        ExpressionLocation(root_id, store.expressions[root_id]) if located else None
+        ExpressionLocation(store.expressions[root_id]) if located else None
     )
     variable = VariableRef("subject") if with_variable else None
     expected = Diagnostic(severity, "message", variable=variable, location=location)
@@ -406,14 +399,14 @@ def test_nested_diagnostics_are_located_at_emission() -> None:
     _static_types_for(store, diagnostics)
     assert len(diagnostics.errors) == 2
     assert {item.location for item in diagnostics.errors} == {
-        ExpressionLocation(root_id, expression) for expression in root
+        ExpressionLocation(expression) for expression in root
     }
     assert diagnostics.items[0] is warning
     assert warning.location is None
 
 
-def test_nested_lambda_diagnostic_preserves_root() -> None:
-    """Keep the stored outer root while locating a failure inside nested lambda bodies."""
+def test_nested_lambda_diagnostic_locates_expression() -> None:
+    """Locate a failure inside nested lambda bodies by its analysis node."""
     store = ConstraintStore()
     store.ensure(True)
     outer, inner = VariableRef("outer"), VariableRef("inner")
@@ -422,12 +415,11 @@ def test_nested_lambda_diagnostic_preserves_root() -> None:
         (outer,), Operation(Operator.lambda_, (Lambda((inner,), body), "x"))
     )
     store.ensure(Operation(Operator.lambda_, (callback, 1)))
-    root_id = store.constraints[-1].expr
     diagnostics = Diagnostics()
     _static_types_for(store, diagnostics)
     assert len(diagnostics.errors) == 1
     assert diagnostics.errors[0].location == ExpressionLocation(
-        root_id, InternalOperation(Operator.concat, (outer, inner))
+        InternalOperation(Operator.concat, (outer, inner))
     )
 
 
@@ -589,7 +581,7 @@ def test_duplicate_lambda_parameters_are_rejected(fold: bool, empty: bool) -> No
     assert types.get_type(root) is UnknownType()
     assert len(diagnostics.errors) == 1
     assert "distinct" in diagnostics.errors[0].message
-    assert diagnostics.errors[0].location == ExpressionLocation(root_id, root)
+    assert diagnostics.errors[0].location == ExpressionLocation(root)
 
 
 def test_nested_lambda_parameters_can_shadow_outer_names() -> None:
@@ -734,7 +726,7 @@ def test_tuple_sets_and_nesting_before_unknown_propagation(
         assert types.get_type(root) is UnknownType()
         assert len(diagnostics.errors) == 1
         assert diagnostics.errors[0].message == "Nested tuples are not supported"
-        assert diagnostics.errors[0].location == ExpressionLocation(root_id, root)
+        assert diagnostics.errors[0].location == ExpressionLocation(root)
     else:
         assert not diagnostics.has_errors
         assert types.get_type(root) == frozenset(
@@ -809,7 +801,6 @@ def test_fold_checks_lambda_body_and_nested_error_location() -> None:
     assert len(diagnostics.errors) == 2
     diagnostic = next(item for item in diagnostics.errors if "concat" in item.message)
     assert diagnostic.location is not None
-    assert diagnostic.location.root_id == store.variables[result].definitions[0].value
     assert diagnostic.location.expression == InternalOperation(
         Operator.concat,
         (ValueDef(ValueType.integer, 1), ValueDef(ValueType.string, "x")),
@@ -982,7 +973,7 @@ def test_cycle_dependents_are_unknown_while_independent_expressions_are_typed() 
         expr_id = store.variables[variable].definitions[0].value
         assert types.get_type(store.expressions[expr_id]) is UnknownType()
         assert any(
-            error.location == ExpressionLocation(expr_id, store.expressions[expr_id])
+            error.location == ExpressionLocation(store.expressions[expr_id])
             and "cycle" in error.message
             for error in diagnostics.errors
         )
@@ -993,7 +984,7 @@ def test_cycle_dependents_are_unknown_while_independent_expressions_are_typed() 
     dependent_id = store.variables[dependent].definitions[0].value
     assert any(
         error.location
-        == ExpressionLocation(dependent_id, store.expressions[dependent_id])
+        == ExpressionLocation(store.expressions[dependent_id])
         for error in diagnostics.errors
     )
 
@@ -1028,7 +1019,7 @@ def test_set_literal_checks_every_element_despite_unknown_types() -> None:
     assert any("concat" in error.message for error in diagnostics.errors)
     assert any("Set literal elements" in error.message for error in diagnostics.errors)
     assert all(
-        error.location is not None and error.location.root_id == root_id
+        error.location is not None
         for error in diagnostics.errors
     )
 
@@ -1070,7 +1061,7 @@ def test_linear_checks_known_terms_before_propagation(with_unknown: bool) -> Non
     assert types.get_type(root) == frozenset({ValueType.integer})
     assert len(diagnostics.errors) == 1
     assert "linear_integer terms must be integer" in diagnostics.errors[0].message
-    assert diagnostics.errors[0].location == ExpressionLocation(root_id, root)
+    assert diagnostics.errors[0].location == ExpressionLocation(root)
 
 
 @pytest.mark.parametrize("with_unknown", [False, True])
@@ -1131,7 +1122,7 @@ def test_value_operations_check_contracts_before_propagation(
     assert len(diagnostics.errors) == (2 if operator == Operator.cardinality else 1)
     assert all(message in diagnostic.message for diagnostic in diagnostics.errors)
     assert all(
-        diagnostic.location == ExpressionLocation(root_id, root)
+        diagnostic.location == ExpressionLocation(root)
         for diagnostic in diagnostics.errors
     )
 

@@ -105,7 +105,7 @@ def compute_evaluation_order(
                     diagnostics.error(
                         f"Variable {var.name!r} has no defining expressions",
                         variable=var,
-                        location=ExpressionLocation(expr_id, var),
+                        location=ExpressionLocation(var),
                     )
                 undefined.add(var)
         sorter.add(expr_id, *deps)
@@ -121,7 +121,7 @@ def compute_evaluation_order(
     for expr_id in sorted(cyclic):
         diagnostics.error(
             f"Expression {expr_id} is part of or depends on a dependency cycle",
-            location=ExpressionLocation(expr_id, store.expressions[expr_id]),
+            location=ExpressionLocation(store.expressions[expr_id]),
         )
 
     return EvaluationOrder(

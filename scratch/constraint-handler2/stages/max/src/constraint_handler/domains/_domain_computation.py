@@ -11,7 +11,6 @@ from ..diagnostics import Diagnostics, ExpressionLocation
 from ..internal_input import (
     ConstraintStore,
     Expr,
-    ExprId,
     Lambda,
     Operation,
     OperationArg,
@@ -70,9 +69,7 @@ class _DomainComputation:
             tuple[str, str, tuple[Domain, ...]], tuple[PythonTable, Domain] | None
         ] = {}
         self.tables: dict[tuple[Expr, DomainScope], DomainTable | None] = {}
-        self.programs: dict[
-            tuple[ExprId, DomainScope], tuple[Expr, str, tuple[Expr, ...]]
-        ] = {}
+        self.programs: dict[tuple[str, tuple[Expr, ...], DomainScope], Expr] = {}
         self.callbacks: dict[str, Callable[..., object]] = {}
         self.sources = {
             variable: tuple(
@@ -295,7 +292,7 @@ class _DomainComputation:
         ]
         if not kinds:
             return
-        location = self.location(expr)
+        location = ExpressionLocation(expr)
         found = ", ".join(kinds)
         expected = "/".join(sorted(allowed))
         message = f"{op} operand {index + 1} has {found} values, expected {expected}"
@@ -305,14 +302,6 @@ class _DomainComputation:
         ):
             return
         self.diagnostics.error(message, location=location)
-
-    def location(self, expr: Expr) -> ExpressionLocation:
-        """Find a stored expression ID for an evaluation diagnostic when possible."""
-        root = next(
-            (root for root, value in self.store.expressions.items() if value == expr),
-            -1,
-        )
-        return ExpressionLocation(root, expr)
 
     def table(
         self, expr: Expr, bindings: dict[VariableRef, Domain]
@@ -332,22 +321,15 @@ class _DomainComputation:
                 self.tables[key] = None
                 return None
             source = expr.args[0].fn
-            for root, current in self.store.expressions.items():
-                original = self.programs.get((root, key[1]))
-                if (
-                    current == expr
-                    and original is not None
-                    and (source, inputs) == original[1:]
-                ):
-                    result = self.table(original[0], bindings)
-                    self.tables[key] = result
-                    return result
+            original = self.programs.get((source, inputs, key[1]))
+            if original is not None:
+                result = self.table(original, bindings)
+                self.tables[key] = result
+                return result
         else:
             inputs = tuple(sorted(free_variables(expr), key=lambda var: var.name))
             source = convert(inputs, expr).fn
-            for root, current in self.store.expressions.items():
-                if current == expr:
-                    self.programs[root, key[1]] = expr, source, inputs
+            self.programs.setdefault((source, inputs, key[1]), expr)
         domains = tuple(self.cache.get_domain(arg, bindings) for arg in inputs)
         if (
             any(domain.is_empty() for domain in domains)
@@ -441,7 +423,7 @@ class _DomainComputation:
                     ) as error:
                         self.diagnostics.error(
                             f"Domain evaluation failed for {values!r}: {error}",
-                            location=self.location(expr),
+                            location=ExpressionLocation(expr),
                         )
                         continue
                     if isinstance(value, set):
@@ -463,7 +445,7 @@ class _DomainComputation:
             ) as error:
                 self.diagnostics.error(
                     f"Domain evaluation unavailable: {error}",
-                    location=self.location(expr),
+                    location=ExpressionLocation(expr),
                 )
                 result = None
         self.relations[key] = result

@@ -80,7 +80,7 @@ class TypeChecker:
                             DiagnosticSeverity.error,
                             "Set variable requires scalar elements",
                             variable,
-                            ExpressionLocation(source.value, expression),
+                            ExpressionLocation(expression),
                         )
                     )
         for constraint in store.constraints:
@@ -125,7 +125,7 @@ class TypeChecker:
                     DiagnosticSeverity.error,
                     f"{role} must be {required}",
                     variable,
-                    ExpressionLocation(root, expression),
+                    ExpressionLocation(expression),
                 )
             )
 
@@ -142,7 +142,7 @@ class TypeChecker:
         if key in visited:
             return
         visited.add(key)
-        location = ExpressionLocation(root, expression)
+        location = ExpressionLocation(expression)
         if isinstance(expression, (tuple, frozenset)):
             for item in expression:
                 self._visit(item, bindings, root, diagnostics, visited)

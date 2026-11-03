@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from enum import StrEnum, auto
 
-from .internal_input import Expr, ExprId, VariableRef
+from .internal_input import Expr, VariableRef
 
 
 class DiagnosticSeverity(StrEnum):
@@ -15,9 +15,8 @@ class DiagnosticSeverity(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class ExpressionLocation:
-    """Pair a stored root ID with the relevant analysis-time expression node."""
+    """Pair the relevant analysis-time expression node with a diagnostic."""
 
-    root_id: ExprId
     expression: Expr
 
 

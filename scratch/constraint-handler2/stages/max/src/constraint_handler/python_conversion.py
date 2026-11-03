@@ -1,7 +1,7 @@
 """Lower internal expressions to closed Python callable source."""
 
 import ast
-from functools import lru_cache
+from functools import cache
 from types import CodeType
 from typing import cast
 
@@ -36,7 +36,7 @@ def value_key(value: object) -> object:
     return (type(value), value)
 
 
-@lru_cache(maxsize=1024)
+@cache
 def compile_python(source: str) -> CodeType:
     """Compile reusable Python code without retaining context-bound callbacks."""
     return compile(source, "<python_eval>", "eval")
@@ -91,6 +91,12 @@ _TEMPLATES: dict[Operator, str] = {
     Operator.set_fold: "__import__('functools').reduce(_arg0, sorted(_arg1, key=repr), _arg2)",
 }
 
+_COMPILE_PYTHON = ast.parse(
+    "__import__('constraint_handler.python_conversion', "
+    "fromlist=('compile_python',)).compile_python",
+    mode="eval",
+).body
+
 
 class _Converter:
     """Generate lexical bindings independent of caller variable names."""
@@ -140,11 +146,7 @@ class _Converter:
                     func=ast.Name(id="eval", ctx=ast.Load()),
                     args=[
                         ast.Call(
-                            func=ast.parse(
-                                "__import__('constraint_handler.python_conversion', "
-                                "fromlist=('compile_python',)).compile_python",
-                                mode="eval",
-                            ).body,
+                            func=_COMPILE_PYTHON,
                             args=[ast.Constant(value=source)],
                             keywords=[],
                         ),
@@ -277,6 +279,7 @@ class _Converter:
                 return _Substitute(args).visit(ast.parse(template, mode="eval").body)
 
 
+@cache
 def convert(parameters: tuple[VariableRef, ...], body: Expr) -> Python:
     """Compile a closed expression over explicit inputs into a Python descriptor."""
     tree = ast.fix_missing_locations(_Converter().callable(parameters, body, {}))

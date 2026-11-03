@@ -143,13 +143,13 @@ class Preprocessor:
                 if domains.get_domain(expr).unknown:
                     diagnostics.error(
                         "Optimization requires a known finite integer domain",
-                        location=ExpressionLocation(item.expr, expr),
+                        location=ExpressionLocation(expr),
                     )
                 if engines[item.expr] != Engine.native:
                     diagnostics.error(
                         "Optimization requires the native engine, not "
                         + engines[item.expr],
-                        location=ExpressionLocation(item.expr, expr),
+                        location=ExpressionLocation(expr),
                     )
         return (
             PreparedProblem(
