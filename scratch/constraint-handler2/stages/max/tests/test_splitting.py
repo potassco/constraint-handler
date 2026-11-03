@@ -43,11 +43,10 @@ from constraint_handler.splitting import (
     Splitter,
     split,
 )
-from constraint_handler.static_types import (
+from constraint_handler.type_checking import (
     SetOf,
-    StaticTypeStore,
+    TypeCache,
     UnknownType,
-    compute_static_types,
 )
 from constraint_handler.util import compute_evaluation_order
 
@@ -74,7 +73,7 @@ def test_linear_operands_preserve_terms_and_offset(
             operator, (ValueDef(ValueType.string, "leq"), *expression.args)
         )
     domains = DomainStore({first: UNKNOWN_DOMAIN, second: Domain(ints=frozenset({1}))})
-    cost = GroundingCost(domains, StaticTypeStore())
+    cost = GroundingCost(domains, TypeCache(ConstraintStore()))
     assert cost.parameters(expression) == (
         (offset,) if offset_only else (first, second, offset)
     )
@@ -330,11 +329,11 @@ def test_split_lowers_python_fold_callbacks() -> None:
     assert store == before
 
 
-def _metadata(store: ConstraintStore) -> tuple[DomainStore, StaticTypeStore]:
+def _metadata(store: ConstraintStore) -> tuple[DomainStore, TypeCache]:
     """Compute metadata without applying normalization or splitting."""
     diagnostics = Diagnostics()
     order = compute_evaluation_order(store, diagnostics)
-    types = compute_static_types(store, order, diagnostics)
+    types = TypeCache(store)
     domains = compute_domains(store, order, diagnostics)
     assert not diagnostics.has_errors
     return domains, types
@@ -376,7 +375,7 @@ def test_splitting_does_not_recompute_metadata(
         unexpected_computation,
     )
     monkeypatch.setattr(
-        "constraint_handler.static_types._StaticTypeComputer.run",
+        "constraint_handler.type_checking.TypeChecker.check",
         unexpected_computation,
     )
     diagnostics = Diagnostics()
@@ -384,10 +383,12 @@ def test_splitting_does_not_recompute_metadata(
     diagnostics.warn("existing warning")
     original_diagnostics = tuple(diagnostics.items)
     original_domains = dict(domains)
-    original_types = dict(types)
+    original_types = {
+        expression: types.get_type(expression)
+        for expression in (*store.expressions.values(), *store.variables)
+    }
     original_scoped_domains = dict(domains.scoped_expressions)
-    original_scoped_types = dict(types.scoped_expressions)
-    assert original_scoped_domains and original_scoped_types
+    assert original_scoped_domains
     monkeypatch.setattr(
         "constraint_handler.util.compute_evaluation_order", unexpected_computation
     )
@@ -395,9 +396,8 @@ def test_splitting_does_not_recompute_metadata(
     assert not diagnostics.has_errors
     assert tuple(diagnostics.items) == original_diagnostics
     assert all(domains[expr] is value for expr, value in original_domains.items())
-    assert all(types[expr] is value for expr, value in original_types.items())
+    assert all(types.get_type(expr) is value for expr, value in original_types.items())
     assert original_scoped_domains.items() <= domains.scoped_expressions.items()
-    assert original_scoped_types.items() <= types.scoped_expressions.items()
 
 
 def test_lambda_metadata_scopes_do_not_combine_independent_calls() -> None:
@@ -417,18 +417,19 @@ def test_lambda_metadata_scopes_do_not_combine_independent_calls() -> None:
     )
     domains, types = _metadata(store)
     original_domains = set(domains.scoped_expressions)
-    original_types = set(types.scoped_expressions)
     _split(store, domains, types)
     zero = ValueDef(ValueType.integer, 0)
-    for metadata, original in ((domains, original_domains), (types, original_types)):
-        scopes = [
-            scope
-            for expr, scope in metadata.scoped_expressions.keys() - original
-            if expr == zero
-        ]
-        assert len(scopes) == 12
-        assert all(len(scope) == 1 for scope in scopes)
-        assert all(parameter not in dict(scope) for scope in scopes)
+    scopes = [
+        scope
+        for expr, scope in domains.scoped_expressions.keys() - original_domains
+        if expr == zero
+    ]
+    assert len(scopes) == 12
+    assert all(len(scope) == 1 for scope in scopes)
+    assert all(parameter not in dict(scope) for scope in scopes)
+    for scope in scopes:
+        bindings = {variable: frozenset({ValueType.integer}) for variable, _ in scope}
+        assert types.get_type(zero, bindings) == frozenset({ValueType.integer})
 
 
 def test_split_preserves_input_with_existing_errors() -> None:
@@ -438,16 +439,16 @@ def test_split_preserves_input_with_existing_errors() -> None:
     diagnostics = Diagnostics()
     order = compute_evaluation_order(store, diagnostics)
     before = store.copy()
-    domains, types = DomainStore(), StaticTypeStore()
+    domains, types = DomainStore(), TypeCache(ConstraintStore())
     split(store, domains, types, order, diagnostics)
     assert store == before
-    assert not domains and not types
+    assert not domains
 
 
 def _split(
     store: ConstraintStore,
     domains: DomainStore,
-    types: StaticTypeStore,
+    types: TypeCache,
     *,
     subset_limit: int = DEFAULT_SUBSET_LIMIT,
 ) -> None:
@@ -830,12 +831,16 @@ def test_documented_subset_decisions(case: int, count: int) -> None:
     auxiliaries = set(store.variables) - {*variables, result}
     assert len(auxiliaries) == count
     assert domains[result] == original_domain
-    assert set(store.expressions.values()) <= domains.keys() & types.keys()
+    assert set(store.expressions.values()) <= domains.keys()
+    for expression in store.expressions.values():
+        types.get_type(expression)
     for auxiliary in auxiliaries:
         definition = store.variables[auxiliary].definitions[0]
         assert definition.value not in original_ids
         assert domains[auxiliary] == domains[store.expressions[definition.value]]
-        assert types[auxiliary] == types[store.expressions[definition.value]]
+        assert types.get_type(auxiliary) == types.get_type(
+            store.expressions[definition.value]
+        )
     diagnostics = Diagnostics()
     assert not compute_evaluation_order(store, diagnostics).cyclic_exprs
     assert not diagnostics.has_errors
@@ -871,18 +876,21 @@ def test_metadata_stores_share_root_nested_and_variable_keys() -> None:
     nested = InternalOperation(Operator.minus, (variable,))
     assert root == nested
     assert domains[root] == Domain(ints=frozenset({-1, -2}))
-    assert types[root] == frozenset({ValueType.integer})
-    assert root_id not in domains and root_id not in types
+    assert types.get_type(root) == frozenset({ValueType.integer})
+    assert root_id not in domains
     domains[root] = Domain(ints=frozenset({-3}))
-    types[root] = frozenset({ValueType.none})
+    with pytest.raises(ValueError):
+        types.set_type(root, frozenset({ValueType.none}))
     assert domains.lookup(nested) == domains.get(root) == Domain(ints=frozenset({-3}))
-    assert types.lookup(nested) == types.get(root) == frozenset({ValueType.none})
+    assert (
+        types.get_type(nested) == types.get_type(root) == frozenset({ValueType.integer})
+    )
     alias_id = store.variables[VariableRef("alias")].definitions[0].value
     assert store.expressions[alias_id] == variable
     assert domains[store.expressions[alias_id]] == domains[variable]
-    assert types[store.expressions[alias_id]] == types[variable]
+    assert types.get_type(store.expressions[alias_id]) == types.get_type(variable)
     assert domains[variable] == Domain(ints=frozenset({1, 2}))
-    assert types[variable] == frozenset({ValueType.integer})
+    assert types.get_type(variable) == frozenset({ValueType.integer})
 
 
 def test_expression_store_lookups_and_lambda_scopes() -> None:
@@ -901,29 +909,29 @@ def test_expression_store_lookups_and_lambda_scopes() -> None:
     domains, types = _metadata(store)
     nested = InternalOperation(Operator.minus, (variable,))
     assert domains[nested] == Domain(ints=frozenset({-1, -2}))
-    assert types[nested] == frozenset({ValueType.integer})
+    assert types.get_type(nested) == frozenset({ValueType.integer})
     assert domains[variable] == Domain(ints=frozenset({1, 2}))
-    assert types[variable] == frozenset({ValueType.integer})
+    assert types.get_type(variable) == frozenset({ValueType.integer})
     text_domain = Domain(strings=frozenset({"text"}))
     text_type = frozenset({ValueType.string})
     assert (
         domains.lookup(variable, scope=frozenset({(variable, text_domain)}))
         == text_domain
     )
-    assert types.lookup(variable, scope=frozenset({(variable, text_type)})) == text_type
+    assert types.get_type(variable, {variable: text_type}) == text_type
     root = store.variables[VariableRef("nested")].definitions[0].value
     expression = store.expressions[root]
     assert domains[expression] == Domain(ints=frozenset({1, 2}))
-    assert types[expression] == frozenset({ValueType.integer})
+    assert types.get_type(expression) == frozenset({ValueType.integer})
     missing = VariableRef("missing")
     with pytest.raises(KeyError):
         domains[missing]
-    with pytest.raises(KeyError):
-        types[missing]
+    assert isinstance(types.get_type(missing), UnknownType)
     domains[missing] = text_domain
-    types[missing] = text_type
+    types = TypeCache(store)
+    types.set_type(missing, text_type)
     assert domains.lookup(missing) == text_domain
-    assert types.lookup(missing) == text_type
+    assert types.get_type(missing) == text_type
 
 
 def test_preprocessor_splits_normalized_linear_terms() -> None:
@@ -958,11 +966,13 @@ def test_preprocessor_splits_normalized_linear_terms() -> None:
         original = (pair[0], InternalOperation(Operator.abs, (variable,)))
         assert prepared.domains[original].cardinality() == 10
         assert prepared.domains[pair] == prepared.domains[original]
-        assert prepared.static_types[pair] == prepared.static_types[original]
+        assert prepared.static_types.get_type(pair) == prepared.static_types.get_type(
+            original
+        )
     domains, types = _metadata(prepared.store)
     assert domains[result] == prepared.domains[result]
-    assert isinstance(types[result], UnknownType)
-    assert prepared.static_types[result] == frozenset({ValueType.integer})
+    assert types.get_type(result) == frozenset({ValueType.integer})
+    assert prepared.static_types.get_type(result) == frozenset({ValueType.integer})
 
 
 def test_implicit_set_membership_cost_and_metadata() -> None:
@@ -981,7 +991,9 @@ def test_implicit_set_membership_cost_and_metadata() -> None:
     (auxiliary,) = set(store.variables) - {result}
     assert domains[auxiliary].implicit_set_elements == frozenset(range(20))
     assert domains[auxiliary].cardinality() == 2**20
-    assert types[auxiliary] == frozenset({SetOf(frozenset({ValueType.integer}), True)})
+    assert types.get_type(auxiliary) == frozenset(
+        {SetOf(frozenset({ValueType.integer}), True)}
+    )
 
 
 def test_unknown_and_empty_domains_do_not_force_splits() -> None:
@@ -1026,7 +1038,7 @@ def test_ties_and_repeated_occurrences() -> None:
         ),
     )
     domains[nested] = Domain(ints=frozenset({1}))
-    types[nested] = frozenset({ValueType.integer})
+    types.set_type(nested, frozenset({ValueType.integer}))
     _split(store, domains, types)
     auxiliaries = set(store.variables) - set(inputs)
     assert len(auxiliaries) == 2
@@ -1154,14 +1166,17 @@ def test_length_cost_uses_static_set_kind() -> None:
             expression: Domain(ints=frozenset(range(4))),
         }
     )
-    types = StaticTypeStore(
-        {variable: frozenset({SetOf(frozenset({ValueType.integer}), True)})}
-    )
+    types = TypeCache(ConstraintStore())
+    types.set_type(variable, frozenset({SetOf(frozenset({ValueType.integer}), True)}))
     costs = GroundingCost(domains, types)
     assert costs.trivial_cost(expression) == 7
-    types[variable] = frozenset({ValueType.string})
+    types = TypeCache(ConstraintStore())
+    types.set_type(variable, frozenset({ValueType.string}))
+    costs = GroundingCost(domains, types)
     assert costs.trivial_cost(expression) == 8
-    types[variable] = UnknownType()
+    types = TypeCache(ConstraintStore())
+    types.set_type(variable, UnknownType())
+    costs = GroundingCost(domains, types)
     assert costs.trivial_cost(expression) == 8
 
 
@@ -1316,7 +1331,10 @@ def test_fold_cost_includes_captures() -> None:
             initial: Domain(ints=frozenset({0, 1, 2})),
         }
     )
-    assert GroundingCost(domains, StaticTypeStore()).trivial_cost(expression) == 120
+    assert (
+        GroundingCost(domains, TypeCache(ConstraintStore())).trivial_cost(expression)
+        == 120
+    )
 
 
 def test_existing_lambda_arguments_use_profitable_splits() -> None:
@@ -1386,14 +1404,14 @@ def test_store_preserves_unknown_and_set_metadata() -> None:
     """Distinguish recorded unknown results from missing metadata."""
     variable = VariableRef("x")
     domains = DomainStore()
-    types = StaticTypeStore()
+    types = TypeCache(ConstraintStore())
     domains[variable] = UNKNOWN_DOMAIN
-    types[variable] = UnknownType()
+    types.set_type(variable, UnknownType())
     assert domains[variable].unknown
-    assert isinstance(types[variable], UnknownType)
+    assert isinstance(types.get_type(variable), UnknownType)
     literal = ValueDef(ValueType.integer, 1)
     domains[literal] = Domain(ints=frozenset({1}))
-    types[literal] = frozenset({ValueType.integer})
+    types.set_type(literal, frozenset({ValueType.integer}))
     assert domains[literal].cardinality() == 1
 
 
@@ -1429,4 +1447,4 @@ def test_lambda_conversion_preserves_existing_scopes_and_captures() -> None:
     type_scope = frozenset(
         (parameter, frozenset({ValueType.integer})) for parameter in (renamed, shadowed)
     )
-    assert types.lookup(nested, scope=type_scope) == frozenset({ValueType.integer})
+    assert types.get_type(nested, dict(type_scope)) == frozenset({ValueType.integer})

@@ -55,7 +55,7 @@ from constraint_handler.internal_input import ValueDef, ValueType
 from constraint_handler.python_conversion import compile_python
 from constraint_handler.python_conversion import convert as convert_python
 from constraint_handler.python_input import Expr
-from constraint_handler.static_types import SetOf, UnknownType, compute_static_types
+from constraint_handler.type_checking import SetOf, TypeCache, TypeChecker
 from constraint_handler.util import compute_evaluation_order
 
 
@@ -143,18 +143,19 @@ def test_linear_comparison_domains_and_types(
     root = store.expressions[store.constraints[0].expr]
     diagnostics = Diagnostics()
     order = compute_evaluation_order(store, diagnostics)
-    types = compute_static_types(store, order, diagnostics)
+    types = TypeCache(store)
+    diagnostics.items.extend(TypeChecker(types).check(store))
     domains = compute_domains(store, order, diagnostics)
     if choices and type(choices[0]) is not int:
         assert diagnostics.has_errors
         assert domains[root].unknown
     elif not choices:
         assert diagnostics.has_errors
-        assert not types[root]
+        assert types.get_type(root) == frozenset({ValueType.boolean})
         assert domains[root].is_empty()
     else:
         assert not diagnostics.has_errors
-        assert types[root] == frozenset({ValueType.boolean})
+        assert types.get_type(root) == frozenset({ValueType.boolean})
         assert domains[root].bools == (
             frozenset({relation == "neq"})
             if relation in {"eq", "neq"}
@@ -577,8 +578,8 @@ def test_cross_type_equality(left: Expr, right: Expr, equal: bool) -> None:
     store.define(eq_result, Operation(Operator.eq, (left, right)))
     store.define(neq_result, Operation(Operator.neq, (left, right)))
     diagnostics = Diagnostics()
-    order = compute_evaluation_order(store, diagnostics)
-    compute_static_types(store, order, diagnostics)
+    compute_evaluation_order(store, diagnostics)
+    diagnostics.items.extend(TypeChecker(TypeCache(store)).check(store))
     assert not diagnostics.has_errors
     domains = _domains_for(store, diagnostics=diagnostics)
     assert domains[eq_result] == Domain(bools=frozenset({equal}))
@@ -744,11 +745,10 @@ def test_compound_set_predicates(op: Operator, value: Expr) -> None:
     left = frozenset({value}) if op == Operator.subset else value
     store.define(result, Operation(op, (left, frozenset({1}))))
     diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = TypeCache(store)
+    diagnostics.items.extend(TypeChecker(types).check(store))
     assert diagnostics.has_errors
-    assert isinstance(types[result], UnknownType)
+    assert types.get_type(result) == frozenset({ValueType.boolean})
 
 
 @pytest.mark.parametrize("op", (Operator.inter, Operator.diff))
@@ -1286,11 +1286,11 @@ def test_shared_definition_completion(set_variable: bool) -> None:
     assert sum(source in variables for _, variables in steps) == 1
     assert list(order.evaluation_steps()) == steps
     domains = compute_domains(store, order, diagnostics)
-    types = compute_static_types(store, order, diagnostics)
+    types = TypeCache(store)
     assert domains[source] == expected_domain
-    assert types[source] == expected_type
+    assert types.get_type(source) == expected_type
     assert domains[dependent] == Domain(ints=frozenset({0, 1} if set_variable else {8}))
-    assert types[dependent] == frozenset({ValueType.integer})
+    assert types.get_type(dependent) == frozenset({ValueType.integer})
     assert not diagnostics.has_errors
 
 

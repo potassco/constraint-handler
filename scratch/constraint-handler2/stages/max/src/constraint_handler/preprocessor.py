@@ -27,7 +27,7 @@ from .internal_input import ConstraintStore
 from .normalization import normalize
 from .python_input import Expr, Value, VariableRef
 from .splitting import DEFAULT_SUBSET_LIMIT, split
-from .static_types import StaticTypeStore, compute_static_types
+from .type_checking import TypeCache, TypeChecker
 from .util import compute_evaluation_order
 
 
@@ -59,7 +59,7 @@ class PreparedProblem:
     """Share prepared metadata, treating Python callbacks as pure for fixed inputs."""
 
     store: ConstraintStore
-    static_types: StaticTypeStore
+    static_types: TypeCache
     domains: DomainStore
     engines: DispatchStore
     python_context: Mapping[str, object] = field(default_factory=dict[str, object])
@@ -115,11 +115,11 @@ class Preprocessor:
         python_context = MappingProxyType(self._python_context.copy())
         diagnostics = Diagnostics()
         order = compute_evaluation_order(snapshot, diagnostics)
-        static_types = compute_static_types(snapshot, order, diagnostics)
+        static_types = TypeCache(snapshot)
+        diagnostics.items.extend(TypeChecker(static_types).check(snapshot))
         if self._options.continue_on_errors or not diagnostics.has_errors:
             normalize(snapshot, static_types)
             order = compute_evaluation_order(snapshot, diagnostics)
-            static_types = compute_static_types(snapshot, order, diagnostics)
         domains = compute_domains(
             snapshot,
             order,

@@ -23,7 +23,7 @@ from .internal_input import (
 )
 from .python_conversion import convert
 from .python_input import Operator
-from .static_types import SetOf, StaticTypeStore, TupleType, UnknownType
+from .type_checking import SetOf, TupleType, TypeCache, UnknownType
 from .util import EvaluationOrder, free_variables
 
 DEFAULT_SUBSET_LIMIT = 12
@@ -104,7 +104,7 @@ class GroundingCost:
     def __init__(
         self,
         domains: DomainStore,
-        static_types: StaticTypeStore,
+        static_types: TypeCache,
     ) -> None:
         """Retain the metadata used by the encoding-specific estimates."""
         self.domains = domains
@@ -186,7 +186,7 @@ class GroundingCost:
 
     def is_set(self, expr: Expr) -> bool:
         """Recognize exclusively set-valued expressions from static types."""
-        kind = self.types[expr]
+        kind = self.types.get_type(expr)
         return (
             not isinstance(kind, UnknownType)
             and bool(kind)
@@ -195,7 +195,7 @@ class GroundingCost:
 
     def is_tuple(self, expr: Expr) -> bool:
         """Recognize exclusively tuple-valued operands without inspecting syntax."""
-        kind = self.types[expr]
+        kind = self.types.get_type(expr)
         return (
             not isinstance(kind, UnknownType)
             and bool(kind)
@@ -247,7 +247,7 @@ class Splitter(GroundingCost):
         self,
         store: ConstraintStore,
         domains: DomainStore,
-        static_types: StaticTypeStore,
+        static_types: TypeCache,
         subset_limit: int,
     ) -> None:
         """Retain mutable pass state and reserve all existing variable names."""
@@ -410,11 +410,10 @@ class Splitter(GroundingCost):
                     definitions=[VariableDefinition(definition_id, condition_id, "")]
                 )
                 domain = self.domains[parameter]
-                kind = self.types[parameter]
+                kind = self.types.get_type(parameter)
                 self.domains[auxiliary] = domain
                 self.domains.setdefault(condition, Domain(bools=frozenset({True})))
-                self.types[auxiliary] = kind
-                self.types.setdefault(condition, frozenset({ValueType.boolean}))
+                self.types.set_type(auxiliary, kind)
                 args[index] = auxiliary
                 worklist.append(definition_id)
             if best:
@@ -449,16 +448,15 @@ class Splitter(GroundingCost):
                     for before, after in zip(pairs, rewritten_pairs, strict=True):
                         before, after = cast(Expr, before), cast(Expr, after)
                         self.domains.setdefault(after, self.domains[before])
-                        self.types.setdefault(after, self.types[before])
+                        self.types.set_type(after, self.types.get_type(before))
                 self.store.replace_expression(expr_id, rewritten)
                 self.domains.setdefault(rewritten, self.domains[expr])
-                self.types.setdefault(rewritten, self.types[expr])
+                self.types.set_type(rewritten, self.types.get_type(expr))
         self.convert_python_calls()
 
     def convert_python_calls(self) -> None:
         """Retain supported flat native operations; lower others to Python."""
         domains = _MetadataTransfer(self.domains)
-        types = _MetadataTransfer(self.types)
         for expr_id, expr in self.store.expressions.items():
             if (
                 isinstance(expr, Operation)
@@ -503,17 +501,16 @@ class Splitter(GroundingCost):
             renamings: list[Renaming] = []
             body = cast(Expr, self.rename(expr, replacements, renamings))
             domains.transfer(renamings, replacements)
-            types.transfer(renamings, replacements)
             call = Operation(Operator.python_eval, (convert(bound, body), *actual))
             self.store.replace_expression(expr_id, call)
             self.domains.setdefault(call, self.domains[expr])
-            self.types.setdefault(call, self.types[expr])
+            self.types.set_type(call, self.types.get_type(expr))
 
 
 def split(
     store: ConstraintStore,
     domains: DomainStore,
-    static_types: StaticTypeStore,
+    static_types: TypeCache,
     order: EvaluationOrder,
     diagnostics: Diagnostics,
     *,

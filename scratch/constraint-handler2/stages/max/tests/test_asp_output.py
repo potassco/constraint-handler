@@ -279,15 +279,14 @@ def test_native_linear_comparison_solves_send_more_money(lib: Library) -> None:
         store.ensure(Operation(Operator.neq, (left, right)))
     words: list[Operation] = []
     for word in ("SEND", "MORE", "MONEY"):
-        words.append(
-            Operation(
-                Operator.add,
-                tuple(
-                    Operation(Operator.mult, (10**position, digits[name]))
-                    for position, name in enumerate(reversed(word))
-                ),
-            )
+        terms = tuple(
+            Operation(Operator.mult, (10**position, digits[name]))
+            for position, name in enumerate(reversed(word))
         )
+        expression = terms[0]
+        for term in terms[1:]:
+            expression = Operation(Operator.add, (expression, term))
+        words.append(expression)
     store.ensure(
         Operation(Operator.eq, (Operation(Operator.add, tuple(words[:2])), words[2]))
     )
@@ -1748,6 +1747,30 @@ def test_native_set_typed_membership(lib: Library, operation: Operator) -> None:
     store.define(result, Operation(operation, (member, source)))
     models = _variable_models(lib, store)
     assert len(models) == 20
+    for model in models:
+        if not {"member", "source"} <= model.keys():
+            assert "result" not in model
+            continue
+        members = model["source"]
+        assert isinstance(members, frozenset)
+        expected = (model["member"] in members) == (operation == Operator.set_isin)
+        assert model["result"] == f"boolean({str(expected).lower()})"
+
+
+@pytest.mark.parametrize("operation", (Operator.set_isin, Operator.set_notin))
+def test_native_set_membership_accepts_none_query(
+    lib: Library, operation: Operator
+) -> None:
+    """Accept None as a query element against sets that may contain None."""
+    store = ConstraintStore()
+    member, source, result = (
+        VariableRef(name) for name in ("member", "source", "result")
+    )
+    store.choose_from_iterator(member, (None, 1))
+    store.choose_from_iterator(source, (frozenset({None}), frozenset({1})))
+    store.define(result, Operation(operation, (member, source)))
+    models = _variable_models(lib, store)
+    assert models
     for model in models:
         if not {"member", "source"} <= model.keys():
             assert "result" not in model

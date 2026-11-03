@@ -1,6 +1,7 @@
 """Tests for static type computation and diagnostics."""
 
 from dataclasses import FrozenInstanceError
+from unittest.mock import patch
 
 import pytest
 
@@ -20,16 +21,274 @@ from constraint_handler.internal_input import Lambda as InternalLambda
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueDef, ValueType
 from constraint_handler.python_input import Expr, OperationArg
-from constraint_handler.static_types import (
+from constraint_handler.type_checking import (
+    UNKNOWN,
     SetOf,
-    StaticTypeStore,
     TupleType,
     Type,
+    TypeCache,
+    TypeChecker,
     UnknownType,
-    compute_static_types,
     union_types,
 )
 from constraint_handler.util import compute_evaluation_order
+
+
+@pytest.mark.parametrize(
+    ("operator", "expected"),
+    (
+        (Operator.length, frozenset({ValueType.integer})),
+        (Operator.linear_integer, frozenset({ValueType.integer})),
+        (Operator.linear_comparison, frozenset({ValueType.boolean})),
+        (Operator.eq, frozenset({ValueType.boolean})),
+        (Operator.sqrt, frozenset({ValueType.integer, ValueType.real})),
+    ),
+)
+def test_cache_fixed_results_ignore_operands(
+    operator: Operator, expected: Type
+) -> None:
+    """Infer declared results even for missing, invalid, or unresolved operands."""
+    types = TypeCache(ConstraintStore())
+    for args in ((), (ValueDef(ValueType.integer, 42),), (VariableRef("missing"),)):
+        assert types.get_type(InternalOperation(operator, args)) == expected
+
+
+def test_cache_bindings_are_snapshots() -> None:
+    """Keep distinct bindings immutable and reject only conflicting writes."""
+    parameter = VariableRef("parameter")
+    body = InternalOperation(Operator.add, (parameter, ValueDef(ValueType.integer, 1)))
+    types = TypeCache(ConstraintStore())
+    integer = frozenset({ValueType.integer})
+    real = frozenset({ValueType.real})
+    bindings: dict[VariableRef, Type] = {parameter: integer}
+    assert types.get_type(body, bindings) == integer
+    bindings[parameter] = real
+    assert types.get_type(body, bindings) == real
+    assert types.get_type(body, {parameter: integer}) == integer
+    types.set_type(body, real, bindings)
+    with pytest.raises(ValueError):
+        types.set_type(body, integer, bindings)
+
+
+@pytest.mark.parametrize(
+    "known", (UNKNOWN, frozenset[ValueType](), frozenset({ValueType.string}))
+)
+def test_cache_trusts_supplied_results(known: Type) -> None:
+    """Treat unknown and empty entries as results and unify absent and empty bindings."""
+    types = TypeCache(ConstraintStore())
+    expression = InternalOperation(Operator.length, ())
+    types.set_type(expression, known)
+    assert types.get_type(expression, {}) is known
+    types.set_type(expression, known, {})
+
+
+def test_cache_structural_keys_and_cycles() -> None:
+    """Do not reuse an ID's old expression type or recurse forever through sources."""
+    store = ConstraintStore()
+    variable = VariableRef("cycle")
+    store.define(variable, variable)
+    store.ensure(1)
+    types = TypeCache(store)
+    root = store.constraints[0].expr
+    assert types.get_type(store.expressions[root]) == frozenset({ValueType.integer})
+    store.replace_expression(root, ValueDef(ValueType.string, "new"))
+    assert types.get_type(store.expressions[root]) == frozenset({ValueType.string})
+    assert types.get_type(variable) is UNKNOWN
+
+
+def test_cache_lambda_unknown_parameter_shadows_global() -> None:
+    """Bind unknown arguments explicitly and still infer a fixed-result body."""
+    store = ConstraintStore()
+    parameter = VariableRef("parameter")
+    store.define(parameter, 1)
+    body = InternalOperation(Operator.length, (parameter,))
+    expression = InternalOperation(
+        Operator.lambda_, (InternalLambda((parameter,), body), VariableRef("missing"))
+    )
+    types = TypeCache(store)
+    assert types.get_type(expression) == frozenset({ValueType.integer})
+    assert types.get_type(parameter, {parameter: UNKNOWN}) is UNKNOWN
+
+
+def test_cache_lambda_does_not_rebind_global_sources() -> None:
+    """Shadow direct references without changing another global's declaration."""
+    store = ConstraintStore()
+    parameter, alias = VariableRef("parameter"), VariableRef("alias")
+    store.define(parameter, "text")
+    store.define(alias, parameter)
+    types = TypeCache(store)
+    bindings = {parameter: frozenset({ValueType.integer})}
+    assert types.get_type(parameter, bindings) == frozenset({ValueType.integer})
+    assert types.get_type(alias, bindings) == frozenset({ValueType.string})
+
+
+def test_checker_does_not_trust_cache_as_validation() -> None:
+    """Check invalid operands even when the caller supplied a trusted result type."""
+    store = ConstraintStore()
+    store.define(VariableRef("result"), Operation(Operator.length, (42,)))
+    expression = next(iter(store.expressions.values()))
+    types = TypeCache(store)
+    types.set_type(expression, frozenset({ValueType.integer}))
+    checker = TypeChecker(types)
+    diagnostics = checker.check(store)
+    assert len(diagnostics) == 1
+    assert "length" in next(iter(diagnostics)).message
+    assert checker.check(store) == diagnostics
+
+
+def test_checker_separates_runtime_shape_failures() -> None:
+    """Leave tuple bounds and callback parameter-count failures to runtime."""
+    store = ConstraintStore()
+    parameter = VariableRef("parameter")
+    store.define(VariableRef("tuple"), Operation(Operator.tuple_get, ((1,), 4)))
+    store.define(
+        VariableRef("call"),
+        Operation(Operator.lambda_, (Lambda((parameter,), parameter),)),
+    )
+    assert not TypeChecker(TypeCache(store)).check(store)
+
+
+def test_checker_unknown_lambda_checks_known_siblings() -> None:
+    """Unknown parameters shadow globals without suppressing independent errors."""
+    store = ConstraintStore()
+    parameter = VariableRef("parameter")
+    store.define(parameter, "text")
+    callback = Lambda((parameter,), Operation(Operator.add, (parameter, "wrong")))
+    store.define(
+        VariableRef("result"),
+        Operation(Operator.lambda_, (callback, VariableRef("missing"))),
+    )
+    diagnostics = TypeChecker(TypeCache(store)).check(store)
+    assert len(diagnostics) == 1
+    assert "add" in next(iter(diagnostics)).message
+
+
+@pytest.mark.parametrize("known", (UNKNOWN, frozenset[ValueType]()))
+def test_cache_memoizes_unknown_and_empty_computations(known: Type) -> None:
+    """Never interpret unknown or empty completed results as cache misses."""
+    types = TypeCache(ConstraintStore())
+    expression = VariableRef("result")
+    with patch(
+        "constraint_handler.type_checking._type_inference._TypeInference.compute",
+        return_value=known,
+    ) as compute:
+        assert types.get_type(expression) is known
+        assert types.get_type(expression) is known
+        compute.assert_called_once()
+
+
+def test_cache_fixed_results_do_not_traverse_operands() -> None:
+    """Avoid requesting operand types when the operator determines its result."""
+    types = TypeCache(ConstraintStore())
+    missing = VariableRef("missing")
+    expression = InternalOperation(Operator.length, (missing,))
+    assert types.get_type(expression) == frozenset({ValueType.integer})
+    types.set_type(missing, frozenset({ValueType.string}))
+
+
+def test_typing_never_executes_python_callbacks() -> None:
+    """Treat source descriptors as opaque during both inference and checking."""
+    store = ConstraintStore()
+    result = VariableRef("result")
+    store.define(
+        result, Operation(Operator.python_eval, (Python("raise_if_executed()"),))
+    )
+    types = TypeCache(store)
+    with patch(
+        "constraint_handler.python_conversion.compile_python",
+        side_effect=AssertionError("Source must not be compiled"),
+    ):
+        assert types.get_type(result) is UNKNOWN
+        assert not TypeChecker(types).check(store)
+
+
+@pytest.mark.parametrize(
+    "statement",
+    (
+        "constraint",
+        "choice",
+        "definition",
+        "default",
+        "set_base",
+        "set_assignment",
+        "set_default",
+    ),
+)
+def test_checker_boolean_statement_contracts(statement: str) -> None:
+    """Require Boolean constraint roots and all declaration conditions."""
+    store = ConstraintStore()
+    variable = VariableRef("variable")
+    if statement == "constraint":
+        store.ensure(1)
+    elif statement == "choice":
+        store.choose(variable, 1, condition=1)
+    elif statement == "definition":
+        store.define(variable, 1, condition=1)
+    elif statement == "default":
+        store.default_to(variable, 1, condition=1)
+    elif statement == "set_base":
+        store.set_contain_choose(variable, 1, condition=1)
+    elif statement == "set_assignment":
+        store.set_contain(variable, 1, condition=1)
+    else:
+        store.set_contain_default_to(variable, 1, condition=1)
+    before = store.copy()
+    diagnostics = TypeChecker(TypeCache(store)).check(store)
+    assert len(diagnostics) == 1
+    assert "must be boolean" in next(iter(diagnostics)).message
+    assert store == before
+
+
+def test_checker_deduplicates_bindings_but_not_roots() -> None:
+    """Collapse repeated binding diagnostics while preserving distinct stored roots."""
+    store = ConstraintStore()
+    parameter, argument = VariableRef("parameter"), VariableRef("argument")
+    store.choose_from_iterator(argument, (1, 1.5))
+    callback = Lambda((parameter,), Operation(Operator.concat, (1, "invalid")))
+    for name, value in (("first", argument), ("second", 2)):
+        store.define(VariableRef(name), Operation(Operator.lambda_, (callback, value)))
+    diagnostics = TypeChecker(TypeCache(store)).check(store)
+    assert len(diagnostics) == 2
+    assert (
+        len(
+            {item.location.root_id for item in diagnostics if item.location is not None}
+        )
+        == 2
+    )
+
+
+@pytest.mark.parametrize(
+    "values, warning", (((1, 1.5), False), ((1, "text"), True), ((True,), True))
+)
+def test_checker_equality_union_warnings(
+    values: tuple[Expr, ...], warning: bool
+) -> None:
+    """Warn for any incompatible alternative without rejecting cross-type equality."""
+    store = ConstraintStore()
+    argument = VariableRef("argument")
+    store.choose_from_iterator(argument, values)
+    store.ensure(Operation(Operator.eq, (argument, 1)))
+    diagnostics = TypeChecker(TypeCache(store)).check(store)
+    assert len(diagnostics) == int(warning)
+    assert all(item.severity == DiagnosticSeverity.warning for item in diagnostics)
+
+
+@pytest.mark.parametrize(
+    "operator", (Operator.set_make, Operator.union, Operator.inter, Operator.diff)
+)
+def test_checker_rejects_known_collection_shapes_with_unknown_members(
+    operator: Operator,
+) -> None:
+    """Keep syntactically known collections out of scalar set-member positions."""
+    store = ConstraintStore()
+    unknown = Operation(Operator.python_eval, (Python("lambda: 1"),))
+    collection = Operation(
+        operator, (unknown, unknown) if operator == Operator.diff else (unknown,)
+    )
+    store.define(VariableRef("result"), Operation(Operator.set_make, (collection,)))
+    diagnostics = TypeChecker(TypeCache(store)).check(store)
+    assert len(diagnostics) == 1
+    assert next(iter(diagnostics)).message == "set_make requires scalar arguments"
 
 
 @pytest.mark.parametrize(
@@ -49,9 +308,7 @@ def test_optimization_statement_types(expr: Expr, condition: Expr, valid: bool) 
     store = ConstraintStore()
     store.minimize(expr, condition)
     diagnostics = Diagnostics()
-    compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    diagnostics.items.extend(TypeChecker(TypeCache(store)).check(store))
     assert diagnostics.has_errors is not valid
     assert all(item.location is not None for item in diagnostics.items)
 
@@ -97,11 +354,11 @@ def test_linear_comparison_rejects_invalid_arguments(
     store.define(VariableRef("input"), 1)
     store.ensure(Operation(Operator.linear_comparison, arguments))
     diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = _static_types_for(store, diagnostics)
     assert diagnostics.has_errors
-    assert isinstance(types[store.expressions[store.constraints[0].expr]], UnknownType)
+    assert types.get_type(store.expressions[store.constraints[0].expr]) == frozenset(
+        {ValueType.boolean}
+    )
 
 
 @pytest.mark.parametrize("severity", list(DiagnosticSeverity))
@@ -135,23 +392,6 @@ def test_diagnostic_subjects(
 
 def test_nested_diagnostics_are_located_at_emission() -> None:
     """Attach each failing node before emission without replacing collected diagnostics."""
-    emitted: list[Diagnostic] = []
-
-    class ObservedDiagnostics(Diagnostics):
-        """Observe diagnostics exactly as consumers receive them at emission."""
-
-        def error(
-            self,
-            message: str,
-            *,
-            variable: VariableRef | None = None,
-            location: ExpressionLocation | None = None,
-        ) -> None:
-            """Require an already located expression diagnostic and retain its identity."""
-            assert location is not None
-            super().error(message, variable=variable, location=location)
-            emitted.append(self.items[-1])
-
     store = ConstraintStore()
     store.ensure(True)
     store.ensure(
@@ -160,14 +400,14 @@ def test_nested_diagnostics_are_located_at_emission() -> None:
     root_id = store.constraints[-1].expr
     root = store.expressions[root_id]
     assert isinstance(root, tuple)
-    diagnostics = ObservedDiagnostics()
+    diagnostics = Diagnostics()
     diagnostics.warn("unlocated warning")
     warning = diagnostics.items[0]
     _static_types_for(store, diagnostics)
-    assert len(emitted) == 2
-    for diagnostic, expression in zip(emitted, root, strict=True):
-        assert diagnostic.location == ExpressionLocation(root_id, expression)
-        assert any(item is diagnostic for item in diagnostics.items)
+    assert len(diagnostics.errors) == 2
+    assert {item.location for item in diagnostics.errors} == {
+        ExpressionLocation(root_id, expression) for expression in root
+    }
     assert diagnostics.items[0] is warning
     assert warning.location is None
 
@@ -191,12 +431,14 @@ def test_nested_lambda_diagnostic_preserves_root() -> None:
     )
 
 
-def _static_types_for(
-    store: ConstraintStore, diagnostics: Diagnostics
-) -> StaticTypeStore:
-    """Compute evaluation order and static types for a store."""
-    order = compute_evaluation_order(store, diagnostics)
-    return compute_static_types(store, order, diagnostics)
+def _static_types_for(store: ConstraintStore, diagnostics: Diagnostics) -> TypeCache:
+    """Check standalone roots and declarations, leaving constraint contracts to statement tests."""
+    compute_evaluation_order(store, diagnostics)
+    context = store.copy()
+    context.constraints.clear()
+    types = TypeCache(context)
+    diagnostics.items.extend(TypeChecker(types).check(context))
+    return types
 
 
 @pytest.mark.parametrize(
@@ -220,7 +462,7 @@ def test_linear_rejects_noninteger_and_nonconstant_inputs(
     store.define(result, expression)
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert isinstance(types[result], UnknownType)
+    assert types.get_type(result) == frozenset({ValueType.integer})
     assert diagnostics.has_errors
 
 
@@ -242,10 +484,12 @@ def test_literals_and_variables() -> None:
     types = _static_types_for(store, diag)
     assert not diag.has_errors
     assert not diag.warnings
-    assert types[x] == frozenset({ValueType.integer, ValueType.real, ValueType.string})
-    assert types[y] == frozenset({ValueType.boolean})
-    assert types[z] == frozenset({ValueType.none})
-    assert types[empty_var] == frozenset()
+    assert types.get_type(x) == frozenset(
+        {ValueType.integer, ValueType.real, ValueType.string}
+    )
+    assert types.get_type(y) == frozenset({ValueType.boolean})
+    assert types.get_type(z) == frozenset({ValueType.none})
+    assert types.get_type(empty_var) == frozenset()
 
 
 @pytest.mark.parametrize("scalar_source", ["choice", "definition", "default", "empty"])
@@ -278,7 +522,7 @@ def test_variable_combines_scalar_and_set_declarations(
     }
     if scalar_source != "empty":
         expected.add(ValueType.string)
-    assert types[variable] == frozenset(expected)
+    assert types.get_type(variable) == frozenset(expected)
     assert not diagnostics.has_errors
 
 
@@ -294,7 +538,7 @@ def test_unknown_mixed_declaration_absorbs_all_alternatives(
     store.set_contain(variable, unknown if unknown_source == "set" else 1)
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert types[variable] is UnknownType()
+    assert types.get_type(variable) is UnknownType()
     assert not diagnostics.has_errors
 
 
@@ -308,7 +552,7 @@ def test_mixed_declarations_merge_complete_sets_and_retain_tuple_alternatives() 
     store.set_contain(variable, 1, condition=False)
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert types[variable] == frozenset(
+    assert types.get_type(variable) == frozenset(
         {
             ValueType.string,
             TupleType((frozenset({ValueType.boolean}),)),
@@ -342,7 +586,7 @@ def test_duplicate_lambda_parameters_are_rejected(fold: bool, empty: bool) -> No
     root = store.expressions[root_id]
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert types[root] is UnknownType()
+    assert types.get_type(root) is UnknownType()
     assert len(diagnostics.errors) == 1
     assert "distinct" in diagnostics.errors[0].message
     assert diagnostics.errors[0].location == ExpressionLocation(root_id, root)
@@ -357,7 +601,7 @@ def test_nested_lambda_parameters_can_shadow_outer_names() -> None:
     store.ensure(Operation(Operator.lambda_, (outer, 1)))
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert types[store.expressions[store.constraints[0].expr]] == frozenset(
+    assert types.get_type(store.expressions[store.constraints[0].expr]) == frozenset(
         {
             TupleType(
                 (
@@ -387,15 +631,17 @@ def test_set_variables_and_set_literals() -> None:
     diag = Diagnostics()
     types = _static_types_for(store, diag)
     assert not diag.has_errors
-    assert types[s1] == frozenset(
+    assert types.get_type(s1) == frozenset(
         {SetOf(frozenset({ValueType.integer, ValueType.string}), True)}
     )
-    assert types[s2] == frozenset({SetOf(frozenset({ValueType.integer}), False)})
-    assert types[s_empty] == frozenset({SetOf(frozenset(), True)})
-    assert types[store.expressions[store.constraints[0].expr]] == frozenset(
+    assert types.get_type(s2) == frozenset(
+        {SetOf(frozenset({ValueType.integer}), False)}
+    )
+    assert types.get_type(s_empty) == frozenset({SetOf(frozenset(), True)})
+    assert types.get_type(store.expressions[store.constraints[0].expr]) == frozenset(
         {SetOf(frozenset(), True)}
     )
-    assert types[store.expressions[store.constraints[1].expr]] == frozenset(
+    assert types.get_type(store.expressions[store.constraints[1].expr]) == frozenset(
         {SetOf(frozenset({ValueType.integer, ValueType.real}), False)}
     )
 
@@ -410,7 +656,9 @@ def test_conditional_set_assignment_can_be_empty(condition: bool | VariableRef) 
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
     assert not diagnostics.has_errors
-    assert types[variable] == frozenset({SetOf(frozenset({ValueType.integer}), True)})
+    assert types.get_type(variable) == frozenset(
+        {SetOf(frozenset({ValueType.integer}), True)}
+    )
 
 
 def test_unconditional_membership_overrides_conditional_emptiness() -> None:
@@ -422,7 +670,7 @@ def test_unconditional_membership_overrides_conditional_emptiness() -> None:
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
     assert not diagnostics.has_errors
-    assert types[variable] == frozenset(
+    assert types.get_type(variable) == frozenset(
         {SetOf(frozenset({ValueType.integer, ValueType.string}), False)}
     )
 
@@ -454,7 +702,7 @@ def test_invalid_set_element_does_not_produce_partial_type(
         store.set_contain(variable, unknown)
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert isinstance(types[variable], UnknownType)
+    assert isinstance(types.get_type(variable), UnknownType)
     assert len(diagnostics.errors) == 1
     assert diagnostics.errors[0].variable == variable
 
@@ -480,20 +728,18 @@ def test_tuple_sets_and_nesting_before_unknown_propagation(
     assert isinstance(rejected, tuple)
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert all(item in types for item in rejected)
+    for item in rejected:
+        types.get_type(item)
     if nested:
-        assert types[root] is UnknownType()
+        assert types.get_type(root) is UnknownType()
         assert len(diagnostics.errors) == 1
         assert diagnostics.errors[0].message == "Nested tuples are not supported"
         assert diagnostics.errors[0].location == ExpressionLocation(root_id, root)
     else:
         assert not diagnostics.has_errors
-        if with_unknown:
-            assert types[root] is UnknownType()
-        else:
-            assert types[root] == frozenset(
-                {TupleType((types[rejected[0]], types[rejected[1]]))}
-            )
+        assert types.get_type(root) == frozenset(
+            {TupleType((types.get_type(rejected[0]), types.get_type(rejected[1])))}
+        )
 
 
 @pytest.mark.parametrize(
@@ -509,7 +755,7 @@ def test_length_supports_strings_sets_and_tuples(
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
     assert not diagnostics.has_errors
-    assert types[result] == frozenset({ValueType.integer})
+    assert types.get_type(result) == frozenset({ValueType.integer})
 
 
 @pytest.mark.parametrize(
@@ -528,7 +774,22 @@ def test_unknown_tuple_cannot_be_a_set_member(
     diagnostics = Diagnostics()
     _static_types_for(store, diagnostics)
     assert len(diagnostics.errors) == 1
-    assert "scalar" in diagnostics.errors[0].message
+    assert "requires" in diagnostics.errors[0].message
+
+
+@pytest.mark.parametrize("operator", (Operator.set_isin, Operator.set_notin))
+def test_set_membership_accepts_none_query(operator: Operator) -> None:
+    """Accept None as a query element because sets may contain None."""
+    store = ConstraintStore()
+    element = VariableRef("element")
+    store.choose_from_iterator(element, (None, 1))
+    store.define(
+        VariableRef("result"), Operation(operator, (element, frozenset({None})))
+    )
+    diagnostics = Diagnostics()
+    types = _static_types_for(store, diagnostics)
+    assert not diagnostics.has_errors
+    assert types.get_type(VariableRef("result")) == frozenset({ValueType.boolean})
 
 
 def test_fold_checks_lambda_body_and_nested_error_location() -> None:
@@ -537,16 +798,16 @@ def test_fold_checks_lambda_body_and_nested_error_location() -> None:
     accumulator, element = VariableRef("accumulator"), VariableRef("element")
     invalid = Operation(Operator.concat, (1, "x"))
     callback = Lambda(
-        (accumulator, element), Operation(Operator.add, (invalid, accumulator))
+        (element, accumulator), Operation(Operator.add, (invalid, accumulator))
     )
     store.ensure(True)
     result = VariableRef("fold")
     store.define(result, Operation(Operator.set_fold, (callback, frozenset({1}), 0)))
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert isinstance(types[result], UnknownType)
-    assert len(diagnostics.errors) == 1
-    diagnostic = diagnostics.errors[0]
+    assert isinstance(types.get_type(result), UnknownType)
+    assert len(diagnostics.errors) == 2
+    diagnostic = next(item for item in diagnostics.errors if "concat" in item.message)
     assert diagnostic.location is not None
     assert diagnostic.location.root_id == store.variables[result].definitions[0].value
     assert diagnostic.location.expression == InternalOperation(
@@ -557,7 +818,7 @@ def test_fold_checks_lambda_body_and_nested_error_location() -> None:
 
 @pytest.mark.parametrize("arity", [0, 1, 3])
 def test_fold_requires_binary_lambda(arity: int) -> None:
-    """A fold callback must accept exactly accumulator and element."""
+    """Leave fold callback parameter-count failures to runtime."""
     store = ConstraintStore()
     parameters = tuple(VariableRef(f"parameter_{index}") for index in range(arity))
     store.ensure(
@@ -565,8 +826,7 @@ def test_fold_requires_binary_lambda(arity: int) -> None:
     )
     diagnostics = Diagnostics()
     _static_types_for(store, diagnostics)
-    assert len(diagnostics.errors) == 1
-    assert "2 parameters" in diagnostics.errors[0].message
+    assert not diagnostics.errors
 
 
 def test_fold_checks_accumulator_feedback() -> None:
@@ -574,7 +834,7 @@ def test_fold_checks_accumulator_feedback() -> None:
     store = ConstraintStore()
     accumulator, element = VariableRef("accumulator"), VariableRef("element")
     callback = Lambda(
-        (accumulator, element), Operation(Operator.length, (accumulator,))
+        (element, accumulator), Operation(Operator.length, (accumulator,))
     )
     store.ensure(Operation(Operator.set_fold, (callback, frozenset({1, 2}), "initial")))
     diagnostics = Diagnostics()
@@ -600,17 +860,20 @@ def test_fold_empty_sets_and_type_growth(
 ) -> None:
     """Terminate on scalar convergence and expanding tuple shapes without checking unreachable bodies."""
     store = ConstraintStore()
-    callback = Lambda((VariableRef("accumulator"), VariableRef("element")), body)
+    callback = Lambda((VariableRef("element"), VariableRef("accumulator")), body)
     result = VariableRef("fold")
     store.define(result, Operation(Operator.set_fold, (callback, members, initial)))
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    if isinstance(initial, tuple):
+    if not members:
+        assert len(diagnostics.errors) == 1
+        assert "concat" in diagnostics.errors[0].message
+    elif isinstance(initial, tuple):
         assert len(diagnostics.errors) == 1
         assert diagnostics.errors[0].message == "Nested tuples are not supported"
     else:
         assert not diagnostics.has_errors
-    assert types[result] is UnknownType()
+    assert types.get_type(result) is UnknownType()
 
 
 @pytest.mark.parametrize(
@@ -628,8 +891,8 @@ def test_fold_unknown_set_and_python_callback(callback: Python | Lambda) -> None
     store.ensure(Operation(Operator.set_fold, (callback, members, 0)))
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert not diagnostics.has_errors
-    assert types[store.expressions[store.constraints[0].expr]] is UnknownType()
+    assert diagnostics.has_errors is isinstance(callback, Python)
+    assert types.get_type(store.expressions[store.constraints[0].expr]) is UnknownType()
 
 
 def test_fold_rejects_nonset_input() -> None:
@@ -656,17 +919,14 @@ def test_lambda_scope_metadata_does_not_overwrite_global_or_other_bindings() -> 
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
     assert not diagnostics.has_errors
-    assert types[parameter] == frozenset({ValueType.string})
+    assert types.get_type(parameter) == frozenset({ValueType.string})
     call = store.expressions[store.variables[result].definitions[0].value]
     assert isinstance(call, InternalOperation)
     internal_callback = call.args[0]
     assert isinstance(internal_callback, InternalLambda)
     for scalar in (ValueType.integer, ValueType.real):
         kind = frozenset({scalar})
-        assert (
-            types.lookup(internal_callback.expr, scope=frozenset({(parameter, kind)}))
-            == kind
-        )
+        assert types.get_type(internal_callback.expr, {parameter: kind}) == kind
 
 
 @pytest.mark.parametrize(
@@ -683,7 +943,7 @@ def test_numeric_union_semantics_preserve_integer_and_real_alternatives(
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
     assert not diagnostics.has_errors
-    assert types[result] == frozenset({ValueType.integer, ValueType.real})
+    assert types.get_type(result) == frozenset({ValueType.integer, ValueType.real})
 
 
 def test_length_mixed_collection_union_and_invalid_member() -> None:
@@ -695,11 +955,11 @@ def test_length_mixed_collection_union_and_invalid_member() -> None:
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
     assert not diagnostics.has_errors
-    assert types[result] == frozenset({ValueType.integer})
+    assert types.get_type(result) == frozenset({ValueType.integer})
     store.choose(argument, 1)
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert types[result] is UnknownType()
+    assert types.get_type(result) == frozenset({ValueType.integer})
     assert len(diagnostics.errors) == 1
 
 
@@ -717,17 +977,24 @@ def test_cycle_dependents_are_unknown_while_independent_expressions_are_typed() 
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
     assert len(diagnostics.errors) == 2
-    for variable in (cycle, dependent):
-        assert types[variable] is UnknownType()
+    for variable in (cycle,):
+        assert types.get_type(variable) is UnknownType()
         expr_id = store.variables[variable].definitions[0].value
-        assert types[store.expressions[expr_id]] is UnknownType()
+        assert types.get_type(store.expressions[expr_id]) is UnknownType()
         assert any(
             error.location == ExpressionLocation(expr_id, store.expressions[expr_id])
             and "cycle" in error.message
             for error in diagnostics.errors
         )
-    assert types[independent] == frozenset(
+    assert types.get_type(independent) == frozenset(
         {TupleType((frozenset({ValueType.integer}), frozenset({ValueType.string})))}
+    )
+    assert types.get_type(dependent) == frozenset({ValueType.integer})
+    dependent_id = store.variables[dependent].definitions[0].value
+    assert any(
+        error.location
+        == ExpressionLocation(dependent_id, store.expressions[dependent_id])
+        for error in diagnostics.errors
     )
 
 
@@ -754,8 +1021,9 @@ def test_set_literal_checks_every_element_despite_unknown_types() -> None:
     assert isinstance(root, frozenset)
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert types[root] is UnknownType()
-    assert all(element in types for element in root)
+    assert types.get_type(root) is UnknownType()
+    for element in root:
+        types.get_type(element)
     assert len(diagnostics.errors) == 2
     assert any("concat" in error.message for error in diagnostics.errors)
     assert any("Set literal elements" in error.message for error in diagnostics.errors)
@@ -777,7 +1045,7 @@ def test_set_literal_propagates_empty_element_types(with_unknown: bool) -> None:
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
     root = store.expressions[store.constraints[0].expr]
-    assert types[root] == (UnknownType() if with_unknown else frozenset())
+    assert types.get_type(root) == (UnknownType() if with_unknown else frozenset())
     assert len(diagnostics.errors) == 1
     assert diagnostics.errors[0].variable == empty
 
@@ -799,9 +1067,9 @@ def test_linear_checks_known_terms_before_propagation(with_unknown: bool) -> Non
     root = store.expressions[root_id]
     diagnostics = Diagnostics()
     types = _static_types_for(store, diagnostics)
-    assert types[root] is UnknownType()
+    assert types.get_type(root) == frozenset({ValueType.integer})
     assert len(diagnostics.errors) == 1
-    assert "linear_integer requires integer" in diagnostics.errors[0].message
+    assert "linear_integer terms must be integer" in diagnostics.errors[0].message
     assert diagnostics.errors[0].location == ExpressionLocation(root_id, root)
 
 
@@ -809,19 +1077,19 @@ def test_linear_checks_known_terms_before_propagation(with_unknown: bool) -> Non
 @pytest.mark.parametrize(
     ("operator", "arguments", "message"),
     [
-        (Operator.eq, (VariableRef("operand"),), "expects 2 arguments"),
-        (Operator.neq, (VariableRef("operand"),), "expects 2 arguments"),
-        (Operator.length, (VariableRef("operand"), 0), "length requires"),
-        (Operator.get_or_else, (VariableRef("operand"),), "expects 2 arguments"),
+        (Operator.eq, (VariableRef("operand"),), "invalid arity"),
+        (Operator.neq, (VariableRef("operand"),), "invalid arity"),
+        (Operator.length, (VariableRef("operand"), 0), "length"),
+        (Operator.get_or_else, (VariableRef("operand"),), "invalid arity"),
         (Operator.if_, (1, VariableRef("operand")), "if_ requires"),
         (Operator.ite, (1, VariableRef("operand"), 0), "ite requires"),
-        (Operator.has_value, (VariableRef("operand"), 0), "expects 1 argument"),
-        (Operator.cardinality, (VariableRef("operand"), 0), "cardinality requires"),
+        (Operator.has_value, (VariableRef("operand"), 0), "invalid arity"),
+        (Operator.cardinality, (VariableRef("operand"), 0), "cardinality"),
         (Operator.set_make, (VariableRef("operand"), (1,)), "set_make requires"),
-        (Operator.set_isin, ((1,), VariableRef("operand")), "requires (scalar, set)"),
-        (Operator.set_isin, (VariableRef("operand"), 1), "requires (scalar, set)"),
-        (Operator.set_notin, ((1,), VariableRef("operand")), "requires (scalar, set)"),
-        (Operator.set_notin, (VariableRef("operand"), 1), "requires (scalar, set)"),
+        (Operator.set_isin, ((1,), VariableRef("operand")), "requires"),
+        (Operator.set_isin, (VariableRef("operand"), 1), "requires"),
+        (Operator.set_notin, ((1,), VariableRef("operand")), "requires"),
+        (Operator.set_notin, (VariableRef("operand"), 1), "requires"),
         (Operator.union, (VariableRef("operand"), 1), "union requires"),
         (Operator.inter, (1, VariableRef("operand")), "inter requires"),
         (Operator.diff, (VariableRef("operand"), 1), "diff requires"),
@@ -836,7 +1104,7 @@ def test_linear_checks_known_terms_before_propagation(with_unknown: bool) -> Non
             (1, VariableRef("operand")),
             "first argument must be a tuple",
         ),
-        (Operator.tuple_get, (VariableRef("operand"),), "expects 2 arguments"),
+        (Operator.tuple_get, (VariableRef("operand"),), "invalid arity"),
     ],
 )
 def test_value_operations_check_contracts_before_propagation(
@@ -859,11 +1127,13 @@ def test_value_operations_check_contracts_before_propagation(
     root_id = store.constraints[0].expr
     root = store.expressions[root_id]
     diagnostics = Diagnostics()
-    types = _static_types_for(store, diagnostics)
-    assert types[root] is UnknownType()
-    assert len(diagnostics.errors) == 1
-    assert message in diagnostics.errors[0].message
-    assert diagnostics.errors[0].location == ExpressionLocation(root_id, root)
+    _static_types_for(store, diagnostics)
+    assert len(diagnostics.errors) == (2 if operator == Operator.cardinality else 1)
+    assert all(message in diagnostic.message for diagnostic in diagnostics.errors)
+    assert all(
+        diagnostic.location == ExpressionLocation(root_id, root)
+        for diagnostic in diagnostics.errors
+    )
 
 
 @pytest.mark.parametrize("with_unknown", [False, True])
@@ -904,9 +1174,29 @@ def test_valid_value_operations_propagate_without_false_errors(
     types = _static_types_for(store, diagnostics)
     assert not diagnostics.has_errors
     for constraint in store.constraints:
-        assert types[store.expressions[constraint.expr]] == (
-            UnknownType() if with_unknown else frozenset()
-        )
+        expression = store.expressions[constraint.expr]
+        assert isinstance(expression, InternalOperation)
+        if expression.op in {
+            Operator.eq,
+            Operator.neq,
+            Operator.has_value,
+            Operator.set_isin,
+            Operator.set_notin,
+            Operator.subset,
+        }:
+            assert types.get_type(expression) == frozenset({ValueType.boolean})
+        elif expression.op in {Operator.length, Operator.cardinality}:
+            assert types.get_type(expression) == frozenset({ValueType.integer})
+        elif expression.op == Operator.if_:
+            assert types.get_type(expression) == frozenset(
+                {ValueType.integer, ValueType.none}
+            )
+        elif expression.op == Operator.ite:
+            assert types.get_type(expression) == frozenset({ValueType.integer})
+        else:
+            assert types.get_type(expression) == (
+                UNKNOWN if with_unknown else frozenset()
+            )
 
 
 def test_unknown_marker_is_singleton() -> None:
@@ -916,24 +1206,21 @@ def test_unknown_marker_is_singleton() -> None:
 
 
 def test_static_type_store_owns_independent_global_and_scoped_maps() -> None:
-    """Support mapping updates without mixing lambda bindings into global types."""
+    """Keep public cache operations separate across global and local bindings."""
     variable = VariableRef("value")
     integer = frozenset({ValueType.integer})
     string = frozenset({ValueType.string})
     scope = frozenset({(variable, string)})
-    types = StaticTypeStore({variable: integer})
-    types.record(variable, string, scope=scope)
-    assert types.lookup(variable) == integer
-    assert types.lookup(variable, scope=scope) == string
-    with pytest.raises(KeyError):
-        types.lookup(variable, scope=frozenset({(variable, integer)}))
-    assert list(types) == [variable]
-    assert len(types) == 1
-    del types[variable]
-    assert not types
-    assert types.lookup(variable, scope=scope) == string
-    assert not StaticTypeStore().scoped_expressions
-    assert not StaticTypeStore()
+    types = TypeCache(ConstraintStore())
+    types.set_type(variable, integer)
+    types.set_type(variable, string, dict(scope))
+    assert types.get_type(variable) == integer
+    assert types.get_type(variable, dict(scope)) == string
+    assert types.get_type(variable, {variable: integer}) == integer
+    with pytest.raises(ValueError):
+        types.set_type(variable, string)
+    assert not hasattr(types, "scoped_expressions")
+    assert not hasattr(types, "items")
 
 
 def test_tuples_and_tuple_get() -> None:
@@ -957,7 +1244,7 @@ def test_tuples_and_tuple_get() -> None:
     types = _static_types_for(store, diag)
     assert len(diag.errors) == 1
     assert diag.errors[0].variable == empty_v
-    assert types[VariableRef("tup_var")] == frozenset(
+    assert types.get_type(VariableRef("tup_var")) == frozenset(
         {
             TupleType(
                 (
@@ -967,12 +1254,14 @@ def test_tuples_and_tuple_get() -> None:
             )
         }
     )
-    assert types[VariableRef("t0")] == frozenset({ValueType.integer, ValueType.real})
-    assert types[VariableRef("t1")] == frozenset({ValueType.string})
-    assert types[VariableRef("t_dyn")] == frozenset(
+    assert types.get_type(VariableRef("t0")) == frozenset(
+        {ValueType.integer, ValueType.real}
+    )
+    assert types.get_type(VariableRef("t1")) == frozenset({ValueType.string})
+    assert types.get_type(VariableRef("t_dyn")) == frozenset(
         {ValueType.integer, ValueType.real, ValueType.string}
     )
-    assert types[VariableRef("t_empty")] == frozenset()
+    assert types.get_type(VariableRef("t_empty")) == frozenset()
 
 
 def test_operators_type_table() -> None:
@@ -1011,8 +1300,8 @@ def test_operators_type_table() -> None:
         ),
         (
             "min",
-            Operation(Operator.min, (b, i)),
-            frozenset({ValueType.boolean, ValueType.integer}),
+            Operation(Operator.min, (i, f)),
+            frozenset({ValueType.integer, ValueType.real}),
         ),
         (
             "get_or_else",
@@ -1030,13 +1319,41 @@ def test_operators_type_table() -> None:
             frozenset({ValueType.integer, ValueType.real}),
         ),
         ("minus", Operation(Operator.minus, (i,)), frozenset({ValueType.integer})),
-        ("sqrt", Operation(Operator.sqrt, (i,)), frozenset({ValueType.real})),
-        ("cos", Operation(Operator.cos, (i,)), frozenset({ValueType.real})),
-        ("sin", Operation(Operator.sin, (f,)), frozenset({ValueType.real})),
-        ("tan", Operation(Operator.tan, (i,)), frozenset({ValueType.real})),
-        ("acos", Operation(Operator.acos, (i,)), frozenset({ValueType.real})),
-        ("asin", Operation(Operator.asin, (f,)), frozenset({ValueType.real})),
-        ("atan", Operation(Operator.atan, (i,)), frozenset({ValueType.real})),
+        (
+            "sqrt",
+            Operation(Operator.sqrt, (i,)),
+            frozenset({ValueType.integer, ValueType.real}),
+        ),
+        (
+            "cos",
+            Operation(Operator.cos, (i,)),
+            frozenset({ValueType.integer, ValueType.real}),
+        ),
+        (
+            "sin",
+            Operation(Operator.sin, (f,)),
+            frozenset({ValueType.integer, ValueType.real}),
+        ),
+        (
+            "tan",
+            Operation(Operator.tan, (i,)),
+            frozenset({ValueType.integer, ValueType.real}),
+        ),
+        (
+            "acos",
+            Operation(Operator.acos, (i,)),
+            frozenset({ValueType.integer, ValueType.real}),
+        ),
+        (
+            "asin",
+            Operation(Operator.asin, (f,)),
+            frozenset({ValueType.integer, ValueType.real}),
+        ),
+        (
+            "atan",
+            Operation(Operator.atan, (i,)),
+            frozenset({ValueType.integer, ValueType.real}),
+        ),
         ("floor", Operation(Operator.floor, (f,)), frozenset({ValueType.integer})),
         ("ceil", Operation(Operator.ceil, (f,)), frozenset({ValueType.integer})),
         ("add_int", Operation(Operator.add, (i, 2)), frozenset({ValueType.integer})),
@@ -1061,7 +1378,7 @@ def test_operators_type_table() -> None:
         (
             "real_div",
             Operation(Operator.real_div, (i, 2)),
-            frozenset({ValueType.real}),
+            frozenset({ValueType.integer, ValueType.real}),
         ),
         (
             "pow_ii",
@@ -1071,7 +1388,7 @@ def test_operators_type_table() -> None:
         (
             "pow_if",
             Operation(Operator.pow, (i, f)),
-            frozenset({ValueType.real}),
+            frozenset({ValueType.integer, ValueType.real}),
         ),
         ("leq", Operation(Operator.leq, (i, f)), frozenset({ValueType.boolean})),
         ("lt", Operation(Operator.lt, (i, f)), frozenset({ValueType.boolean})),
@@ -1112,9 +1429,9 @@ def test_operators_type_table() -> None:
     diag = Diagnostics()
     types = _static_types_for(store, diag)
     assert not diag.has_errors
-    assert types[opt] == frozenset({ValueType.integer, ValueType.none})
+    assert types.get_type(opt) == frozenset({ValueType.integer, ValueType.none})
     for name, _, expected in cases:
-        assert types[VariableRef(name)] == expected, name
+        assert types.get_type(VariableRef(name)) == expected, name
 
 
 def test_set_operations_and_call_operations() -> None:
@@ -1162,26 +1479,26 @@ def test_set_operations_and_call_operations() -> None:
     diag = Diagnostics()
     types = _static_types_for(store, diag)
     assert not diag.has_errors
-    assert types[VariableRef("u1")] == frozenset({SetOf(frozenset(), True)})
-    assert types[VariableRef("u2")] == frozenset(
+    assert types.get_type(VariableRef("u1")) == frozenset({SetOf(frozenset(), True)})
+    assert types.get_type(VariableRef("u2")) == frozenset(
         {SetOf(frozenset({ValueType.integer}), False)}
     )
-    assert types[VariableRef("inter")] == frozenset(
+    assert types.get_type(VariableRef("inter")) == frozenset(
         {SetOf(frozenset({ValueType.integer, ValueType.string}), True)}
     )
-    assert types[VariableRef("diff")] == frozenset(
+    assert types.get_type(VariableRef("diff")) == frozenset(
         {SetOf(frozenset({ValueType.integer}), True)}
     )
-    assert types[VariableRef("subset")] == frozenset({ValueType.boolean})
-    assert types[VariableRef("isin")] == frozenset({ValueType.boolean})
-    assert types[VariableRef("notin")] == frozenset({ValueType.boolean})
-    assert types[VariableRef("card")] == frozenset({ValueType.integer})
-    assert types[VariableRef("lam_res")] == frozenset(
+    assert types.get_type(VariableRef("subset")) == frozenset({ValueType.boolean})
+    assert types.get_type(VariableRef("isin")) == frozenset({ValueType.boolean})
+    assert types.get_type(VariableRef("notin")) == frozenset({ValueType.boolean})
+    assert types.get_type(VariableRef("card")) == frozenset({ValueType.integer})
+    assert types.get_type(VariableRef("lam_res")) == frozenset(
         {ValueType.integer, ValueType.real}
     )
-    assert types[VariableRef("py_res")] == UnknownType()
-    assert types[VariableRef("fold_res")] == UnknownType()
-    assert types[VariableRef("absorb")] == UnknownType()
+    assert types.get_type(VariableRef("py_res")) == UnknownType()
+    assert types.get_type(VariableRef("fold_res")) == UnknownType()
+    assert types.get_type(VariableRef("absorb")) == UnknownType()
 
 
 def test_lambda_empty_and_unknown_args() -> None:
@@ -1211,14 +1528,16 @@ def test_lambda_empty_and_unknown_args() -> None:
     store.set_contain(s_unk, unk_v)
 
     types = _static_types_for(store, Diagnostics())
-    assert types[VariableRef("res_empty")] == frozenset()
-    assert types[VariableRef("res_unk")] == UnknownType()
-    assert types[VariableRef("op_empty")] == frozenset()
-    assert types[VariableRef("lin_empty")] == frozenset()
-    assert types[VariableRef("lin_unk")] == UnknownType()
-    assert types[VariableRef("set_unk")] == UnknownType()
-    assert types[VariableRef("tup_unk")] == UnknownType()
-    assert types[s_unk] == UnknownType()
+    assert types.get_type(VariableRef("res_empty")) == frozenset()
+    assert types.get_type(VariableRef("res_unk")) == UnknownType()
+    assert types.get_type(VariableRef("op_empty")) == frozenset()
+    assert types.get_type(VariableRef("lin_empty")) == frozenset({ValueType.integer})
+    assert types.get_type(VariableRef("lin_unk")) == frozenset({ValueType.integer})
+    assert types.get_type(VariableRef("set_unk")) == UnknownType()
+    assert types.get_type(VariableRef("tup_unk")) == frozenset(
+        {TupleType((UNKNOWN, frozenset({ValueType.integer})))}
+    )
+    assert types.get_type(s_unk) == UnknownType()
 
 
 def test_diagnostics_for_undefined_cycles_and_contract_violations() -> None:
@@ -1287,9 +1606,9 @@ def test_diagnostics_for_undefined_cycles_and_contract_violations() -> None:
     assert diag.has_errors
     assert len(diag.errors) >= 35
     assert all(d.severity == DiagnosticSeverity.error for d in diag.errors)
-    assert types[ok] == frozenset({ValueType.integer})
-    assert types[a] == UnknownType()
-    assert types[b] == UnknownType()
+    assert types.get_type(ok) == frozenset({ValueType.integer})
+    assert types.get_type(a) == UnknownType()
+    assert types.get_type(b) == UnknownType()
 
 
 @pytest.mark.parametrize(

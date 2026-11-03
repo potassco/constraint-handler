@@ -27,7 +27,7 @@ from .python_input import (
     Value,
     VariableRef,
 )
-from .static_types import StaticTypeStore
+from .type_checking import TypeCache, TypeChecker
 
 __all__ = [
     "DEFAULT_PRIORITY",
@@ -54,8 +54,9 @@ __all__ = [
     "Set",
     "SolveOptions",
     "Solver",
-    "StaticTypeStore",
     "Tuple",
+    "TypeCache",
+    "TypeChecker",
     "Value",
     "VariableRef",
     "asp_facts",

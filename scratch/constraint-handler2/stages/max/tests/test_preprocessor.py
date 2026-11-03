@@ -29,7 +29,7 @@ from constraint_handler.domains import Domain
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueType
 from constraint_handler.python_input import Expr
-from constraint_handler.static_types import SetOf
+from constraint_handler.type_checking import SetOf
 
 
 def test_minimize_solver_reports_optimal_models_and_cost() -> None:
@@ -74,8 +74,13 @@ def test_minimize_matches_exhaustive_optional_reference(
         Operation(
             Operator.add,
             (
-                Operation(Operator.mult, (coefficients[0], left)),
-                Operation(Operator.mult, (coefficients[1], right)),
+                Operation(
+                    Operator.add,
+                    (
+                        Operation(Operator.mult, (coefficients[0], left)),
+                        Operation(Operator.mult, (coefficients[1], right)),
+                    ),
+                ),
                 offset,
             ),
         ),
@@ -195,7 +200,7 @@ def test_minimize_undefined_sum_excludes_remaining_terms_and_base() -> None:
     store.choose(optional, 10)
     store.define(defined, -4)
     store.minimize(
-        Operation(Operator.add, (optional, defined, 3)),
+        Operation(Operator.add, (Operation(Operator.add, (optional, defined)), 3)),
         Operation(Operator.eq, (defined, -4)),
     )
     processor = Preprocessor(PreprocessOptions())
@@ -281,7 +286,7 @@ def test_continue_on_errors_preserves_native_nullable_subset(
     prepared, diagnostics = processor.preprocess()
     assert diagnostics.has_errors
     assert any(
-        item.message == "subset requires 2 set arguments" for item in diagnostics.items
+        item.message == "subset requires set arguments" for item in diagnostics.items
     )
     if not continue_on_errors:
         assert not prepared.engines
@@ -638,7 +643,7 @@ def test_preprocess_nullary_boolean_operators(op: Operator, value: bool) -> None
     preprocessor.add(store)
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert prepared.static_types[result] == frozenset({ValueType.boolean})
+    assert prepared.static_types.get_type(result) == frozenset({ValueType.boolean})
     assert prepared.domains[result] == Domain(bools=frozenset({value}))
 
 
@@ -656,8 +661,8 @@ def test_preprocess_integer_division(left: float, right: float, quotient: int) -
     preprocessor.add(store)
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
-    assert prepared.static_types[divided] == frozenset({ValueType.integer})
-    assert prepared.static_types[result] == frozenset({ValueType.integer})
+    assert prepared.static_types.get_type(divided) == frozenset({ValueType.integer})
+    assert prepared.static_types.get_type(result) == frozenset({ValueType.integer})
     assert prepared.domains[divided] == Domain(ints=frozenset({quotient}))
     assert prepared.domains[result] == Domain(ints=frozenset({2 * quotient + 1}))
 
@@ -721,9 +726,9 @@ def test_preprocessor_workflow() -> None:
     assert not diagnostics.has_errors
     assert not diagnostics.warnings
 
-    assert prepared.static_types[x] == frozenset({ValueType.integer})
-    assert prepared.static_types[y] == frozenset({ValueType.integer})
-    assert prepared.static_types[s] == frozenset(
+    assert prepared.static_types.get_type(x) == frozenset({ValueType.integer})
+    assert prepared.static_types.get_type(y) == frozenset({ValueType.integer})
+    assert prepared.static_types.get_type(s) == frozenset(
         {SetOf(frozenset({ValueType.integer}), False)}
     )
 
@@ -773,13 +778,13 @@ def test_preprocess_collection_length(
     prepared, diagnostics = preprocessor.preprocess()
     assert not diagnostics.items
     assert prepared.domains[length] == Domain(ints=lengths)
-    assert prepared.static_types[length] == frozenset({ValueType.integer})
+    assert prepared.static_types.get_type(length) == frozenset({ValueType.integer})
     assert prepared.domains[result] == Domain(
         ints=frozenset(size + value for size in lengths for value in range(20))
     )
-    assert set(prepared.store.expressions.values()) <= (
-        prepared.domains.keys() & prepared.static_types.keys()
-    )
+    assert set(prepared.store.expressions.values()) <= prepared.domains.keys()
+    for expression in prepared.store.expressions.values():
+        prepared.static_types.get_type(expression)
 
 
 @pytest.mark.parametrize("value", (True, 1, 1.5, None))

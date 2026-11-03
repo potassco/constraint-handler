@@ -16,7 +16,7 @@ from .internal_input import (
     VariableRef,
 )
 from .python_input import Operator
-from .static_types import StaticTypeStore, Type, TypeScope, UnknownType
+from .type_checking import Type, TypeCache, TypeScope, UnknownType
 
 _NUMERIC = frozenset({ValueType.integer})
 _RELATIONS = frozenset(
@@ -30,21 +30,11 @@ class _Normalizer:
     """Rewrite integer expressions using the previously computed variable types."""
 
     def __init__(
-        self, static_types: StaticTypeStore, *, preserve_undefined: bool = False
+        self, static_types: TypeCache, *, preserve_undefined: bool = False
     ) -> None:
         """Retain type information used to guard arithmetic rewrites."""
         self._types = static_types
         self._preserve_undefined = preserve_undefined
-        self._integer_expressions: set[tuple[Expr, TypeScope]] = {
-            (expr, frozenset())
-            for expr, known in static_types.items()
-            if not isinstance(known, UnknownType) and bool(known) and known <= _NUMERIC
-        }
-        self._integer_expressions.update(
-            (expr, scope)
-            for (expr, scope), known in static_types.scoped_expressions.items()
-            if not isinstance(known, UnknownType) and bool(known) and known <= _NUMERIC
-        )
 
     def is_numeric(self, expr: OperationArg, scopes: frozenset[TypeScope]) -> bool:
         """Prove integer inputs conservatively, without assuming callable results."""
@@ -53,7 +43,7 @@ class _Normalizer:
                 return kind in _NUMERIC
             case VariableRef():
                 for scope in scopes:
-                    known = dict(scope).get(expr, self._types.get(expr, UnknownType()))
+                    known = self._types.get_type(expr, dict(scope))
                     if (
                         isinstance(known, UnknownType)
                         or not known
@@ -77,16 +67,22 @@ class _Normalizer:
             case Operation(op, args) if op in _ARITHMETIC:
                 valid_arity = (
                     len(args) == 2
-                    if op == Operator.sub
+                    if op in {Operator.sub, Operator.add, Operator.mult}
                     else len(args) == 1
                     if op == Operator.minus
                     else bool(args)
                 )
                 return valid_arity and all(self.is_numeric(arg, scopes) for arg in args)
             case Operation():
-                return bool(scopes) and all(
-                    (expr, scope) in self._integer_expressions for scope in scopes
-                )
+                for scope in scopes:
+                    known = self._types.get_type(expr, dict(scope))
+                    if (
+                        isinstance(known, UnknownType)
+                        or not known
+                        or not known <= _NUMERIC
+                    ):
+                        return False
+                return bool(scopes)
             case _:
                 return False
 
@@ -103,12 +99,8 @@ class _Normalizer:
             for arg in arguments:
                 if isinstance(arg, (Lambda, Python)):
                     known = UnknownType()
-                elif scope:
-                    known = self._types.scoped_expressions.get(
-                        (arg, scope), UnknownType()
-                    )
                 else:
-                    known = self._types.get(arg, UnknownType())
+                    known = self._types.get_type(arg, dict(scope))
                 if isinstance(known, UnknownType) and self.is_numeric(
                     arg, frozenset({scope})
                 ):
@@ -216,9 +208,6 @@ class _Normalizer:
                             for arg in args
                         ),
                     )
-                for scope in scopes:
-                    if (expr, scope) in self._integer_expressions:
-                        self._integer_expressions.add((rewritten, scope))
                 if (
                     op in _RELATIONS
                     and len(args) == 2
@@ -285,7 +274,7 @@ class _Normalizer:
                 return rewritten
 
 
-def normalize(store: ConstraintStore, static_types: StaticTypeStore) -> None:
+def normalize(store: ConstraintStore, static_types: TypeCache) -> None:
     """Rewrite store expressions in place, preserving IDs and declaration metadata."""
     normalizer = _Normalizer(static_types)
     objective_normalizer = _Normalizer(static_types, preserve_undefined=True)

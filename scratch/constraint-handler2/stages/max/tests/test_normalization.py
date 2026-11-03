@@ -8,8 +8,16 @@ from constraint_handler.internal_input import Constraint, ValueDef, ValueType
 from constraint_handler.internal_input import Lambda as InternalLambda
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.normalization import normalize
-from constraint_handler.static_types import StaticTypeStore, compute_static_types
+from constraint_handler.type_checking import Type, TypeCache
 from constraint_handler.util import compute_evaluation_order
+
+
+def _known_types(store: ConstraintStore, known: dict[VariableRef, Type]) -> TypeCache:
+    """Seed trusted variable types for isolated normalization tests."""
+    types = TypeCache(store)
+    for expression, kind in known.items():
+        types.set_type(expression, kind)
+    return types
 
 
 @pytest.mark.parametrize(
@@ -26,10 +34,7 @@ def test_normalize_objectives_use_fresh_linear_roots(
     original = store.optimizations[0]
     internal_constraint = Constraint(original.expr, True, "shared")
     store.constraints.append(internal_constraint)
-    diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = TypeCache(store)
     normalize(store, types)
     objective = store.optimizations[0]
     assert objective.expr != original.expr
@@ -53,11 +58,14 @@ def test_normalize_linear_expression_preserves_store_ids() -> None:
     y = VariableRef("y")
     store.define(
         y,
-        Operation(Operator.sub, (Operation(Operator.add, (x, x, 3)), x)),
+        Operation(
+            Operator.sub,
+            (Operation(Operator.add, (Operation(Operator.add, (x, x)), 3)), x),
+        ),
         label="definition",
     )
     definition = store.variables[y].definitions[0]
-    normalize(store, StaticTypeStore(expressions={x: frozenset({ValueType.integer})}))
+    normalize(store, _known_types(store, {x: frozenset({ValueType.integer})}))
     assert store.variables[y].definitions[0] == definition
     assert store.expressions[definition.value] == InternalOperation(
         Operator.linear_integer,
@@ -76,8 +84,8 @@ def test_normalize_relations_and_repeatability(relation: Operator) -> None:
     store.choose_from_iterator(x, (1, 2))
     store.ensure(Operation(relation, (Operation(Operator.mult, (2, x)), 3)), "check")
     diagnostics = Diagnostics()
-    order = compute_evaluation_order(store, diagnostics)
-    types = compute_static_types(store, order, diagnostics)
+    compute_evaluation_order(store, diagnostics)
+    types = TypeCache(store)
     normalize(store, types)
     expr_id = store.constraints[0].expr
     assert store.expressions[expr_id] == InternalOperation(
@@ -101,7 +109,7 @@ def test_nonnumeric_equality_is_unchanged(value: str | bool | None) -> None:
     store = ConstraintStore()
     store.ensure(Operation(Operator.eq, (value, value)))
     before = dict(store.expressions)
-    normalize(store, StaticTypeStore())
+    normalize(store, TypeCache(store))
     assert store.expressions == before
 
 
@@ -123,11 +131,12 @@ def test_products_and_lambda_shadowing_are_not_distributed() -> None:
             ),
         )
     )
-    types = StaticTypeStore(
-        expressions={
+    types = _known_types(
+        store,
+        {
             x: frozenset({ValueType.integer}),
             y: frozenset({ValueType.integer}),
-        }
+        },
     )
     normalize(store, types)
     result = store.expressions[store.constraints[0].expr]
@@ -153,7 +162,7 @@ def test_runtime_tuple_normalization_preserves_structural_pairs() -> None:
     variable = VariableRef("variable")
     store.define(variable, (frozenset(), 3))
     store.ensure(Operation(Operator.linear_integer, ((2, variable), 0)))
-    normalize(store, StaticTypeStore())
+    normalize(store, TypeCache(store))
     result = store.expressions[store.variables[variable].definitions[0].value]
     assert result == InternalOperation(
         Operator.make_tuple, (frozenset(), ValueDef(ValueType.integer, 3))
@@ -178,7 +187,7 @@ def test_real_coefficients_are_not_normalized() -> None:
         )
     )
     before = dict(store.expressions)
-    normalize(store, StaticTypeStore(expressions={x: frozenset({ValueType.integer})}))
+    normalize(store, _known_types(store, {x: frozenset({ValueType.integer})}))
     assert store.expressions == before
 
 
@@ -198,8 +207,8 @@ def test_real_arithmetic_is_not_normalized(
         )
     )
     diagnostics = Diagnostics()
-    order = compute_evaluation_order(store, diagnostics)
-    types = compute_static_types(store, order, diagnostics)
+    compute_evaluation_order(store, diagnostics)
+    types = TypeCache(store)
     before = dict(store.expressions)
     normalize(store, types)
     assert store.expressions == before
@@ -211,7 +220,7 @@ def test_zero_product_prunes_its_term() -> None:
     store = ConstraintStore()
     x = VariableRef("x")
     store.ensure(Operation(Operator.mult, (0, x)))
-    normalize(store, StaticTypeStore(expressions={x: frozenset({ValueType.integer})}))
+    normalize(store, _known_types(store, {x: frozenset({ValueType.integer})}))
     assert store.expressions[store.constraints[0].expr] == InternalOperation(
         Operator.linear_integer, (ValueDef(ValueType.integer, 0),)
     )
@@ -228,7 +237,7 @@ def test_lambda_relation_uses_free_integer_variable() -> None:
             (Lambda((parameter,), Operation(Operator.eq, (x, 1))), "text"),
         )
     )
-    normalize(store, StaticTypeStore(expressions={x: frozenset({ValueType.integer})}))
+    normalize(store, _known_types(store, {x: frozenset({ValueType.integer})}))
     result = store.expressions[store.constraints[0].expr]
     assert isinstance(result, InternalOperation)
     callback = result.args[0]
@@ -249,7 +258,7 @@ def test_nonconstant_linear_coefficient_is_not_rewritten() -> None:
     x = VariableRef("x")
     store.ensure(Operation(Operator.linear_integer, ((x, x), 0)))
     before = dict(store.expressions)
-    normalize(store, StaticTypeStore(expressions={x: frozenset({ValueType.integer})}))
+    normalize(store, _known_types(store, {x: frozenset({ValueType.integer})}))
     assert store.expressions == before
 
 
@@ -266,7 +275,7 @@ def test_nested_scalar_products_combine_coefficients(expression: Operation) -> N
     x = VariableRef("x")
     store.define(VariableRef("result"), expression)
     expr_id = store.variables[VariableRef("result")].definitions[0].value
-    normalize(store, StaticTypeStore(expressions={x: frozenset({ValueType.integer})}))
+    normalize(store, _known_types(store, {x: frozenset({ValueType.integer})}))
     assert store.expressions[expr_id] == InternalOperation(
         Operator.linear_integer,
         ((ValueDef(ValueType.integer, 6), x), ValueDef(ValueType.integer, 0)),
@@ -277,7 +286,7 @@ def test_nested_scalar_products_combine_coefficients(expression: Operation) -> N
     "arguments",
     [
         (0, Operation(Operator.mult, (VariableRef("x"), VariableRef("y")))),
-        (0, VariableRef("x"), VariableRef("y")),
+        (Operation(Operator.mult, (0, VariableRef("x"))), VariableRef("y")),
         (0, Operation(Operator.add, (VariableRef("x"), 1))),
     ],
 )
@@ -290,10 +299,9 @@ def test_zero_product_prunes_compound_terms(
     expr_id = store.variables[VariableRef("result")].definitions[0].value
     normalize(
         store,
-        StaticTypeStore(
-            expressions={
-                VariableRef(name): frozenset({ValueType.integer}) for name in ("x", "y")
-            }
+        _known_types(
+            store,
+            {VariableRef(name): frozenset({ValueType.integer}) for name in ("x", "y")},
         ),
     )
     assert store.expressions[expr_id] == InternalOperation(
@@ -319,9 +327,7 @@ def test_relations_use_known_integer_expression_types(
     operands = (argument, 2) if operator == Operator.int_div else (argument,)
     store.ensure(Operation(relation, (Operation(operator, operands), y)))
     diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = TypeCache(store)
     normalize(store, types)
     result = store.expressions[store.constraints[0].expr]
     assert isinstance(result, InternalOperation)
@@ -349,9 +355,7 @@ def test_shared_lambda_is_normalized_per_call() -> None:
         ),
     )
     diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = TypeCache(store)
     expr_id = store.variables[VariableRef("result")].definitions[0].value
     before = store.expressions[expr_id]
     assert isinstance(before, tuple)
@@ -393,9 +397,7 @@ def test_lambda_relations_keep_scoped_integer_expression_proofs(
         )
     )
     diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = TypeCache(store)
     normalize(store, types)
     call = store.expressions[store.constraints[0].expr]
     assert isinstance(call, InternalOperation)
@@ -430,7 +432,13 @@ def test_nested_lambda_bindings_preserve_free_and_shadowed_types() -> None:
                             (
                                 Lambda(
                                     (inner,),
-                                    Operation(Operator.add, (outer, outer, inner)),
+                                    Operation(
+                                        Operator.add,
+                                        (
+                                            Operation(Operator.add, (outer, outer)),
+                                            inner,
+                                        ),
+                                    ),
                                 ),
                                 Operation(Operator.abs, (outer,)),
                             ),
@@ -449,9 +457,7 @@ def test_nested_lambda_bindings_preserve_free_and_shadowed_types() -> None:
         ),
     )
     diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = TypeCache(store)
     expr_id = store.variables[VariableRef("result")].definitions[0].value
     normalize(store, types)
     call = store.expressions[expr_id]
@@ -497,7 +503,7 @@ def test_lambda_unknown_binding_does_not_use_global_parameter_type() -> None:
     before = dict(store.expressions)
     normalize(
         store,
-        StaticTypeStore(expressions={parameter: frozenset({ValueType.integer})}),
+        _known_types(store, {parameter: frozenset({ValueType.integer})}),
     )
     assert store.expressions == before
 
@@ -511,7 +517,7 @@ def test_scalar_product_does_not_distribute_over_addition() -> None:
         Operation(Operator.mult, (2, Operation(Operator.add, (x, 1)))),
     )
     expr_id = store.variables[VariableRef("result")].definitions[0].value
-    normalize(store, StaticTypeStore(expressions={x: frozenset({ValueType.integer})}))
+    normalize(store, _known_types(store, {x: frozenset({ValueType.integer})}))
     assert store.expressions[expr_id] == InternalOperation(
         Operator.mult,
         (
@@ -538,9 +544,7 @@ def test_integer_expression_proofs_do_not_leak_into_lambda_scope() -> None:
     before = store.expressions[expr_id]
     assert isinstance(before, tuple)
     diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = TypeCache(store)
     normalize(store, types)
     result = store.expressions[expr_id]
     assert isinstance(result, InternalOperation)
@@ -575,9 +579,7 @@ def test_lambda_normalization_uses_bound_argument_types(
         )
     )
     diagnostics = Diagnostics()
-    types = compute_static_types(
-        store, compute_evaluation_order(store, diagnostics), diagnostics
-    )
+    types = TypeCache(store)
     expr_id = store.constraints[0].expr
     before = store.expressions[expr_id]
     normalize(store, types)
