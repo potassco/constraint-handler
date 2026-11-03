@@ -37,6 +37,7 @@ def load_variables(
     """
     get_variable_interface(init, manager)
     get_variables(init, manager, errors, add_watch)
+    get_bool_evaluate(init, manager, add_watch)
     get_set_declarations(init, manager, add_watch)
     get_multimap_declarations(init, manager, add_watch)
     get_engine_variables(init, manager, errors, add_watch)
@@ -303,11 +304,29 @@ def get_evaluate(
     """
 
     evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_evaluate)
-    bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_bool_evaluate)
-    bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, internal._bool_evaluated)
     for (ref, expr, _), literal in evaluate_atoms.items():
         var = EvaluateVariable(ref, expr, literal)
         evaluate_variables.append(var)
+
+
+def get_bool_evaluate(
+    ctl: clingo.PropagateInit,
+    manager: VariableManager,
+    add_watch: Callable[[int], None],
+) -> None:
+    """
+    Load `evaluate` atoms into `EvaluateVariable` instances.
+    Also load "bool_evaluate" atoms and create the corresponding variables.
+
+    Args:
+        ctl: Clingo PropagateInit object.
+        manager: Manager receiving loaded variables.
+        evaluate_variables: Collection receiving explicit evaluations.
+        add_watch: Register a watch while respecting check-only mode.
+    """
+
+    bool_evaluate_atoms = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_bool_evaluate)
+    bool_evaluated_atoms = myClorm.findInPropagateInit(ctl, internal._bool_evaluated)
 
     true_val = expression.Val(type_.BaseType.bool, True)  # ty:ignore[unresolved-attribute]
     false_val = expression.Val(type_.BaseType.bool, False)  # ty:ignore[unresolved-attribute]
