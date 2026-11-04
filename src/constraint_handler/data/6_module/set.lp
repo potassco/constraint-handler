@@ -1,5 +1,6 @@
 %%%%%%%%%%%%%%%%% set_baseDomain
-_set_baseDomain(X,E,C,LBL,loc(set_baseDomain(LBL,X,E,C))) :- _phase_active(solve), ch_core(set_baseDomain(X,E,C),LBL).
+_bool_join(COND1,COND2) :- _phase_active(solve), ch_core(set_baseDomain(X,E,COND1),_), ch_core(variable_declare(X,set,COND2),_).
+_set_baseDomain(X,E,C,LBL,loc(set_baseDomain(LBL,X,E,C))) :- _phase_active(solve), ch_core(set_baseDomain(X,E,COND1),LBL), ch_core(variable_declare(X,set,COND2),_), _bool_joined(COND1,COND2,C).
 
 _bool_evaluate(C,LBL) :- _set_baseDomain(X,E,C,LBL,Choice).
 _bool_evaluate(operation(set_isin,(E,(variable(X),()))),LBL) :- _set_baseDomain(X,E,C,LBL,Choice).

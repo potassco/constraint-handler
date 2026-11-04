@@ -36,7 +36,7 @@ _default_connect(X,Y) :- _default_dependVariable(E,X), _default_ensureVariable(E
 _default_connect(X,X) :- ch_core(variable_declare(X,open,C),LBL), _default_mode(depends), _se_value(C,val(bool,true)).
 
 -_default_apply(X,D,C,P) :-
-  ch_core(variable_default(X,D,C,P),LBL),
+  ch_solve(variable_default(X,D,C,P),LBL),
   ch_core(variable_assign(Y,E),LBL2),
   _default_connect(X,Y),
   _default_mode(depends).
@@ -45,7 +45,7 @@ _default_connect(X,X) :- ch_core(variable_declare(X,open,C),LBL), _default_mode(
 %%%%%% guessing
 _se_value(variable(X),V) :- ch_core(variable_assign(X,E),LBL), _se_value(E,V).
 
-_se_value(variable(X),V) :- ch_core(variable_default(X,E,C,P),LBL), _se_value(E,V), _default_apply(X,E,C,P).
+_se_value(variable(X),V) :- ch_solve(variable_default(X,E,C,P),LBL), _se_value(E,V), _default_apply(X,E,C,P).
 
 { _se_value(variable(X),V) : ch_solve(variable_choice(X,E),LBL1), _se_value(E,V) } :-
   ch_core(variable_declare(X,open,C),LBL), _se_value(C,val(bool,true)).

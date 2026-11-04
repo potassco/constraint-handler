@@ -12,7 +12,6 @@ _variable_has_active_declaration(Var) :-
 _set_variable_domain(Var, Expr) :-
 	_passed(compile2, _, variable_domain(Var, Expr, Cond)),
 	_se_value(Cond, val(bool, true)),
-	_variable_has_active_declaration(Var),
 	_se_is_set(variable(Var)).
 
 _set_value_choice_blocked(variable(Var)) :-
@@ -33,7 +32,7 @@ _variable_has_active_definition(Var) :-
 	_se_value(Expr, Value).
 
 % var has to take one of the values of the domain
-var_has_domain(Var) :- _passed(compile2, _, variable_domain(Var, Expr, Cond)), _se_value(Cond, val(bool, true)), _variable_has_active_declaration(Var).
+var_has_domain(Var) :- _passed(compile2, _, variable_domain(Var, Expr, Cond)), _se_value(Cond, val(bool, true)).
 :- var_has_domain(Var),
    not 1 #sum { 1, Value : _se_value(variable(Var), Value),
 					  _passed(compile2, _, variable_domain(Var, Expr, Cond)), _se_value(Cond, val(bool, true)),
@@ -57,7 +56,7 @@ _se_value(variable(Var), bad) :-
 	not _expression_is_value(Expr),
 	not _se_is_set(Expr),
 	#false : Expr = variable(Var), _passed(compile2, _, variable_declare(Var, _, _)), not _variable_has_active_declaration(Var);
-	#false : Expr = variable(Var), _passed(compile2, _, variable_define(Var, _, _)), not _variable_has_active_definition(Var);
+	#false : Expr = variable(Var), _passed(compile2, _, variable_define(Var, _, _)), not _variable_has_active_definition(Var), not var_has_domain(Var);
 	#false : Expr = variable(Var), _passed(compile2, _, variable_declare(Var, fromFacts, Cond)), _se_value(Cond, val(bool, true)), not var_has_domain(Var), not _variable_has_active_definition(Var).
 
 _set_choice_value(Expr, set) :-
@@ -116,7 +115,6 @@ _se_value(variable(Var), bad) :-
  _set_contains(variable(Var), Val):-
 	 _passed(compile2, _, variable_define(Var, Expr, Cond)),
 	 _se_value(Cond, val(bool, true)),
-	 _variable_has_active_declaration(Var),
     _se_is_set(variable(Var)),
 	_set_contains(Expr, Val),
 	Val != bad.
@@ -130,14 +128,12 @@ _set_contains(variable(Var), Val) :-
 _set_contains(variable(Var), Val) :-
 	_passed(compile2, _, set_assign(Var, Expr, Cond)),
 	_se_value(Cond, val(bool, true)),
-	_variable_has_active_declaration(Var),
 	_set_contains(Expr, Val),
 	Val != bad.
 
 _set_contains(variable(Var), Val) :-
 	_passed(compile2, _, set_assign(Var, Expr, Cond)),
 	_se_value(Cond, val(bool, true)),
-	_variable_has_active_declaration(Var),
 	not _se_is_set(Expr),
 	_se_value(Expr, Val),
 	Val != bad.

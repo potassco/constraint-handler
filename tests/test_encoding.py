@@ -44,6 +44,7 @@ core_tests = [
     "core/check",
     "core/conditional_assign",
     "core/conditional_declare",
+    "core/conditional_declare_definition",
     "core/conditional_declare_domain",
     "core/conditional_declare_empty_domain",
     "core/conditional_declare_inactive_domain",
@@ -517,7 +518,6 @@ other_tests = [
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "core/conditional_declare",
-    "core/conditional_declare_empty_domain",
     "datatype/bool/conj_disj/mixed",
     "datatype/bool/conj_disj/none",
     "datatype/float/mult/recovery",
@@ -681,6 +681,7 @@ propagator_xfail: set[str] = {
 
 propagator_true_skip: set[str] = propagator_skip | {
     "core/conditional_declare",
+    "core/conditional_declare_definition",
     "core/conditional_declare_domain",
     "core/conditional_declare_empty_domain",
     "core/conditional_declare_set",
@@ -763,6 +764,7 @@ choice_statistics_skip: set[str] = {
     "core/boolean_shortcut_optional_presence",
     "core/check",
     "core/conditional_declare",
+    "core/conditional_declare_definition",
     "core/conditional_declare_domain",
     "core/conditional_declare_empty_domain",
     "core/conditional_declare_set",
