@@ -398,6 +398,24 @@ class VariableManager:
             raise KeyError(f"Variable with name {name} does not exist. Can not delete")
         del self.variables[name]
 
+    def delete_variable_type(self, name: clingo.Symbol, variable: VariableType) -> None:
+        """Delete one registered variable object.
+
+        Remove the symbol entry when it no longer contains any variable types.
+        """
+        if name not in self.variables:
+            raise KeyError(f"Variable with name {name} does not exist. Can not delete")
+
+        for var_type, candidate in self.variables[name].items():
+            if candidate is variable:
+                break
+        else:
+            raise KeyError(f"Variable {variable} is not registered under name {name}.")
+
+        del self.variables[name][var_type]
+        if not self.variables[name]:
+            del self.variables[name]
+
     def get_dependencies(self, name: clingo.Symbol) -> set[clingo.Symbol]:
         """
         Get the dependencies of a variable by name.

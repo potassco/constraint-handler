@@ -417,9 +417,9 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             ng = ng.union(extra_literals)
         prop_stop = ctl.add_nogood(ng, lock=True)
         if conflict and prop_stop:
-            assert False, (
-                f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
-            )
+            assert (
+                False
+            ), f"Added violated constraint but solver did not detect it for variable {var} with reasons {ng} and truth values {[ctl.assignment.value(lit) for lit in ng]}"
 
         return not prop_stop
 
@@ -430,9 +430,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         to_evaluate_expressions: set[VariableValue],
     ) -> bool:
         """
-        Evaluate a set of variables under the current solver assignment.
+        Evaluate scheduled variables and expressions in dependency-rank order.
 
-        If a variable changes, its parents are scheduled for evaluation.
+        As values become available, dependent expressions and their owning
+        variables are scheduled for evaluation.
 
         Args:
             ctl: Clingo PropagateControl object.
@@ -458,7 +459,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         max_rank = max(max(eval_by_rank.keys(), default=0), max(eval_by_rank_expr.keys(), default=0))
 
         while rank <= max_rank:
-            # print("Evaluating rank: ", rank)
+            print("Evaluating rank: ", rank)
 
             max_rank = self.evaluate_expressions_at_rank(
                 ctl,
@@ -507,12 +508,15 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         while eval_by_rank_expr[rank]:
             expr = eval_by_rank_expr[rank].pop()
+            print("eval: ", expr)
             if not is_evaluation_possible(expr):
                 continue
 
             expr_result = expr.evaluate(self.evaluations, ctl, self.environment)
             if not expr_result:
                 continue
+
+            print("Expr evaluate to ", expr)
 
             for var in self.variable_manager.get_expr_owners(expr):
                 var.expressions_evaluated_counter += 1
@@ -551,6 +555,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         while eval_by_rank[rank]:
             var = eval_by_rank[rank].pop()
+            print("Eval: ", var)
             if not is_evaluation_possible(var):
                 continue
 
@@ -559,7 +564,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 return True, max_rank
             if not result:
                 continue
-
+            print("Variable evaluated to ", result)
             self.evaluations.add_var_to_evaluations(var)
             for expr in self.variable_manager.get_var_exprs(var.var):
                 expr.vars_counter += 1
@@ -705,11 +710,14 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def set_parents(self) -> None:
         """
-        Populate parent relationships between variables.
+        Remove engine variables that are not referenced by other managed variables.
 
-        Parents are variables that depend on another variable's value; if a child
-        changes, parents are scheduled for re-evaluation.
+        Parent links are built only to identify unused engine variables, so no
+        links need to be built when the manager contains none.
         """
+        if not any(var.name == OTHER_ENGINE_VAR_NAME for var in self.variable_manager.get_variables()):
+            return
+
         useless_other_engine_vars: list[VariableType] = []
 
         for var in self.variable_manager.get_variables():
@@ -730,7 +738,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for var in useless_other_engine_vars:
             # Variable is an compile/ground engine variable with no parents, removing it since it is useless for us
-            self.variable_manager.delete_variable(var.var)
+            self.variable_manager.delete_variable_type(var.var, var)
 
             # Now we delete this variable from the literal2var mapping
             for lit in var.literals:
