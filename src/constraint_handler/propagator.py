@@ -1,8 +1,6 @@
 from collections.abc import Iterable, Sequence
-from itertools import product
 
 import clingo
-from clingo import Symbol
 
 import constraint_handler.schemas.propagator_atom as prop_atom
 from constraint_handler import evaluator, myClorm, variable_loader
@@ -59,9 +57,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     def __init__(self) -> None:
         """
         Initialize the propagator.
-
-        Args:
-            check_only: If True, do not perform propagation (only allow checks).
         """
         self.variable_manager: VariableManager = VariableManager()
         self.evaluations: Evaluations = Evaluations()
@@ -324,7 +319,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def check_shared_values(self, ctl: clingo.PropagateControl) -> None:
         """
-        Evaluate `evaluate` atoms against the current assignments.
+        Evaluate shared values against the current assignments.
 
         Args:
             ctl: Clingo PropagateControl object.
@@ -459,8 +454,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         max_rank = max(max(eval_by_rank.keys(), default=0), max(eval_by_rank_expr.keys(), default=0))
 
         while rank <= max_rank:
-            print("Evaluating rank: ", rank)
-
             max_rank = self.evaluate_expressions_at_rank(
                 ctl,
                 rank,
@@ -508,15 +501,12 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         while eval_by_rank_expr[rank]:
             expr = eval_by_rank_expr[rank].pop()
-            print("eval: ", expr)
             if not is_evaluation_possible(expr):
                 continue
 
             expr_result = expr.evaluate(self.evaluations, ctl, self.environment)
             if not expr_result:
                 continue
-
-            print("Expr evaluate to ", expr)
 
             for var in self.variable_manager.get_expr_owners(expr):
                 var.expressions_evaluated_counter += 1
@@ -555,7 +545,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         while eval_by_rank[rank]:
             var = eval_by_rank[rank].pop()
-            print("Eval: ", var)
             if not is_evaluation_possible(var):
                 continue
 
@@ -564,7 +553,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
                 return True, max_rank
             if not result:
                 continue
-            print("Variable evaluated to ", result)
+
             self.evaluations.add_var_to_evaluations(var)
             for expr in self.variable_manager.get_var_exprs(var.var):
                 expr.vars_counter += 1
@@ -582,7 +571,6 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo PropagateControl object.
             var: Variable to evaluate.
-            expr_lits: Set of expression literals relevant for the evaluation. Defaults to None.
 
         Returns:
             bool | None:
@@ -788,8 +776,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
     def add_shared_values(self, model: clingo.Model) -> None:
         """
-        Add optimization value atoms for optimization sums to the model.
-        This uses the post_processor.py "_extend_optimize_values" function.
+        Add evaluated shared-value atoms to the model.
 
         Args:
             model: Clingo model to extend.
