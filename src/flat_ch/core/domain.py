@@ -42,6 +42,7 @@ class ProgramInputKind(IntEnum):
     OPTIMIZE_MAXIMIZE_SUM = auto()
     OPTIMIZE_PRECISION = auto()
     EXECUTION_DECLARE = auto()
+    WARNING = auto()
 
 
 class DeclarationKind(str, Enum):
@@ -306,6 +307,14 @@ class ExecutionDeclare:
     kind: ProgramInputKind = ProgramInputKind.EXECUTION_DECLARE
 
 
+@dataclass(frozen=True, slots=True)
+class WarningInput:
+    warning_kind: Symbol
+    declarations: Symbol
+    message: Symbol
+    kind: ProgramInputKind = ProgramInputKind.WARNING
+
+
 ProgramInput: TypeAlias = (
     IVariableDeclare
     | IVariableDomain
@@ -321,4 +330,5 @@ ProgramInput: TypeAlias = (
     | OptimizeMaximizeSum
     | OptimizePrecision
     | ExecutionDeclare
+    | WarningInput
 )

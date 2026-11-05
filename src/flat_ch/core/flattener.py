@@ -32,6 +32,7 @@ from flat_ch.core.domain import (
     ProgramInputKind,
     PythonEvaluateInput,
     VariableDefault,
+    WarningInput,
 )
 from flat_ch.core.evaluation.operators import Arity, Operator
 from flat_ch.core.evaluation.python import PythonRegistry
@@ -99,6 +100,11 @@ class Flattener:
 
     def _intern_program_input(self, node: ProgramInput) -> None:
         match node.kind:
+            case ProgramInputKind.WARNING:
+                warn: WarningInput = node  # type: ignore
+                self.interned_program.append(
+                    (ProgramInputKind.WARNING, (warn.warning_kind, warn.declarations, warn.message))
+                )
             case ProgramInputKind.VARIABLE_DECLARE:
                 var_decl: IVariableDeclare = node  # type: ignore
                 self.interned_program.append(
@@ -486,6 +492,8 @@ class Flattener:
 
     def _emit_program_input_fact(self, kind: ProgramInputKind, payload: tuple) -> None:
         match kind:
+            case ProgramInputKind.WARNING:
+                self._emit_fact(Function("warning", payload))
             case ProgramInputKind.VARIABLE_DECLARE:
                 name, declaration_kind, declaration_condition_id, registration_id = payload
                 var_sym = name if isinstance(name, Symbol) else Function(name, [])

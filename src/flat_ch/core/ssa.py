@@ -24,6 +24,7 @@ from flat_ch.core.domain import (
     ProgramInput,
     StatementKind,
     Type,
+    WarningInput,
 )
 from flat_ch.core.evaluation.operators import Operator
 from flat_ch.core.evaluation.python import infer_python_io
@@ -75,8 +76,13 @@ class SSA:
             for statement in execution.statements:
                 state = self._handle_statement(statement, state)
         except ValueError as e:
-            print(f"Error during SSA transformation for `{self._execution_name}`: {e}")
-            return []
+            return [
+                WarningInput(
+                    clingo.Function("expression", [clingo.Function("pythonError")]),
+                    clingo.Function(""),
+                    clingo.String(str(e)),
+                )
+            ]
 
         live_roots = [state.get(_identifier_name(output_var), SSA._none_value()) for output_var in execution.outputs]
         live_roots.extend(expr for key, expr in state.items() if key.startswith("_ssa"))

@@ -311,6 +311,8 @@ _fch_warning_forbid(KIND) :- warning_forbid(_, KIND).
 _fch_warning_ignore(KIND) :- warning_ignore(KIND).
 _fch_warning_ignore(KIND) :- warning_ignore(_, KIND).
 
+warning(KIND, INFO, MSG) :- _fch_flat(warning(KIND, INFO, MSG)).
+
 warning(variable(badValue), (), NAME) :- value(NAME, bad).
 
 warning(expression(pythonError), (), (python, EXPR_ID, MESSAGE)) :-
@@ -319,6 +321,10 @@ warning(expression(pythonError), (), (python, EXPR_ID, MESSAGE)) :-
 
 warning(variable(emptyDomain), (), NAME) :-
 	_fch_empty_var_domain(NAME).
+
+warning_raised(KIND, INFO) :- warning(KIND, INFO, _), not _fch_warning_ignore(KIND).
+warning_raised(KIND) :- warning_raised(KIND, _).
+warning_raised :- warning_raised(_).
 
 :- warning(KIND, INFO, MSG), _fch_warning_forbid(KIND), not _fch_warning_ignore(KIND).
 
