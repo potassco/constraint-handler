@@ -35,12 +35,16 @@ python -m pipx install pre-commit
 pre-commit install
 ```
 
+Each test in [tests/test_encoding.py](tests/test_encoding.py) has a 10-second
+`pytest-timeout` thread watchdog covering setup, grounding, solving, and
+teardown. On timeout, pytest prints thread stacks and terminates the test run.
+
 ## Performance Benchmarks
 
 The encoding performance checks live in
-[tests/test_encoding.py](tests/test_encoding.py), and their input programs live
-under [tests/example/performance](tests/example/performance). The `performance`
-nox session runs the threshold-based regression checks and the
+[tests/test_performance_engines.py](tests/test_performance_engines.py), and
+their input programs live under [tests/performance](tests/performance). The
+`performance` nox session runs the threshold-based regression checks and the
 `pytest-benchmark` capture tests together. Each run automatically stores a
 saved benchmark file directly under `.benchmarks/` using a branch-and-timestamp
 name.
@@ -62,10 +66,11 @@ nox -s benchmark_compare -- .benchmarks/0008_master-20260420-203125.json .benchm
 The benchmark ids follow the pattern `compile-...`, `ground-...`,
 `propagator-check-...`, and `propagator-solve-...`, so `pytest -k` can target
 individual cases directly. Each encoding benchmark also times out after its
-aggregate runtime threshold plus one second, preventing a severe regression
-from holding the performance session open indefinitely. The aggregate threshold
-is the configured average multiplied by the number of measured and warmup runs,
-so individual runs may exceed the average when the overall mean still passes.
+aggregate runtime threshold plus one second. The `pytest-timeout` thread
+watchdog covers setup, grounding, solving, and teardown; on expiry it prints
+thread stacks and terminates pytest. The aggregate threshold is the configured
+average multiplied by the number of measured and warmup runs, so individual
+runs may exceed the average when the overall mean still passes.
 
 The default `nox -s test` session excludes `performance` tests so the normal
 test matrix stays practical.

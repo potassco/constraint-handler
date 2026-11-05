@@ -5,6 +5,8 @@ import constraint_handler
 import constraint_handler.engine as engine
 import tests.utils.testing as chut
 
+pytestmark = pytest.mark.timeout(10, method="thread")
+
 ctrl_options = ["0", "--heuristic=Domain"]
 
 
