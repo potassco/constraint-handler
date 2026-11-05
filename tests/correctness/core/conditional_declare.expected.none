@@ -1,0 +1,8 @@
+value(disabled,val(bool,true))
+value(disabled,val(bool,false))
+value(disabled,bad)
+value(dynamic,bad)
+value(bad_condition,bad)
+value(bad_condition,val(bool,true))
+value(bad_condition,val(bool,false))
+bool_evaluated(operation(conj,(operation(lnot,(variable(enabled),())),(variable(dynamic),()))),val(bool,true))

@@ -29,6 +29,7 @@ class StatementKind(IntEnum):
 
 class ProgramInputKind(IntEnum):
     VARIABLE_DECLARE = auto()
+    VARIABLE_DOMAIN = auto()
     VARIABLE_DEFINE = auto()
     VARIABLE_DEFAULT = auto()
     ENSURE_CONSTRAINT = auto()
@@ -36,10 +37,18 @@ class ProgramInputKind(IntEnum):
     EVALUATE_INPUT = auto()
     PYTHON_EVALUATE_INPUT = auto()
     BOOL_EVALUATE_INPUT = auto()
-    SET_DECLARE = auto()
+    SET_BASE_DOMAIN = auto()
+    SET_ASSIGN = auto()
     OPTIMIZE_MAXIMIZE_SUM = auto()
     OPTIMIZE_PRECISION = auto()
     EXECUTION_DECLARE = auto()
+    WARNING = auto()
+
+
+class DeclarationKind(str, Enum):
+    DOMAIN = "domain"
+    DEFINITION = "definition"
+    SET = "set"
 
 
 class FlatFact(str, Enum):
@@ -55,7 +64,6 @@ class FlatFact(str, Enum):
     CHECK = "check"
     EVALUATE = "evaluate"
     BOOL_EVALUATE = "bool_evaluate"
-    SET = "set_decl"
     SET_BASE_DOMAIN = "set_base_domain"
     SET_ASSIGN = "set_assign"
     OPTIMIZE_SUM = "optimize_sum"
@@ -69,7 +77,7 @@ class FlatFact(str, Enum):
 
 
 _FLAT_FACT_VARIABLE_MAP = {
-    FlatFact.VARIABLE_DECLARE: ("NAME",),
+    FlatFact.VARIABLE_DECLARE: ("NAME", "DECL_KIND", "COND_EXPR_ID"),
     FlatFact.VARIABLE_DOMAIN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.VARIABLE_DEFINE: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.EXPRESSION_VALUE: ("ID", "TYPE_ID", "VALUE"),
@@ -79,9 +87,8 @@ _FLAT_FACT_VARIABLE_MAP = {
     FlatFact.VARIABLE_DEFAULT: ("NAME", "EXPR_ID", "COND_EXPR_ID", "PRIORITY"),
     FlatFact.EVALUATE: ("EXPR", "EXPR_ID"),
     FlatFact.BOOL_EVALUATE: ("EXPR", "EXPR_ID"),
-    FlatFact.SET: ("NAME",),
-    FlatFact.SET_BASE_DOMAIN: ("NAME", "EXPR_ID"),
-    FlatFact.SET_ASSIGN: ("NAME", "EXPR_ID"),
+    FlatFact.SET_BASE_DOMAIN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
+    FlatFact.SET_ASSIGN: ("NAME", "EXPR_ID", "COND_EXPR_ID"),
     FlatFact.PAIR: ("ID", "KEY_EXPR_ID", "VALUE_EXPR_ID"),
     FlatFact.OPTIMIZE_SUM: ("ID", "ELEM", "PRIO", "COND_EXPR_ID"),
     FlatFact.OPTIMIZE_LABEL: ("LABEL", "EXPR_ID", "PRIO", "COND_EXPR_ID"),
@@ -177,9 +184,19 @@ ExecutionStatement: TypeAlias = IAssignStatement | IAssertStatement | IIfStateme
 @dataclass(frozen=True, slots=True)
 class IVariableDeclare:
     name: str | Symbol
-    domain: tuple[tuple[Expression, Expression], ...] = ()
+    condition: Expression = IValue(Type.BOOL, True)
     registration_id: int | None = None
+    declaration_kind: DeclarationKind = DeclarationKind.DOMAIN
     kind: ProgramInputKind = ProgramInputKind.VARIABLE_DECLARE
+
+
+@dataclass(frozen=True, slots=True)
+class IVariableDomain:
+    name: str | Symbol
+    expression: Expression
+    condition: Expression = IValue(Type.BOOL, True)
+    registration_id: int | None = None
+    kind: ProgramInputKind = ProgramInputKind.VARIABLE_DOMAIN
 
 
 @dataclass(frozen=True, slots=True)
@@ -247,11 +264,19 @@ class BoolEvaluateInput:
 
 
 @dataclass(frozen=True, slots=True)
-class ISetDeclare:
+class ISetBaseDomain:
     name: str | Symbol
-    base_domain: tuple[Expression, ...] = ()
-    assignment: tuple[Expression, ...] = ()
-    kind: ProgramInputKind = ProgramInputKind.SET_DECLARE
+    expression: Expression
+    condition: Expression = IValue(Type.BOOL, True)
+    kind: ProgramInputKind = ProgramInputKind.SET_BASE_DOMAIN
+
+
+@dataclass(frozen=True, slots=True)
+class ISetAssign:
+    name: str | Symbol
+    expression: Expression
+    condition: Expression = IValue(Type.BOOL, True)
+    kind: ProgramInputKind = ProgramInputKind.SET_ASSIGN
 
 
 @dataclass(frozen=True, slots=True)
@@ -282,8 +307,17 @@ class ExecutionDeclare:
     kind: ProgramInputKind = ProgramInputKind.EXECUTION_DECLARE
 
 
+@dataclass(frozen=True, slots=True)
+class WarningInput:
+    warning_kind: Symbol
+    declarations: Symbol
+    message: Symbol
+    kind: ProgramInputKind = ProgramInputKind.WARNING
+
+
 ProgramInput: TypeAlias = (
     IVariableDeclare
+    | IVariableDomain
     | IVariableDefine
     | VariableDefault
     | EnsureConstraint
@@ -291,8 +325,10 @@ ProgramInput: TypeAlias = (
     | EvaluateInput
     | PythonEvaluateInput
     | BoolEvaluateInput
-    | ISetDeclare
+    | ISetBaseDomain
+    | ISetAssign
     | OptimizeMaximizeSum
     | OptimizePrecision
     | ExecutionDeclare
+    | WarningInput
 )

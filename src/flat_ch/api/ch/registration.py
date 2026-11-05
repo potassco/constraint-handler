@@ -9,6 +9,7 @@ from flat_ch.core.base_registration import BaseRegistration, parse_operator, par
 from flat_ch.core.domain import (
     BoolEvaluateInput,
     CheckConstraint,
+    DeclarationKind,
     EnsureConstraint,
     EvaluateInput,
     ExecutionDeclare,
@@ -95,32 +96,36 @@ class Registration(BaseRegistration):
         return clingo.Number(0)
 
     def _handle_declare(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 3:
+        if len(args) == 4:
             domain_kind = args[2].name
             var_sym = self._lower_variable_symbol(args[1])
+            condition = self.parse_expression(args[3])
 
             if domain_kind == "set":
-                self.reg.update_set(var_sym)
+                self.reg.update_var(var_sym, (), condition=condition, declaration_kind=DeclarationKind.SET)
             elif domain_kind == "boolDomain":
                 self.reg.update_var(
                     var_sym,
                     (
-                        (IValue(Type.BOOL, True), IValue(Type.BOOL, True)),
-                        (IValue(Type.BOOL, False), IValue(Type.BOOL, True)),
+                        (IValue(Type.BOOL, True), condition),
+                        (IValue(Type.BOOL, False), condition),
                     ),
+                    condition=condition,
                 )
             elif domain_kind == "fromFacts":
-                self.reg.update_var(var_sym, ())
+                self.reg.update_var(var_sym, (), condition=condition)
+            elif domain_kind == "definition":
+                self.reg.update_var(var_sym, (), condition=condition, declaration_kind=DeclarationKind.DEFINITION)
             elif domain_kind == "open":
-                self.reg.update_var(var_sym, ())
+                self.reg.update_var(var_sym, (), condition=condition)
             elif domain_kind == "fromList":
                 unnested = tuple(self.parse_expression(s) for s in self.unnest(args[2].arguments[0]))
-                self.reg.update_var(var_sym, tuple((expr, IValue(Type.BOOL, True)) for expr in unnested))
+                self.reg.update_var(var_sym, tuple((expr, condition) for expr in unnested), condition=condition)
 
     def _handle_domain(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:
             var_sym = self._lower_variable_symbol(args[1])
-            self.reg.update_var(var_sym, ((self.parse_expression(args[2]), self.parse_expression(args[3])),))
+            self.reg.update_domain(var_sym, self.parse_expression(args[2]), self.parse_expression(args[3]))
 
     def _handle_define(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 4:
@@ -268,15 +273,15 @@ class Registration(BaseRegistration):
 
     def _handle_set_declare(self, args: tuple[clingo.Symbol, ...]):
         if len(args) == 2:
-            self.reg.update_set(args[1])
+            self.reg.update_var(args[1], (), declaration_kind=DeclarationKind.SET)
 
     def _handle_set_base_domain(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 3:
-            self.reg.update_set(args[1], base_domain=(self.parse_expression(args[2]),))
+        if len(args) == 4:
+            self.reg.update_set_base_domain(args[1], self.parse_expression(args[2]), self.parse_expression(args[3]))
 
     def _handle_set_assign(self, args: tuple[clingo.Symbol, ...]):
-        if len(args) == 3:
-            self.reg.update_set(args[1], assignment=(self.parse_expression(args[2]),))
+        if len(args) == 4:
+            self.reg.update_set_assign(args[1], self.parse_expression(args[2]), self.parse_expression(args[3]))
 
     def parse_expression(self, symbol: clingo.Symbol) -> Expression:
         cached = self._expression_cache.get(symbol)

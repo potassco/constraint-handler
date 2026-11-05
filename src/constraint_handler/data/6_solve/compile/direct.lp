@@ -12,6 +12,7 @@ _se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
 _se_value(variable(X),V) :- _passed(compile,LBL,variable_define(X,E,C)), _se_value(C,val(bool,true)), _se_value(E,V).
+_se_value(variable(X),bad) :- _expression(compile,variable(X)), #false : _passed(compile,_,variable_declare(X,D,C)), _se_value(C,val(bool,true)).
 
 
 %%%%%%%%%%%%%%%%% tuples
@@ -69,6 +70,7 @@ _expression_pythonEval(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _d
 
 _expression_eval_exec(Q,RES) :- _expression_pythonEval(Q,E), RES=@pythonEvalExpr(E,(),ID), _main_solverIdentifiers(ID).
 _computedIdx(E,val(TYPE,V)) :- _expression_eval_exec(E,valid(val(TYPE,V))).
+_computedIdx(E,bad) :- _expression_eval_exec(E,valid(bad)).
 _computedIdx(E,bad) :- _expression_eval_exec(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _expression_eval_exec(E,error(KIND,MSG)).
 
@@ -92,7 +94,7 @@ _expression_pythonEval(E,operation(O,L)) :- _direct_resortToPython(E), _direct_i
 %_se_value(operation(OP,ARGS),bad) :- _direct_bad_operation(OP,ARGS).
 %_se_value(bad,bad) :- direct_query(bad).
 _se_value(bad,bad).
-%_direct_imploded(bad,bad).
+_direct_imploded(bad,bad) :- _direct_implode(bad).
 
 %%%%%%%%%%%%%%%%% implode
 _direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), _type_representation(T,extensional).

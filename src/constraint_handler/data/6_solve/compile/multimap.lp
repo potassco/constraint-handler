@@ -1,4 +1,4 @@
-_se_value(variable(X),ref(multimap,variable(X))) :- _passed(compile,LBL,variable_declare(X,multimap)).
+_se_value(variable(X),ref(multimap,variable(X))) :- _passed(compile,LBL,variable_declare(X,multimap,C)), _se_value(C,val(bool,true)).
 _multimap_add(variable(X),EK,EV) :- _passed(compile,LBL,multimap_assign(X,EK,EV)).
 
 %%%%%%%%%%%%%%%%% pairstuples

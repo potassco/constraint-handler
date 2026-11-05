@@ -125,7 +125,8 @@
 \alt `variable_choice' `(' <variable> `,' <expression> `)'
 \alt `variable_choice' `(' <variable> `,' <expression> `,' <label> `)'
 \alt `variable_declare' `(' <variable> `,' <domain> `)'
-\alt `variable_declare' `(' <variable> `,' <domain> `,' <label> `)'
+\alt `variable_declare' `(' <variable> `,' <domain> `,' <expression> `)'
+\alt `variable_declare' `(' <variable> `,' <domain> `,' <expression> `,' <label> `)'
 \alt `variable_default' `(' <variable> `,' <expression> `)'
 \alt ...
 \alt `variable_default' `(' <variable> `,' <expression> `,' <expression> `,' <int> `,' <label> `)'
@@ -143,7 +144,8 @@
 ~\alt `set_assign' `(' <variable> `,' <expression> `)'
 \alt `set_assign' `(' <variable> `,' <expression> `,' <label> `)'
 \alt `set_baseDomain' `(' <variable> `,' <expression> `)'
-\alt `set_baseDomain' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `set_baseDomain' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `set_baseDomain' `(' <variable> `,' <expression> `,' <expression> `,' <label> `)'
 
 <execution-atom> ::=
 ~\alt `execution_declare' `(' <term> `,' <statement> `,' <variable-list> `,' <variable-list> `)'

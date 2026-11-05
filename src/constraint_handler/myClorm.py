@@ -313,7 +313,7 @@ def _match_cltopy(symbol, target):
     if issubclass(target_class, tuple) and getattr(target_class, "_fields", None) is None:
         child_targets = _cached_get_args(target)
         if len(child_targets) >= 2 and child_targets[-1] == Ellipsis:
-            child_targets = child_targets[:-1] + tuple(child_targets[-2] for _ in range(len(symbol.arguments) - 1))
+            child_targets = child_targets[:-2] + (child_targets[-2],) * (len(symbol.arguments) - len(child_targets) + 2)
         if symbol.name != "" or len(child_targets) != len(symbol.arguments):
             return _NO_MATCH
         fields = None

@@ -2,6 +2,13 @@
 
 ## Ongoing
 
+## v0.0.10
+
+- add `warning_raised`, `warning_raised(Type)`, and
+  `warning_raised(Type,Labels)` output markers for non-ignored warnings.
+- - drop static warning for multiple declarations
+- - update `variable_declare` to take a condition argument.
+- - update `set_baseDomain` to take a condition argument.
 - introduce a staged python interface
 
 ## v0.0.9

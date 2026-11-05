@@ -1,0 +1,3 @@
+value(df,val(bool,false))
+value(df,val(bool,true))
+warning_raised(expression(pythonError))

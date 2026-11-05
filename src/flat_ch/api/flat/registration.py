@@ -9,6 +9,7 @@ from flat_ch.core.base_registration import BaseRegistration, parse_operator, par
 from flat_ch.core.domain import (
     BoolEvaluateInput,
     CheckConstraint,
+    DeclarationKind,
     EnsureConstraint,
     EvaluateInput,
     ExecutionDeclare,
@@ -101,10 +102,10 @@ class Registration(BaseRegistration):
             case self._ui_decl if args_len == 1:
                 self.reg.update_var(self.to_str(args[0]), ())
             case self._ui_dom if args_len == 2:
-                self.reg.update_var(self.to_str(args[0]), ((self.parse_expression(args[1]), IValue(Type.BOOL, True)),))
+                self.reg.update_domain(self.to_str(args[0]), self.parse_expression(args[1]))
             case self._ui_dom if args_len == 3:
-                self.reg.update_var(
-                    self.to_str(args[0]), ((self.parse_expression(args[1]), self.parse_expression(args[2])),)
+                self.reg.update_domain(
+                    self.to_str(args[0]), self.parse_expression(args[1]), self.parse_expression(args[2])
                 )
             case self._ui_def if args_len == 2:
                 self.reg.sequential_inputs.append(
@@ -180,11 +181,15 @@ class Registration(BaseRegistration):
                     )
                 )
             case self._ui_set_decl if args_len == 1:
-                self.reg.update_set(self.to_str(args[0]))
-            case self._ui_set_base if args_len == 2:
-                self.reg.update_set(self.to_str(args[0]), base_domain=(self.parse_expression(args[1]),))
-            case self._ui_set_assign if args_len == 2:
-                self.reg.update_set(self.to_str(args[0]), assignment=(self.parse_expression(args[1]),))
+                self.reg.update_var(self.to_str(args[0]), (), declaration_kind=DeclarationKind.SET)
+            case self._ui_set_base if args_len == 3:
+                self.reg.update_set_base_domain(
+                    self.to_str(args[0]), self.parse_expression(args[1]), self.parse_expression(args[2])
+                )
+            case self._ui_set_assign if args_len == 3:
+                self.reg.update_set_assign(
+                    self.to_str(args[0]), self.parse_expression(args[1]), self.parse_expression(args[2])
+                )
             case self._ui_opt_sum if args_len == 4:
                 self.reg.sequential_inputs.append(
                     OptimizeMaximizeSum(

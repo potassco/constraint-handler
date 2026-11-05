@@ -1,5 +1,5 @@
 variable_declare(s,set).
-set_baseDomain(s,val(int,(1..4)),s).
+set_baseDomain(s,val(int,(1..4)),val(bool,true),s).
 
 ensure(operation(set_isin,(val(int,1),(variable(s),())))).
 ensure(operation(set_notin,(val(int,4),(variable(s),())))).

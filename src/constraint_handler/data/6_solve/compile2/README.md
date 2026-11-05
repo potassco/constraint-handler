@@ -5,12 +5,12 @@ _passed(compile2, LBL, Declaration)
 Declaration can be:
 
 %%% variable and domain definition
-_passed(compile2, LBL, variable_declare(Var, fromFacts)). % the variable is connected to a domain, unecessary
+_passed(compile2, LBL, variable_declare(Var, fromFacts, Cond)). % the variable is connected to a domain
 _passed(compile2, LBL, variable_domain(Var, Expr, Cond)) % all enabled expressions
 
-_passed(compile2, LBL, variable_declare(Var, set)). % variable is declared as a set
+_passed(compile2, LBL, variable_declare(Var, set, Cond)). % variable is declared as a set
 
-_passed(compile2, LBL, variable_declare(Var, definition)). % not used, define is enough
+_passed(compile2, LBL, variable_declare(Var, definition, Cond)). % not used, define is enough
 _passed(compile2, LBL, variable_define(Var, Expr, Cond))  % Expr is assigned to Var when Cond is true
 
 _passed(compile2, LBL, set_assign(Var, Expr)) % Expr is assigned to Var, but Var is a set

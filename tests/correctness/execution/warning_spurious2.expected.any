@@ -1,0 +1,4 @@
+value(run,val(bool,false))
+value(run,val(bool,true))
+value(execution_input(example,"cond"),val(bool,false))
+value(execution_input(example,"cond"),val(bool,true))

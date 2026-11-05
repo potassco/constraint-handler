@@ -144,23 +144,29 @@ Args:
 #defined set_declare/1.
 _fch_input(set_declare(NAME))            :- set_declare(NAME).
 
-%*! set_baseDomain(SetName, Expression)
-Statically defines the full background pool of allowed candidates for a specific set asset.
+%*! set_baseDomain(SetName, Expression[, Condition])
+Defines candidate members when Condition evaluates to Boolean true.
 Args:
  - SetName: The identifier string for the targeted collection asset.
  - Expression: The background literal generation bounds expression.
+ - Condition: An optional Boolean expression, defaulting to true.
 *%
 #defined set_baseDomain/2.
-_fch_input(set_baseDomain(NAME, EXPR))   :- set_baseDomain(NAME, EXPR).
+#defined set_baseDomain/3.
+_fch_input(set_baseDomain(NAME, EXPR, val(bool, true))) :- set_baseDomain(NAME, EXPR).
+_fch_input(set_baseDomain(NAME, EXPR, CONDITION)) :- set_baseDomain(NAME, EXPR, CONDITION).
 
-%*! set_assign(SetName, Expression)
-Explicitly assigns concrete elements to a target set, constraining variable membership choices.
+%*! set_assign(SetName, Expression[, Condition])
+Assigns concrete elements to a target set when Condition evaluates to Boolean true.
 Args:
  - SetName: The identifier string for the targeted collection asset.
  - Expression: The literal element or structural set operation to enforce assignment.
+ - Condition: An optional Boolean expression, defaulting to true.
 *%
 #defined set_assign/2.
-_fch_input(set_assign(NAME, EXPR))       :- set_assign(NAME, EXPR).
+#defined set_assign/3.
+_fch_input(set_assign(NAME, EXPR, val(bool, true))) :- set_assign(NAME, EXPR).
+_fch_input(set_assign(NAME, EXPR, CONDITION)) :- set_assign(NAME, EXPR, CONDITION).
 
 
 #defined optimize_maximizeSum/3.
@@ -200,9 +206,9 @@ Args:
  - Size: The total number of elements contained within the set.
 *%
 % Declared sets get their size directly
-set_size(NAME, SIZE)           :- _fch_set_decl(NAME), _fch_set_size(NAME, SIZE).
+set_size(NAME, SIZE)           :- _fch_set_handle(NAME), _fch_set_size(NAME, SIZE).
 % Variables defined as sets get their size from the target set definition
-set_size(VAR_NAME, SIZE)       :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_decl(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
+set_size(VAR_NAME, SIZE)       :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_handle(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
 
 %*! bool_evaluated(Expression, Value)
 

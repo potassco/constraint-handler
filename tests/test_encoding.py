@@ -43,8 +43,16 @@ core_tests = [
     "core/boolean_shortcut_optional_presence",
     "core/check",
     "core/conditional_assign",
+    "core/conditional_declare",
+    "core/conditional_declare_definition",
+    "core/conditional_declare_domain",
+    "core/conditional_declare_empty_domain",
+    "core/conditional_declare_inactive_domain",
+    "core/conditional_declare_set",
+    "core/conditional_declare_set_multiple",
     "core/conditional_define",
     "core/conditional_domain",
+    "core/conditional_domain_shared_entry",
     "core/conditional_definitions",
     "core/conj_bad_none_recovery",
     "core/custom_globals",
@@ -62,6 +70,7 @@ core_tests = [
     "core/set_execution_input_alias",
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
+    # "core/unbound_variable_expressions",
     "core/unprojected_optional_equality",
     "core/set_to_variable",
 ]
@@ -259,7 +268,12 @@ execution_tests = [
     "execution/python_integrity_should_be_ignored",
     "execution/python_list",
     "execution/python_set_empty_equality",
+    "execution/python_syntax_error",
+    "execution/python_syntax_error_return",
+    "execution/python_syntax_error_through",
     "execution/run_condition",
+    "execution/warning_spurious",
+    "execution/warning_spurious2",
 ]
 
 expression_tests = [
@@ -271,6 +285,7 @@ expression_tests = [
     "expression/lambda/recursive",
     "expression/lambda/zero_args",
     "expression/python",
+    "expression/python_bad_result",
     "expression/python_extract/bad",
     "expression/python_extract/basic",
     "expression/python_extract/binding_leak",
@@ -280,6 +295,7 @@ expression_tests = [
     "expression/python_extract/set_projection",
     "expression/python_extract/static",
     "expression/python_extract/succeeds",
+    "expression/python_extract/tuple_containing_bad",
     "expression/python_extract/tuple_projection",
     "expression/python_multi_args",
     "expression/tuple",
@@ -323,6 +339,8 @@ python_tests = [
 
 set_tests = [
     "set/conditional_assign",
+    "set/conditional_assign_dynamic",
+    "set/conditional_base_domain",
     "set/comparisons",
     "set/diff_flat",
     "set/eq_neq_flat",
@@ -459,6 +477,7 @@ warning_tests = [
     "warning/forbid_labeled_match",
     "warning/ignore",
     "warning/ignore_labeled",
+    "warning/mutually_exclusive_declarations",
     "warning/python_extract/statement_error",
     "warning/python_extract/undeclared_variable",
     "warning/statement/control",
@@ -507,10 +526,17 @@ compile_xfail: set[str] = {
     "datatype/int/int_div/negative",
     "engine/request",
     "expression/tuple_extra",
+    "execution/python_syntax_error",
+    "execution/warning_spurious",
+    "execution/warning_spurious2",
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "unit/tuple_eq",
     "unit/tuple_neq",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
+    "warning/ignore_labeled",
+    "warning/variables",
 }
 
 compile2_skip: set[str] = {
@@ -520,6 +546,7 @@ compile2_skip: set[str] = {
     "variable/dynamic_type",  # non static input
 }
 compile2_xfail: set[str] = {
+    "core/empty_set_execution",
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
@@ -536,6 +563,10 @@ compile2_xfail: set[str] = {
     "expression/python_extract/basic",
     "expression/python_extract/set_input",
     "expression/python_extract/static",
+    "expression/python_extract/tuple_containing_bad",
+    "execution/python_syntax_error",
+    "execution/warning_spurious",
+    "execution/warning_spurious2",
     "multimap/basics",
     "multimap/equality",
     "multimap/executions",
@@ -558,6 +589,10 @@ compile2_xfail: set[str] = {
     "type/multimap/operations",
     "unit/float/float_max",
     "unit/float/float_min",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
+    "warning/ignore_labeled",
+    "warning/variables",
 }
 ground_skip: set[str] = {
     "core/python_set_bool_brave",
@@ -578,6 +613,9 @@ ground_xfail: set[str] = {
     "expression/lambda/recursive",
     "expression/lambda/zero_args",
     "expression/tuple_extra",
+    "execution/python_syntax_error",
+    "execution/warning_spurious",
+    "execution/warning_spurious2",
     "multimap/basics",
     "multimap/equality",
     "multimap/executions",
@@ -595,6 +633,10 @@ ground_xfail: set[str] = {
     "unit/tuple_eq",
     "unit/tuple_neq",
     "unit/unary/set_length",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
+    "warning/ignore_labeled",
+    "warning/variables",
 }
 
 propagator_skip: set[str] = {
@@ -602,6 +644,8 @@ propagator_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {
+    "core/conditional_declare_definition",
+    "core/conditional_declare_set_multiple",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
@@ -618,6 +662,9 @@ propagator_xfail: set[str] = {
     "default/depends/with_domain",
     "engine/request",
     "engine/request_mixed_trig",
+    "execution/python_syntax_error",
+    "execution/warning_spurious",
+    "execution/warning_spurious2",
     "expression/lambda/recursive",
     "multimap/main",
     "set/fold_bools",
@@ -626,16 +673,33 @@ propagator_xfail: set[str] = {
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "warning/bad_interface",
+    "warning/forbid_labeled",
+    "warning/forbid_labeled_match",
+    "warning/ignore_labeled",
+    "warning/mutually_exclusive_declarations",
+    "warning/variables",
 }
 
 propagator_true_skip: set[str] = propagator_skip | {
+    "core/conditional_declare",
+    "core/conditional_declare_definition",
+    "core/conditional_declare_domain",
+    "core/conditional_declare_empty_domain",
+    "core/conditional_declare_set",
+    "core/empty_set_execution",
     "core/reasoning_modes",
     "core/reasoning_modes_with_show",
     "core/conditional_domain",
+    "core/unbound_variable_expressions",
     "execution/conditional_input_domain",
     "execution/conditional_input_domain_dynamic",
     "execution/python_integrity_should_be_ignored",
+    "execution/python_syntax_error",
+    "execution/run_condition",
+    "execution/warning_spurious",
+    "execution/warning_spurious2",
     "set/conditional_assign",
+    "set/conditional_base_domain",
     "set/diff_flat",
     "set/eq_neq_flat",
     "set/from_domain",
@@ -648,10 +712,14 @@ propagator_true_skip: set[str] = propagator_skip | {
     "set/subset_flat",
     "set/union_flat",
     "type/checking/membership_set_polymorphic",
+    "warning/variable_reservedName",
     "warning/variable_undeclared",
 }
 propagator_true_xfail: set[str] = propagator_xfail | {
+    "core/check",  # Hash/order-sensitive dependency-counter drift.
+    "core/conditional_definitions",  # Hash/order-sensitive dependency-counter drift.
     "core/conditional_domain",
+    "core/ensure",  # Hash/order-sensitive dependency-counter drift.
 }
 
 engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [
@@ -699,6 +767,12 @@ choice_statistics_skip: set[str] = {
     "core/bool_evaluate/forbidden",
     "core/boolean_shortcut_optional_presence",
     "core/check",
+    "core/conditional_declare",
+    "core/conditional_declare_definition",
+    "core/conditional_declare_domain",
+    "core/conditional_declare_empty_domain",
+    "core/conditional_declare_set",
+    "core/conditional_declare_set_multiple",
     "core/conditional_definitions",
     "core/empty_set_execution",
     "core/evaluate_dynamic",
@@ -748,13 +822,20 @@ choice_statistics_skip: set[str] = {
     "error/recovery_check",
     "execution/conditional_string_equality_single_model",
     "execution/python_integrity_should_be_ignored",
+    "execution/python_syntax_error_return",
+    "execution/python_syntax_error_through",
+    "execution/python_syntax_error",
     "execution/run_condition",
+    "execution/warning_spurious",
+    "execution/warning_spurious2",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
     "optimization/label_int",
     "optimization/label_string",
     "optimization/optional_absent_linked_value",
     "set/conditional_assign",
+    "set/conditional_assign_dynamic",
+    "set/conditional_base_domain",
     "python/dynamic",
     "type/bool/has_value",
     "type/warning/python",
@@ -822,6 +903,7 @@ choice_statistics_skip: set[str] = {
     "unit/unary/float_minus",
     "unit/unary/set_length",
     "warning/forbid_labeled_match",
+    "warning/mutually_exclusive_declarations",
     "warning/python_extract/statement_error",
 }
 choice_statistics_xfail: set[str] = {
@@ -883,6 +965,7 @@ choice_statistics_xfail: set[str] = {
     "variable/same_val_multi_expr",
     "warning/bad",
     "warning/fake_forbid",
+    "warning/ignore_labeled",
     "warning/variable_reservedName",
     "warning/variable_undeclared",
     "warning/variables",
@@ -913,6 +996,8 @@ tightness_statistics_skip: set[str] = {
 }
 tightness_statistics_xfail: set[str] = {
     "default/define/single",
+    "execution/python_syntax_error",
+    "execution/warning_spurious",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",

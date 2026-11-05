@@ -17,8 +17,10 @@ BoolDomain = domain.BoolDomain
 FromFacts = domain.FromFacts
 
 
-class Propagator_variable_declare(atom.Variable_declare):
-    pass
+class Propagator_variable_declare(NamedTuple):
+    name: expression.constant
+    domain: domain.Domain
+    label: expression.constant
 
 
 class Propagator_variable_define(NamedTuple):

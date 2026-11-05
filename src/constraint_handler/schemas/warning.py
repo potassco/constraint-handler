@@ -73,6 +73,13 @@ class Warning(typing.NamedTuple):
     info: typing.Any
 
 
+Warning_raised0 = typing.NamedTuple("Warning_raised", [])
+Warning_raised1 = typing.NamedTuple("Warning_raised", [("symbol", Kind)])
+Warning_raised2 = typing.NamedTuple("Warning_raised", [("symbol", Kind), ("declarations", tuple[typing.Any, ...])])
+
+type Warning_raised = Warning_raised0 | Warning_raised1 | Warning_raised2
+
+
 class Warning_forbid(typing.NamedTuple):
     symbol: Kind
     label: typing.Any  # expression.constant

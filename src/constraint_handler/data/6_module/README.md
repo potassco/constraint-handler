@@ -12,13 +12,13 @@ ch_core(check/1,LBL).
 ch_core(ensure/1,LBL).
 ch_core(evaluate/2,LBL).
 ch_core(preference_holds/2,LBL).
-ch_core(set_baseDomain/2,LBL).
+ch_core(set_baseDomain/3,LBL).
 ch_core(variable_assign/2,LBL).
-ch_core(variable_declare/2,LBL).
+ch_core(variable_declare/3,LBL).
 ch_core(variable_default/3,LBL).
 ch_solve(variable_assign/2,LBL).
 ch_solve(variable_choice/2,LBL).
-ch_solve(variable_declare/2,LBL).
+ch_solve(variable_declare/3,LBL).
 ch_solve(variable_default/4,LBL).
 _se_value/2.
 
@@ -36,7 +36,7 @@ _preference_index/2.
 _preference_potentialAux/2.
 _preference_potentialScore/1.
 _preference_expressionScore/2.
-_set_baseDomain/3.
+_set_baseDomain/5.
 _bool_evaluate/2.
 
 ### Output predicates
@@ -46,7 +46,7 @@ _warning/3.
 _se_value/2.
 ch_solve(set_assign/3,LBL).
 ch_solve(share_value/1,LBL).
-ch_solve(variable_declare/2,LBL).
+ch_solve(variable_declare/3,LBL).
 ch_solve(variable_domain/3,LBL).
 ch_post(evaluate/2,LBL).
 ch_post(variable_interface/1,LBL).

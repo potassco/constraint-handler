@@ -8,12 +8,12 @@ _passed(sugar,LBL,ensure(E)) :- _passed(defaultArgs,LBL,ensure(E)).
 _passed(sugar,LBL,evaluate(E,E)) :- _passed(defaultArgs,LBL,evaluate(E)).
 
 %%%%%% variable fromFacts atoms
-_passed(sugar,LBL,variable_declare(X,D)) :- _passed(defaultArgs,LBL,variable_declare(X,D)), D=(definition;fromFacts;open;set;multimap).
-_passed(sugar,LBL,variable_declare(X,fromFacts)) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
-_passed(sugar,LBL,variable_domain(X,val(bool,(false;true)),val(bool,true))) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain)).
+_passed(sugar,LBL,variable_declare(X,D,C)) :- _passed(defaultArgs,LBL,variable_declare(X,D,C)), D=(definition;fromFacts;open;set;multimap).
+_passed(sugar,LBL,variable_declare(X,fromFacts,C)) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain,C)).
+_passed(sugar,LBL,variable_domain(X,val(bool,(false;true)),C)) :- _passed(defaultArgs,LBL,variable_declare(X,boolDomain,C)).
 
 %%%%%% variable define
-_passed(sugar,LBL,variable_declare(X,definition)) :- _passed(defaultArgs,LBL,variable_define(X,E,C)), not _defaultArgs_variableDeclared(X).
+_passed(sugar,LBL,variable_declare(X,definition,val(bool,true))) :- _passed(defaultArgs,LBL,variable_define(X,E,C)), not _defaultArgs_variableDeclared(X).
 _passed(sugar,LBL,variable_define(X,E,C)) :- _passed(defaultArgs,LBL,variable_define(X,E,C)).
 
 %%%%%% variable domain
@@ -35,7 +35,7 @@ _passed(sugar,LBL,multimap_assign(X,EKEY,EVAL)) :- _passed(defaultArgs,LBL,multi
 
 %%%%%% set atoms
 _passed(sugar,LBL,set_assign(X,E,C)) :- _passed(defaultArgs,LBL,set_assign(X,E,C)).
-_passed(sugar,LBL,set_baseDomain(X,E)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E)).
+_passed(sugar,LBL,set_baseDomain(X,E,C)) :- _passed(defaultArgs,LBL,set_baseDomain(X,E,C)).
 
 %%%%%% optimize atoms
 _sugar_aux(LBL,optimize_component(EXPR,E,PREC,ID,PRIO,C)) :-
@@ -58,6 +58,6 @@ _passed(sugar,LBL,DEC) :- _passed(ssa,LBL,DEC).
 _variable(sugar,X) :- _variable(ssa,X).
 
 %%%%%% internal declarations
-_passed(internal_declaration,LBL,variable_declare(X,DOM)) :- _passed(ssa,LBL,variable_declare(X,DOM)), _execution_outputVar(LBL,PRG,N,X).
+_passed(internal_declaration,LBL,variable_declare(X,DOM,C)) :- _passed(ssa,LBL,variable_declare(X,DOM,C)), _execution_outputVar(LBL,PRG,N,X).
 _passed(internal_declaration,LBL,variable_define(X,DEF,COND)) :- _passed(ssa,LBL,variable_define(X,DEF,COND)), _execution_outputVar(LBL,PRG,N,X).
 _passed(internal_declaration,LBL,check(E)) :- _passed(ssa,LBL,check(E)).

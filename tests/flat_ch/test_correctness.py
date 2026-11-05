@@ -78,7 +78,9 @@ flat_ch_currently_not_working_tests = {
     "core/conditional_assign",
     "core/reasoning_modes",
     "core/reasoning_modes_with_show",
+    "expression/python_bad_result",
     "expression/python_extract/basic",
+    "expression/python_extract/tuple_containing_bad",
     "error/recovery",
     "error/recovery_bool",
     "error/recovery_conditionals",
@@ -86,6 +88,9 @@ flat_ch_currently_not_working_tests = {
     "execution/optional_run",
     "execution/python_augassign_types",
     "execution/python_integrity",
+    "execution/python_syntax_error",
+    "execution/warning_spurious",
+    "execution/warning_spurious2",
     "expression/alternative_syntax/core",
     "expression/alternative_syntax/lambda",
     "expression/bad_equality",
@@ -99,7 +104,6 @@ flat_ch_currently_not_working_tests = {
     "optimization/multimap_int",
     "optimization/multimap_labeled_values",
     "optimization/priority",
-    "set/conditional_assign",
     "set/fold_bools",
     "set/iterations",
     "set/manipulations",
@@ -236,6 +240,10 @@ flat_ch_currently_not_working_tests = {
     "variable/missing_domain_bad",
 }.intersection(base_tests)
 
+# FCH requires statically determined program structure. Both CH and FCH support
+# expression-controlled activation of fixed declarations. ASP choices determining
+# input statement presence are CH-only; such fixtures belong here, not in
+# flat_ch_currently_not_working_tests.
 flat_ch_unsupported_tests = {
     "core/custom_globals",
     "core/python_set_bool_brave",
@@ -256,6 +264,8 @@ flat_ch_unsupported_tests = {
     "optimization/preferences",
     "python/dynamic",
     "python/set_output",
+    "variable/dynamic_type",
+    "variable/parallel_declaration",
 }.intersection(base_tests)
 
 flat_ch_supported_tests = [

@@ -44,9 +44,9 @@ _correction_proposed(PHASE,LBL,variable_domain(X,E,C),variable_domain(X,NE,NC)) 
 _correction_proposed(PHASE,LBL,set_assign(X,E,C),set_assign(X,NE,NC)) :-
   _passed(sugar,LBL,set_assign(X,E,C)),
   _correction_expressionOutput(PHASE,E,NE), _correction_expressionOutput(PHASE,C,NC).
-_correction_proposed(PHASE,LBL,set_baseDomain(X,E),set_baseDomain(X,NE)) :-
-  _passed(sugar,LBL,set_baseDomain(X,E)),
-  _correction_expressionOutput(PHASE,E,NE).
+_correction_proposed(PHASE,LBL,set_baseDomain(X,E,C),set_baseDomain(X,NE,NC)) :-
+  _passed(sugar,LBL,set_baseDomain(X,E,C)),
+  _correction_expressionOutput(PHASE,E,NE), _correction_expressionOutput(PHASE,C,NC).
 _correction_proposed(PHASE,LBL,multimap_assign(X,K,B),multimap_assign(X,NK,NB)) :-
   _passed(sugar,LBL,multimap_assign(X,K,B)),
   _correction_expressionOutput(PHASE,K,NK), _correction_expressionOutput(PHASE,B,NB).

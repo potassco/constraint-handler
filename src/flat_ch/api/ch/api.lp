@@ -5,8 +5,10 @@
 
 #defined variable_declare/2.
 #defined variable_declare/3.
-_fch_input(variable_declare(_fch_label, NAME, DOMAIN)) :- variable_declare(NAME, DOMAIN).
-_fch_input(variable_declare(LABEL, NAME, DOMAIN)) :- variable_declare(NAME, DOMAIN, LABEL).
+#defined variable_declare/4.
+_fch_input(variable_declare(_fch_label, NAME, DOMAIN, val(bool, true))) :- variable_declare(NAME, DOMAIN).
+_fch_input(variable_declare(_fch_label, NAME, DOMAIN, CONDITION)) :- variable_declare(NAME, DOMAIN, CONDITION).
+_fch_input(variable_declare(LABEL, NAME, DOMAIN, CONDITION)) :- variable_declare(NAME, DOMAIN, CONDITION, LABEL).
 
 #defined variable_define/2.
 #defined variable_define/3.
@@ -70,13 +72,17 @@ _fch_input(set_declare(LABEL, NAME)) :- set_declare(NAME, LABEL).
 
 #defined set_baseDomain/2.
 #defined set_baseDomain/3.
-_fch_input(set_baseDomain(_fch_label, NAME, EXPR)) :- set_baseDomain(NAME, EXPR).
-_fch_input(set_baseDomain(LABEL, NAME, EXPR)) :- set_baseDomain(NAME, EXPR, LABEL).
+#defined set_baseDomain/4.
+_fch_input(set_baseDomain(_fch_label, NAME, EXPR, val(bool, true))) :- set_baseDomain(NAME, EXPR).
+_fch_input(set_baseDomain(_fch_label, NAME, EXPR, CONDITION)) :- set_baseDomain(NAME, EXPR, CONDITION).
+_fch_input(set_baseDomain(LABEL, NAME, EXPR, CONDITION)) :- set_baseDomain(NAME, EXPR, CONDITION, LABEL).
 
 #defined set_assign/2.
 #defined set_assign/3.
-_fch_input(set_assign(_fch_label, NAME, EXPR)) :- set_assign(NAME, EXPR).
-_fch_input(set_assign(LABEL, NAME, EXPR)) :- set_assign(NAME, EXPR, LABEL).
+#defined set_assign/4.
+_fch_input(set_assign(_fch_label, NAME, EXPR, val(bool, true))) :- set_assign(NAME, EXPR).
+_fch_input(set_assign(_fch_label, NAME, EXPR, CONDITION)) :- set_assign(NAME, EXPR, CONDITION).
+_fch_input(set_assign(LABEL, NAME, EXPR, CONDITION)) :- set_assign(NAME, EXPR, CONDITION, LABEL).
 
 #defined optimize_maximizeSum/2.
 #defined optimize_maximizeSum/3.
@@ -150,10 +156,10 @@ _fch_default_ensure_var(ENSURE_EXPR_ID, VAR_NAME) :-
 _fch_default_connect(X, Y) :-
     _fch_default_ensure_var(ENSURE_EXPR_ID, X),
     _fch_default_ensure_var(ENSURE_EXPR_ID, Y),
-    _fch_var_decl(X),
+	_fch_domain_var_active(X),
     X != Y.
 
-_fch_default_connect(X, X) :- _fch_var_decl(X), _fch_default_mode(depends).
+_fch_default_connect(X, X) :- _fch_domain_var_active(X), _fch_default_mode(depends).
 
 _fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
     _fch_var_default(NAME, DEFAULT_ID, COND_ID, PRIORITY),
@@ -163,17 +169,18 @@ _fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
 
 _fch_default_apply(NAME, DEFAULT_ID, COND_ID, PRIORITY) :-
     _fch_var_default(NAME, DEFAULT_ID, COND_ID, PRIORITY),
+	_fch_var_active(NAME),
 	not _fch_default_suppressed(NAME, DEFAULT_ID, COND_ID, PRIORITY).
 
 % A variable subject to an applying default is defined by the default expression.
-_fch_dynamic_var_def(NAME, DEFAULT_ID) :- _fch_default_apply(NAME, DEFAULT_ID, _, _).
+_fch_selected_var_def(NAME, DEFAULT_ID) :- _fch_default_apply(NAME, DEFAULT_ID, _, _).
 
 %
 % CH-facing output compatibility.
 %
 
-set_size(NAME, SIZE) :- _fch_set_decl(NAME), _fch_set_size(NAME, SIZE).
-set_size(VAR_NAME, SIZE) :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_decl(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
+set_size(NAME, SIZE) :- _fch_set_handle(NAME), _fch_set_size(NAME, SIZE).
+set_size(VAR_NAME, SIZE) :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_handle(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
 
 bool_evaluated(EXPR, val(bool, true)) :-
 	_fch_bool_evaluate(EXPR, EXPR_ID),
@@ -273,10 +280,6 @@ set_value(execution_input(EXEC, VAR), VALUE) :- set_value((EXEC, VAR, in), VALUE
 set_value(execution_output(EXEC, VAR), VALUE) :- set_value((EXEC, VAR, out), VALUE).
 
 value(NAME, bad) :-
-	_fch_var_def(NAME, EXPR_ID),
-	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
-
-value(NAME, bad) :-
 	_fch_dynamic_var_def(NAME, EXPR_ID),
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
 
@@ -308,6 +311,8 @@ _fch_warning_forbid(KIND) :- warning_forbid(_, KIND).
 _fch_warning_ignore(KIND) :- warning_ignore(KIND).
 _fch_warning_ignore(KIND) :- warning_ignore(_, KIND).
 
+warning(KIND, INFO, MSG) :- _fch_flat(warning(KIND, INFO, MSG)).
+
 warning(variable(badValue), (), NAME) :- value(NAME, bad).
 
 warning(expression(pythonError), (), (python, EXPR_ID, MESSAGE)) :-
@@ -316,6 +321,10 @@ warning(expression(pythonError), (), (python, EXPR_ID, MESSAGE)) :-
 
 warning(variable(emptyDomain), (), NAME) :-
 	_fch_empty_var_domain(NAME).
+
+warning_raised(KIND, INFO) :- warning(KIND, INFO, _), not _fch_warning_ignore(KIND).
+warning_raised(KIND) :- warning_raised(KIND, _).
+warning_raised :- warning_raised(_).
 
 :- warning(KIND, INFO, MSG), _fch_warning_forbid(KIND), not _fch_warning_ignore(KIND).
 

@@ -19,10 +19,12 @@ from flat_ch.core.domain import (
     IOperation,
     IPair,
     IPythonOperation,
-    ISetDeclare,
+    ISetAssign,
+    ISetBaseDomain,
     IValue,
     IVariableDeclare,
     IVariableDefine,
+    IVariableDomain,
     IVariableRef,
     OptimizeMaximizeSum,
     OptimizePrecision,
@@ -30,6 +32,7 @@ from flat_ch.core.domain import (
     ProgramInputKind,
     PythonEvaluateInput,
     VariableDefault,
+    WarningInput,
 )
 from flat_ch.core.evaluation.operators import Arity, Operator
 from flat_ch.core.evaluation.python import PythonRegistry
@@ -97,28 +100,38 @@ class Flattener:
 
     def _intern_program_input(self, node: ProgramInput) -> None:
         match node.kind:
+            case ProgramInputKind.WARNING:
+                warn: WarningInput = node  # type: ignore
+                self.interned_program.append(
+                    (ProgramInputKind.WARNING, (warn.warning_kind, warn.declarations, warn.message))
+                )
             case ProgramInputKind.VARIABLE_DECLARE:
                 var_decl: IVariableDeclare = node  # type: ignore
-                dom_ids = tuple(
-                    (self._intern_expr(expr), self._intern_expr(condition)) for expr, condition in var_decl.domain
-                )
                 self.interned_program.append(
-                    (ProgramInputKind.VARIABLE_DECLARE, (var_decl.name, dom_ids, var_decl.registration_id))
+                    (
+                        ProgramInputKind.VARIABLE_DECLARE,
+                        (
+                            var_decl.name,
+                            var_decl.declaration_kind,
+                            self._intern_expr(var_decl.condition),
+                            var_decl.registration_id,
+                        ),
+                    )
                 )
 
-            case ProgramInputKind.VARIABLE_DEFINE:
-                var_def: IVariableDefine = node  # type: ignore
-                expr_id = self._intern_expr(var_def.expression)
-                condition_id = self._intern_expr(var_def.condition)
+            case ProgramInputKind.VARIABLE_DEFINE | ProgramInputKind.VARIABLE_DOMAIN:
+                var_input: IVariableDefine | IVariableDomain = node  # type: ignore
+                expr_id = self._intern_expr(var_input.expression)
+                condition_id = self._intern_expr(var_input.condition)
                 self.interned_program.append(
-                    (ProgramInputKind.VARIABLE_DEFINE, (var_def.name, expr_id, condition_id, var_def.registration_id))
+                    (node.kind, (var_input.name, expr_id, condition_id, var_input.registration_id))
                 )
 
-            case ProgramInputKind.SET_DECLARE:
-                set_decl: ISetDeclare = node  # type: ignore
-                base_ids = tuple(self._intern_expr(expr) for expr in set_decl.base_domain)
-                assignment_ids = tuple(self._intern_expr(expr) for expr in set_decl.assignment)
-                self.interned_program.append((ProgramInputKind.SET_DECLARE, (set_decl.name, base_ids, assignment_ids)))
+            case ProgramInputKind.SET_BASE_DOMAIN | ProgramInputKind.SET_ASSIGN:
+                set_input: ISetBaseDomain | ISetAssign = node  # type: ignore
+                expr_id = self._intern_expr(set_input.expression)
+                condition_id = self._intern_expr(set_input.condition)
+                self.interned_program.append((node.kind, (set_input.name, expr_id, condition_id)))
 
             case ProgramInputKind.ENSURE_CONSTRAINT:
                 ens: EnsureConstraint = node  # type: ignore
@@ -479,51 +492,51 @@ class Flattener:
 
     def _emit_program_input_fact(self, kind: ProgramInputKind, payload: tuple) -> None:
         match kind:
+            case ProgramInputKind.WARNING:
+                self._emit_fact(Function("warning", payload))
             case ProgramInputKind.VARIABLE_DECLARE:
-                name, dom_ids, registration_id = payload
+                name, declaration_kind, declaration_condition_id, registration_id = payload
                 var_sym = name if isinstance(name, Symbol) else Function(name, [])
-                decl_args = [var_sym]
+                decl_args = [var_sym, Function(declaration_kind.value, []), Number(declaration_condition_id)]
                 if registration_id is not None:
                     decl_args.insert(0, Number(registration_id))
                 self._emit_fact(Function(FlatFact.VARIABLE_DECLARE.value, decl_args))
-                for expr_id, condition_id in dom_ids:
-                    dom_args = [var_sym, Number(expr_id), Number(condition_id)]
-                    if registration_id is not None:
-                        dom_args.insert(0, Number(registration_id))
-                    self._emit_fact(
-                        Function(
-                            FlatFact.VARIABLE_DOMAIN.value,
-                            dom_args,
-                        )
-                    )
 
             case ProgramInputKind.VARIABLE_DEFINE:
                 name, expr_id, condition_id, registration_id = payload
                 var_sym = name if isinstance(name, Symbol) else Function(name, [])
-                fact_name = FlatFact.VARIABLE_DEFINE.value
                 fact_args = [var_sym, Number(expr_id), Number(condition_id)]
                 if registration_id is not None:
                     fact_args.insert(0, Number(registration_id))
-                self._emit_fact(Function(fact_name, fact_args))
+                self._emit_fact(Function(FlatFact.VARIABLE_DEFINE.value, fact_args))
 
-            case ProgramInputKind.SET_DECLARE:
-                name, base_ids, assignment_ids = payload
+            case ProgramInputKind.VARIABLE_DOMAIN:
+                name, expr_id, condition_id, registration_id = payload
+                var_sym = name if isinstance(name, Symbol) else Function(name, [])
+                fact_args = [var_sym, Number(expr_id), Number(condition_id)]
+                if registration_id is not None:
+                    fact_args.insert(0, Number(registration_id))
+                self._emit_fact(Function(FlatFact.VARIABLE_DOMAIN.value, fact_args))
+
+            case ProgramInputKind.SET_BASE_DOMAIN:
+                name, expr_id, condition_id = payload
                 set_sym = name if isinstance(name, Symbol) else Function(name, [])
-                self._emit_fact(Function(FlatFact.SET.value, [set_sym]))
-                for expr_id in base_ids:
-                    self._emit_fact(
-                        Function(
-                            FlatFact.SET_BASE_DOMAIN.value,
-                            [set_sym, Number(expr_id)],
-                        )
+                self._emit_fact(
+                    Function(
+                        FlatFact.SET_BASE_DOMAIN.value,
+                        [set_sym, Number(expr_id), Number(condition_id)],
                     )
-                for expr_id in assignment_ids:
-                    self._emit_fact(
-                        Function(
-                            FlatFact.SET_ASSIGN.value,
-                            [set_sym, Number(expr_id)],
-                        )
+                )
+
+            case ProgramInputKind.SET_ASSIGN:
+                name, expr_id, condition_id = payload
+                set_sym = name if isinstance(name, Symbol) else Function(name, [])
+                self._emit_fact(
+                    Function(
+                        FlatFact.SET_ASSIGN.value,
+                        [set_sym, Number(expr_id), Number(condition_id)],
                     )
+                )
 
             case ProgramInputKind.ENSURE_CONSTRAINT:
                 label_str, expr_id, registration_id = payload

@@ -72,6 +72,32 @@ warning(Type, Labels, Details)
 
 ---
 
+## Warning Raised
+
+**[Result]**{.badge .result }
+
+The `warning_raised` output predicates summarize non-ignored warnings in a
+reported model:
+
+| Output | Meaning |
+| :--- | :--- |
+| `warning_raised` | At least one warning was raised. |
+| `warning_raised(Type)` | At least one warning of `Type` was raised. |
+| `warning_raised(Type,Labels)` | A warning of `Type` with the given `Labels` was raised. |
+
+`Type` and `Labels` are the corresponding fields of `warning(Type,Labels,Details)`.
+
+!!! Example
+    A Python error with an empty label list produces these summary atoms:
+
+    ```prolog
+    warning_raised.
+    warning_raised(expression(pythonError)).
+    warning_raised(expression(pythonError),()).
+    ```
+
+---
+
 ## Ignore Warning
 **[Declaration]**{.badge .declaration }
 
@@ -328,7 +354,7 @@ warning(variable(emptyDomain), _,Variable)
     Variable declared with an empty list as its domain.
 
     ```prolog
-    variable_declare(d_a,a,fromList(())).
+    variable_declare(a,fromList(()),val(bool,true),d_a).
     ```
 
     Raises the warning:
@@ -340,7 +366,7 @@ warning(variable(emptyDomain), _,Variable)
 This error occurs when a [Variable] has a defined [Domain] but has not been [declared][variable_declare].
 
 ```prolog
-warning(variable(undeclared), (), (Scope, Variable))
+warning(variable(undeclared),(),(Scope,Variable))
 ```
 
 | Name | Description |
@@ -376,8 +402,8 @@ warning(variable(multipleDeclarations), _, (Variable, Domains...))
     Variable declared multiple times with different domains.
 
     ```prolog
-    variable_declare(d_u,u,fromFacts).
-    variable_declare(d_u,u,boolDomain).
+    variable_declare(u,fromFacts,val(bool,true),d_u).
+    variable_declare(u,boolDomain,val(bool,true),d_u).
     ```
 
     Raises the warning:
@@ -389,7 +415,7 @@ warning(variable(multipleDeclarations), _, (Variable, Domains...))
 This error occurs when a [Variable] is defined more than once within the same scope.
 
 ```prolog
-warning(variable(multipleDefinitions), _, (Variable, Expressions...))
+warning(variable(multipleDefinitions),_,(Variable,Expressions...))
 ```
 
 | Name | Description |
@@ -401,8 +427,8 @@ warning(variable(multipleDefinitions), _, (Variable, Expressions...))
     Variable defined multiple times.
 
     ```prolog
-    variable_define(d_x,x,val(int, 1)).
-    variable_define(d_x,x,val(int, 2)).
+    variable_define(x,val(int,1),val(bool,true),d_x).
+    variable_define(x,val(int,2),val(bool,true),d_x).
     ```
 
     Raises the warning:
@@ -414,7 +440,7 @@ This warning occurs when a [Variable] has a name that could be confused with res
 operators, numbers or types.
 
 ```prolog
-warning(variable(confusingName), _, ((Scope,Name), Reason))
+warning(variable(confusingName),_,((Scope,Name),Reason))
 ```
 
 | Name | Description |
@@ -426,7 +452,7 @@ warning(variable(confusingName), _, ((Scope,Name), Reason))
     Variable defined with a name that could be confused with a reserved keyword.
 
     ```prolog
-    variable_define(d_and, assert, val(int, 1)).
+    variable_define(assert,val(int,1),val(bool,true),d_and).
     ```
 
     Raises the warning:
@@ -442,7 +468,7 @@ This section covers warnings related to [Preference] statements.
 This warning occurs when a [Preference] uses a feature that is not (yet) supported.
 
 ```prolog
-warning(preference(unsupported), _, Details)
+warning(preference(unsupported),_,Details)
 ```
 
 | Name | Description |
@@ -474,7 +500,7 @@ This section covers warnings related to the propagator.
 This warning occurs when there is an error in the propagator.
 
 ```prolog
-warning(propagator, _, Message)
+warning(propagator,_,Message)
 ```
 
 | Name | Description |
@@ -491,7 +517,7 @@ This section covers warnings related to type errors.
 This warning occurs when the type system is not able to resolve the type of an [Operation].
 
 ```prolog
-warning(type(failed_operation), _, (Scope, Operator, Arguments))
+warning(type(failed_operation),_,(Scope,Operator,Arguments))
 ```
 
 | Name | Description |
@@ -507,7 +533,7 @@ This section covers warnings that do not fit into the previous categories.
 #### Other Error
 
 ```prolog
-warning(otherError, _, Message)
+warning(otherError,_,Message)
 ```
 
 | Name | Description |

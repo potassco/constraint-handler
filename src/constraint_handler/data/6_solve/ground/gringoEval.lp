@@ -1,5 +1,6 @@
 _expression(ground,E) :- _passed(ground,LBL,variable_assign(X,E)).
 _expression(ground,E) :- _passed(ground,LBL,variable_choice(X,E)).
+_expression(ground,C) :- _passed(ground,LBL,variable_declare(X,D,C)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_default(X,E,C,P)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_define(X,E,C)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_domain(X,E,C)).
@@ -10,7 +11,7 @@ _ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E,C)), ge_result(C,val(b
 
 _expression(ground,C) :- _passed(ground,LBL,set_assign(X,E,C)).
 _ge_set_assign(X,E) :- _passed(ground,LBL,set_assign(X,E,C)), _se_value(C,val(bool,true)).
-_ge_set_declare(X) :- _passed(ground,LBL,variable_declare(X,set)).
+_ge_set_declare(X) :- _passed(ground,LBL,variable_declare(X,set,C)), ge_result(C,val(bool,true)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 
 ge_value(X,V) :- _ge_assign(X,EXPR), ge_result(EXPR,V).
@@ -23,6 +24,7 @@ _expression(ground,EXPR) :- _ge_assign(X,EXPR).
 
 _se_value(variable(X),val(T,V)) :- ge_value(X,val(T,V)).
 _se_value(variable(X),bad) :- ge_value(X,bad).
+_se_value(variable(X),bad) :- ge_result(variable(X),bad).
 _se_value(variable(X),ref(set,variable(X))) :- ge_value(X,set(S)).
 _set_assign(variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
 _se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).
@@ -49,6 +51,7 @@ _ge_enumeratedVariables(EXPR,R) :- _expression(ground,EXPR), R=@pythonEnumerateV
 
 _ge_mapAux(EXPR,N,()) :- _ge_enumeratedVariables(EXPR,length(N)).
 _ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), ge_value(X,V).
+_ge_mapAux(EXPR,I,((X,bad),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), not ge_value(X,_).
 %_ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), _direct_imploded(variable(X),V).
 _ge_mapped(EXPR,M) :- _ge_mapAux(EXPR,0,M).
 

@@ -154,3 +154,10 @@ class ModelBuilder:
             ignored = self.ignored_warnings.get(error.id)
             if ignored is None or not ignored[1]:
                 self.atoms.add(error)
+                self.atoms.update(
+                    (
+                        warning.Warning_raised0(),
+                        warning.Warning_raised1(error.id),
+                        warning.Warning_raised2(error.id, error.declarations),
+                    )
+                )

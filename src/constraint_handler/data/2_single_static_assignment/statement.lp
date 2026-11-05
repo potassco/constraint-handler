@@ -71,7 +71,7 @@ _expression_contextualized(SCOPE,E,@pythonReflect(function,(),L)) :- _expression
 % TODO: operators
 
 %%%%% statement_condition
-_statement_condition((PRG,()),(COND,())) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), COND != val(bool,false).
+_statement_condition((PRG,()),(COND,())) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)).
 _statement_condition((l,SCOPE),ES) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_condition(SCOPE,ES).
 _statement_condition((r,SCOPE),ES) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_condition(SCOPE,ES).
 _statement_condition((t,SCOPE),(E,ES)) :- _statement_querySSA(LBL,PRG,SCOPE,if(COND,THEN,ELSE)), _expression_contextualized(SCOPE,COND,E), _statement_condition(SCOPE,ES).
@@ -131,28 +131,24 @@ _statement_introduce(LBL,XS,EX) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)
 _statement_ensure(LBL,ASSR) :- _statement_querySSA(LBL,PRG,SCOPE,assert(E)),
   _expression_contextualized(SCOPE,E,EX),
   _statement_condition(SCOPE,ES),
-  CONJ=operation(conj,ES),
-  ASSR=operation(limp,(CONJ,(EX,()))).
+  ASSR=operation(limp,(operation(conj,ES),(EX,()))).
 
 
-_statement_introduce(LBL,XS,EX) :- _statement_querySSA(LBL,PRG,SCOPE,assign(X,E)), _expression_contextualized(SCOPE,E,EX),_statement_latest(SCOPE,X,variable(XS)).
 _statement_introduce(LBL,XS,operation(pythonExtract(CODE,X),VARS)) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonVarsResult(PRG,SCOPE,valid(X)), _statement_pythonInputMap(SCOPE,VARS),_statement_latest(SCOPE,X,variable(XS)).
 _statement_ensure(LBL,ASSR) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)),
   _statement_pythonInputMap(SCOPE,VARS),
   _statement_condition(SCOPE,ES),
-  CONJ=operation(conj,ES),
   SUCCEEDS=operation(pythonExtract(CODE,"__succeeds"),VARS),
-  ASSR=operation(limp,(CONJ,(SUCCEEDS,()))).
+  ASSR=operation(limp,(operation(conj,ES),(SUCCEEDS,()))).
 
 %%% TODO: add bad / error handling
 _execution_ou_proj(PRG,X) :- _statement_latest((PRG,()),X,EX).
 
-_statement_introduce(LBL,EX,V) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,val(bool,true))), _statement_latest((PRG,()),X,V).
-_statement_introduce(LBL,EX,operation(ite,(COND,(V,(val(none,none),()))))) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), COND != val(bool,true), _statement_latest((PRG,()),X,V).
+_statement_introduce(LBL,EX,V) :- _execution_outputVar(LBL,PRG,X,EX), _statement_latest((PRG,()),X,V).
 _statement_introduce(LBL,EX,val(none,none)) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), not _execution_ou_proj(PRG,X).
 
-_passed(ssa,LBL,variable_define(X,E,val(bool,true))) :- _statement_introduce(LBL,X,E).
-_passed(ssa,LBL,variable_declare(X,definition)) :- _statement_introduce(LBL,X,E).
+_passed(ssa,LBL,(variable_define(X,E,COND);variable_declare(X,definition,COND))) :- _statement_introduce(LBL,X,E), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)).
+_passed(ssa,LBL,(variable_define(EX,val(none,none),operation(lnot,(COND,())));variable_declare(EX,definition,operation(lnot,(COND,()))))) :- _execution_outputVar(LBL,PRG,X,EX), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), COND != val(bool,true).
 _passed(ssa,LBL,check(E)) :- _statement_ensure(LBL,E).
 _variable(ssa,EX) :- _execution_inputVar(LBL,PRG,X,EX).
