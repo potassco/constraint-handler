@@ -114,9 +114,10 @@ class PythonIOVisitor(ast.NodeVisitor):
 
 
 def infer_python_io(script_payload: str) -> tuple[list[str], list[str]]:
-    """Parses a Python snippet and infers referenced inputs and assigned outputs."""
+    """Validates a Python snippet and infers referenced inputs and assigned outputs."""
     try:
         syntax_tree = ast.parse(script_payload, mode="exec")
+        compile(syntax_tree, filename="<fch_python>", mode="exec")
         visitor = PythonIOVisitor()
         visitor.visit(syntax_tree)
 
