@@ -72,6 +72,32 @@ warning(Type, Labels, Details)
 
 ---
 
+## Warning Raised
+
+**[Result]**{.badge .result }
+
+The `warning_raised` output predicates summarize non-ignored warnings in a
+reported model:
+
+| Output | Meaning |
+| :--- | :--- |
+| `warning_raised` | At least one warning was raised. |
+| `warning_raised(Type)` | At least one warning of `Type` was raised. |
+| `warning_raised(Type,Labels)` | A warning of `Type` with the given `Labels` was raised. |
+
+`Type` and `Labels` are the corresponding fields of `warning(Type,Labels,Details)`.
+
+!!! Example
+    A Python error with an empty label list produces these summary atoms:
+
+    ```prolog
+    warning_raised.
+    warning_raised(expression(pythonError)).
+    warning_raised(expression(pythonError),()).
+    ```
+
+---
+
 ## Ignore Warning
 **[Declaration]**{.badge .declaration }
 

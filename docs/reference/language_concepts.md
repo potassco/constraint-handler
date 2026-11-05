@@ -203,5 +203,6 @@ A list of output facts used to represent results.
 | [set_value] | Indicates the assigned value of a variable in the solution. |
 | [multimap_value] | Indicates the assigned value of a variable in the solution. |
 | [warning] | Represents a warning message generated during solving. |
+| [warning_raised](error_handling.md#warning-raised) | Summarizes raised warnings by type and related labels. |
 | [evaluated] | Experimental and not documented. |
 | [preference_score] | Represents the total score of preferences satisfied in the solution. |
