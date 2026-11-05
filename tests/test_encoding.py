@@ -269,6 +269,7 @@ execution_tests = [
     "execution/python_list",
     "execution/python_set_empty_equality",
     "execution/python_syntax_error",
+    "execution/python_syntax_error_through",
     "execution/run_condition",
     "execution/warning_spurious",
     "execution/warning_spurious2",
@@ -820,6 +821,7 @@ choice_statistics_skip: set[str] = {
     "error/recovery_check",
     "execution/conditional_string_equality_single_model",
     "execution/python_integrity_should_be_ignored",
+    "execution/python_syntax_error_through",
     "execution/python_syntax_error",
     "execution/run_condition",
     "execution/warning_spurious",
@@ -992,6 +994,7 @@ tightness_statistics_skip: set[str] = {
 }
 tightness_statistics_xfail: set[str] = {
     "default/define/single",
+    "execution/python_syntax_error",
     "execution/warning_spurious",
     "optimization/multimap_bool",
     "optimization/multimap_float",

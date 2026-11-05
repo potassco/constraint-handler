@@ -62,4 +62,4 @@ class Evaluated(NamedTuple):
     value: expression.ReducedExpr
 
 
-type ResultAtom = Bool_evaluated | Evaluated | Set_value | Multimap_value | OptimizeResult | Preference_score | Value | warning.Warning
+type ResultAtom = Bool_evaluated | Evaluated | Set_value | Multimap_value | OptimizeResult | Preference_score | Value | warning.Warning | warning.Warning_raised
