@@ -90,7 +90,7 @@ def symbol_sequence(*items: clingo.Symbol) -> clingo.Symbol:
 
 def optional_condition(name: clingo.Symbol) -> tuple[clingo.Symbol, ...]:
     return (
-        clingo.Function("variable_declare", [name, clingo.Function("fromFacts")]),
+        clingo.Function("variable_declare", [name, clingo.Function("fromFacts"), TRUE_SYMBOL]),
         clingo.Function(
             "variable_domain",
             [name, clingo.Function("val", [clingo.Function("bool"), clingo.Function("false")]), TRUE_SYMBOL],
@@ -763,8 +763,8 @@ def test_domain_computation_declared_sets_are_empty_only_without_assignments() -
         (
             empty_var,
             required_var,
-            clingo.Function("variable_declare", [empty_name, clingo.Function("set")]),
-            clingo.Function("variable_declare", [required_name, clingo.Function("set")]),
+            clingo.Function("variable_declare", [empty_name, clingo.Function("set"), TRUE_SYMBOL]),
+            clingo.Function("variable_declare", [required_name, clingo.Function("set"), TRUE_SYMBOL]),
             clingo.Function("set_assign", [required_name, int_symbol(1), true_value]),
         ),
         (),

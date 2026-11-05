@@ -544,7 +544,6 @@ compile2_skip: set[str] = {
     "variable/dynamic_type",  # non static input
 }
 compile2_xfail: set[str] = {
-    "core/conditional_declare",
     "core/empty_set_execution",
     "core/reasoning_modes",  # multimap
     "core/reasoning_modes_with_show",

@@ -490,7 +490,7 @@ class DomainComputation:
         {
             ("variable_assign", 2),
             ("variable_choice", 2),
-            ("variable_declare", 2),
+            ("variable_declare", 3),
             ("variable_default", 4),
             ("variable_define", 3),
             ("variable_domain", 3),
@@ -696,6 +696,8 @@ class DomainComputation:
             if expr.name == "variable_declare":
                 if cls.is_function(expr.arguments[1], "set", 0):
                     set_sources.setdefault(expr.arguments[0], {"set_assign": [], "optional_set_assign": []})
+                if expr.arguments[2] != TRUE_BOOLEAN_SYMBOL:
+                    variable_sources.setdefault(expr.arguments[0], []).append(cached_function("bad"))
                 continue
             if expr.name == "set_assign" and len(expr.arguments) == 3:
                 var, source_expr, condition = expr.arguments

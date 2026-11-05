@@ -9,6 +9,10 @@ _variable_has_active_declaration(Var) :-
 	_passed(compile2, _, variable_declare(Var, _, Cond)),
 	_se_value(Cond, val(bool, true)).
 
+_se_value(variable(Var), bad) :-
+	_expression(compile2, variable(Var)),
+	not _variable_has_active_declaration(Var).
+
 _set_variable_domain(Var, Expr) :-
 	_passed(compile2, _, variable_domain(Var, Expr, Cond)),
 	_se_value(Cond, val(bool, true)),
@@ -65,7 +69,12 @@ _set_choice_value(Expr, set) :-
 _set_choice_value(Expr, Value) :-
 	_se_is_set(Expr),
 	_se_domain(Expr, Value),
-	Value != set.
+	Value != set,
+	Value != bad.
+_set_choice_value(Expr, bad) :-
+	_se_is_set(Expr),
+	_se_domain(Expr, bad),
+	_se_value(Expr, bad) : Expr = variable(Var).
 
 1 { _se_value(Expr, Value) : _set_choice_value(Expr, Value) } 1 :-
 	_set_choice_value(Expr, _),
