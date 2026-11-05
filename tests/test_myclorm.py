@@ -506,6 +506,10 @@ def test_cltopy_variadic_tuple_target_is_supported():
     assert myClorm.cltopy(symbol, tuple[int, ...]) == (1, 2, 3)
 
 
+def test_cltopy_empty_variadic_tuple_target_is_supported():
+    assert myClorm.cltopy(clingo.Function("", []), tuple[int, ...]) == ()
+
+
 def test_cltopy_nested_typed_tuple_is_supported():
     symbol = clingo.Function(
         "",
