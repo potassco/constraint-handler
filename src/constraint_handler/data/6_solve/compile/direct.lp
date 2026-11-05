@@ -12,6 +12,7 @@ _se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
 _se_value(variable(X),V) :- _passed(compile,LBL,variable_define(X,E,C)), _se_value(C,val(bool,true)), _se_value(E,V).
+_se_value(variable(X),bad) :- _expression(compile,variable(X)), #false : _passed(compile,_,variable_declare(X,D,C)), _se_value(C,val(bool,true)).
 
 
 %%%%%%%%%%%%%%%%% tuples

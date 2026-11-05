@@ -517,7 +517,6 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
-    "core/conditional_declare",
     "datatype/bool/conj_disj/mixed",
     "datatype/bool/conj_disj/none",
     "datatype/float/mult/recovery",
