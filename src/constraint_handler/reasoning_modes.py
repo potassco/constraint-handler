@@ -226,7 +226,10 @@ class BraveReasoningStrategy(_StagedReasoningStrategy):
     @staticmethod
     def _variable_result_atoms(variables):
         for result_var in variables:
-            if isinstance(result_var, (result.Evaluated, warning.Warning)):
+            if isinstance(
+                result_var,
+                (result.Evaluated, warning.Warning, warning.Warning_raised0, warning.Warning_raised1, warning.Warning_raised2),
+            ):
                 continue
             if not isinstance(result_var, (result.Value, result.Set_value, result.Multimap_value)):
                 raise TypeError(f"Unexpected variable type: {type(result_var)} with value {result_var}")
