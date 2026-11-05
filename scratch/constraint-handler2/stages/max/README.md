@@ -50,7 +50,7 @@ enumerates the Cartesian product of its known input domains and evaluates the
 callable for each row:
 
 ```asp
-solution(ExprId, SolutionId).
+solution(Expr, SolutionId).
 input(SolutionId, variable("a"), integer(42)).
 input(SolutionId, variable("b"), integer(1)).
 output(SolutionId, integer(43)).

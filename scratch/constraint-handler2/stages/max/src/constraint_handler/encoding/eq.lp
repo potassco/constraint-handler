@@ -23,7 +23,7 @@ def tuple_key(lib, value):
 #end.
 
 equality_operands(Id, Op, Left, Right) :-
-    native_expression(Id, operation(Op, (Left, Right))), Op = (eq; neq).
+    native_expression(Id), Id = operation(Op, (Left, Right)), Op = (eq; neq).
 
 equality_input(Arg) :-
     equality_operands(_, _, Left, Right), Arg = (Left; Right).

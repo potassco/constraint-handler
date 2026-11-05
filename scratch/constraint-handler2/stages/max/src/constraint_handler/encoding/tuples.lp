@@ -2,22 +2,19 @@ tuple_argument_defined(Id, Index) :- tuple_argument(Id, Index, Arg), value(Arg, 
 value(Id, tuple) :- tuple_arity(Id, _),
     tuple_argument_defined(Id, Index) : tuple_argument(Id, Index, _).
 tuple_size(Id, Size) :- tuple_arity(Id, Size), value(Id, tuple).
-payload_copy(__tuple(Id, Index), Arg) :-
-    tuple_argument(Id, Index, Arg), value(Id, tuple).
+value(__tuple(Id, Index), Value) :- tuple_argument(Id, Index, Arg), value(Id, tuple), value(Arg, Value).
+set_value(__tuple(Id, Index), Value) :- tuple_argument(Id, Index, Arg), value(Id, tuple), set_value(Arg, Value).
 
-payload_copy(Id, __tuple(Arg, Index)) :-
-    native_expression(Id, operation(tuple_get, (Arg, Position))),
+value(Id, Value) :-
+    native_expression(Id), Id = operation(tuple_get, (Arg, Position)),
     value(Arg, tuple), tuple_size(Arg, Size), value(Position, integer(Index)),
-    Index >= 0, Index < Size.
-value(Id, integer(Size)) :- native_expression(Id, operation(length, (Arg,))),
+    Index >= 0, Index < Size, value(__tuple(Arg, Index), Value).
+set_value(Id, Value) :-
+    native_expression(Id), Id = operation(tuple_get, (Arg, Position)),
+    value(Arg, tuple), tuple_size(Arg, Size), value(Position, integer(Index)),
+    Index >= 0, Index < Size, set_value(__tuple(Arg, Index), Value).
+value(Id, integer(Size)) :- native_expression(Id), Id = operation(length, (Arg,)),
     value(Arg, tuple), tuple_size(Arg, Size).
-
-variable_tuple_choice(Name, ExprId) :- variable_choose(Name, ExprId, ConditionId, _),
-    value(ExprId, tuple), value(ConditionId, boolean(true)).
-{ variable_value(Name, ExprId) } :- variable_tuple_choice(Name, ExprId).
-payload_pair(variable(Name), ExprId) :- variable_tuple_choice(Name, ExprId).
-variable_value(Name, ExprId) :- variable_tuple_choice(Name, ExprId),
-    value(variable(Name), tuple), not payload_difference(variable(Name), ExprId).
 
 equality_tuple_subject(Arg) :- equality_input(Arg), value(Arg, tuple).
 equality_input(__tuple(Arg, Index)) :- equality_tuple_subject(Arg),

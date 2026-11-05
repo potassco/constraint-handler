@@ -12,6 +12,7 @@ from .domains import DomainCache, DomainValue
 from .internal_input import (
     ConstraintStore,
     Expr,
+    ExprId,
     Lambda,
     Operation,
     OperationArg,
@@ -130,6 +131,7 @@ def _complex_facts(
     for expr_id, expr in sorted(store.expressions.items()):
         if engines[expr_id] != Engine.complex:
             continue
+        key = _term(lib, expr)
         if not (
             isinstance(expr, Operation)
             and expr.op == Operator.python_eval
@@ -154,7 +156,7 @@ def _complex_facts(
         set_universes: dict[tuple[int, int | None], frozenset[Symbol]] = {}
         for values, result in table.rows:
             solution = _number(lib, solution_id)
-            yield Function(lib, "solution", [_number(lib, expr_id), solution])
+            yield Function(lib, "solution", [key, solution])
             for index, (arg, value) in enumerate(zip(arguments, values, strict=True)):
                 argument = argument_terms[index]
                 if argument is None:
@@ -183,8 +185,8 @@ def _complex_facts(
                     included = {
                         _term(lib, convert_expression(member)) for member in item
                     }
-                    key = (index, position)
-                    if key not in set_universes:
+                    universe_key = (index, position)
+                    if universe_key not in set_universes:
                         candidates: list[DomainValue] = []
                         for alternative in axes[index]:
                             if position is None:
@@ -193,13 +195,13 @@ def _complex_facts(
                                 alternative
                             ):
                                 candidates.append(alternative[position])
-                        set_universes[key] = frozenset(
+                        set_universes[universe_key] = frozenset(
                             _term(lib, convert_expression(member))
                             for candidate in candidates
                             if isinstance(candidate, frozenset)
                             for member in candidate
                         )
-                    for member in sorted(set_universes[key] - included):
+                    for member in sorted(set_universes[universe_key] - included):
                         yield Function(
                             lib, "set_input_exclude", [solution, subject, member]
                         )
@@ -229,6 +231,9 @@ def asp_facts(
             raise ValueError("optimization requires a native linear integer objective")
         if domains is None or domains.get_domain(expr).unknown:
             raise ValueError("optimization requires known finite integer domains")
+    terms: dict[ExprId, Symbol] = {
+        expr_id: _term(lib, expr) for expr_id, expr in store.expressions.items()
+    }
     facts: list[Symbol] = [
         Function(lib, "set_variable", [String(lib, variable.name)])
         for variable in store.set_variables
@@ -258,8 +263,8 @@ def asp_facts(
                         predicate,
                         [
                             String(lib, variable.name),
-                            _number(lib, entry.value),
-                            _number(lib, entry.condition),
+                            terms[entry.value],
+                            terms[entry.condition],
                             String(lib, entry.label),
                         ],
                     )
@@ -271,8 +276,8 @@ def asp_facts(
                     predicates[2],
                     [
                         String(lib, variable.name),
-                        _number(lib, entry.value),
-                        _number(lib, entry.condition),
+                        terms[entry.value],
+                        terms[entry.condition],
                         _number(lib, entry.priority),
                         String(lib, entry.label),
                     ],
@@ -283,7 +288,7 @@ def asp_facts(
         Function(
             lib,
             "check" if constraint.is_check else "ensure",
-            [_number(lib, constraint.expr), String(lib, constraint.label)],
+            [terms[constraint.expr], String(lib, constraint.label)],
         )
         for constraint in store.constraints
     )
@@ -293,8 +298,8 @@ def asp_facts(
             "minimize_statement",
             [
                 _number(lib, statement),
-                _number(lib, item.expr),
-                _number(lib, item.condition),
+                terms[item.expr],
+                terms[item.condition],
                 _number(lib, item.priority),
             ],
         )
@@ -312,15 +317,27 @@ def asp_facts(
         if term.name == "set"
         for member in term.arguments[0].arguments
     )
+    facts.extend(
+        Function(
+            lib,
+            "constant_tuple_size",
+            [term, _number(lib, len(term.arguments[0].arguments))],
+        )
+        for term in sorted(constants)
+        if term.name == "tuple"
+    )
+    facts.extend(
+        Function(lib, "constant_tuple_item", [term, _number(lib, index), item])
+        for term in sorted(constants)
+        if term.name == "tuple"
+        for index, item in enumerate(term.arguments[0].arguments)
+    )
     order_minima: dict[Expr, int | None] = {}
     for expr_id, expr in sorted(store.expressions.items()):
-        facts.append(Function(lib, "expr", [_number(lib, expr_id), _term(lib, expr)]))
+        key = terms[expr_id]
+        facts.append(Function(lib, "expr", [key]))
         facts.append(
-            Function(
-                lib,
-                "engine",
-                [Function(lib, engines[expr_id].value), _number(lib, expr_id)],
-            )
+            Function(lib, "engine", [Function(lib, engines[expr_id].value), key])
         )
         if (
             engines[expr_id] == Engine.native
@@ -331,14 +348,14 @@ def asp_facts(
                 Function(
                     lib,
                     "tuple_arity",
-                    [_number(lib, expr_id), _number(lib, len(expr.args))],
+                    [key, _number(lib, len(expr.args))],
                 )
             )
             facts.extend(
                 Function(
                     lib,
                     "tuple_argument",
-                    [_number(lib, expr_id), _number(lib, index), _term(lib, arg)],
+                    [key, _number(lib, index), _term(lib, arg)],
                 )
                 for index, arg in enumerate(expr.args)
             )
@@ -353,7 +370,7 @@ def asp_facts(
                     "set_argument"
                     if expr.op == Operator.set_make
                     else "boolean_argument",
-                    [_number(lib, expr_id), _term(lib, arg)],
+                    [key, _term(lib, arg)],
                 )
                 for arg in expr.args
             )
@@ -366,7 +383,7 @@ def asp_facts(
                 Function(
                     lib,
                     "boolean_equivalence_argument",
-                    [_number(lib, expr_id), _number(lib, index), _term(lib, arg)],
+                    [key, _number(lib, index), _term(lib, arg)],
                 )
                 for index, arg in enumerate(expr.args)
             )
@@ -384,7 +401,7 @@ def asp_facts(
                     if comparison
                     else "linear_integer_offset",
                     [
-                        _number(lib, expr_id),
+                        key,
                         _term(lib, expr.args[0] if comparison else expr.args[-1]),
                     ],
                 )
@@ -397,7 +414,7 @@ def asp_facts(
                         lib,
                         "linear_integer_term",
                         [
-                            _number(lib, expr_id),
+                            key,
                             _number(lib, index),
                             _term(lib, coefficient),
                             _term(lib, argument),
@@ -454,7 +471,7 @@ def asp_facts(
                         "linear_comparison_base"
                         if comparison
                         else "linear_integer_base",
-                        [_number(lib, expr_id), _number(lib, baseline)],
+                        [key, _number(lib, baseline)],
                     )
                 )
     if domains is not None:

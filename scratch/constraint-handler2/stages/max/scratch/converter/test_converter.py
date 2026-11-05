@@ -162,6 +162,28 @@ def test_ensure_maps_to_check_and_evaluate_adds_declaration() -> None:
     )
 
 
+def test_variadic_add_folds_to_binary_adds() -> None:
+    """Verify an n-ary add converts to left-nested binary adds."""
+    source = """
+    variable_declare(x, fromFacts).
+    variable_domain(x, val(int, 1..2)).
+    variable_declare(y, fromFacts).
+    variable_domain(y, val(int, 1..2)).
+    variable_declare(z, fromFacts).
+    variable_domain(z, val(int, 1..2)).
+    evaluate(operation(add, (variable(x), (variable(y), (variable(z), ())))), "sum_lbl").
+    """
+    store = convert_string(source)
+    eval_def = store.variables[VariableRef("__evaluate_0")].definitions[0]
+    assert store._expressions[eval_def.value] == internal_input.Operation(
+        Operator.add,
+        (
+            internal_input.Operation(Operator.add, (VariableRef("x"), VariableRef("y"))),
+            VariableRef("z"),
+        ),
+    )
+
+
 def test_ssa_conditional_if_and_seq2() -> None:
     """Verify SSA conversion of if-then-else and seq2 using conditional variable_define."""
     store = convert_file(CORRECTNESS_DIR / "execution" / "main_absolut.lp")

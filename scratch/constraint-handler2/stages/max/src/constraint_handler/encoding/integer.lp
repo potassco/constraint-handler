@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 value(Id, integer(|V|)) :-
-    native_expression(Id, operation(abs, (Arg,))),
+    native_expression(Id), Id = operation(abs, (Arg,)),
     value(Arg, integer(V)).
 
 linear_integer_input(Arg) :-

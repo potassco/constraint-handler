@@ -24,7 +24,7 @@ from constraint_handler import (
     SolveOptions,
     VariableRef,
 )
-from constraint_handler.asp_facts import asp_facts
+from constraint_handler.asp_facts import _term, asp_facts
 from constraint_handler.dispatching import DispatchStore
 from constraint_handler.domains import Domain
 from constraint_handler.internal_input import SetVariable
@@ -41,7 +41,9 @@ def lib() -> Library:
     return library
 
 
-def test_optimization_facts_include_single_term_and_constant_bases() -> None:
+def test_optimization_facts_include_single_term_and_constant_bases(
+    lib: Library,
+) -> None:
     """Export statement identities, single-term order gaps, and constant bases."""
     store = ConstraintStore()
     variable = VariableRef("objective")
@@ -57,12 +59,20 @@ def test_optimization_facts_include_single_term_and_constant_bases() -> None:
     assert not diagnostics.has_errors
     first, second = problem.store.optimizations
     facts = {str(fact) for fact in problem.asp_facts}
-    assert f"minimize_statement(0,{first.expr},{first.condition},3)" in facts
-    assert f"minimize_statement(1,{second.expr},{second.condition},0)" in facts
-    assert f"linear_integer_base({first.expr},11)" in facts
-    assert f"linear_integer_base({second.expr},7)" in facts
+
+    def term(expr_id: int) -> str:
+        return str(_term(lib, problem.store.expressions[expr_id]))
+
     assert (
-        f'linear_integer_term({first.expr},0,integer(-2),variable("objective"))'
+        f"minimize_statement(0,{term(first.expr)},{term(first.condition)},3)" in facts
+    )
+    assert (
+        f"minimize_statement(1,{term(second.expr)},{term(second.condition)},0)" in facts
+    )
+    assert f"linear_integer_base({term(first.expr)},11)" in facts
+    assert f"linear_integer_base({term(second.expr)},7)" in facts
+    assert (
+        f'linear_integer_term({term(first.expr)},0,integer(-2),variable("objective"))'
         in facts
     )
     assert 'order_min(variable("objective"),-3)' in facts
@@ -609,8 +619,8 @@ def test_asp_facts_declarations(lib: Library) -> None:
             "variable_choose",
             [
                 String(lib, variable.name),
-                Number(lib, 0),
-                Number(lib, 1),
+                parse_term(lib, "integer(1)"),
+                parse_term(lib, "boolean(true)"),
                 String(lib, 'input"\\\n'),
             ],
         )
@@ -619,18 +629,18 @@ def test_asp_facts_declarations(lib: Library) -> None:
     default = next(fact for fact in facts if fact.name == "variable_default_to")
     assert default.arguments[:4] == [
         String(lib, variable.name),
-        Number(lib, 4),
-        Number(lib, 5),
+        parse_term(lib, "integer(0)"),
+        parse_term(lib, "boolean(true)"),
         Number(lib, -2),
     ]
     assert (
-        parse_term(lib, 'expr(2,operation(add,(variable("x\\"\\\\\\n"),integer(2))))')
+        parse_term(lib, 'expr(operation(add,(variable("x\\"\\\\\\n"),integer(2))))')
         in facts
     )
-    assert parse_term(lib, "expr(0,integer(1))") in facts
-    assert parse_term(lib, "expr(1,boolean(true))") in facts
-    assert parse_term(lib, 'check(6,"check")') in facts
-    assert parse_term(lib, 'ensure(7,"ensure")') in facts
+    assert parse_term(lib, "expr(integer(1))") in facts
+    assert parse_term(lib, "expr(boolean(true))") in facts
+    assert parse_term(lib, 'check(boolean(true),"check")') in facts
+    assert parse_term(lib, 'ensure(boolean(false),"ensure")') in facts
 
 
 @pytest.mark.parametrize("operator", (Operator.int_div, Operator.real_div))
@@ -1158,8 +1168,9 @@ def test_native_has_value_grounds_two_rules_for_nullable_sets(
 ) -> None:
     """Ground only two result rules regardless of the set's powerset size."""
     control = Control(lib)
+    term = 'operation(has_value,(variable("source"),))'
     control.parse_string(
-        'expr(1,operation(has_value,(variable("source"),))). engine(native,1). '
+        f"expr({term}). engine(native,{term}). "
         '1 { value(variable("source"),none); value(variable("source"),set) } 1. '
         f'{{ set_value(variable("source"),integer(0..{members - 1})) }} '
         ':- value(variable("source"),set).'
@@ -1172,7 +1183,7 @@ def test_native_has_value_grounds_two_rules_for_nullable_sets(
     result_literals = {
         atom.literal
         for symbol, atom in control.base[("value", 2, True)].items()
-        if str(symbol.arguments[0]) == "1"
+        if symbol.arguments[0] == parse_term(lib, term)
     }
     assert len(result_literals) == 2
     control.write_aspif(preprocess=False)
@@ -1913,11 +1924,12 @@ def test_complex_set_universe_shared_between_rows(lib: Library, kind: str) -> No
         for expr_id, engine in problem.engines.items()
         if engine == Engine.complex
     )
+    expression_term = _term(lib, problem.store.expressions[expression_id])
     row = 0
     for value in problem.domains.get_domain(source).iter_values():
         assert isinstance(value, (int, frozenset))
         for offset_value in (10, 20):
-            expected.append(f"solution({expression_id},{row})")
+            expected.append(f"solution({expression_term},{row})")
             input_value = "set" if isinstance(value, frozenset) else f"integer({value})"
             expected.append(f'input({row},variable("source"),{input_value})')
             if isinstance(value, frozenset):
@@ -2116,7 +2128,7 @@ def test_asp_facts_values(lib: Library, value: Expr, term: str) -> None:
         store,
         DispatchStore((expr_id, Engine.native) for expr_id in store.expressions),
     )
-    assert parse_term(lib, f"expr(0,{term})") in facts
+    assert parse_term(lib, f"expr({term})") in facts
     assert parse_term(lib, f"constant({term})") in facts
     assert parse_term(lib, "constant(boolean(true))") in facts
     for fact in facts:
@@ -2158,9 +2170,19 @@ def test_asp_facts_set_entries(lib: Library) -> None:
         store,
         DispatchStore((expr_id, Engine.native) for expr_id in store.expressions),
     )
-    assert parse_term(lib, 'set_contain_choose("s",0,1,"choice")') in facts
-    assert parse_term(lib, 'set_contain("s",2,3,"define")') in facts
-    assert parse_term(lib, 'set_contain_default_to("s",4,5,4,"default")') in facts
+    assert (
+        parse_term(lib, 'set_contain_choose("s",integer(1),boolean(true),"choice")')
+        in facts
+    )
+    assert (
+        parse_term(lib, 'set_contain("s",integer(2),boolean(true),"define")') in facts
+    )
+    assert (
+        parse_term(
+            lib, 'set_contain_default_to("s",integer(3),boolean(true),4,"default")'
+        )
+        in facts
+    )
 
 
 def test_asp_facts_requires_complete_dispatch(lib: Library) -> None:
@@ -2180,11 +2202,9 @@ def test_asp_facts_other_engines(lib: Library, engine: Engine) -> None:
     )
     engines = DispatchStore((expr_id, engine) for expr_id in store.expressions)
     facts = asp_facts(lib, store, engines)
-    assert parse_term(lib, f"engine({engine.value},0)") in facts
-    assert (
-        parse_term(lib, 'expr(0,operation(python_eval,(python("lambda: 1"),)))')
-        in facts
-    )
+    op = 'operation(python_eval,(python("lambda: 1"),))'
+    assert parse_term(lib, f"engine({engine.value},{op})") in facts
+    assert parse_term(lib, f"expr({op})") in facts
 
 
 @pytest.mark.parametrize("value", (-(2**31) - 1, 2**31))

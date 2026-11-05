@@ -795,6 +795,14 @@ def _convert_expr(
             raise ConversionError(f"Unrecognized expression term: {_term_to_str(term)}")
 
 
+def _fold_add(args: tuple[OperationArg, ...]) -> Operation:
+    """Left-fold an n-ary ASP add into nested binary adds."""
+    total = Operation(Operator.add, (args[0], args[1]))
+    for arg in args[2:]:
+        total = Operation(Operator.add, (total, arg))
+    return total
+
+
 def _convert_operation(
     op_term: Term,
     converted_args: tuple[OperationArg, ...],
@@ -820,6 +828,8 @@ def _convert_operation(
                 )
             if op_name not in _OPERATOR_MAP:
                 raise UnsupportedFeatureError(f"Unknown operator {op_name!r}")
+            if op_name == "add" and len(converted_args) > 2:
+                return _fold_add(converted_args)
             return Operation(_OPERATOR_MAP[op_name], converted_args)
         case _:
             raise ConversionError(
