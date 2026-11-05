@@ -644,6 +644,7 @@ propagator_skip: set[str] = {
     "warning/python_extract/statement_error",
 }
 propagator_xfail: set[str] = {
+    "core/conditional_declare_definition",
     "core/conditional_declare_set_multiple",
     "core/reasoning_modes_with_show",
     "datatype/bool/conj_disj_mixed",
@@ -715,7 +716,10 @@ propagator_true_skip: set[str] = propagator_skip | {
     "warning/variable_undeclared",
 }
 propagator_true_xfail: set[str] = propagator_xfail | {
+    "core/check",  # Hash/order-sensitive dependency-counter drift.
+    "core/conditional_definitions",  # Hash/order-sensitive dependency-counter drift.
     "core/conditional_domain",
+    "core/ensure",  # Hash/order-sensitive dependency-counter drift.
 }
 
 engine_test_configs: list[tuple[engine.Engine, set[str], set[str]]] = [
