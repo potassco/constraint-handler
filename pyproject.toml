@@ -37,6 +37,7 @@ typecheck = [
 ]
 test = [
     "pytest==9.0.1",
+    "pytest-timeout==2.4.0",
     "clintest>=0.4",
     "pytest-benchmark>=5.1,<6",
 ]
