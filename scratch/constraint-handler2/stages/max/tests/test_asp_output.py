@@ -3,7 +3,6 @@
 import operator
 from collections.abc import Callable
 from dataclasses import replace
-from importlib.resources import files
 from itertools import combinations, pairwise
 
 import pytest
@@ -28,6 +27,7 @@ from constraint_handler.asp_facts import _term, asp_facts
 from constraint_handler.dispatching import DispatchStore
 from constraint_handler.domains import Domain
 from constraint_handler.internal_input import SetVariable
+from constraint_handler.preprocessor import load_encodings
 from constraint_handler.python_input import Expr, OperationArg
 
 from .domain_helpers import seeded_domains
@@ -132,10 +132,7 @@ def test_native_linear_integer(lib: Library, values: tuple[int, ...]) -> None:
     models: list[dict[str, int]] = []
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "integer.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     outcome = control.solve(
         on_model=lambda model: models.append(
@@ -190,10 +187,7 @@ def test_native_linear_integer_unfolded(
             )
         )
     )
-    for encoding in ("native.lp", "integer.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[set[str]] = []
     outcome = control.solve(
@@ -241,10 +235,7 @@ def test_native_linear_comparison(lib: Library, relation: str, arity: int) -> No
     )
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "integer.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[dict[str, Symbol]] = []
     outcome = control.solve(
@@ -312,10 +303,7 @@ def test_native_linear_comparison_solves_send_more_money(lib: Library) -> None:
     )
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "integer.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[dict[str, int]] = []
     outcome = control.solve(
@@ -359,10 +347,7 @@ def test_native_boolean_short_circuit(
     assert not any(fact.name == "solution" for fact in problem.asp_facts)
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "boolean.lp", "complex.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[dict[str, bool]] = []
     outcome = control.solve(
@@ -455,10 +440,7 @@ def test_native_boolean_absent_input_feeds_python(
     assert not diagnostics.has_errors
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "boolean.lp", "complex.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[set[str]] = []
     outcome = control.solve(
@@ -484,9 +466,7 @@ def test_constraint_truth_and_existence(
     control.parse_string(f'{kind}(0,"constraint").')
     if value is not None:
         control.parse_string(f"value(0,{value}).")
-    control.parse_string(
-        files("constraint_handler").joinpath("encoding", "native.lp").read_text()
-    )
+    load_encodings(control)
     control.ground([("base", [])])
     result = control.solve()
     assert result.satisfiable == (
@@ -509,10 +489,7 @@ def test_constraints_on_complex_expression(
     assert not diagnostics.has_errors
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "boolean.lp", "integer.lp", "complex.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[set[str]] = []
     result = control.solve(
@@ -559,12 +536,7 @@ def test_native_and_complex_scalar_expression(
     )
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "integer.lp", "complex.lp"):
-        control.parse_string(
-            files("constraint_handler")
-            .joinpath("encoding", encoding)
-            .read_text(encoding="utf-8")
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     variables = {
         parse_term(lib, f'variable("{name}")') for name in ("left", "right", "result")
@@ -666,10 +638,7 @@ def test_complex_division_by_zero(
     assert diagnostics.has_errors == (0 in values)
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "integer.lp", "complex.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[frozenset[str]] = []
     control.solve(
@@ -907,10 +876,7 @@ def test_complex_solution_rows(lib: Library, with_engine: bool) -> None:
             or fact.arguments[0].name != "complex"
         )
     )
-    for encoding in ("native.lp", "integer.lp", "complex.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     variables = {
         parse_term(lib, f'variable("{name}")') for name in ("a", "b", "sum", "negative")
@@ -1005,17 +971,7 @@ def test_set_expression_outputs(
     assert not diagnostics.has_errors
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in (
-        "native.lp",
-        "integer.lp",
-        "boolean.lp",
-        "eq.lp",
-        "set.lp",
-        "complex.lp",
-    ):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[set[str]] = []
     outcome = control.solve(
@@ -1057,19 +1013,7 @@ def _variable_models(
     assert Engine.propagator not in problem.engines.values()
     control = Control(lib, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in (
-        "native.lp",
-        "integer.lp",
-        "boolean.lp",
-        "eq.lp",
-        "set.lp",
-        "tuples.lp",
-        "none.lp",
-        "complex.lp",
-    ):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[dict[str, Payload]] = []
 
@@ -1175,10 +1119,7 @@ def test_native_has_value_grounds_two_rules_for_nullable_sets(
         f'{{ set_value(variable("source"),integer(0..{members - 1})) }} '
         ':- value(variable("source"),set).'
     )
-    for encoding in ("native.lp", "none.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground()
     result_literals = {
         atom.literal
@@ -1337,10 +1278,7 @@ def test_computed_tuple_slot_grounding_growth_is_linear(lib: Library) -> None:
         assert not any(fact.name == "solution" for fact in problem.asp_facts)
         control = Control(lib)
         control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-        for encoding in ("native.lp", "integer.lp", "tuples.lp"):
-            control.parse_string(
-                files("constraint_handler").joinpath("encoding", encoding).read_text()
-            )
+        load_encodings(control)
         control.ground([("base", [])])
         control.write_aspif(preprocess=False)
         sizes.append(sum(len(line.split()) for line in control.buffer.splitlines()))
@@ -1493,10 +1431,7 @@ def test_tuple_equality_aspif_growth_is_linear(
         assert set(problem.engines.values()) == {Engine.native}
         control = Control(lib)
         control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-        for encoding in ("native.lp", "eq.lp", "set.lp", "tuples.lp"):
-            control.parse_string(
-                files("constraint_handler").joinpath("encoding", encoding).read_text()
-            )
+        load_encodings(control)
         control.ground([("base", [])])
         control.write_aspif(preprocess=False)
         sizes.append(sum(len(line.split()) for line in control.buffer.splitlines()))
@@ -1600,10 +1535,7 @@ def test_native_equality_grounding_is_linear(
         assert not any(fact.name == "solution" for fact in problem.asp_facts)
         control = Control(lib)
         control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-        for encoding in ("native.lp", "eq.lp", "set.lp"):
-            control.parse_string(
-                files("constraint_handler").joinpath("encoding", encoding).read_text()
-            )
+        load_encodings(control)
         control.ground([("base", [])])
         control.write_aspif(preprocess=False)
         sizes.append(sum(len(line.split()) for line in control.buffer.splitlines()))

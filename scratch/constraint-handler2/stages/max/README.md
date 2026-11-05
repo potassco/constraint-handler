@@ -64,11 +64,12 @@ Candidate calls that raise `ArithmeticError`, `LookupError`, `TypeError`, or
 Dependent expressions therefore remain undefined unless their existing semantics
 can determine a result without that input. Python domain inference retains only
 successful candidate results; it reports evaluation failures as warnings.
-The solver loads `native.lp`, `boolean.lp`, `integer.lp`, `set.lp`, and `complex.lp` from
+The solver loads `copy.lp`, `native.lp`, `boolean.lp`, `integer.lp`, `set.lp`, and `complex.lp` from
 the bundled `encoding/` directory. Shared value, variable, and constraint rules
-remain in `native.lp`.
+remain in `native.lp`. `copy.lp` provides `copy_value_from_to/2`, which copies a
+full payload between expressions.
 
-Sets use `value(ExprId, set)` for definedness and `set_value(ExprId, Value)`
+Sets use `value(Expr, set)` for definedness and `set_value(Expr, Value)`
 for each member. An empty set has the marker but no members; an undefined
 expression has neither. Native rules handle constant sets, aliases, conditional
 definitions, whole-set choices, and required or optional set-variable members.

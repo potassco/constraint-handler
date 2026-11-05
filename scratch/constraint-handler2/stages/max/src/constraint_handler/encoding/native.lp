@@ -31,13 +31,7 @@ variable_selected(Name, Expr) :- variable_define(Name, Expr, _, _),
 { variable_selected(Name, Expr) } :- variable_choose(Name, Expr, _, _),
     variable_candidate(Name, Expr).
 
-value(variable(Name), Value) :- variable_selected(Name, Expr), value(Expr, Value).
-set_value(variable(Name), Value) :- variable_selected(Name, Expr), set_value(Expr, Value).
-tuple_size(variable(Name), Size) :- variable_selected(Name, Expr), tuple_size(Expr, Size).
-value(__tuple(variable(Name), Index), Value) :- variable_selected(Name, Expr),
-    tuple_size(Expr, Size), Index = 0..Size-1, value(__tuple(Expr, Index), Value).
-set_value(__tuple(variable(Name), Index), Value) :- variable_selected(Name, Expr),
-    tuple_size(Expr, Size), Index = 0..Size-1, set_value(__tuple(Expr, Index), Value).
+copy_value_from_to(Expr, variable(Name)) :- variable_selected(Name, Expr).
 
 % a candidate whose payload matches the variable is selected with it
 variable_selected(Name, Expr) :- variable_candidate(Name, Expr),

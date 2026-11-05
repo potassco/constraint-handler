@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from importlib.resources import files
+from importlib.resources import as_file, files
 from pathlib import Path
 
 from clingo.control import Control
@@ -162,6 +162,12 @@ class Preprocessor:
         )
 
 
+def load_encodings(control: Control) -> None:
+    """Parse all bundled encodings through encoding.lp, resolving its includes on disk."""
+    with as_file(files().joinpath("encoding", "encoding.lp")) as path:
+        control.parse_files([str(path)])
+
+
 class Solver:
     """Isolated solving session created from a PreparedProblem."""
 
@@ -191,20 +197,7 @@ class Solver:
                 )
             )
         )
-        for encoding in (
-            "native.lp",
-            "none.lp",
-            "boolean.lp",
-            "integer.lp",
-            "eq.lp",
-            "set.lp",
-            "tuples.lp",
-            "complex.lp",
-            "optimize.lp",
-        ):
-            self._control.parse_string(
-                files().joinpath("encoding", encoding).read_text(encoding="utf-8"),
-            )
+        load_encodings(self._control)
         self._control.ground([("base", [])])
 
     @property

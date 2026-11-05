@@ -641,7 +641,7 @@ def test_profile_tuple_payloads(tmp_path: Path) -> None:
         select_expression,
     )
 
-    source = """solution(7,0).
+    source = """solution(probe,0).
 input(0,variable("arg"),tuple).
 input_tuple_size(0,variable("arg"),2).
 input(0,__tuple(variable("arg"),0),boolean(false)).
@@ -653,7 +653,7 @@ tuple_size(__complex_output(0),2).
 value(__tuple(__complex_output(0),0),integer(1)).
 value(__tuple(__complex_output(0),1),set).
 set_value(__tuple(__complex_output(0),1),string("a")).
-solution(7,1).
+solution(probe,1).
 input(1,variable("arg"),tuple).
 input_tuple_size(1,variable("arg"),2).
 input(1,__tuple(variable("arg"),0),boolean(true)).
@@ -664,7 +664,9 @@ value(__complex_output(1),tuple).
 tuple_size(__complex_output(1),0).
 """
     library = Library()
-    table, _setup = select_expression(library, source.splitlines(keepends=True), 7)
+    table, _setup = select_expression(
+        library, source.splitlines(keepends=True), parse_term(library, "probe")
+    )
     payloads = model_values(
         [parse_term(library, line.rstrip().removesuffix(".")) for line in table]
     )
@@ -674,8 +676,9 @@ tuple_size(__complex_output(1),0).
     )
     assert payloads[parse_term(library, "__complex_output(1)")] == ("tuple", ())
     (tmp_path / "ch_facts.lp").write_text(source)
-    profile_expression(tmp_path, 7)
-    report = json.loads((tmp_path / "expression_7_profile.json").read_text())
+    profile_expression(tmp_path, "probe")
+    (report_path,) = tmp_path.glob("expression_*_profile.json")
+    report = json.loads(report_path.read_text())
     assert report["same_models"]
     assert all(
         variant["models"] == 2 and variant["exhausted"]

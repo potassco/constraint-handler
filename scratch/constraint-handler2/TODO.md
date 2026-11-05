@@ -22,6 +22,3 @@ Facts:
   - if there is a definition, no choices should be made active, as they would need to agree and could also be omitted. Important to not have multiple models
   
 
-
-
-- use copy_value_from_to(Expr1, Expr2)

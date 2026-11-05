@@ -14,7 +14,6 @@ import sys
 import time
 import traceback
 from collections import Counter
-from importlib.resources import files
 from pathlib import Path
 
 from clingo.control import Control
@@ -26,6 +25,7 @@ from clingo.symbol import Function, Symbol, SymbolType, parse_term
 from constraint_handler import Engine, Operator, PreprocessOptions, Preprocessor
 from constraint_handler.asp_facts import asp_facts
 from constraint_handler.internal_input import Operation
+from constraint_handler.preprocessor import load_encodings
 
 from .converter import ConversionError, convert_file, convert_string
 
@@ -302,19 +302,7 @@ def audit_case(path: Path, domains_only: bool = False) -> dict[str, object]:
         checkpoint("grounding")
         control = Control(lib, ["0"])
         control.parse_string("\n".join(f"{fact}." for fact in facts))
-        for encoding in (
-            "native.lp",
-            "boolean.lp",
-            "integer.lp",
-            "eq.lp",
-            "set.lp",
-            "tuples.lp",
-            "none.lp",
-            "complex.lp",
-        ):
-            control.parse_string(
-                files("constraint_handler").joinpath("encoding", encoding).read_text()
-            )
+        load_encodings(control)
         control.ground([("base", [])])
         checkpoint("solving")
         models: list[set[tuple[str, str, object]]] = []

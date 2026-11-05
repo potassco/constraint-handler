@@ -22,8 +22,8 @@ def tuple_key(lib, value):
     return value
 #end.
 
-equality_operands(Id, Op, Left, Right) :-
-    native_expression(Id), Id = operation(Op, (Left, Right)), Op = (eq; neq).
+equality_operands(Expr, Op, Left, Right) :-
+    native_expression(Expr), Expr = operation(Op, (Left, Right)), Op = (eq; neq).
 
 equality_input(Arg) :-
     equality_operands(_, _, Left, Right), Arg = (Left; Right).
@@ -47,20 +47,20 @@ equality_scalar_key(Arg, Key) :-
 equality_set_key(Arg, Key) :-
     equality_set(Arg), set_value(Arg, Member), equality_key(Member, Key).
 
-equality_scalar(Id, Op) :-
-    equality_operands(Id, Op, Left, Right),
+equality_scalar(Expr, Op) :-
+    equality_operands(Expr, Op, Left, Right),
     equality_defined(Left), equality_defined(Right), not equality_set(Left),
     not equality_tuple_subject(Left).
-equality_scalar(Id, Op) :-
-    equality_operands(Id, Op, Left, Right),
+equality_scalar(Expr, Op) :-
+    equality_operands(Expr, Op, Left, Right),
     equality_defined(Left), equality_defined(Right), not equality_set(Right),
     not equality_tuple_subject(Right).
 
-equality_match(Id) :-
-    equality_operands(Id, _, Left, Right),
+equality_match(Expr) :-
+    equality_operands(Expr, _, Left, Right),
     equality_scalar_key(Left, Key), equality_scalar_key(Right, Key).
 
-value(Id, boolean(true)) :- equality_scalar(Id, eq), equality_match(Id).
-value(Id, boolean(false)) :- equality_scalar(Id, eq), not equality_match(Id).
-value(Id, boolean(false)) :- equality_scalar(Id, neq), equality_match(Id).
-value(Id, boolean(true)) :- equality_scalar(Id, neq), not equality_match(Id).
+value(Expr, boolean(true)) :- equality_scalar(Expr, eq), equality_match(Expr).
+value(Expr, boolean(false)) :- equality_scalar(Expr, eq), not equality_match(Expr).
+value(Expr, boolean(false)) :- equality_scalar(Expr, neq), equality_match(Expr).
+value(Expr, boolean(true)) :- equality_scalar(Expr, neq), not equality_match(Expr).

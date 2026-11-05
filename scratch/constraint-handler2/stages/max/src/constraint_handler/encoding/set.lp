@@ -3,68 +3,68 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-set_operands(Id, Op, Left, Right) :-
-    native_expression(Id), Id = operation(Op, (Left, Right)),
+set_operands(Expr, Op, Left, Right) :-
+    native_expression(Expr), Expr = operation(Op, (Left, Right)),
     Op = (union; inter; diff; subset; eq; neq),
     value(Left, set), value(Right, set).
 
-value(Id, set) :-
-    set_operands(Id, Op, _, _), Op = (union; inter; diff).
+value(Expr, set) :-
+    set_operands(Expr, Op, _, _), Op = (union; inter; diff).
 
-set_value(Id, Member) :-
-    set_operands(Id, union, Left, _), set_value(Left, Member).
-set_value(Id, Member) :-
-    set_operands(Id, union, _, Right), set_value(Right, Member).
-set_value(Id, Member) :-
-    set_operands(Id, inter, Left, Right),
+set_value(Expr, Member) :-
+    set_operands(Expr, union, Left, _), set_value(Left, Member).
+set_value(Expr, Member) :-
+    set_operands(Expr, union, _, Right), set_value(Right, Member).
+set_value(Expr, Member) :-
+    set_operands(Expr, inter, Left, Right),
     set_value(Left, Member), set_value(Right, Member).
-set_value(Id, Member) :-
-    set_operands(Id, diff, Left, Right),
+set_value(Expr, Member) :-
+    set_operands(Expr, diff, Left, Right),
     set_value(Left, Member), not set_value(Right, Member).
 
-set_left_difference(Id) :-
-    set_operands(Id, subset, Left, Right),
+set_left_difference(Expr) :-
+    set_operands(Expr, subset, Left, Right),
     set_value(Left, Member), not set_value(Right, Member).
 
-value(Id, boolean(false)) :-
-    set_operands(Id, subset, _, _), set_left_difference(Id).
-value(Id, boolean(true)) :-
-    set_operands(Id, subset, _, _), not set_left_difference(Id).
+value(Expr, boolean(false)) :-
+    set_operands(Expr, subset, _, _), set_left_difference(Expr).
+value(Expr, boolean(true)) :-
+    set_operands(Expr, subset, _, _), not set_left_difference(Expr).
 
-set_unequal(Id) :-
-    set_operands(Id, Op, Left, Right), Op = (eq; neq),
+set_unequal(Expr) :-
+    set_operands(Expr, Op, Left, Right), Op = (eq; neq),
     equality_set_key(Left, Key), not equality_set_key(Right, Key).
-set_unequal(Id) :-
-    set_operands(Id, Op, Left, Right), Op = (eq; neq),
+set_unequal(Expr) :-
+    set_operands(Expr, Op, Left, Right), Op = (eq; neq),
     equality_set_key(Right, Key), not equality_set_key(Left, Key).
 
-value(Id, boolean(true)) :- set_operands(Id, eq, _, _), not set_unequal(Id).
-value(Id, boolean(false)) :- set_operands(Id, eq, _, _), set_unequal(Id).
-value(Id, boolean(true)) :- set_operands(Id, neq, _, _), set_unequal(Id).
-value(Id, boolean(false)) :- set_operands(Id, neq, _, _), not set_unequal(Id).
+value(Expr, boolean(true)) :- set_operands(Expr, eq, _, _), not set_unequal(Expr).
+value(Expr, boolean(false)) :- set_operands(Expr, eq, _, _), set_unequal(Expr).
+value(Expr, boolean(true)) :- set_operands(Expr, neq, _, _), set_unequal(Expr).
+value(Expr, boolean(false)) :- set_operands(Expr, neq, _, _), not set_unequal(Expr).
 
-set_membership(Id, Op, Member, Set) :-
-    native_expression(Id), Id = operation(Op, (Element, Set)), Op = (set_isin; set_notin),
+set_membership(Expr, Op, Member, Set) :-
+    native_expression(Expr), Expr = operation(Op, (Element, Set)), Op = (set_isin; set_notin),
     value(Element, Member), value(Set, set).
 
-value(Id, boolean(true)) :-
-    set_membership(Id, set_isin, Member, Set), set_value(Set, Member).
-value(Id, boolean(false)) :-
-    set_membership(Id, set_isin, Member, Set), not set_value(Set, Member).
-value(Id, boolean(false)) :-
-    set_membership(Id, set_notin, Member, Set), set_value(Set, Member).
-value(Id, boolean(true)) :-
-    set_membership(Id, set_notin, Member, Set), not set_value(Set, Member).
+value(Expr, boolean(true)) :-
+    set_membership(Expr, set_isin, Member, Set), set_value(Set, Member).
+value(Expr, boolean(false)) :-
+    set_membership(Expr, set_isin, Member, Set), not set_value(Set, Member).
+value(Expr, boolean(false)) :-
+    set_membership(Expr, set_notin, Member, Set), set_value(Set, Member).
+value(Expr, boolean(true)) :-
+    set_membership(Expr, set_notin, Member, Set), not set_value(Set, Member).
 
-value(Id, integer(Size)) :-
-    native_expression(Id), Id = operation(Op, (Set,)), Op = (cardinality; length),
+value(Expr, integer(Size)) :-
+    native_expression(Expr), Expr = operation(Op, (Set,)), Op = (cardinality; length),
     value(Set, set), Size = #count { Member : set_value(Set, Member) }.
 
-set_argument_defined(Id, Arg) :- set_argument(Id, Arg), value(Arg, _).
+set_argument_defined(Expr, Arg) :- set_argument(Expr, Arg), value(Arg, _).
 
-value(Id, set) :-
-    native_expression(Id), Id = operation(set_make, _),
-    set_argument_defined(Id, Arg) : set_argument(Id, Arg).
-set_value(Id, Member) :-
-    native_expression(Id), Id = operation(set_make, _), value(Id, set),
-    set_argument(Id, Arg), value(Arg, Member).
+value(Expr, set) :-
+    native_expression(Expr), Expr = operation(set_make, _),
+    set_argument_defined(Expr, Arg) : set_argument(Expr, Arg).
+set_value(Expr, Member) :-
+    native_expression(Expr), Expr = operation(set_make, _), value(Expr, set),
+    set_argument(Expr, Arg), value(Arg, Member).

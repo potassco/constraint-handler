@@ -13,14 +13,7 @@ def test_package_is_installed() -> None:
     """Verify installed metadata, the typing marker, and the bundled encodings."""
     assert metadata("constraint-handler")["Name"] == "constraint-handler"
     assert files(constraint_handler).joinpath("py.typed").is_file()
-    for encoding in (
-        "native.lp",
-        "boolean.lp",
-        "integer.lp",
-        "eq.lp",
-        "complex.lp",
-    ):
-        assert files(constraint_handler).joinpath("encoding", encoding).is_file()
+    assert files(constraint_handler).joinpath("encoding", "encoding.lp").is_file()
 
 
 def test_native_encoding_is_independent_of_working_directory(

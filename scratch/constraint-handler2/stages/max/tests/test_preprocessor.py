@@ -1,6 +1,5 @@
 """Tests for the Preprocessor, PreparedProblem, and Solver workflow interface."""
 
-from importlib.resources import files
 from itertools import combinations, product
 from pathlib import Path
 from types import SimpleNamespace
@@ -9,6 +8,7 @@ from unittest.mock import ANY, Mock
 import pytest
 from clingo.control import Control
 from clingo.core import Library
+from clingo.script import enable_python
 from clingo.solve import Model
 
 from constraint_handler import (
@@ -28,6 +28,7 @@ from constraint_handler import (
 from constraint_handler.domains import Domain
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueType
+from constraint_handler.preprocessor import load_encodings
 from constraint_handler.python_input import Expr
 from constraint_handler.type_checking import SetOf
 
@@ -381,12 +382,11 @@ def test_native_if_optional_operands(payload: Expr, python_reference: bool) -> N
         assert not any(
             fact.name in {"solution", "input", "output"} for fact in prepared.asp_facts
         )
-    control = Control(Library(), ["0"])
+    library = Library()
+    enable_python(library)
+    control = Control(library, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in prepared.asp_facts))
-    for encoding in ("native.lp", "boolean.lp", "tuples.lp", "none.lp", "complex.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[set[str]] = []
     assert control.solve(
@@ -478,12 +478,11 @@ def test_native_if_set_grounding_is_linear() -> None:
         assert not diagnostics.has_errors
         assert set(prepared.engines.values()) == {Engine.native}
         assert not any(fact.name == "solution" for fact in prepared.asp_facts)
-        control = Control(Library())
+        library = Library()
+        enable_python(library)
+        control = Control(library)
         control.parse_string("\n".join(f"{fact}." for fact in prepared.asp_facts))
-        for encoding in ("native.lp", "boolean.lp"):
-            control.parse_string(
-                files("constraint_handler").joinpath("encoding", encoding).read_text()
-            )
+        load_encodings(control)
         control.ground([("base", [])])
         control.write_aspif(preprocess=False)
         sizes.append(sum(len(line.split()) for line in control.buffer.splitlines()))

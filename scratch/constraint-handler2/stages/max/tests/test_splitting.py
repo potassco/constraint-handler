@@ -2,7 +2,6 @@
 
 import math
 from collections.abc import Callable
-from importlib.resources import files
 from itertools import combinations
 from typing import cast
 
@@ -34,6 +33,7 @@ from constraint_handler.internal_input import Expr as InternalExpr
 from constraint_handler.internal_input import Lambda as InternalLambda
 from constraint_handler.internal_input import Operation as InternalOperation
 from constraint_handler.internal_input import ValueDef, ValueType
+from constraint_handler.preprocessor import load_encodings
 from constraint_handler.python_conversion import convert
 from constraint_handler.splitting import (
     DEFAULT_SUBSET_LIMIT,
@@ -557,10 +557,7 @@ def test_nested_membership_chain_exhaustive_models(condition: bool, depth: int) 
     enable_python(library)
     control = Control(library, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in ("native.lp", "boolean.lp", "set.lp", "complex.lp"):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground([("base", [])])
     models: list[frozenset[str]] = []
     outcome = control.solve(
@@ -634,10 +631,7 @@ def test_recursive_splitting_preserves_complete_solution_sets(
         enable_python(library)
         control = Control(library, ["0"])
         control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-        for encoding in ("native.lp", "boolean.lp", "set.lp", "complex.lp"):
-            control.parse_string(
-                files("constraint_handler").joinpath("encoding", encoding).read_text()
-            )
+        load_encodings(control)
         control.ground()
         models: list[frozenset[str]] = []
         outcome = control.solve(
@@ -717,19 +711,7 @@ def test_recursive_splitting_preserves_inactive_branch_models(
     enable_python(library)
     control = Control(library, ["0"])
     control.parse_string("\n".join(f"{fact}." for fact in problem.asp_facts))
-    for encoding in (
-        "native.lp",
-        "boolean.lp",
-        "integer.lp",
-        "eq.lp",
-        "set.lp",
-        "tuples.lp",
-        "none.lp",
-        "complex.lp",
-    ):
-        control.parse_string(
-            files("constraint_handler").joinpath("encoding", encoding).read_text()
-        )
+    load_encodings(control)
     control.ground()
     models: list[frozenset[str]] = []
     outcome = control.solve(
