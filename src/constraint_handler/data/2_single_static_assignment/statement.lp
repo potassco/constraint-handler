@@ -23,7 +23,7 @@ _expression_querySSA(PRG,SCOPE,D) :- _expression_querySSA(PRG,SCOPE,E), _express
 _expression(defaultArgs,E) :- _expression_querySSA(PRG,SCOPE,E).
 
 _statement_pythonVarsResult(PRG,SCOPE,R) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _main_solverIdentifiers(ID), R=@pythonStatementVariables(CODE,(),ID).
-_warning(KIND,PRG,MSG) :- _statement_pythonVarsResult(PRG,SCOPE,error(KIND,MSG)).
+ch_core(warning_raise(KIND,MSG,val(bool,true)),PRG) :- _statement_pythonVarsResult(PRG,SCOPE,error(KIND,MSG)).
 
 
 %%%%% statement_changed

@@ -6,4 +6,4 @@ _passed(correction(reservedName,rem),LBL,DECL) :- _variable_name(conflict,X), _v
 _passed(correction(reservedName,add),LBL,variable_declare(X,definition,C)) :- _variable_name(conflict,X), _passed(ssa,LBL,variable_declare(X,definition,C)).
 _passed(correction(reservedName,add),LBL,variable_define(X,E,C)) :- _variable_name(conflict,X), _passed(ssa,LBL,variable_define(X,E,C)).
 
-_warning(variable(reservedName),LBL,X) :- _variable_name(reserved,X), _variable_involve(sugar,LBL,X,DECL).
+ch_core(warning_raise(variable(reservedName),X,val(bool,true)),LBL) :- _variable_name(reserved,X), _variable_involve(sugar,LBL,X,DECL).
