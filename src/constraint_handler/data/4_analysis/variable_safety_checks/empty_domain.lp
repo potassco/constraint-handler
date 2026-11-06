@@ -1,5 +1,5 @@
 _variable_hasDomain(sugar,X) :- _passed(sugar,LBL,variable_domain(X,E,C)).
-ch_core(warning_raise(variable(emptyDomain),X,val(bool,true)),LBL) :- _passed(sugar,LBL,variable_declare(X,fromFacts,C)), not _variable_hasDomain(sugar,X).
+ch_core(warning_raise(variable(emptyDomain),X,C),LBL) :- _passed(sugar,LBL,variable_declare(X,fromFacts,C)), not _variable_hasDomain(sugar,X).
 _passed(correction(emptyDomain,rem),LBL,variable_declare(X,fromFacts,C)) :-
 	_passed(sugar,LBL,variable_declare(X,fromFacts,C)),
 	not _variable_hasDomain(sugar,X).

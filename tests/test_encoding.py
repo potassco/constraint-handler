@@ -488,6 +488,7 @@ warning_tests = [
     "warning/statement/python",
     "warning/statement/structure",
     "warning/syntax",
+    "warning/variable/empty_domain",
     "warning/variable_confusing_name",
     "warning/variable_reservedName",
     "warning/variable_undeclared",

@@ -1,0 +1,2 @@
+warning(variable(emptyDomain),inactive,inactive_facts)
+warning_raised(variable(emptyDomain),inactive)

@@ -1,0 +1,4 @@
+value(enabled,val(bool,true))
+warning(variable(emptyDomain),active,active_facts)
+warning_raised(variable(emptyDomain),active)
+warning_raised(variable(emptyDomain))
