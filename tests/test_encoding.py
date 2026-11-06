@@ -488,11 +488,11 @@ warning_tests = [
     "warning/statement/python",
     "warning/statement/structure",
     "warning/syntax",
+    "warning/variable/confusing_name",
     "warning/variable/empty_domain",
-    "warning/variable_confusing_name",
-    "warning/variable_reservedName",
-    "warning/variable_undeclared",
-    "warning/variable_undeclared_statement",
+    "warning/variable/reserved_name",
+    "warning/variable/undeclared",
+    "warning/variable/undeclared_statement",
     "warning/variables",
 ]
 
@@ -716,8 +716,8 @@ propagator_true_skip: set[str] = propagator_skip | {
     "set/subset_flat",
     "set/union_flat",
     "type/checking/membership_set_polymorphic",
-    "warning/variable_reservedName",
-    "warning/variable_undeclared",
+    "warning/variable/reserved_name",
+    "warning/variable/undeclared",
 }
 propagator_true_xfail: set[str] = propagator_xfail | {
     "core/check",  # Hash/order-sensitive dependency-counter drift.
@@ -972,8 +972,8 @@ choice_statistics_xfail: set[str] = {
     "warning/bad",
     "warning/fake_forbid",
     "warning/ignore_labeled",
-    "warning/variable_reservedName",
-    "warning/variable_undeclared",
+    "warning/variable/reserved_name",
+    "warning/variable/undeclared",
     "warning/variables",
 }
 
