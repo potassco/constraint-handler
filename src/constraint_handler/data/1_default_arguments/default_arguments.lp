@@ -9,6 +9,7 @@
 #defined warning_raise/1.
 #defined warning_raise/2.
 #defined warning_raise/3.
+#defined warning_raise/4.
 
 %%%%%%%%%%%%%%%%% labels are optional
 _passed(defaultArgs,_label_anonymous,bool_evaluate(E)) :- bool_evaluate(E).
@@ -19,9 +20,10 @@ _passed(defaultArgs,_label_anonymous,ensure(E)) :- ensure(E).
 _passed(defaultArgs,LBL,ensure(E)) :- ensure(E,LBL).
 _passed(defaultArgs,_label_anonymous,evaluate(E)) :- evaluate(E).
 _passed(defaultArgs,LBL,evaluate(E)) :- evaluate(E,LBL).
-_passed(defaultArgs,_label_anonymous,warning_raise(KIND,val(bool,true))) :- warning_raise(KIND).
-_passed(defaultArgs,_label_anonymous,warning_raise(KIND,COND)) :- warning_raise(KIND,COND).
-_passed(defaultArgs,LBL,warning_raise(KIND,COND)) :- warning_raise(KIND,COND,LBL).
+_passed(defaultArgs,_label_anonymous,warning_raise(KIND,none,val(bool,true))) :- warning_raise(KIND).
+_passed(defaultArgs,_label_anonymous,warning_raise(KIND,MSG,val(bool,true))) :- warning_raise(KIND,MSG).
+_passed(defaultArgs,_label_anonymous,warning_raise(KIND,MSG,COND)) :- warning_raise(KIND,MSG,COND).
+_passed(defaultArgs,LBL,warning_raise(KIND,MSG,COND)) :- warning_raise(KIND,MSG,COND,LBL).
 
 %%%%%% variable declare
 #defined variable_declare/2.

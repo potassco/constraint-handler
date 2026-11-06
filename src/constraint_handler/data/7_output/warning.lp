@@ -1,8 +1,8 @@
 _warning_forbid(KIND,LBL) :- ch_core(warning_forbid(KIND),LBL).
 _warning_ignore(KIND,LBL) :- ch_core(warning_ignore(KIND),LBL).
 
-_bool_evaluate(COND,LBL) :- _phase_active(solve), ch_core(warning_raise(KIND,COND),LBL).
-_warning(KIND,LBL,COND) :- _phase_active(solve), ch_core(warning_raise(KIND,COND),LBL), _bool_evaluated(COND,val(bool,true)).
+_bool_evaluate(COND,LBL) :- _phase_active(solve), ch_core(warning_raise(KIND,MSG,COND),LBL).
+_warning(KIND,LBL,MSG) :- _phase_active(solve), ch_core(warning_raise(KIND,MSG,COND),LBL), _bool_evaluated(COND,val(bool,true)).
 
 _warning_raised(KIND,INFO) :- _warning(KIND,INFO,MSG), not _warning_ignore(KIND,INFO), not _warning_ignore(KIND,_label_anonymous).
 :- _warning_raised(KIND,INFO), _warning_forbid(KIND,_label_anonymous).

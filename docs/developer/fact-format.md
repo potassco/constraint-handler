@@ -169,8 +169,9 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <warning-control-atom> ::=
     | "warning_raise" "(" <term> ")"
-    | "warning_raise" "(" <term> "," <expression> ")"
-    | "warning_raise" "(" <term> "," <expression> "," <label> ")"
+    | "warning_raise" "(" <term> "," <term> ")"
+    | "warning_raise" "(" <term> "," <term> "," <expression> ")"
+    | "warning_raise" "(" <term> "," <term> "," <expression> "," <label> ")"
     | "warning_forbid" "(" <term> ")"
     | "warning_forbid" "(" <term> "," <term> ")"
     | "warning_ignore" "(" <term> ")"

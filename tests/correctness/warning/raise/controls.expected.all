@@ -1,6 +1,6 @@
 value(global_flag,val(bool,false))
 value(labeled_flag,val(bool,false))
-warning(labeled,visible,val(bool,true))
-warning(filtered,allowed,val(bool,true))
+warning(labeled,visible,none)
+warning(filtered,allowed,none)
 warning_raised(labeled,visible)
 warning_raised(filtered,allowed)

@@ -101,21 +101,21 @@ reported model:
 ## Raise Warning
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-`warning_raise(KIND,COND,LBL)` raises a warning in each model where the
+`warning_raise(KIND,MSG,COND,LBL)` raises a warning in each model where the
 [Expression] `COND` evaluates to `val(bool,true)`. `KIND` identifies the warning
-type, and `LBL` identifies the declaration.
+type, `MSG` supplies its details, and `LBL` identifies the declaration.
 
-`warning_raise(KIND,COND)` uses the anonymous label `_label_anonymous`. `warning_raise(KIND)`
-also defaults the condition to `val(bool,true)`, raising the warning unconditionally.
+Trailing arguments are optional: `MSG` defaults to `none`, `COND` to
+`val(bool,true)`, and `LBL` to `_label_anonymous`.
 
 ```prolog
 variable_declare(flag,boolDomain).
-warning_raise(custom,variable(flag),notice).
+warning_raise(custom,"flag is true",variable(flag),notice).
 ```
 
-Models where `flag` is true contain `warning(custom,notice,variable(flag))`
-and the corresponding `warning_raised` summary atoms. The warning details contain
-the condition expression after preprocessing. The existing `warning_ignore` and
+Models where `flag` is true contain `warning(custom,notice,"flag is true")`
+and the corresponding `warning_raised` summary atoms. The message is preserved
+as supplied. The existing `warning_ignore` and
 `warning_forbid` declarations apply to these warnings, including label-specific
 forms such as `warning_ignore(custom,notice)`.
 
