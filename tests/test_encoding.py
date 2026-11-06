@@ -480,6 +480,9 @@ warning_tests = [
     "warning/mutually_exclusive_declarations",
     "warning/python_extract/statement_error",
     "warning/python_extract/undeclared_variable",
+    "warning/raise/basic",
+    "warning/raise/controls",
+    "warning/raise/dynamic",
     "warning/statement/control",
     "warning/statement/decl_lists",
     "warning/statement/python",
@@ -905,6 +908,8 @@ choice_statistics_skip: set[str] = {
     "warning/forbid_labeled_match",
     "warning/mutually_exclusive_declarations",
     "warning/python_extract/statement_error",
+    "warning/raise/controls",
+    "warning/raise/dynamic",
 }
 choice_statistics_xfail: set[str] = {
     "core/conditional_assign",

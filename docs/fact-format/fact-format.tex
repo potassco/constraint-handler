@@ -171,7 +171,10 @@
 \alt `preference_variableValue' `(' <variable> `,' <expression> `,' <int> `,' <label> `)'
 
 <warning-control-atom> ::=
-~\alt `warning_forbid' `(' <term> `)'
+~\alt `warning_raise' `(' <term> `)'
+\alt `warning_raise' `(' <term> `,' <expression> `)'
+\alt `warning_raise' `(' <term> `,' <expression> `,' <label> `)'
+\alt `warning_forbid' `(' <term> `)'
 \alt `warning_forbid' `(' <term> `,' <term> `)'
 \alt `warning_ignore' `(' <term> `)'
 \alt `warning_ignore' `(' <term> `,' <term> `)'

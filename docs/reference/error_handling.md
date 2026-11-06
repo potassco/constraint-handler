@@ -98,6 +98,29 @@ reported model:
 
 ---
 
+## Raise Warning
+**[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
+
+`warning_raise(KIND,COND,LBL)` raises a warning in each model where the
+[Expression] `COND` evaluates to `val(bool,true)`. `KIND` identifies the warning
+type, and `LBL` identifies the declaration.
+
+`warning_raise(KIND,COND)` uses the anonymous label `_label_anonymous`. `warning_raise(KIND)`
+also defaults the condition to `val(bool,true)`, raising the warning unconditionally.
+
+```prolog
+variable_declare(flag,boolDomain).
+warning_raise(custom,variable(flag),notice).
+```
+
+Models where `flag` is true contain `warning(custom,notice,variable(flag))`
+and the corresponding `warning_raised` summary atoms. The warning details contain
+the condition expression after preprocessing. The existing `warning_ignore` and
+`warning_forbid` declarations apply to these warnings, including label-specific
+forms such as `warning_ignore(custom,notice)`.
+
+---
+
 ## Ignore Warning
 **[Declaration]**{.badge .declaration }
 

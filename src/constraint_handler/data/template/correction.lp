@@ -24,6 +24,9 @@ _correction_proposed(PHASE,LBL,ensure(E),ensure(NE)) :-
 _correction_proposed(PHASE,LBL,evaluate(REF,E),evaluate(REF,NE)) :-
   _passed(sugar,LBL,evaluate(REF,E)),
   _correction_expressionOutput(PHASE,E,NE).
+_correction_proposed(PHASE,LBL,warning_raise(KIND,COND),warning_raise(KIND,NC)) :-
+  _passed(sugar,LBL,warning_raise(KIND,COND)),
+  _correction_expressionOutput(PHASE,COND,NC).
 _correction_proposed(PHASE,LBL,variable_assign(X,E),variable_assign(X,NE)) :-
   _passed(sugar,LBL,variable_assign(X,E)),
   _correction_expressionOutput(PHASE,E,NE).

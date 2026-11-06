@@ -2,6 +2,7 @@ _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=bool_evaluate(E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=check(E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=ensure(E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=evaluate(REF,E).
+_expression(PHASE,LBL,DECL,COND) :- _passed(PHASE,LBL,DECL), DECL=warning_raise(KIND,COND).
 
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_assign(X,E).
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=variable_choice(X,E).

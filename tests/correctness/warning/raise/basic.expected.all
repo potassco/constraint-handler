@@ -1,0 +1,9 @@
+warning(unconditional,_label_anonymous,val(bool,true))
+warning(conditional,_label_anonymous,val(bool,true))
+warning(labeled,notice,val(bool,true))
+warning_raised(folded,comparison)
+warning_raised(unconditional,_label_anonymous)
+warning_raised(conditional,_label_anonymous)
+warning_raised(labeled,notice)
+warning_raised(unconditional)
+warning_raised

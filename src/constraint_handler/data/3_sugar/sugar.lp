@@ -6,6 +6,7 @@ _passed(sugar,LBL,check(E)) :- _passed(defaultArgs,LBL,check(E)).
 _passed(sugar,LBL,ensure(E)) :- _passed(defaultArgs,LBL,ensure(E)).
 
 _passed(sugar,LBL,evaluate(E,E)) :- _passed(defaultArgs,LBL,evaluate(E)).
+_passed(sugar,LBL,warning_raise(KIND,COND)) :- _passed(defaultArgs,LBL,warning_raise(KIND,COND)).
 
 %%%%%% variable fromFacts atoms
 _passed(sugar,LBL,variable_declare(X,D,C)) :- _passed(defaultArgs,LBL,variable_declare(X,D,C)), D=(definition;fromFacts;open;set;multimap).

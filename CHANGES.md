@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+- introduce declaration `warning_raise(KIND,COND,LBL)` to let the user specify
+  warnings to be emitted conditionally.
+
 ## v0.0.10
 
 - add `warning_raised`, `warning_raised(Type)`, and

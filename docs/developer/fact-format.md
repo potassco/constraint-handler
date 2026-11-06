@@ -168,6 +168,9 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "preference_variableValue" "(" <variable> "," <expression> "," <int> "," <label> ")"
 
 <warning-control-atom> ::=
+    | "warning_raise" "(" <term> ")"
+    | "warning_raise" "(" <term> "," <expression> ")"
+    | "warning_raise" "(" <term> "," <expression> "," <label> ")"
     | "warning_forbid" "(" <term> ")"
     | "warning_forbid" "(" <term> "," <term> ")"
     | "warning_ignore" "(" <term> ")"
