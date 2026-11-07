@@ -129,7 +129,12 @@ src/
 │   │   ├── set.lp, multimap.lp                   # Data structures
 │   │   ├── execution.lp, conditionals.lp         # Control flow
 │   │   └── propagator.lp, pythonHelper.lp        # Solver integration
-│   ├── propagator.py           # Constraint handler propagator
+│   ├── propagator/             # Constraint handler propagator subsystem
+│   │   ├── handler.py          # Main propagator implementation
+│   │   ├── model_builder.py
+│   │   ├── optimization_modes.py
+│   │   ├── reasoning_modes.py
+│   │   ├── variable_loader.py
 │   ├── evaluator.py            # Expression evaluator
 │   ├── schemas/                # Data schemas (Clorm-based)
 │   └── utils/                  # Utility modules
