@@ -6,8 +6,12 @@ from collections.abc import Callable, Iterable
 import clingo
 from clingo import Symbol
 
-from constraint_handler.PropagatorConstants import REASONING_MODE_PROGRAM, REASONING_STAGE_ATOM, ReasoningMode
-from constraint_handler.PropagatorVariables import BoolEvaluateVariable, VariableType
+from constraint_handler.propagator.PropagatorConstants import (
+    REASONING_MODE_PROGRAM,
+    REASONING_STAGE_ATOM,
+    ReasoningMode,
+)
+from constraint_handler.propagator.PropagatorVariables import BoolEvaluateVariable, VariableType
 from constraint_handler.schemas import result, warning
 
 

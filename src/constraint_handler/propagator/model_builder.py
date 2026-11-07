@@ -6,8 +6,8 @@ from typing import Any
 import clingo
 
 from constraint_handler import evaluator, multimap
-from constraint_handler.PropagatorConstants import OTHER_ENGINE_VAR_NAME, ValueStatus
-from constraint_handler.PropagatorVariables import BoolEvaluateVariable, EvaluateVariable, VariableType
+from constraint_handler.propagator.PropagatorConstants import OTHER_ENGINE_VAR_NAME, ValueStatus
+from constraint_handler.propagator.PropagatorVariables import BoolEvaluateVariable, EvaluateVariable, VariableType
 from constraint_handler.schemas import expression, result, warning
 
 

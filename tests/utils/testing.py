@@ -12,7 +12,7 @@ from clintest.quantifier import All, Any, Exact, Finished, First, Last, Quantifi
 
 import constraint_handler
 from constraint_handler.engine import Engine, compile
-from constraint_handler.PropagatorConstants import OPTIMIZATION_STAGE_ATOM
+from constraint_handler.propagator.PropagatorConstants import OPTIMIZATION_STAGE_ATOM
 
 
 def atoms_from_file(file_name: str) -> list[clingo.Symbol]:
