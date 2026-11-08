@@ -4,11 +4,14 @@ from collections import defaultdict
 from typing import Mapping
 
 import clingo
+from mypy.server.update import propagate_changes_using_dependencies
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.result as result
 import constraint_handler.schemas.warning as warning
+from constraint_handler.propagator.model_builder import ModelBuilder
+from constraint_handler.reasoning_modes.reasoning_modes_propagator import ReasoningModesPropagator
 
 
 class OptimizePostProcessingPropagator(clingo.Propagator):
@@ -137,3 +140,16 @@ def set_optimize_valuation(propagator: OptimizePostProcessingPropagator, model) 
 
     if model.optimality_proven:
         propagator._cached_optimize_value_symbols = optimize_value_symbols.copy()
+
+
+def extend_with_reasoning_mode_atoms(propagator: ReasoningModesPropagator, model) -> None:
+    model_builder = ModelBuilder({})
+    symbols = set()
+    for variable, values in propagator.reasoning_strategy.model.items():
+        for value in values:
+            model_builder.add_value(variable, value)
+
+    for atom in model_builder.atoms:
+        symbol = myClorm.pytocl(atom)
+        symbols.add(clingo.Function(f"{symbol.name}_rm", symbol.arguments))
+    model.extend(symbols)

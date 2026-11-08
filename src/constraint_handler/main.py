@@ -17,6 +17,7 @@ import constraint_handler.schemas.solve as solve
 import constraint_handler.solver_environment as solver_environment
 import flat_ch.main as flat_main
 from constraint_handler.engine import Engine, compile
+from constraint_handler.reasoning_modes.reasoning_modes_propagator import ReasoningMode, ReasoningModesPropagator
 from constraint_handler.schemas.type_ import BaseType
 
 module_main = [
@@ -176,6 +177,7 @@ def add_to_control(
     environment=None,
     _environment_ids=dict(),
     engine: Engine = compile,
+    reasoning_mode: ReasoningMode = ReasoningMode.STANDARD,
 ):
     """Adds encoding logic to the provided Control instance. The environment argumennt specifies the locals used in the python statements and expressions."""
     if engine.name == "fch":
@@ -205,14 +207,17 @@ def add_to_control(
             _environment_ids[eid] = idx
         ctrl.add(f"main_solverIdentifier({idx}).")
     ctrl.add(engine.program())
-    setup_propagator(ctrl)
+    setup_propagator(ctrl, reasoning_mode)
 
 
-def setup_propagator(ctrl: clingo.Control):
+def setup_propagator(ctrl: clingo.Control, reasoning_mode: ReasoningMode):
     prop = propagator.ConstraintHandlerPropagator()
     post_prop = post_processor.OptimizePostProcessingPropagator()
 
+    reasoning_mode_prop = ReasoningModesPropagator(reasoning_mode)
+
     ctrl.register_propagator(prop)
+    ctrl.register_propagator(reasoning_mode_prop)
     ctrl.register_propagator(post_prop)
     prop.get_configuration(ctrl)
     original_solve = ctrl.solve
@@ -222,6 +227,7 @@ def setup_propagator(ctrl: clingo.Control):
             if prop.on_model(model) == False:
                 return False
             post_processor.set_optimize_valuation(post_prop, model)
+            post_processor.extend_with_reasoning_mode_atoms(reasoning_mode_prop, model)
             if on_model is not None:
                 return on_model(model)
 
