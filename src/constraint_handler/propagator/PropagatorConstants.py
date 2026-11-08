@@ -30,7 +30,7 @@ class EvaluationResult(enum.Enum):
     INFER = "__infer__"
 
 
-class ReasoningMode(enum.Enum):
+class PropagatorReasoningMode(enum.Enum):
     STANDARD = "standard"
     BRAVE = "brave"
     CAUTIOUS = "cautious"
