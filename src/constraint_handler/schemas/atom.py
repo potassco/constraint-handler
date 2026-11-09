@@ -88,6 +88,7 @@ class Multimap_assign(NamedTuple):
     name: expression.constant
     key: expression.Expr
     val: expression.Expr
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 

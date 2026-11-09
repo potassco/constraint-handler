@@ -1,0 +1,4 @@
+value(toggle,val(bool,false))
+value(toggle,val(bool,true))
+multimap_value(dynamic,val(int,1),val(int,10))
+multimap_value(dynamic,val(int,2),val(int,20))

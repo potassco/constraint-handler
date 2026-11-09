@@ -5,7 +5,7 @@ _passed(propagator,LBL,variable_declare/3).
 _passed(propagator,LBL,variable_define/3).
 _passed(propagator,LBL,variable_domain/3).
 _passed(propagator,LBL,set_assign/3).
-_passed(propagator,LBL,multimap_assign/3).
+_passed(propagator,LBL,multimap_assign/4).
 _passed(propagator,LBL,share_value/1).
 _bool_evaluated/2.
 _warning_forbid/2.
@@ -28,7 +28,7 @@ propagator_variable_domain/3.
 propagator_variable_define/3.
 propagator_set_declare/2.
 propagator_set_assign/3.
-propagator_multimap_assign/4.
+propagator_multimap_assign/5.
 propagator_multimap_declare/2.
 propagator_share_value/2.
 propagator_warning_forbid/2.

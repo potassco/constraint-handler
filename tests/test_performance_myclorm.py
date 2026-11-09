@@ -130,6 +130,7 @@ propagator_init = BenchmarkPropagateInit(
                         clingo.Function(f"map_{index}"),
                         expression.Variable(clingo.Function("x")),
                         make_expression(index),
+                        expression.TRUE,
                         clingo.Function("benchmark"),
                     )
                 ),

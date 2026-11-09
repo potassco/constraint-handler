@@ -65,6 +65,7 @@ class Multimap_assign(NamedTuple):
     name: expression.constant
     key: expression.Expr
     val: expression.Expr
+    condition: expression.Expr
 
 
 class Optimize_component(NamedTuple):

@@ -136,7 +136,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <multimap-atom> ::=
     | "multimap_assign" "(" <variable> "," <expression> "," <expression> ")"
-    | "multimap_assign" "(" <variable> "," <expression> "," <expression> "," <label> ")"
+    | "multimap_assign" "(" <variable> "," <expression> "," <expression> "," <expression> ")"
+    | "multimap_assign" "(" <variable> "," <expression> "," <expression> "," <expression> "," <label> ")"
 
 <set-atom> ::=
     | "set_assign" "(" <variable> "," <expression> ")"

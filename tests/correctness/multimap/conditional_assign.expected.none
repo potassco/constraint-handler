@@ -1,0 +1,4 @@
+multimap_value(m,val(int,3),val(int,30))
+multimap_value(m,val(int,5),val(int,50))
+multimap_value(m,val(int,7),val(int,70))
+multimap_value(m,val(int,8),val(int,80))

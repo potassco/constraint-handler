@@ -31,7 +31,7 @@ _passed(sugar,LBL,variable_default(X,D,C,P)) :- _passed(defaultArgs,LBL,variable
 
 
 %%%%%% multimap atoms
-_passed(sugar,LBL,multimap_assign(X,EKEY,EVAL)) :- _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)).
+_passed(sugar,LBL,multimap_assign(X,EKEY,EVAL,C)) :- _passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL,C)).
 
 
 %%%%%% set atoms

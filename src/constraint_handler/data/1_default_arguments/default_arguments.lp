@@ -90,9 +90,11 @@ _passed(defaultArgs,LBL,variable_define(X,E,C)) :- variable_define(X,E,C,LBL).
 %%%%%% multimap atoms
 #defined multimap_assign/3.
 #defined multimap_assign/4.
+#defined multimap_assign/5.
 
-_passed(defaultArgs,_label_anonymous,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(X,EKEY,EVAL).
-_passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(X,EKEY,EVAL,LBL).
+_passed(defaultArgs,_label_anonymous,multimap_assign(X,EKEY,EVAL,val(bool,true))) :- multimap_assign(X,EKEY,EVAL).
+_passed(defaultArgs,_label_anonymous,multimap_assign(X,EKEY,EVAL,C)) :- multimap_assign(X,EKEY,EVAL,C).
+_passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL,C)) :- multimap_assign(X,EKEY,EVAL,C,LBL).
 
 %%%%% set atoms
 #defined set_assign/2.

@@ -149,7 +149,7 @@ set_baseDomain(Name, Value, Condition, Label).
 
 Each active `set_baseDomain` fact introduces one candidate value. The solver may include or exclude each candidate independently. An inactive declaration does not prevent the same value from being included through another declaration.
 
-For example, `set_baseDomain(s,val(int,1),variable(enabled))` makes `1` a candidate only when `enabled` evaluates to true. A labeled declaration formerly written as `set_baseDomain(Name,Value,Label)` must now include a condition: `set_baseDomain(Name,Value,val(bool,true),Label)`.
+For example, `set_baseDomain(s,val(int,1),variable(enabled))` makes `1` a candidate only when `enabled` evaluates to true.
 
 !!! Example
     `set_assign` and `set_baseDomain` can be used together on the same set. Here, `my_set` has a base domain of candidates `1`, `2`, `3` (each optionally included by the solver), while `2` and `4` are always explicitly included via `set_assign`, and `1` is forced to appear via an `ensure` constraint:
@@ -296,13 +296,15 @@ value(Name, val(multimap, variable(Name))).
 
 ### Assign
 
-To add key-value pairs to a multimap, use the `multimap_assign/3` predicate:
+To add key-value pairs to a multimap, use the `multimap_assign` predicate:
 #### Input
 
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
 ```prolog
 multimap_assign(Name, Key, Value).
+multimap_assign(Name, Key, Value, Condition).
+multimap_assign(Name, Key, Value, Condition, Label).
 ```
 
 | Name | Description |
@@ -310,6 +312,8 @@ multimap_assign(Name, Key, Value).
 | `Name` | The unique identifier of the multimap to which the key-value pair will be added. |
 | `Key` | The key in form of a `val/2` predicate to be added to the multimap. |
 | `Value` | The value in form of a `val/2` to be associated with the key in the multimap. |
+| `Condition` | An expression that must evaluate to `val(bool,true)` for the pair to be added. Defaults to `val(bool,true)`. |
+| `Label` | An optional declaration label. |
 
 !!! Note
     While we use Key-Value terminology, it is important to remember that in a multimap, each key can be associated with multiple values. Meaning, if we assign the same key multiple times with different values, all those values will be stored in a set associated with that key.
