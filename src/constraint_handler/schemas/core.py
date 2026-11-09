@@ -11,11 +11,13 @@ import constraint_handler.schemas.expression as expression
 class Variable_assign(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr
 
 
 class Variable_choice(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr
 
 
 class Variable_declare(NamedTuple):

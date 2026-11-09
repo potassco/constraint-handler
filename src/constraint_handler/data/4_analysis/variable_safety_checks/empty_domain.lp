@@ -11,15 +11,15 @@ _passed(correction(emptyDomain,add),LBL,variable_define(X,bad,C)) :-
 	not _variable_hasDomain(sugar,X).
 
 
-_variable_hasSource(sugar,X) :- _passed(sugar,LBL,variable_assign(X,E)).
-_variable_hasSource(sugar,X) :- _passed(sugar,LBL,variable_choice(X,E)).
+_variable_hasSource(sugar,X) :- _passed(sugar,LBL,variable_assign(X,E,C)).
+_variable_hasSource(sugar,X) :- _passed(sugar,LBL,variable_choice(X,E,C)).
 _variable_hasSource(sugar,X) :- _passed(sugar,LBL,variable_default(X,E,C,P)).
 
-_passed(correction(emptyDomain,rem),LBL,variable_assign(X,E)) :-
-	_passed(sugar,LBL,variable_assign(X,E)),
+_passed(correction(emptyDomain,rem),LBL,variable_assign(X,E,C)) :-
+	_passed(sugar,LBL,variable_assign(X,E,C)),
 	not _variable_hasSource(sugar,X).
-_passed(correction(emptyDomain,rem),LBL,variable_choice(X,E)) :-
-	_passed(sugar,LBL,variable_choice(X,E)),
+_passed(correction(emptyDomain,rem),LBL,variable_choice(X,E,C)) :-
+	_passed(sugar,LBL,variable_choice(X,E,C)),
 	not _variable_hasSource(sugar,X).
 _passed(correction(emptyDomain,rem),LBL,variable_default(X,E,C,P)) :-
 	_passed(sugar,LBL,variable_default(X,E,C,P)),

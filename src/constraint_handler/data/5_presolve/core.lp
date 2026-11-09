@@ -1,6 +1,6 @@
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=bool_evaluate(E).
-ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_assign(X,E).
-ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_choice(X,E).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_assign(X,E,C).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_choice(X,E,C).
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_declare(X,D,C).
 
 _bool_join(COND1,COND2) :- _phase_active(solve), ch_core(variable_default(NAME,EXPR,COND1,PRIORITY),_), ch_core(variable_declare(NAME,open,COND2),_).

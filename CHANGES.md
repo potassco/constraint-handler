@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- - update `variable_assign` and `variable_choice` to take a condition
+    argument.
 - introduce declaration `warning_raise(KIND,MSG,COND,LBL)` to let the user
   specify warnings to be emitted conditionally.
 

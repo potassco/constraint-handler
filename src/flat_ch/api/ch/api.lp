@@ -27,14 +27,18 @@ _fch_input(variable_domain(LABEL, NAME, EXPR, COND)) :- variable_domain(NAME, EX
 % variable_choice is a domain-population alias, just like in CH's own compile2/propagator engines.
 #defined variable_choice/2.
 #defined variable_choice/3.
+#defined variable_choice/4.
 _fch_input(variable_domain(_fch_label, NAME, EXPR, val(bool, true))) :- variable_choice(NAME, EXPR).
-_fch_input(variable_domain(LABEL, NAME, EXPR, val(bool, true))) :- variable_choice(NAME, EXPR, LABEL).
+_fch_input(variable_domain(_fch_label, NAME, EXPR, COND)) :- variable_choice(NAME, EXPR, COND).
+_fch_input(variable_domain(LABEL, NAME, EXPR, COND)) :- variable_choice(NAME, EXPR, COND, LABEL).
 
 % variable_assign forces a value, exactly like variable_define.
 #defined variable_assign/2.
 #defined variable_assign/3.
+#defined variable_assign/4.
 _fch_input(variable_define(_fch_label, NAME, EXPR, val(bool, true))) :- variable_assign(NAME, EXPR).
-_fch_input(variable_define(LABEL, NAME, EXPR, val(bool, true))) :- variable_assign(NAME, EXPR, LABEL).
+_fch_input(variable_define(_fch_label, NAME, EXPR, COND)) :- variable_assign(NAME, EXPR, COND).
+_fch_input(variable_define(LABEL, NAME, EXPR, COND)) :- variable_assign(NAME, EXPR, COND, LABEL).
 
 #defined variable_default/2.
 #defined variable_default/3.

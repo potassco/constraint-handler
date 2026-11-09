@@ -1,6 +1,6 @@
 ### Input predicates
 
-_passed(propagator,LBL,variable_assign/2).
+_passed(propagator,LBL,variable_assign/3).
 _passed(propagator,LBL,variable_declare/3).
 _passed(propagator,LBL,variable_define/3).
 _passed(propagator,LBL,variable_domain/3).

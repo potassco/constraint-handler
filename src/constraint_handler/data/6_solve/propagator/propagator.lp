@@ -38,10 +38,9 @@ _propagator_ensure(operation(neq,(variable(X),(E,()))),CNAME) :- _passed(propaga
 _bool_evaluate(E,LBL) :- _propagator_ensure(E,LBL).
 :- _propagator_ensure(E,LBL), not _bool_evaluated(E,val(bool,true)), not _bool_evaluated(E,bad).
 
-propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_assign(X,E)).
-%_passed(propagator,CNAME,variable_domain(X,E,val(bool,true))) :- _passed(propagator,CNAME,variable_choice(X,E)).
-%propagator_variable_assign(X,E,CNAME) :- _passed(propagator,CNAME,variable_assign(X,E)).
-%propagator_variable_choice(X,E,CNAME) :- _passed(propagator,CNAME,variable_choice(X,E)).
+_bool_evaluate(C,CNAME) :- _passed(propagator,CNAME,variable_assign(X,E,C)).
+propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_assign(X,E,C)), _bool_evaluated(C,val(bool,true)).
+%_passed(propagator,CNAME,variable_domain(X,E,C)) :- _passed(propagator,CNAME,variable_choice(X,E,C)).
 %propagator_variable_default(X,E,C,P,CNAME) :- _passed(propagator,CNAME,variable_default(X,E,C,P)). %% TODO: temporary hack
 _bool_evaluate(C,CNAME) :- _passed(propagator,CNAME,variable_define(X,E,C)).
 propagator_variable_define(X,E,CNAME) :- _passed(propagator,CNAME,variable_define(X,E,C)), _bool_evaluated(C,val(bool,true)).

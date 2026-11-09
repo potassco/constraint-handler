@@ -1,8 +1,8 @@
 ### Input predicates
 
 _phase_active(type_check).
-_passed(sugar,LBL,variable_assign/2).
-_passed(sugar,LBL,variable_choice/2).
+_passed(sugar,LBL,variable_assign/3).
+_passed(sugar,LBL,variable_choice/3).
 _passed(sugar,LBL,variable_default/4).
 _passed(sugar,LBL,variable_declare/3).
 _passed(sugar,LBL,variable_define/3).

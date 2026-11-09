@@ -1,5 +1,5 @@
-_passed(compile2,CNAME,variable_define(X,E,val(bool,true))) :- _passed(compile2,CNAME,variable_assign(X,E)).
-_passed(compile2,CNAME,variable_domain(X,E,val(bool,true))) :- _passed(compile2,CNAME,variable_choice(X,E)).
+_passed(compile2,CNAME,variable_define(X,E,C)) :- _passed(compile2,CNAME,variable_assign(X,E,C)).
+_passed(compile2,CNAME,variable_domain(X,E,C)) :- _passed(compile2,CNAME,variable_choice(X,E,C)).
 %% TODO: temporary hack
 
 _expression_is_value(val(Type, Value)) :- _expression(compile2, val(Type, Value)).

@@ -121,9 +121,11 @@
 
 <variable-atom> ::=
 ~\alt `variable_assign' `(' <variable> `,' <expression> `)'
-\alt `variable_assign' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `variable_assign' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `variable_assign' `(' <variable> `,' <expression> `,' <expression> `,' <label> `)'
 \alt `variable_choice' `(' <variable> `,' <expression> `)'
-\alt `variable_choice' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `variable_choice' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `variable_choice' `(' <variable> `,' <expression> `,' <expression> `,' <label> `)'
 \alt `variable_declare' `(' <variable> `,' <domain> `)'
 \alt `variable_declare' `(' <variable> `,' <domain> `,' <expression> `)'
 \alt `variable_declare' `(' <variable> `,' <domain> `,' <expression> `,' <label> `)'
