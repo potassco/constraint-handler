@@ -76,7 +76,7 @@ compile_benchmarks = [
 ]
 
 ground_benchmarks = [
-    PerformanceBenchmark("sum_aggregates", 300.0),
+    PerformanceBenchmark("sum_aggregates", 30.0, constants={"x_count": 8}),
     PerformanceBenchmark("sum_chain", 1.0),
     PerformanceBenchmark("bad_scaling_compile", 1.0, constants={"max_depth": 9}),
     PerformanceBenchmark("repeated_constraints", 70.0, constants={"pair_count": 1000}),
