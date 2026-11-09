@@ -145,7 +145,7 @@ def set_optimize_valuation(propagator: OptimizePostProcessingPropagator, model) 
 def extend_with_reasoning_mode_atoms(propagator: ReasoningModesPropagator, model) -> None:
     model_builder = ModelBuilder({})
     symbols = set()
-    for variable, values in propagator.reasoning_strategy.model.items():
+    for variable, values in propagator.reasoning_strategy.rm_model.items():
         for value in values:
             model_builder.add_value(variable, value)
 
