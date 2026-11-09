@@ -47,12 +47,17 @@ _sugar_aux(LBL,optimize_component(EXPR,E,PREC,ID,PRIO,C)) :-
 _passed(sugar,LBL,optimize_component(E,O,P,ID,PRIORITY,C)) :- _sugar_aux(LBL,optimize_component(E,O,P,ID,PRIORITY,C)).
 
 %%%%%% preference atoms
-_sugar_aux(LBL,preference_holds(operation(eq,(variable(X),(E,()))),K)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K > 0.
-_sugar_aux(LBL,preference_holds(operation(neq,(variable(X),(E,()))),-K)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K)), K < 0.
-_sugar_aux(LBL,preference_holds(E,K)) :- _passed(defaultArgs,LBL,preference_holds(E,K)), K > 0.
-_sugar_aux(LBL,preference_holds(operation(wnot,(E,())),-K)) :- _passed(defaultArgs,LBL,preference_holds(E,K)), K < 0.
+_sugar_aux(LBL,preference_holds(operation(eq,(variable(X),(E,()))),K,C)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K,C)), K > 0.
+_sugar_aux(LBL,preference_holds(operation(neq,(variable(X),(E,()))),-K,C)) :- _passed(defaultArgs,LBL,preference_variableValue(X,E,K,C)), K < 0.
+_sugar_aux(LBL,preference_holds(E,K,C)) :- _passed(defaultArgs,LBL,preference_holds(E,K,C)), K > 0.
+_sugar_aux(LBL,preference_holds(operation(wnot,(E,())),-K,C)) :- _passed(defaultArgs,LBL,preference_holds(E,K,C)), K < 0.
 
-_passed(sugar,LBL,preference_holds(E,K)) :- _sugar_aux(LBL,preference_holds(E,K)).
+_passed(sugar,LBL,preference_holds(K,E)) :- _sugar_aux(LBL,preference_holds(E,K,E)).
+_passed(sugar,LBL,preference_holds(K,E)) :- _sugar_aux(LBL,preference_holds(E,K,val(bool,true))), E != val(bool,true).
+_passed(sugar,LBL,preference_holds(K,C)) :- _sugar_aux(LBL,preference_holds(val(bool,true),K,C)), C != val(bool,true).
+_passed(sugar,LBL,preference_holds(K,val(bool,false))) :- _sugar_aux(LBL,preference_holds(val(bool,false),K,C)).
+_passed(sugar,LBL,preference_holds(K,val(bool,false))) :- _sugar_aux(LBL,preference_holds(E,K,val(bool,false))).
+_passed(sugar,LBL,preference_holds(K,operation(conj,(C,(E,()))))) :- _sugar_aux(LBL,preference_holds(E,K,C)), E != C, E != val(bool,true), C != val(bool,true), E != val(bool,false), C != val(bool,false).
 
 %%%%%% ssa atoms
 _passed(sugar,LBL,DEC) :- _passed(ssa,LBL,DEC).

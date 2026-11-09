@@ -164,10 +164,12 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "preference_maximizeScore"
     | "preference_holds" "(" <expression> ")"
     | "preference_holds" "(" <expression> "," <int> ")"
-    | "preference_holds" "(" <expression> "," <int> "," <label> ")"
+    | "preference_holds" "(" <expression> "," <int> "," <expression> ")"
+    | "preference_holds" "(" <expression> "," <int> "," <expression> "," <label> ")"
     | "preference_variableValue" "(" <variable> "," <expression> ")"
     | "preference_variableValue" "(" <variable> "," <expression> "," <int> ")"
-    | "preference_variableValue" "(" <variable> "," <expression> "," <int> "," <label> ")"
+    | "preference_variableValue" "(" <variable> "," <expression> "," <int> "," <expression> ")"
+    | "preference_variableValue" "(" <variable> "," <expression> "," <int> "," <expression> "," <label> ")"
 
 <warning-control-atom> ::=
     | "warning_raise" "(" <term> ")"

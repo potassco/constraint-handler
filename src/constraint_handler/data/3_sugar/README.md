@@ -15,8 +15,8 @@ _passed(defaultArgs,LBL,set_assign/2).
 _passed(defaultArgs,LBL,set_baseDomain/3).
 _passed(defaultArgs,LBL,optimize_precision/2).
 _passed(defaultArgs,LBL,optimize_maximizeSum/4).
-_passed(defaultArgs,LBL,preference_holds/2).
-_passed(defaultArgs,LBL,preference_variableValue/3).
+_passed(defaultArgs,LBL,preference_holds/3).
+_passed(defaultArgs,LBL,preference_variableValue/4).
 _passed(defaultArgs,LBL,warning_forbid/2).
 _passed(defaultArgs,LBL,warning_ignore/2).
 _passed(ssa,LBL,DECL).

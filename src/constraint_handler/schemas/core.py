@@ -80,8 +80,8 @@ class Preference_maximizeScore(NamedTuple):
 
 
 class Preference_holds(NamedTuple):
-    value: expression.Expr
     factor: int
+    condition: expression.Expr
 
 
 type PreferenceAtom = Preference_maximizeScore | Preference_holds

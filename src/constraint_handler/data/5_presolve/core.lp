@@ -24,5 +24,5 @@ ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=share_value(
 %_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(bool_evaluate(E),LBL).
 %_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(evaluate(REF,E),LBL).
 %_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(ensure(E),LBL).
-%_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
+%_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(preference_holds(K,E),LBL).
 %_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=evaluate(REF,E).

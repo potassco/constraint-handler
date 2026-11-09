@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+- - update `preference_holds` and `preference_variableValue` to take an
+    optional condition before the label.
+- - remove the warning for multiple preference scores for the same expression.
 - - update `variable_assign` and `variable_choice` to take a condition
     argument.
 - introduce declaration `warning_raise(KIND,MSG,COND,LBL)` to let the user

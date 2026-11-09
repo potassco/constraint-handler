@@ -60,7 +60,7 @@ _correction_proposed(PHASE,LBL,optimize_component(E,ORIG,PREC,ID,PRIO,C),optimiz
   _correction_expressionOutput(PHASE,PREC,NREC),
   _correction_expressionOutput(PHASE,C,NC),
   _correction_numberOutput(PHASE,PRIO,NRIO).
-_correction_proposed(PHASE,LBL,preference_holds(E,K),preference_holds(NE,NK)) :- _passed(sugar,LBL,preference_holds(E,K)),
+_correction_proposed(PHASE,LBL,preference_holds(K,E),preference_holds(NK,NE)) :- _passed(sugar,LBL,preference_holds(K,E)),
   _correction_expressionOutput(PHASE,E,NE),
   _correction_numberOutput(PHASE,K,NK).
 

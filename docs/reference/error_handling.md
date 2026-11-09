@@ -27,8 +27,6 @@ Here, we outline the various warning types that can be reported by the constrain
 | [`variable(multipleDeclarations)`](#multiple-declarations) | A [Variable] has multiple declarations with different [Domains]. |
 | [`variable(multipleDefinitions)`](#multiple-definitions) | A [Variable] is defined more than once within the same scope. |
 | [`variable(confusingName)`](#confusing-name) | A [Variable] has a name that could be confused with reserved keywords, operators, numbers or types. |
-| **Preference** | |
-| [`preference(unsupported)`](#unsupported) | A [Preference] uses a feature that is not (yet) supported. |
 | **propagator** | |
 | [`propagator`](#propagator) | An error occurred in the propagator. |
 | **Type** | |
@@ -482,37 +480,6 @@ warning(variable(confusingName),_,((Scope,Name),Reason))
     ```prolog
     warning(variable(confusingName),(),(((),assert),keyword))
     ```
-
----
-
-### Preference Warnings
-This section covers warnings related to [Preference] statements.
-#### Unsupported
-This warning occurs when a [Preference] uses a feature that is not (yet) supported.
-
-```prolog
-warning(preference(unsupported),_,Details)
-```
-
-| Name | Description |
-| :--- | :--- |
-| `Type` | `preference(unsupported)` |
-| `Details` | A tuple describing the feature that is not supported. |
-
-!!! Example
-    Defining multiple preference values for the same variable.
-
-    ```prolog
-    preference_variableValue(dummy,z,val(int,2),5).
-    preference_variableValue(dummy,z,val(int,2),7).
-    ```
-
-    Raises the warning:
-    ```prolog
-    warning(preference(unsupported),(),("multiple scores for the same expression",operation(eq,(variable(z),(val(int,2),()))),5,7))
-    ```
-
-    Here, the details indicate that there are multiple scores defined for the same expression `z == 2`, which is not supported.
 
 ---
 

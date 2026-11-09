@@ -12,9 +12,9 @@ set_baseDomain/2. set_baseDomain/3. set_baseDomain/4.
 execution_declare/4. execution_declare/5. execution_declare/6.
 optimize_precision/1. optimize_precision/2.
 optimize_maximizeSum/1. optimize_maximizeSum/2. optimize_maximizeSum/3. optimize_maximizeSum/4. optimize_maximizeSum/5.
-preference_holds/1. preference_holds/2. preference_holds/3.
+preference_holds/1. preference_holds/2. preference_holds/3. preference_holds/4.
 preference_maximizeScore/0.
-preference_variableValue/2. preference_variableValue/3. preference_variableValue/4.
+preference_variableValue/2. preference_variableValue/3. preference_variableValue/4. preference_variableValue/5.
 main_solverIdentifier/1.
 phase_request/2.
 parameter_request/2.
