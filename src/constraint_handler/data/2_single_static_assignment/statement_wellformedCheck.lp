@@ -15,10 +15,10 @@ _statement_wellformed(assert(EXPR)) :- _statement_query(PRG,SCOPE,assert(EXPR)),
 
 
 
-_warning(statement(syntaxError),LBL,STMT) :- _statement_query(PRG,SCOPE,STMT), not _statement_wellformed(STMT), _passed(defaultArgs,LBL,execution_declare(PRG,STMT2,INS,OUTS,COND)).
+ch_core(warning_raise(statement(syntaxError),STMT,val(bool,true)),LBL) :- _statement_query(PRG,SCOPE,STMT), not _statement_wellformed(STMT), _passed(defaultArgs,LBL,execution_declare(PRG,STMT2,INS,OUTS,COND)).
 
 
 %%%%%% statement atoms
-_warning(atom(syntaxError),PRG,execution_declare(PRG)) :- _phase_active(statement_wellformedCheck), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)),
+ch_core(warning_raise(atom(syntaxError),execution_declare(PRG),val(bool,true)),PRG) :- _phase_active(statement_wellformedCheck), _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)),
     #false: _statement_wellformed(STMT), true=@pythonIsList(INS), true=@pythonIsList(OUTS), true=@pythonIsExpr(COND).
 %%% TODO add bad for all exec outs

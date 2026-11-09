@@ -19,12 +19,14 @@ class FailIntegrity(NamedTuple):
 class Variable_assign(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 
 class Variable_choice(NamedTuple):
     name: expression.constant
     value: expression.Expr
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 

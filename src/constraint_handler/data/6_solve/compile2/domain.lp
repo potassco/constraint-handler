@@ -1,7 +1,7 @@
 _top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=share_value(E).
 
-_top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=variable_assign(X,E).
-_top_level_expression(E) :- _passed(compile2,LBL,DECL), DECL=variable_choice(X,E).
+_top_level_expression(E;C) :- _passed(compile2,LBL,DECL), DECL=variable_assign(X,E,C).
+_top_level_expression(E;C) :- _passed(compile2,LBL,DECL), DECL=variable_choice(X,E,C).
 _top_level_expression(C) :- _passed(compile2,LBL,DECL), DECL=variable_declare(X,D,C).
 _top_level_expression(E;C) :- _passed(compile2,LBL,DECL), DECL=variable_default(X,E,C,P).
 _top_level_expression(E;C) :- _passed(compile2,LBL,DECL), DECL=variable_define(X,E,C).
@@ -9,15 +9,15 @@ _top_level_expression(E;C) :- _passed(compile2,LBL,DECL), DECL=variable_domain(X
 _top_level_expression(E;C) :- _passed(compile2,LBL,DECL), DECL=set_assign(X,E,C).
 
 _top_level_expression(variable_declare(X,D,C)) :- _passed(compile2,LBL,DECL), DECL=variable_declare(X,D,C).
-_top_level_expression(variable_assign(X,E)) :- _passed(compile2,LBL,DECL), DECL=variable_assign(X,E).
-_top_level_expression(variable_choice(X,E)) :- _passed(compile2,LBL,DECL), DECL=variable_choice(X,E).
+_top_level_expression(variable_assign(X,E,C)) :- _passed(compile2,LBL,DECL), DECL=variable_assign(X,E,C).
+_top_level_expression(variable_choice(X,E,C)) :- _passed(compile2,LBL,DECL), DECL=variable_choice(X,E,C).
 _top_level_expression(variable_default(X,E,C,P)) :- _passed(compile2,LBL,DECL), DECL=variable_default(X,E,C,P).
 _top_level_expression(variable_define(X,E,C)) :- _passed(compile2,LBL,DECL), DECL=variable_define(X,E,C).
 _top_level_expression(variable_domain(X,E,C)) :- _passed(compile2,LBL,DECL), DECL=variable_domain(X,E,C).
 _top_level_expression(set_assign(X,E,C)) :- _passed(compile2,LBL,DECL), DECL=set_assign(X,E,C).
 
-_top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_assign(X,E).
-_top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_choice(X,E).
+_top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_assign(X,E,C).
+_top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_choice(X,E,C).
 _top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_default(X,E,C,P).
 _top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_define(X,E,C).
 _top_level_expression(variable(X)) :- _passed(compile2,LBL,DECL), DECL=variable_domain(X,E,C).

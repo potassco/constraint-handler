@@ -1,0 +1,11 @@
+warning(unconditional,_label_anonymous,none)
+warning(message_only,_label_anonymous,details(7))
+warning(conditional,_label_anonymous,none)
+warning(labeled,notice,details(8))
+warning(folded,comparison,operation(eq,(val(int,1),(val(int,2),()))))
+warning_raised(folded,comparison)
+warning_raised(unconditional,_label_anonymous)
+warning_raised(conditional,_label_anonymous)
+warning_raised(labeled,notice)
+warning_raised(unconditional)
+warning_raised

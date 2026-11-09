@@ -24,12 +24,15 @@ _correction_proposed(PHASE,LBL,ensure(E),ensure(NE)) :-
 _correction_proposed(PHASE,LBL,evaluate(REF,E),evaluate(REF,NE)) :-
   _passed(sugar,LBL,evaluate(REF,E)),
   _correction_expressionOutput(PHASE,E,NE).
-_correction_proposed(PHASE,LBL,variable_assign(X,E),variable_assign(X,NE)) :-
-  _passed(sugar,LBL,variable_assign(X,E)),
-  _correction_expressionOutput(PHASE,E,NE).
-_correction_proposed(PHASE,LBL,variable_choice(X,E),variable_choice(X,NE)) :-
-  _passed(sugar,LBL,variable_choice(X,E)),
-  _correction_expressionOutput(PHASE,E,NE).
+_correction_proposed(PHASE,LBL,warning_raise(KIND,MSG,COND),warning_raise(KIND,MSG,NC)) :-
+  _passed(sugar,LBL,warning_raise(KIND,MSG,COND)),
+  _correction_expressionOutput(PHASE,COND,NC).
+_correction_proposed(PHASE,LBL,variable_assign(X,E,C),variable_assign(X,NE,NC)) :-
+  _passed(sugar,LBL,variable_assign(X,E,C)),
+  _correction_expressionOutput(PHASE,E,NE), _correction_expressionOutput(PHASE,C,NC).
+_correction_proposed(PHASE,LBL,variable_choice(X,E,C),variable_choice(X,NE,NC)) :-
+  _passed(sugar,LBL,variable_choice(X,E,C)),
+  _correction_expressionOutput(PHASE,E,NE), _correction_expressionOutput(PHASE,C,NC).
 _correction_proposed(PHASE,LBL,variable_default(X,E,C,P),variable_default(X,NE,NC,NP)) :-
   _passed(sugar,LBL,variable_default(X,E,C,P)),
   _correction_expressionOutput(PHASE,E,NE), _correction_expressionOutput(PHASE,C,NC),
@@ -69,7 +72,7 @@ _passed(correction(PHASE,rem),LBL,DECL) :- _correction(PHASE,LBL,DECL,NECL).
 _passed(correction(PHASE,rem),LBL,DECL) :- _correction(PHASE,LBL,DECL,NECL).
 _passed(correction(PHASE,add),LBL,NECL) :- _correction(PHASE,LBL,DECL,NECL).
 
-_warning(correction(PHASE),LBL,DECL) :- _correction(PHASE,LBL,DECL,NECL), #false: _passed(internal_declaration,LBL2,DECL).
+ch_core(warning_raise(correction(PHASE),DECL,val(bool,true)),LBL) :- _correction(PHASE,LBL,DECL,NECL), #false: _passed(internal_declaration,LBL2,DECL).
 
 #defined _correction_expression/3.
 #defined _correction_number/3.

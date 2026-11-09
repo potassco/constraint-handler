@@ -488,8 +488,8 @@ class DomainComputation:
 
     VARIABLE_SOURCE_SIGNATURES: ClassVar[frozenset[tuple[str, int]]] = frozenset(
         {
-            ("variable_assign", 2),
-            ("variable_choice", 2),
+            ("variable_assign", 3),
+            ("variable_choice", 3),
             ("variable_declare", 3),
             ("variable_default", 4),
             ("variable_define", 3),
@@ -709,9 +709,10 @@ class DomainComputation:
                 continue
             elif expr.name == "variable_default" and len(expr.arguments) == 4:
                 var, source_expr, _condition, _priority = expr.arguments
-            elif expr.name == "variable_define" and len(expr.arguments) == 3:
-                var, source_expr, _condition = expr.arguments
-            elif expr.name == "variable_domain" and len(expr.arguments) == 3:
+            elif (
+                expr.name in {"variable_assign", "variable_choice", "variable_define", "variable_domain"}
+                and len(expr.arguments) == 3
+            ):
                 var, source_expr, _condition = expr.arguments
             else:
                 var, source_expr = expr.arguments

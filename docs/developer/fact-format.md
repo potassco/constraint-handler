@@ -117,9 +117,11 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <variable-atom> ::=
     | "variable_assign" "(" <variable> "," <expression> ")"
-    | "variable_assign" "(" <variable> "," <expression> "," <label> ")"
+    | "variable_assign" "(" <variable> "," <expression> "," <expression> ")"
+    | "variable_assign" "(" <variable> "," <expression> "," <expression> "," <label> ")"
     | "variable_choice" "(" <variable> "," <expression> ")"
-    | "variable_choice" "(" <variable> "," <expression> "," <label> ")"
+    | "variable_choice" "(" <variable> "," <expression> "," <expression> ")"
+    | "variable_choice" "(" <variable> "," <expression> "," <expression> "," <label> ")"
     | "variable_declare" "(" <variable> "," <domain> ")"
     | "variable_declare" "(" <variable> "," <domain> "," <expression> ")"
     | "variable_declare" "(" <variable> "," <domain> "," <expression> "," <label> ")"
@@ -168,6 +170,10 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "preference_variableValue" "(" <variable> "," <expression> "," <int> "," <label> ")"
 
 <warning-control-atom> ::=
+    | "warning_raise" "(" <term> ")"
+    | "warning_raise" "(" <term> "," <term> ")"
+    | "warning_raise" "(" <term> "," <term> "," <expression> ")"
+    | "warning_raise" "(" <term> "," <term> "," <expression> "," <label> ")"
     | "warning_forbid" "(" <term> ")"
     | "warning_forbid" "(" <term> "," <term> ")"
     | "warning_ignore" "(" <term> ")"

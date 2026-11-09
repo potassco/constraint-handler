@@ -6,6 +6,7 @@ _passed(sugar,LBL,check(E)) :- _passed(defaultArgs,LBL,check(E)).
 _passed(sugar,LBL,ensure(E)) :- _passed(defaultArgs,LBL,ensure(E)).
 
 _passed(sugar,LBL,evaluate(E,E)) :- _passed(defaultArgs,LBL,evaluate(E)).
+_passed(sugar,LBL,warning_raise(KIND,MSG,COND)) :- _passed(defaultArgs,LBL,warning_raise(KIND,MSG,COND)).
 
 %%%%%% variable fromFacts atoms
 _passed(sugar,LBL,variable_declare(X,D,C)) :- _passed(defaultArgs,LBL,variable_declare(X,D,C)), D=(definition;fromFacts;open;set;multimap).
@@ -20,10 +21,10 @@ _passed(sugar,LBL,variable_define(X,E,C)) :- _passed(defaultArgs,LBL,variable_de
 _passed(sugar,LBL,variable_domain(X,E,C)) :- _passed(defaultArgs,LBL,variable_domain(X,E,C)).
 
 %%%%%% variable assign
-_passed(sugar,LBL,variable_assign(X,E)) :- _passed(defaultArgs,LBL,variable_assign(X,E)).
+_passed(sugar,LBL,variable_assign(X,E,C)) :- _passed(defaultArgs,LBL,variable_assign(X,E,C)).
 
 %%%%%% variable choice
-_passed(sugar,LBL,variable_choice(X,E)) :- _passed(defaultArgs,LBL,variable_choice(X,E)).
+_passed(sugar,LBL,variable_choice(X,E,C)) :- _passed(defaultArgs,LBL,variable_choice(X,E,C)).
 
 %%%%%% variable default
 _passed(sugar,LBL,variable_default(X,D,C,P)) :- _passed(defaultArgs,LBL,variable_default(X,D,C,P)).

@@ -1,0 +1,5 @@
+warning_raised(ignored)
+warning_raised(labeled,suppressed)
+warning_raised(forbidden)
+warning_raised(filtered,blocked)
+warning_raised(overridden)

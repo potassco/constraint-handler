@@ -121,9 +121,11 @@
 
 <variable-atom> ::=
 ~\alt `variable_assign' `(' <variable> `,' <expression> `)'
-\alt `variable_assign' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `variable_assign' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `variable_assign' `(' <variable> `,' <expression> `,' <expression> `,' <label> `)'
 \alt `variable_choice' `(' <variable> `,' <expression> `)'
-\alt `variable_choice' `(' <variable> `,' <expression> `,' <label> `)'
+\alt `variable_choice' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `variable_choice' `(' <variable> `,' <expression> `,' <expression> `,' <label> `)'
 \alt `variable_declare' `(' <variable> `,' <domain> `)'
 \alt `variable_declare' `(' <variable> `,' <domain> `,' <expression> `)'
 \alt `variable_declare' `(' <variable> `,' <domain> `,' <expression> `,' <label> `)'
@@ -171,7 +173,11 @@
 \alt `preference_variableValue' `(' <variable> `,' <expression> `,' <int> `,' <label> `)'
 
 <warning-control-atom> ::=
-~\alt `warning_forbid' `(' <term> `)'
+~\alt `warning_raise' `(' <term> `)'
+\alt `warning_raise' `(' <term> `,' <term> `)'
+\alt `warning_raise' `(' <term> `,' <term> `,' <expression> `)'
+\alt `warning_raise' `(' <term> `,' <term> `,' <expression> `,' <label> `)'
+\alt `warning_forbid' `(' <term> `)'
 \alt `warning_forbid' `(' <term> `,' <term> `)'
 \alt `warning_ignore' `(' <term> `)'
 \alt `warning_ignore' `(' <term> `,' <term> `)'

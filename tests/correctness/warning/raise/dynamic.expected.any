@@ -1,0 +1,8 @@
+value(flag,val(bool,false))
+value(flag,val(bool,true))
+warning(positive,notice,positive_message)
+warning(negative,notice,negative_message)
+warning_raised(positive,notice)
+warning_raised(negative,notice)
+warning_raised(shared,positive)
+warning_raised(shared,negative)

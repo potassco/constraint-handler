@@ -13,11 +13,11 @@ ch_core(ensure/1,LBL).
 ch_core(evaluate/2,LBL).
 ch_core(preference_holds/2,LBL).
 ch_core(set_baseDomain/3,LBL).
-ch_core(variable_assign/2,LBL).
+ch_core(variable_assign/3,LBL).
 ch_core(variable_declare/3,LBL).
 ch_core(variable_default/3,LBL).
-ch_solve(variable_assign/2,LBL).
-ch_solve(variable_choice/2,LBL).
+ch_solve(variable_assign/3,LBL).
+ch_solve(variable_choice/3,LBL).
 ch_solve(variable_declare/3,LBL).
 ch_solve(variable_default/4,LBL).
 _se_value/2.

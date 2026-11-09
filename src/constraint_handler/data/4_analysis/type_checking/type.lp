@@ -9,8 +9,8 @@ _expression(type_check,EXPR) :- _phase_active(type_check), type_query(EXPR).
 _expression(type_check,variable(X)) :- _phase_active(type_check), _variable(sugar,X).
 
 %%%%%%%%%%%%%%%%% type_variable %%% TODO: take into account the situation where the condition isn't a boolean
-_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_assign(X,E)), _type_expression(E,T).
-_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_choice(X,E)), _type_expression(E,T).
+_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_assign(X,E,C)), _type_expression(E,T).
+_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_choice(X,E,C)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_default(X,E,C,P)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_define(X,E,C)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_domain(X,E,C)), _type_expression(E,T).
@@ -65,7 +65,7 @@ _type_pythonExtractAux(ARGS,IDX,((X,T),L)) :- _type_pythonExtractAux(ARGS,IDX+1,
 _type_pythonExtract(STMT,EXPR,ARGS,TS,IDS) :- _expression(type_check,operation(pythonExtract(STMT,EXPR),ARGS)), _type_pythonExtractAux(ARGS,0,TS), _main_solverIdentifiers(IDS).
 _type_pythonTypeExtractResult(operation(pythonExtract(STMT,EXPR),ARGS),T) :- _type_pythonExtract(STMT,EXPR,ARGS,TS,IDS), T=@pythonTypeExtract(STMT,EXPR,TS,IDS).
 _type_expression(E,T) :- _type_pythonTypeExtractResult(E,valid(T)).
-_warning(KIND,(),MSG) :- _type_pythonTypeExtractResult(E,error(KIND,MSG)).
+ch_core(warning_raise(KIND,MSG,val(bool,true)),()) :- _type_pythonTypeExtractResult(E,error(KIND,MSG)).
 
 
 %%%%%%%%%%%%%%%%% warnings
@@ -77,8 +77,8 @@ _type_nonMinimal(variable(X),W) :- _type_warning(variable(X),W).
 _type_nonMinimal(E,W) :- _expression_operationIndex(type_check,E,IDX,ARG), _type_warning(ARG,W).
 _type_nonMinimal(E,W) :- _expression_tupleIndex(type_check,E,IDX,ARG), _type_warning(ARG,W).
 
-_warning(type(W),(),E) :- _type_warning(E,W), not _type_nonMinimal(E,W).
-_warning(type(W),LBL,variable(X)) :- _type_warning(variable(X),W), _passed(sugar,LBL,variable_declare(X,D,C)), #false: X=loc(V).
+ch_core(warning_raise(type(W),E,val(bool,true)),()) :- _type_warning(E,W), not _type_nonMinimal(E,W).
+ch_core(warning_raise(type(W),variable(X),val(bool,true)),LBL) :- _type_warning(variable(X),W), _passed(sugar,LBL,variable_declare(X,D,C)), #false: X=loc(V).
 
 type_expression(E,T) :- _type_expression(E,T), T != bot, not _type_expression(E,top).
 type_expression(E,top) :- _type_expression(E,top).

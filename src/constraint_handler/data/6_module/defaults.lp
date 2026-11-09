@@ -22,7 +22,7 @@ _default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), not -_defaul
 
 %%%%%% mode define
 
--_default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), ch_solve(variable_assign(X,E),LBL2),
+-_default_apply(X,D,C,P) :- ch_solve(variable_default(X,D,C,P),LBL), ch_solve(variable_assign(X,E,C2),LBL2), _se_value(C2,val(bool,true)),
   _default_mode(define).
 
 
@@ -37,17 +37,17 @@ _default_connect(X,X) :- ch_core(variable_declare(X,open,C),LBL), _default_mode(
 
 -_default_apply(X,D,C,P) :-
   ch_solve(variable_default(X,D,C,P),LBL),
-  ch_core(variable_assign(Y,E),LBL2),
+  ch_core(variable_assign(Y,E,C2),LBL2), _se_value(C2,val(bool,true)),
   _default_connect(X,Y),
   _default_mode(depends).
 
 
 %%%%%% guessing
-_se_value(variable(X),V) :- ch_core(variable_assign(X,E),LBL), _se_value(E,V).
+_se_value(variable(X),V) :- ch_core(variable_assign(X,E,C),LBL), _se_value(E,V), _se_value(C,val(bool,true)).
 
 _se_value(variable(X),V) :- ch_solve(variable_default(X,E,C,P),LBL), _se_value(E,V), _default_apply(X,E,C,P).
 
-{ _se_value(variable(X),V) : ch_solve(variable_choice(X,E),LBL1), _se_value(E,V) } :-
+{ _se_value(variable(X),V) : ch_solve(variable_choice(X,E,C1),LBL1), _se_value(E,V), _se_value(C1,val(bool,true)) } :-
   ch_core(variable_declare(X,open,C),LBL), _se_value(C,val(bool,true)).
 
 :- ch_core(variable_declare(X,open,C),LBL), _se_value(C,val(bool,true)), 1 != { _se_value(variable(X),V) }, _engine_grounding(LBL). % TODO change 1 != to 1 >

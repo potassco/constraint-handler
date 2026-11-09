@@ -9,12 +9,12 @@ _expression_wellformed(variable(X)) :- _expression_wfQuery(variable(X)).
 _expression_wellformed(operation(O,L)) :- _expression_wfQuery(operation(O,L)), true=@pythonIsList(L); _expression_wellformed(O) : O=pythonExtract(PSTMT,PEXPR); _expression_wellformed(D) : D=@pythonListElements(L).
 _expression_wellformed(EXPR) :- _expression_wfQuery(EXPR), true=@pythonIsTuple(EXPR), _expression_wellformed(D) : D=@pythonTupleElements(EXPR).
 _expression_wellformed(lambda(ARGS,E)) :- _expression_wfQuery(lambda(ARGS,E)).
-_warning(expression(syntaxError),(),"lambda checks unsupported") :- _expression_wfQuery(lambda(ARGS,E)). %TODO
+ch_core(warning_raise(expression(syntaxError),"lambda checks unsupported",val(bool,true)),()) :- _expression_wfQuery(lambda(ARGS,E)). %TODO
 
 % TODO: for operations, check that the operator is well-formed
 
 
-_warning(expression(syntaxError),(),EXPR) :- _phase_active(wf_check), _expression(sugar,EXPR), not _expression_wellformed(EXPR).
+ch_core(warning_raise(expression(syntaxError),EXPR,val(bool,true)),()) :- _phase_active(wf_check), _expression(sugar,EXPR), not _expression_wellformed(EXPR).
 
 
 

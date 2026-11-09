@@ -6,6 +6,10 @@
 #defined ensure/2.
 #defined evaluate/1.
 #defined evaluate/2.
+#defined warning_raise/1.
+#defined warning_raise/2.
+#defined warning_raise/3.
+#defined warning_raise/4.
 
 %%%%%%%%%%%%%%%%% labels are optional
 _passed(defaultArgs,_label_anonymous,bool_evaluate(E)) :- bool_evaluate(E).
@@ -16,6 +20,10 @@ _passed(defaultArgs,_label_anonymous,ensure(E)) :- ensure(E).
 _passed(defaultArgs,LBL,ensure(E)) :- ensure(E,LBL).
 _passed(defaultArgs,_label_anonymous,evaluate(E)) :- evaluate(E).
 _passed(defaultArgs,LBL,evaluate(E)) :- evaluate(E,LBL).
+_passed(defaultArgs,_label_anonymous,warning_raise(KIND,none,val(bool,true))) :- warning_raise(KIND).
+_passed(defaultArgs,_label_anonymous,warning_raise(KIND,MSG,val(bool,true))) :- warning_raise(KIND,MSG).
+_passed(defaultArgs,_label_anonymous,warning_raise(KIND,MSG,COND)) :- warning_raise(KIND,MSG,COND).
+_passed(defaultArgs,LBL,warning_raise(KIND,MSG,COND)) :- warning_raise(KIND,MSG,COND,LBL).
 
 %%%%%% variable declare
 #defined variable_declare/2.
@@ -42,8 +50,10 @@ _passed(defaultArgs,LBL,variable_domain(X,E,C)) :- variable_domain(X,E,C,LBL).
 %%%%%% variable open
 #defined variable_assign/2.
 #defined variable_assign/3.
+#defined variable_assign/4.
 #defined variable_choice/2.
 #defined variable_choice/3.
+#defined variable_choice/4.
 #defined variable_default/2.
 #defined variable_default/3.
 #defined variable_default/4.
@@ -57,13 +67,15 @@ _passed(defaultArgs,_label_anonymous,variable_default(X,E,C,P)) :- variable_defa
 _passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(X,E,C,P), _passed(defaultArgs,LBL,variable_declare(X,D,COND)).
 _passed(defaultArgs,LBL,variable_default(X,E,C,P)) :- variable_default(X,E,C,P,LBL).
 
-_passed(defaultArgs,_label_anonymous,variable_assign(X,E)) :- variable_assign(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
-_passed(defaultArgs,LBL,variable_assign(X,E)) :- variable_assign(X,E,LBL).
+_passed(defaultArgs,_label_anonymous,variable_assign(X,E,val(bool,true))) :- variable_assign(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_assign(X,E,val(bool,true))) :- variable_assign(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
+_passed(defaultArgs,_label_anonymous,variable_assign(X,E,C)) :- variable_assign(X,E,C).
+_passed(defaultArgs,LBL,variable_assign(X,E,C)) :- variable_assign(X,E,C,LBL).
 
-_passed(defaultArgs,_label_anonymous,variable_choice(X,E)) :- variable_choice(X,E), not _defaultArgs_variableDeclared(X).
-_passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
-_passed(defaultArgs,LBL,variable_choice(X,E)) :- variable_choice(X,E,LBL).
+_passed(defaultArgs,_label_anonymous,variable_choice(X,E,val(bool,true))) :- variable_choice(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_choice(X,E,val(bool,true))) :- variable_choice(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
+_passed(defaultArgs,_label_anonymous,variable_choice(X,E,C)) :- variable_choice(X,E,C).
+_passed(defaultArgs,LBL,variable_choice(X,E,C)) :- variable_choice(X,E,C,LBL).
 
 %%%%%% variable definition
 #defined variable_define/2.
