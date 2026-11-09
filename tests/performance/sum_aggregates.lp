@@ -1,74 +1,22 @@
 % Regression: variadic integer addition over many multi-valued variables.
 % Should avoid grounding Cartesian products for variadic add.
 
+#const x_count = 10.
 #const domain_max = 3.
-#const target_sum = 21.
 
-variable_declare(x1,fromFacts).
-variable_domain(x1,val(int,1..domain_max)).
+variable_declare(x(1..x_count),fromFacts).
+variable_domain(x(1..x_count),val(int,1..domain_max)).
 
-variable_declare(x2,fromFacts).
-variable_domain(x2,val(int,1..domain_max)).
-
-variable_declare(x3,fromFacts).
-variable_domain(x3,val(int,1..domain_max)).
-
-variable_declare(x4,fromFacts).
-variable_domain(x4,val(int,1..domain_max)).
-
-variable_declare(x5,fromFacts).
-variable_domain(x5,val(int,1..domain_max)).
-
-variable_declare(x6,fromFacts).
-variable_domain(x6,val(int,1..domain_max)).
-
-variable_declare(x7,fromFacts).
-variable_domain(x7,val(int,1..domain_max)).
-
-variable_declare(x8,fromFacts).
-variable_domain(x8,val(int,1..domain_max)).
-
-variable_declare(x9,fromFacts).
-variable_domain(x9,val(int,1..domain_max)).
-
-variable_declare(x10,fromFacts).
-variable_domain(x10,val(int,1..domain_max)).
+sum_arguments(x_count,()).
+sum_arguments(I,(variable(x(I+1)),Rest)) :-
+    I >= 0,
+    sum_arguments(I + 1,Rest).
 
 variable_define(
     sum,
-    operation(
-        add,
-        (
-            variable(x1),
-            (
-                variable(x2),
-                (
-                    variable(x3),
-                    (
-                        variable(x4),
-                        (
-                            variable(x5),
-                            (
-                                variable(x6),
-                                (
-                                    variable(x7),
-                                    (
-                                        variable(x8),
-                                        (
-                                            variable(x9),
-                                            (variable(x10), ())
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    ),
+    operation(add,Arguments),
     val(bool,true),
     d_sum
-).
+) :- sum_arguments(0,Arguments).
 
-ensure(operation(eq,(variable(sum),(val(int,target_sum),()))),sum_matches_target).
+ensure(operation(eq,(variable(sum),(val(int,x_count * (domain_max + 1) / 2 + 1),()))),sum_matches_target).

@@ -415,16 +415,18 @@ def get_multimap_declarations(
         add_watch(-literal)
 
     assigns = myClorm.findInPropagateInit(ctl, prop_atom.Propagator_multimap_assign)
-    for (symbol_var, key_expr, expr, name), literal in assigns.items():
+    for (symbol_var, key_expr, expr, condition, name), literal in assigns.items():
         try:
             dictvar: DictVariable = cast(DictVariable, manager.get_variable(symbol_var, DictVariable.__name__))
         except KeyError:
             continue
         key_value = manager.get_variable_value(key_expr, 1)
         value = manager.get_variable_value(expr, literal)
-        dictvar.add_value(key_value, value)
+        condition_value = manager.get_variable_value(condition, literal)
+        dictvar.add_value(key_value, value, condition_value)
         manager.add_expr_owner(key_value, dictvar)
         manager.add_expr_owner(value, dictvar)
+        manager.add_expr_owner(condition_value, dictvar)
 
         add_watch(literal)
         add_watch(-literal)

@@ -1846,7 +1846,7 @@ class DictVariable:
     """
     A dict variable with a name and a set of key-value expressions.
 
-    This is supposed to mirror the multimap_declare/2 and multimap_assign/4 atom in the ASP encoding.
+    This is supposed to mirror the multimap_declare/2 and multimap_assign/5 atom in the ASP encoding.
     multimap_declare is this class, while each multimap_assign adds a possible key-value pair to the dict.
 
     Implements the VariableType protocol.
@@ -1906,13 +1906,16 @@ class DictVariable:
             exprs.update(value.expressions)
         return exprs
 
-    def add_value(self, key_value: VariableValue, value: VariableValue) -> None:
+    def add_value(
+        self, key_value: VariableValue, value: VariableValue, condition_value: VariableValue | None = None
+    ) -> None:
         """
         Add a key-value pair to the dict variable.
 
         Args:
             key_value: Interned expression for the key.
             value: Interned expression for the value.
+            condition_value: Interned condition controlling membership of the pair.
         """
         # order is important, first we check if the expression exists to increase counter, then we add it to the dict
         # if we add it to the dict first, the check for the counter will not trigger for new expressions
@@ -1924,7 +1927,9 @@ class DictVariable:
 
         if value not in self.expressions:
             self.expressions_count += 1
-        self.dict_expressions[key_value].add_value(value)
+        if condition_value is not None and condition_value not in self.expressions and condition_value != value:
+            self.expressions_count += 1
+        self.dict_expressions[key_value].add_value(value, condition_value)
 
     def has_domain(self) -> bool:
         """

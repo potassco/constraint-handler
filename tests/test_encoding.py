@@ -306,6 +306,7 @@ expression_tests = [
 
 multimap_tests = [
     "multimap/basics",
+    "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
     "multimap/main",
@@ -572,6 +573,7 @@ compile2_xfail: set[str] = {
     "execution/warning_spurious",
     "execution/warning_spurious2",
     "multimap/basics",
+    "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
     "multimap/main",
@@ -621,6 +623,7 @@ ground_xfail: set[str] = {
     "execution/warning_spurious",
     "execution/warning_spurious2",
     "multimap/basics",
+    "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
     "multimap/main",
@@ -834,6 +837,7 @@ choice_statistics_skip: set[str] = {
     "execution/warning_spurious2",
     "expression/python_extract/dynamic",
     "expression/python_extract/succeeds",
+    "multimap/conditional_assign",
     "optimization/label_int",
     "optimization/label_string",
     "optimization/optional_absent_linked_value",

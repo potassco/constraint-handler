@@ -90,9 +90,11 @@ _passed(defaultArgs,LBL,variable_define(X,E,C)) :- variable_define(X,E,C,LBL).
 %%%%%% multimap atoms
 #defined multimap_assign/3.
 #defined multimap_assign/4.
+#defined multimap_assign/5.
 
-_passed(defaultArgs,_label_anonymous,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(X,EKEY,EVAL).
-_passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL)) :- multimap_assign(X,EKEY,EVAL,LBL).
+_passed(defaultArgs,_label_anonymous,multimap_assign(X,EKEY,EVAL,val(bool,true))) :- multimap_assign(X,EKEY,EVAL).
+_passed(defaultArgs,_label_anonymous,multimap_assign(X,EKEY,EVAL,C)) :- multimap_assign(X,EKEY,EVAL,C).
+_passed(defaultArgs,LBL,multimap_assign(X,EKEY,EVAL,C)) :- multimap_assign(X,EKEY,EVAL,C,LBL).
 
 %%%%% set atoms
 #defined set_assign/2.
@@ -146,15 +148,19 @@ _defaultArgs_optimize_priority(PRIO) :- _passed(defaultArgs,LBL,optimize_maximiz
 _passed(defaultArgs,_label_anonymous,optimize_precision(PREC,PRIO)) :- _defaultArgs_optimizePrecision(PREC), _defaultArgs_optimize_priority(PRIO), not _defaultArgs_precisionProj(PRIO).
 
 %%%%%% preference atoms
-#defined preference_holds/3.
-#defined preference_holds/2.
 #defined preference_holds/1.
-#defined preference_variableValue/4.
-#defined preference_variableValue/3.
+#defined preference_holds/2.
+#defined preference_holds/3.
+#defined preference_holds/4.
 #defined preference_variableValue/2.
-_passed(defaultArgs,_label_anonymous,preference_holds(E,1)) :- preference_holds(E).
-_passed(defaultArgs,_label_anonymous,preference_holds(E,K)) :- preference_holds(E,K).
-_passed(defaultArgs,LBL,preference_holds(E,K)) :- preference_holds(E,K,LBL).
-_passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,1)) :- preference_variableValue(X,E).
-_passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,K)) :- preference_variableValue(X,E,K).
-_passed(defaultArgs,LBL,preference_variableValue(X,E,K)) :- preference_variableValue(X,E,K,LBL).
+#defined preference_variableValue/3.
+#defined preference_variableValue/4.
+#defined preference_variableValue/5.
+_passed(defaultArgs,_label_anonymous,preference_holds(E,1,val(bool,true))) :- preference_holds(E).
+_passed(defaultArgs,_label_anonymous,preference_holds(E,K,val(bool,true))) :- preference_holds(E,K).
+_passed(defaultArgs,_label_anonymous,preference_holds(E,K,C)) :- preference_holds(E,K,C).
+_passed(defaultArgs,LBL,preference_holds(E,K,C)) :- preference_holds(E,K,C,LBL).
+_passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,1,val(bool,true))) :- preference_variableValue(X,E).
+_passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,K,val(bool,true))) :- preference_variableValue(X,E,K).
+_passed(defaultArgs,_label_anonymous,preference_variableValue(X,E,K,C)) :- preference_variableValue(X,E,K,C).
+_passed(defaultArgs,LBL,preference_variableValue(X,E,K,C)) :- preference_variableValue(X,E,K,C,LBL).

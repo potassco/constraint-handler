@@ -88,6 +88,7 @@ class Multimap_assign(NamedTuple):
     name: expression.constant
     key: expression.Expr
     val: expression.Expr
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 
@@ -123,6 +124,7 @@ class Preference_maximizeScore(NamedTuple):
 class Preference_holds(NamedTuple):
     value: expression.Expr
     factor: int = 1
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 
@@ -130,6 +132,7 @@ class Preference_variableValue(NamedTuple):
     variable: expression.constant
     value: expression.Expr
     factor: int = 1
+    condition: expression.Expr = expression.TRUE
     label: expression.constant = LABEL_ANONYMOUS
 
 

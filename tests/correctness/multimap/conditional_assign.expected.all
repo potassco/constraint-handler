@@ -1,0 +1,5 @@
+multimap_value(m,val(int,1),val(int,10))
+multimap_value(m,val(int,2),val(int,20))
+multimap_value(m,val(int,4),val(int,40))
+multimap_value(m,val(int,6),val(int,60))
+value(dynamic_count,val(int,1))

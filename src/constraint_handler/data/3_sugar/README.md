@@ -10,13 +10,13 @@ _passed(defaultArgs,LBL,variable_declare/3).
 _passed(defaultArgs,LBL,variable_default/4).
 _passed(defaultArgs,LBL,variable_define/3).
 _passed(defaultArgs,LBL,variable_domain/3).
-_passed(defaultArgs,LBL,multimap_assign/3).
+_passed(defaultArgs,LBL,multimap_assign/4).
 _passed(defaultArgs,LBL,set_assign/2).
 _passed(defaultArgs,LBL,set_baseDomain/3).
 _passed(defaultArgs,LBL,optimize_precision/2).
 _passed(defaultArgs,LBL,optimize_maximizeSum/4).
-_passed(defaultArgs,LBL,preference_holds/2).
-_passed(defaultArgs,LBL,preference_variableValue/3).
+_passed(defaultArgs,LBL,preference_holds/3).
+_passed(defaultArgs,LBL,preference_variableValue/4).
 _passed(defaultArgs,LBL,warning_forbid/2).
 _passed(defaultArgs,LBL,warning_ignore/2).
 _passed(ssa,LBL,DECL).
@@ -39,7 +39,7 @@ _passed(sugar,LBL,variable_declare/3).
 _passed(sugar,LBL,variable_default/4).
 _passed(sugar,LBL,variable_define/3).
 _passed(sugar,LBL,variable_domain/3).
-_passed(sugar,LBL,multimap_assign/3).
+_passed(sugar,LBL,multimap_assign/4).
 _passed(sugar,LBL,set_assign/2).
 _passed(sugar,LBL,set_baseDomain/3).
 _passed(sugar,LBL,optimize_component/6).

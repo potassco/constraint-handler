@@ -18,11 +18,11 @@ ch_solve(variable_define(NAME,EXPR,JOINED),LBL) :- _phase_active(solve), ch_core
 ch_solve(variable_domain(NAME,EXPR,JOINED),LBL) :- _phase_active(solve), ch_core(variable_domain(NAME,EXPR,COND1),LBL), ch_core(variable_declare(NAME,fromFacts,COND2),_), _bool_joined(COND1,COND2,JOINED).
 ch_solve(set_assign(NAME,EXPR,JOINED),LBL) :- _phase_active(solve), ch_core(set_assign(NAME,EXPR,COND1),LBL), ch_core(variable_declare(NAME,set,COND2),_), _bool_joined(COND1,COND2,JOINED).
 
-ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=multimap_assign(X,K,B).
+ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=multimap_assign(X,K,B,C).
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=share_value(E).
 
 %_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(bool_evaluate(E),LBL).
 %_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(evaluate(REF,E),LBL).
 %_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(ensure(E),LBL).
-%_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
+%_passed(solve,LBL,share_value(E)) :- _phase_active(solve), ch_core(preference_holds(K,E),LBL).
 %_passed(solve,LBL,DECL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=evaluate(REF,E).

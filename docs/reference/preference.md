@@ -13,10 +13,12 @@ The constraint handler provides multiple ways of specifying preferences. Here, w
 ### Variable Value
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-One way to provide a preference is to assign a preference value to a variable having a specific value. For this, we can use the `preference_variableValue/3` predicate.
+One way to provide a preference is to assign a preference value to a variable having a specific value. For this, we can use the `preference_variableValue` predicate.
 
 ```prolog
 preference_variableValue(Name, Expression, Value)
+preference_variableValue(Name, Expression, Value, Condition)
+preference_variableValue(Name, Expression, Value, Condition, Label)
 ```
 
 | Name | Description |
@@ -24,8 +26,11 @@ preference_variableValue(Name, Expression, Value)
 | `Name` | The name of the variable for which we are specifying a preference. |
 | `Expression` | The expression representing the value of the variable we are assigning a preference to. |
 | `Value` | The preference value assigned to the variable having the specified value. |
+| `Condition` | An [Expression] controlling whether the preference applies. Defaults to `val(bool,true)`. |
+| `Label` | An optional label for the declaration. |
 
 The preference value is a numeric value that indicates how much we prefer that variable to take that specific value. Higher preference values indicate stronger preferences.
+The preference contributes to the score only when `Condition` evaluates to true. Omitting `Value` gives a preference value of `1`.
 
 !!! Example
     Consider a program that defines a variable `color` with possible values `red`, `green`, `blue`, and `yellow`.
@@ -50,16 +55,21 @@ The preference value is a numeric value that indicates how much we prefer that v
 ### Holds
 **[Declaration]**{.badge .declaration } **[Label Support]**{.badge .label-support }
 
-In addition to assigning preference values to variable-value pairs, we can also express preferences based on certain conditions using the `preference_holds/2` predicate.
+The `preference_holds` predicate expresses a preference that a Boolean expression evaluates to true.
 
 ```prolog
-preference_holds(Condition, Value)
+preference_holds(Expression)
+preference_holds(Expression, Value)
+preference_holds(Expression, Value, Condition)
+preference_holds(Expression, Value, Condition, Label)
 ```
 
 | Name | Description |
 | :--- | :--- |
-| `Condition` | An [Expression] representing the condition we are assigning a preference to. |
-| `Value` | The preference value assigned when the condition holds true. |
+| `Expression` | A Boolean [Expression] we prefer to hold true. |
+| `Value` | The preference weight. Defaults to `1`. |
+| `Condition` | A Boolean [Expression] controlling whether the preference applies. Defaults to `val(bool,true)`. |
+| `Label` | An optional label for the declaration. |
 
 
 !!! Example
@@ -121,9 +131,9 @@ preference_score(TotalScore)
     - Total Score: 3 + 3 + 10 = 16
 
 ### Negative Values
-So far, we have only used positive preference values. However, it is also possible to use negative values to express that certain conditions or variable-value pairs are undesirable.
+Negative values express that a condition or variable-value pair is undesirable.
 
-However, instead of decreasing the overall score, negative preference values will increase the score of models that do not satisfy the corresponding condition or variable-value pair.
+For an active declaration, negative values add their absolute value to the score when the preferred expression is false or the variable takes a different value.
 
 !!! Example
     Extending the previous example, suppose we want to express that we strongly dislike the color `yellow` appearing in any model.

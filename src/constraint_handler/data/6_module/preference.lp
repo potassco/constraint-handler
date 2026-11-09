@@ -1,10 +1,8 @@
 #defined preference_maximizeScore/0.
 
-ch_core(warning_raise(preference(unsupported),("multiple scores for the same expression",E,K1,K2),val(bool,true)),LBL1) :- _passed(sugar,LBL1,preference_holds(E,K1)), _passed(sugar,LBL2,preference_holds(E,K2)), K1 < K2.
-
-ch_solve(share_value(E),LBL) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
-_preference_expressionScore(E,K) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
-_bool_evaluate(E,LBL) :- _phase_active(solve), ch_core(preference_holds(E,K),LBL).
+ch_solve(share_value(E),LBL) :- _phase_active(solve), ch_core(preference_holds(K,E),LBL).
+_preference_expressionScore(E,K) :- _phase_active(solve), ch_core(preference_holds(K,E),LBL).
+_bool_evaluate(E,LBL) :- _phase_active(solve), ch_core(preference_holds(K,E),LBL).
 
 
 _preference_expression(E) :- _preference_expressionScore(E,K).
@@ -15,10 +13,10 @@ _preference_index(F,IDX+1) :- _preference_index(E,IDX), _preference_expression(F
 
 _preference_potentialAux(0,0) :- preference_maximizeScore.
 _preference_potentialAux(IDX+1,W)   :- _preference_potentialAux(IDX,W), _preference_index(E,IDX).
-_preference_potentialAux(IDX+1,W+K) :- _preference_potentialAux(IDX,W), _preference_index(E,IDX), _preference_expressionScore(E, K), K > 0.
+_preference_potentialAux(IDX+1,W+K) :- _preference_potentialAux(IDX,W), _preference_index(E,IDX), K = #sum { SCORE : _preference_expressionScore(E,SCORE) }.
 _preference_potentialScore(W) :- _preference_potentialAux(IDX,W), not _preference_potentialAux(IDX+1,W).
 
-preference_score(W) :- preference_maximizeScore, W = #sum { K,E : _bool_evaluated(E,val(bool,true)),  _preference_expressionScore(E,K), K > 0 }.
+preference_score(W) :- preference_maximizeScore, W = #sum { K,E : _bool_evaluated(E,val(bool,true)), _preference_expressionScore(E,K) }.
 
 #heuristic _bool_evaluated(E,val(bool,true)) : _preference_expressionScore(E,K). [1,true]
 #heuristic preference_score(W) : _preference_potentialScore(W),W>0. [1+W,true]

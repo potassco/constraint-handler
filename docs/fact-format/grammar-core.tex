@@ -28,7 +28,7 @@ and \texttt{<label>} are defined in the fact format.
 <core-collection-declaration> ::=
 ~\alt `set_assign' `(' <variable> `,' <expression> `,' <expression> `)'
 \alt `set_baseDomain' `(' <variable> `,' <expression> `,' <expression> `)'
-\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `)'
+\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `,' <expression> `)'
 
 <core-query-declaration> ::=
 ~\alt `bool_evaluate' `(' <expression> `)'
@@ -39,7 +39,7 @@ and \texttt{<label>} are defined in the fact format.
 
 <core-optimization-declaration> ::=
 ~\alt `optimize_component' `(' <expression> `,' <expression> `,' <expression> `,' <term> `,' <expression> `,' <expression> `)'
-\alt `preference_holds' `(' <expression> `,' <int> `)'
+\alt `preference_holds' `(' <int> `,' <expression> `)'
 
 <core-control-declaration> ::=
 ~\alt `engine_request' `(' <term> `)'

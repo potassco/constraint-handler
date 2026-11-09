@@ -140,7 +140,8 @@
 
 <multimap-atom> ::=
 ~\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `)'
-\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `,' <label> `)'
+\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `,' <expression> `)'
+\alt `multimap_assign' `(' <variable> `,' <expression> `,' <expression> `,' <expression> `,' <label> `)'
 
 <set-atom> ::=
 ~\alt `set_assign' `(' <variable> `,' <expression> `)'
@@ -167,10 +168,12 @@
 ~\alt `preference_maximizeScore'
 \alt `preference_holds' `(' <expression> `)'
 \alt `preference_holds' `(' <expression> `,' <int> `)'
-\alt `preference_holds' `(' <expression> `,' <int> `,' <label> `)'
+\alt `preference_holds' `(' <expression> `,' <int> `,' <expression> `)'
+\alt `preference_holds' `(' <expression> `,' <int> `,' <expression> `,' <label> `)'
 \alt `preference_variableValue' `(' <variable> `,' <expression> `)'
 \alt `preference_variableValue' `(' <variable> `,' <expression> `,' <int> `)'
-\alt `preference_variableValue' `(' <variable> `,' <expression> `,' <int> `,' <label> `)'
+\alt `preference_variableValue' `(' <variable> `,' <expression> `,' <int> `,' <expression> `)'
+\alt `preference_variableValue' `(' <variable> `,' <expression> `,' <int> `,' <expression> `,' <label> `)'
 
 <warning-control-atom> ::=
 ~\alt `warning_raise' `(' <term> `)'

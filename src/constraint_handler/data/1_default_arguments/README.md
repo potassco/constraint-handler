@@ -10,14 +10,14 @@ variable_declare/2. variable_declare/3. variable_declare/4.
 variable_define/2. variable_define/3. variable_define/4.
 variable_domain/2. variable_domain/3. variable_domain/4.
 variable_default/2. variable_default/3. variable_default/4. variable_default/5.
-multimap_assign/3. multimap_assign/4.
+multimap_assign/3. multimap_assign/4. multimap_assign/5.
 set_assign/2. set_assign/3.
 set_baseDomain/2. set_baseDomain/3. set_baseDomain/4.
 execution_declare/4. execution_declare/5. execution_declare/6.
 optimize_precision/1. optimize_precision/2.
 optimize_maximizeSum/1. optimize_maximizeSum/2. optimize_maximizeSum/3. optimize_maximizeSum/4. optimize_maximizeSum/5.
-preference_holds/1. preference_holds/2. preference_holds/3.
-preference_variableValue/2. preference_variableValue/3. preference_variableValue/4.
+preference_holds/1. preference_holds/2. preference_holds/3. preference_holds/4.
+preference_variableValue/2. preference_variableValue/3. preference_variableValue/4. preference_variableValue/5.
 warning_forbid/1. warning_forbid/2.
 warning_ignore/1. warning_ignore/2.
 
@@ -39,13 +39,13 @@ _passed(defaultArgs,LBL,variable_declare/3).
 _passed(defaultArgs,LBL,variable_define/3).
 _passed(defaultArgs,LBL,variable_default/4).
 _passed(defaultArgs,LBL,variable_domain/3).
-_passed(defaultArgs,LBL,multimap_assign/3).
+_passed(defaultArgs,LBL,multimap_assign/4).
 _passed(defaultArgs,LBL,set_assign/2).
 _passed(defaultArgs,LBL,set_baseDomain/3).
 _passed(defaultArgs,LBL,execution_declare/5).
 _passed(defaultArgs,LBL,optimize_maximizeSum/4).
 _passed(defaultArgs,LBL,optimize_precision/2).
-_passed(defaultArgs,LBL,preference_holds/2).
-_passed(defaultArgs,LBL,preference_variableValue/3).
+_passed(defaultArgs,LBL,preference_holds/3).
+_passed(defaultArgs,LBL,preference_variableValue/4).
 _passed(defaultArgs,LBL,warning_forbid/2).
 _passed(defaultArgs,LBL,warning_ignore/2).
