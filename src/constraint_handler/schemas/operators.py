@@ -55,7 +55,7 @@ MultimapOperator = common.PPEnum(
     "MultimapOperator",
     [
         "find",
-        "find2",
+        "multimap_find2",
         "multimap_isin",
         "multimap_make",
         "multimap_fold",
@@ -63,7 +63,7 @@ MultimapOperator = common.PPEnum(
         "countKeys",
         "countEntries",
         "sumIntEntries",
-        "maxEntries",
-        "minEntries",
+        "multimap_maxEntries",
+        "multimap_minEntries",
     ],
 )

@@ -2,7 +2,8 @@
 
 ## Ongoing
 
-- - rename `find2` to `multimap_find2`.
+- - rename `find2`, `maxEntries`, and `minEntries` to `multimap_find2`,
+    `multimap_maxEntries`, and `multimap_minEntries`.
 - - update `preference_holds` and `preference_variableValue` to take an
     optional condition before the label.
 - - remove the warning for multiple preference scores for the same expression.

@@ -1,8 +1,4 @@
 %%% capitals = { "germany" : "berlin"; "france" : "paris";  "belarus" : "minsk" }
-%%% cities = { "germany" : "berlin", "potsdam", "brest";
-%%%            "france" : "paris", "brest";
-%%%            "usa" : "paris";
-%%%            "belarus" : "brest" }
 
 %%% properDivisors = { 4 : { 1, 2 }; 5 : { 1 }; 6 : { 1, 2, 3 } }
 %%% properDivisors2 = { 4 : 1, 2; 5 : 1; 6 : 1, 2, 3 }
@@ -33,8 +29,6 @@
 %%% e = { { 1, 2 } : { 2, 4} }
 
 %%% All:
-%%% max cities = "potsdam"     min cities = "brest"
-%%% max properDivisors2 = 3     min properDivisors2 = 1
 %%% a==b     not a==c     not a==d     not a==e     not a!=b     a!=c     a!=d     a!=e
 %%% d!=e     e!=d
 
@@ -48,15 +42,6 @@ variable_define(capitals, operation(multimap_make,
                                 ((val(string,"germany"), val(string,"berlin")),
                                 ((val(string,"france"), val(string,"paris")),
                                 ((val(string,"belarus"), val(string,"minsk")),()))))).
-
-variable_declare(cities,multimap).
-multimap_assign(cities,val(string,"germany"),val(string,"berlin")).
-multimap_assign(cities,val(string,"germany"),val(string,"potsdam")).
-multimap_assign(cities,val(string,"germany"),val(string,"brest")).
-multimap_assign(cities,val(string,"france"),val(string,"paris")).
-multimap_assign(cities,val(string,"france"),val(string,"brest")).
-multimap_assign(cities,val(string,"usa"),val(string,"paris")).
-multimap_assign(cities,val(string,"belarus"),val(string,"brest")).
 
 variable_declare(properDivisors,multimap).
 multimap_assign(properDivisors,val(int,4),operation(set_make,(val(int,1),(val(int,2), ())))).
@@ -100,12 +85,6 @@ evaluate(operation(sumIntEntries,(variable(capitals),()))).
 evaluate(operation(sumIntEntries,(variable(properDivisors),()))).
 evaluate(operation(sumIntEntries,(variable(properDivisors2),()))).
 evaluate(operation(sumIntEntries,(variable(sums),()))).
-
-evaluate(operation(maxEntries,(variable(cities),()))).
-evaluate(operation(minEntries,(variable(cities),()))).
-evaluate(operation(maxEntries,(variable(properDivisors2),()))).
-evaluate(operation(minEntries,(variable(properDivisors2),()))).
-
 
 evaluate(operation(multimap_fold,(val(function,myproduct),(variable(properDivisors2),(val(int,100),()))))).
 _computedIdx(E,val(int,VA*VB)) :- _computeIdx(E,myproduct), _computeIdx(E,0,val(int,VA)), _computeIdx(E,1,val(int,VB)).

@@ -1,0 +1,2 @@
+evaluated(operation(multimap_maxEntries,(variable(cities),())),val(string,"potsdam"))
+evaluated(operation(multimap_maxEntries,(variable(properDivisors2),())),val(int,3))

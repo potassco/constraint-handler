@@ -316,6 +316,8 @@ multimap_tests = [
     "multimap/find2",
     "multimap/fold_i",
     "multimap/main",
+    "multimap/max_entries",
+    "multimap/min_entries",
 ]
 
 optimization_tests = [
@@ -587,6 +589,8 @@ compile2_xfail: set[str] = {
     "multimap/find2",
     "multimap/fold_i",
     "multimap/main",
+    "multimap/max_entries",
+    "multimap/min_entries",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",
@@ -639,6 +643,8 @@ ground_xfail: set[str] = {
     "multimap/find2",
     "multimap/fold_i",
     "multimap/main",
+    "multimap/max_entries",
+    "multimap/min_entries",
     "optimization/multimap_bool",
     "optimization/multimap_float",
     "optimization/multimap_float_precision",

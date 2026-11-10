@@ -92,7 +92,7 @@ def evaluate_operator(o, args, apply_operator=None) -> result.EvalResult:
         case operators.MultimapOperator.find:
             assert len(args) == 2
             return result.EvalResult(args[1][args[0]] if args[0] in args[1] else frozenset(), NO_ERRORS)
-        case operators.MultimapOperator.find2:
+        case operators.MultimapOperator.multimap_find2:
             assert len(args) == 3
             return result.EvalResult(args[1] in args[0] and args[2] in args[0][args[1]], NO_ERRORS)
         case operators.MultimapOperator.multimap_fold:
@@ -142,10 +142,10 @@ def evaluate_operator(o, args, apply_operator=None) -> result.EvalResult:
             for key, value in args[0].items():
                 total += sum(v for v in value if isinstance(v, int))
             return result.EvalResult(total, NO_ERRORS)
-        case operators.MultimapOperator.maxEntries:
+        case operators.MultimapOperator.multimap_maxEntries:
             __max, errors = compare(args[0], max)
             return result.EvalResult(__max, tuple((kind, str(msg)) for kind, msg in errors))
-        case operators.MultimapOperator.minEntries:
+        case operators.MultimapOperator.multimap_minEntries:
             __min, errors = compare(args[0], min)
             return result.EvalResult(__min, tuple((kind, str(msg)) for kind, msg in errors))
         case _:

@@ -1,0 +1,2 @@
+evaluated(operation(multimap_minEntries,(variable(cities),())),val(string,"berlin"))
+evaluated(operation(multimap_minEntries,(variable(properDivisors2),())),val(int,1))

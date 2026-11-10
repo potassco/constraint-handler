@@ -48,10 +48,10 @@ _computedIdx(E,val(int,N)) :- _computeIdx(E,sumIntEntries), _computeIdx(E,0,ref(
     N = #sum { RV,K : _multimap_entry(EM,K,val(int,RV)) }.
 
 %%%% TODO use type-specific greater/smaller than, instead of gringo's ordering.
-_computedIdx(E,M) :- _computeIdx(E,maxEntries), _computeIdx(E,0,ref(multimap,EM)),
+_computedIdx(E,M) :- _computeIdx(E,multimap_maxEntries), _computeIdx(E,0,ref(multimap,EM)),
     M = #max { V : _multimap_entry(EM,K,V) }.
 
-_computedIdx(E,M) :- _computeIdx(E,minEntries), _computeIdx(E,0,ref(multimap,EM)),
+_computedIdx(E,M) :- _computeIdx(E,multimap_minEntries), _computeIdx(E,0,ref(multimap,EM)),
     M = #min { V : _multimap_entry(EM,K,V) }.
 
 %%%%%%%%%%%%%%%%%% multimap_isin notin
