@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import itertools
 import math
+import warnings
 from collections import Counter
 from dataclasses import dataclass
 from threading import Lock
@@ -116,8 +117,9 @@ class PythonIOVisitor(ast.NodeVisitor):
 def infer_python_io(script_payload: str) -> tuple[list[str], list[str]]:
     """Validates a Python snippet and infers referenced inputs and assigned outputs."""
     try:
-        syntax_tree = ast.parse(script_payload, mode="exec")
-        compile(syntax_tree, filename="<fch_python>", mode="exec")
+        with warnings.catch_warnings(action="ignore", category=SyntaxWarning):
+            syntax_tree = ast.parse(script_payload, mode="exec")
+            compile(syntax_tree, filename="<fch_python>", mode="exec")
         visitor = PythonIOVisitor()
         visitor.visit(syntax_tree)
 
@@ -161,7 +163,8 @@ class PythonRegistry:
             return self._lookup[semantic_key].program_id
 
         program_id = next(self._id_gen)
-        compiled_code = compile(script_payload, filename=f"<fch_python_{program_id}>", mode="exec")
+        with warnings.catch_warnings(action="ignore", category=SyntaxWarning):
+            compiled_code = compile(script_payload, filename=f"<fch_python_{program_id}>", mode="exec")
 
         program = CompiledPythonProgram(
             program_id=program_id,
