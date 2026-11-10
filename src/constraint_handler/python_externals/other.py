@@ -37,6 +37,10 @@ def pythonFloatUnary(operator, val):
             return _to_val("float", -value)
         case "sqrt" if value >= 0:
             return _to_val("float", math.sqrt(value))
+        case "float_from_int":
+            return _to_val("float", float(value))
+        case "int_from_float":
+            return _to_val("int", int(value))
         case _:
             return clingo.Function("bad", [])
 

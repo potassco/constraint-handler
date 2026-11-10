@@ -120,11 +120,11 @@ value(name, val(bool, false))
 | `disj` | Disjunction | ([bool]\*) $\to$ [bool] | `true` if *at least one* argument in the list is true. |
 | `limp` | Implication | ([bool] \| [none], [bool] \| [none]) $\to$ [bool] \| [none] | `true` if the first argument is `false` or the second is `true`. Evaluates to `false` if `true` implies `false`, and `none` otherwise. |
 | `lxor` | Exclusive OR | ([bool]\*) $\to$ [bool]  | `true` if an **odd** number of arguments are `true`. |
-| `leqv` | Equivalence | ([bool]\*) $\to$ [bool]  | `true` if an **even** number of arguments are `true`. |
+| `leqv` | Equivalence | ([bool]\*) $\to$ [bool]  | `true` if an **even** number of arguments are `false`. |
 | **Negation** | | | |
 | `lnot` | Logical | ([bool]) $\to$ [bool] | Standard inversion (`true` $\to$ `false`, `false` $\to$ `true`). |
-| `snot` | Strong | ([bool]) $\to$ [bool] | Treats undefined/missing values as `false`. |
-| `wnot` | Weak | ([bool]) $\to$ [bool] | Treats undefined/missing values as `true`. |
+| `snot` | Strong | ([bool]) $\to$ [bool] | Inverts a Boolean value; evaluates to `false` for `none`. |
+| `wnot` | Weak | ([bool]) $\to$ [bool] | Inverts a Boolean value; evaluates to `true` for `none`. |
 
 !!! Example
     Checking for inequality of two variables
@@ -157,15 +157,20 @@ value(name, val(int, -7))
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Arithmetic** | | | |
-| `add` | Addition | ([int]\*) $\to$ [int] | Adds all provided integers together. |
+| `add` | Addition | ([int]\*) $\to$ [int] | Adds all provided integers together. Returns 0 for no arguments. |
 | `sub` | Subtraction | ([int], [int]) $\to$ [int] | Subtracts the second integer from the first. |
-| `mult` | Multiplication | ([int]\*) $\to$ [int] | Multiplies all provided integers together. |
-| `int_div` | Integer Division | ([int] \| [float], [int] \| [float]) $\to$ [int] | Divides the first argument by the second and rounds down to the nearest integer. |
+| `mult` | Multiplication | ([int]\*) $\to$ [int] | Multiplies all provided integers together. Returns 1 for no arguments. |
+| `int_div` | Integer Division | ([int] \| [float], [int] \| [float]) $\to$ [int] | Divides the first argument by the second. A zero divisor produces `bad`. |
+| `mod` | Modulo | ([int], [int]) $\to$ [int] | Returns the remainder of dividing the first integer by the second. A zero divisor produces `bad`. |
 | `pow` | Exponentiation | ([int], [int]) $\to$ [int] | Raises the first integer to the power of the second. |
 | `abs` | Absolute Value | ([int]) $\to$ [int] | Returns the absolute value of the integer. |
 | `minus` | Unary Minus | ([int]) $\to$ [int] | Negates the integer. |
+| `floor` | Floor | ([int]) $\to$ [int] | Returns the integer unchanged. |
+| `ceil` | Ceiling | ([int]) $\to$ [int] | Returns the integer unchanged. |
 | `max` | Maximum | ([int], [int]) $\to$ [int] | Returns the larger of the two integers. |
 | `min` | Minimum | ([int], [int]) $\to$ [int] | Returns the smaller of the two integers. |
+| **Conversion** | | | |
+| `float_from_int` | Integer to Float | ([int]) $\to$ [float] | Converts an integer to a float. |
 | **Trigonometry** | | | |
 | `sqrt` | Square Root | ([int]) $\to$ [float] | Calculates the square root of the integer. |
 | `sin` | Sine | ([int]) $\to$ [float] | Calculates the sine of the integer. |
@@ -215,22 +220,26 @@ value(name, val(float, float("-0.001")))
 
 ### Supported Operators
 !!! info "Type Promotion"
-    If a binary operation involves one [int] and one [float] (e.g. the addition of an int and a float), the integer is automatically promoted to a float. The result is then calcualted as if both operands were floats.
+    The signatures for `add`, `sub`, `mult`, `mod`, and `pow` below apply when at least one operand is a [float]. Integer operands are promoted to floats, and the result is a float. Integer-only calls and empty-argument defaults are documented under [Int](#int). `max` and `min` return the selected operand, preserving its type.
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Arithmetic** | | | |
-| `add` | Addition | (\[[int] \| [float]\]\*) $\to$ [float] | Adds all provided numbers together. |
-| `sub` | Subtraction | ([float], [float]) $\to$ [float] | Subtracts the second float from the first. |
-| `mult` | Multiplication | (\[[int] \| [float]\]\*) $\to$ [float] | Multiplies all provided numbers together. |
-| `float_div` | Float Division | ([int] \| [float], [int] \| [float]) $\to$ [float] | Performs explicit floating point division. |
-| `floor` | Floor | ([float]) $\to$ [int] | Rounds the float down to the nearest integer value. |
-| `ceil` | Ceiling | ([float]) $\to$ [int] | Rounds the float up to the nearest integer value. |
-| `pow` | Exponentiation | ([float], [float]) $\to$ [float] | Raises the first value to the power of the second. |
+| `add` | Addition | (([int] \| [float])\*) $\to$ [float] | Adds all provided numbers together. |
+| `sub` | Subtraction | ([int] \| [float], [int] \| [float]) $\to$ [float] | Subtracts the second number from the first. |
+| `mult` | Multiplication | (([int] \| [float])\*) $\to$ [float] | Multiplies all provided numbers together. |
+| `float_div` | Float Division | ([int] \| [float], [int] \| [float]) $\to$ [float] | Performs explicit floating point division. A zero divisor produces `bad`. |
+| `int_div` | Integer Division | ([int] \| [float], [int] \| [float]) $\to$ [int] | See [Int](#int) for integer division semantics. |
+| `mod` | Modulo | ([int] \| [float], [int] \| [float]) $\to$ [float] | Returns the remainder of dividing the first number by the second. A zero divisor produces `bad`. |
+| `floor` | Floor | ([float]) $\to$ [int] | Rounds down to the nearest integer. |
+| `ceil` | Ceiling | ([float]) $\to$ [int] | Rounds up to the nearest integer. |
+| `pow` | Exponentiation | ([int] \| [float], [int] \| [float]) $\to$ [float] | Raises the first number to the power of the second. |
 | `abs` | Absolute Value | ([float]) $\to$ [float] | Returns the absolute value. |
 | `minus` | Unary Minus | ([float]) $\to$ [float] | Negates the value. |
 | `max` | Maximum | (A\[[int] \| [float]\], B\[[int] \| [float]\]) $\to$ A \| B | Returns the larger of the two values, keeping the respective type. |
 | `min` | Minimum | (A\[[int] \| [float]\], B\[[int] \| [float]\]) $\to$ A \| B | Returns the smaller of the two values, keeping the respective type. |
+| **Conversion** | | | |
+| `int_from_float` | Float to Integer | ([float]) $\to$ [int] | Converts a float to an integer, truncating toward zero. |
 | **Trigonometry** | | | |
 | `sqrt` | Square Root | ([float]) $\to$ [float] | Calculates the square root. |
 | `sin` | Sine | ([float]) $\to$ [float] | Calculates the sine. |
@@ -240,12 +249,12 @@ value(name, val(float, float("-0.001")))
 | `acos` | Arc Cosine | ([float]) $\to$ [float] | Calculates the inverse cosine. |
 | `atan` | Arc Tangent | ([float]) $\to$ [float] | Calculates the inverse tangent. |
 | **Comparison** | | | |
-| `eq` | Equality | ([float] \| [none], [float] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
-| `neq` | Inequality | ([float] \| [none], [float] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
-| `lt` | Less Than | ([float], [float]) $\to$ [bool] | `true` if first is strictly less than second. |
-| `leq` | Less Than or Equal | ([float], [float]) $\to$ [bool] | `true` if first is less than or equal to second. |
-| `gt` | Greater Than | ([float], [float]) $\to$ [bool] | `true` if first is strictly greater than second. |
-| `geq` | Greater Than or Equal | ([float], [float]) $\to$ [bool] | `true` if first is greater than or equal to second. |
+| `eq` | Equality | ([int] \| [float] \| [none], [int] \| [float] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
+| `neq` | Inequality | ([int] \| [float] \| [none], [int] \| [float] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
+| `lt` | Less Than | ([int] \| [float], [int] \| [float]) $\to$ [bool] | `true` if first is strictly less than second. |
+| `leq` | Less Than or Equal | ([int] \| [float], [int] \| [float]) $\to$ [bool] | `true` if first is less than or equal to second. |
+| `gt` | Greater Than | ([int] \| [float], [int] \| [float]) $\to$ [bool] | `true` if first is strictly greater than second. |
+| `geq` | Greater Than or Equal | ([int] \| [float], [int] \| [float]) $\to$ [bool] | `true` if first is greater than or equal to second. |
 
 !!! Example
     Multiplying two floats
@@ -282,6 +291,10 @@ value(name, val(string, "Constraint Handling"))
 | **Comparison** | | | |
 | `eq` | Equality | ([string] \| [none], [string] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. |
 | `neq` | Inequality | ([string] \| [none], [string] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
+| `lt` | Less Than | ([string], [string]) $\to$ [bool] | `true` if the first string precedes the second lexicographically. |
+| `leq` | Less Than or Equal | ([string], [string]) $\to$ [bool] | `true` if the first string precedes or equals the second lexicographically. |
+| `gt` | Greater Than | ([string], [string]) $\to$ [bool] | `true` if the first string follows the second lexicographically. |
+| `geq` | Greater Than or Equal | ([string], [string]) $\to$ [bool] | `true` if the first string follows or equals the second lexicographically. |
 
 !!! Example
     Concatenating a prefix to a name.
