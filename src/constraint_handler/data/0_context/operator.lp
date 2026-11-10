@@ -46,6 +46,8 @@ operator_declare(OP,((int;float),()),float) :- OP=(sqrt;cos;sin;tan;acos;asin;at
 operator_declare((abs;minus),(float,()),float).
 operator_declare(ceil,(float,()),int).
 operator_declare(floor,(float,()),int).
+operator_declare(float_from_int,(int,()),float).
+operator_declare(int_from_float,(float,()),int).
 operator_declare(OP,(T1,(T2,())),float) :- T1=(int;float), T2=(int;float), (T1,T2) != (int,int), OP=(sub;float_div;mod;pow;max;min).
 operator_declare(float_div,(int,(int,())),float).
 operator_declare((leq;lt;geq;gt),(T1,(T2,())),bool) :- T1=(int;float), T2=(int;float), (T1,T2) != (int,int).
@@ -68,6 +70,8 @@ operator_declare(find,(T1,(multimap,())),set) :- _type(T1).
 operator_declare((countKeys;countEntries;sumIntEntries),(multimap,()),int).
 operator_declare((eq;neq),(multimap,(multimap,())),bool).
 operator_declare(multimap_isin,(T1,(multimap,())),bool) :- _type(T1).
+operator_declare(multimap_fold,(function((V,(B,())),B),(multimap,(B,()))),B) :- _type(V), _type(B).
+operator_declare(multimap_fold_i,(function((K,(V,(B,()))),B),(multimap,(B,()))),B) :- _type(K), _type(V), _type(B).
 
 %%%%%%%%%%%%%%%%% set
 operator_declare(cardinality,(set,()),int).
@@ -77,7 +81,7 @@ operator_declare(diff,(set,(set,())),set).
 operator_declare_variadic((union;inter),T,set,1) :- _type(T).
 operator_declare((eq;neq),(set,(set,())),bool).
 operator_declare(subset,(set,(set,())),bool).
-operator_declare(fold,(function((TSET,(TACC,())),TACC),(set,(TACC,()))),bool) :- _type(TSET), _type(TACC).
+operator_declare(set_fold,(function((TSET,(TACC,())),TACC),(set,(TACC,()))),TACC) :- _type(TSET), _type(TACC).
 
 %%%%%%%%%%%%%%%%% string
 operator_declare(length,(string,()),int).

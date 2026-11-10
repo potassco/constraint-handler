@@ -313,6 +313,7 @@ multimap_tests = [
     "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
+    "multimap/fold_i",
     "multimap/main",
 ]
 
@@ -581,6 +582,7 @@ compile2_xfail: set[str] = {
     "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
+    "multimap/fold_i",
     "multimap/main",
     "optimization/multimap_bool",
     "optimization/multimap_float",
@@ -631,6 +633,7 @@ ground_xfail: set[str] = {
     "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
+    "multimap/fold_i",
     "multimap/main",
     "optimization/multimap_bool",
     "optimization/multimap_float",
