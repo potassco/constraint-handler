@@ -71,6 +71,9 @@ _fch_op_strict_child(ID, ARG_2_ID) :- _fch_op_float_div(ID, ARG_1_ID, ARG_2_ID).
 _fch_op_int_div(ID, ARG_1_ID, ARG_2_ID) :- _fch_flat(op_int_div(ID, ARG_1_ID, ARG_2_ID)).
 _fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_int_div(ID, ARG_1_ID, ARG_2_ID).
 _fch_op_strict_child(ID, ARG_2_ID) :- _fch_op_int_div(ID, ARG_1_ID, ARG_2_ID).
+_fch_op_mod(ID, ARG_1_ID, ARG_2_ID) :- _fch_flat(op_mod(ID, ARG_1_ID, ARG_2_ID)).
+_fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_mod(ID, ARG_1_ID, ARG_2_ID).
+_fch_op_strict_child(ID, ARG_2_ID) :- _fch_op_mod(ID, ARG_1_ID, ARG_2_ID).
 _fch_op_ceil(ID, ARG_1_ID) :- _fch_flat(op_ceil(ID, ARG_1_ID)).
 _fch_op_strict_child(ID, ARG_1_ID) :- _fch_op_ceil(ID, ARG_1_ID).
 _fch_op_floor(ID, ARG_1_ID) :- _fch_flat(op_floor(ID, ARG_1_ID)).

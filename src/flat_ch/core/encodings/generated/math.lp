@@ -330,6 +330,26 @@ _fch_static_python_binary(ID, _fch_op_int_div_id, ((_fch_type_float_id, V1), (_f
     _fch_static_expr_val(A1, _fch_type_float_id, V1),
     _fch_static_expr_val(A2, _fch_type_float_id, V2).
 
+_fch_static_python_binary(ID, _fch_op_mod_id, ((_fch_type_int_id, V1), (_fch_type_float_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_static_expr_val(A1, _fch_type_int_id, V1),
+    _fch_static_expr_val(A2, _fch_type_float_id, V2).
+
+_fch_static_python_binary(ID, _fch_op_mod_id, ((_fch_type_float_id, V1), (_fch_type_int_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_static_expr_val(A1, _fch_type_float_id, V1),
+    _fch_static_expr_val(A2, _fch_type_int_id, V2).
+
+_fch_static_python_binary(ID, _fch_op_mod_id, ((_fch_type_float_id, V1), (_fch_type_float_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_static_expr_val(A1, _fch_type_float_id, V1),
+    _fch_static_expr_val(A2, _fch_type_float_id, V2).
+
+_fch_static_python_binary(ID, _fch_op_mod_id, ((_fch_type_int_id, V1), (_fch_type_int_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_static_expr_val(A1, _fch_type_int_id, V1),
+    _fch_static_expr_val(A2, _fch_type_int_id, V2).
+
 _fch_static_python_binary(ID, _fch_op_float_div_id, ((_fch_type_int_id, V1), (_fch_type_float_id, V2))) :-
     _fch_op_float_div(ID, A1, A2),
     _fch_static_expr_val(A1, _fch_type_int_id, V1),
@@ -708,6 +728,26 @@ _fch_dynamic_python_binary(ID, _fch_op_int_div_id, ((_fch_type_float_id, V1), (_
     _fch_op_int_div(ID, A1, A2),
     _fch_dynamic_expr_val(A1, _fch_type_float_id, V1),
     _fch_dynamic_expr_val(A2, _fch_type_float_id, V2).
+
+_fch_dynamic_python_binary(ID, _fch_op_mod_id, ((_fch_type_int_id, V1), (_fch_type_float_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_dynamic_expr_val(A1, _fch_type_int_id, V1),
+    _fch_dynamic_expr_val(A2, _fch_type_float_id, V2).
+
+_fch_dynamic_python_binary(ID, _fch_op_mod_id, ((_fch_type_float_id, V1), (_fch_type_int_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_dynamic_expr_val(A1, _fch_type_float_id, V1),
+    _fch_dynamic_expr_val(A2, _fch_type_int_id, V2).
+
+_fch_dynamic_python_binary(ID, _fch_op_mod_id, ((_fch_type_float_id, V1), (_fch_type_float_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_dynamic_expr_val(A1, _fch_type_float_id, V1),
+    _fch_dynamic_expr_val(A2, _fch_type_float_id, V2).
+
+_fch_dynamic_python_binary(ID, _fch_op_mod_id, ((_fch_type_int_id, V1), (_fch_type_int_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_dynamic_expr_val(A1, _fch_type_int_id, V1),
+    _fch_dynamic_expr_val(A2, _fch_type_int_id, V2).
 
 _fch_dynamic_python_binary(ID, _fch_op_float_div_id, ((_fch_type_int_id, V1), (_fch_type_float_id, V2))) :-
     _fch_op_float_div(ID, A1, A2),
