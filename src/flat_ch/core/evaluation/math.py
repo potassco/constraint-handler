@@ -48,6 +48,13 @@ def handle_int_div(arguments: list[tuple[Type, typing.Any]]) -> tuple[Type, typi
     return Type.INT, int(float(v1) // float(v2))
 
 
+def handle_mod(arguments: list[tuple[Type, typing.Any]]) -> tuple[Type, typing.Any]:
+    (left_type, left), (right_type, right) = arguments
+    if Type.FLOAT in (left_type, right_type):
+        return Type.FLOAT, float(left) % float(right)
+    return Type.INT, int(left) % int(right)
+
+
 def handle_abs(arguments: list[tuple[Type, typing.Any]]) -> tuple[Type, typing.Any]:
     arg_type, value = arguments[0]
     if arg_type == Type.FLOAT:

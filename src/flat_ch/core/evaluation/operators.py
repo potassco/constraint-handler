@@ -24,6 +24,7 @@ class Operator(IntEnum):
     MULT = auto()
     FLOAT_DIV = auto()
     INT_DIV = auto()
+    MOD = auto()
     CEIL = auto()
     FLOOR = auto()
     MINUS = auto()

@@ -1,0 +1,4 @@
+value(x,val(float,float("4.0")))
+value(x,bad)
+value(y,val(float,float("2.0")))
+value(y,bad)

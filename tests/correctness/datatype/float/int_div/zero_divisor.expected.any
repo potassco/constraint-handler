@@ -1,0 +1,4 @@
+value(x,val(float,float("0.0")))
+value(x,val(float,float("2.0")))
+evaluated(operation(int_div,(val(float,float("6.0")),(variable(x),()))),bad)
+evaluated(operation(int_div,(val(float,float("6.0")),(variable(x),()))),val(int,3))

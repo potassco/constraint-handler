@@ -305,6 +305,18 @@ _fch_template_python_binary(ID, _fch_op_int_div_id, (({{LEFT_TYPE}}, V1), ({{RIG
 % @endexpand
 
 % @expand float_numeric_pairs
+_fch_template_python_binary(ID, _fch_op_mod_id, (({{LEFT_TYPE}}, V1), ({{RIGHT_TYPE}}, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_template_expr_val(A1, {{LEFT_TYPE}}, V1),
+    _fch_template_expr_val(A2, {{RIGHT_TYPE}}, V2).
+% @endexpand
+
+_fch_template_python_binary(ID, _fch_op_mod_id, ((_fch_type_int_id, V1), (_fch_type_int_id, V2))) :-
+    _fch_op_mod(ID, A1, A2),
+    _fch_template_expr_val(A1, _fch_type_int_id, V1),
+    _fch_template_expr_val(A2, _fch_type_int_id, V2).
+
+% @expand float_numeric_pairs
 _fch_template_python_binary(ID, _fch_op_float_div_id, (({{LEFT_TYPE}}, V1), ({{RIGHT_TYPE}}, V2))) :-
     _fch_op_float_div(ID, A1, A2),
     _fch_template_expr_val(A1, {{LEFT_TYPE}}, V1),
@@ -325,7 +337,7 @@ _fch_template_python_binary(ID, _fch_op_pow_id, (({{LEFT_TYPE}}, V1), ({{RIGHT_T
 
 _fch_template_python_unary(ID, _fch_op_sqrt_id, ((T, V),)) :-
     _fch_op_sqrt(ID, A1),
-    _fch_template_expr_val(A1, T, V).
+    _fch_template_expr_val(A1, T, V), T = (_fch_type_int_id; _fch_type_float_id).
 
 _fch_template_python_unary(ID, _fch_op_length_id, ((_fch_type_string_id, V),)) :-
     _fch_op_length(ID, A1),
