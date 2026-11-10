@@ -83,7 +83,7 @@ The `getOrElse` operator is used to provide a fallback value if the first [Expre
 
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
-| `getOrElse` | GetOrElse | (A | [none], B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
+| `getOrElse` | GetOrElse | (A \| [none], B) $\to$ A \| B | Returns the value of `A` if it is defined, otherwise the value of `B`. |
 
 !!! Example
     ```prolog

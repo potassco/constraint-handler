@@ -284,10 +284,6 @@ expression_tests = [
     "expression/alternative_syntax/core",
     "expression/alternative_syntax/lambda",
     "expression/bad_equality",
-    "expression/lambda/deeper",
-    "expression/lambda/lambdas",
-    "expression/lambda/recursive",
-    "expression/lambda/zero_args",
     "expression/python",
     "expression/python_bad_result",
     "expression/python_extract/bad",
@@ -308,22 +304,28 @@ expression_tests = [
     "expression/tuple_nested",
 ]
 
+expression_lambda_tests = [
+    "expression/lambda/deeper",
+    "expression/lambda/lambdas",
+    "expression/lambda/recursive",
+    "expression/lambda/zero_args",
+]
+
 multimap_tests = [
     "multimap/basics",
     "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
+    "multimap/find2",
+    "multimap/fold_i",
     "multimap/main",
+    "multimap/max_entries",
+    "multimap/min_entries",
 ]
 
 optimization_tests = [
     "optimization/label_int",
     "optimization/label_string",
-    "optimization/multimap_bool",
-    "optimization/multimap_float",
-    "optimization/multimap_float_precision",
-    "optimization/multimap_int",
-    "optimization/multimap_labeled_values",
     "optimization/no_multimap_bool",
     "optimization/no_multimap_float",
     "optimization/no_multimap_float_precision",
@@ -332,6 +334,14 @@ optimization_tests = [
     "optimization/optional_absent_linked_value",
     "optimization/preferences",
     "optimization/priority",
+]
+
+optimization_multimap_tests = [
+    "optimization/multimap_bool",
+    "optimization/multimap_float",
+    "optimization/multimap_float_precision",
+    "optimization/multimap_int",
+    "optimization/multimap_labeled_values",
 ]
 
 python_tests = [
@@ -352,6 +362,7 @@ set_tests = [
     "set/executions",
     "set/fold_bools",
     "set/from_domain",
+    "set/inter/variadic",
     "set/inter_flat",
     "set/iterations",
     "set/length_flat",
@@ -509,8 +520,10 @@ base_tests = (
     + error_tests
     + execution_tests
     + expression_tests
+    + expression_lambda_tests
     + multimap_tests
     + optimization_tests
+    + optimization_multimap_tests
     + python_tests
     + set_tests
     + type_tests
@@ -538,6 +551,8 @@ compile_xfail: set[str] = {
     "execution/python_syntax_error",
     "execution/warning_spurious",
     "execution/warning_spurious2",
+    "multimap/find2",
+    "set/inter/variadic",  # Only binary intersection is implemented.
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "unit/tuple_eq",
@@ -549,106 +564,92 @@ compile_xfail: set[str] = {
 }
 
 compile2_skip: set[str] = {
-    "datatype/casting",
     "engine/request_mult",  # mixed engines
     "execution/python_integrity",  # non static input
     "variable/dynamic_type",  # non static input
 }
-compile2_xfail: set[str] = {
-    "core/empty_set_execution",
-    "core/reasoning_modes",  # multimap
-    "core/reasoning_modes_with_show",
-    "datatype/bool/conj_disj_mixed",
-    "datatype/float/mult/recovery",
-    "datatype/float/pow/mixed",
-    "datatype/int/int_div/negative",
-    "engine/request",
-    "engine/request_set_ref",  # mixed engines?
-    "expression/alternative_syntax/lambda",
-    "expression/lambda/deeper",
-    "expression/lambda/lambdas",
-    "expression/lambda/recursive",
-    "expression/lambda/zero_args",
-    "expression/python_extract/basic",
-    "expression/python_extract/set_input",
-    "expression/python_extract/static",
-    "expression/python_extract/tuple_containing_bad",
-    "execution/python_syntax_error",
-    "execution/warning_spurious",
-    "execution/warning_spurious2",
-    "multimap/basics",
-    "multimap/conditional_assign",
-    "multimap/equality",
-    "multimap/executions",
-    "multimap/main",
-    "optimization/multimap_bool",
-    "optimization/multimap_float",
-    "optimization/multimap_float_precision",
-    "optimization/multimap_int",
-    "optimization/multimap_labeled_values",
-    "optimization/priority",
-    "set/fold_bools",
-    "set/iterations",
-    "set/manipulations",
-    "set/membership_nested",
-    "set/nested",
-    "set/selfref",
-    "type/bool/with_none_binary",
-    "type/bool/with_none_unary",
-    "type/checking/numeric",
-    "type/multimap/operations",
-    "unit/float/float_max",
-    "unit/float/float_min",
-    "warning/forbid_labeled",
-    "warning/forbid_labeled_match",
-    "warning/ignore_labeled",
-    "warning/variables",
-}
+compile2_xfail: set[str] = (
+    {
+        "core/empty_set_execution",
+        "core/reasoning_modes",  # multimap
+        "core/reasoning_modes_with_show",
+        "datatype/bool/conj_disj_mixed",
+        "datatype/float/mult/recovery",
+        "datatype/float/pow/mixed",
+        "datatype/int/int_div/negative",
+        "engine/request",
+        "engine/request_set_ref",  # mixed engines?
+        "expression/alternative_syntax/lambda",
+        "expression/python_extract/basic",
+        "expression/python_extract/set_input",
+        "expression/python_extract/static",
+        "expression/python_extract/tuple_containing_bad",
+        "execution/python_syntax_error",
+        "execution/warning_spurious",
+        "execution/warning_spurious2",
+        "optimization/priority",
+        "set/fold_bools",
+        "set/iterations",
+        "set/manipulations",
+        "set/membership_nested",
+        "set/nested",
+        "set/selfref",
+        "type/bool/with_none_binary",
+        "type/bool/with_none_unary",
+        "type/checking/numeric",
+        "type/multimap/operations",
+        "unit/float/float_max",
+        "unit/float/float_min",
+        "warning/forbid_labeled",
+        "warning/forbid_labeled_match",
+        "warning/ignore_labeled",
+        "warning/variables",
+    }
+    | set(expression_lambda_tests)
+    | set(multimap_tests)
+    | set(optimization_multimap_tests)
+)
+
 ground_skip: set[str] = {
     "core/python_set_bool_brave",
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
     "set/selfref",
     "warning/python_extract/statement_error",
 }
-ground_xfail: set[str] = {
-    "core/reasoning_modes",
-    "core/reasoning_modes_with_show",
-    "core/set_execution_input_alias",
-    "datatype/bool/conj_disj_mixed",
-    "datatype/float/mult/recovery",
-    "engine/request",
-    "engine/request_set_ref",
-    "expression/alternative_syntax/lambda",
-    "expression/lambda/lambdas",
-    "expression/lambda/recursive",
-    "expression/lambda/zero_args",
-    "expression/tuple_extra",
-    "execution/python_syntax_error",
-    "execution/warning_spurious",
-    "execution/warning_spurious2",
-    "multimap/basics",
-    "multimap/conditional_assign",
-    "multimap/equality",
-    "multimap/executions",
-    "multimap/main",
-    "optimization/multimap_bool",
-    "optimization/multimap_float",
-    "optimization/multimap_float_precision",
-    "optimization/multimap_int",
-    "optimization/multimap_labeled_values",
-    "optimization/priority",
-    "set/fold_bools",
-    "set/iterations",
-    "type/bool/with_none_binary",
-    "type/bool/with_none_unary",
-    "unit/tuple_eq",
-    "unit/tuple_neq",
-    "unit/unary/set_length",
-    "warning/forbid_labeled",
-    "warning/forbid_labeled_match",
-    "warning/ignore_labeled",
-    "warning/variables",
-}
+ground_xfail: set[str] = (
+    {
+        "core/reasoning_modes",
+        "core/reasoning_modes_with_show",
+        "core/set_execution_input_alias",
+        "datatype/bool/conj_disj_mixed",
+        "datatype/float/mult/recovery",
+        "engine/request",
+        "engine/request_set_ref",
+        "expression/alternative_syntax/lambda",
+        "expression/lambda/lambdas",
+        "expression/lambda/recursive",
+        "expression/lambda/zero_args",
+        "expression/tuple_extra",
+        "execution/python_syntax_error",
+        "execution/warning_spurious",
+        "execution/warning_spurious2",
+        "optimization/priority",
+        "set/fold_bools",
+        "set/iterations",
+        "type/bool/with_none_binary",
+        "type/bool/with_none_unary",
+        "unit/tuple_eq",
+        "unit/tuple_neq",
+        "unit/unary/set_length",
+        "warning/forbid_labeled",
+        "warning/forbid_labeled_match",
+        "warning/ignore_labeled",
+        "warning/variables",
+    }
+    | set(multimap_tests)
+    | set(optimization_multimap_tests)
+)
+
 
 propagator_skip: set[str] = {
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets

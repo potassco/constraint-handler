@@ -1319,6 +1319,16 @@ class Domain:
         return cls._map_numbers_unary(domain, math.ceil)
 
     @classmethod
+    def op_float_from_int(cls, domain: Domain) -> Domain:
+        """Convert numeric domain values to floats."""
+        return cls._map_numbers_unary(domain, float)
+
+    @classmethod
+    def op_int_from_float(cls, domain: Domain) -> Domain:
+        """Truncate numeric domain values to integers."""
+        return cls._map_numbers_unary(domain, int)
+
+    @classmethod
     def op_add(cls, left: Domain, right: Domain) -> Domain:
         """Compute the addition domain."""
         return cls._map_arithmetic_binary(left, right, lambda lhs, rhs: lhs + rhs)

@@ -48,24 +48,24 @@ variable_define(in5,EXPR) :-
   MAP = operation(multimap_make,
                            ((val(int,5), val(string,"c")),
                            ((val(string,"c"), val(int,6)),()))),
-  EXPR = operation(find,(val(int,5),(MAP,()))).
+  EXPR = operation(multimap_find,(val(int,5),(MAP,()))).
 variable_define(inc,EXPR) :-
   MAP = operation(multimap_make,
                            ((val(int,5), val(string,"c")),
                            ((val(string,"c"), val(int,6)),()))),
-  EXPR = operation(find,(val(string,"c"),(MAP,()))).
+  EXPR = operation(multimap_find,(val(string,"c"),(MAP,()))).
 variable_define(in6,EXPR) :-
   MAP = operation(multimap_make,
                            ((val(int,5), val(string,"c")),
                            ((val(string,"c"), val(int,6)),()))),
-  EXPR = operation(find,(val(int,6),(MAP,()))).
+  EXPR = operation(multimap_find,(val(int,6),(MAP,()))).
 
-variable_define(m1a,operation(find,(val(string,"a"),(variable(m1),())))).
-variable_define(m1b,operation(find,(val(string,"b"),(variable(m1),())))).
-variable_define(m1c,operation(find,(val(string,"c"),(variable(m1),())))).
-variable_define(m2a,operation(find,(val(string,"a"),(variable(m2),())))).
-variable_define(m2b,operation(find,(val(string,"b"),(variable(m2),())))).
-variable_define(m2c,operation(find,(val(string,"c"),(variable(m2),())))).
+variable_define(m1a,operation(multimap_find,(val(string,"a"),(variable(m1),())))).
+variable_define(m1b,operation(multimap_find,(val(string,"b"),(variable(m1),())))).
+variable_define(m1c,operation(multimap_find,(val(string,"c"),(variable(m1),())))).
+variable_define(m2a,operation(multimap_find,(val(string,"a"),(variable(m2),())))).
+variable_define(m2b,operation(multimap_find,(val(string,"b"),(variable(m2),())))).
+variable_define(m2c,operation(multimap_find,(val(string,"c"),(variable(m2),())))).
 
 evaluate(operation(eq,(variable(m1a),(operation(set_make,(val(int,1),())),())))).
 evaluate(operation(eq,(variable(m1b),(operation(set_make,(val(int,2),(val(int,3),()))),())))).

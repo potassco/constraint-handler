@@ -103,6 +103,7 @@ flat_ch_currently_not_working_tests = {
     "optimization/multimap_labeled_values",
     "optimization/priority",
     "set/fold_bools",
+    "set/inter/variadic",
     "set/iterations",
     "set/manipulations",
     "set/membership_nested",

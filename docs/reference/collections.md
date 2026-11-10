@@ -196,17 +196,17 @@ Once a set is created (either via declaration or returned from another operation
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `set_make` | Make | ([list]\[T\]) $\to$ [set]\[T\] | Creates a new set explicitly from a list of arguments. |
+| `set_make` | Make | (T\*) $\to$ [set]\[T\] | Creates a set from zero or more arguments. |
 | **Set Theory** | | | |
 | `union` | Union | ([set]\*) $\to$ [set] | Returns a new set containing elements from all sets. |
-| `inter` | Intersection | ([set], [set]) $\to$ [set] | Returns a new set containing only elements common to both sets. |
+| `inter` | Intersection | ([set], [set]\*) $\to$ [set] | Returns a new set containing elements common to all supplied sets. Requires at least one set. |
 | `diff` | Difference | ([set], [set]) $\to$ [set] | Returns a new set containing elements of the first set that are not in the second set. |
 | `subset` | Subset | ([set], [set]) $\to$ [bool] | `true` if first set is a subset of the second. |
 | **Membership** | | | |
 | `set_isin` | Is In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is contained in the set. |
 | `set_notin` | Not In | (T, [set]\[T\]) $\to$ [bool] | `true` if the element is NOT contained in the set. |
 | **Analysis** | | | |
-| `length` | Cardinality | ([set]) $\to$ [int] | Returns the number of elements in the set. |
+| `cardinality` | Cardinality | ([set]) $\to$ [int] | Returns the number of elements in the set. |
 | `set_fold` | Fold | ((A,B) $\to$ B, [set]\([A]\), B) $\to$ B | Iterates over the set, applies a function to each element and accumulates the result. |
 | **Comparison** | | | |
 | `eq` | Equality | ([set] \| [none], [set] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two sets have the same value if they contain the same values. |
@@ -379,17 +379,19 @@ can be used in expressions.
 | Operator | Name | Signature | Description |
 | :--- | :--- | :--- | :--- |
 | **Construction** | | | |
-| `multimap_make` | Make | ([list]\[(K, V)\]) $\to$ [multimap]\[K, V\] | Creates a new multimap from a list of `(Key, Value)` tuples. |
+| `multimap_make` | Make | ((K, V)\*) $\to$ [multimap]\[K, V\] | Creates a multimap from zero or more `(Key, Value)` tuple arguments. |
 | **Analysis** | | | |
 | `countKeys` | Count Keys | ([multimap]) $\to$ [int] | Returns the number of unique keys in the map. |
 | `countEntries` | Count Entries | ([multimap]) $\to$ [int] | Returns the total number of key-value pairs. |
 | `sumIntEntries`| Sum Entries | ([multimap]) $\to$ [int] | Sums all integer values contained in the map. |
-| `maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ V | Returns the maximum value stored in the map (by value, not key). |
-| `minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ V | Returns the minimum value stored in the map. |
+| `multimap_maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ V | Returns the maximum value stored in the map (by value, not key). |
+| `multimap_minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ V | Returns the minimum value stored in the map. |
 | **Operations** | | | |
-| `find` | Find | (K, [multimap]\[K, V\]) $\to$ [set]\[V\] | Retrieves the set of value(s) associated with a specific key. |
+| `multimap_find` | Find | (K, [multimap]\[K, V\]) $\to$ [set]\[V\] | Retrieves the set of value(s) associated with a specific key. |
+| `multimap_find2` | Has Entry | ([multimap]\[K, V\], K, V) $\to$ [bool] | Checks whether the map contains the specified key-value pair. Implemented in the Python evaluator. |
 | `multimap_isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
 | `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all values in the multimap, applies a function to each value and accumulates the result. |
+| `multimap_fold_i` | Keyed Fold | ((K,V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Accumulates a result by passing each key, value, and accumulator to the function. |
 | **Comparison** | | | |
 | `eq` | Equality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have the same value, otherwise `false`. Two multimaps have the same value if they contain the same key-value-pairs. |
 | `neq` | Inequality | ([multimap] \| [none], [multimap] \| [none]) $\to$ [bool] | `true` if both arguments have different values, otherwise `false`. |
@@ -405,7 +407,7 @@ can be used in expressions.
 
     The fold operator will then iterate over each value stored in the multimap, applying the function to the current value and the accumulator, updating the accumulator with the result. After all values have been processed, the final value of the accumulator is returned.
 
-    Because all values in a multimap are stored in sets, the `multimap_fold` operator can be seen as a combination of `find` and `set_fold`. First, `find` retrieves all values associated with each key, and then `set_fold` is applied to these values.
+    Because all values in a multimap are stored in sets, the `multimap_fold` operator can be seen as a combination of `multimap_find` and `set_fold`. First, `multimap_find` retrieves all values associated with each key, and then `set_fold` is applied to these values.
 
     In this example, we will sum all integer values in a multimap. For this, we assume that `val(function, add)` is a predefined function that adds two integers.
 

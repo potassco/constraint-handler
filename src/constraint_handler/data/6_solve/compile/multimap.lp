@@ -30,11 +30,11 @@ _multimap_entry(EM,RK,RV) :- _multimap_add(EM,EK,EV),
 
 multimap_value(X,KEY,VAL) :- _se_value(variable(X),ref(multimap,EM)), _multimap_entry(EM,KEY,VAL).
 
-%%%%%%%%%%%%%%%%%% find
+%%%%%%%%%%%%%%%%%% multimap_find
 %%% TODO: this is fragile, maybe buggy.
-_computedIdx(E,ref(set,find((K,(ref(multimap,EM),()))))) :- _computeIdx(E,find), _computeIdx(E,0,K), _computeIdx(E,1,ref(multimap,EM)).
+_computedIdx(E,ref(set,multimap_find((K,(ref(multimap,EM),()))))) :- _computeIdx(E,multimap_find), _computeIdx(E,0,K), _computeIdx(E,1,ref(multimap,EM)).
 
-_set_contains(find((K,(ref(multimap,EM),()))),V) :- _computeIdx(E,find), _computeIdx(E,0,K), _computeIdx(E,1,ref(multimap,EM)),
+_set_contains(multimap_find((K,(ref(multimap,EM),()))),V) :- _computeIdx(E,multimap_find), _computeIdx(E,0,K), _computeIdx(E,1,ref(multimap,EM)),
     _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% count keys and entries
@@ -48,10 +48,10 @@ _computedIdx(E,val(int,N)) :- _computeIdx(E,sumIntEntries), _computeIdx(E,0,ref(
     N = #sum { RV,K : _multimap_entry(EM,K,val(int,RV)) }.
 
 %%%% TODO use type-specific greater/smaller than, instead of gringo's ordering.
-_computedIdx(E,M) :- _computeIdx(E,maxEntries), _computeIdx(E,0,ref(multimap,EM)),
+_computedIdx(E,M) :- _computeIdx(E,multimap_maxEntries), _computeIdx(E,0,ref(multimap,EM)),
     M = #max { V : _multimap_entry(EM,K,V) }.
 
-_computedIdx(E,M) :- _computeIdx(E,minEntries), _computeIdx(E,0,ref(multimap,EM)),
+_computedIdx(E,M) :- _computeIdx(E,multimap_minEntries), _computeIdx(E,0,ref(multimap,EM)),
     M = #min { V : _multimap_entry(EM,K,V) }.
 
 %%%%%%%%%%%%%%%%%% multimap_isin notin
@@ -86,8 +86,8 @@ _computedIdx(E,val(bool,false)) :- _multimap_eqMissingEntry(E).
 
 %%%%%%%%%%%%%%%%%% Fold
 %%% fold: a -> b -> b
-_multimap_makeIndex(VM) :- _computeIdx(E,multimap_fold), _computeIdx(E,1,ref(multimap,VM)).
-_multimap_foldStep(E,0,ACC) :- _computeIdx(E,multimap_fold), _computeIdx(E,2,ACC).
+_multimap_makeIndex(VM) :- _computeIdx(E,OP), OP = (multimap_fold;multimap_fold_i), _computeIdx(E,1,ref(multimap,VM)).
+_multimap_foldStep(E,0,ACC) :- _computeIdx(E,OP), OP = (multimap_fold;multimap_fold_i), _computeIdx(E,2,ACC).
 
 direct_query(operation(VO,(VI,(VB,())))) :- _computeIdx(E,multimap_fold), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,ref(multimap,VM)),
     _multimap_index(VM,I,KI,VI), _multimap_foldStep(E,I,VB).
@@ -95,7 +95,13 @@ _multimap_foldStep(E,I+1,NEXT) :- _computeIdx(E,multimap_fold), _computeIdx(E,0,
     _multimap_foldStep(E,I,VB), _multimap_index(VM,I,KI,VI),
     _se_value(operation(VO,(VI,(VB,()))),NEXT).
 
-_computedIdx(E,VB) :- _computeIdx(E, multimap_fold), _computeIdx(E,1,ref(multimap,VM)),
+direct_query(operation(VO,(KI,(VI,(VB,()))))) :- _computeIdx(E,multimap_fold_i), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,ref(multimap,VM)),
+    _multimap_index(VM,I,KI,VI), _multimap_foldStep(E,I,VB).
+_multimap_foldStep(E,I+1,NEXT) :- _computeIdx(E,multimap_fold_i), _computeIdx(E,0,val(function,VO)), _computeIdx(E,1,ref(multimap,VM)),
+    _multimap_foldStep(E,I,VB), _multimap_index(VM,I,KI,VI),
+    _se_value(operation(VO,(KI,(VI,(VB,())))),NEXT).
+
+_computedIdx(E,VB) :- _computeIdx(E,OP), OP = (multimap_fold;multimap_fold_i), _computeIdx(E,1,ref(multimap,VM)),
     _multimap_foldStep(E,I,VB), _multimap_lastIndex(VM,I).
 
 
