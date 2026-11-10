@@ -89,7 +89,7 @@ def evaluate_operator(o, args, apply_operator=None) -> result.EvalResult:
         case operators.MultimapOperator.multimap_isin:
             assert len(args) == 2
             return result.EvalResult(args[0] in args[1], NO_ERRORS)
-        case operators.MultimapOperator.find:
+        case operators.MultimapOperator.multimap_find:
             assert len(args) == 2
             return result.EvalResult(args[1][args[0]] if args[0] in args[1] else frozenset(), NO_ERRORS)
         case operators.MultimapOperator.multimap_find2:

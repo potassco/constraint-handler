@@ -54,7 +54,7 @@ SetOperator = common.PPEnum(
 MultimapOperator = common.PPEnum(
     "MultimapOperator",
     [
-        "find",
+        "multimap_find",
         "multimap_find2",
         "multimap_isin",
         "multimap_make",

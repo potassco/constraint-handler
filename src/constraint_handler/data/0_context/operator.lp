@@ -66,7 +66,7 @@ operator_declare((abs;ceil;floor;minus),(int,()),int).
 
 %%%%%%%%%%%%%%%%% multimap
 operator_declare_variadic(multimap_make,(K,V),multimap,1) :- _type(K), _type(V).
-operator_declare(find,(T1,(multimap,())),set) :- _type(T1).
+operator_declare(multimap_find,(T1,(multimap,())),set) :- _type(T1).
 operator_declare((countKeys;countEntries;sumIntEntries),(multimap,()),int).
 operator_declare((eq;neq),(multimap,(multimap,())),bool).
 operator_declare(multimap_isin,(T1,(multimap,())),bool) :- _type(T1).

@@ -387,7 +387,7 @@ can be used in expressions.
 | `multimap_maxEntries` | Max Entry | ([multimap]\[K, V\]) $\to$ V | Returns the maximum value stored in the map (by value, not key). |
 | `multimap_minEntries` | Min Entry | ([multimap]\[K, V\]) $\to$ V | Returns the minimum value stored in the map. |
 | **Operations** | | | |
-| `find` | Find | (K, [multimap]\[K, V\]) $\to$ [set]\[V\] | Retrieves the set of value(s) associated with a specific key. |
+| `multimap_find` | Find | (K, [multimap]\[K, V\]) $\to$ [set]\[V\] | Retrieves the set of value(s) associated with a specific key. |
 | `multimap_find2` | Has Entry | ([multimap]\[K, V\], K, V) $\to$ [bool] | Checks whether the map contains the specified key-value pair. Implemented in the Python evaluator. |
 | `multimap_isin` | Has Key | (K, [multimap]\[K, V\]) $\to$ [bool] | `true` if the specific **Key** exists in the map. |
 | `multimap_fold`| Fold | ((V,B) $\to$ B, [multimap]\[K, V\], B) $\to$ B | Iterates over all values in the multimap, applies a function to each value and accumulates the result. |
@@ -407,7 +407,7 @@ can be used in expressions.
 
     The fold operator will then iterate over each value stored in the multimap, applying the function to the current value and the accumulator, updating the accumulator with the result. After all values have been processed, the final value of the accumulator is returned.
 
-    Because all values in a multimap are stored in sets, the `multimap_fold` operator can be seen as a combination of `find` and `set_fold`. First, `find` retrieves all values associated with each key, and then `set_fold` is applied to these values.
+    Because all values in a multimap are stored in sets, the `multimap_fold` operator can be seen as a combination of `multimap_find` and `set_fold`. First, `multimap_find` retrieves all values associated with each key, and then `set_fold` is applied to these values.
 
     In this example, we will sum all integer values in a multimap. For this, we assume that `val(function, add)` is a predefined function that adds two integers.
 

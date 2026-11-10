@@ -72,7 +72,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "int_div" | "float_div" | "pow" | "abs" | "minus" | "max" | "min"
 
 <multimap-operator> ::=
-    | <eq-operator> | "find" | "multimap_fold" | "multimap_isin" | "multimap_make"
+    | <eq-operator> | "multimap_find" | "multimap_fold" | "multimap_isin" | "multimap_make"
     | "multimap_find2" | "multimap_fold_i"
     | "countKeys" | "countEntries" | "sumIntEntries"
     | "multimap_maxEntries" | "multimap_minEntries"

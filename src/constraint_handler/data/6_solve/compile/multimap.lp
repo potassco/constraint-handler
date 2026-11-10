@@ -30,11 +30,11 @@ _multimap_entry(EM,RK,RV) :- _multimap_add(EM,EK,EV),
 
 multimap_value(X,KEY,VAL) :- _se_value(variable(X),ref(multimap,EM)), _multimap_entry(EM,KEY,VAL).
 
-%%%%%%%%%%%%%%%%%% find
+%%%%%%%%%%%%%%%%%% multimap_find
 %%% TODO: this is fragile, maybe buggy.
-_computedIdx(E,ref(set,find((K,(ref(multimap,EM),()))))) :- _computeIdx(E,find), _computeIdx(E,0,K), _computeIdx(E,1,ref(multimap,EM)).
+_computedIdx(E,ref(set,multimap_find((K,(ref(multimap,EM),()))))) :- _computeIdx(E,multimap_find), _computeIdx(E,0,K), _computeIdx(E,1,ref(multimap,EM)).
 
-_set_contains(find((K,(ref(multimap,EM),()))),V) :- _computeIdx(E,find), _computeIdx(E,0,K), _computeIdx(E,1,ref(multimap,EM)),
+_set_contains(multimap_find((K,(ref(multimap,EM),()))),V) :- _computeIdx(E,multimap_find), _computeIdx(E,0,K), _computeIdx(E,1,ref(multimap,EM)),
     _multimap_entry(EM,K,V).
 
 %%%%%%%%%%%%%%%%%% count keys and entries
