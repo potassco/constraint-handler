@@ -20,7 +20,7 @@ _float_operation(ExprList) :- _expression(compile2, operation(float_div, ExprLis
     _se_value(Expr, val(float, V)),
     not _se_value(operation(mult, (Expr, ())), val(float, V)).
 
-_unary_float_operation(abs;ceil;floor;minus).
+_unary_float_operation(abs;ceil;floor;minus;sqrt).
 
 :-
     _expression(compile2, operation(OP, (Expr, ()))),
@@ -28,6 +28,10 @@ _unary_float_operation(abs;ceil;floor;minus).
     _se_value(Expr, val(float, V)),
     not _se_value(operation(OP, (Expr, ())), @pythonFloatUnary(OP, V)).
 
+:-
+    _expression(compile2, operation(sqrt, (Expr, ()))),
+    _se_value(Expr, val(int, V)),
+    not _se_value(operation(sqrt, (Expr, ())), @pythonFloatUnary(sqrt, V)).
 
 
 %%%%%%%%%%%%%%%%% nary operations

@@ -25,7 +25,7 @@ def _to_val(type_, v):
 
 @cache
 def pythonFloatUnary(operator, val):
-    value = float(val.arguments[0].string)
+    value = val.number if val.type == clingo.SymbolType.Number else float(val.arguments[0].string)
     match operator.name:
         case "abs":
             return _to_val("float", abs(value))
@@ -35,6 +35,8 @@ def pythonFloatUnary(operator, val):
             return _to_val("int", math.floor(value))
         case "minus":
             return _to_val("float", -value)
+        case "sqrt" if value >= 0:
+            return _to_val("float", math.sqrt(value))
         case _:
             return clingo.Function("bad", [])
 
