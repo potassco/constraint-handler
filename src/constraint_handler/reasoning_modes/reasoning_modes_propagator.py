@@ -419,6 +419,19 @@ class UnionReasoningMode(ReasoningStrategy):
 class SupremumReasoningMode(ReasoningStrategy):
     """Accumulate the supremum of each variable across solver models."""
 
+    def init(
+        self,
+        init: clingo.PropagateInit,
+        variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
+    ) -> None:
+        """Reset bounds and require at least one progress witness."""
+        super().init(init, variables)
+        self._init_literals(init, variables)
+        init.add_clause(list(self.variable_lit.values()))
+        for name in self.scalar_variables:
+            literals = set(self.value_literals[name].values())
+            init.add_clause([*literals, -self.variable_lit[name]])
+
     def join(self, model: dict[clingo.Symbol, object]) -> None:
         """Accumulate the least upper bound of a model's variable values.
 
@@ -441,7 +454,8 @@ class SupremumReasoningMode(ReasoningStrategy):
             right: Second scalar or collection value.
 
         Returns:
-            Their union for collections or their maximum for scalars.
+            Their union for collections, maximum for numbers, or TOP for
+            unequal nonnumeric values. Equal nonnumeric values are unchanged.
         """
         if isinstance(left, frozenset) and isinstance(right, frozenset):
             return left.union(right)
@@ -452,22 +466,46 @@ class SupremumReasoningMode(ReasoningStrategy):
                     for value in values:
                         pairs.append((key, value))
             return multimap.Multimap.from_pairs(pairs)
-        # if left or right are not a number return "TOP"
         if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
-            return "TOP"
+            return left if left == right else "TOP"
         return max(left, right)
 
     def nogoods(self) -> list[Iterable[int]]:
-        """Build nogoods for the supremum reasoning mode.
+        """Require at least one variable to improve the accumulated supremum.
 
         Returns:
-            Nogoods matching each previously seen value and the helper.
+            Nogoods blocking unchanged scalar bounds and already-seen members
+            from witnessing progress after the current model.
         """
-        return []
+        nogoods: list[Iterable[int]] = []
+        for name, helper in self.variable_lit.items():
+            if name not in self.rm_model:
+                continue
+            current = next(iter(self.rm_model[name]))
+            if name in self.scalar_variables:
+                for value, literal in self.value_literals[name].items():
+                    if self._supremum(current, value) == current:
+                        nogoods.append((literal, helper))
+            else:
+                nogoods.append(self._set_or_multimap_member_nogood(name, current, helper, union=True))
+        return nogoods
 
 
 class InfimumReasoningMode(ReasoningStrategy):
     """Accumulate the infimum of each variable across solver models."""
+
+    def init(
+        self,
+        init: clingo.PropagateInit,
+        variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
+    ) -> None:
+        """Reset bounds and require at least one progress witness."""
+        super().init(init, variables)
+        self._init_literals(init, variables)
+        init.add_clause(list(self.variable_lit.values()))
+        for name in self.scalar_variables:
+            literals = set(self.value_literals[name].values())
+            init.add_clause([*literals, -self.variable_lit[name]])
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
         """Accumulate the greatest lower bound of a model's variable values.
@@ -491,7 +529,8 @@ class InfimumReasoningMode(ReasoningStrategy):
             right: Second scalar or collection value.
 
         Returns:
-            Their intersection for collections or their minimum for scalars.
+            Their intersection for collections, minimum for numbers, or BOT for
+            unequal nonnumeric values. Equal nonnumeric values are unchanged.
         """
         if isinstance(left, frozenset) and isinstance(right, frozenset):
             return left.intersection(right)
@@ -499,10 +538,29 @@ class InfimumReasoningMode(ReasoningStrategy):
             return multimap.Multimap.from_pairs(
                 (key, value) for key, values in left.items() for value in values & right.get(key, frozenset())
             )
-        # if left or right are not a number return "BOT"
         if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
-            return "BOT"
+            return left if left == right else "BOT"
         return min(left, right)
+
+    def nogoods(self) -> list[Iterable[int]]:
+        """Require at least one variable to improve the accumulated infimum.
+
+        Returns:
+            Nogoods blocking unchanged scalar bounds and retained members
+            from witnessing progress after the current model.
+        """
+        nogoods: list[Iterable[int]] = []
+        for name, helper in self.variable_lit.items():
+            if name not in self.rm_model:
+                continue
+            current = next(iter(self.rm_model[name]))
+            if name in self.scalar_variables:
+                for value, literal in self.value_literals[name].items():
+                    if self._infimum(current, value) == current:
+                        nogoods.append((literal, helper))
+            else:
+                nogoods.append(self._set_or_multimap_member_nogood(name, current, helper))
+        return nogoods
 
 
 REASONING_STRATEGIES = {
