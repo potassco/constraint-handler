@@ -367,7 +367,7 @@ _fch_static_python_binary(ID, _fch_op_pow_id, ((_fch_type_float_id, V1), (_fch_t
 
 _fch_static_python_unary(ID, _fch_op_sqrt_id, ((T, V),)) :-
     _fch_op_sqrt(ID, A1),
-    _fch_static_expr_val(A1, T, V).
+    _fch_static_expr_val(A1, T, V), T = (_fch_type_int_id; _fch_type_float_id).
 
 _fch_static_python_unary(ID, _fch_op_length_id, ((_fch_type_string_id, V),)) :-
     _fch_op_length(ID, A1),
@@ -746,7 +746,7 @@ _fch_dynamic_python_binary(ID, _fch_op_pow_id, ((_fch_type_float_id, V1), (_fch_
 
 _fch_dynamic_python_unary(ID, _fch_op_sqrt_id, ((T, V),)) :-
     _fch_op_sqrt(ID, A1),
-    _fch_dynamic_expr_val(A1, T, V).
+    _fch_dynamic_expr_val(A1, T, V), T = (_fch_type_int_id; _fch_type_float_id).
 
 _fch_dynamic_python_unary(ID, _fch_op_length_id, ((_fch_type_string_id, V),)) :-
     _fch_op_length(ID, A1),
