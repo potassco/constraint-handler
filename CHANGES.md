@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- - rename `find2` to `multimap_find2`.
 - - update `preference_holds` and `preference_variableValue` to take an
     optional condition before the label.
 - - remove the warning for multiple preference scores for the same expression.

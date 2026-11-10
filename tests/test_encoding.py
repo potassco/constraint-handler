@@ -313,6 +313,7 @@ multimap_tests = [
     "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
+    "multimap/find2",
     "multimap/fold_i",
     "multimap/main",
 ]
@@ -540,6 +541,7 @@ compile_xfail: set[str] = {
     "execution/python_syntax_error",
     "execution/warning_spurious",
     "execution/warning_spurious2",
+    "multimap/find2",
     "set/inter/variadic",  # Only binary intersection is implemented.
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
@@ -582,6 +584,7 @@ compile2_xfail: set[str] = {
     "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
+    "multimap/find2",
     "multimap/fold_i",
     "multimap/main",
     "optimization/multimap_bool",
@@ -633,6 +636,7 @@ ground_xfail: set[str] = {
     "multimap/conditional_assign",
     "multimap/equality",
     "multimap/executions",
+    "multimap/find2",
     "multimap/fold_i",
     "multimap/main",
     "optimization/multimap_bool",

@@ -1,0 +1,5 @@
+value(present,val(bool,true))
+value(second_value,val(bool,true))
+value(wrong_value,val(bool,false))
+value(missing_key,val(bool,false))
+value(empty_map,val(bool,false))
