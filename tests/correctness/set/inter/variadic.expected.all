@@ -1,0 +1,8 @@
+set_value(unary,val(int,1))
+set_value(unary,val(int,2))
+set_value(unary,val(int,3))
+set_value(ternary,val(int,2))
+value(len_unary,val(int,3))
+value(len_unary_empty,val(int,0))
+value(len_ternary,val(int,1))
+value(len_quaternary_empty,val(int,0))

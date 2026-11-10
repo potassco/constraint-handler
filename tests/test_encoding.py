@@ -352,6 +352,7 @@ set_tests = [
     "set/executions",
     "set/fold_bools",
     "set/from_domain",
+    "set/inter/variadic",
     "set/inter_flat",
     "set/iterations",
     "set/length_flat",
@@ -538,6 +539,7 @@ compile_xfail: set[str] = {
     "execution/python_syntax_error",
     "execution/warning_spurious",
     "execution/warning_spurious2",
+    "set/inter/variadic",  # Only binary intersection is implemented.
     "type/bool/with_none_binary",
     "type/bool/with_none_unary",
     "unit/tuple_eq",
@@ -549,7 +551,6 @@ compile_xfail: set[str] = {
 }
 
 compile2_skip: set[str] = {
-    "datatype/casting",
     "engine/request_mult",  # mixed engines
     "execution/python_integrity",  # non static input
     "variable/dynamic_type",  # non static input
