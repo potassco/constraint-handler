@@ -173,12 +173,18 @@ class ReasoningStrategy(ABC):
 
     Attributes:
         rm_model: Accumulated values keyed by Clingo variable symbol.
+        variable_lit: Witness literals keyed by Clingo variable symbol.
+        value_literals: Value literals keyed by variable and value.
+        scalar_variables: Names of scalar variables.
     """
 
     def __init__(self) -> None:
         """Initialize an empty accumulated model."""
         super().__init__()
         self.rm_model: dict[clingo.Symbol, set[Any]] = {}
+        self.variable_lit: dict[clingo.Symbol, int] = {}
+        self.value_literals: dict[clingo.Symbol, dict[Any, int]] = {}
+        self.scalar_variables: set[clingo.Symbol] = set()
 
     def init(
         self,
@@ -210,106 +216,39 @@ class ReasoningStrategy(ABC):
         """
         return []
 
-
-class StandardReasoningMode(ReasoningStrategy):
-    """Use ordinary model enumeration without accumulating constraints."""
-
-    def join(self, model: dict[clingo.Symbol, object]) -> None:
-        """Leave the strategy state unchanged for a model.
-
-        Args:
-            model: Variable values from the current solver model.
-        """
-        return
-
-
-class _LiteralReasoningMode(ReasoningStrategy):
-    """Share witness and value literals used to prune repeated model values."""
-
-    def __init__(self) -> None:
-        """Initialize maps for witness and semantic value literals."""
-        super().__init__()
-        self.variable_lit: dict[clingo.Symbol, int] = {}
-        self.set_or_multimap_value_literals: dict[clingo.Symbol, dict[Any, int]] = {}
-        self.scalar_literals: dict[clingo.Symbol, dict[Any, set[int]]] = {}
-
-    def init(
+    def _init_literals(
         self,
         init: clingo.PropagateInit,
         variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
     ) -> None:
-        """Create witnesses and group literals representing equal values.
-
-        Args:
-            init: Clingo initialization context for the current solve.
-            variables: Tracked variables and their possible values.
-        """
-        super().init(init, variables)
+        """Create witnesses and map collection values to their solver literals."""
         self.variable_lit.clear()
-        self.set_or_multimap_value_literals.clear()
-        self.scalar_literals.clear()
+        self.value_literals.clear()
+        self.scalar_variables.clear()
 
         for name, variable in variables.items():
             self.variable_lit[name] = init.add_literal(freeze=True)
-            # Different source atoms may encode the same member or key/value pair.
-            value2lits: dict[Any, set[int]] = {}
+            self.value_literals[name] = {}
+            if isinstance(variable, _ScalarVariable):
+                self.scalar_variables.add(name)
+
             for candidate in variable.possible_values:
                 if isinstance(candidate, _PairValue):
                     value = (candidate.key, candidate.value)
                 else:
                     value = candidate.value
-                value2lits.setdefault(value, set()).add(candidate.literal)
-
-            # for scalars we don't need prescence literals since only 1 if true at a time.
-            if isinstance(variable, _ScalarVariable):
-                self.scalar_literals[name] = value2lits
-                continue
-
-            self.set_or_multimap_value_literals[name] = {}
-            for value, literals in value2lits.items():
-                # With one source literal, that literal already means this value is present.
-                if len(literals) == 1:
-                    self.set_or_multimap_value_literals[name][value] = next(iter(literals))
-                    continue
-                # Encode presence as the OR of all literals representing this value.
-                presence = init.add_literal(freeze=True)
-                self.set_or_multimap_value_literals[name][value] = presence
-                init.add_clause([-presence, *literals])
-                for literal in literals:
-                    init.add_clause([-literal, presence])
+                self.value_literals[name][value] = candidate.literal
 
     def _set_or_multimap_value_nogood(self, name: clingo.Symbol, value: Any, helper: int) -> tuple[int, ...]:
-        """Build a nogood that disables a witness for an unchanged collection.
-
-        The returned literals describe the complete set or multimap value,
-        followed by the helper literal.
-
-        Args:
-            name: Symbol identifying the set or multimap variable.
-            value: Complete set or multimap value to match.
-            helper: Literal representing this variable's progress witness.
-
-        Returns:
-            A nogood matching the complete value and helper literal.
-        """
+        """Build a nogood that matches a complete collection value and witness."""
         if isinstance(value, multimap.Multimap):
-            retained = set()
-            # build the key, value pairs for the multimap
-            for key, items in value.items():
-                for item in items:
-                    retained.add((key, item))
+            retained = {(key, item) for key, items in value.items() for item in items}
         else:
             retained = value
 
-        # Exact-value matching is identical for union and intersection, so no union flag is needed.
-        # Their callers choose which accumulated values to block from witnessing progress.
         equality = []
-        for item, literal in self.set_or_multimap_value_literals[name].items():
-            # Match both present and absent members so this represents the whole value.
-            if item in retained:
-                equality.append(literal)
-            else:
-                equality.append(-literal)
+        for item, literal in self.value_literals[name].items():
+            equality.append(literal if item in retained else -literal)
         equality.append(helper)
         return tuple(equality)
 
@@ -328,22 +267,37 @@ class _LiteralReasoningMode(ReasoningStrategy):
             Member literals followed by the helper literal.
         """
         if isinstance(value, multimap.Multimap):
-            members = {(key, item) for key, items in value.items() for item in items}
+            members = set()
+            for key, items in value.items():
+                for item in items:
+                    members.add((key, item))
         else:
             members = value
 
-        literals = self.set_or_multimap_value_literals[name]
-        # Memberwise progress is directional, so the union flag selects which condition to match.
+        literals = self.value_literals[name]
         if union:
-            # Union needs an unseen member to appear; match all unseen members being absent.
-            nogood = [-literal for item, literal in literals.items() if item not in members]
+            nogood = []
+            for item, literal in literals.items():
+                if item not in members:
+                    nogood.append(-literal)
         else:
-            # Intersection needs a retained member to disappear; match all retained members being present.
             nogood = [literals[item] for item in members]
         return (*nogood, helper)
 
 
-class IntersectionReasoningMode(_LiteralReasoningMode):
+class StandardReasoningMode(ReasoningStrategy):
+    """Use ordinary model enumeration without accumulating constraints."""
+
+    def join(self, model: dict[clingo.Symbol, object]) -> None:
+        """Leave the strategy state unchanged for a model.
+
+        Args:
+            model: Variable values from the current solver model.
+        """
+        return
+
+
+class IntersectionReasoningMode(ReasoningStrategy):
     """Retain complete variable values that agree across all models."""
 
     def __init__(self) -> None:
@@ -363,6 +317,7 @@ class IntersectionReasoningMode(_LiteralReasoningMode):
             variables: Tracked variables and their possible values.
         """
         super().init(init, variables)
+        self._init_literals(init, variables)
         self._initialized = False
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
@@ -399,11 +354,10 @@ class IntersectionReasoningMode(_LiteralReasoningMode):
                 continue
             # we do this because for intersection there is always just one value in values_in_rm_model
             value = next(iter(rm_values))
-            if name in self.scalar_literals:
-                for literal in self.scalar_literals[name][value]:
-                    # if the literal corresponds to the retained value then the helper is false
-                    # and thus the witness nogood can still fire
-                    nogoods.append((literal, helper))
+            if name in self.scalar_variables:
+                # If the literal corresponds to the retained value, the helper
+                # is false and the witness nogood can still fire.
+                nogoods.append((self.value_literals[name][value], helper))
             else:
                 nogoods.append(self._set_or_multimap_value_nogood(name, value, helper))
             witnesses.append(-helper)
@@ -412,7 +366,7 @@ class IntersectionReasoningMode(_LiteralReasoningMode):
         return nogoods
 
 
-class UnionReasoningMode(_LiteralReasoningMode):
+class UnionReasoningMode(ReasoningStrategy):
     """Accumulate distinct complete variable values and search for unseen values."""
 
     def init(
@@ -427,11 +381,10 @@ class UnionReasoningMode(_LiteralReasoningMode):
             variables: Tracked variables and their possible values.
         """
         super().init(init, variables)
+        self._init_literals(init, variables)
         init.add_clause(list(self.variable_lit.values()))
-        for name, value2lit in self.scalar_literals.items():
-            literals = set()
-            for alternatives in value2lit.values():
-                literals.update(alternatives)
+        for name in self.scalar_variables:
+            literals = set(self.value_literals[name].values())
             init.add_clause([*literals, -self.variable_lit[name]])
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
@@ -455,11 +408,9 @@ class UnionReasoningMode(_LiteralReasoningMode):
         nogoods: list[Iterable[int]] = []
         for name, helper in self.variable_lit.items():
             rm_values = self.rm_model.get(name, set())
-            if name in self.scalar_literals:
-                value2lit = self.scalar_literals[name]
+            if name in self.scalar_variables:
                 for value in rm_values:
-                    for literal in value2lit[value]:
-                        nogoods.append((literal, helper))
+                    nogoods.append((self.value_literals[name][value], helper))
             else:
                 nogoods.extend([self._set_or_multimap_value_nogood(name, value, helper) for value in rm_values])
         return nogoods
@@ -495,13 +446,24 @@ class SupremumReasoningMode(ReasoningStrategy):
         if isinstance(left, frozenset) and isinstance(right, frozenset):
             return left.union(right)
         if isinstance(left, multimap.Multimap) and isinstance(right, multimap.Multimap):
-            return multimap.Multimap.from_pairs(
-                (key, value) for source in (left, right) for key, values in source.items() for value in values
-            )
+            pairs = []
+            for source in (left, right):
+                for key, values in source.items():
+                    for value in values:
+                        pairs.append((key, value))
+            return multimap.Multimap.from_pairs(pairs)
         # if left or right are not a number return "TOP"
         if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
             return "TOP"
         return max(left, right)
+
+    def nogoods(self) -> list[Iterable[int]]:
+        """Build nogoods for the supremum reasoning mode.
+
+        Returns:
+            Nogoods matching each previously seen value and the helper.
+        """
+        return []
 
 
 class InfimumReasoningMode(ReasoningStrategy):
