@@ -228,6 +228,7 @@ def setup_propagator(ctrl: clingo.Control, reasoning_mode: ReasoningMode):
             if prop.on_model(model) == False:
                 return False
             post_processor.set_optimize_valuation(post_prop, model)
+            reasoning_mode_prop.on_model(model)
             post_processor.extend_with_reasoning_mode_atoms(reasoning_mode_prop, model)
             if on_model is not None:
                 return on_model(model)
@@ -236,6 +237,7 @@ def setup_propagator(ctrl: clingo.Control, reasoning_mode: ReasoningMode):
 
     def new_solve(*args, **kwargs):
         post_prop.reset_optimize_value_symbols()
+        reasoning_mode_prop.prepare(ctrl)
         if len(args) > 1:
             args = (args[0], combine_on_model(args[1])) + args[2:]
         elif "on_model" in kwargs:
