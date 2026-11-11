@@ -241,7 +241,8 @@ class ReasoningStrategy(ABC):
         assert self.solve_literal is not None
         inactive = -init.solver_literal(self.solve_literal)
         init.freeze_literal(-inactive)
-        init.add_clause([inactive, *(init.solver_literal(literal) for literal in self.variable_lit.values())])
+        if self.variable_lit:
+            init.add_clause([inactive, *(init.solver_literal(literal) for literal in self.variable_lit.values())])
         for name in self.scalar_variables:
             literals = set(self.value_literals[name].values())
             clause = [*literals, -self.variable_lit[name]]
@@ -352,6 +353,9 @@ class IntersectionReasoningMode(ReasoningStrategy):
         Returns:
             Nogoods that allow another model only when a retained value changes.
         """
+        if not self.variable_lit:
+            return []
+
         nogoods: list[Iterable[int]] = []
         witnesses = []
         for name, helper in self.variable_lit.items():

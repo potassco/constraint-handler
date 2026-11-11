@@ -1060,7 +1060,6 @@ def test_standard_reasoning_mode_keeps_ordinary_enumeration() -> None:
     assert propagator.reasoning_strategy.rm_model == {}
 
 
-@pytest.mark.xfail(reason="Progress guards currently prevent ordinary solving when there are no tracked variables")
 @pytest.mark.parametrize(
     "reasoning_mode",
     [ReasoningMode.INTERSECTION, ReasoningMode.UNION, ReasoningMode.SUPREMUM, ReasoningMode.INFIMUM],
