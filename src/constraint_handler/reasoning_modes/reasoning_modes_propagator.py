@@ -578,6 +578,7 @@ class ReasoningModesPropagator(clingo.Propagator):
     the solve callback. The main API wires both steps automatically.
 
     Attributes:
+        reasoning_mode: Selected mode used to name aggregate model atoms.
         reasoning_strategy: Strategy used to combine successive models.
         disabled: Whether standard enumeration makes propagation unnecessary.
     """
@@ -588,6 +589,7 @@ class ReasoningModesPropagator(clingo.Propagator):
         Args:
             reasoning_mode: Strategy to use during model enumeration.
         """
+        self.reasoning_mode = reasoning_mode
         self.reasoning_strategy: ReasoningStrategy = REASONING_STRATEGIES[reasoning_mode]()
         self._variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable] = {}
         self._witnesses: dict[clingo.Symbol, int] = {}
@@ -601,6 +603,7 @@ class ReasoningModesPropagator(clingo.Propagator):
         Args:
             reasoning_mode: Strategy to use during model enumeration.
         """
+        self.reasoning_mode = reasoning_mode
         self.reasoning_strategy = REASONING_STRATEGIES[reasoning_mode]()
         self.disabled = isinstance(self.reasoning_strategy, StandardReasoningMode)
 
