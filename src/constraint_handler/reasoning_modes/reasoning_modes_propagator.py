@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections import deque
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -31,10 +30,10 @@ class ReasoningMode(Enum):
 
 @dataclass
 class _Value:
-    """Associate a solver literal with a possible variable value.
+    """Associate a program literal with a possible variable value.
 
     Attributes:
-        literal: Solver literal that is true when the value is selected.
+        literal: Program literal that is true when the value is selected.
         value: Python representation of the possible value.
     """
 
@@ -44,10 +43,10 @@ class _Value:
 
 @dataclass
 class _PairValue:
-    """Associate a solver literal with a possible multimap pair.
+    """Associate a program literal with a possible multimap pair.
 
     Attributes:
-        literal: Solver literal that is true when the pair is present.
+        literal: Program literal that is true when the pair is present.
         key: Key in the multimap.
         value: Value associated with the key.
     """
@@ -73,14 +72,14 @@ class _ScalarVariable:
     value: Any = None
     has_value: bool = False
 
-    def update(self, assignment: clingo.Assignment) -> None:
-        """Update the selected value from a solver assignment.
+    def update(self, model: clingo.Model) -> None:
+        """Update the selected value from an accepted model.
 
         Args:
-            assignment: Current solver assignment used to inspect literals.
+            model: Current model used to inspect program literals.
         """
         for candidate in self.possible_values:
-            if assignment.is_true(candidate.literal):
+            if model.is_true(candidate.literal):
                 self.value = candidate.value
                 self.has_value = True
                 return
@@ -103,14 +102,14 @@ class _SetVariable:
     possible_values: list[_Value] = field(default_factory=list)
     value: frozenset[Any] = frozenset()
 
-    def update(self, assignment: clingo.Assignment) -> None:
+    def update(self, model: clingo.Model) -> None:
         """Rebuild the set value from true member literals.
 
         Args:
-            assignment: Current solver assignment used to inspect literals.
+            model: Current model used to inspect program literals.
         """
         self.value = frozenset(
-            candidate.value for candidate in self.possible_values if assignment.is_true(candidate.literal)
+            candidate.value for candidate in self.possible_values if model.is_true(candidate.literal)
         )
 
 
@@ -128,16 +127,14 @@ class _MultimapVariable:
     possible_values: list[_PairValue] = field(default_factory=list)
     value: multimap.Multimap[Any, Any] = field(default_factory=lambda: multimap.Multimap.from_pairs([]))
 
-    def update(self, assignment: clingo.Assignment) -> None:
+    def update(self, model: clingo.Model) -> None:
         """Rebuild the multimap value from true pair literals.
 
         Args:
-            assignment: Current solver assignment used to inspect literals.
+            model: Current model used to inspect program literals.
         """
         self.value = multimap.Multimap.from_pairs(
-            (candidate.key, candidate.value)
-            for candidate in self.possible_values
-            if assignment.is_true(candidate.literal)
+            (candidate.key, candidate.value) for candidate in self.possible_values if model.is_true(candidate.literal)
         )
 
 
@@ -185,6 +182,7 @@ class ReasoningStrategy(ABC):
         self.variable_lit: dict[clingo.Symbol, int] = {}
         self.value_literals: dict[clingo.Symbol, dict[Any, int]] = {}
         self.scalar_variables: set[clingo.Symbol] = set()
+        self.solve_literal: int | None = None
 
     def init(
         self,
@@ -221,13 +219,12 @@ class ReasoningStrategy(ABC):
         init: clingo.PropagateInit,
         variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
     ) -> None:
-        """Create witnesses and map collection values to their solver literals."""
-        self.variable_lit.clear()
+        """Freeze prepared witnesses and map values to program literals."""
         self.value_literals.clear()
         self.scalar_variables.clear()
 
         for name, variable in variables.items():
-            self.variable_lit[name] = init.add_literal(freeze=True)
+            init.freeze_literal(init.solver_literal(self.variable_lit[name]))
             self.value_literals[name] = {}
             if isinstance(variable, _ScalarVariable):
                 self.scalar_variables.add(name)
@@ -238,6 +235,17 @@ class ReasoningStrategy(ABC):
                 else:
                     value = candidate.value
                 self.value_literals[name][value] = candidate.literal
+
+    def _add_progress_guards(self, init: clingo.PropagateInit) -> None:
+        """Install static solver guards that become inactive on later solves."""
+        assert self.solve_literal is not None
+        inactive = -init.solver_literal(self.solve_literal)
+        init.freeze_literal(-inactive)
+        init.add_clause([inactive, *(init.solver_literal(literal) for literal in self.variable_lit.values())])
+        for name in self.scalar_variables:
+            literals = set(self.value_literals[name].values())
+            clause = [*literals, -self.variable_lit[name]]
+            init.add_clause([inactive, *(init.solver_literal(literal) for literal in clause)])
 
     def _set_or_multimap_value_nogood(self, name: clingo.Symbol, value: Any, helper: int) -> tuple[int, ...]:
         """Build a nogood that matches a complete collection value and witness."""
@@ -382,10 +390,7 @@ class UnionReasoningMode(ReasoningStrategy):
         """
         super().init(init, variables)
         self._init_literals(init, variables)
-        init.add_clause(list(self.variable_lit.values()))
-        for name in self.scalar_variables:
-            literals = set(self.value_literals[name].values())
-            init.add_clause([*literals, -self.variable_lit[name]])
+        self._add_progress_guards(init)
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
         """Add each model value to the accumulated set of values.
@@ -427,10 +432,7 @@ class SupremumReasoningMode(ReasoningStrategy):
         """Reset bounds and require at least one progress witness."""
         super().init(init, variables)
         self._init_literals(init, variables)
-        init.add_clause(list(self.variable_lit.values()))
-        for name in self.scalar_variables:
-            literals = set(self.value_literals[name].values())
-            init.add_clause([*literals, -self.variable_lit[name]])
+        self._add_progress_guards(init)
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
         """Accumulate the least upper bound of a model's variable values.
@@ -502,10 +504,7 @@ class InfimumReasoningMode(ReasoningStrategy):
         """Reset bounds and require at least one progress witness."""
         super().init(init, variables)
         self._init_literals(init, variables)
-        init.add_clause(list(self.variable_lit.values()))
-        for name in self.scalar_variables:
-            literals = set(self.value_literals[name].values())
-            init.add_clause([*literals, -self.variable_lit[name]])
+        self._add_progress_guards(init)
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
         """Accumulate the greatest lower bound of a model's variable values.
@@ -575,6 +574,9 @@ REASONING_STRATEGIES = {
 class ReasoningModesPropagator(clingo.Propagator):
     """Build variable models and apply nogoods for a reasoning strategy.
 
+    Call prepare after grounding and before each solve, and pass on_model to
+    the solve callback. The main API wires both steps automatically.
+
     Attributes:
         reasoning_strategy: Strategy used to combine successive models.
         disabled: Whether standard enumeration makes propagation unnecessary.
@@ -588,8 +590,8 @@ class ReasoningModesPropagator(clingo.Propagator):
         """
         self.reasoning_strategy: ReasoningStrategy = REASONING_STRATEGIES[reasoning_mode]()
         self._variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable] = {}
-        self._watched_literals: set[int] = set()
-        self._nogood_queue: deque[Iterable[int]] = deque()
+        self._witnesses: dict[clingo.Symbol, int] = {}
+        self._solve_literal: int | None = None
 
         self.disabled = isinstance(self.reasoning_strategy, StandardReasoningMode)
 
@@ -602,24 +604,24 @@ class ReasoningModesPropagator(clingo.Propagator):
         self.reasoning_strategy = REASONING_STRATEGIES[reasoning_mode]()
         self.disabled = isinstance(self.reasoning_strategy, StandardReasoningMode)
 
-    def init(self, init: clingo.PropagateInit) -> None:
-        """Load variable values and register watched solver literals.
+    def prepare(self, control: clingo.Control) -> None:
+        """Load program literals and support progress witnesses before solving.
 
         Args:
-            init: Clingo initialization context for the current solve.
+            control: Grounded control whose next solve will use this strategy.
         """
+        if self._solve_literal is not None:
+            control.release_external(self._solve_literal)
+            self._solve_literal = None
         if self.disabled:
             return
         self._variables.clear()
-        self._watched_literals.clear()
-        self._nogood_queue.clear()
-        init.check_mode = clingo.PropagatorCheckMode.Total
 
-        se_values = myClorm.findInPropagateInit(init, internal._se_value)
-        set_values = myClorm.findInPropagateInit(init, internal._set_contains)
-        multimap_values = myClorm.findInPropagateInit(init, result.Multimap_value)
+        se_values = myClorm.findInControl(control, internal._se_value)
+        set_values = myClorm.findInControl(control, internal._set_contains)
+        multimap_values = myClorm.findInControl(control, result.Multimap_value)
 
-        for (expr, value), literal in se_values.items():
+        for atom, (expr, value) in se_values.items():
             if not isinstance(expr, expression.Variable):
                 continue
             name = _variable_to_symbol(expr)
@@ -630,79 +632,51 @@ class ReasoningModesPropagator(clingo.Propagator):
             else:
                 scalar = self._variables.setdefault(name, _ScalarVariable(name))
                 if isinstance(scalar, _ScalarVariable):
-                    scalar.possible_values.append(_Value(literal, _python_value(value)))
+                    scalar.possible_values.append(_Value(atom.literal, _python_value(value)))
 
-        for (expr, value), literal in set_values.items():
+        for atom, (expr, value) in set_values.items():
             for variable in self._variables.values():
                 if isinstance(variable, _SetVariable) and variable.source == expr:
-                    variable.possible_values.append(_Value(literal, _python_value(value)))
-                    self._watched_literals.add(literal)
+                    variable.possible_values.append(_Value(atom.literal, _python_value(value)))
 
-        for (name, key, value), literal in multimap_values.items():
+        for atom, (name, key, value) in multimap_values.items():
             variable_name = myClorm.pytocl(expression.Variable(name)).arguments[0]
             variable = self._variables.get(variable_name)
             if isinstance(variable, _MultimapVariable):
-                variable.possible_values.append(_PairValue(literal, _python_value(key), _python_value(value)))
-                self._watched_literals.add(literal)
+                variable.possible_values.append(_PairValue(atom.literal, _python_value(key), _python_value(value)))
 
-        for variable in self._variables.values():
-            if isinstance(variable, _ScalarVariable):
-                self._watched_literals.update(candidate.literal for candidate in variable.possible_values)
-        for literal in self._watched_literals:
-            init.add_watch(literal)
+        with control.backend() as backend:
+            for name in self._variables:
+                if name not in self._witnesses:
+                    helper = backend.add_atom()
+                    backend.add_rule([helper], choice=True)
+                    self._witnesses[name] = helper
+            self._solve_literal = backend.add_atom()
+            backend.add_external(self._solve_literal, clingo.TruthValue.True_)
+        self.reasoning_strategy.variable_lit = {name: self._witnesses[name] for name in self._variables}
+        self.reasoning_strategy.solve_literal = self._solve_literal
+
+    def init(self, init: clingo.PropagateInit) -> None:
+        """Reset accumulation and initialize guards for the current solve."""
+        if self.disabled:
+            return
         self.reasoning_strategy.init(init, self._variables)
 
-    def propagate(self, control: clingo.PropagateControl, changes: Sequence[int]) -> None:
-        """Add queued nogoods without updating tracked variable values.
+    def on_model(self, model: clingo.Model) -> None:
+        """Accumulate an accepted model and constrain the search for the next.
 
         Args:
-            control: Clingo control used to add nogoods.
-            changes: Watched literals whose assignments changed.
+            model: Accepted model whose program literals determine its values.
         """
         if self.disabled:
-            return
-        self._add_nogoods(control)
-
-    def check(self, control: clingo.PropagateControl) -> None:
-        """Process a total assignment and queue constraints for further progress.
-
-        Args:
-            control: Clingo control containing the current assignment.
-        """
-        if self.disabled:
-            return
-        if self._add_nogoods(control):
-            return
-        if not control.assignment.is_total:
             return
 
         for variable in self._variables.values():
-            variable.update(control.assignment)
-        model = {variable.name: variable.value for variable in self._variables.values() if _has_value(variable)}
-        self.reasoning_strategy.join(model)
-        # Let this assignment finish before installing nogoods that demand further progress.
-        self._nogood_queue.extend(tuple(nogood) for nogood in self.reasoning_strategy.nogoods())
-
-        # print values stored
-        import pprint
-
-        print("Stored values:")
-        pprint.pprint(self.reasoning_strategy.rm_model)
-
-    def _add_nogoods(self, control: clingo.PropagateControl) -> bool:
-        """Add queued nogoods until the queue is empty or propagation stops.
-
-        Args:
-            control: Clingo control used to add nogoods.
-
-        Returns:
-            Whether adding a nogood stopped propagation.
-        """
-        while self._nogood_queue:
-            nogood = self._nogood_queue.popleft()
-            if not control.add_nogood(nogood, tag=True, lock=True):
-                return True
-        return False
+            variable.update(model)
+        values = {variable.name: variable.value for variable in self._variables.values() if _has_value(variable)}
+        self.reasoning_strategy.join(values)
+        for nogood in self.reasoning_strategy.nogoods():
+            model.context.add_nogood(tuple(nogood))
 
 
 def _has_value(variable: _ScalarVariable | _SetVariable | _MultimapVariable) -> bool:
