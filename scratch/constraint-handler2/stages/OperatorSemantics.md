@@ -8,9 +8,8 @@ either format. Input-specific spellings are listed where they are known.
 
 An operator is applied to the values of its arguments. The contracts below
 describe valid argument types and the value produced for valid inputs.
-Expressions may also be undefined, have an unknown domain, or produce
-diagnostics during evaluation; these cases are described by the consuming
-stage, not by changing the operator's mathematical meaning. See
+Incompatible types in comparisons produce `undefined` and a error; other
+undefined cases are reported by the consuming stage. See
 [StaticTypeChecking](Preprocessing/StaticTypeChecking.md) for static type
 contracts and [DomainComputation](Preprocessing/DomainComputation.md) for
 domain approximations, diagnostics, and threshold behavior.
@@ -19,14 +18,15 @@ domain approximations, diagnostics, and threshold behavior.
 
 | Operator | Arguments | Meaning |
 | --- | --- | --- |
-| `eq(x, y)` | Any values | True iff `x` and `y` are equal. Integers and reals compare by numeric value; booleans are distinct from numbers. Values of different other types are unequal. |
+| `eq(x, y)` | Any values | True iff `x` and `y` are equal. Integers and reals compare by numeric value; values of the same other type compare by equality. Incompatible types, including booleans and numbers, yield `undefined` and a error. |
 | `neq(x, y)` | Any values | Logical negation of `eq(x, y)`. |
 | `max(x1, ..., xn)` | One or more booleans or numbers | Greatest argument under the ordering below. |
 | `min(x1, ..., xn)` | One or more booleans or numbers | Least argument under the ordering below. |
 
 Booleans are ordered `false < true`; integers and reals use numeric ordering.
-Mixed integer/real comparisons use numeric values. `max` and `min` preserve the
-type of the selected value.
+Mixed integer/real comparisons use numeric values. Other incompatible types
+yield `undefined` and a error. `max` and `min` preserve the type of the
+selected value.
 
 ## Strings and generic values
 
@@ -79,7 +79,7 @@ missing.
 | `floor(x)`, `ceil(x)` | Number | Greatest integer no greater than `x`, or least integer no less than `x`, respectively. |
 | `real_from_int(x)` | Integer | Convert `x` to a real. |
 | `int_from_real(x)` | Real | Convert to an integer by truncating toward zero. |
-| `lt(x, y)`, `leq(x, y)`, `gt(x, y)`, `geq(x, y)` | Booleans or numbers | Strict/non-strict ordering comparisons; return a boolean. |
+| `lt(x, y)`, `leq(x, y)`, `gt(x, y)`, `geq(x, y)` | Two booleans or two numbers | Strict/non-strict ordering comparisons; return a boolean. Mixed integer/real operands compare by numeric value. |
 
 Integer-only `add`, `sub`, and `mult` return integers; if any operand is real,
 their result is real. `pow` may return either integer or real for integer
