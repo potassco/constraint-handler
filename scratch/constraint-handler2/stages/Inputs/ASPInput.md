@@ -156,8 +156,10 @@ example(string_trunc, trunc(val(string,"constraint"),val(int,5))).
 example(string_substring, substring(val(string,"constraint"),val(int,1),val(int,3))).
 
 % Python operators; argument names are symbolic terms, not ASP variables
-example(python_eval, python_eval("4 if x>4 else 2",((x,val(int,5)),(y,val(int,2))))).
-example(python_execute, python_execute("x=4\ny=-x",y)).
+example(python_eval, python_eval(val(python,"4 if x>4 else 2"),((x,val(int,5)),(y,val(int,2))))).
+example(python_execute, python_execute(val(python,"x=4\ny=-x"),y)).
+example(python_eval, python_eval(val(string,"4 if x>4 else 2"),((x,val(int,5)),(y,val(int,2))))).
+example(python_execute, python_execute(val(string,"x=4\ny=-x"),y)).
 
 % Set operators
 example(set_make, set_make(val(int,1),val(int,2))).
