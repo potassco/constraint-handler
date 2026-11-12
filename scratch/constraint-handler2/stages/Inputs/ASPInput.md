@@ -25,52 +25,52 @@ numbers, strings, tuples, functions.
 
 1. Values
    - `val(bool,true)` `val(bool, false)`
-1. Operators
-   - `neg` (the logical `not` operator)
-   - `and`
-   - `or`
-   - `eq`
+2. Operators
+   - `neg/1` (the logical `not` operator)
+   - `and/2`
+   - `or/2`
+   - `eq/2`
      - QUESTIONS: Who implements this? Is this shared for all constructs?
        Extensional vs intensional vs both?
-1. Declarations
+3. Declarations
 
 #### Integer
 
 1. Values
    - `val(int,<n>)` $\\mathtt{<n>}\\in\\mathbf{Z}$
-1. Operators
-   - `add`
-   - `mul`
-   - `geq`
-   - `ge`
-   - `leq`
-   - `le`
-   - `eq`
-2. Declarations
+2. Operators
+   - `add/2`
+   - `mul/2`
+   - `geq/2`
+   - `ge/2`
+   - `leq/2`
+   - `le/2`
+   - `eq/2`
+3. Declarations
 
 #### Floats
 
 1. Values
    - `val(float,"<n>")` $\\mathtt{<n>}\\in\\mathbf{R}$
-1. Operators
-   - `add`
-   - `mul`
-   - `geq`
-   - `ge`?
-   - `leq`
-   - `le`?
-   - `eq`?
-1. Declarations
+2. Operators
+   - `add/2`
+   - `mul/2`
+   - `geq/2`
+   - `ge/2`?
+   - `leq/2`
+   - `le/2`?
+   - `eq/2`?
+3. Declarations
 
 #### Strings
 
 1. Values
    - `val(string,<w>)` `<w>` is a gringo string
-1. Operators
-   - `concat`
-   - `trunc`
-   - `substring`
-1. Declarations
+2. Operators
+   - `concat/2`
+   - `trunc/2`
+   - `substring/3`
+3. Declarations
 
 #### Python
 
@@ -79,12 +79,12 @@ numbers, strings, tuples, functions.
      - `val(python,none)` or `val(python,<w>)` `<w>` is a gringo string or
      - no inherent values, return values are mapped into other constructs'
        values
-1. Operators
-   - `python_eval`
+2. Operators
+   - `python_eval/2`
      - `python_eval("4 if x>4 else 2",((x,<expression>),(y,<expression>)))`
-   - `python_execute`
+   - `python_execute/2`
      - `python_execute("x=4\ny=-x",y)`
-1. Declarations
+3. Declarations
 
 #### Sets
 
@@ -97,14 +97,27 @@ numbers, strings, tuples, functions.
        `val(set,(1,3,(5,6)))` plus
        `set_include(<set_name>,<expression>)`
 2. Operators
-   - `set_make`
-   - `union`
-   - `intersection`
-   - `in`
-   - `subset`
-   - `superset`
+   - `set_make/n` (variadic: `n` elements)
+   - `union/2`
+   - `intersection/2`
+   - `in/2`
+   - `subset/2`
+   - `superset/2`
 3. Declarations
    - `set_choose`
+
+
+#### Tuples
+
+1. Values
+   - `(val(int,1),val(float,"2.1"))`, `(val(int,1),)` (one element), `()` (empty)
+2. Operators
+   - `tuple_make/n` (variadic: `n` elements)
+   - `tuple_get/2`
+   - `length/1`
+   - `eq/2`
+   - `neq/2`
+3. Declarations
 
 ### Clingo-valid examples
 
@@ -125,6 +138,16 @@ example(python_value, val(python,"payload")).
 example(set_value, val(set,(val(int,1),val(int,2)))).
 example(variable, variable(item)).
 example(tuple_expression, (val(int,1),val(string,"one"))).
+example(tuple_single, (val(int,1),)).
+example(tuple_empty, ()).
+example(tuple_nested, (val(int,1),(val(int,2),val(int,3)))).
+
+% Tuple operators; index is 0-based
+example(tuple_make, tuple_make(val(int,1),val(string,"one"),val(bool,true))).
+example(tuple_get, tuple_get((val(int,1),val(string,"one")),val(int,1))).
+example(tuple_length, length((val(int,1),val(string,"one")))).
+example(tuple_eq, eq((val(int,1),val(int,2)),(val(int,1),val(int,2)))).
+example(tuple_neq, neq((val(int,1),val(int,2)),(val(int,1),val(int,3)))).
 
 % Boolean logic and shared equality
 example(boolean_not, neg(val(bool,true))).
@@ -177,7 +200,8 @@ default_to(variable(fallback),val(string,"blue"),1).
 default_to(variable(conditional_fallback),val(int,0),1,(eq(variable(enabled),val(bool,true)),val(bool,true))).
 ensure(eq(variable(choice),val(int,1)),val(bool,true)).
 check(geq(variable(total),val(int,0)),val(bool,true)).
-prefer(eq(variable(choice),val(int,1)),val(bool,true),(1,10)).
+minimize(variable(total),1).
+maximize(variable(choice),2,(eq(variable(enabled),val(bool,true)),val(bool,true))).
 set_choose(variable(labels),val(string,"urgent")).
 
 % A condition over tuples of variables and corresponding value tuples
@@ -195,12 +219,15 @@ example(tuple_condition,((variable(x),variable(enabled)),((val(int,1),val(bool,t
     | <operator>(<expression>_1,..,<expression>_n)
     | expressiontuple
 <expressiontuple> ::=
-    | (expression,expressiontuple)
     | (expressionlist)
+    | ()
 <expressionlist> ::=
     | expression, expressionlist
     | expression
 ```
+
+A one-element tuple needs a trailing comma, `(<expression>,)`, because
+`(<expression>)` is only parenthesized grouping.
 
 where `<name>` is a basic gringo term, and `<value>` is a value, and
 `<operator>` an operator of any construct with `n` being its arity.
@@ -208,11 +235,12 @@ where `<name>` is a basic gringo term, and `<value>` is a value, and
 ### Base declarations
 
 1. `define(<variable>,<expression>(,<condition>))`
-1. `choose(<variable>,<expression>(,<condition>))`
-1. `default_to(<variable>,<expression>(,<priority>)(,<condition>))`
-1. `ensure(<expression>,<value>(,<condition>))`
-1. `check(<expression>,<value>(,<condition>))`
-1. `prefer(<expression>,<value>,(<priority>,<weight>)(,<condition>))`
+2. `choose(<variable>,<expression>(,<condition>))`
+3. `default_to(<variable>,<expression>(,<priority>)(,<condition>))`
+4. `ensure(<expression>,<value>(,<condition>))`
+5. `check(<expression>,<value>(,<condition>))`
+6. `minimize(<weight_expression>,(<priority>)(,<condition>))`
+7. `maximize(<weight_expression>,(<priority>)(,<condition>))`
 
 What is a `<condition>`?
 
