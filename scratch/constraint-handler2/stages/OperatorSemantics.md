@@ -23,7 +23,7 @@ Definitions:
  - defined(X) is true if all x in X are defined, false otherwise.
  - number(x) denotes the numeric value of `x` if `x` is an integer or float, x otherwise
  - ANY_TYPE = {bool, None, int, float, string, tuple, set} % no lambda
- - The comparison `==` (and `in`, set construction) in the formulas below is mathematical equality, not Python's: values of different types are unequal (`1 == true` is false), int and float compare by numeric value, and tuples and sets compare element-wise under the same rule.
+ - Equality compares integers and floats by numeric value, and other values only when their types match; tuples and sets compare element-wise. `eq`/`neq` and ordering comparisons with unsupported type combinations yield `undefined` and a type error. Set membership and construction treat values of different types as unequal (`1` and `true` are distinct).
 
 # Types:
 
@@ -50,16 +50,18 @@ out in {bool}
 
 ### Semantics:
 ```
-if defined({x1, x2})
+if defined({x1, x2}) and (
+  type(x1) == type(x2) or {type(x1), type(x2)} <= {int, float}
+)
   out = (number(x1) == number(x2))
 else
   out = undefined
 ```
 
-### Warnings:
+### Type Errors:
 ```
 if type(x1) != type(x2) and not {type(x1), type(x2)} <= {int, float}
-  warn("Comparing values of different types")
+  error("Comparing values of different types")
 ```
 
 ## neq
@@ -74,16 +76,18 @@ out in {bool}
 
 ### Semantics:
 ```
-if defined({x1, x2})
+if defined({x1, x2}) and (
+  type(x1) == type(x2) or {type(x1), type(x2)} <= {int, float}
+)
   out = (number(x1) != number(x2))
 else
   out = undefined
 ```
 
-### Warnings:
+### Type Errors:
 ```
 if type(x1) != type(x2) and not {type(x1), type(x2)} <= {int, float}
-  warn("Comparing values of different types")
+  error("Comparing values of different types")
 ```
 
 ## lt
@@ -92,13 +96,16 @@ if type(x1) != type(x2) and not {type(x1), type(x2)} <= {int, float}
 n=2
 
 ### Types:
-x1, ..., xn in {int, float}
+x1, x2 in ANY_TYPE
 
 out in {bool}
 
 ### Semantics:
 ```
-if defined({x1, x2})
+if defined({x1, x2}) and (
+  (type(x1) == bool and type(x2) == bool) or
+  {type(x1), type(x2)} <= {int, float}
+)
   out = (number(x1) < number(x2))
 else
   out = undefined
@@ -106,7 +113,10 @@ else
 
 ### Type Errors:
 ```
-if not {type(x1), type(x2)} <= {int, float}
+if not (
+  (type(x1) == bool and type(x2) == bool) or
+  {type(x1), type(x2)} <= {int, float}
+)
   error("Unsupported comparison type")
 ```
 
@@ -116,13 +126,16 @@ if not {type(x1), type(x2)} <= {int, float}
 n=2
 
 ### Types:
-x1, ..., xn in {int, float}
+x1, x2 in ANY_TYPE
 
 out in {bool}
 
 ### Semantics:
 ```
-if defined({x1, x2})
+if defined({x1, x2}) and (
+  (type(x1) == bool and type(x2) == bool) or
+  {type(x1), type(x2)} <= {int, float}
+)
   out = (number(x1) <= number(x2))
 else
   out = undefined
@@ -130,7 +143,10 @@ else
 
 ### Type Errors:
 ```
-if not {type(x1), type(x2)} <= {int, float}
+if not (
+  (type(x1) == bool and type(x2) == bool) or
+  {type(x1), type(x2)} <= {int, float}
+)
   error("Unsupported comparison type")
 ```
 
@@ -140,13 +156,16 @@ if not {type(x1), type(x2)} <= {int, float}
 n=2
 
 ### Types:
-x1, ..., xn in {int, float}
+x1, x2 in ANY_TYPE
 
 out in {bool}
 
 ### Semantics:
 ```
-if defined({x1, x2})
+if defined({x1, x2}) and (
+  (type(x1) == bool and type(x2) == bool) or
+  {type(x1), type(x2)} <= {int, float}
+)
   out = (number(x1) > number(x2))
 else
   out = undefined
@@ -154,7 +173,10 @@ else
 
 ### Type Errors:
 ```
-if not {type(x1), type(x2)} <= {int, float}
+if not (
+  (type(x1) == bool and type(x2) == bool) or
+  {type(x1), type(x2)} <= {int, float}
+)
   error("Unsupported comparison type")
 ```
 
@@ -164,13 +186,16 @@ if not {type(x1), type(x2)} <= {int, float}
 n=2
 
 ### Types:
-x1, ..., xn in {int, float}
+x1, x2 in ANY_TYPE
 
 out in {bool}
 
 ### Semantics:
 ```
-if defined({x1, x2})
+if defined({x1, x2}) and (
+  (type(x1) == bool and type(x2) == bool) or
+  {type(x1), type(x2)} <= {int, float}
+)
   out = (number(x1) >= number(x2))
 else
   out = undefined
@@ -178,7 +203,10 @@ else
 
 ### Type Errors:
 ```
-if not {type(x1), type(x2)} <= {int, float}
+if not (
+  (type(x1) == bool and type(x2) == bool) or
+  {type(x1), type(x2)} <= {int, float}
+)
   error("Unsupported comparison type")
 ```
 
