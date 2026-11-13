@@ -112,8 +112,8 @@ numbers, strings, tuples, functions.
 1. Values
    - `(val(int,1),val(float,"2.1"))`, `(val(int,1),)` (one element), `()` (empty)
 2. Operators
-   - `tuple_make/n` (variadic: `n` elements)
-   - `tuple_get/2`
+   - `make_tuple/n` (variadic: `n` elements)
+   - `tuple_index/2` (tuple and zero-based integer index)
    - `length/1`
    - `eq/2`
    - `neq/2`
@@ -143,8 +143,8 @@ example(tuple_empty, ()).
 example(tuple_nested, (val(int,1),(val(int,2),val(int,3)))).
 
 % Tuple operators; index is 0-based
-example(tuple_make, tuple_make(val(int,1),val(string,"one"),val(bool,true))).
-example(tuple_get, tuple_get((val(int,1),val(string,"one")),val(int,1))).
+example(tuple_make, make_tuple(val(int,1),val(string,"one"),val(bool,true))).
+example(tuple_index, tuple_index((val(int,1),val(string,"one")),val(int,1))).
 example(tuple_length, length((val(int,1),val(string,"one")))).
 example(tuple_eq, eq((val(int,1),val(int,2)),(val(int,1),val(int,2)))).
 example(tuple_neq, neq((val(int,1),val(int,2)),(val(int,1),val(int,3)))).

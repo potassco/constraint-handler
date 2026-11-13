@@ -131,6 +131,16 @@ Value = bool | float | int | str | None
 #
 Set = frozenset[Expr]
 Tuple = tuple[Expr, ...]
+# Tuple expressions use Python tuple syntax: (), (x,), and (x, y).
+#
+# Tuple operations are expressed with Operation like other operators.
+# tuple_index uses a zero-based integer index; length returns the tuple size.
+#
+pair = (VariableRef("x"), 1)
+Operation(Operator.make_tuple, (VariableRef("x"), 1))
+Operation(Operator.tuple_index, (pair, 0))
+Operation(Operator.length, (pair,))
+Operation(Operator.eq, (pair, (VariableRef("x"), 1)))
 
 # Operation stores an operator and its argument expressions.
 # For example, x + 2 is represented by Operation(Operator.add, (VariableRef("x"), 2)).
@@ -156,6 +166,10 @@ enum Operator {
     # Equality comparisons
     eq,
     neq,
+
+    # Tuple construction and access
+    make_tuple,
+    tuple_index,
 
     # String and generic value operations; length is shared by both categories
     concat,
