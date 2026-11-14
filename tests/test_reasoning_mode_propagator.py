@@ -183,18 +183,17 @@ def test_supremum_and_infimum_join_multimap_values() -> None:
 
 
 @pytest.mark.parametrize("mode_type", [UnionReasoningMode, SupremumReasoningMode, InfimumReasoningMode])
-def test_reasoning_mode_translates_program_literals_for_guards(mode_type: type[ReasoningStrategy]) -> None:
+def test_reasoning_mode_initializes_progress_witness(mode_type: type[ReasoningStrategy]) -> None:
     name = clingo.String("value")
     variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable] = {
         name: _ScalarVariable(name, [_Value(1, 1)])
     }
     mode = mode_type()
     mode.variable_lit = {name: 2}
-    mode.solve_literal = 3
     init = _InitRecorder()
     mode.init(cast(clingo.PropagateInit, init), variables)
-    assert init.frozen == [102, 103]
-    assert init.clauses == [(-103, 102), (-103, 101, -102)]
+    assert init.frozen == [102]
+    assert init.clauses == []
     assert mode.variable_lit == {name: 2}
     assert mode.value_literals == {name: {1: 1}}
 
@@ -782,9 +781,9 @@ def test_extremum_propagator_callback_pruning_reports_strict_progress(
 
 @pytest.mark.parametrize("reasoning_mode", [ReasoningMode.SUPREMUM, ReasoningMode.INFIMUM])
 @pytest.mark.parametrize(
-    "program, expected_supremum, expected_infimum, max_models",
+    "program, expected_supremum, expected_infimum, expected_satisfiable, max_models, expected_model_count",
     [
-        ('_se_value(variable("value"), val(string, "same")).', {"same"}, {"same"}, 1),
+        ('_se_value(variable("value"), val(string, "same")).', {"same"}, {"same"}, True, 1, None),
         (
             (
                 '1 { _se_value(variable("value"), val(string, "left")); '
@@ -792,45 +791,54 @@ def test_extremum_propagator_callback_pruning_reports_strict_progress(
             ),
             {"TOP"},
             {"BOT"},
+            True,
             2,
+            None,
         ),
         (
             ('1 { _se_value(variable("value"), val(int, 3)); _se_value(variable("value"), val(string, "text")) } 1.'),
             {"TOP"},
             {"BOT"},
+            True,
             2,
+            None,
         ),
-        ('{ _se_value(variable("value"), val(int, 1..3)) } 1.', {3}, {1}, 4),
+        ('{ _se_value(variable("value"), val(int, 1..3)) } 1.', {3}, {1}, True, 4, None),
         (
             ('{ _se_value(variable("value"), val(int, 1)) }. :- _se_value(variable("value"), val(int, 1)).'),
-            None,
-            None,
-            0,
+            set(),
+            set(),
+            True,
+            1,
+            1,
         ),
-        ('_se_value(variable("value"), ref(set, variable("value"))).', {frozenset()}, {frozenset()}, 1),
+        (
+            '_se_value(variable("value"), ref(set, variable("value"))).',
+            {frozenset()},
+            {frozenset()},
+            True,
+            1,
+            None,
+        ),
         (
             '_se_value(variable("value"), ref(multimap, variable("value"))).',
             {multimap.Multimap.from_pairs([])},
             {multimap.Multimap.from_pairs([])},
+            True,
             1,
+            None,
         ),
-        pytest.param(
-            "",
-            set(),
-            set(),
-            32,
-            marks=pytest.mark.xfail(
-                reason="Progress guards currently make aggregate modes UNSAT with no tracked variables"
-            ),
-        ),
+        ("", set(), set(), True, 32, 32),
     ],
 )
 def test_extremum_propagator_scalar_and_empty_domains(
     reasoning_mode: ReasoningMode,
     program: str,
-    expected_supremum: set[object] | None,
-    expected_infimum: set[object] | None,
+    expected_supremum: set[object],
+    expected_infimum: set[object],
+    expected_satisfiable: bool,
     max_models: int,
+    expected_model_count: int | None,
 ) -> None:
     control = clingo.Control(["0"])
     propagator = ReasoningModesPropagator(reasoning_mode)
@@ -847,12 +855,16 @@ def test_extremum_propagator_scalar_and_empty_domains(
     for _ in range(2):
         accumulated.clear()
         propagator.prepare(control)
-        assert control.solve(on_model=on_model).satisfiable == (expected is not None)
-        assert bool(accumulated) == (expected is not None)
+        assert control.solve(on_model=on_model).satisfiable is expected_satisfiable
+        assert bool(accumulated) is expected_satisfiable
         assert len(accumulated) <= max_models
+        if expected_model_count is not None:
+            assert len(accumulated) == expected_model_count
         if expected:
             assert all(previous != current for previous, current in pairwise(accumulated))
         expected_model = {} if not expected else {clingo.String("value"): expected}
+        if not expected:
+            assert all(not model for model in accumulated)
         assert propagator.reasoning_strategy.rm_model == expected_model
 
 
