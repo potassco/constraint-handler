@@ -182,7 +182,6 @@ class ReasoningStrategy(ABC):
         self.variable_lit: dict[clingo.Symbol, int] = {}
         self.value_literals: dict[clingo.Symbol, dict[Any, int]] = {}
         self.scalar_variables: set[clingo.Symbol] = set()
-        self.solve_literal: int | None = None
 
     def init(
         self,
@@ -235,18 +234,6 @@ class ReasoningStrategy(ABC):
                 else:
                     value = candidate.value
                 self.value_literals[name][value] = candidate.literal
-
-    def _add_progress_guards(self, init: clingo.PropagateInit) -> None:
-        """Install static solver guards that become inactive on later solves."""
-        assert self.solve_literal is not None
-        inactive = -init.solver_literal(self.solve_literal)
-        init.freeze_literal(-inactive)
-        if self.variable_lit:
-            init.add_clause([inactive, *(init.solver_literal(literal) for literal in self.variable_lit.values())])
-        for name in self.scalar_variables:
-            literals = set(self.value_literals[name].values())
-            clause = [*literals, -self.variable_lit[name]]
-            init.add_clause([inactive, *(init.solver_literal(literal) for literal in clause)])
 
     def _set_or_multimap_value_nogood(self, name: clingo.Symbol, value: Any, helper: int) -> tuple[int, ...]:
         """Build a nogood that matches a complete collection value and witness."""
@@ -386,7 +373,7 @@ class UnionReasoningMode(ReasoningStrategy):
         init: clingo.PropagateInit,
         variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
     ) -> None:
-        """Initialize literals and add witness and scalar selection guards once.
+        """Initialize literals used to track candidate values.
 
         Args:
             init: Clingo initialization context for the current solve.
@@ -394,7 +381,6 @@ class UnionReasoningMode(ReasoningStrategy):
         """
         super().init(init, variables)
         self._init_literals(init, variables)
-        self._add_progress_guards(init)
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
         """Add each model value to the accumulated set of values.
@@ -433,10 +419,9 @@ class SupremumReasoningMode(ReasoningStrategy):
         init: clingo.PropagateInit,
         variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
     ) -> None:
-        """Reset bounds and require at least one progress witness."""
+        """Reset accumulated bounds and initialize candidate literals."""
         super().init(init, variables)
         self._init_literals(init, variables)
-        self._add_progress_guards(init)
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
         """Accumulate the least upper bound of a model's variable values.
@@ -505,10 +490,9 @@ class InfimumReasoningMode(ReasoningStrategy):
         init: clingo.PropagateInit,
         variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
     ) -> None:
-        """Reset bounds and require at least one progress witness."""
+        """Reset accumulated bounds and initialize candidate literals."""
         super().init(init, variables)
         self._init_literals(init, variables)
-        self._add_progress_guards(init)
 
     def join(self, model: dict[clingo.Symbol, object]) -> None:
         """Accumulate the greatest lower bound of a model's variable values.
@@ -597,7 +581,6 @@ class ReasoningModesPropagator(clingo.Propagator):
         self.reasoning_strategy: ReasoningStrategy = REASONING_STRATEGIES[reasoning_mode]()
         self._variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable] = {}
         self._witnesses: dict[clingo.Symbol, int] = {}
-        self._solve_literal: int | None = None
 
         self.disabled = isinstance(self.reasoning_strategy, StandardReasoningMode)
 
@@ -617,9 +600,6 @@ class ReasoningModesPropagator(clingo.Propagator):
         Args:
             control: Grounded control whose next solve will use this strategy.
         """
-        if self._solve_literal is not None:
-            control.release_external(self._solve_literal)
-            self._solve_literal = None
         if self.disabled:
             return
         self._variables.clear()
@@ -658,10 +638,7 @@ class ReasoningModesPropagator(clingo.Propagator):
                     helper = backend.add_atom()
                     backend.add_rule([helper], choice=True)
                     self._witnesses[name] = helper
-            self._solve_literal = backend.add_atom()
-            backend.add_external(self._solve_literal, clingo.TruthValue.True_)
         self.reasoning_strategy.variable_lit = {name: self._witnesses[name] for name in self._variables}
-        self.reasoning_strategy.solve_literal = self._solve_literal
 
     def init(self, init: clingo.PropagateInit) -> None:
         """Reset accumulation and initialize guards for the current solve."""
@@ -682,7 +659,19 @@ class ReasoningModesPropagator(clingo.Propagator):
             variable.update(model)
         values = {variable.name: variable.value for variable in self._variables.values() if _has_value(variable)}
         self.reasoning_strategy.join(values)
-        for nogood in self.reasoning_strategy.nogoods():
+        nogoods = self.reasoning_strategy.nogoods()
+        for name, variable in self._variables.items():
+            if isinstance(variable, _ScalarVariable):
+                candidate_literals = (candidate.literal for candidate in variable.possible_values)
+                nogoods.append(
+                    (
+                        self.reasoning_strategy.variable_lit[name],
+                        *(-literal for literal in candidate_literals),
+                    )
+                )
+        if self._variables:
+            nogoods.append(tuple(-helper for helper in self.reasoning_strategy.variable_lit.values()))
+        for nogood in nogoods:
             model.context.add_nogood(tuple(nogood))
 
 
