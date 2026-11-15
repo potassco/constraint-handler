@@ -16,6 +16,7 @@ from constraint_handler.reasoning_modes.reasoning_modes_propagator import (
     ReasoningStrategy,
     SupremumReasoningMode,
     UnionReasoningMode,
+    _LatticeBound,
     _MultimapVariable,
     _PairValue,
     _ScalarVariable,
@@ -85,6 +86,28 @@ def test_extend_reasoning_mode_atoms_emits_each_scalar_value() -> None:
     assert {symbol.arguments[1] for symbol in symbols} == {
         clingo.Function("val", [clingo.Function("int"), clingo.Number(3)]),
         clingo.Function("val", [clingo.Function("int"), clingo.Number(5)]),
+    }
+
+
+@pytest.mark.parametrize(
+    "strategy_type, reasoning_mode, expected_value",
+    [
+        (SupremumReasoningMode, ReasoningMode.SUPREMUM, "TOP"),
+        (InfimumReasoningMode, ReasoningMode.INFIMUM, "BOT"),
+    ],
+)
+def test_extend_reasoning_mode_atoms_serializes_lattice_bounds_as_strings(
+    strategy_type: type[ReasoningStrategy], reasoning_mode: ReasoningMode, expected_value: str
+) -> None:
+    variable = clingo.String("value")
+    strategy = strategy_type()
+    strategy.join({variable: "left"})
+    strategy.join({variable: "right"})
+
+    symbols = _extend(strategy.rm_model, reasoning_mode)
+
+    assert symbols == {
+        clingo.parse_term(f'model_{reasoning_mode.name.lower()}("value",val(string,"{expected_value}"))')
     }
 
 
@@ -202,13 +225,19 @@ def test_reasoning_mode_initializes_progress_witness(mode_type: type[ReasoningSt
     "left, right, expected",
     [
         ("same", "same", "same"),
-        ("left", "right", "TOP"),
-        (3, "text", "TOP"),
-        ("text", 3, "TOP"),
-        pytest.param(True, 1, "TOP", marks=pytest.mark.xfail(reason="Python equality currently conflates True and 1")),
-        ("TOP", 3, "TOP"),
-        (3, "TOP", "TOP"),
-        ("TOP", "text", "TOP"),
+        ("TOP", "TOP", "TOP"),
+        ("left", "right", _LatticeBound.TOP),
+        (3, "text", _LatticeBound.TOP),
+        ("text", 3, _LatticeBound.TOP),
+        pytest.param(
+            True,
+            1,
+            _LatticeBound.TOP,
+            marks=pytest.mark.xfail(reason="Python equality currently conflates True and 1"),
+        ),
+        ("TOP", 3, _LatticeBound.TOP),
+        (3, "TOP", _LatticeBound.TOP),
+        ("TOP", "text", _LatticeBound.TOP),
     ],
 )
 def test_supremum_joins_nonnumeric_values(left: object, right: object, expected: object) -> None:
@@ -227,7 +256,8 @@ def test_supremum_joins_nonnumeric_values(left: object, right: object, expected:
         (False, [False, True], [False]),
         (True, [False, True], [False, True]),
         ("same", ["same", "other", 3], ["same"]),
-        ("TOP", ["same", "TOP", 3], ["same", "TOP", 3]),
+        (_LatticeBound.TOP, ["same", "TOP", 3], ["same", "TOP", 3]),
+        ("TOP", ["same", "TOP", 3], ["TOP"]),
         (3, [2, 3, "text"], [2, 3]),
     ],
 )
@@ -280,13 +310,19 @@ def test_supremum_collection_nogoods_require_unseen_members(members: frozenset[i
     "left, right, expected",
     [
         ("same", "same", "same"),
-        ("left", "right", "BOT"),
-        (3, "text", "BOT"),
-        ("text", 3, "BOT"),
-        pytest.param(True, 1, "BOT", marks=pytest.mark.xfail(reason="Python equality currently conflates True and 1")),
-        ("BOT", 3, "BOT"),
-        (3, "BOT", "BOT"),
-        ("BOT", "text", "BOT"),
+        ("BOT", "BOT", "BOT"),
+        ("left", "right", _LatticeBound.BOT),
+        (3, "text", _LatticeBound.BOT),
+        ("text", 3, _LatticeBound.BOT),
+        pytest.param(
+            True,
+            1,
+            _LatticeBound.BOT,
+            marks=pytest.mark.xfail(reason="Python equality currently conflates True and 1"),
+        ),
+        ("BOT", 3, _LatticeBound.BOT),
+        (3, "BOT", _LatticeBound.BOT),
+        ("BOT", "text", _LatticeBound.BOT),
     ],
 )
 def test_infimum_joins_nonnumeric_values(left: object, right: object, expected: object) -> None:
@@ -305,7 +341,8 @@ def test_infimum_joins_nonnumeric_values(left: object, right: object, expected: 
         (False, [False, True], [False, True]),
         (True, [False, True], [True]),
         ("same", ["same", "other", 3], ["same"]),
-        ("BOT", ["same", "BOT", 3], ["same", "BOT", 3]),
+        (_LatticeBound.BOT, ["same", "BOT", 3], ["same", "BOT", 3]),
+        ("BOT", ["same", "BOT", 3], ["BOT"]),
         (3, [2, 3, "text"], [3]),
     ],
 )
@@ -789,16 +826,16 @@ def test_extremum_propagator_callback_pruning_reports_strict_progress(
                 '1 { _se_value(variable("value"), val(string, "left")); '
                 '_se_value(variable("value"), val(string, "right")) } 1.'
             ),
-            {"TOP"},
-            {"BOT"},
+            {_LatticeBound.TOP},
+            {_LatticeBound.BOT},
             True,
             2,
             None,
         ),
         (
             ('1 { _se_value(variable("value"), val(int, 3)); _se_value(variable("value"), val(string, "text")) } 1.'),
-            {"TOP"},
-            {"BOT"},
+            {_LatticeBound.TOP},
+            {_LatticeBound.BOT},
             True,
             2,
             None,

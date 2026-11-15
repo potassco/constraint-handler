@@ -11,7 +11,11 @@ import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.result as result
 import constraint_handler.schemas.warning as warning
 from constraint_handler import multimap
-from constraint_handler.reasoning_modes.reasoning_modes_propagator import ReasoningMode, ReasoningModesPropagator
+from constraint_handler.reasoning_modes.reasoning_modes_propagator import (
+    ReasoningMode,
+    ReasoningModesPropagator,
+    _LatticeBound,
+)
 
 
 class OptimizePostProcessingPropagator(clingo.Propagator):
@@ -152,6 +156,8 @@ def extend_with_reasoning_mode_atoms(propagator: ReasoningModesPropagator, model
             if isinstance(value, multimap.Multimap):
                 value_symbol = _multimap_symbol(value)
             else:
+                if isinstance(value, _LatticeBound):
+                    value = value.value
                 reduced_value, _ = evaluator.reducedExpr(value)
                 value_symbol = myClorm.pytocl(reduced_value)
             symbols.add(clingo.Function(f"model_{propagator.reasoning_mode.name.lower()}", [variable, value_symbol]))
