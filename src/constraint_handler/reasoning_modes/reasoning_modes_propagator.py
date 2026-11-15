@@ -462,6 +462,10 @@ class SupremumReasoningMode(ReasoningStrategy):
                     for value in values:
                         pairs.append((key, value))
             return multimap.Multimap.from_pairs(pairs)
+        if isinstance(left, bool) and isinstance(right, bool):
+            return left or right
+        if isinstance(left, bool) or isinstance(right, bool):
+            return _LatticeBound.TOP
         if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
             return left if left == right else _LatticeBound.TOP
         return max(left, right)
@@ -530,6 +534,10 @@ class InfimumReasoningMode(ReasoningStrategy):
             return multimap.Multimap.from_pairs(
                 (key, value) for key, values in left.items() for value in values & right.get(key, frozenset())
             )
+        if isinstance(left, bool) and isinstance(right, bool):
+            return left and right
+        if isinstance(left, bool) or isinstance(right, bool):
+            return _LatticeBound.BOT
         if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
             return left if left == right else _LatticeBound.BOT
         return min(left, right)
