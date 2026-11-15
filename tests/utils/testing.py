@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Sequence, Union
+from dataclasses import dataclass, field
 
 import clingo
 import clintest.assertion
@@ -13,6 +13,13 @@ from clintest.quantifier import All, Any, Exact, Finished, First, Last, Quantifi
 import constraint_handler
 from constraint_handler.engine import Engine, compile
 from constraint_handler.propagator.PropagatorConstants import OPTIMIZATION_STAGE_ATOM
+from constraint_handler.reasoning_modes.reasoning_modes_propagator import ReasoningMode
+
+
+@dataclass
+class TestingOptions:
+    clingo_options: list[str] = field(default_factory=list)
+    add_to_ctl_options: dict[str, ReasoningMode] = field(default_factory=dict)
 
 
 def atoms_from_file(file_name: str) -> list[clingo.Symbol]:
@@ -44,7 +51,7 @@ def absent(atom):
     return clintest.assertion.Not(clintest.assertion.Or(clintest.assertion.Contains(atom), TheoryContains(atom)))
 
 
-def build_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
+def build_expectations(name) -> list[tuple[clintest.test.Test, TestingOptions]]:
     name = name + ".expected."
     tests = []
 
@@ -75,15 +82,20 @@ def build_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
             test_noargs.append(satisfiable)
 
     if test_noargs:
-        tests.append((clintest.test.And(*test_noargs), []))
+        tests.append((clintest.test.And(*test_noargs), TestingOptions()))
 
     test_brave = [clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "brave")]
     if test_brave:
-        tests.append((clintest.test.And(*test_brave), ["--enum-mode=brave"]))
+        tests.append((clintest.test.And(*test_brave), TestingOptions(clingo_options=["--enum-mode=brave"])))
 
     test_cautious = [clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "cautious")]
     if test_cautious:
-        tests.append((clintest.test.And(*test_cautious), ["--enum-mode=cautious"]))
+        tests.append((clintest.test.And(*test_cautious), TestingOptions(clingo_options=["--enum-mode=cautious"])))
+
+    for mode in (ReasoningMode.UNION, ReasoningMode.INTERSECTION, ReasoningMode.SUPREMUM, ReasoningMode.INFIMUM):
+        test_mode = [clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + mode.name.lower())]
+        if test_mode:
+            tests.append((clintest.test.And(*test_mode), TestingOptions(add_to_ctl_options={"reasoning_mode": mode})))
 
     test_optimize = []
     for atom in atoms_from_file(name + "optall"):
@@ -93,13 +105,13 @@ def build_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
     for atom in atoms_from_file(name + "optnone"):
         test_optimize.append(AssertOptimal(All(), absent(atom)))
     if test_optimize:
-        tests.append((clintest.test.And(*test_optimize), ["--opt-mode=optN"]))
+        tests.append((clintest.test.And(*test_optimize), TestingOptions(clingo_options=["--opt-mode=optN"])))
 
     return tests
 
 
 class TheoryContains(clintest.assertion.Assertion):
-    def __init__(self, symbol: Union[clingo.Symbol, str]) -> None:
+    def __init__(self, symbol: clingo.Symbol | str) -> None:
         self.__symbol = symbol
 
     def __repr__(self):
@@ -150,15 +162,17 @@ class AssertOptimal(clintest.test.Test):
 class Solver(clintest.solver.Solver):
     def __init__(
         self,
-        arguments: Optional[Sequence[str]] = None,
-        program: Optional[str] = None,
-        files: Optional[Sequence[str]] = None,
+        arguments: Sequence[str] | None = None,
+        program: str | None = None,
+        files: Sequence[str] | None = None,
         engine: Engine = compile,
+        add_to_ctl_options: dict[str, ReasoningMode] | None = None,
     ) -> None:
         self.__arguments = [] if arguments is None else arguments
         self.__program = "" if program is None else program
         self.__files = [] if files is None else files
         self.__engine = engine
+        self.__add_to_ctl_options = {} if add_to_ctl_options is None else add_to_ctl_options
 
     def solve(self, test: clintest.test.Test) -> None:
         if test.outcome().is_certain():
@@ -166,7 +180,7 @@ class Solver(clintest.solver.Solver):
 
         ctl = clingo.Control(self.__arguments)
 
-        constraint_handler.add_to_control(ctl, engine=self.__engine)
+        constraint_handler.add_to_control(ctl, engine=self.__engine, **self.__add_to_ctl_options)
         ctl.add(self.__program)
 
         for file_name in self.__files:
@@ -188,4 +202,5 @@ class Solver(clintest.solver.Solver):
         program = repr(self.__program)
         files = repr(self.__files)
         engine = repr(self.__engine)
-        return f"{name}({arguments}, {program}, {files}, {engine})"
+        add_to_ctl_options = repr(self.__add_to_ctl_options)
+        return f"{name}({arguments}, {program}, {files}, {engine}, {add_to_ctl_options})"

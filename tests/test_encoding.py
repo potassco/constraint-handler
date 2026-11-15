@@ -26,9 +26,11 @@ def run_test(name: str, selected_engine: engine.Engine):
     name = "tests/correctness/" + name
     expectations = chut.build_expectations(name)
     assert expectations, f"Missing expectations: {name}"
-    for test, extra_args in expectations:
-        options = ctrl_options + extra_args
-        solver = chut.Solver(options, files=[name + ".lp"], engine=selected_engine)
+    for test, extra_options in expectations:
+        options = ctrl_options + extra_options.clingo_options
+        solver = chut.Solver(
+            options, files=[name + ".lp"], engine=selected_engine, add_to_ctl_options=extra_options.add_to_ctl_options
+        )
         solver.solve(test)
         test.assert_()
 
