@@ -1,1 +1,1 @@
-model_supremum(s,set())
+model_infimum(s,set())
