@@ -56,6 +56,9 @@ core_tests = [
     "core/optional_absent_string_comparison_evaluation",
     "core/python_set_bool_brave",
     "core/reasoning_modes",
+    "core/reasoning_modes_new_strings",
+    "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_bool_int",
     "core/reasoning_modes_sets",
     "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
@@ -539,6 +542,8 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
+    "core/reasoning_modes_new_bool_int",
+    "core/reasoning_modes_new_nested_sets",
     "datatype/bool/conj_disj/mixed",
     "datatype/bool/conj_disj/none",
     "datatype/float/mult/recovery",
@@ -569,6 +574,8 @@ compile2_xfail: set[str] = (
     {
         "core/empty_set_execution",
         "core/reasoning_modes",  # multimap
+        "core/reasoning_modes_new_bool_int",
+        "core/reasoning_modes_new_nested_sets",
         "core/reasoning_modes_with_show",
         "core/reasoning_modes_sets",  # new modes
         "datatype/bool/conj_disj_mixed",
@@ -619,6 +626,8 @@ ground_skip: set[str] = {
 ground_xfail: set[str] = (
     {
         "core/reasoning_modes",
+        "core/reasoning_modes_new_bool_int",
+        "core/reasoning_modes_new_nested_sets",
         "core/reasoning_modes_with_show",
         "datatype/bool/conj_disj_mixed",
         "datatype/float/mult/recovery",
@@ -652,6 +661,9 @@ propagator_skip: set[str] = {
 propagator_xfail: set[str] = {
     "core/conditional_declare_definition",
     "core/conditional_declare_set_multiple",
+    "core/reasoning_modes_new_bool_int",
+    "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_strings",
     "core/reasoning_modes_with_show",
     "core/variable/defined",
     "core/variable/typed",
