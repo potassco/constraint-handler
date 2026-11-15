@@ -1,0 +1,3 @@
+model_union(value,val(string,"red"))
+model_union(value,val(string,"blue"))
+model_union(value,val(string,"green"))
