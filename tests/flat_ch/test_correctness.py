@@ -306,8 +306,8 @@ def solve_with_flat_ch(name: str, test, extra_args: list[str], expected_stats: d
 def run_test(name: str):
     file_name = "tests/correctness/" + name
     expectations, expected_stats = chut.build_expectations(file_name)
-    for test, extra_args in expectations:
-        solve_with_flat_ch(file_name, test, extra_args, expected_stats if not extra_args else {})
+    for test, extra_options in expectations:
+        solve_with_flat_ch(file_name, test, extra_options.clingo_options, expected_stats if not extra_options else {})
         test.assert_()
 
 

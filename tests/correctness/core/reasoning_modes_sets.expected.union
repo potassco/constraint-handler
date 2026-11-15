@@ -1,0 +1,4 @@
+model_union(s,set((val(int,1),())))
+model_union(s,set((val(int,1),(val(int,2),()))))
+model_union(s,set((val(int,1),(val(int,3),()))))
+model_union(s,set((val(int,1),(val(int,2),(val(int,3),())))))

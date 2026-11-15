@@ -1,0 +1,6 @@
+model_supremum(a,val(int,2))
+model_supremum(b,val(int,2))
+model_supremum(c,val(bool,true))
+model_supremum(s1,set((val(int,1),(val(int,2),()))))
+model_supremum(s2,set((val(int,1),(val(int,2),()))))
+model_supremum(m1,multimap(((val(int,1),(val(int,1),(val(int,2),()))),((val(int,2),(val(int,1),())),())),()))

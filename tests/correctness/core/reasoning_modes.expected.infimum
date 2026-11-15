@@ -1,0 +1,6 @@
+model_infimum(a,val(int,1))
+model_infimum(b,val(int,1))
+model_infimum(c,val(bool,true))
+model_infimum(s1,set(()))
+model_infimum(s2,set((val(int,1),())))
+model_infimum(m1,multimap(((val(int,2),(val(int,1),())),()),()))

@@ -14,10 +14,12 @@ def run_test(name: str, selected_engine: engine.Engine):
     if selected_engine in (engine.propagator, engine.propagator_check):
         expected_stats.pop("choices", None)
     assert expectations, f"Missing expectations: {name}"
-    for test, extra_args in expectations:
-        options = ctrl_options + extra_args
-        solver = chut.Solver(options, files=[name + ".lp"], engine=selected_engine)
-        solver.solve(test, expected_stats if not extra_args else {})
+    for test, extra_options in expectations:
+        options = ctrl_options + extra_options.clingo_options
+        solver = chut.Solver(
+            options, files=[name + ".lp"], engine=selected_engine, add_to_ctl_options=extra_options.add_to_ctl_options
+        )
+        solver.solve(test, expected_stats if not extra_options else {})
         test.assert_()
 
 
