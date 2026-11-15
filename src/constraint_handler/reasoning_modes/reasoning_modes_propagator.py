@@ -28,6 +28,11 @@ class ReasoningMode(Enum):
     INFIMUM = 7
 
 
+class _LatticeBound(Enum):
+    TOP = "TOP"
+    BOT = "BOT"
+
+
 @dataclass
 class _Value:
     """Associate a program literal with a possible variable value.
@@ -458,7 +463,7 @@ class SupremumReasoningMode(ReasoningStrategy):
                         pairs.append((key, value))
             return multimap.Multimap.from_pairs(pairs)
         if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
-            return left if left == right else "TOP"
+            return left if left == right else _LatticeBound.TOP
         return max(left, right)
 
     def nogoods(self) -> list[Iterable[int]]:
@@ -526,7 +531,7 @@ class InfimumReasoningMode(ReasoningStrategy):
                 (key, value) for key, values in left.items() for value in values & right.get(key, frozenset())
             )
         if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
-            return left if left == right else "BOT"
+            return left if left == right else _LatticeBound.BOT
         return min(left, right)
 
     def nogoods(self) -> list[Iterable[int]]:
