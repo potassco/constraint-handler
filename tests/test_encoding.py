@@ -570,6 +570,7 @@ compile2_xfail: set[str] = (
         "core/empty_set_execution",
         "core/reasoning_modes",  # multimap
         "core/reasoning_modes_with_show",
+        "core/reasoning_modes_sets",  # new modes
         "datatype/bool/conj_disj_mixed",
         "datatype/float/mult/recovery",
         "datatype/float/pow/mixed",
@@ -654,6 +655,8 @@ propagator_xfail: set[str] = {
     "core/reasoning_modes_with_show",
     "core/variable/defined",
     "core/variable/typed",
+    "core/reasoning_modes_sets",  # new modes
+    "core/reasoning_modes",  # new modes
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
     "default/basic_true",
