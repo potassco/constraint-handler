@@ -176,6 +176,34 @@ def test_infimum_reasoning_mode_joins_values() -> None:
     assert mode.rm_model == {variable: {3}}
 
 
+@pytest.mark.parametrize(
+    "left, right, expected",
+    [(False, False, False), (False, True, True), (True, False, True), (True, True, True)],
+)
+def test_supremum_reasoning_mode_joins_boolean_values(left: bool, right: bool, expected: bool) -> None:
+    mode = SupremumReasoningMode()
+    variable = clingo.String("value")
+
+    mode.join({variable: left})
+    mode.join({variable: right})
+
+    assert mode.rm_model == {variable: {expected}}
+
+
+@pytest.mark.parametrize(
+    "left, right, expected",
+    [(False, False, False), (False, True, False), (True, False, False), (True, True, True)],
+)
+def test_infimum_reasoning_mode_joins_boolean_values(left: bool, right: bool, expected: bool) -> None:
+    mode = InfimumReasoningMode()
+    variable = clingo.String("value")
+
+    mode.join({variable: left})
+    mode.join({variable: right})
+
+    assert mode.rm_model == {variable: {expected}}
+
+
 def test_supremum_and_infimum_join_set_values() -> None:
     variable = clingo.String("items")
     supremum = SupremumReasoningMode()
@@ -229,12 +257,7 @@ def test_reasoning_mode_initializes_progress_witness(mode_type: type[ReasoningSt
         ("left", "right", _LatticeBound.TOP),
         (3, "text", _LatticeBound.TOP),
         ("text", 3, _LatticeBound.TOP),
-        pytest.param(
-            True,
-            1,
-            _LatticeBound.TOP,
-            marks=pytest.mark.xfail(reason="Python equality currently conflates True and 1"),
-        ),
+        (True, 1, _LatticeBound.TOP),
         ("TOP", 3, _LatticeBound.TOP),
         (3, "TOP", _LatticeBound.TOP),
         ("TOP", "text", _LatticeBound.TOP),
@@ -314,12 +337,7 @@ def test_supremum_collection_nogoods_require_unseen_members(members: frozenset[i
         ("left", "right", _LatticeBound.BOT),
         (3, "text", _LatticeBound.BOT),
         ("text", 3, _LatticeBound.BOT),
-        pytest.param(
-            True,
-            1,
-            _LatticeBound.BOT,
-            marks=pytest.mark.xfail(reason="Python equality currently conflates True and 1"),
-        ),
+        (True, 1, _LatticeBound.BOT),
         ("BOT", 3, _LatticeBound.BOT),
         (3, "BOT", _LatticeBound.BOT),
         ("BOT", "text", _LatticeBound.BOT),
@@ -836,6 +854,17 @@ def test_extremum_propagator_callback_pruning_reports_strict_progress(
             ('1 { _se_value(variable("value"), val(int, 3)); _se_value(variable("value"), val(string, "text")) } 1.'),
             {_LatticeBound.TOP},
             {_LatticeBound.BOT},
+            True,
+            2,
+            None,
+        ),
+        (
+            (
+                '1 { _se_value(variable("value"), val(bool, false)); '
+                '_se_value(variable("value"), val(bool, true)) } 1.'
+            ),
+            {True},
+            {False},
             True,
             2,
             None,
