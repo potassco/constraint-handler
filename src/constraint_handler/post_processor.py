@@ -5,7 +5,6 @@ from collections.abc import Mapping
 from typing import Any
 
 import clingo
-from mypy.server.update import propagate_changes_using_dependencies
 
 import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
