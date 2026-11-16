@@ -26,6 +26,10 @@ from constraint_handler.reasoning_modes.reasoning_modes_propagator import (
 from constraint_handler.schemas import expression
 
 
+def _user_variable_interfaces(*names: str) -> str:
+    return "\n".join(f'ch_post(variable_interface("{name}"), "test").' for name in names)
+
+
 class _RecordingReasoningStrategy(ReasoningStrategy):
     def __init__(self) -> None:
         super().__init__()
@@ -505,7 +509,7 @@ def test_reasoning_mode_propagator_builds_model_from_accepted_values() -> None:
     control.add(
         "base",
         [],
-        """
+        _user_variable_interfaces("scalar", "items", "mapping") + """
         1 { _se_value(variable("scalar"), val(int, 3));
             _se_value(variable("scalar"), val(int, 4)) } 1.
         _se_value(variable("items"), ref(set, variable("items"))).
@@ -530,6 +534,27 @@ def test_reasoning_mode_propagator_builds_model_from_accepted_values() -> None:
     assert all(model[mapping] == expected_mapping for model in mode.models)
 
 
+def test_reasoning_mode_propagator_tracks_only_interface_variables() -> None:
+    control = clingo.Control(["0"])
+    propagator = ReasoningModesPropagator(ReasoningMode.UNION)
+    control.register_propagator(propagator)
+    control.add(
+        "base",
+        [],
+        _user_variable_interfaces("public") + """
+        _se_value(variable("public"), val(int, 1)).
+        _se_value(variable("internal"), val(int, 2)).
+        """,
+    )
+    control.ground([("base", [])])
+
+    propagator.prepare(control)
+
+    public = clingo.String("public")
+    assert set(propagator._variables) == {public}
+    assert propagator._variables[public].possible_values[0].value == 1
+
+
 def test_intersection_propagator_callback_pruning_reports_progress_models() -> None:
     control = clingo.Control(["0"])
     propagator = ReasoningModesPropagator(ReasoningMode.INTERSECTION)
@@ -537,7 +562,7 @@ def test_intersection_propagator_callback_pruning_reports_progress_models() -> N
     control.add(
         "base",
         [],
-        """
+        _user_variable_interfaces("scalar") + """
         1 { _se_value(variable("scalar"), val(int, 3));
             _se_value(variable("scalar"), val(int, 4)) } 1.
         { auxiliary(1..5) }.
@@ -587,7 +612,11 @@ def test_intersection_propagator_optional_scalar_has_empty_intersection() -> Non
     control = clingo.Control(["0"])
     propagator = ReasoningModesPropagator(ReasoningMode.INTERSECTION)
     control.register_propagator(propagator)
-    control.add("base", [], '{ _se_value(variable("scalar"), val(int, 1)) }.')
+    control.add(
+        "base",
+        [],
+        _user_variable_interfaces("scalar") + '{ _se_value(variable("scalar"), val(int, 1)) }.',
+    )
     control.ground([("base", [])])
     reported: list[dict[clingo.Symbol, set[object]]] = []
 
@@ -651,7 +680,7 @@ def test_intersection_propagator_prunes_nonshrinking_collection_models() -> None
     control.add(
         "base",
         [],
-        """
+        _user_variable_interfaces("items", "mapping") + """
         _se_value(variable("items"), ref(set, variable("items"))).
         _set_contains(variable("items"), val(int, 1)).
         { _set_contains(variable("items"), val(int, 2)) }.
@@ -747,7 +776,7 @@ def test_union_propagator_callback_pruning_reports_strict_growth() -> None:
     control.add(
         "base",
         [],
-        """
+        _user_variable_interfaces("scalar", "items", "mapping") + """
         1 { _se_value(variable("scalar"), val(int, 1));
             _se_value(variable("scalar"), val(int, 2)) } 1.
         _se_value(variable("items"), ref(set, variable("items"))).
@@ -796,7 +825,7 @@ def test_extremum_propagator_callback_pruning_reports_strict_progress(
     control.add(
         "base",
         [],
-        """
+        _user_variable_interfaces("scalar", "items", "mapping") + """
         1 { _se_value(variable("scalar"), val(int, 1..3)) } 1.
         _se_value(variable("items"), ref(set, variable("items"))).
         _set_contains(variable("items"), val(int, 0)).
@@ -909,7 +938,7 @@ def test_extremum_propagator_scalar_and_empty_domains(
     control = clingo.Control(["0"])
     propagator = ReasoningModesPropagator(reasoning_mode)
     control.register_propagator(propagator)
-    control.add("base", [], program + " { auxiliary(1..5) }.")
+    control.add("base", [], _user_variable_interfaces("value") + program + " { auxiliary(1..5) }.")
     control.ground([("base", [])])
     accumulated: list[dict[clingo.Symbol, set[object]]] = []
 
@@ -956,7 +985,9 @@ def test_reasoning_mode_ignores_total_assignments_rejected_by_another_propagator
     rejector = RejectFirstValue()
     control.register_propagator(propagator)
     control.register_propagator(rejector)
-    control.add('1 { _se_value(variable("scalar"), val(int, 1..2)) } 1.')
+    control.add(
+        "base", [], _user_variable_interfaces("scalar") + '1 { _se_value(variable("scalar"), val(int, 1..2)) } 1.'
+    )
     control.ground()
     propagator.prepare(control)
 
@@ -980,7 +1011,9 @@ def test_reasoning_mode_reuses_witnesses_after_cleanup_and_additional_grounding(
     control = clingo.Control(["0"])
     propagator = ReasoningModesPropagator(reasoning_mode)
     control.register_propagator(propagator)
-    control.add('1 { _se_value(variable("scalar"), val(int, 1..2)) } 1.')
+    control.add(
+        "base", [], _user_variable_interfaces("scalar") + '1 { _se_value(variable("scalar"), val(int, 1..2)) } 1.'
+    )
     control.ground()
     scalar = clingo.String("scalar")
     other = clingo.String("other")
@@ -996,7 +1029,11 @@ def test_reasoning_mode_reuses_witnesses_after_cleanup_and_additional_grounding(
         assert propagator.reasoning_strategy.rm_model == expected
         control.cleanup()
 
-    control.add("extra", [], '1 { _se_value(variable("other"), val(int, 4..5)) } 1.')
+    control.add(
+        "extra",
+        [],
+        _user_variable_interfaces("other") + '1 { _se_value(variable("other"), val(int, 4..5)) } 1.',
+    )
     control.ground([("extra", [])])
     propagator.prepare(control)
     assert len(propagator._witnesses) == 2

@@ -9,7 +9,7 @@ from typing import Any
 import clingo
 
 from constraint_handler import multimap, myClorm
-from constraint_handler.schemas import expression, internal, result
+from constraint_handler.schemas import expression, internal, post, result
 
 
 class ReasoningMode(Enum):
@@ -620,11 +620,19 @@ class ReasoningModesPropagator(clingo.Propagator):
         se_values = myClorm.findInControl(control, internal._se_value)
         set_values = myClorm.findInControl(control, internal._set_contains)
         multimap_values = myClorm.findInControl(control, result.Multimap_value)
+        user_variables: set[clingo.Symbol] = set()
+        for ch_post_atom in myClorm.findInControl(control, post.Ch_post).values():
+            interface = ch_post_atom.declaration
+            if isinstance(interface, post.Variable_interface):
+                variable = expression.Variable(interface.variable)
+                user_variables.add(_variable_to_symbol(variable))
 
         for atom, (expr, value) in se_values.items():
             if not isinstance(expr, expression.Variable):
                 continue
             name = _variable_to_symbol(expr)
+            if name not in user_variables:
+                continue
             if isinstance(value, internal.Ref) and str(value.type_) == "set":
                 self._variables.setdefault(name, _SetVariable(name, value.expr))
             elif isinstance(value, internal.Ref) and str(value.type_) == "multimap":
