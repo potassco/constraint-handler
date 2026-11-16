@@ -6,7 +6,7 @@ from typing import cast
 import clingo
 import pytest
 
-from constraint_handler import add_to_control, engine, multimap
+from constraint_handler import add_to_control, engine, multimap, myClorm
 from constraint_handler.post_processor import extend_with_reasoning_mode_atoms
 from constraint_handler.reasoning_modes.reasoning_modes_propagator import (
     InfimumReasoningMode,
@@ -19,11 +19,12 @@ from constraint_handler.reasoning_modes.reasoning_modes_propagator import (
     _LatticeBound,
     _MultimapVariable,
     _PairValue,
+    _python_value,
     _ScalarVariable,
     _SetVariable,
     _Value,
 )
-from constraint_handler.schemas import expression
+from constraint_handler.schemas import expression, internal
 
 
 def _user_variable_interfaces(*names: str) -> str:
@@ -124,6 +125,29 @@ def test_extend_reasoning_mode_atoms_encodes_whole_set_values() -> None:
         clingo.parse_term('model_union("items",set((val(int,1),(val(int,2),()))))'),
         clingo.parse_term('model_union("items",set((val(int,3),())))'),
     }
+
+
+def test_extend_reasoning_mode_atoms_encodes_set_of_singleton_sets() -> None:
+    variable = clingo.String("value")
+
+    symbols = _extend({variable: {frozenset({frozenset({1})})}})
+
+    assert symbols == {clingo.parse_term('model_union("value",set((set((val(int,1),())),())))')}
+
+
+def test_python_value_evaluates_internal_set_reference() -> None:
+    reference = myClorm.cltopy(
+        clingo.parse_term("ref(set,operation(set_make,(val(int,1),())))"),
+        internal.Ref,
+    )
+
+    assert _python_value(reference) == frozenset({1})
+
+
+def test_python_value_returns_bad_for_unresolved_internal_set_reference() -> None:
+    reference = myClorm.cltopy(clingo.parse_term('ref(set,variable("missing"))'), internal.Ref)
+
+    assert _python_value(reference) is expression.Bad.bad
 
 
 def test_extend_reasoning_mode_atoms_encodes_empty_set_marker() -> None:
@@ -888,10 +912,7 @@ def test_extremum_propagator_callback_pruning_reports_strict_progress(
             None,
         ),
         (
-            (
-                '1 { _se_value(variable("value"), val(bool, false)); '
-                '_se_value(variable("value"), val(bool, true)) } 1.'
-            ),
+            ('1 { _se_value(variable("value"), val(bool, false)); _se_value(variable("value"), val(bool, true)) } 1.'),
             {True},
             {False},
             True,

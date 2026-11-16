@@ -543,7 +543,6 @@ other_tests = [
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
     "core/reasoning_modes_new_bool_int",
-    "core/reasoning_modes_new_nested_sets",
     "datatype/bool/conj_disj/mixed",
     "datatype/bool/conj_disj/none",
     "datatype/float/mult/recovery",
@@ -627,7 +626,6 @@ ground_xfail: set[str] = (
     {
         "core/reasoning_modes",
         "core/reasoning_modes_new_bool_int",
-        "core/reasoning_modes_new_nested_sets",
         "core/reasoning_modes_with_show",
         "datatype/bool/conj_disj_mixed",
         "datatype/float/mult/recovery",

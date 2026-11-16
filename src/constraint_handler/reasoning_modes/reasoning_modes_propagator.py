@@ -8,7 +8,7 @@ from typing import Any
 
 import clingo
 
-from constraint_handler import multimap, myClorm
+from constraint_handler import evaluator, multimap, myClorm
 from constraint_handler.schemas import expression, internal, post, result
 
 
@@ -153,6 +153,13 @@ def _python_value(value: Any) -> Any:
         The underlying Python value for expression values and references;
         otherwise, the input unchanged.
     """
+    if isinstance(value, internal.Ref):
+        evaluated_value, errors = evaluator.evaluate_expr(value.expr)
+        if errors or evaluated_value is expression.Bad.bad:
+            return expression.Bad.bad
+        if str(value.type_) == "set" and isinstance(evaluated_value, (set, frozenset)):
+            return frozenset(evaluated_value)
+        return expression.Bad.bad
     if isinstance(value, (expression.Val, expression.Ref)):
         return value.value
     return value
