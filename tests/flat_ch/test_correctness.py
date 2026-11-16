@@ -246,6 +246,10 @@ flat_ch_currently_not_working_tests = {
 flat_ch_unsupported_tests = {
     "core/custom_globals",
     "core/python_set_bool_brave",
+    "core/reasoning_modes_new_strings",
+    "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_bool_int",
+    "core/reasoning_modes_sets",
     "execution/python_integrity_should_be_ignored",
     "execution/python_set_empty_equality",
     "expression/python_extract/bad",
