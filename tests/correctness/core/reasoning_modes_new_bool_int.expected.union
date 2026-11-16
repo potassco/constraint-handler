@@ -1,2 +1,4 @@
 model_union(value,val(bool,true))
 model_union(value,val(int,1))
+model_union(zero,val(bool,false))
+model_union(zero,val(int,0))
