@@ -29,6 +29,8 @@ class ReasoningMode(Enum):
 
 
 class _LatticeBound(Enum):
+    """Top and bottom values used for incomparable scalar values."""
+
     TOP = "TOP"
     BOT = "BOT"
 
@@ -230,7 +232,12 @@ class ReasoningStrategy(ABC):
         init: clingo.PropagateInit,
         variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
     ) -> None:
-        """Freeze prepared witnesses and map values to program literals."""
+        """Freeze prepared witnesses and map values to program literals.
+
+        Args:
+            init: Clingo initialization context for the current solve.
+            variables: Tracked variables and their possible values.
+        """
         self.value_literals.clear()
         self.scalar_variables.clear()
 
@@ -248,7 +255,16 @@ class ReasoningStrategy(ABC):
                 self.value_literals[name][value] = candidate.literal
 
     def _set_or_multimap_value_nogood(self, name: clingo.Symbol, value: Any, helper: int) -> tuple[int, ...]:
-        """Build a nogood that matches a complete collection value and witness."""
+        """Build a nogood that matches a complete collection value and witness.
+
+        Args:
+            name: Symbol identifying the collection variable.
+            value: Complete set or multimap value to match.
+            helper: Literal representing this variable's progress witness.
+
+        Returns:
+            Literals matching the complete value followed by the helper.
+        """
         if isinstance(value, multimap.Multimap):
             retained = {(key, item) for key, items in value.items() for item in items}
         else:
@@ -431,7 +447,12 @@ class SupremumReasoningMode(ReasoningStrategy):
         init: clingo.PropagateInit,
         variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
     ) -> None:
-        """Reset accumulated bounds and initialize candidate literals."""
+        """Reset accumulated bounds and initialize candidate literals.
+
+        Args:
+            init: Clingo initialization context for the current solve.
+            variables: Tracked variables and their possible values.
+        """
         super().init(init, variables)
         self._init_literals(init, variables)
 
@@ -506,7 +527,12 @@ class InfimumReasoningMode(ReasoningStrategy):
         init: clingo.PropagateInit,
         variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable],
     ) -> None:
-        """Reset accumulated bounds and initialize candidate literals."""
+        """Reset accumulated bounds and initialize candidate literals.
+
+        Args:
+            init: Clingo initialization context for the current solve.
+            variables: Tracked variables and their possible values.
+        """
         super().init(init, variables)
         self._init_literals(init, variables)
 
@@ -669,7 +695,11 @@ class ReasoningModesPropagator(clingo.Propagator):
         self.reasoning_strategy.variable_lit = {name: self._witnesses[name] for name in self._variables}
 
     def init(self, init: clingo.PropagateInit) -> None:
-        """Reset accumulation and initialize guards for the current solve."""
+        """Reset accumulation and initialize guards for the current solve.
+
+        Args:
+            init: Clingo initialization context for the current solve.
+        """
         if self.disabled:
             return
         self.reasoning_strategy.init(init, self._variables)
