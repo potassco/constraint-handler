@@ -53,7 +53,7 @@ binding. Missing entries raise `KeyError`.
 
 ## Type Meaning
 
-`ValueType` distinguishes `boolean`, `integer`, `real`, `string`, and `none`. A
+`ValueType` distinguishes `boolean`, `integer`, `float`, `string`, and `none`. A
 known type is a frozenset of alternative scalar, set, or tuple members. The
 empty frozenset means no possible values; it is distinct from the unknown
 singleton, which means type information is unavailable or invalid.

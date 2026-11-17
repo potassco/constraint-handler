@@ -15,14 +15,14 @@ TBD
 enum ValueType {
 	boolean,
 	integer,
-	real,
+	float,
 	string,
 	none,
 }
 
 # Internal scalar literals retain their type explicitly.
 # The value is the corresponding Python base-type value.
-# The language type Real (`ValueType.real`) is represented by Python `float`.
+# The language type float (`ValueType.float`) is represented by Python `float`.
 #
 ValueDef(value_type: ValueType, value: Any)
 

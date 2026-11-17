@@ -6,21 +6,21 @@ coefficients of the same variable and collecting constant terms. For example,
 only to linear expressions; normalization does not distribute multiplication
 over addition or rewrite nonlinear products. Coefficients and offsets must be
 integer literals, and every term must be known to have only integer values.
-Real-valued, mixed integer/real, and unknown operands are not eligible for
+float-valued, mixed integer/float, and unknown operands are not eligible for
 these rewrites.
 
 Lambda calls are normalized separately using the static types of their bound
 arguments. For example, `lambda p: p + p` called with an integer is rewritten
-to use `2*p`; a real-valued call is left unchanged. A shared lambda can
+to use `2*p`; a float-valued call is left unchanged. A shared lambda can
 therefore have different normalized bodies at different call sites. If one call
-can bind a parameter to either integers or reals, its body is rewritten only
+can bind a parameter to either integers or floats, its body is rewritten only
 where the rewrite is valid for every possible binding. Nested calls retain
 captured parameter types, while inner parameters shadow outer bindings. Unknown
 binding types never inherit an unrelated outer variable's type.
 
 Relational expressions are also rewritten so that one side is the zero constant
 when both sides are known to be integer-valued. A relation is of the form
-`lhs relation 0`. Relations involving reals are not moved to zero.
+`lhs relation 0`. Relations involving floats are not moved to zero.
 
 Normalization is useful because `10*a+b == 10*c+d` yields 100 combinations for
 each side, so comparing the sides directly would require `100*100 = 10000`

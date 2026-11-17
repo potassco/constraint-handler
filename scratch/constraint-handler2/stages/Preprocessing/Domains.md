@@ -4,7 +4,7 @@
 
 ## Python Datastructure
 
-Real values use Python `float` as their representation.
+float values use Python `float` as their representation.
 
 type SetValue = bool | int | float | str | None | tuple[SetValue, ...]
 
@@ -13,7 +13,7 @@ class Domain:
 	bools: frozenset[bool] = frozenset()
 	ints: frozenset[int] = frozenset()
 	int_range: tuple[int, int] | None = None  # Inclusive bounds.
-	reals: frozenset[float] = frozenset()
+	floats: frozenset[float] = frozenset()
 	has_none: bool = False
 	strings: frozenset[str] = frozenset()
 	tuples: frozenset[tuple[SetValue, ...]] = frozenset()
@@ -23,10 +23,10 @@ class Domain:
 ```
 
 The integer part of a numeric domain is `ints` together with every integer in
-`int_range` (inclusive); the real part is `reals`. `int_range` is a compact
+`int_range` (inclusive); the float part is `floats`. `int_range` is a compact
 representation and does not require materializing its values. These parts stay
 separate during domain computation: integer-only results may use `int_range`,
-while real results are stored explicitly in `reals` or cause the result to
+while float results are stored explicitly in `floats` or cause the result to
 become `unknown` when they cannot be computed within the threshold.
 
 `explicit_sets` contains complete set values. `implicit_set_elements` describes

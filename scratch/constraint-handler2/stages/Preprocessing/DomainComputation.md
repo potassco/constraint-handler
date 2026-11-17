@@ -63,20 +63,20 @@ Here, `unknown(D(x))` tests whether the input domain is unknown; this is
 distinct from `None` being a value in a known domain.
 
 For numeric arithmetic, let `I(x)` be the integer part of `D(x)` and `R(x)` its
-real part. For operands `x1,...,xn`, let `N_int = product(|I(xi)|)` and
+float part. For operands `x1,...,xn`, let `N_int = product(|I(xi)|)` and
 `N_real = product(|I(xi)| + |R(xi)|) - N_int`. Thus `N_real` counts
-combinations containing at least one real. For operations where real inputs
-produce real results, compute those combinations exactly if
+combinations containing at least one float. For operations where float inputs
+produce float results, compute those combinations exactly if
 `N_real <= Threshold`; otherwise return `unknown`. Compute all-integer
 combinations exactly only if `N_int + N_real <= Threshold`; otherwise use
 `int_range` only if the operation is guaranteed to return integers for those
 inputs. This keeps the total number of exactly evaluated combinations within
-`Threshold`. Operations that can produce reals from all-integer inputs must
+`Threshold`. Operations that can produce floats from all-integer inputs must
 include those combinations in the thresholded exact computation or return
 `unknown`. Because `unknown` represents the whole domain, an unknown result for
 any partition makes the overall result unknown.
 
-Numerical failures, including overflow and non-finite real inputs or results,
+Numerical failures, including overflow and non-finite float inputs or results,
 must emit a warning and return `unknown` for the entire operation, discarding
 any partial results. Mathematically undefined or complex-valued combinations
 are instead excluded with a warning.
@@ -84,7 +84,7 @@ are instead excluded with a warning.
 ### Operation(Eq, [x,y]):
 
 Equality accepts operands of any types; different types are not a static type
-error. Integers and reals compare by numeric value (`1 == 1.0` is `true`).
+error. Integers and floats compare by numeric value (`1 == 1.0` is `true`).
 Booleans are not numbers for equality (`true == 1` is `false`). Other different
 scalar types compare unequal (`"a" == 42` is `false`).
 
@@ -327,7 +327,7 @@ else
 Each `(ci, xi)` pairs a constant integer coefficient `ci` with an
 integer-valued expression `xi`, followed by a constant offset `c` (defaulting
 to `0` if omitted). If any `D(xi)` is unknown, the domain is unknown.
-Coefficients and offsets must be integer literals; real or other noninteger
+Coefficients and offsets must be integer literals; float or other noninteger
 term values are invalid and produce a diagnostic and an unknown domain.
 
 ```
@@ -342,7 +342,7 @@ else
 ### Operation(IntDiv, [x,y]):
 
 If any input domain is unknown, the domain is unknown. The result is always an
-integer, including for real operands: evaluate `int(a // b)`, rounding the
+integer, including for float operands: evaluate `int(a // b)`, rounding the
 quotient toward negative infinity, not toward zero.
 
 ```
@@ -387,11 +387,11 @@ If any input domain is unknown, the domain is unknown.
 if D(x) = {} or D(y) = {}
     {}
 else if D(y) = {0}
-    {a ** 0 | a in D(x)}  # Integer bases give 1; real bases give 1.0.
+    {a ** 0 | a in D(x)}  # Integer bases give 1; float bases give 1.0.
 else if D(y) = {1}
     D(x)
 else if product(|D(x)|,|D(y)|) <= Threshold
-    {a ** b | a in D(x), b in D(y), a ** b is defined and real}
+    {a ** b | a in D(x), b in D(y), a ** b is defined and float}
 else
     I_y_nonnegative = {b in I(y) | b >= 0}
     N_int = |I(x)| * |I_y_nonnegative|
@@ -401,7 +401,7 @@ else
     else
         R_real = {a ** b | a in I(x) union R(x), b in I(y) union R(y),
                    not (a in I(x) and b in I_y_nonnegative),
-                   a ** b is defined and real}
+                   a ** b is defined and float}
         if N_int + N_real <= Threshold
             R_int = {a ** b | a in I(x), b in I_y_nonnegative}
         else
@@ -410,7 +410,7 @@ else
             R = max(1, A ** E)
             R_int = int_range=(-R,R)
         R_int union R_real
-# error/warning for undefined or non-real powers
+# error/warning for undefined or non-float powers
 ```
 
 ### Operation(RealFromInt, [x]):
@@ -419,7 +419,7 @@ If any input domain is unknown, the domain is unknown.
 
 ```
 if |I(x)| + |R(x)| <= Threshold
-    {real(v) | v in I(x)} union R(x)
+    {float(v) | v in I(x)} union R(x)
 else
     unknown
 ```
@@ -766,7 +766,7 @@ The iteration order is deterministic `repr` order. Folding the empty set
 returns the initial value. Each body evaluation uses the usual operator
 thresholds, and its domains are recorded in the corresponding binding scope.
 The final union uses the normal domain representation: large integer outputs
-may become intervals, while too many distinct real outputs give `unknown`.
+may become intervals, while too many distinct float outputs give `unknown`.
 
 ### Operation(PythonEval, [fn,args...]):
 
@@ -791,7 +791,7 @@ else
 
 Check the product before evaluating the source or invoking the callback. A
 zero-argument call has one combination and is evaluated once if
-`Threshold >= 1`. Supported results are bool, int, real, string, `None`,
+`Threshold >= 1`. Supported results are bool, int, float, string, `None`,
 recursively scalar tuples, and frozensets of those scalar/tuple values.
 Source-evaluation errors, non-callable source, callback exceptions, and
 unsupported results produce a warning and `unknown`; partial successful results

@@ -105,10 +105,10 @@ a numeric contract; it is not silently narrowed to `{integer}`. Contracts do
 not implicitly coerce booleans to integers.
 
 Result rules are lifted over the Cartesian product of operand alternatives,
-then unioned. Thus `add({integer, real}, {integer})` yields `{integer, real}`,
-not just `{real}`. Integer-only combinations of `add`, `sub`, `mult`, and `mod`
-yield `integer`; combinations containing a real yield `real`. `pow` includes
-both integer and real for an integer/integer combination, and real for every
+then unioned. Thus `add({integer, float}, {integer})` yields `{integer, float}`,
+not just `{float}`. Integer-only combinations of `add`, `sub`, `mult`, and `mod`
+yield `integer`; combinations containing a float yield `float`. `pow` includes
+both integer and float for an integer/integer combination, and float for every
 other numeric combination. Mixed input unions retain all applicable results.
 Set metadata follows the conservative rules in the table.
 
@@ -126,21 +126,21 @@ operators have their explicit table rules.
 | `eq(x,y)`, `neq(x,y)`                                                      | `type(x)=any, type(y)=any`                                               | `boolean`                                                                                                                                                                            |
 | `concat(x,y)`                                                              | `type(x) == type(y) == string`                                           | `string`                                                                                                                                                                             |
 | `length(x)`                                                                | every member is `string`, `SetOf`, or `TupleType`                        | `integer`, including empty strings, sets, and tuples                                                                                                                                 |
-| `max(A1, ..., An)`, `min(A1, ..., An)`                                     | `n >= 1` `type(A_i) in {boolean, integer, real}`                         | `union(type(A_i))`                                                                                                                                                                   |
+| `max(A1, ..., An)`, `min(A1, ..., An)`                                     | `n >= 1` `type(A_i) in {boolean, integer, float}`                         | `union(type(A_i))`                                                                                                                                                                   |
 | `get_or_else(A,B)`                                                         | `type(A)=any, type(B)=any`                                               | `(type(A) without none) union type(B)`                                                                                                                                               |
 | `if_(condition,A)`                                                         | `type(condition) == boolean, type(A)=any`                                | `type(A) union none`                                                                                                                                                                 |
 | `has_value(x)`                                                             | `type(x)=any`                                                            | `boolean`                                                                                                                                                                            |
-| `abs(A)`, `minus(A)`                                                       | `type(A) in {integer, real}`                                             | `type(A)`                                                                                                                                                                            |
-| `sqrt(x)`, `cos(x)`, `sin(x)`, `tan(x)`, `acos(x)`, `asin(x)`, `atan(x)`   | `type(x) in {integer, real}`                                             | `real`                                                                                                                                                                               |
-| `floor(x)`, `ceil(x)`                                                      | `type(x) in {integer, real}`                                             | `integer`                                                                                                                                                                            |
-| `add(A1, ..., An)`, `sub(A1,A2)`, `mult(A1, ..., An)`                      | `n >= 1` (`sub`: `n == 2`), `type(A_i) in {integer, real}`               | `integer` if all `integer`, else `real`                                                                                                                                              |
+| `abs(A)`, `minus(A)`                                                       | `type(A) in {integer, float}`                                             | `type(A)`                                                                                                                                                                            |
+| `sqrt(x)`, `cos(x)`, `sin(x)`, `tan(x)`, `acos(x)`, `asin(x)`, `atan(x)`   | `type(x) in {integer, float}`                                             | `float`                                                                                                                                                                               |
+| `floor(x)`, `ceil(x)`                                                      | `type(x) in {integer, float}`                                             | `integer`                                                                                                                                                                            |
+| `add(A1, ..., An)`, `sub(A1,A2)`, `mult(A1, ..., An)`                      | `n >= 1` (`sub`: `n == 2`), `type(A_i) in {integer, float}`               | `integer` if all `integer`, else `float`                                                                                                                                              |
 | `linear_integer((c1, A1), ..., (cn, An), c)`                               | `c_i` and `c` are integer literals; `type(A_i) == integer`               | `integer`                                                                                                                                                                            |
-| `mod(A,B)`, `int_div(A,B)`                                                 | `type(A_i) in {integer, real}`                                           | `integer` if both `integer` (`int_div`: always `integer`), else `real`                                                                                                               |
-| `real_div(A,B)`                                                            | `type(A_i) in {integer, real}`                                           | `real`                                                                                                                                                                               |
-| `pow(base,exponent)`                                                       | `type(base) in {integer, real}`, `type(exponent) in {integer, real}`     | `integer union real` if both are `integer` (negative exponents give reals), else `real`                                                                                              |
-| `leq(A,B)`, `lt(A,B)`, `geq(A,B)`, `gt(A,B)`                               | `type(A_i) in {boolean, integer, real}`                                  | `boolean`                                                                                                                                                                            |
-| `real_from_int(x)`                                                         | `type(x) == integer`                                                     | `real`                                                                                                                                                                               |
-| `int_from_real(x)`                                                         | `type(x) == real`                                                        | `integer`                                                                                                                                                                            |
+| `mod(A,B)`, `int_div(A,B)`                                                 | `type(A_i) in {integer, float}`                                           | `integer` if both `integer` (`int_div`: always `integer`), else `float`                                                                                                               |
+| `real_div(A,B)`                                                            | `type(A_i) in {integer, float}`                                           | `float`                                                                                                                                                                               |
+| `pow(base,exponent)`                                                       | `type(base) in {integer, float}`, `type(exponent) in {integer, float}`     | `integer union float` if both are `integer` (negative exponents give floats), else `float`                                                                                              |
+| `leq(A,B)`, `lt(A,B)`, `geq(A,B)`, `gt(A,B)`                               | `type(A_i) in {boolean, integer, float}`                                  | `boolean`                                                                                                                                                                            |
+| `real_from_int(x)`                                                         | `type(x) == integer`                                                     | `float`                                                                                                                                                                               |
+| `int_from_real(x)`                                                         | `type(x) == float`                                                        | `integer`                                                                                                                                                                            |
 | `conj(A1, ..., An)`, `disj(A1, ..., An)`, `limp(A,B)`, `lxor(A1, ..., An)` | `type(A_i) == boolean` (`limp`: `n == 2`)                                | `boolean`                                                                                                                                                                            |
 | `leqv(A1, ..., An)`                                                        | `type(A_i) == boolean`                                                   | `boolean`                                                                                                                                                                            |
 | `ite(condition,A,B)`                                                       | `type(condition) == boolean, type(A)=any, type(B)=any`                   | `type(A) union type(B)`                                                                                                                                                              |
@@ -163,7 +163,7 @@ expressions. Their respective values are `true`, `false`, `false`, and `true`.
 The Boolean input contract holds vacuously when there are no operands.
 
 Equality and inequality accept different input types. Different scalar types
-compare unequal, except integers and reals compare by numeric value. Thus
+compare unequal, except integers and floats compare by numeric value. Thus
 `eq("a", 42)` and `eq(true, 1)` are false, while `eq(1, 1.0)` is true. These
 comparisons are valid expressions, not type errors.
 
@@ -184,7 +184,7 @@ variables of the same name, so they are looked up in the lambda's environment,
 not in the global `StaticTypeStore.expressions` mapping.
 
 Binding one member type at a time retains binding-specific results and scoped
-metadata. With `x : {integer, real}`, `add(x, 1)` gives `{integer, real}`. The
+metadata. With `x : {integer, float}`, `add(x, 1)` gives `{integer, float}`. The
 number of known combinations is `product(|type(a_i)|)`. Unknown arguments are
 bound as `UNKNOWN`, and the body is still visited to diagnose independent
 errors; the call result remains `UNKNOWN`. An empty argument type means no
