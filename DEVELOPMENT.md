@@ -75,6 +75,40 @@ runs may exceed the average when the overall mean still passes.
 The default `nox -s test` session excludes `performance` tests so the normal
 test matrix stays practical.
 
+### Float Computation Benchmarks
+
+The ASP programs under `tests/performance/float/` cover addition chains,
+integer and fractional multiplication, equality and ordering near a small
+separation, cancellation after adding a large offset, division with
+multiplicative recovery, square root with squaring, and sine/cosine with the
+sum of their squares. A shared three-value
+input domain includes negative, exact dyadic, and repeating-fraction inputs.
+The workloads have three models regardless of size and expose `value/2`.
+
+Each workload runs at sizes 16 and 64 with `compile`, `compile2`, `fch`,
+`ground`, `propagator`, and `propagator_check`.
+FCH trigonometry cases are skipped because its native operator set lacks
+`sin` and `cos`.
+Timings include control setup, loading, grounding, and solving, using one
+warmup and three measured runs. The 30-second mean limit is a generous safety
+ceiling for comparing implementations, rather than a calibrated baseline.
+
+```bash
+# capture all float benchmarks
+nox -s performance -- -k 'float/'
+
+# capture only FCH float benchmarks
+nox -s performance -- -k 'fch and float/'
+
+# smoke-run the workloads once each, without timing repetitions
+nox -Rs test -- tests/test_performance_engines.py -m performance -k 'float/' --benchmark-disable
+```
+
+Use the same workload sizes and engine selection when comparing saved runs
+with `nox -s benchmark_compare`. Engine and workload constants are recorded in
+the benchmark metadata. Additional representations can use these same ASP
+inputs through their engine implementations.
+
 ## Expectation Fixtures
 
 Encoding tests pair a program named `[name].lp` with optional expectation files

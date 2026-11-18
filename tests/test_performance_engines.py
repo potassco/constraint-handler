@@ -6,7 +6,7 @@ import clingo
 import pytest
 
 import constraint_handler
-from constraint_handler.engine import Engine, compile, ground, propagator, propagator_check
+from constraint_handler.engine import Engine, compile, compile2, fch, ground, propagator, propagator_check
 
 ctrl_options = ["1000", "--heuristic=Domain"]
 performance_examples_dir = Path("tests/performance")
@@ -19,10 +19,11 @@ class PerformanceBenchmark:
     measured_runs: int = 1
     warmup_runs: int = 0
     constants: dict[str, int] | None = None
+    program_name: str | None = None
 
     @property
     def program_path(self) -> str:
-        return performance_examples_dir / f"{self.name}.lp"
+        return performance_examples_dir / f"{self.program_name or self.name}.lp"
 
 
 def run_benchmark_program(benchmark_case: PerformanceBenchmark, engine: Engine) -> None:
@@ -97,11 +98,35 @@ propagator_solve_benchmarks = [
     PerformanceBenchmark("assignment_chain", 5.0, constants={"chain_length": 200}),
 ]
 
+float_benchmarks = [
+    PerformanceBenchmark(
+        f"float/{name}-{size}",
+        30.0,
+        measured_runs=3,
+        warmup_runs=1,
+        constants={"size": size},
+        program_name=f"float/{name}",
+    )
+    for name in ("addition", "cancellation", "comparisons", "division", "multiplication", "sqrt", "trigonometry")
+    for size in (16, 64)
+]
+
 all_benchmarks = (
     [benchmark_param(benchmark_case, compile) for benchmark_case in compile_benchmarks]
     + [benchmark_param(benchmark_case, ground) for benchmark_case in ground_benchmarks]
     + [benchmark_param(benchmark_case, propagator_check) for benchmark_case in propagator_check_benchmarks]
     + [benchmark_param(benchmark_case, propagator) for benchmark_case in propagator_solve_benchmarks]
+    + [
+        benchmark_param(
+            benchmark_case,
+            engine,
+            marks=(pytest.mark.skip(reason="FCH does not support native sin/cos operators"),)
+            if engine == fch and benchmark_case.program_name == "float/trigonometry"
+            else (),
+        )
+        for engine in (compile, compile2, fch, ground, propagator, propagator_check)
+        for benchmark_case in float_benchmarks
+    ]
     + [
         benchmark_param(
             PerformanceBenchmark("large_int_domain", 300.0, constants={"int_domain_size": 3000}),
