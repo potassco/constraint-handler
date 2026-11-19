@@ -1,0 +1,3 @@
+variable_declared(bad_condition)
+variable_declared(inactive)
+variable_declared(undeclared)

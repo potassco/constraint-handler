@@ -34,6 +34,7 @@ None.
 warning/3.
 set_value/2.
 value/2.
+variable_declared/1.
 multimap_value/3.
 bool_evaluated/2.
 evaluated/2.
