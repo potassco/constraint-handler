@@ -9,7 +9,7 @@ _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
 %%%%%%%%%%%%%%%%% variable_define/3
 _ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E,C)), ge_result(C,val(bool,true)).
 
-_expression(ground,C) :- _passed(ground,LBL,set_assign(X,E,C)).
+_expression(ground,(E;C)) :- _passed(ground,LBL,set_assign(X,E,C)).
 _ge_set_assign(X,E) :- _passed(ground,LBL,set_assign(X,E,C)), _se_value(C,val(bool,true)).
 _ge_set_declare(X) :- _passed(ground,LBL,variable_declare(X,set,C)), ge_result(C,val(bool,true)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
@@ -35,8 +35,7 @@ _se_value(variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T). % TODO: fragi
 _variable(ground,X) :- _expression(ground,EXPR), X=@pythonExpressionVariable(EXPR).
 %_direct_implode(variable(X)) :- _expression(ground,EXPR), X=@pythonExpressionVariable(EXPR).
 
-_direct_implode(variable(X)) :- _variable(ground,X), _se_value(variable(X),V).
-ge_value(X,VAL) :- _variable(ground,X), _se_value(variable(X),val(T,V)), _direct_imploded(variable(X),VAL).
+ge_value(X,val(T,V)) :- _variable(ground,X), _se_value(variable(X),val(T,V)).
 
 
 _ge_setAssignsAux(X,#inf,()) :- _ge_set_declare(X).
