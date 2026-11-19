@@ -11,9 +11,6 @@ import constraint_handler.engine as engine
     [
         pytest.param(
             engine.propagator,
-            marks=pytest.mark.xfail(
-                strict=True, raises=AssertionError, reason="Repeated reasoning-mode solves lose propagator set values"
-            ),
             id="propagator",
         ),
         pytest.param(engine.propagator_check, id="propagator-check"),
