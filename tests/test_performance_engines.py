@@ -120,9 +120,11 @@ all_benchmarks = (
         benchmark_param(
             benchmark_case,
             engine,
-            marks=(pytest.mark.skip(reason="FCH does not support native sin/cos operators"),)
-            if engine == fch and benchmark_case.program_name == "float/trigonometry"
-            else (),
+            marks=(
+                (pytest.mark.skip(reason="FCH does not support native sin/cos operators"),)
+                if engine == fch and benchmark_case.program_name == "float/trigonometry"
+                else ()
+            ),
         )
         for engine in (compile, compile2, fch, ground, propagator, propagator_check)
         for benchmark_case in float_benchmarks
