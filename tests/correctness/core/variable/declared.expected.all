@@ -1,0 +1,6 @@
+variable_declared(active)
+variable_declared(conditional)
+variable_declared(empty_set)
+variable_declared(enabled)
+variable_declared(multiple)
+value(active,bad)

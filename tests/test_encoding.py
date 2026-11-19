@@ -73,6 +73,7 @@ core_tests = [
     # "core/unbound_variable_expressions",
     "core/unprojected_optional_equality",
     "core/set_to_variable",
+    "core/variable/declared",
 ]
 
 datatype_tests = [
