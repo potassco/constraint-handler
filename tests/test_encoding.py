@@ -69,6 +69,7 @@ core_tests = [
     "core/reasoning_modes",
     "core/reasoning_modes_new_strings",
     "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_deeply_nested_sets",
     "core/reasoning_modes_new_bool_int",
     "core/reasoning_modes_new_normal_atoms",
     "core/reasoning_modes_sets",
@@ -581,6 +582,7 @@ compile2_xfail: set[str] = (
         "core/reasoning_modes",  # multimap
         "core/reasoning_modes_new_bool_int",
         "core/reasoning_modes_new_nested_sets",
+        "core/reasoning_modes_new_deeply_nested_sets",
         "core/reasoning_modes_with_show",
         "core/reasoning_modes_sets",  # new modes
         "datatype/bool/conj_disj_mixed",
@@ -672,6 +674,7 @@ propagator_xfail: set[str] = {
     "core/reasoning_modes_new_bool_int",
     "core/reasoning_modes_new_normal_atoms",
     "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_deeply_nested_sets",
     "core/reasoning_modes_new_strings",
     "core/reasoning_modes_with_show",
     "core/reasoning_modes_sets",  # new modes
@@ -949,6 +952,7 @@ choice_statistics_xfail: set[str] = {
     "core/reasoning_modes_new_normal_atoms",
     "core/reasoning_modes_new_bool_int",
     "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_deeply_nested_sets",
     "core/reasoning_modes_new_strings",
     "core/reasoning_modes_sets",
     "core/reasoning_modes_with_show",
