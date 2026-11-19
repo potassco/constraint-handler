@@ -124,6 +124,23 @@ def test_regular_atoms_are_selected_as_boolean_reasoning_variables() -> None:
     assert model.symbols == set()
 
 
+def test_regular_atoms_matching_constraint_handler_variables_are_not_selected() -> None:
+    control = clingo.Control(["0"])
+    propagator = ReasoningModesPropagator(ReasoningMode.UNION)
+    control.register_propagator(propagator)
+    control.add(
+        "base",
+        [],
+        'select_rm(feature, 1). { feature("a") }. ch_post(variable_interface(feature("a")), "test").',
+    )
+    control.ground([("base", [])])
+
+    propagator.prepare(control)
+
+    feature_a = clingo.Function("feature", [clingo.String("a")])
+    assert not propagator.is_non_constraint_handler_variable(feature_a)
+
+
 @pytest.mark.parametrize(
     "strategy_type, reasoning_mode, expected_value",
     [

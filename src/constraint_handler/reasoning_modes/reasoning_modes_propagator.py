@@ -656,6 +656,13 @@ class ReasoningModesPropagator(clingo.Propagator):
         self._variables.clear()
         self._non_constraint_handler_variables.clear()
 
+        user_variables: set[clingo.Symbol] = set()
+        for ch_post_atom in myClorm.findInControl(control, post.Ch_post).values():
+            interface = ch_post_atom.declaration
+            if isinstance(interface, post.Variable_interface):
+                variable = expression.Variable(interface.variable)
+                user_variables.add(_variable_to_symbol(variable))
+
         for selector in control.symbolic_atoms.by_signature("select_rm", 2):
             name, arity = selector.symbol.arguments
             if name.type == clingo.SymbolType.String:
@@ -670,6 +677,8 @@ class ReasoningModesPropagator(clingo.Propagator):
 
             for atom in control.symbolic_atoms.by_signature(predicate_name, arity.number):
                 atom_symbol = atom.symbol
+                if atom_symbol in user_variables:
+                    continue
                 self._non_constraint_handler_variables.add(atom_symbol)
                 self._variables[atom_symbol] = _ScalarVariable(
                     atom_symbol,
@@ -679,12 +688,6 @@ class ReasoningModesPropagator(clingo.Propagator):
         se_values = myClorm.findInControl(control, internal._se_value)
         set_values = myClorm.findInControl(control, internal._set_contains)
         multimap_values = myClorm.findInControl(control, result.Multimap_value)
-        user_variables: set[clingo.Symbol] = set()
-        for ch_post_atom in myClorm.findInControl(control, post.Ch_post).values():
-            interface = ch_post_atom.declaration
-            if isinstance(interface, post.Variable_interface):
-                variable = expression.Variable(interface.variable)
-                user_variables.add(_variable_to_symbol(variable))
 
         for atom, (expr, value) in se_values.items():
             if not isinstance(expr, expression.Variable):
