@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- introduce fields `tight` and `choices` to `.expected.stats` format and simplify the testing framework usage
 - add `variable_declared(X)` output for user-facing variables with an active
   declaration.
 - add `variable_defined(X)` output for user-facing variables with a non-`bad`

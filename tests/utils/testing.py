@@ -44,7 +44,7 @@ def absent(atom):
     return clintest.assertion.Not(clintest.assertion.Or(clintest.assertion.Contains(atom), TheoryContains(atom)))
 
 
-def build_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
+def build_expectations(name) -> tuple[list[tuple[clintest.test.Test, list[str]]], dict[str, str]]:
     name = name + ".expected."
     tests = []
 
@@ -74,7 +74,7 @@ def build_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
         if satisfiability_implicit and not satisfiability_asserted:
             test_noargs.append(satisfiable)
 
-    if test_noargs:
+    if test_noargs or expected_stats.keys() & {"tight", "choices"}:
         tests.append((clintest.test.And(*test_noargs), []))
 
     test_brave = [clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + "brave")]
@@ -95,7 +95,7 @@ def build_expectations(name) -> list[tuple[clintest.test.Test, list[str]]]:
     if test_optimize:
         tests.append((clintest.test.And(*test_optimize), ["--opt-mode=optN"]))
 
-    return tests
+    return tests, expected_stats
 
 
 class TheoryContains(clintest.assertion.Assertion):
@@ -147,6 +147,15 @@ class AssertOptimal(clintest.test.Test):
         return self.__quantifier.outcome()
 
 
+def assert_statistics(statistics: dict, expected: dict[str, str]) -> None:
+    if "tight" in expected:
+        actual = statistics["problem"]["lp"]["sccs"] == 0.0
+        assert actual == (expected["tight"] == "true"), f"tight: expected {expected['tight']}, got {actual}"
+    if "choices" in expected:
+        actual = statistics["solving"]["solvers"]["choices"] > 0.0
+        assert actual == (expected["choices"] == "true"), f"choices: expected {expected['choices']}, got {actual}"
+
+
 class Solver(clintest.solver.Solver):
     def __init__(
         self,
@@ -160,11 +169,11 @@ class Solver(clintest.solver.Solver):
         self.__files = [] if files is None else files
         self.__engine = engine
 
-    def solve(self, test: clintest.test.Test) -> None:
-        if test.outcome().is_certain():
+    def solve(self, test: clintest.test.Test, expected_stats: dict[str, str] = {}) -> None:
+        if test.outcome().is_certain() and not expected_stats:
             return
 
-        ctl = clingo.Control(self.__arguments)
+        ctl = clingo.Control([*self.__arguments, "--stats=2"])
 
         constraint_handler.add_to_control(ctl, engine=self.__engine)
         ctl.add(self.__program)
@@ -173,14 +182,14 @@ class Solver(clintest.solver.Solver):
             ctl.load(file_name)
         ctl.ground()
 
-        if not test.outcome().is_certain():
-            ctl.solve(
-                on_core=test.on_core,
-                on_finish=test.on_finish,
-                on_model=test.on_model,
-                on_unsat=test.on_unsat,
-                on_statistics=test.on_statistics,
-            )
+        ctl.solve(
+            on_core=test.on_core,
+            on_finish=test.on_finish,
+            on_model=test.on_model,
+            on_unsat=test.on_unsat,
+            on_statistics=test.on_statistics,
+        )
+        assert_statistics(ctl.statistics, expected_stats)
 
     def __repr__(self):
         name = self.__class__.__name__
