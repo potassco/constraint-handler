@@ -664,12 +664,15 @@ class ReasoningModesPropagator(clingo.Propagator):
                 predicate_name = name.name
             else:
                 continue
+
             if arity.type != clingo.SymbolType.Number or arity.number < 0:
                 continue
+
             for atom in control.symbolic_atoms.by_signature(predicate_name, arity.number):
-                self._non_constraint_handler_variables.add(atom.symbol)
-                self._variables[atom.symbol] = _ScalarVariable(
-                    atom.symbol,
+                atom_symbol = atom.symbol
+                self._non_constraint_handler_variables.add(atom_symbol)
+                self._variables[atom_symbol] = _ScalarVariable(
+                    atom_symbol,
                     [_Value(atom.literal, True), _Value(-atom.literal, False)],
                 )
 
