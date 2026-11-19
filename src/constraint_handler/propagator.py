@@ -156,6 +156,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         self.add_watches_to_ctl(init)
 
+        # run propagate with literal 1
+        # We do this explicitly here since it does not happen on solve calls after the first one
+        self.propagate(init, [1])
+
     def add_watch(self, lit: int) -> None:
         """
         Add a watch literal to the set of watched literals if check_only is disabled
@@ -290,19 +294,19 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             return self.add_nogoods_from_queue(ctl)
         return False
 
-    def add_nogoods_from_queue(self, ctl: clingo.PropagateControl) -> bool:
+    def add_nogoods_from_queue(self, ctl: clingo.PropagateControl | clingo.PropagateInit) -> bool:
         """
         Add queued nogoods until the queue is empty or clingo refuses one.
 
         Args:
-            ctl: Clingo PropagateControl object.
+            ctl: Clingo propagation control or initialization object.
 
         Returns:
             bool: True if adding a nogood failed (propagation must stop).
         """
         while len(self.nogood_queue) > 0:
             ng = self.nogood_queue.pop(0)
-            if not ctl.add_nogood(ng, lock=True):
+            if not self.add_nogood(ctl, ng, lock=True):
                 return True
 
         return False
@@ -327,14 +331,18 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         for var in self.shared_values:
             var.evaluate(self.evaluations, ctl, self.environment)
 
-    def propagate(self, control: clingo.PropagateControl, changes: Sequence[int]) -> None:
+    def propagate(
+        self,
+        control: clingo.PropagateControl | clingo.PropagateInit,
+        changes: Sequence[int],
+    ) -> None:
         """
         Propagate after a solver assignment change.
         Checks which variables are affected by the change, evaluates them,
         and applies optimization pruning if enabled.
 
         Args:
-            control: Clingo propagation control.
+            control: Clingo propagation control or initialization object.
             changes: Sequence of (signed) solver literals that changed.
         """
         # print("Propagating...", changes)
@@ -382,9 +390,19 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         self.add_nogood_for_variable(ctl, self.optimization.sums, extra_literals=extra_literals)
         return True
 
+    @staticmethod
+    def add_nogood(
+        ctl: clingo.PropagateControl | clingo.PropagateInit,
+        literals: Iterable[int],
+        lock: bool = False,
+    ) -> bool:
+        if isinstance(ctl, clingo.PropagateInit):
+            return ctl.add_clause([-literal for literal in literals])
+        return ctl.add_nogood(literals, lock=lock)
+
     def add_nogood_for_variable(
         self,
-        ctl: clingo.PropagateControl,
+        ctl: clingo.PropagateControl | clingo.PropagateInit,
         var: VariableType | OptimizationHandler,
         extra_literals: Iterable[int] | None = None,
         conflict: bool = True,
@@ -410,7 +428,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         ng: set[int] = self.get_reasons(var)
         if extra_literals:
             ng = ng.union(extra_literals)
-        prop_stop = ctl.add_nogood(ng, lock=True)
+        prop_stop = self.add_nogood(ctl, ng, lock=True)
         if conflict and prop_stop:
             assert (
                 False
