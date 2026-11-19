@@ -94,6 +94,36 @@ def test_extend_reasoning_mode_atoms_emits_each_scalar_value() -> None:
     }
 
 
+def test_regular_atoms_are_selected_as_boolean_reasoning_variables() -> None:
+    control = clingo.Control(["0"])
+    propagator = ReasoningModesPropagator(ReasoningMode.UNION)
+    control.register_propagator(propagator)
+    control.add("base", [], 'select_rm(feature, 1). { feature("a"); feature("b") }.')
+    control.ground([("base", [])])
+
+    propagator.prepare(control)
+    assert control.solve(on_model=propagator.on_model).satisfiable
+
+    feature_a = clingo.Function("feature", [clingo.String("a")])
+    feature_b = clingo.Function("feature", [clingo.String("b")])
+    assert propagator.reasoning_strategy.rm_model == {
+        feature_a: {False, True},
+        feature_b: {False, True},
+    }
+
+    model = _Model()
+    extend_with_reasoning_mode_atoms(propagator, model)
+    assert model.symbols == {
+        clingo.Function("model_union", [feature_a]),
+        clingo.Function("model_union", [feature_b]),
+    }
+
+    propagator.reasoning_strategy.rm_model = {feature_a: {False}}
+    model = _Model()
+    extend_with_reasoning_mode_atoms(propagator, model)
+    assert model.symbols == set()
+
+
 @pytest.mark.parametrize(
     "strategy_type, reasoning_mode, expected_value",
     [

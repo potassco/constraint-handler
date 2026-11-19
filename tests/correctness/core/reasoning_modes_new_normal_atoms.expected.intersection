@@ -1,0 +1,2 @@
+model_intersection(fixed,val(int,7))
+model_intersection(candidate(b))

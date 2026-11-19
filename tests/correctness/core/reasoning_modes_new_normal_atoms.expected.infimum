@@ -1,0 +1,2 @@
+model_infimum(fixed,val(int,7))
+model_infimum(candidate(b))
