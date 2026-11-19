@@ -42,6 +42,10 @@ class _shared_value(NamedTuple):
     val: expression.ReducedExpr
 
 
+class _variable_declared(NamedTuple):
+    name: expression.constant
+
+
 class _optimize_component(NamedTuple):
     expr: expression.Expr
     original: expression.Expr

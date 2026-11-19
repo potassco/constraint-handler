@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- add `variable_declared(X)` output for user-facing variables with an active
+  declaration.
 - - rename `find`, `find2`, `maxEntries`, and `minEntries` to `multima_find`,
     `multimap_find2`, `multimap_maxEntries`, and `multimap_minEntries`.
 - - update `preference_holds` and `preference_variableValue` to take an
