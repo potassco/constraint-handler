@@ -626,9 +626,14 @@ class ReasoningModesPropagator(clingo.Propagator):
         self.reasoning_mode = reasoning_mode
         self.reasoning_strategy: ReasoningStrategy = REASONING_STRATEGIES[reasoning_mode]()
         self._variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable] = {}
+        self._non_constraint_handler_variables: set[clingo.Symbol] = set()
         self._witnesses: dict[clingo.Symbol, int] = {}
 
         self.disabled = isinstance(self.reasoning_strategy, StandardReasoningMode)
+
+    def is_non_constraint_handler_variable(self, name: clingo.Symbol) -> bool:
+        """Return whether a tracked name is a selected regular atom."""
+        return name in self._non_constraint_handler_variables
 
     def set_mode(self, reasoning_mode: ReasoningMode) -> None:
         """Replace the active reasoning strategy.
@@ -649,6 +654,24 @@ class ReasoningModesPropagator(clingo.Propagator):
         if self.disabled:
             return
         self._variables.clear()
+        self._non_constraint_handler_variables.clear()
+
+        for selector in control.symbolic_atoms.by_signature("select_rm", 2):
+            name, arity = selector.symbol.arguments
+            if name.type == clingo.SymbolType.String:
+                predicate_name = name.string
+            elif name.type == clingo.SymbolType.Function and not name.arguments:
+                predicate_name = name.name
+            else:
+                continue
+            if arity.type != clingo.SymbolType.Number or arity.number < 0:
+                continue
+            for atom in control.symbolic_atoms.by_signature(predicate_name, arity.number):
+                self._non_constraint_handler_variables.add(atom.symbol)
+                self._variables[atom.symbol] = _ScalarVariable(
+                    atom.symbol,
+                    [_Value(atom.literal, True), _Value(-atom.literal, False)],
+                )
 
         se_values = myClorm.findInControl(control, internal._se_value)
         set_values = myClorm.findInControl(control, internal._set_contains)

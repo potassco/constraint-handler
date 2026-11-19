@@ -152,6 +152,10 @@ def extend_with_reasoning_mode_atoms(propagator: ReasoningModesPropagator, model
 
     symbols = set()
     for variable, values in propagator.reasoning_strategy.rm_model.items():
+        if propagator.is_non_constraint_handler_variable(variable):
+            if any(value is True for value in values):
+                symbols.add(clingo.Function(f"model_{propagator.reasoning_mode.name.lower()}", [variable]))
+            continue
         for value in values:
             if isinstance(value, multimap.Multimap):
                 value_symbol = _multimap_symbol(value)
