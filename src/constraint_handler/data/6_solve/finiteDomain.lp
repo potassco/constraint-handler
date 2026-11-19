@@ -28,7 +28,7 @@ _passed(ground,LBL,ensure(operation(neq,(variable(X),(E,()))))) :- _finiteDomain
 *%
 
 1 { _se_value(variable(X),V) : _passed(compile,LBL1,variable_domain(X,E,C)), _se_value(C,val(bool,true)), _se_value(E,V);
-   _ge_assign(X,V) : _passed(ground,LBL1,variable_domain(X,E,C)), _se_value(C,val(bool,true)), _se_value(E,V);
+   _ge_domain_value(X,V) : _passed(ground,LBL1,variable_domain(X,E,C)), _se_value(C,val(bool,true)), _se_value(E,V);
    _variable_emptyDomain(X)
  } 1 :-
    _passed((compile;ground),LBL,variable_declare(X,fromFacts,COND)), _se_value(COND,val(bool,true)).

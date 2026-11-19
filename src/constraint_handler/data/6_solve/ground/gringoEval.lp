@@ -7,35 +7,29 @@ _expression(ground,(E;C)) :- _passed(ground,LBL,variable_domain(X,E,C)).
 _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
 
 %%%%%%%%%%%%%%%%% variable_define/3
-_ge_assign(X,E) :- _passed(ground,LBL,variable_define(X,E,C)), ge_result(C,val(bool,true)).
+_ge_value(X,V) :- _passed(ground,LBL,variable_define(X,E,C)), ge_result(C,val(bool,true)), ge_result(E,V).
 
 _expression(ground,(E;C)) :- _passed(ground,LBL,set_assign(X,E,C)).
-_ge_set_assign(X,E) :- _passed(ground,LBL,set_assign(X,E,C)), _se_value(C,val(bool,true)).
+_ge_set_assign(X,V) :- _passed(ground,LBL,set_assign(X,E,C)), _se_value(C,val(bool,true)), ge_result(E,V).
 _ge_set_declare(X) :- _passed(ground,LBL,variable_declare(X,set,C)), ge_result(C,val(bool,true)).
 %%% TODO: make sure set assign doesn't get broken down across different engines
 
-ge_value(X,V) :- _ge_assign(X,EXPR), ge_result(EXPR,V).
-ge_value(X,bad) :- _ge_assign(X,EXPR), _se_value(EXPR,bad).
+_ge_value(X,V) :- _ge_domain_value(X,V).
 
-_expression(ground,EXPR) :- _ge_assign(X,EXPR).
-
-%_ge_nonImploded(X) :- ge_value(X,set(S)).
-%_ge_nonImploded(X) :- ge_value(X,multimap(M)).
-
-_se_value(variable(X),val(T,V)) :- ge_value(X,val(T,V)).
-_se_value(variable(X),bad) :- ge_value(X,bad).
+_se_value(variable(X),val(T,V)) :- _ge_value(X,val(T,V)).
+_se_value(variable(X),bad) :- _ge_value(X,bad).
 _se_value(variable(X),bad) :- ge_result(variable(X),bad).
-_se_value(variable(X),ref(set,variable(X))) :- ge_value(X,set(S)).
-_set_assign(variable(X),VAL) :- ge_value(X,set(S)), VAL=@pythonListElements(S).
+_se_value(variable(X),ref(set,variable(X))) :- _ge_value(X,set(S)).
+_set_assign(variable(X),VAL) :- _ge_value(X,set(S)), VAL=@pythonListElements(S).
 _se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).
 _se_value(val(T,V),val(T,V)) :- _expression(ground,val(T,V)).
 
-_se_value(variable(X),T) :- ge_value(X,T), true=@pythonIsTuple(T). % TODO: fragile and probably incorrect!
+_se_value(variable(X),T) :- _ge_value(X,T), true=@pythonIsTuple(T). % TODO: fragile and probably incorrect!
 
 _variable(ground,X) :- _expression(ground,EXPR), X=@pythonExpressionVariable(EXPR).
 %_direct_implode(variable(X)) :- _expression(ground,EXPR), X=@pythonExpressionVariable(EXPR).
 
-ge_value(X,val(T,V)) :- _variable(ground,X), _se_value(variable(X),val(T,V)).
+_ge_value(X,val(T,V)) :- _variable(ground,X), _se_value(variable(X),val(T,V)).
 
 
 _ge_setAssignsAux(X,#inf,()) :- _ge_set_declare(X).
@@ -44,13 +38,13 @@ _ge_setAssignsAux(X,F,(F,L)) :- _ge_setAssignsAux(X,E,L), _ge_set_assign(X,F), E
 _ge_setAssigns(X,L) :- _ge_setAssignsAux(X,E,L),
     0 = #count { G : _ge_set_assign(X,G), E < G }.
 
-_ge_assign(X,set(L)) :- _ge_set_declare(X), _ge_setAssigns(X,L).
+_ge_value(X,set(L)) :- _ge_set_declare(X), _ge_setAssigns(X,L).
 
 _ge_enumeratedVariables(EXPR,R) :- _expression(ground,EXPR), R=@pythonEnumerateVariables(EXPR).
 
 _ge_mapAux(EXPR,N,()) :- _ge_enumeratedVariables(EXPR,length(N)).
-_ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), ge_value(X,V).
-_ge_mapAux(EXPR,I,((X,bad),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), not ge_value(X,_).
+_ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), _ge_value(X,V).
+_ge_mapAux(EXPR,I,((X,bad),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), not _ge_value(X,_).
 %_ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), _direct_imploded(variable(X),V).
 _ge_mapped(EXPR,M) :- _ge_mapAux(EXPR,0,M).
 

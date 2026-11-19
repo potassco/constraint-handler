@@ -13,7 +13,7 @@ _optimize_component/7.
 
 ### Output predicates
 
-_ge_assign/2.
+_ge_domain_value/2.
 _se_value/2.
 _passed(compile,LBL,DECL).
 _passed(compile2,LBL,DECL).

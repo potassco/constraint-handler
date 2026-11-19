@@ -8,7 +8,7 @@ _passed(ground,LBL,variable_define/3).
 _passed(ground,LBL,variable_domain/3).
 _passed(ground,LBL,set_assign/3).
 _passed(ground,LBL,share_value/1).
-_direct_imploded/2.
+_ge_domain_value/2.
 _main_solverIdentifiers/1.
 
 ### Intermediate predicates
@@ -16,7 +16,7 @@ _main_solverIdentifiers/1.
 _expression(ground,EXPR).
 _ge_set_assign/2.
 _ge_set_declare/1.
-ge_value/2.
+_ge_value/2.
 _variable(ground,VAR).
 _ge_setAssignsAux/3.
 _ge_setAssigns/2.
@@ -28,8 +28,6 @@ ge_result/2.
 
 ### Output predicates
 
-_ge_assign/2.
 _se_value/2.
 _set_assign/2.
-_direct_implode/1.
 _warning/3.
