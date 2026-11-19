@@ -1,0 +1,2 @@
+model_supremum(value,val(string,"TOP"))
+model_supremum(zero,val(string,"TOP"))

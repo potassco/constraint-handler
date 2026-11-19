@@ -8,8 +8,8 @@ from clingo import Symbol
 
 import constraint_handler.schemas.propagator_atom as prop_atom
 from constraint_handler import myClorm
-from constraint_handler.PropagatorConstants import OTHER_ENGINE_VAR_NAME, propagator_warning_t
-from constraint_handler.PropagatorVariables import (
+from constraint_handler.propagator.PropagatorConstants import OTHER_ENGINE_VAR_NAME, propagator_warning_t
+from constraint_handler.propagator.PropagatorVariables import (
     BoolEvaluateVariable,
     DictVariable,
     EvaluateVariable,

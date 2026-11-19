@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import clingo
 
@@ -9,6 +10,12 @@ import constraint_handler.evaluator as evaluator
 import constraint_handler.myClorm as myClorm
 import constraint_handler.schemas.result as result
 import constraint_handler.schemas.warning as warning
+from constraint_handler import multimap
+from constraint_handler.reasoning_modes.reasoning_modes_propagator import (
+    ReasoningMode,
+    ReasoningModesPropagator,
+    _LatticeBound,
+)
 
 
 class OptimizePostProcessingPropagator(clingo.Propagator):
@@ -137,3 +144,35 @@ def set_optimize_valuation(propagator: OptimizePostProcessingPropagator, model) 
 
     if model.optimality_proven:
         propagator._cached_optimize_value_symbols = optimize_value_symbols.copy()
+
+
+def extend_with_reasoning_mode_atoms(propagator: ReasoningModesPropagator, model) -> None:
+    if propagator.reasoning_mode is ReasoningMode.STANDARD:
+        return
+
+    symbols = set()
+    for variable, values in propagator.reasoning_strategy.rm_model.items():
+        if propagator.is_non_constraint_handler_variable(variable):
+            if any(value is True for value in values):
+                symbols.add(clingo.Function(f"model_{propagator.reasoning_mode.name.lower()}", [variable]))
+            continue
+        for value in values:
+            if isinstance(value, multimap.Multimap):
+                value_symbol = _multimap_symbol(value)
+            else:
+                if isinstance(value, _LatticeBound):
+                    value = value.value
+                reduced_value, _ = evaluator.reducedExpr(value)
+                value_symbol = myClorm.pytocl(reduced_value)
+            symbols.add(clingo.Function(f"model_{propagator.reasoning_mode.name.lower()}", [variable, value_symbol]))
+    model.extend(symbols)
+
+
+def _multimap_symbol(value: multimap.Multimap[Any, Any]) -> clingo.Symbol:
+    entries = []
+    for key, values in value.items():
+        reduced_key, _ = evaluator.reducedExpr(key)
+        reduced_values = sorted(myClorm.pytocl(evaluator.reducedExpr(item)[0]) for item in values)
+        entries.append(clingo.Function("", [myClorm.pytocl(reduced_key), myClorm.nest(reduced_values)]))
+
+    return clingo.Function("multimap", [myClorm.nest(sorted(entries)), clingo.Function("", [])])

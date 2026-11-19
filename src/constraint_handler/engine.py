@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from constraint_handler.PropagatorConstants import PROPAGATOR_CHECK_MODE_STR
+from constraint_handler.propagator.PropagatorConstants import PROPAGATOR_CHECK_MODE_STR
 
 
 @dataclass(frozen=True)

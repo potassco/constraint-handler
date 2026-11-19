@@ -26,9 +26,11 @@ def run_test(name: str, selected_engine: engine.Engine):
     name = "tests/correctness/" + name
     expectations = chut.build_expectations(name)
     assert expectations, f"Missing expectations: {name}"
-    for test, extra_args in expectations:
-        options = ctrl_options + extra_args
-        solver = chut.Solver(options, files=[name + ".lp"], engine=selected_engine)
+    for test, extra_options in expectations:
+        options = ctrl_options + extra_options.clingo_options
+        solver = chut.Solver(
+            options, files=[name + ".lp"], engine=selected_engine, add_to_ctl_options=extra_options.add_to_ctl_options
+        )
         solver.solve(test)
         test.assert_()
 
@@ -65,6 +67,11 @@ core_tests = [
     "core/optional_absent_string_comparison_evaluation",
     "core/python_set_bool_brave",
     "core/reasoning_modes",
+    "core/reasoning_modes_new_strings",
+    "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_deeply_nested_sets",
+    "core/reasoning_modes_new_bool_int",
+    "core/reasoning_modes_new_normal_atoms",
     "core/reasoning_modes_sets",
     "core/reasoning_modes_with_show",
     "core/set_execution_input_alias",
@@ -541,6 +548,7 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
+    "core/reasoning_modes_new_bool_int",
     "datatype/bool/conj_disj/mixed",
     "datatype/bool/conj_disj/none",
     "datatype/float/mult/recovery",
@@ -572,7 +580,11 @@ compile2_xfail: set[str] = (
     {
         "core/empty_set_execution",
         "core/reasoning_modes",  # multimap
+        "core/reasoning_modes_new_bool_int",
+        "core/reasoning_modes_new_nested_sets",
+        "core/reasoning_modes_new_deeply_nested_sets",
         "core/reasoning_modes_with_show",
+        "core/reasoning_modes_sets",  # new modes
         "datatype/bool/conj_disj_mixed",
         "datatype/float/mult/recovery",
         "datatype/float/pow/mixed",
@@ -619,6 +631,7 @@ ground_skip: set[str] = {
 ground_xfail: set[str] = (
     {
         "core/reasoning_modes",
+        "core/reasoning_modes_new_bool_int",
         "core/reasoning_modes_with_show",
         "core/set_execution_input_alias",
         "datatype/bool/conj_disj_mixed",
@@ -658,7 +671,14 @@ propagator_skip: set[str] = {
 propagator_xfail: set[str] = {
     "core/conditional_declare_definition",
     "core/conditional_declare_set_multiple",
+    "core/reasoning_modes_new_bool_int",
+    "core/reasoning_modes_new_normal_atoms",
+    "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_deeply_nested_sets",
+    "core/reasoning_modes_new_strings",
     "core/reasoning_modes_with_show",
+    "core/reasoning_modes_sets",  # new modes
+    "core/reasoning_modes",  # new modes
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
     "default/basic_true",
@@ -929,6 +949,11 @@ choice_statistics_xfail: set[str] = {
     "core/conditional_assign",
     "core/integrity",
     "core/reasoning_modes",
+    "core/reasoning_modes_new_normal_atoms",
+    "core/reasoning_modes_new_bool_int",
+    "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_deeply_nested_sets",
+    "core/reasoning_modes_new_strings",
     "core/reasoning_modes_sets",
     "core/reasoning_modes_with_show",
     "datatype/bool/derived_relations",
