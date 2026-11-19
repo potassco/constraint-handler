@@ -183,6 +183,8 @@ _fch_selected_var_def(NAME, DEFAULT_ID) :- _fch_default_apply(NAME, DEFAULT_ID, 
 % CH-facing output compatibility.
 %
 
+variable_declared(NAME) :- _fch_var_active(NAME).
+
 set_size(NAME, SIZE) :- _fch_set_handle(NAME), _fch_set_size(NAME, SIZE).
 set_size(VAR_NAME, SIZE) :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_handle(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
 
@@ -288,6 +290,11 @@ value(NAME, bad) :-
 	_fch_dynamic_expr_val(EXPR_ID, _fch_type_fail_id, _).
 
 value(NAME, bad) :- _fch_empty_var_domain(NAME).
+
+value(NAME, bad) :-
+	variable_declared(NAME),
+	_fch_var_active(NAME, definition),
+	not _fch_dynamic_var_def(NAME, _).
 
 _fch_execution_input_declared(EXEC, VAR) :- _fch_flat(var_decl((EXEC, VAR, in))).
 _fch_execution_input_defined(EXEC, VAR) :- _fch_flat(var_def((EXEC, VAR, in), _)).
