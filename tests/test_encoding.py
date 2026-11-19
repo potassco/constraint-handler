@@ -1,6 +1,5 @@
 import pytest
 
-import constraint_handler
 import constraint_handler.engine as engine
 import tests.utils.testing as chut
 

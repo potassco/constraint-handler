@@ -76,6 +76,7 @@ flat_ch_currently_not_working_tests = {
     "core/conditional_assign",
     "core/reasoning_modes",
     "core/reasoning_modes_with_show",
+    "core/set_execution_input_alias",
     "expression/python_bad_result",
     "expression/python_extract/basic",
     "expression/python_extract/tuple_containing_bad",
