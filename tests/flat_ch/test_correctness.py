@@ -279,8 +279,8 @@ flat_ch_supported_core_tests = [name for name in flat_ch_supported_tests if name
 flat_ch_supported_non_core_tests = [name for name in flat_ch_supported_tests if not name.startswith("core/")]
 
 
-def solve_with_flat_ch(name: str, test, extra_args: list[str]):
-    ctl = clingo.Control([*ctrl_options, *extra_args])
+def solve_with_flat_ch(name: str, test, extra_args: list[str], expected_stats: dict[str, str] = {}):
+    ctl = clingo.Control([*ctrl_options, *extra_args, "--stats=2"])
     add_to_control(ctl, {}, engine=fch)
     if name.startswith("tests/correctness/optimization/"):
         ctl.add("base", [], "_fch_enable_optimize_value_output.")
@@ -288,7 +288,7 @@ def solve_with_flat_ch(name: str, test, extra_args: list[str]):
     ctl.load(name + ".lp")
     ctl.ground()
 
-    if not test.outcome().is_certain():
+    if not test.outcome().is_certain() or expected_stats:
         ctl.solve(
             on_core=test.on_core,
             on_finish=test.on_finish,
@@ -296,12 +296,14 @@ def solve_with_flat_ch(name: str, test, extra_args: list[str]):
             on_unsat=test.on_unsat,
             on_statistics=test.on_statistics,
         )
+        chut.assert_statistics(ctl.statistics, expected_stats)
 
 
 def run_test(name: str):
     file_name = "tests/correctness/" + name
-    for test, extra_args in chut.build_expectations(file_name):
-        solve_with_flat_ch(file_name, test, extra_args)
+    expectations, expected_stats = chut.build_expectations(file_name)
+    for test, extra_args in expectations:
+        solve_with_flat_ch(file_name, test, extra_args, expected_stats if not extra_args else {})
         test.assert_()
 
 

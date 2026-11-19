@@ -2,6 +2,7 @@
 
 ## Ongoing
 
+- introduce fields `tight` and `choices` to `.expected.stats` format and simplify the testing framework usage
 - - rename `find`, `find2`, `maxEntries`, and `minEntries` to `multima_find`,
     `multimap_find2`, `multimap_maxEntries`, and `multimap_minEntries`.
 - - update `preference_holds` and `preference_variableValue` to take an

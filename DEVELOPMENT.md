@@ -135,8 +135,11 @@ The supported suffixes are:
   enumeration mode.
 - `optall`, `optany`, and `optnone`: atom must occur in every, any, or no
   optimal model respectively.
-- `stats`: one `key=value` entry per line. `models=<count>` asserts the exact
-  number of models.
+- `stats`: one `key=value` entry per line. All keys are optional.
+  `models=<count>` asserts the exact number of models. `tight=true` asserts zero
+  strongly connected components, and `tight=false` asserts at least one. `choices=false`
+  asserts zero solver choices, and `choices=true` asserts at least one.
+  Boolean values are lowercase `true` or `false`; omitted fields are unchecked.
 
 `all`, `none`, `first`, `last`, `optall`, and `optnone` implicitly also require
 at least one model unless an `any`, `brave`, `cautious`, or `optany`
