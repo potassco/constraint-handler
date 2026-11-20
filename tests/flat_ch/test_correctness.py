@@ -248,6 +248,8 @@ flat_ch_unsupported_tests = {
     "core/python_set_bool_brave",
     "core/reasoning_modes_new_strings",
     "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_deeply_nested_sets",
+    "core/reasoning_modes_new_normal_atoms",
     "core/reasoning_modes_new_bool_int",
     "core/reasoning_modes_sets",
     "execution/python_integrity_should_be_ignored",
