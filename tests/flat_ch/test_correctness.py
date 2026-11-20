@@ -252,6 +252,7 @@ flat_ch_unsupported_tests = {
     "expression/python_extract/bad",
     "expression/python_extract/binding_leak",
     "expression/python_extract/dynamic",
+    "expression/python_extract/set_compound_input",
     "expression/python_extract/set_input",
     "expression/python_extract/set_output",
     "expression/python_extract/set_projection",
