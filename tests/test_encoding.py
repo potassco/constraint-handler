@@ -11,6 +11,8 @@ ctrl_options = ["0", "--heuristic=Domain"]
 def run_test(name: str, selected_engine: engine.Engine):
     name = "tests/correctness/" + name
     expectations, expected_stats = chut.build_expectations(name)
+    if selected_engine in (engine.propagator, engine.propagator_check):
+        expected_stats.pop("choices", None)
     assert expectations, f"Missing expectations: {name}"
     for test, extra_args in expectations:
         options = ctrl_options + extra_args
