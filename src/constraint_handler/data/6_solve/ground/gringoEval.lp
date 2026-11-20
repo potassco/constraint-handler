@@ -5,50 +5,46 @@ _expression(ground,(E;C)) :- _passed(ground,LBL,variable_default(X,E,C,P)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_define(X,E,C)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_domain(X,E,C)).
 _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
-
-%%%%%%%%%%%%%%%%% variable_define/3
-_ge_value(X,V) :- _passed(ground,LBL,variable_define(X,E,C)), ge_result(C,val(bool,true)), ge_result(E,V).
-
 _expression(ground,(E;C)) :- _passed(ground,LBL,set_assign(X,E,C)).
-_ge_set_assign(X,V) :- _passed(ground,LBL,set_assign(X,E,C)), _se_value(C,val(bool,true)), ge_result(E,V).
-_ge_set_declare(X) :- _passed(ground,LBL,variable_declare(X,set,C)), ge_result(C,val(bool,true)).
-%%% TODO: make sure set assign doesn't get broken down across different engines
-
-_ge_value(X,V) :- _ge_domain_value(X,V).
-
-_se_value(variable(X),val(T,V)) :- _ge_value(X,val(T,V)).
-_se_value(variable(X),bad) :- _ge_value(X,bad).
-_se_value(variable(X),bad) :- ge_result(variable(X),bad).
-_se_value(variable(X),ref(set,variable(X))) :- _ge_value(X,set(S)).
-_set_assign(variable(X),VAL) :- _ge_value(X,set(S)), VAL=@pythonListElements(S).
-_se_value(operation(OP,ARGS),V) :- ge_result(operation(OP,ARGS),V).
-_se_value(val(T,V),val(T,V)) :- _expression(ground,val(T,V)).
-
-_se_value(variable(X),T) :- _ge_value(X,T), true=@pythonIsTuple(T). % TODO: fragile and probably incorrect!
 
 _variable(ground,X) :- _expression(ground,EXPR), X=@pythonExpressionVariable(EXPR).
-%_direct_implode(variable(X)) :- _expression(ground,EXPR), X=@pythonExpressionVariable(EXPR).
+_se_value(variable(X),V) :- _passed(ground,LBL,variable_define(X,E,C)), _ge_value(C,val(bool,true)), _se_value(E,V).
+_se_value(variable(X),ref(set,variable(X))) :- _passed(ground,LBL,variable_declare(X,set,C)), _ge_value(C,val(bool,true)).
+_set_contains(variable(X),V) :- _passed(ground,LBL,set_assign(X,E,C)), _ge_value(C,val(bool,true)), _ge_value(E,V).
 
-_ge_value(X,val(T,V)) :- _variable(ground,X), _se_value(variable(X),val(T,V)).
+_ge_value(variable(X),val(T,V)) :- _variable(ground,X), _se_value(variable(X),val(T,V)).
+_ge_value(variable(X),bad) :- _variable(ground,X), _se_value(variable(X),bad).
+_ge_value(variable(X),RV) :- _variable(ground,X), _se_value(variable(X),V), V!=bad, #false : V=val(T,W); _ge_reduced(V,RV).
+_ge_value(variable(X),bad) :- _variable(ground,X), not _se_value(variable(X),_).
 
+_ge_eval_expression(E) :- _expression(ground,E), #false : E=variable(X).
+_ge_expand(V) :- _variable(ground,X), _se_value(variable(X),V).
+_ge_expand(V) :- _ge_expand(ref(set,R)), not _ge_eval_expression(R), _set_contains(R,V).
+_ge_expand(V) :- _ge_tuple(T,_,ARGS), V=@pythonListElements(ARGS).
+_ge_tuple(T,N,ARGS) :- _ge_expand(T), (function,(),N,ARGS)=@pythonReify(T).
+_ge_reduced(V,V) :- _ge_expand(V), #false : V=ref(T,R); not _ge_tuple(V,_,_).
 
-_ge_setAssignsAux(X,#inf,()) :- _ge_set_declare(X).
-_ge_setAssignsAux(X,F,(F,L)) :- _ge_setAssignsAux(X,E,L), _ge_set_assign(X,F), E < F,
-    0 = #count { G : _ge_set_assign(X,G), E < G, G < F }.
-_ge_setAssigns(X,L) :- _ge_setAssignsAux(X,E,L),
-    0 = #count { G : _ge_set_assign(X,G), E < G }.
+_set_makeIndex(R) :- _ge_expand(ref(set,R)), not _ge_eval_expression(R).
+_ge_set_list(R,0,()) :- _ge_expand(ref(set,R)), not _ge_eval_expression(R).
+_ge_set_list(R,I+1,(RV,L)) :- _ge_set_list(R,I,L), _set_index(R,I,V), _ge_reduced(V,RV).
+_ge_reduced(ref(set,R),set(L)) :- _ge_set_list(R,I,L), _set_lastIndex(R,I).
+_ge_reduced(ref(set,E),set(L)) :- _ge_eval_exec(E,M,valid(set(L))).
 
-_ge_value(X,set(L)) :- _ge_set_declare(X), _ge_setAssigns(X,L).
+_ge_tuple_list(T,N,()) :- _ge_tuple(T,N,ARGS).
+_ge_tuple_list(T,I,(RV,L)) :- _ge_tuple_list(T,I+1,L), _ge_tuple(T,_,ARGS), (I,V)=@pythonEnumerateElements(ARGS), _ge_reduced(V,RV).
+_ge_reduced(T,RV) :- _ge_tuple_list(T,0,L), RV=@pythonReflect(function,(),L).
 
 _ge_enumeratedVariables(EXPR,R) :- _expression(ground,EXPR), R=@pythonEnumerateVariables(EXPR).
-
 _ge_mapAux(EXPR,N,()) :- _ge_enumeratedVariables(EXPR,length(N)).
-_ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), _ge_value(X,V).
-_ge_mapAux(EXPR,I,((X,bad),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), not _ge_value(X,_).
-%_ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), _direct_imploded(variable(X),V).
+_ge_mapAux(EXPR,I,((X,V),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), _ge_value(variable(X),V).
 _ge_mapped(EXPR,M) :- _ge_mapAux(EXPR,0,M).
 
-_ge_eval_exec(EXPR,M,RES) :- _ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifiers(ID).
-ge_result(EXPR,V) :- _ge_eval_exec(EXPR,M,valid(V)).
-ge_result(EXPR,bad) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).
+_ge_eval_exec(EXPR,M,RES) :- _ge_eval_expression(EXPR), _ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifiers(ID).
+_ge_value(EXPR,V) :- _ge_eval_exec(EXPR,M,valid(V)).
+_ge_value(EXPR,bad) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).
+_se_value(EXPR,V) :- _ge_eval_exec(EXPR,M,valid(V)), #false : V=set(L).
+_se_value(EXPR,bad) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).
+_se_value(EXPR,ref(set,EXPR)) :- _ge_eval_exec(EXPR,M,valid(set(L))).
+_set_contains(EXPR,V) :- _ge_eval_exec(EXPR,M,valid(set(L))), V=@pythonListElements(L).
+_shared_value(EXPR,bad) :- _passed(ground,LBL,share_value(EXPR)), _ge_value(EXPR,bad).
 _warning(KIND,(),(EXPR,M,MSG)) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).

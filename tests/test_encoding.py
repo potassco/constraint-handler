@@ -622,7 +622,6 @@ ground_xfail: set[str] = (
         "expression/lambda/lambdas",
         "expression/lambda/recursive",
         "expression/lambda/zero_args",
-        "expression/python_extract/set_compound_input",
         "expression/tuple_extra",
         "execution/python_syntax_error",
         "execution/warning_spurious",
