@@ -6,6 +6,7 @@ import clingo
 
 import constraint_handler.schemas.domain as domain  # fmt: skip
 import constraint_handler.schemas.expression as expression
+import constraint_handler.schemas.type_ as type_m
 import constraint_handler.schemas.warning as warning
 
 
@@ -65,9 +66,14 @@ class Variable_defined(NamedTuple):
     name: expression.constant
 
 
+class Variable_typed(NamedTuple):
+    name: expression.constant
+    type_: type_m.BaseType | type_m.OtherType | clingo.Symbol
+
+
 class Evaluated(NamedTuple):
     expr: expression.Expr
     value: expression.ReducedExpr
 
 
-type ResultAtom = Bool_evaluated | Evaluated | Set_value | Multimap_value | OptimizeResult | Preference_score | Value | Variable_declared | Variable_defined | warning.Warning | warning.Warning_raised
+type ResultAtom = Bool_evaluated | Evaluated | Set_value | Multimap_value | OptimizeResult | Preference_score | Value | Variable_declared | Variable_defined | Variable_typed | warning.Warning | warning.Warning_raised
