@@ -74,6 +74,7 @@ core_tests = [
     "core/unprojected_optional_equality",
     "core/set_to_variable",
     "core/variable/declared",
+    "core/variable/defined",
 ]
 
 datatype_tests = [
@@ -660,6 +661,7 @@ propagator_xfail: set[str] = {
     "core/conditional_declare_definition",
     "core/conditional_declare_set_multiple",
     "core/reasoning_modes_with_show",
+    "core/variable/defined",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
     "default/basic_true",
@@ -704,6 +706,7 @@ propagator_true_skip: set[str] = propagator_skip | {
     "core/reasoning_modes_with_show",
     "core/conditional_domain",
     "core/unbound_variable_expressions",
+    "core/variable/defined",
     "execution/conditional_input_domain",
     "execution/conditional_input_domain_dynamic",
     "execution/python_integrity_should_be_ignored",
@@ -794,6 +797,7 @@ choice_statistics_skip: set[str] = {
     "core/set_interface_value_marker",
     "core/shared_optional_output_domains",
     "core/unprojected_optional_equality",
+    "core/variable/defined",
     "datatype/bool/conj_disj/none",
     "datatype/bool/conj_disj/variable",
     "datatype/bool/leqv_lxor/none",

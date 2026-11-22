@@ -29,5 +29,6 @@ set_value/2.
 type_variableD/2.
 value/2.
 variable_declared/1.
+variable_defined/1.
 warning/3.
 evaluated/2.

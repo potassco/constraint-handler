@@ -1,0 +1,5 @@
+variable_defined(boolean)
+variable_defined(defined)
+variable_defined(defined_set)
+variable_defined(empty_set)
+variable_defined(integer)
