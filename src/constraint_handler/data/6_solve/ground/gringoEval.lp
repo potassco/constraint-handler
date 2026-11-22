@@ -15,7 +15,6 @@ _set_candidate(variable(X),bad) :- _passed(ground,LBL,set_assign(X,variable(Y),C
 
 _ge_eval_expression(E) :- _expression(ground,E), #false : E=variable(X).
 _direct_implode(V) :- _variable(ground,X), _se_value(variable(X),V), #false : V=ref(set,E), _ge_eval_expression(E).
-_direct_imploded(ref(set,E),set(L)) :- _ge_eval_exec(E,M,valid(set(L))).
 
 _ge_enumeratedVariables(EXPR,R) :- _expression(ground,EXPR), R=@pythonEnumerateVariables(EXPR).
 _ge_mapAux(EXPR,N,()) :- _ge_enumeratedVariables(EXPR,length(N)).
@@ -24,11 +23,4 @@ _ge_mapAux(EXPR,I,((X,RV),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables
 _ge_mapAux(EXPR,I,((X,bad),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), not _se_value(variable(X),_).
 _ge_mapped(EXPR,M) :- _ge_mapAux(EXPR,0,M).
 
-_ge_eval_exec(EXPR,M,RES) :- _ge_eval_expression(EXPR), _ge_mapped(EXPR,M), RES=@pythonEvalExpr(EXPR,M,ID), _main_solverIdentifiers(ID).
-_direct_explode(V) :- _ge_eval_exec(EXPR,M,valid(V)).
-_se_value(EXPR,V) :- _ge_eval_exec(EXPR,M,valid(V)), V=(bad;val(T,W)).
-_se_value(EXPR,V) :- _ge_eval_exec(EXPR,M,valid(RV)), _expression_tupleLength(implode,RV,N), _direct_exploded(RV,V).
-_se_value(EXPR,bad) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).
-_se_value(EXPR,ref(set,EXPR)) :- _ge_eval_exec(EXPR,M,valid(set(L))).
-_set_contains(EXPR,V) :- _ge_eval_exec(EXPR,M,valid(set(L))), RV=@pythonListElements(L), _direct_exploded(RV,V).
-_warning(KIND,(),(EXPR,M,MSG)) :- _ge_eval_exec(EXPR,M,error(KIND,MSG)).
+_python_evaluate(EXPR,EXPR,M) :- _ge_eval_expression(EXPR), _ge_mapped(EXPR,M).

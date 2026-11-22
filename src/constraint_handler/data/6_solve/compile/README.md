@@ -16,10 +16,10 @@ _type_extensionalOrder/1.
 _type_representation/2.
 type_expression/2.
 _set_candidate/2.
+_python_evaluate/3.
 
 ### Intermediate predicates
 
-_expression_pythonEval/2.
 _expression_dynamicTainted/1.
 _argument_value/2.
 _direct_queryOperation/1.
@@ -34,7 +34,7 @@ _direct_imploded_args_aux/3.
 _direct_implodeTupleAux/3.
 _direct_lazy/1.
 _direct_tupleValuesAux/3.
-_expression_eval_exec/2.
+_python_evaluated/3.
 _expression((compile;implode),EXPR).
 _int_add/3.
 _int_mult/3.
@@ -68,6 +68,9 @@ _tupleEqAux/3.
 _passed(correction(REASON,add),LBL,DECL).
 direct_query/1.
 _se_value/2.
+_python_evaluate/3.
+_python_evaluated/3.
+_python_result/2.
 _set_assign/2.
 _set_candidate/2.
 _set_contains/2.

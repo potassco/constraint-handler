@@ -93,6 +93,7 @@ m6_datatype = [
 
 m6_compile = [
     "6_solve/compile/direct",
+    "6_solve/compile/python",
 ]
 
 m6_compile2 = [
