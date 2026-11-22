@@ -185,6 +185,12 @@ _fch_selected_var_def(NAME, DEFAULT_ID) :- _fch_default_apply(NAME, DEFAULT_ID, 
 
 variable_declared(NAME) :- _fch_var_active(NAME).
 
+variable_defined(NAME) :-
+	_fch_dynamic_var_def(NAME, EXPR_ID),
+	_fch_dynamic_expr_val(EXPR_ID, TYPE, _),
+	TYPE != _fch_type_fail_id.
+variable_defined(NAME) :- _fch_var_active(NAME, set).
+
 set_size(NAME, SIZE) :- _fch_set_handle(NAME), _fch_set_size(NAME, SIZE).
 set_size(VAR_NAME, SIZE) :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_handle(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
 
