@@ -16,7 +16,7 @@ ch_core(warning_ignore/1,LBL).
 
 _se_value1/1.
 _shared_value/2.
-_type_variableD/2.
+_variable_typed/2.
 _variable_declared/1.
 _warning_forbid/2.
 _warning_ignore/2.
@@ -26,7 +26,7 @@ warning_raised/0.
 ### Output predicates
 
 set_value/2.
-type_variableD/2.
+variable_typed/2.
 value/2.
 variable_declared/1.
 variable_defined/1.

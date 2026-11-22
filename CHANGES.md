@@ -2,6 +2,9 @@
 
 ## Ongoing
 
+## v0.0.11
+
+- - replace `type_variableD(X,T)` with `variable_typed(X,T)`.
 - introduce fields `tight` and `choices` to `.expected.stats` format and
   simplify the testing framework usage
 - add `variable_declared(X)` output for user-facing variables with an active

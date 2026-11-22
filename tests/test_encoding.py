@@ -63,6 +63,7 @@ core_tests = [
     "core/set_to_variable",
     "core/variable/declared",
     "core/variable/defined",
+    "core/variable/typed",
 ]
 
 datatype_tests = [
@@ -647,6 +648,7 @@ propagator_xfail: set[str] = {
     "core/conditional_declare_set_multiple",
     "core/reasoning_modes_with_show",
     "core/variable/defined",
+    "core/variable/typed",
     "datatype/bool/conj_disj_mixed",
     "datatype/float/mult/recovery",
     "default/basic_true",
@@ -692,6 +694,7 @@ propagator_true_skip: set[str] = propagator_skip | {
     "core/conditional_domain",
     "core/unbound_variable_expressions",
     "core/variable/defined",
+    "core/variable/typed",
     "execution/conditional_input_domain",
     "execution/conditional_input_domain_dynamic",
     "execution/python_integrity_should_be_ignored",

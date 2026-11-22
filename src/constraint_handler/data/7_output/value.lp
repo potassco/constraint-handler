@@ -14,9 +14,9 @@ _shared_value(variable(X),bad) :- _passed(ground,LBL,share_value(variable(X))), 
 _se_value1(variable(X)) :- _se_value(variable(X),V), ch_post(variable_interface(X),LBL).
 value(X,bad) :- ch_post(variable_interface(X),LBL), _passed(compile,_,variable_declare(X,D,C)), _bool_evaluated(C,val(bool,true)), _expression(compile,variable(X)), not _se_value1(variable(X)).
 
-_type_variableD(X,T) :- _se_value(variable(X),val(T,V)).
-_type_variableD(X,set) :- _se_value(variable(X),set).
-_type_variableD(X,set) :- _se_value(variable(X),ref(set,R)).
-_type_variableD(X,bot) :- value(X,bad).
+_variable_typed(X,T) :- _se_value(variable(X),val(T,V)).
+_variable_typed(X,set) :- _se_value(variable(X),set).
+_variable_typed(X,set) :- _se_value(variable(X),ref(set,R)).
+_variable_typed(X,bot) :- value(X,bad).
 
-type_variableD(X,T) :- _type_variableD(X,T), ch_post(variable_interface(X),LBL).
+variable_typed(X,T) :- _variable_typed(X,T), ch_post(variable_interface(X),LBL).

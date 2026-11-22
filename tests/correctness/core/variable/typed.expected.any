@@ -1,0 +1,7 @@
+variable_typed(conditional,int)
+variable_typed(dynamic,int)
+variable_typed(dynamic,string)
+typed_as(conditional,int)
+typed_as(dynamic,int)
+typed_as(dynamic,string)
+not_typed(conditional)

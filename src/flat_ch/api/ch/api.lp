@@ -191,6 +191,10 @@ variable_defined(NAME) :-
 	TYPE != _fch_type_fail_id.
 variable_defined(NAME) :- _fch_var_active(NAME, set).
 
+variable_typed(NAME, TYPE) :- value(NAME, TYPE, _).
+variable_typed(NAME, set) :- _fch_var_active(NAME, set).
+variable_typed(NAME, bot) :- value(NAME, bad).
+
 set_size(NAME, SIZE) :- _fch_set_handle(NAME), _fch_set_size(NAME, SIZE).
 set_size(VAR_NAME, SIZE) :- _fch_var_def(VAR_NAME, TARGET_ID), _fch_set_handle(TARGET_ID), _fch_set_size(TARGET_ID, SIZE).
 

@@ -123,6 +123,12 @@ or is an empty collection.
 `variable_defined(Name)` is added to the model when the user-facing variable
 `Name` has a value other than `bad`. This includes empty collections.
 
+`variable_typed(Name, Type)` exposes the type of the user-facing variable's
+evaluated value. For example, an integer value produces `variable_typed(Name,int)`
+and `val(none,none)` produces `variable_typed(Name,none)`. Sets, including empty
+sets, have type `set`; `bad` values have type `bot`. The type can vary between
+models when the variable's domain contains values of different types.
+
 When a variable is assigned a value, an atom of the `value/2` predicate is added to the model.
 The same predicate is also used by some higher-level features, such as labeled optimization declarations, to expose aggregated results in the final model.
 

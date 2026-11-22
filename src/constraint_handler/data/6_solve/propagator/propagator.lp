@@ -56,5 +56,12 @@ propagator_share_value(E,LBL) :- _passed(propagator,LBL,share_value(E)).
 %{ _propagator_variable_defined(X) } :- _passed(propagator,LBL,variable_declare(X,D,C)), ch_post(variable_interface(X),LBL2), _bool_evaluated(C,val(bool,true)).
 _variable_defined(X) :- _propagator_variable_defined(X).
 
+_propagator_type(int;float;string;symbol;bool;none;function;multimap;set;bot).
+%0 { _propagator_variable_typed(X,T) : _propagator_type(T) } 1 :-
+%    _passed(propagator,LBL,variable_declare(X,D,C)),
+%    ch_post(variable_interface(X),LBL2),
+%    _bool_evaluated(C,val(bool,true)).
+_variable_typed(X,T) :- _propagator_variable_typed(X,T).
+
 propagator_warning_forbid(KIND,LBL) :- _warning_forbid(KIND,LBL).
 propagator_warning_ignore(KIND,LBL) :- _warning_ignore(KIND,LBL).
