@@ -535,7 +535,6 @@ other_tests = [
 
 compile_skip: set[str] = set()
 compile_xfail: set[str] = {
-    "core/conditional_define_inactive_bad",
     "datatype/bool/conj_disj/mixed",
     "datatype/bool/conj_disj/none",
     "datatype/float/mult/recovery",
@@ -564,7 +563,6 @@ compile2_skip: set[str] = {
 }
 compile2_xfail: set[str] = (
     {
-        "core/conditional_define_inactive_bad",
         "core/empty_set_execution",
         "core/reasoning_modes",  # multimap
         "core/reasoning_modes_with_show",
@@ -615,7 +613,6 @@ ground_skip: set[str] = {
 }
 ground_xfail: set[str] = (
     {
-        "core/conditional_define_inactive_bad",
         "core/reasoning_modes",
         "core/reasoning_modes_with_show",
         "datatype/bool/conj_disj_mixed",
@@ -650,7 +647,6 @@ propagator_skip: set[str] = {
 propagator_xfail: set[str] = {
     "core/conditional_declare_definition",
     "core/conditional_declare_set_multiple",
-    "core/conditional_define_inactive_bad",
     "core/reasoning_modes_with_show",
     "core/variable/defined",
     "core/variable/typed",

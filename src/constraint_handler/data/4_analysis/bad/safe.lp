@@ -28,7 +28,7 @@ _variable_query(safe,X) :- _variable(sugar,X).
 
 
 _safe_bad(bad) :- _phase_active(safe).
-_safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_define(X,E,C)), _safe_bad(E;C).
+_safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_define(X,E,C)), _safe_bad(E;C), _deterministic(C,(bad;val(bool,true))).
 _safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_declare(X,set,COND)), _passed(sugar,LBL2,set_assign(X,E,C)), _safe_bad(COND;E;C).
 _safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_declare(X,multimap,COND)), _passed(sugar,LBL2,multimap_assign(X,KE,BE,CE)), _safe_bad(COND;KE;BE;CE).
 _safe_bad(EXPR) :- _phase_active(safe), _expression(sugar,EXPR), _expression_tupleIndex(sugar,EXPR,IDX,F), _safe_bad(F).
