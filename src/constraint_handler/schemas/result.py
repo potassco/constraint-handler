@@ -57,9 +57,17 @@ class Value(NamedTuple):
         return f"Value({str(self.name)},{str(self.val)})"
 
 
+class Variable_declared(NamedTuple):
+    name: expression.constant
+
+
+class Variable_defined(NamedTuple):
+    name: expression.constant
+
+
 class Evaluated(NamedTuple):
     expr: expression.Expr
     value: expression.ReducedExpr
 
 
-type ResultAtom = Bool_evaluated | Evaluated | Set_value | Multimap_value | OptimizeResult | Preference_score | Value | warning.Warning | warning.Warning_raised
+type ResultAtom = Bool_evaluated | Evaluated | Set_value | Multimap_value | OptimizeResult | Preference_score | Value | Variable_declared | Variable_defined | warning.Warning | warning.Warning_raised

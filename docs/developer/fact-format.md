@@ -239,6 +239,8 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 <atom> ::=
     | "value" "(" <variable> "," <val> ")"
+    | "variable_declared" "(" <variable> ")"
+    | "variable_defined" "(" <variable> ")"
     | "evaluated" "(" <operator> "," <expression-list>  "," <val> ")"
     | "set_value" "(" <variable> "," <val> ")"
     | "multimap_value" "(" <variable> "," <val> "," <val> ")"

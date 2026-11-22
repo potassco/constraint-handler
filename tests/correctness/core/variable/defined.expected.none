@@ -1,0 +1,7 @@
+variable_defined(failed)
+variable_defined(inactive)
+not_defined(boolean)
+not_defined(defined)
+not_defined(defined_set)
+not_defined(empty_set)
+not_defined(integer)

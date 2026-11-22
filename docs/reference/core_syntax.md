@@ -114,6 +114,15 @@ Variables represent references to values that can be reused throughout the progr
 
 **[Result]**{.badge .result }
 
+`variable_declared(Name)` is added to the model when at least one declaration
+of the user-facing variable `Name` has a condition that evaluates to true.
+This includes declarations introduced by `variable_define` and collection
+declarations. The marker is present even when the variable evaluates to `bad`
+or is an empty collection.
+
+`variable_defined(Name)` is added to the model when the user-facing variable
+`Name` has a value other than `bad`. This includes empty collections.
+
 When a variable is assigned a value, an atom of the `value/2` predicate is added to the model.
 The same predicate is also used by some higher-level features, such as labeled optimization declarations, to expose aggregated results in the final model.
 
