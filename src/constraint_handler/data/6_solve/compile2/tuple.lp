@@ -1,11 +1,11 @@
-_tuple_value_index(Tuple, TupleValue, Idx, Value) :-
-    _se_value(Tuple, TupleValue),
+_tuple_domain_index(Tuple, TupleValue, Idx, Value) :-
+    _se_domain(Tuple, TupleValue),
     _expression_tupleIndex(compile2, Tuple, Idx, _),
     (function, (), _, Args) = @pythonReify(TupleValue),
     (Idx, Value) = @pythonEnumerateElements(Args).
 
 _tuple_set_component(Tuple, TupleValue, Idx, Arg, SetValue) :-
-    _tuple_value_index(Tuple, TupleValue, Idx, SetValue),
+    _tuple_domain_index(Tuple, TupleValue, Idx, SetValue),
     _expression_tupleIndex(compile2, Tuple, Idx, Arg),
     _se_is_set(Arg).
 
@@ -17,28 +17,28 @@ _tuple_set_value_matches_uid(Arg, SetValue, Uid) :-
     _tuple_set_component(_, _, _, Arg, SetValue),
     _se_set_domain_symbol(Arg, Uid, SetValue).
 
-:-
-    _tuple_value_index(Tuple, TupleValue, Idx, Value),
+:- _se_value(Tuple, TupleValue),
+    _tuple_domain_index(Tuple, TupleValue, Idx, Value),
     _expression_tupleIndex(compile2, Tuple, Idx, Arg),
     not _se_is_set(Arg),
     not _se_value(Arg, Value).
 
-:-
-    _tuple_value_index(Tuple, TupleValue, Idx, SetValue),
+:- _se_value(Tuple, TupleValue),
+    _tuple_domain_index(Tuple, TupleValue, Idx, SetValue),
     _expression_tupleIndex(compile2, Tuple, Idx, Arg),
     _se_is_set(Arg),
     not _tuple_set_value_matches_uid(Arg, SetValue, _).
 
-:-
-    _tuple_value_index(Tuple, TupleValue, Idx, SetValue),
+:- _se_value(Tuple, TupleValue),
+    _tuple_domain_index(Tuple, TupleValue, Idx, SetValue),
     _expression_tupleIndex(compile2, Tuple, Idx, Arg),
     _se_is_set(Arg),
     _tuple_set_value_matches_uid(Arg, SetValue, Uid),
     _se_set_domain(Uid, pos, Value),
     not _set_contains(Arg, Value).
 
-:-
-    _tuple_value_index(Tuple, TupleValue, Idx, SetValue),
+:- _se_value(Tuple, TupleValue),
+    _tuple_domain_index(Tuple, TupleValue, Idx, SetValue),
     _expression_tupleIndex(compile2, Tuple, Idx, Arg),
     _se_is_set(Arg),
     _tuple_set_value_matches_uid(Arg, SetValue, Uid),

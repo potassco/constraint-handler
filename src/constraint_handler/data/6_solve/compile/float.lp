@@ -25,8 +25,8 @@ _operator_needsPython(OP,T1,T2) :- operator_declare(OP,(T1,(T2,())),T), (T1;T2)=
 _operator_needsPython(OP,T1,T2) :- (T1,T2)=((float,int);(int,float)), OP=(eq;neq).
 _operator_needsPython(float_div,int,int).
 
-_expression_pythonEval(E,operation(OP,(val(T,V),()))) :- _computeIdx(E,OP), _operator_needsPython(OP,T), _computeIdx(E,0,val(T,V)).
-_expression_pythonEval(E,operation(OP,(val(T1,V1),(val(T2,V2),())))) :- _computeIdx(E,OP), _operator_needsPython(OP,T1,T2), _computeIdx(E,0,val(T1,V1)), _computeIdx(E,1,val(T2,V2)).
+_python_evaluate(E,operation(OP,(val(T,V),())),()) :- _computeIdx(E,OP), _operator_needsPython(OP,T), _computeIdx(E,0,val(T,V)).
+_python_evaluate(E,operation(OP,(val(T1,V1),(val(T2,V2),()))),()) :- _computeIdx(E,OP), _operator_needsPython(OP,T1,T2), _computeIdx(E,0,val(T1,V1)), _computeIdx(E,1,val(T2,V2)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(float,V)), _computeIdx(E,1,val(float,V)).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(float,_)), _computeIdx(E,1,val(float,V)), not _computeIdx(E,0,val(float,V)).
