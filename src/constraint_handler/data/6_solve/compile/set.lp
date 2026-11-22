@@ -2,6 +2,7 @@ _set_assign(variable(X),E) :- _passed(compile,LBL,set_assign(X,E,C)), _se_value(
 _se_value(variable(X),ref(set,variable(X))) :- _passed(compile,LBL,variable_declare(X,set,C)), _se_value(C,val(bool,true)).
 
 direct_query(E) :- _set_assign(X,E).
+_set_candidate(R,V) :- _set_assign(R,E), _se_value(E,V).
 
 %%%%%%%%%%%%%%%%% cardinality
 _computedIdx(E,val(int,N)) :- _computeIdx(E,cardinality), _computeIdx(E,0,ref(set,SET)),
@@ -10,13 +11,10 @@ _computedIdx(E,val(int,N)) :- _computeIdx(E,cardinality), _computeIdx(E,0,ref(se
 %%%%%%%%%%%%%%%%% set_declare set_assign set_value
 
 direct_query(operation(eq,(V1,(V2,())))) :-
-    _set_assign(EX,E1), _se_value(E1,V1),
-    _set_assign(EX,E2), _se_value(E2,V2), V1 < V2.
+    _set_candidate(EX,V1), _set_candidate(EX,V2), V1 < V2.
 _set_contains(EX,V1) :-
-    _set_assign(EX,E1), _se_value(E1,V1), %_se_value(EX,ref(set,ER)),
-    #false : _set_assign(EX,E2), _se_value(E2,V2), _se_value(operation(eq,(V2,(V1,()))),val(bool,true)), V2 < V1.
-
-_set_assign(EX,S) :- _set_assign(EX,ref(set,S)).
+    _set_candidate(EX,V1),
+    #false : _set_candidate(EX,V2), _se_value(operation(eq,(V2,(V1,()))),val(bool,true)), V2 < V1.
 
 %%%%%%%%%%%%%%%%% set_isin set_notin
 direct_query(operation(eq,(V1,(V2,())))) :- _computeIdx(E,(set_isin;set_notin)), _computeIdx(E,0,V1), _computeIdx(E,1,ref(set,S)),
@@ -51,7 +49,7 @@ _set_assign(set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% union inter diff
 _se_value(operation(OP,L),ref(set,operation(OP,L))) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
-_set_assign(operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
+_set_candidate(operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
 direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;inter),(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
@@ -59,13 +57,13 @@ direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;i
     _set_contains(R2,V2),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
-_set_assign(operation(inter,(S1,(S2,()))),VSMALL) :- direct_query(operation(inter,(S1,(S2,())))),
+_set_candidate(operation(inter,(S1,(S2,()))),VSMALL) :- direct_query(operation(inter,(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
     _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
     (VSMALL,VBIG)=((V1,V2);(V2,V1)), VSMALL <= VBIG.
 
-_set_assign(operation(diff,(S1,(S2,()))),V1) :- direct_query(operation(diff,(S1,(S2,())))),
+_set_candidate(operation(diff,(S1,(S2,()))),V1) :- direct_query(operation(diff,(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
     _set_contains(R1,V1),
     #false : _set_contains(R2,V2), _se_value(operation(eq,(VSMALL,(VBIG,()))),val(bool,true)),
@@ -164,10 +162,15 @@ _set_implode(REF) :- _direct_implode(E), _se_value(E,ref(set,REF)).
 _direct_imploded(ref(set,REF),V) :- _direct_implode(ref(set,REF)), _set_imploded(REF,V).
 _direct_imploded(E,V) :- _direct_implode(E), _se_value(E,ref(set,REF)), _set_imploded(REF,V).
 
-_direct_implode(val(TV,RV)) :- _set_implode(EM), _set_contains(EM,val(TV,RV)).
+_direct_implode(V) :- _set_implode(EM), _set_contains(EM,V).
 _set_makeIndex(EM) :- _set_implode(EM).
 _set_as_list_aux(EM,0,()) :- _set_implode(EM).
-_set_as_list_aux(EM,IDX+1,(V,L)) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,val(TV,RV)), _direct_imploded(val(TV,RV),V).
+_set_as_list_aux(EM,IDX+1,(V,L)) :- _set_as_list_aux(EM,IDX,L), _set_index(EM,IDX,RV), _direct_imploded(RV,V).
 _set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
 
-%_direct_imploded(E,E) :- _direct_implode(E), E = set(_).
+_direct_imploded(set(L),set(L)) :- _direct_implode(set(L)).
+
+_direct_explode(V) :- _direct_explode(set(L)), V=@pythonListElements(L).
+_direct_exploded(set(L),ref(set,set(L))) :- _direct_explode(set(L)).
+_set_contains(set(L),V) :- _direct_explode(set(L)), RV=@pythonListElements(L), _direct_exploded(RV,V).
+_direct_imploded(ref(set,set(L)),set(L)) :- _direct_explode(set(L)).

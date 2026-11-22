@@ -143,7 +143,7 @@ m7_output = [
 
 t_modules = {
     "expression": ("PHASE", ["sugar", "type_check", "compile", "compile2"]),
-    "expression_sequence": ("PHASE", ["defaultArgs", "sugar", "type_check", "compile", "compile2"]),
+    "expression_sequence": ("PHASE", ["defaultArgs", "sugar", "type_check", "compile", "compile2", "implode"]),
     "correction": ("PHASE", ["constantFolding", "float_normalize", "safe", "type_check", "wf_check"]),
 }
 modules = (

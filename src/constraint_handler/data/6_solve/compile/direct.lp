@@ -99,13 +99,18 @@ _direct_imploded(bad,bad) :- _direct_implode(bad).
 %%%%%%%%%%%%%%%%% implode
 _direct_imploded(val(T,V),val(T,V)) :- _direct_implode(val(T,V)), _type_representation(T,extensional).
 
-_direct_imploded(variable(X),V) :- _direct_implode(variable(X)), _se_value(variable(X),V).
 _direct_implode(V) :- _direct_implode(variable(X)), _se_value(variable(X),V).
 _direct_imploded(variable(X),W) :- _direct_implode(variable(X)), _se_value(variable(X),V), _direct_imploded(V,W).
 
-_isTuple(compile,E) :- _direct_implode(E), true=@pythonIsTuple(E).
-_isTuple(compile,E,N,ARGS) :- _direct_implode(E), (function,(),N,ARGS)=@pythonReify(E).
-_direct_implode(X) :- _direct_implode(E), _expression_tupleIndex(compile,E,IDX,X).
-_direct_implodeTupleAux(E,N,()) :- _direct_implode(E), _expression_tupleLength(compile,E,N).
-_direct_implodeTupleAux(E,IDX,(V,L)) :- _direct_implodeTupleAux(E,IDX+1,L), _expression_tupleIndex(compile,E,IDX,X), _direct_imploded(X,V).
+_expression(implode,E) :- _direct_implode(E).
+_direct_implode(X) :- _direct_implode(E), _expression_tupleIndex(implode,E,IDX,X).
+_direct_implodeTupleAux(E,N,()) :- _direct_implode(E), _expression_tupleLength(implode,E,N).
+_direct_implodeTupleAux(E,IDX,(V,L)) :- _direct_implodeTupleAux(E,IDX+1,L), _expression_tupleIndex(implode,E,IDX,X), _direct_imploded(X,V).
 _direct_imploded(E,TUPLE) :- _direct_implodeTupleAux(E,0,L), TUPLE=@pythonReflect(function,(),L).
+
+_expression(implode,E) :- _direct_explode(E).
+_direct_explode(X) :- _direct_explode(E), _expression_tupleIndex(implode,E,IDX,X).
+_direct_exploded(V,V) :- _direct_explode(V), V=(bad;val(T,W)).
+_direct_explodeTupleAux(E,N,()) :- _direct_explode(E), _expression_tupleLength(implode,E,N).
+_direct_explodeTupleAux(E,IDX,(V,L)) :- _direct_explodeTupleAux(E,IDX+1,L), _expression_tupleIndex(implode,E,IDX,X), _direct_exploded(X,V).
+_direct_exploded(E,TUPLE) :- _direct_explodeTupleAux(E,0,L), TUPLE=@pythonReflect(function,(),L).
