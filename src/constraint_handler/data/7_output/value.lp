@@ -1,6 +1,7 @@
 _variable_declared(X) :- ch_core(variable_declare(X,D,C),LBL), _bool_evaluated(C,val(bool,true)).
 variable_declared(X) :- _variable_declared(X), ch_post(variable_interface(X),LBL).
-variable_defined(X) :- _se_value(variable(X),V), V != bad, ch_post(variable_interface(X),LBL).
+_variable_defined(X) :- _se_value(variable(X),V), V != bad.
+variable_defined(X) :- _variable_defined(X), ch_post(variable_interface(X),LBL).
 
 set_value(X,V) :- _se_value(variable(X),set), _set_contains(variable(X),V), ch_post(variable_interface(X),LBL). %%% for compile2
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V), ch_post(variable_interface(X),LBL).

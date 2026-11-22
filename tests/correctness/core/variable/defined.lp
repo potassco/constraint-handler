@@ -8,7 +8,6 @@ variable_declare(defined,definition,variable(forced_condition)).
 variable_define(defined,val(int,7)).
 variable_declare(conditional,definition,variable(boolean)).
 variable_define(conditional,val(int,8)).
-not_defined(conditional) :- not variable_defined(conditional).
 variable_declare(failed,definition).
 variable_define(failed,bad).
 variable_declare(empty_set,set).
@@ -16,3 +15,5 @@ variable_declare(defined_set,set).
 set_assign(defined_set,val(int,1)).
 variable_declare(inactive,definition,val(bool,false)).
 variable_define(inactive,val(int,7)).
+not_defined(X) :- variable_declare(X,D), not variable_defined(X).
+not_defined(X) :- variable_declare(X,D,C), not variable_defined(X).
