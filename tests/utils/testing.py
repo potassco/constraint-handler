@@ -95,6 +95,9 @@ def build_expectations(name) -> tuple[list[tuple[clintest.test.Test, TestingOpti
 
     for mode in (ReasoningMode.UNION, ReasoningMode.INTERSECTION, ReasoningMode.SUPREMUM, ReasoningMode.INFIMUM):
         test_mode = [clintest.test.Assert(Last(), contains(atom)) for atom in atoms_from_file(name + mode.name.lower())]
+        test_mode.extend(
+            clintest.test.Assert(Last(), absent(atom)) for atom in atoms_from_file(name + mode.name.lower() + ".none")
+        )
         if test_mode:
             tests.append((clintest.test.And(*test_mode), TestingOptions(add_to_ctl_options={"reasoning_mode": mode})))
 
