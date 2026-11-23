@@ -23,4 +23,4 @@ _ge_mapAux(EXPR,I,((X,RV),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables
 _ge_mapAux(EXPR,I,((X,bad),M)) :- _ge_mapAux(EXPR,I+1,M), _ge_enumeratedVariables(EXPR,(I,X)), not _se_value(variable(X),_).
 _ge_mapped(EXPR,M) :- _ge_mapAux(EXPR,0,M).
 
-_python_evaluate(EXPR,EXPR,M) :- _ge_eval_expression(EXPR), _ge_mapped(EXPR,M).
+_python_evaluate(EXPR,M) :- _ge_eval_expression(EXPR), _ge_mapped(EXPR,M).

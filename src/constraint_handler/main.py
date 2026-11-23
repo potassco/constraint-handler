@@ -81,7 +81,6 @@ m6_module = [
 
 m6_datatype = [
     "6_solve/compile/bool",
-    "6_solve/compile/cast",
     "6_solve/compile/conditionals",
     "6_solve/compile/equality",
     "6_solve/compile/float",

@@ -6,7 +6,7 @@ _expression(compile,E) :- direct_query(E).
 
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
 _se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
-_python_evaluate(python(S),python(S),()) :- direct_query(python(S)).
+_python_request(python(S),python(S)) :- direct_query(python(S)).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
@@ -65,12 +65,12 @@ _direct_imploded_args_aux(E,IDX,()) :- _computeIdx(E,python(STR)), _expression_o
 _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L), _computeIdx(E,IDX,V),
     _direct_imploded(V,IMP).
 
-_python_evaluate(E,operation(python(S),L),()) :- _computeIdx(E,python(S)), _direct_imploded_args_aux(E,0,L).
+_python_request(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _direct_imploded_args_aux(E,0,L).
 
 _direct_resortToPython(operation(pythonExtract(PSTMT,PEXPR),ARGS)) :- _expression(compile,operation(pythonExtract(PSTMT,PEXPR),ARGS)).
 _direct_implode(V) :- _direct_resortToPython(E), _computeIdx(E,IDX,V).
 _direct_imploded_args_aux(E,N,()) :- _direct_resortToPython(E), _expression_operationLength(compile,E,N).
-_python_evaluate(E,operation(O,L),()) :- _direct_resortToPython(E), _direct_imploded_args_aux(E,0,L), E=operation(O,ARGS).
+_python_request(E,operation(O,L)) :- _direct_resortToPython(E), _direct_imploded_args_aux(E,0,L), E=operation(O,ARGS).
 
 %%%%%%%%%%%%%%%%% bad
 %_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _expression_safe(operation(OP,ARGS)), not _operator_recoverable(OP).
