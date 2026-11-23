@@ -35,7 +35,7 @@ _statement_changed(statement_python(CODE),X) :- _statement_querySSA(LBL,PRG,SCOP
 
 %%%%% statement_context
 
-_statement_context((PRG,()),X,variable(execution_input(PRG,X))) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), X=@pythonListElements(INS).
+_statement_context((PRG,()),X,variable(EX)) :- _execution_inputVar(LBL,PRG,X,EX).
 
 
 _statement_context((l,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_context(SCOPE,X,XS).
