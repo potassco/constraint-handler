@@ -18,8 +18,8 @@ _expression(PHASE,LBL,DECL,(E;O;P;C)) :- _passed(PHASE,LBL,DECL), DECL=optimize_
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(K,E).
 
 _expression(PHASE,E) :- _expression(PHASE,LBL,DECL,E).
-_expression(PHASE,D) :- _expression(PHASE,operation(O,L)), D=@pythonListElements(L).
-_expression(PHASE,D) :- _expression(PHASE,T), D=@pythonTupleElements(T).
+_expression(PHASE,D) :- _expression_operationIndex(PHASE,E,IDX,D).
+_expression(PHASE,D) :- _expression_tupleIndex(PHASE,E,IDX,D).
 
 _number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=variable_default(X,D,C,PRIO).
 _number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,ORIG,PREC,X,PRIO,C).
