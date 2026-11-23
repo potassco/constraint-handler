@@ -7,7 +7,7 @@ direct_query(E1;E2) :- direct_query((E1,E2)).
 %%%%%%%%%%%%%%%%% multimap_make
 _se_value(operation(multimap_make,L),ref(multimap,operation(multimap_make,L))) :- direct_query(operation(multimap_make,L)).
 _multimap_add(ER,EK,EV) :- direct_query(operation(multimap_make,L)), _se_value(operation(multimap_make,L),ref(multimap,ER)),
-    (EK,EV)=@pythonListElements(L).
+    _expression_operationIndex(compile,operation(multimap_make,L),IDX,(EK,EV)).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value
 

@@ -36,7 +36,7 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,set_notin), _computeIdx(E,0,V1),
 
 %%%%%%%%%%%%%%%%% set_make
 _se_value(operation(set_make,L),ref(set,operation(set_make,L))) :- direct_query(operation(set_make,L)).
-_set_assign(operation(set_make,L),SE) :- direct_query(operation(set_make,L)), SE=@pythonListElements(L).
+_set_assign(operation(set_make,L),SE) :- direct_query(operation(set_make,L)), _expression_operationIndex(compile,operation(set_make,L),IDX,SE).
 
 _se_value(set(L),ref(set,set(L))) :- direct_query(set(L)).
 _set_assign(set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
@@ -49,7 +49,7 @@ _set_assign(set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% union inter diff
 _se_value(operation(OP,L),ref(set,operation(OP,L))) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
-_set_candidate(operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
+_set_candidate(operation(union,L),V) :- direct_query(operation(union,L)), _expression_operationIndex(compile,operation(union,L),IDX,SE), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
 direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;inter),(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
