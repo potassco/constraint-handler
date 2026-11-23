@@ -294,6 +294,7 @@ expression_tests = [
     "expression/python_multi_args",
     "expression/tuple",
     "expression/tuple_arity_mismatch",
+    "expression/tuple_computed_equality",
     "expression/tuple_extra",
     "expression/tuple_nested",
 ]

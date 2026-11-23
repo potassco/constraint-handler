@@ -18,8 +18,9 @@ _se_value(variable(X),bad) :- _expression(compile,variable(X)), #false : _passed
 _direct_tupleValuesAux(E,N,()) :- _expression(compile,E), _expression_tupleLength(compile,E,N).
 _direct_tupleValuesAux(E,IDX,(V,VS)) :- _direct_tupleValuesAux(E,IDX+1,VS),
     _expression_tupleIndex(compile,E,IDX,ARG), _se_value(ARG,V).
-_se_value(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
-_isTuple(compile,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
+_direct_tupleValues(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
+_se_value(E,TUPLE) :- _direct_tupleValues(E,TUPLE).
+_isTuple(compile,TUPLE) :- _direct_tupleValues(E,TUPLE).
 
 %%%%%%%%%%%%% blablablabla
 _expression_dynamicTainted(bad) :- _expression(compile,bad).
