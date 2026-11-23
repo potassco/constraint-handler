@@ -106,8 +106,10 @@ _statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,statement_pyt
 
 
 
-_statement_indexedVar(SCOPE,IDX,X) :- _statement_context(SCOPE,X,XS), true=@pythonIsString(X), IDX=#count { Y: _statement_context(SCOPE,Y,YS), true=@pythonIsString(Y), Y<X }.
-_statement_countVars(SCOPE,N) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), N=#count { X: _statement_context(SCOPE,X,XS), true=@pythonIsString(X) }.
+_statement_variableName(X) :- _statement_context(SCOPE,X,XS).
+_statement_pythonName(X) :- _statement_variableName(X), true=@pythonIsString(X).
+_statement_indexedVar(SCOPE,IDX,X) :- _statement_context(SCOPE,X,XS), _statement_pythonName(X), IDX=#count { Y: _statement_context(SCOPE,Y,YS), _statement_pythonName(Y), Y<X }.
+_statement_countVars(SCOPE,N) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), N=#count { X: _statement_context(SCOPE,X,XS), _statement_pythonName(X) }.
 
 _statement_pythonInputMapAux(SCOPE,N,()) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_countVars(SCOPE,N).
 _statement_pythonInputMapAux(SCOPE,IDX,((val(string,Y),YS),VARS)) :- _statement_pythonInputMapAux(SCOPE,IDX+1,VARS), _statement_indexedVar(SCOPE,IDX,Y), _statement_context(SCOPE,Y,YS).

@@ -12,6 +12,8 @@ _statement_query/3.
 _statement_querySSA/4.
 _statement_changed/2.
 _statement_context/3.
+_statement_variableName/1.
+_statement_pythonName/1.
 _statement_condition/2.
 _statement_countVars/2.
 _statement_definedLatest/2.
