@@ -18,7 +18,8 @@ _se_value(variable(X),bad) :- _expression(compile,variable(X)), #false : _passed
 _direct_tupleValuesAux(E,N,()) :- _expression(compile,E), _expression_tupleLength(compile,E,N).
 _direct_tupleValuesAux(E,IDX,(V,VS)) :- _direct_tupleValuesAux(E,IDX+1,VS),
     _expression_tupleIndex(compile,E,IDX,ARG), _se_value(ARG,V).
-_direct_tupleValues(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
+_expression_sequenceTupleQuery(compile,L) :- _direct_tupleValuesAux(E,0,L).
+_direct_tupleValues(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), _expression_sequenceTuple(compile,VS,TUPLE).
 _se_value(E,TUPLE) :- _direct_tupleValues(E,TUPLE).
 _isTuple(compile,TUPLE) :- _direct_tupleValues(E,TUPLE).
 
@@ -91,11 +92,13 @@ _expression(implode,E) :- _direct_implode(E).
 _direct_implode(X) :- _direct_implode(E), _expression_tupleIndex(implode,E,IDX,X).
 _direct_implodeTupleAux(E,N,()) :- _direct_implode(E), _expression_tupleLength(implode,E,N).
 _direct_implodeTupleAux(E,IDX,(V,L)) :- _direct_implodeTupleAux(E,IDX+1,L), _expression_tupleIndex(implode,E,IDX,X), _direct_imploded(X,V).
-_direct_imploded(E,TUPLE) :- _direct_implodeTupleAux(E,0,L), TUPLE=@pythonReflect(function,(),L).
+_expression_sequenceTupleQuery(implode,L) :- _direct_implodeTupleAux(E,0,L).
+_direct_imploded(E,TUPLE) :- _direct_implodeTupleAux(E,0,L), _expression_sequenceTuple(implode,L,TUPLE).
 
 _expression(implode,E) :- _direct_explode(E).
 _direct_explode(X) :- _direct_explode(E), _expression_tupleIndex(implode,E,IDX,X).
 _direct_exploded(V,V) :- _direct_explode(V), V=(bad;val(T,W)).
 _direct_explodeTupleAux(E,N,()) :- _direct_explode(E), _expression_tupleLength(implode,E,N).
 _direct_explodeTupleAux(E,IDX,(V,L)) :- _direct_explodeTupleAux(E,IDX+1,L), _expression_tupleIndex(implode,E,IDX,X), _direct_exploded(X,V).
-_direct_exploded(E,TUPLE) :- _direct_explodeTupleAux(E,0,L), TUPLE=@pythonReflect(function,(),L).
+_expression_sequenceTupleQuery(implode,L) :- _direct_explodeTupleAux(E,0,L).
+_direct_exploded(E,TUPLE) :- _direct_explodeTupleAux(E,0,L), _expression_sequenceTuple(implode,L,TUPLE).

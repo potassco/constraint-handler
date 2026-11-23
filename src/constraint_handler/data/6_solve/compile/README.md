@@ -4,6 +4,7 @@ _passed(compile,LBL,DECL).
 _passed(sugar,LBL,set_baseDomain/3).
 _expression_tupleLength((compile;implode),EXPR,N).
 _expression_tupleIndex((compile;implode),EXPR,IDX,ARG).
+_expression_sequenceTuple((compile;implode),LIST,TUPLE).
 _expression_operationIndex(compile,EXPR,IDX,ARG).
 _expression_operationIndex(sugar,EXPR,IDX,ARG).
 _expression_operationOperator(sugar,EXPR,OP).
@@ -34,6 +35,7 @@ _direct_imploded_args_aux/3.
 _direct_implodeTupleAux/3.
 _direct_lazy/1.
 _direct_tupleValuesAux/3.
+_expression_sequenceTupleQuery((compile;implode),LIST).
 _python_request/2.
 _python_evaluate/1.
 _python_cached/3.
