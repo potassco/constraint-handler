@@ -1,0 +1,2 @@
+multimap_value(from_pair,val(string,"key"),val(int,7))
+value(from_pair_count,val(int,1))

@@ -40,7 +40,8 @@ _int_add/3.
 _int_mult/3.
 _isTuple/2. _isTuple/4.
 _lambda_aux/2.
-_multimap_add/3.
+_multimap_assign/3.
+_multimap_candidate/3.
 _multimap_has/3.
 _multimap_representative/4.
 _multimap_entry/3.

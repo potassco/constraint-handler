@@ -313,6 +313,7 @@ multimap_tests = [
     "multimap/find2",
     "multimap/fold_i",
     "multimap/main",
+    "multimap/make_pair_variable",
     "multimap/max_entries",
     "multimap/min_entries",
 ]
