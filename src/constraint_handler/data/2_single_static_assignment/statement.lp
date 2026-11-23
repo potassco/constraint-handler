@@ -1,5 +1,6 @@
-_execution_inputVar(LBL,PRG,X,execution_input(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), X=@pythonListElements(INS).
-_execution_outputVar(LBL,PRG,X,execution_output(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), X=@pythonListElements(OUTS).
+_expression_sequence(defaultArgs,(INS;OUTS)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)).
+_execution_inputVar(LBL,PRG,X,execution_input(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), _expression_sequenceIndex(defaultArgs,INS,IDX,X).
+_execution_outputVar(LBL,PRG,X,execution_output(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), _expression_sequenceIndex(defaultArgs,OUTS,IDX,X).
 
 
 

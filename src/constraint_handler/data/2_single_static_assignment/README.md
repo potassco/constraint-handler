@@ -10,6 +10,8 @@ _execution_ou_proj/2.
 _execution_outputVar/4.
 _statement_query/3.
 _statement_querySSA/4.
+_statement_expressionQuery/1.
+_statement_expressionWellformed/1.
 _statement_changed/2.
 _statement_context/3.
 _statement_variableName/1.
@@ -34,6 +36,9 @@ _expression_contextualizedTupleAux/4.
 _expression_querySSA/3.
 _expression_operationIndex/4.
 _expression_operationLength/3.
+_expression_sequence(defaultArgs,LIST).
+_expression_sequenceIndex(defaultArgs,LIST,IDX,X).
+_expression_sequenceLength(defaultArgs,LIST,N).
 _expression_tupleIndex/4.
 _expression_tupleLength/3.
 
