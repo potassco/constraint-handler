@@ -7,7 +7,6 @@ _expression(compile,E) :- direct_query(E).
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
 _se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
 _python_evaluate(python(S),python(S),()) :- direct_query(python(S)).
-_se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
