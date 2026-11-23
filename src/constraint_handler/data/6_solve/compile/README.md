@@ -62,6 +62,7 @@ _set_lastIndex/2.
 _set_implode/1.
 _set_as_list_aux/3.
 _set_imploded/2.
+_set_explode_member/2.
 _tupleComp/5.
 _tuple_pair/5.
 _tupleEqAux/3.

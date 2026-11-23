@@ -170,7 +170,8 @@ _set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
 
 _direct_imploded(set(L),set(L)) :- _direct_implode(set(L)).
 
-_direct_explode(V) :- _direct_explode(set(L)), V=@pythonListElements(L).
+_set_explode_member(L,RV) :- _direct_explode(set(L)), RV=@pythonListElements(L).
+_direct_explode(V) :- _set_explode_member(L,V).
 _direct_exploded(set(L),ref(set,set(L))) :- _direct_explode(set(L)).
-_set_contains(set(L),V) :- _direct_explode(set(L)), RV=@pythonListElements(L), _direct_exploded(RV,V).
+_set_contains(set(L),V) :- _set_explode_member(L,RV), _direct_exploded(RV,V).
 _direct_imploded(ref(set,set(L)),set(L)) :- _direct_explode(set(L)).

@@ -11,5 +11,5 @@ _direct_explode(V) :- _python_evaluated(E,valid(V)).
 _se_value(E,V) :- _python_evaluated(E,valid(V)), V=(bad;val(T,W)).
 _se_value(E,V) :- _python_evaluated(E,valid(RV)), _expression_tupleLength(implode,RV,N), _direct_exploded(RV,V).
 _se_value(E,ref(set,E)) :- _python_evaluated(E,valid(set(L))).
-_set_candidate(E,V) :- _python_evaluated(E,valid(set(L))), RV=@pythonListElements(L), _direct_exploded(RV,V).
+_set_candidate(E,V) :- _python_evaluated(E,valid(set(L))), _set_contains(set(L),V).
 _direct_imploded(ref(set,E),set(L)) :- _python_evaluated(E,valid(set(L))).
