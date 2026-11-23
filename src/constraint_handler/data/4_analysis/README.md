@@ -39,6 +39,7 @@ _expression_tailIndex/4.
 _expression_tailLength/3.
 _expression_tupleDomainAux/3.
 _expression_tupleIndex/4.
+_expression_tupleQuery/2.
 _expression_typeQuery/1.
 _expression_wellformed/1.
 _expression_wfQuery/1.

@@ -1,4 +1,6 @@
-_isTuple(PHASE,E) :- _expression(PHASE,E), true=@pythonIsTuple(E).
+_expression_tupleQuery(PHASE,E) :- _expression(PHASE,E); #false: E=operation(OP,ARGS); #false: E=variable(X); #false: E=val(T,V); #false: E=lambda(VARS,EXPR); #false: E=ref(T,R); #false: E=bad; #false: E=set(L); #false: E=(E0,E1).
+_isTuple(PHASE,E) :- _expression_tupleQuery(PHASE,E), true=@pythonIsTuple(E).
+_isTuple(PHASE,(E0,E1)) :- _expression(PHASE,(E0,E1)), E1!=().
 _isTuple(PHASE,E,N,ARGS) :- _isTuple(PHASE,E), (function,(),N,ARGS)=@pythonReify(E).
 
 _expression_tail(PHASE,TAIL) :- _isTuple(PHASE,E,N,(E0,(E1,(E2,TAIL)))).
