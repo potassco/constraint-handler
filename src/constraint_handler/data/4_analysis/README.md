@@ -14,6 +14,7 @@ _operator_variadicEmptyReturns/2.
 _parameter_value/2.
 _phase_active/1.
 _number(sugar,N).
+_string(sugar,S).
 _type/1.
 type_query/1.
 operator_declare/3.
@@ -38,6 +39,7 @@ _expression_tupleIndex/4.
 _expression_typeQuery/1.
 _expression_wellformed/1.
 _expression_wfQuery/1.
+_string_wellformed/1.
 _float_normalizeQuery/1.
 _illformed/1. _illformed/2.
 _main/1.

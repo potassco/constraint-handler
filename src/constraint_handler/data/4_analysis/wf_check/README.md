@@ -4,12 +4,14 @@ _phase_active(wf_check).
 _expression(sugar,EXPR).
 _expression(sugar,LBL,DECL,EXPR).
 _number(sugar,N).
+_string(sugar,S).
 _passed(defaultArgs,LBL,execution_declare/5).
 
 ### Intermediate predicates
 
 _expression_wfQuery/1.
 _expression_wellformed/1.
+_string_wellformed/1.
 
 ### Output predicates
 

@@ -26,6 +26,10 @@ _number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=optimize_component
 _number(PHASE,LBL,DECL,K) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(K,E).
 _number(PHASE,K) :- _number(PHASE,LBL,DECL,K).
 
+_string(PHASE,CODE) :- _expression(PHASE,python(CODE)).
+_string(PHASE,(PSTMT;PEXPR)) :- _expression(PHASE,pythonExtract(PSTMT,PEXPR)).
+_string(PHASE,(PSTMT;PEXPR)) :- _expression(PHASE,operation(pythonExtract(PSTMT,PEXPR),ARGS)).
+
 _variable(PHASE,X) :- _expression(PHASE,variable(X)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_assign(X,E,C)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_choice(X,E,C)).

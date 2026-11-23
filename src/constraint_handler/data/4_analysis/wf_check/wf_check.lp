@@ -2,8 +2,9 @@
 _expression_wfQuery(EXPR) :- _phase_active(wf_check), _expression(sugar,EXPR).
 _expression_wfQuery(pythonExtract(PSTMT,PEXPR)) :- _expression_wfQuery(operation(pythonExtract(PSTMT,PEXPR),L)).
 _expression_wellformed(bad) :- _phase_active(wf_check).
-_expression_wellformed(python(CODE)) :- _expression_wfQuery(python(CODE)), true=@pythonIsString(CODE).
-_expression_wellformed(pythonExtract(PSTMT,PEXPR)) :- _expression_wfQuery(pythonExtract(PSTMT,PEXPR)), true=@pythonIsString(PSTMT),true=@pythonIsString(PEXPR).
+_string_wellformed(S) :- _phase_active(wf_check), _string(sugar,S), true=@pythonIsString(S).
+_expression_wellformed(python(CODE)) :- _expression_wfQuery(python(CODE)), _string_wellformed(CODE).
+_expression_wellformed(pythonExtract(PSTMT,PEXPR)) :- _expression_wfQuery(pythonExtract(PSTMT,PEXPR)), _string_wellformed(PSTMT), _string_wellformed(PEXPR).
 _expression_wellformed(val(T,V)) :- _expression_wfQuery(val(T,V)).
 _expression_wellformed(variable(X)) :- _expression_wfQuery(variable(X)).
 _expression_wellformed(operation(O,L)) :- _expression_wfQuery(operation(O,L)), _expression_operationLength(sugar,operation(O,L),N); _expression_wellformed(O) : O=pythonExtract(PSTMT,PEXPR); _expression_wellformed(D) : _expression_operationIndex(sugar,operation(O,L),IDX,D).
