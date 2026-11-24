@@ -1,8 +1,5 @@
-_python_evaluate(E) :- _python_request(Q,E).
-_python_evaluate(E) :- _python_evaluate(E,()).
-_python_cached(E,ID,RES) :- _python_evaluate(E), _main_solverIdentifiers(ID), RES=@pythonEvalExpr(E,(),ID).
-_python_evaluated(Q,RES) :- _python_request(Q,E), _python_cached(E,ID,RES).
-_python_evaluated(E,RES) :- _python_evaluate(E,()), _python_cached(E,ID,RES).
+_python_evaluated(Q,RES) :- _python_request(Q,E), _main_solverIdentifiers(ID), RES=@pythonEvalExpr(E,(),ID).
+_python_evaluated(E,RES) :- _python_evaluate(E,()), _main_solverIdentifiers(ID), RES=@pythonEvalExpr(E,(),ID).
 _python_evaluated(E,RES) :- _python_evaluate(E,(BINDING,REST)), _main_solverIdentifiers(ID), RES=@pythonEvalExpr(E,(BINDING,REST),ID).
 _python_evaluated(E,valid(bad)) :- _python_evaluated(E,error(KIND,MSG)).
 _warning(KIND,(),(python,E,MSG)) :- _python_evaluated(E,error(KIND,MSG)).

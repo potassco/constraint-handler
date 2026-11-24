@@ -71,7 +71,7 @@ _python_request(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _direct_i
 _direct_resortToPython(operation(pythonExtract(PSTMT,PEXPR),ARGS)) :- _expression(compile,operation(pythonExtract(PSTMT,PEXPR),ARGS)).
 _direct_implode(V) :- _direct_resortToPython(E), _computeIdx(E,IDX,V).
 _direct_imploded_args_aux(E,N,()) :- _direct_resortToPython(E), _expression_operationLength(compile,E,N).
-_python_request(E,operation(O,L)) :- _direct_resortToPython(E), _direct_imploded_args_aux(E,0,L), E=operation(O,ARGS).
+_python_request(operation(O,ARGS),operation(O,L)) :- _direct_resortToPython(operation(O,ARGS)), _direct_imploded_args_aux(operation(O,ARGS),0,L).
 
 %%%%%%%%%%%%%%%%% bad
 %_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _expression_safe(operation(OP,ARGS)), not _operator_recoverable(OP).

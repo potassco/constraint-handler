@@ -37,8 +37,6 @@ _direct_lazy/1.
 _direct_tupleValuesAux/3.
 _expression_sequenceTupleQuery((compile;implode),LIST).
 _python_request/2.
-_python_evaluate/1.
-_python_cached/3.
 _expression((compile;implode),EXPR).
 _int_add/3.
 _int_mult/3.
