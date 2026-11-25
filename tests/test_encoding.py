@@ -681,8 +681,6 @@ ground_xfail: set[str] = (
     }
     | set(multimap_tests)
     | set(optimization_multimap_tests)
-    | set(core_join_tests)
-    | set(core_meet_tests)
 )
 
 

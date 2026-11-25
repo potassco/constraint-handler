@@ -4,6 +4,7 @@ _expression(ground,C) :- _passed(ground,LBL,variable_declare(X,D,C)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_default(X,E,C,P)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_define(X,E,C)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,variable_domain(X,E,C)).
+_expression(ground,(E;C)) :- _passed(ground,LBL,variable_element(X,E,C)).
 _expression(ground,E) :- _passed(ground,LBL,share_value(E)).
 _expression(ground,(E;C)) :- _passed(ground,LBL,set_assign(X,E,C)).
 

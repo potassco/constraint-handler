@@ -6,6 +6,7 @@ _passed(ground,LBL,variable_declare/3).
 _passed(ground,LBL,variable_default/4).
 _passed(ground,LBL,variable_define/3).
 _passed(ground,LBL,variable_domain/3).
+_passed(ground,LBL,variable_element/3).
 _passed(ground,LBL,set_assign/3).
 _passed(ground,LBL,share_value/1).
 _se_value/2.

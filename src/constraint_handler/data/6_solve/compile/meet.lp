@@ -1,4 +1,4 @@
-_meet_element(X,E) :- _passed(compile,LBL,variable_element(X,E,C)), _se_value(C,val(bool,true)), _passed(compile,DECL_LBL,variable_declare(X,meet,DECL_COND)), _se_value(DECL_COND,val(bool,true)).
+_meet_element(X,E) :- _passed((compile;ground),LBL,variable_element(X,E,C)), _se_value(C,val(bool,true)), _passed((compile;ground),DECL_LBL,variable_declare(X,meet,DECL_COND)), _se_value(DECL_COND,val(bool,true)).
 _meet_single(X,E) :- _meet_element(X,E), 1 = #count { E2 : _meet_element(X,E2) }.
 _meet_multiple(X) :- _meet_element(X,E1), _meet_element(X,E2), E1 != E2.
 _meet_value(X,bool,V) :- _meet_element(X,E), _se_value(E,val(bool,V)).
@@ -13,7 +13,7 @@ _meet_bad(X) :- _meet_element(X,E), _se_value(E,bad).
 _meet_bad(X) :- _meet_multiple(X), _meet_value(X,T,_), _meet_value(X,U,_), T != U.
 _meet_bad(X) :- _meet_multiple(X), _meet_element(X,E), _se_value(E,V), V != bad, not _meet_supported(E,V).
 _meet_bad(X) :- _meet_element(X,E), not _se_value(E,_).
-_meet_bad(X) :- _passed(compile,LBL,variable_declare(X,meet,C)), _se_value(C,val(bool,true)), not _meet_element(X,_).
+_meet_bad(X) :- _passed((compile;ground),LBL,variable_declare(X,meet,C)), _se_value(C,val(bool,true)), not _meet_element(X,_).
 
 _se_value(variable(X),V) :- _meet_single(X,E), _se_value(E,V).
 _se_value(variable(X),val(bool,false)) :- _meet_value(X,bool,false), not _meet_bad(X).
