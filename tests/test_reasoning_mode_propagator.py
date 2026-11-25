@@ -205,6 +205,44 @@ def test_extend_reasoning_mode_atoms_encodes_empty_set_marker() -> None:
     assert symbols == {clingo.parse_term('model_union("items",set(()))')}
 
 
+@pytest.mark.parametrize("selected_engine", [engine.compile, engine.ground], ids=["compile", "ground"])
+@pytest.mark.parametrize(
+    "reasoning_mode, expected_sets",
+    [
+        (ReasoningMode.UNION, {"set((val(int,1),(val(int,2),())))", "set((val(int,2),(val(int,3),())))"}),
+        (ReasoningMode.INTERSECTION, set()),
+        (ReasoningMode.SUPREMUM, {"set((val(int,1),(val(int,2),(val(int,3),()))))"}),
+        (ReasoningMode.INFIMUM, {"set((val(int,2),()))"}),
+    ],
+)
+def test_reasoning_modes_sets_with_alternative_sources_and_empty_set(
+    selected_engine: engine.Engine, reasoning_mode: ReasoningMode, expected_sets: set[str]
+) -> None:
+    control = clingo.Control(["0"])
+    add_to_control(control, engine=selected_engine, reasoning_mode=reasoning_mode)
+    control.add("""
+        { choose }.
+        variable_define(s,operation(set_make,(val(int,1),(val(int,2),())))) :- choose.
+        variable_define(s,operation(set_make,(val(int,2),(val(int,3),())))) :- not choose.
+        variable_define(other,operation(set_make,(val(int,1),(val(int,2),())))).
+        variable_define(empty,operation(set_make,())).
+    """)
+    control.ground()
+    aggregate_name = f"model_{reasoning_mode.name.lower()}"
+    reported: list[set[clingo.Symbol]] = []
+
+    def on_model(model: clingo.Model) -> None:
+        reported.append({atom for atom in model.symbols(theory=True) if atom.match(aggregate_name, 2)})
+
+    expected = {clingo.parse_term(f"{aggregate_name}(s,{value})") for value in expected_sets}
+    expected.add(clingo.parse_term(f"{aggregate_name}(other,set((val(int,1),(val(int,2),()))))"))
+    expected.add(clingo.parse_term(f"{aggregate_name}(empty,set(()))"))
+    for _ in range(2):
+        reported.clear()
+        assert control.solve(on_model=on_model).satisfiable
+        assert reported[-1] == expected
+
+
 def test_extend_reasoning_mode_atoms_encodes_whole_multimap_values() -> None:
     variable = clingo.String("mapping")
     first = multimap.Multimap.from_pairs([("key", 1), ("key", 2)])
@@ -473,7 +511,7 @@ def test_collection_values_reuse_candidate_literals_without_presence_helpers() -
     scalar = clingo.String("scalar")
     variables: dict[clingo.Symbol, _ScalarVariable | _SetVariable | _MultimapVariable] = {
         scalar: _ScalarVariable(scalar, [_Value(1, 4), _Value(2, 5)]),
-        items: _SetVariable(items, expression.Variable("items"), [_Value(1, 1), _Value(2, 2)]),
+        items: _SetVariable(items, [_Value(1, 1), _Value(2, 2)]),
         mapping: _MultimapVariable(mapping, [_PairValue(3, "key", 1)]),
     }
     mode = UnionReasoningMode()
@@ -500,7 +538,6 @@ def test_set_variable_update_preserves_python_equal_members() -> None:
 
     variable = _SetVariable(
         clingo.String("items"),
-        expression.Variable("items"),
         [_Value(1, 1), _Value(2, True)],
     )
 

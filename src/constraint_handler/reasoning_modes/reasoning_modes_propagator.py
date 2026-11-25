@@ -35,6 +35,12 @@ class _LatticeBound(Enum):
     BOT = "BOT"
 
 
+class _NotInModel(Enum):
+    """Special value indicating a variable has no value."""
+
+    NO_VALUE = "NO_VALUE"
+
+
 @dataclass
 class _Value:
     """Associate a program literal with a possible variable value.
@@ -99,13 +105,11 @@ class _SetVariable:
 
     Attributes:
         name: Clingo symbol identifying the variable.
-        source: Expression whose member literals represent this set.
         possible_values: Members that can be present in the set.
         value: Set of members present in the latest assignment.
     """
 
     name: clingo.Symbol
-    source: expression.Expr
     possible_values: list[_Value] = field(default_factory=list)
     value: frozenset[Any] = frozenset()
 
@@ -196,6 +200,11 @@ class ReasoningStrategy(ABC):
         self.variable_lit: dict[clingo.Symbol, int] = {}
         self.value_literals: dict[clingo.Symbol, dict[Any, int]] = {}
         self.scalar_variables: set[clingo.Symbol] = set()
+
+    @property
+    def _variables(self) -> Iterable[clingo.Symbol]:
+        """Return all tracked variable symbols."""
+        return self.variable_lit.keys()
 
     def init(
         self,
@@ -688,6 +697,7 @@ class ReasoningModesPropagator(clingo.Propagator):
         se_values = myClorm.findInControl(control, internal._se_value)
         set_values = myClorm.findInControl(control, internal._set_contains)
         multimap_values = myClorm.findInControl(control, result.Multimap_value)
+        set_sources: list[tuple[clingo.Symbol, expression.Expr, int]] = []
 
         for atom, (expr, value) in se_values.items():
             if not isinstance(expr, expression.Variable):
@@ -696,7 +706,8 @@ class ReasoningModesPropagator(clingo.Propagator):
             if name not in user_variables:
                 continue
             if isinstance(value, internal.Ref) and str(value.type_) == "set":
-                self._variables.setdefault(name, _SetVariable(name, value.expr))
+                self._variables.setdefault(name, _SetVariable(name))
+                set_sources.append((name, value.expr, atom.literal))
             elif isinstance(value, internal.Ref) and str(value.type_) == "multimap":
                 self._variables.setdefault(name, _MultimapVariable(name))
             else:
@@ -704,10 +715,12 @@ class ReasoningModesPropagator(clingo.Propagator):
                 if isinstance(scalar, _ScalarVariable):
                     scalar.possible_values.append(_Value(atom.literal, _python_value(value)))
 
+        set_members: dict[clingo.Symbol, dict[Any, list[tuple[int, int]]]] = {}
         for atom, (expr, value) in set_values.items():
-            for variable in self._variables.values():
-                if isinstance(variable, _SetVariable) and variable.source == expr:
-                    variable.possible_values.append(_Value(atom.literal, _python_value(value)))
+            for name, source, source_literal in set_sources:
+                if expr == source and isinstance(self._variables.get(name), _SetVariable):
+                    members = set_members.setdefault(name, {})
+                    members.setdefault(_python_value(value), []).append((source_literal, atom.literal))
 
         for atom, (name, key, value) in multimap_values.items():
             variable_name = myClorm.pytocl(expression.Variable(name)).arguments[0]
@@ -715,7 +728,24 @@ class ReasoningModesPropagator(clingo.Propagator):
             if isinstance(variable, _MultimapVariable):
                 variable.possible_values.append(_PairValue(atom.literal, _python_value(key), _python_value(value)))
 
+        # add an "absent from model" value to scalars
+        for variable in self._variables.values():
+            if variable.name in self._non_constraint_handler_variables:
+                continue
+            if isinstance(variable, _ScalarVariable):
+                defined = clingo.Function("variable_defined", [variable.name])
+                defined_atom = control.symbolic_atoms[defined]
+                variable.possible_values.append(_Value(-defined_atom.literal, _NotInModel.NO_VALUE))
+
         with control.backend() as backend:
+            for name, members in set_members.items():
+                variable = self._variables[name]
+                assert isinstance(variable, _SetVariable)
+                for value, alternatives in members.items():
+                    member_literal = backend.add_atom()
+                    for source_literal, contains_literal in alternatives:
+                        backend.add_rule([member_literal], [source_literal, contains_literal])
+                    variable.possible_values.append(_Value(member_literal, value))
             for name in self._variables:
                 if name not in self._witnesses:
                     helper = backend.add_atom()

@@ -582,6 +582,7 @@ compile2_xfail: set[str] = (
         "core/reasoning_modes_new_deeply_nested_sets",
         "core/reasoning_modes_with_show",
         "core/reasoning_modes_sets",  # new modes
+        "core/reasoning_modes_sets_alternative_sources",
         "datatype/bool/conj_disj_mixed",
         "datatype/float/mult/recovery",
         "datatype/float/pow/mixed",
@@ -670,6 +671,7 @@ propagator_xfail: set[str] = {
     "core/reasoning_modes_new_deeply_nested_sets",
     "core/reasoning_modes_new_strings",
     "core/reasoning_modes_with_show",
+    "core/reasoning_modes_sets_alternative_sources",
     "core/variable/defined",
     "core/variable/typed",
     "core/reasoning_modes_sets",  # new modes
