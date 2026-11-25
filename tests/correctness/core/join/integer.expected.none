@@ -1,0 +1,5 @@
+value(integer,val(int,1))
+value(integer,val(int,4))
+value(integer,val(int,99))
+value(implicit,val(int,2))
+value(implicit,val(int,5))

@@ -1,0 +1,3 @@
+bool_evaluated(operation(leqv,(variable(join_enabled),(operation(eq,(variable(result),(val(int,7),()))),()))),val(bool,false))
+value(result,bad)
+value(result,val(int,4))

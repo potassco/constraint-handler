@@ -82,6 +82,7 @@ core_join_tests = [
     "core/join/condition",
     "core/join/float",
     "core/join/integer",
+    "core/join/meet_isolation",
     "core/join/nondeterministic",
     "core/join/set",
     "core/join/string",

@@ -1,4 +1,4 @@
-_meet_element(X,E) :- _passed(compile,LBL,variable_element(X,E,C)), _se_value(C,val(bool,true)).
+_meet_element(X,E) :- _passed(compile,LBL,variable_element(X,E,C)), _se_value(C,val(bool,true)), _passed(compile,DECL_LBL,variable_declare(X,meet,DECL_COND)), _se_value(DECL_COND,val(bool,true)).
 _meet_single(X,E) :- _meet_element(X,E), 1 = #count { E2 : _meet_element(X,E2) }.
 _meet_multiple(X) :- _meet_element(X,E1), _meet_element(X,E2), E1 != E2.
 _meet_value(X,bool,V) :- _meet_element(X,E), _se_value(E,val(bool,V)).

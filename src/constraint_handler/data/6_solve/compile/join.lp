@@ -1,4 +1,4 @@
-_join_element(X,E) :- _passed(compile,LBL,variable_element(X,E,C)), _se_value(C,val(bool,true)).
+_join_element(X,E) :- _passed(compile,LBL,variable_element(X,E,C)), _se_value(C,val(bool,true)), _passed(compile,DECL_LBL,variable_declare(X,join,DECL_COND)), _se_value(DECL_COND,val(bool,true)).
 _join_single(X,E) :- _join_element(X,E), 1 = #count { E2 : _join_element(X,E2) }.
 _join_multiple(X) :- _join_element(X,E1), _join_element(X,E2), E1 != E2.
 _join_value(X,bool,V) :- _join_element(X,E), _se_value(E,val(bool,V)).
