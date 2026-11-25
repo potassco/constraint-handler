@@ -6,8 +6,7 @@ _expression(compile,E) :- direct_query(E).
 
 _se_value(val(T,V),val(T,V)) :- direct_query(val(T,V)).
 _se_value(ref(T,R),ref(T,R)) :- direct_query(ref(T,R)).
-_python_evaluate(python(S),python(S),()) :- direct_query(python(S)).
-_se_value(Q,RES) :- direct_query(Q), _computedIdx(Q,RES).
+_python_request(python(S),python(S)) :- direct_query(python(S)).
 
 _se_value(lambda(VARS,ERES),val(function,lambda(VARS,ERES))) :- direct_query(lambda(VARS,ERES)).
 
@@ -19,8 +18,10 @@ _se_value(variable(X),bad) :- _expression(compile,variable(X)), #false : _passed
 _direct_tupleValuesAux(E,N,()) :- _expression(compile,E), _expression_tupleLength(compile,E,N).
 _direct_tupleValuesAux(E,IDX,(V,VS)) :- _direct_tupleValuesAux(E,IDX+1,VS),
     _expression_tupleIndex(compile,E,IDX,ARG), _se_value(ARG,V).
-_se_value(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
-_isTuple(compile,TUPLE) :- _direct_tupleValuesAux(E,0,VS), TUPLE=@pythonReflect(function,(),VS).
+_expression_sequenceTupleQuery(compile,L) :- _direct_tupleValuesAux(E,0,L).
+_direct_tupleValues(E,TUPLE) :- _direct_tupleValuesAux(E,0,VS), _expression_sequenceTuple(compile,VS,TUPLE).
+_se_value(E,TUPLE) :- _direct_tupleValues(E,TUPLE).
+_isTuple(compile,TUPLE) :- _direct_tupleValues(E,TUPLE).
 
 %%%%%%%%%%%%% blablablabla
 _expression_dynamicTainted(bad) :- _expression(compile,bad).
@@ -65,12 +66,12 @@ _direct_imploded_args_aux(E,IDX,()) :- _computeIdx(E,python(STR)), _expression_o
 _direct_imploded_args_aux(E,IDX,(IMP,L)) :- _direct_imploded_args_aux(E,IDX+1,L), _computeIdx(E,IDX,V),
     _direct_imploded(V,IMP).
 
-_python_evaluate(E,operation(python(S),L),()) :- _computeIdx(E,python(S)), _direct_imploded_args_aux(E,0,L).
+_python_request(E,operation(python(S),L)) :- _computeIdx(E,python(S)), _direct_imploded_args_aux(E,0,L).
 
 _direct_resortToPython(operation(pythonExtract(PSTMT,PEXPR),ARGS)) :- _expression(compile,operation(pythonExtract(PSTMT,PEXPR),ARGS)).
 _direct_implode(V) :- _direct_resortToPython(E), _computeIdx(E,IDX,V).
 _direct_imploded_args_aux(E,N,()) :- _direct_resortToPython(E), _expression_operationLength(compile,E,N).
-_python_evaluate(E,operation(O,L),()) :- _direct_resortToPython(E), _direct_imploded_args_aux(E,0,L), E=operation(O,ARGS).
+_python_request(operation(O,ARGS),operation(O,L)) :- _direct_resortToPython(operation(O,ARGS)), _direct_imploded_args_aux(operation(O,ARGS),0,L).
 
 %%%%%%%%%%%%%%%%% bad
 %_direct_bad_operation(OP,ARGS) :- direct_query(operation(OP,ARGS)), _se_value(ARG,bad), ARG=@pythonListElements(ARGS), not _expression_safe(operation(OP,ARGS)), not _operator_recoverable(OP).
@@ -91,11 +92,13 @@ _expression(implode,E) :- _direct_implode(E).
 _direct_implode(X) :- _direct_implode(E), _expression_tupleIndex(implode,E,IDX,X).
 _direct_implodeTupleAux(E,N,()) :- _direct_implode(E), _expression_tupleLength(implode,E,N).
 _direct_implodeTupleAux(E,IDX,(V,L)) :- _direct_implodeTupleAux(E,IDX+1,L), _expression_tupleIndex(implode,E,IDX,X), _direct_imploded(X,V).
-_direct_imploded(E,TUPLE) :- _direct_implodeTupleAux(E,0,L), TUPLE=@pythonReflect(function,(),L).
+_expression_sequenceTupleQuery(implode,L) :- _direct_implodeTupleAux(E,0,L).
+_direct_imploded(E,TUPLE) :- _direct_implodeTupleAux(E,0,L), _expression_sequenceTuple(implode,L,TUPLE).
 
 _expression(implode,E) :- _direct_explode(E).
 _direct_explode(X) :- _direct_explode(E), _expression_tupleIndex(implode,E,IDX,X).
 _direct_exploded(V,V) :- _direct_explode(V), V=(bad;val(T,W)).
 _direct_explodeTupleAux(E,N,()) :- _direct_explode(E), _expression_tupleLength(implode,E,N).
 _direct_explodeTupleAux(E,IDX,(V,L)) :- _direct_explodeTupleAux(E,IDX+1,L), _expression_tupleIndex(implode,E,IDX,X), _direct_exploded(X,V).
-_direct_exploded(E,TUPLE) :- _direct_explodeTupleAux(E,0,L), TUPLE=@pythonReflect(function,(),L).
+_expression_sequenceTupleQuery(implode,L) :- _direct_explodeTupleAux(E,0,L).
+_direct_exploded(E,TUPLE) :- _direct_explodeTupleAux(E,0,L), _expression_sequenceTuple(implode,L,TUPLE).

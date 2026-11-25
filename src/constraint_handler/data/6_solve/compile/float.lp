@@ -17,7 +17,7 @@ _direct_resortToPython(operation(mult,(ARG1,(ARG2,REST)))) :-
     _expression(compile,operation(mult,(ARG1,(ARG2,REST)))),
     _computeIdx(operation(mult,(ARG1,(ARG2,REST))),IDX,val(float,V)).
 
-_operator_forFloat(abs;acos;asin;atan;ceil;cos;floor;minus;sin;sqrt;tan).
+_operator_forFloat(abs;acos;asin;atan;ceil;cos;float_from_int;floor;int_from_float;minus;sin;sqrt;tan).
 _operator_forFloat(float_div;int_div;float_div;mod;geq;gt;leq;lt;max;min;pow;sub).
 _operator_needsPython(OP,float) :- operator_declare(OP,(float,()),T), _operator_forFloat(OP).
 _operator_needsPython(OP,int) :- operator_declare(OP,(int,()),float), _operator_forFloat(OP).
@@ -25,8 +25,8 @@ _operator_needsPython(OP,T1,T2) :- operator_declare(OP,(T1,(T2,())),T), (T1;T2)=
 _operator_needsPython(OP,T1,T2) :- (T1,T2)=((float,int);(int,float)), OP=(eq;neq).
 _operator_needsPython(float_div,int,int).
 
-_python_evaluate(E,operation(OP,(val(T,V),())),()) :- _computeIdx(E,OP), _operator_needsPython(OP,T), _computeIdx(E,0,val(T,V)).
-_python_evaluate(E,operation(OP,(val(T1,V1),(val(T2,V2),()))),()) :- _computeIdx(E,OP), _operator_needsPython(OP,T1,T2), _computeIdx(E,0,val(T1,V1)), _computeIdx(E,1,val(T2,V2)).
+_python_request(E,operation(OP,(val(T,V),()))) :- _computeIdx(E,OP), _operator_needsPython(OP,T), _computeIdx(E,0,val(T,V)).
+_python_request(E,operation(OP,(val(T1,V1),(val(T2,V2),())))) :- _computeIdx(E,OP), _operator_needsPython(OP,T1,T2), _computeIdx(E,0,val(T1,V1)), _computeIdx(E,1,val(T2,V2)).
 
 _computedIdx(E,val(bool,true)) :- _computeIdx(E,eq), _computeIdx(E,0,val(float,V)), _computeIdx(E,1,val(float,V)).
 _computedIdx(E,val(bool,false)) :- _computeIdx(E,eq), _computeIdx(E,0,val(float,_)), _computeIdx(E,1,val(float,V)), not _computeIdx(E,0,val(float,V)).

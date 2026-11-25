@@ -1,30 +1,28 @@
 _se_value(variable(X),ref(multimap,variable(X))) :- _passed(compile,LBL,variable_declare(X,multimap,C)), _se_value(C,val(bool,true)).
-_multimap_add(variable(X),EK,EV) :- _passed(compile,LBL,multimap_assign(X,EK,EV,C)), _se_value(C,val(bool,true)).
+_multimap_assign(variable(X),EK,EV) :- _passed(compile,LBL,multimap_assign(X,EK,EV,C)), _se_value(C,val(bool,true)).
 
-%%%%%%%%%%%%%%%%% pairstuples
-direct_query(E1;E2) :- direct_query((E1,E2)).
+_multimap_candidate(ER,K,V) :- _multimap_assign(ER,EK,EV), _se_value(EK,K), _se_value(EV,V).
 
 %%%%%%%%%%%%%%%%% multimap_make
 _se_value(operation(multimap_make,L),ref(multimap,operation(multimap_make,L))) :- direct_query(operation(multimap_make,L)).
-_multimap_add(ER,EK,EV) :- direct_query(operation(multimap_make,L)), _se_value(operation(multimap_make,L),ref(multimap,ER)),
-    (EK,EV)=@pythonListElements(L).
+_multimap_candidate(ER,K,V) :- direct_query(operation(multimap_make,L)), _se_value(operation(multimap_make,L),ref(multimap,ER)),
+    _expression_operationIndex(compile,operation(multimap_make,L),IDX,ARG), _se_value(ARG,(K,V)).
 
 %%%%%%%%%%%%%%%%% multimap_assign multimap_value
 
-_multimap_has(key,EM,K) :- _multimap_add(EM,EK,EV), _se_value(EK,K).
+_multimap_has(key,EM,K) :- _multimap_candidate(EM,K,V).
 
 direct_query(operation(eq,(V1,(V2,())))) :- _multimap_has(D,E,V1), _multimap_has(D,E,V2), V1 <= V2.
 
-_multimap_has(val(R),EM,V) :- _multimap_add(EM,EK,EV),
-    _se_value(EK,K), _se_value(EV,V),
+_multimap_has(val(R),EM,V) :- _multimap_candidate(EM,K,V),
     _multimap_representative(key,EM,K,R).
 _multimap_representative(D,E,V,R) :- _multimap_has(D,E,V),
     _multimap_has(D,E,R), R <= V, _se_value(operation(eq,(R,(V,()))),val(bool,true)),
     #false: _multimap_has(D,E,W), W < R, _se_value(operation(eq,(W,(R,()))),val(bool,true)).
 
-_multimap_entry(EM,RK,RV) :- _multimap_add(EM,EK,EV),
-    _se_value(EK,K), _multimap_representative(key,EM,K,RK),
-    _se_value(EV,V), _multimap_representative(val(RK),EM,V,RV).
+_multimap_entry(EM,RK,RV) :- _multimap_candidate(EM,K,V),
+    _multimap_representative(key,EM,K,RK),
+    _multimap_representative(val(RK),EM,V,RV).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

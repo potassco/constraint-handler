@@ -36,7 +36,7 @@ _computedIdx(E,val(bool,true)) :- _computeIdx(E,set_notin), _computeIdx(E,0,V1),
 
 %%%%%%%%%%%%%%%%% set_make
 _se_value(operation(set_make,L),ref(set,operation(set_make,L))) :- direct_query(operation(set_make,L)).
-_set_assign(operation(set_make,L),SE) :- direct_query(operation(set_make,L)), SE=@pythonListElements(L).
+_set_assign(operation(set_make,L),SE) :- direct_query(operation(set_make,L)), _expression_operationIndex(compile,operation(set_make,L),IDX,SE).
 
 _se_value(set(L),ref(set,set(L))) :- direct_query(set(L)).
 _set_assign(set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
@@ -49,7 +49,7 @@ _set_assign(set(L),SE) :- direct_query(set(L)), SE=@pythonListElements(L).
 
 %%%%%%%%%%%%%%%%% union inter diff
 _se_value(operation(OP,L),ref(set,operation(OP,L))) :- direct_query(operation(OP,L)), OP = (diff;inter;union).
-_set_candidate(operation(union,L),V) :- direct_query(operation(union,L)), SE=@pythonListElements(L), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
+_set_candidate(operation(union,L),V) :- direct_query(operation(union,L)), _expression_operationIndex(compile,operation(union,L),IDX,SE), _se_value(SE,ref(set,ER)), _set_contains(ER,V).
 
 direct_query(operation(eq,(VSMALL,(VBIG,())))) :- direct_query(operation((diff;inter),(S1,(S2,())))),
     _se_value(S1,ref(set,R1)), _se_value(S2,ref(set,R2)),
@@ -170,7 +170,8 @@ _set_imploded(EM,set(L)) :- _set_as_list_aux(EM,IDX,L), _set_lastIndex(EM,IDX).
 
 _direct_imploded(set(L),set(L)) :- _direct_implode(set(L)).
 
-_direct_explode(V) :- _direct_explode(set(L)), V=@pythonListElements(L).
+_set_explode_member(L,RV) :- _direct_explode(set(L)), RV=@pythonListElements(L).
+_direct_explode(V) :- _set_explode_member(L,V).
 _direct_exploded(set(L),ref(set,set(L))) :- _direct_explode(set(L)).
-_set_contains(set(L),V) :- _direct_explode(set(L)), RV=@pythonListElements(L), _direct_exploded(RV,V).
+_set_contains(set(L),V) :- _set_explode_member(L,RV), _direct_exploded(RV,V).
 _direct_imploded(ref(set,set(L)),set(L)) :- _direct_explode(set(L)).

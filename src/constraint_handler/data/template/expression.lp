@@ -18,13 +18,17 @@ _expression(PHASE,LBL,DECL,(E;O;P;C)) :- _passed(PHASE,LBL,DECL), DECL=optimize_
 _expression(PHASE,LBL,DECL,E) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(K,E).
 
 _expression(PHASE,E) :- _expression(PHASE,LBL,DECL,E).
-_expression(PHASE,D) :- _expression(PHASE,operation(O,L)), D=@pythonListElements(L).
-_expression(PHASE,D) :- _expression(PHASE,T), D=@pythonTupleElements(T).
+_expression(PHASE,D) :- _expression_operationIndex(PHASE,E,IDX,D).
+_expression(PHASE,D) :- _expression_tupleIndex(PHASE,E,IDX,D).
 
 _number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=variable_default(X,D,C,PRIO).
 _number(PHASE,LBL,DECL,PRIO) :- _passed(PHASE,LBL,DECL), DECL=optimize_component(E,ORIG,PREC,X,PRIO,C).
 _number(PHASE,LBL,DECL,K) :- _passed(PHASE,LBL,DECL), DECL=preference_holds(K,E).
 _number(PHASE,K) :- _number(PHASE,LBL,DECL,K).
+
+_string(PHASE,CODE) :- _expression(PHASE,python(CODE)).
+_string(PHASE,(PSTMT;PEXPR)) :- _expression(PHASE,pythonExtract(PSTMT,PEXPR)).
+_string(PHASE,(PSTMT;PEXPR)) :- _expression(PHASE,operation(pythonExtract(PSTMT,PEXPR),ARGS)).
 
 _variable(PHASE,X) :- _expression(PHASE,variable(X)).
 _expression(PHASE,variable(X)) :- _passed(PHASE,LBL,variable_assign(X,E,C)).

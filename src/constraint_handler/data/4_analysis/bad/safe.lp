@@ -2,8 +2,8 @@
 _expression_safeQuery(EXPR) :- _phase_active(safe), _expression(sugar,EXPR).
 _expression_safe(EXPR) :- _expression_safeQuery(EXPR), EXPR=val(T,V).
 _expression_safe(EXPR) :- _expression_safeQuery(EXPR), EXPR=variable(X), _variable_safe(X).
-_expression_safe(EXPR) :- _expression_safeQuery(EXPR), EXPR=operation(O,L), _operator_safe(O), _expression_safe(D) : D=@pythonListElements(L).
-_expression_safe(EXPR) :- _expression_safeQuery(EXPR), true=@pythonIsTuple(EXPR), _expression_safe(D) : D=@pythonTupleElements(EXPR).
+_expression_safe(EXPR) :- _expression_safeQuery(EXPR), _expression_operationOperator(sugar,EXPR,O), _operator_safe(O), _expression_safe(D) : _expression_operationIndex(sugar,EXPR,IDX,D).
+_expression_safe(EXPR) :- _expression_safeQuery(EXPR), _isTuple(sugar,EXPR), _expression_safe(D) : _expression_tupleIndex(sugar,EXPR,IDX,D).
 %_expression_safe(lambda(ARGS,E)) :- _expression_safeQuery(lambda(ARGS,E)).
 %_warning(expression(syntaxError),SCOPE,"lambda checks unsupported") :- _expression_safeQuery(SCOPE,lambda(ARGS,E)).
 
@@ -17,18 +17,15 @@ _expression_safe(EXPR) :- _expression_safeQuery(EXPR), true=@pythonIsTuple(EXPR)
 _variable_safe(X) :- _variable_query(safe,X),
   _expression_safe(E;C) : _passed(sugar,LBL,variable_assign(X,E,C));
   _expression_safe(E;C) : _passed(sugar,LBL,variable_choice(X,E,C));
-  _expression_safe(E) : _passed(sugar,LBL,variable_default(X,E,C,P));
-  _expression_safe(C) : _passed(sugar,LBL,variable_default(X,E,C,P));
-  _expression_safe(E) : _passed(sugar,LBL,variable_define(X,E,C));
-  _expression_safe(C) : _passed(sugar,LBL,variable_define(X,E,C));
-  _expression_safe(E) : _passed(sugar,LBL,variable_domain(X,E,C));
-  _expression_safe(C) : _passed(sugar,LBL,variable_domain(X,E,C)).
+  _expression_safe(E;C) : _passed(sugar,LBL,variable_default(X,E,C,P));
+  _expression_safe(E;C) : _passed(sugar,LBL,variable_define(X,E,C));
+  _expression_safe(E;C) : _passed(sugar,LBL,variable_domain(X,E,C)).
 _variable_query(safe,X) :- _variable(sugar,X).
 
 
 
 _safe_bad(bad) :- _phase_active(safe).
-_safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_define(X,E,C)), _safe_bad(E;C).
+_safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_define(X,E,C)), _safe_bad(E;C), _deterministic(C,(bad;val(bool,true))).
 _safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_declare(X,set,COND)), _passed(sugar,LBL2,set_assign(X,E,C)), _safe_bad(COND;E;C).
 _safe_bad(variable(X)) :- _phase_active(safe), _expression(sugar,variable(X)), _passed(sugar,LBL,variable_declare(X,multimap,COND)), _passed(sugar,LBL2,multimap_assign(X,KE,BE,CE)), _safe_bad(COND;KE;BE;CE).
 _safe_bad(EXPR) :- _phase_active(safe), _expression(sugar,EXPR), _expression_tupleIndex(sugar,EXPR,IDX,F), _safe_bad(F).

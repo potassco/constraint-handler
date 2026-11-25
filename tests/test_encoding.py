@@ -39,6 +39,7 @@ core_tests = [
     "core/conditional_declare_set",
     "core/conditional_declare_set_multiple",
     "core/conditional_define",
+    "core/conditional_define_inactive_bad",
     "core/conditional_domain",
     "core/conditional_domain_shared_entry",
     "core/conditional_definitions",
@@ -293,6 +294,7 @@ expression_tests = [
     "expression/python_multi_args",
     "expression/tuple",
     "expression/tuple_arity_mismatch",
+    "expression/tuple_computed_equality",
     "expression/tuple_extra",
     "expression/tuple_nested",
 ]
@@ -312,6 +314,7 @@ multimap_tests = [
     "multimap/find2",
     "multimap/fold_i",
     "multimap/main",
+    "multimap/make_pair_variable",
     "multimap/max_entries",
     "multimap/min_entries",
 ]

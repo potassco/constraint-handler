@@ -81,7 +81,6 @@ m6_module = [
 
 m6_datatype = [
     "6_solve/compile/bool",
-    "6_solve/compile/cast",
     "6_solve/compile/conditionals",
     "6_solve/compile/equality",
     "6_solve/compile/float",
@@ -143,6 +142,7 @@ m7_output = [
 ]
 
 t_modules = {
+    # Every phase in expression must also appear in expression_sequence.
     "expression": ("PHASE", ["sugar", "type_check", "compile", "compile2"]),
     "expression_sequence": ("PHASE", ["defaultArgs", "sugar", "type_check", "compile", "compile2", "implode"]),
     "correction": ("PHASE", ["constantFolding", "float_normalize", "safe", "type_check", "wf_check"]),
@@ -194,7 +194,7 @@ def add_to_control(
         kw, sub = map
         data = files("constraint_handler.data.template").joinpath(f"{file_name}.lp").read_text()
         for phase in sub:
-            ndata = str(data).replace(kw, phase)
+            ndata = data.replace(kw, phase)
             ctrl.add(ndata)
     if environment is not None:
         eid = id(environment)

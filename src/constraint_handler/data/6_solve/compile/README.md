@@ -4,6 +4,7 @@ _passed(compile,LBL,DECL).
 _passed(sugar,LBL,set_baseDomain/3).
 _expression_tupleLength((compile;implode),EXPR,N).
 _expression_tupleIndex((compile;implode),EXPR,IDX,ARG).
+_expression_sequenceTuple((compile;implode),LIST,TUPLE).
 _expression_operationIndex(compile,EXPR,IDX,ARG).
 _expression_operationIndex(sugar,EXPR,IDX,ARG).
 _expression_operationOperator(sugar,EXPR,OP).
@@ -16,7 +17,7 @@ _type_extensionalOrder/1.
 _type_representation/2.
 type_expression/2.
 _set_candidate/2.
-_python_evaluate/3.
+_python_evaluate/2.
 
 ### Intermediate predicates
 
@@ -34,13 +35,15 @@ _direct_imploded_args_aux/3.
 _direct_implodeTupleAux/3.
 _direct_lazy/1.
 _direct_tupleValuesAux/3.
-_python_evaluated/3.
+_expression_sequenceTupleQuery((compile;implode),LIST).
+_python_request/2.
 _expression((compile;implode),EXPR).
 _int_add/3.
 _int_mult/3.
 _isTuple/2. _isTuple/4.
 _lambda_aux/2.
-_multimap_add/3.
+_multimap_assign/3.
+_multimap_candidate/3.
 _multimap_has/3.
 _multimap_representative/4.
 _multimap_entry/3.
@@ -59,6 +62,7 @@ _set_lastIndex/2.
 _set_implode/1.
 _set_as_list_aux/3.
 _set_imploded/2.
+_set_explode_member/2.
 _tupleComp/5.
 _tuple_pair/5.
 _tupleEqAux/3.
@@ -68,9 +72,7 @@ _tupleEqAux/3.
 _passed(correction(REASON,add),LBL,DECL).
 direct_query/1.
 _se_value/2.
-_python_evaluate/3.
-_python_evaluated/3.
-_python_result/2.
+_python_evaluated/2.
 _set_assign/2.
 _set_candidate/2.
 _set_contains/2.

@@ -23,6 +23,6 @@ _ge_mapped/2.
 ### Output predicates
 
 _se_value/2.
-_python_evaluate/3.
+_python_evaluate/2.
 _set_candidate/2.
 _direct_implode/1.

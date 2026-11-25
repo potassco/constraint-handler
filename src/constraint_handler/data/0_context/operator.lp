@@ -37,7 +37,8 @@ operator_declare((eq;neq),(T1,(T2,())),bool) :- T1 = (int;float), T2 = (int;floa
 operator_declare((eq;neq),((T1,(T2,()));(T2,(T1,()))),bool) :- T1 = (int;float), _type(T2), T2 != int, T2 != float, T2 != none.
 operator_declare((leq;lt;geq;gt),(T,(T,())),bool) :- _type_extensionalOrder(T).
 
-_operator_unsafe(int_div;float_div).
+_operator_unsafe(int_div;float_div;sqrt;acos;asin;mod;pow).
+%_operator_unsafe(cos;sin;tan;ceil;floor;int_from_float). % can produce bad on non-finite arguments.
 
 %%%%%%%%%%%%%%%%% float
 operator_declare_variadic((add;mult),float,float,2).

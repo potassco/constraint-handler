@@ -1,5 +1,6 @@
-_execution_inputVar(LBL,PRG,X,execution_input(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), X=@pythonListElements(INS).
-_execution_outputVar(LBL,PRG,X,execution_output(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), X=@pythonListElements(OUTS).
+_expression_sequence(defaultArgs,(INS;OUTS)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)).
+_execution_inputVar(LBL,PRG,X,execution_input(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), _expression_sequenceIndex(defaultArgs,INS,IDX,X).
+_execution_outputVar(LBL,PRG,X,execution_output(PRG,X)) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), _expression_sequenceIndex(defaultArgs,OUTS,IDX,X).
 
 
 
@@ -35,7 +36,7 @@ _statement_changed(statement_python(CODE),X) :- _statement_querySSA(LBL,PRG,SCOP
 
 %%%%% statement_context
 
-_statement_context((PRG,()),X,variable(execution_input(PRG,X))) :- _passed(defaultArgs,LBL,execution_declare(PRG,STMT,INS,OUTS,COND)), X=@pythonListElements(INS).
+_statement_context((PRG,()),X,variable(EX)) :- _execution_inputVar(LBL,PRG,X,EX).
 
 
 _statement_context((l,SCOPE),X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,seq2(S1,S2)), _statement_context(SCOPE,X,XS).
@@ -106,8 +107,10 @@ _statement_latest(SCOPE,X,XS) :- _statement_querySSA(LBL,PRG,SCOPE,statement_pyt
 
 
 
-_statement_indexedVar(SCOPE,IDX,X) :- _statement_context(SCOPE,X,XS), true=@pythonIsString(X), IDX=#count { Y: _statement_context(SCOPE,Y,YS), true=@pythonIsString(Y), Y<X }.
-_statement_countVars(SCOPE,N) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), N=#count { X: _statement_context(SCOPE,X,XS), true=@pythonIsString(X) }.
+_statement_variableName(X) :- _statement_context(SCOPE,X,XS).
+_statement_pythonName(X) :- _statement_variableName(X), true=@pythonIsString(X).
+_statement_indexedVar(SCOPE,IDX,X) :- _statement_context(SCOPE,X,XS), _statement_pythonName(X), IDX=#count { Y: _statement_context(SCOPE,Y,YS), _statement_pythonName(Y), Y<X }.
+_statement_countVars(SCOPE,N) :- _statement_querySSA(LBL,PRG,SCOPE,STMT), N=#count { X: _statement_context(SCOPE,X,XS), _statement_pythonName(X) }.
 
 _statement_pythonInputMapAux(SCOPE,N,()) :- _statement_querySSA(LBL,PRG,SCOPE,statement_python(CODE)), _statement_countVars(SCOPE,N).
 _statement_pythonInputMapAux(SCOPE,IDX,((val(string,Y),YS),VARS)) :- _statement_pythonInputMapAux(SCOPE,IDX+1,VARS), _statement_indexedVar(SCOPE,IDX,Y), _statement_context(SCOPE,Y,YS).

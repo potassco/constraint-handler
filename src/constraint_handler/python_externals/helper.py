@@ -5,30 +5,33 @@ import clingo
 import constraint_handler.myClorm as myClorm
 
 
+def _list_elements(symbol):
+    try:
+        return myClorm.cltopy(symbol, list[clingo.Symbol])
+    except myClorm.FailedInstantiationExn:
+        return None
+
+
 @cache
 def pythonListElements(clL):
-    try:
-        return myClorm.cltopy(clL, list[clingo.Symbol])
-    except myClorm.FailedInstantiationExn:
-        return []
+    return _list_elements(clL) or []
 
 
 @cache
 def pythonReversedList(clL):
-    pL = pythonListElements(clL)
-    return myClorm.pytocl(list(reversed(pL)))
+    elements = _list_elements(clL)
+    return [] if elements is None else myClorm.pytocl(list(reversed(elements)))
 
 
 @cache
 def pythonEnumerateElements(clL):
-    pL = pythonListElements(clL)
-    return [myClorm.pytocl(e) for e in enumerate(pL)]
+    return [myClorm.pytocl(entry) for entry in enumerate(_list_elements(clL) or [])]
 
 
 @cache
 def pythonListLength(clL):
-    pL = pythonListElements(clL)
-    return myClorm.pytocl(len(pL))
+    elements = _list_elements(clL)
+    return [] if elements is None else myClorm.pytocl(len(elements))
 
 
 @cache
