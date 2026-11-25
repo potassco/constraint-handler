@@ -47,6 +47,16 @@ _passed(defaultArgs,LBL,variable_domain(X,E,val(bool,true))) :- variable_domain(
 _passed(defaultArgs,_label_anonymous,variable_domain(X,E,C)) :- variable_domain(X,E,C).
 _passed(defaultArgs,LBL,variable_domain(X,E,C)) :- variable_domain(X,E,C,LBL).
 
+%%%%%% variable elements
+#defined variable_element/2.
+#defined variable_element/3.
+#defined variable_element/4.
+
+_passed(defaultArgs,_label_anonymous,variable_element(X,E,val(bool,true))) :- variable_element(X,E), not _defaultArgs_variableDeclared(X).
+_passed(defaultArgs,LBL,variable_element(X,E,val(bool,true))) :- variable_element(X,E), _passed(defaultArgs,LBL,variable_declare(X,D,C)).
+_passed(defaultArgs,_label_anonymous,variable_element(X,E,C)) :- variable_element(X,E,C).
+_passed(defaultArgs,LBL,variable_element(X,E,C)) :- variable_element(X,E,C,LBL).
+
 %%%%%% variable open
 #defined variable_assign/2.
 #defined variable_assign/3.

@@ -1,0 +1,4 @@
+value(boolean,val(bool,true))
+value(boolean_false,val(bool,false))
+variable_typed(boolean,bool)
+variable_typed(boolean_false,bool)

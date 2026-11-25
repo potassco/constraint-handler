@@ -65,8 +65,7 @@ preprocessor.join([
 ```
 
 `Val` represents a typed constant, and `Variable` represents a reference to a
-variable in an expression. Domain declarations use domain instances such as
-`FromFacts()` from `constraint_handler.schemas.domain`.
+variable in an expression.
 
 ## Preparation
 

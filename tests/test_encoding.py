@@ -76,6 +76,27 @@ core_tests = [
     "core/variable/typed",
 ]
 
+core_join_tests = [
+    "core/join/bad",
+    "core/join/boolean",
+    "core/join/condition",
+    "core/join/float",
+    "core/join/integer",
+    "core/join/nondeterministic",
+    "core/join/set",
+    "core/join/string",
+]
+
+core_meet_tests = [
+    "core/meet/bad",
+    "core/meet/boolean",
+    "core/meet/condition",
+    "core/meet/float",
+    "core/meet/integer",
+    "core/meet/set",
+    "core/meet/string",
+]
+
 datatype_tests = [
     "datatype/casting",
     "datatype/bool/conj_disj/basic",
@@ -519,6 +540,8 @@ warning_tests = [
 
 base_tests = (
     core_tests
+    + core_join_tests
+    + core_meet_tests
     + datatype_tests
     + default_tests
     + engine_tests
@@ -620,6 +643,8 @@ compile2_xfail: set[str] = (
     | set(expression_lambda_tests)
     | set(multimap_tests)
     | set(optimization_multimap_tests)
+    | set(core_join_tests)
+    | set(core_meet_tests)
 )
 
 ground_skip: set[str] = {
@@ -655,6 +680,8 @@ ground_xfail: set[str] = (
     }
     | set(multimap_tests)
     | set(optimization_multimap_tests)
+    | set(core_join_tests)
+    | set(core_meet_tests)
 )
 
 
@@ -707,7 +734,7 @@ propagator_xfail: set[str] = {
     "warning/ignore_labeled",
     "warning/mutually_exclusive_declarations",
     "warning/variables",
-}
+} | set(core_join_tests) | set(core_meet_tests)
 
 propagator_true_skip: set[str] = propagator_skip | {
     "core/conditional_declare",

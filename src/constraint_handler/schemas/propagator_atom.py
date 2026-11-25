@@ -15,6 +15,8 @@ Value = result.Value
 
 BoolDomain = domain.BoolDomain
 FromFacts = domain.FromFacts
+Join = domain.Join
+Meet = domain.Meet
 
 
 class Propagator_variable_declare(NamedTuple):

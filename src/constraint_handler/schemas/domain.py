@@ -11,6 +11,14 @@ class FromFacts(NamedTuple):
     pass
 
 
+class Join(NamedTuple):
+    pass
+
+
+class Meet(NamedTuple):
+    pass
+
+
 class BoolDomain(NamedTuple):
     pass
 
@@ -27,4 +35,4 @@ class Multimap(NamedTuple):
     pass
 
 
-type Domain = Definition | BoolDomain | FromFacts | Open | Set | Multimap
+type Domain = Definition | BoolDomain | FromFacts | Join | Meet | Open | Set | Multimap

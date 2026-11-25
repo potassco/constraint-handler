@@ -159,6 +159,7 @@ A list of declarations used to define problems.
 | [variable_declareOptional] | Declares an optional variable with a specified domain. |
 | [variable_define] | Declares and defines a variable with a specific value. |
 | [variable_domain] | Retrieves the domain of a declared variable. |
+| [variable_element] | Contributes an expression value to a variable declared with `join` or `meet`. |
 | **Set** | |
 | [set_declare] | Declares a set variable with a specified domain. |
 | [set_assign] | Declares a set variable and assigns it a value from a specified domain. |

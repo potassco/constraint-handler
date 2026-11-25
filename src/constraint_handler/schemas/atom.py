@@ -59,7 +59,14 @@ class Variable_domain(NamedTuple):
     label: expression.constant = LABEL_ANONYMOUS
 
 
-type VariableAtom = Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain
+class Variable_element(NamedTuple):
+    name: expression.constant
+    value: expression.Expr
+    condition: expression.Expr = expression.TRUE
+    label: expression.constant = LABEL_ANONYMOUS
+
+
+type VariableAtom = Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain | Variable_element
 
 
 class Bool_evaluate(NamedTuple):

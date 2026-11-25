@@ -1,0 +1,11 @@
+variable_declare(left,set).
+set_assign(left,val(int,1)).
+set_assign(left,val(int,2)).
+variable_declare(right,set).
+set_assign(right,val(int,2)).
+set_assign(right,val(int,3)).
+variable_declare(intersection,meet).
+variable_element(intersection,variable(left)).
+variable_element(intersection,variable(right)).
+variable_declare(single,meet).
+variable_element(single,variable(left)).

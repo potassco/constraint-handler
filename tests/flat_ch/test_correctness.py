@@ -9,6 +9,8 @@ from constraint_handler import add_to_control
 from constraint_handler.engine import fch
 from tests.test_encoding import (
     base_tests,
+    core_join_tests,
+    core_meet_tests,
     ctrl_options,
     engine_tests,
     multimap_tests,
@@ -289,6 +291,12 @@ flat_ch_supported_tests = [
 
 flat_ch_supported_core_tests = [name for name in flat_ch_supported_tests if name.startswith("core/")]
 flat_ch_supported_non_core_tests = [name for name in flat_ch_supported_tests if not name.startswith("core/")]
+flat_ch_skipped_core_tests = [
+    pytest.param(name, id=name, marks=pytest.mark.skip(reason="join and meet are not supported by FCH"))
+    if name in core_join_tests or name in core_meet_tests
+    else name
+    for name in flat_ch_supported_core_tests
+]
 
 
 def solve_with_flat_ch(name: str, test, extra_args: list[str], expected_stats: dict[str, str] = {}):
@@ -329,7 +337,7 @@ def test_flat_ch_correctness(name: str):
 
 @pytest.mark.parametrize(
     "name",
-    flat_ch_supported_core_tests,
+    flat_ch_skipped_core_tests,
 )
 def test_flat_ch_core_correctness(name: str):
     run_test(name)

@@ -6,6 +6,7 @@ ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=variable_dec
 _bool_join(COND1,COND2) :- _phase_active(solve), ch_core(variable_default(NAME,EXPR,COND1,PRIORITY),_), ch_core(variable_declare(NAME,open,COND2),_).
 _bool_join(COND1,COND2) :- _phase_active(solve), ch_core(variable_define(NAME,EXPR,COND1),_), ch_core(variable_declare(NAME,definition,COND2),_).
 _bool_join(COND1,COND2) :- _phase_active(solve), ch_core(variable_domain(NAME,EXPR,COND1),_), ch_core(variable_declare(NAME,fromFacts,COND2),_).
+_bool_join(COND1,COND2) :- _phase_active(solve), ch_core(variable_element(NAME,EXPR,COND1),_), ch_core(variable_declare(NAME,(join;meet),COND2),_).
 _bool_join(COND1,COND2) :- _phase_active(solve), ch_core(set_assign(NAME,EXPR,COND1),_), ch_core(variable_declare(NAME,set,COND2),_).
 
 _bool_joined(COND,COND,COND) :- _bool_join(COND,COND).
@@ -16,6 +17,7 @@ _bool_joined(COND1,COND2,operation(conj,(COND2,(COND1,())))) :- _bool_join(COND1
 ch_solve(variable_default(NAME,EXPR,JOINED,PRIORITY),LBL) :- _phase_active(solve), ch_core(variable_default(NAME,EXPR,COND1,PRIORITY),LBL), ch_core(variable_declare(NAME,open,COND2),_), _bool_joined(COND1,COND2,JOINED).
 ch_solve(variable_define(NAME,EXPR,JOINED),LBL) :- _phase_active(solve), ch_core(variable_define(NAME,EXPR,COND1),LBL), ch_core(variable_declare(NAME,definition,COND2),_), _bool_joined(COND1,COND2,JOINED).
 ch_solve(variable_domain(NAME,EXPR,JOINED),LBL) :- _phase_active(solve), ch_core(variable_domain(NAME,EXPR,COND1),LBL), ch_core(variable_declare(NAME,fromFacts,COND2),_), _bool_joined(COND1,COND2,JOINED).
+ch_solve(variable_element(NAME,EXPR,JOINED),LBL) :- _phase_active(solve), ch_core(variable_element(NAME,EXPR,COND1),LBL), ch_core(variable_declare(NAME,(join;meet),COND2),_), _bool_joined(COND1,COND2,JOINED).
 ch_solve(set_assign(NAME,EXPR,JOINED),LBL) :- _phase_active(solve), ch_core(set_assign(NAME,EXPR,COND1),LBL), ch_core(variable_declare(NAME,set,COND2),_), _bool_joined(COND1,COND2,JOINED).
 
 ch_solve(DECL,LBL) :- _phase_active(solve), ch_core(DECL,LBL), DECL=multimap_assign(X,K,B,C).

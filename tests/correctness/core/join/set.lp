@@ -1,0 +1,15 @@
+variable_declare(left,set).
+set_assign(left,val(int,1)).
+set_assign(left,val(int,2)).
+variable_declare(right,set).
+set_assign(right,val(int,2)).
+set_assign(right,val(int,3)).
+variable_declare(last,set).
+set_assign(last,val(int,4)).
+set_assign(last,val(int,5)).
+variable_declare(joined,join).
+variable_element(joined,variable(left)).
+variable_element(joined,variable(right)).
+variable_element(joined,variable(last)).
+variable_declare(single,join).
+variable_element(single,variable(left)).

@@ -1,0 +1,2 @@
+value(single_string,val(string,"only"))
+value(multi_string,bad)

@@ -114,7 +114,7 @@ This page describes the EBNF grammar for the fact format used by the constraint 
 
 ## Building Facts and Declarations
 ```ebnf
-<domain> ::= "definition" | "boolDomain" | "fromFacts" | "open" | "set" | "multimap"
+<domain> ::= "definition" | "boolDomain" | "fromFacts" | "join" | "meet" | "open" | "set" | "multimap"
 
 <variable-atom> ::=
     | "variable_assign" "(" <variable> "," <expression> ")"
@@ -134,6 +134,9 @@ This page describes the EBNF grammar for the fact format used by the constraint 
     | "variable_domain" "(" <variable> "," <expression> ")"
     | "variable_domain" "(" <variable> "," <expression> "," <expression> ")"
     | "variable_domain" "(" <variable> "," <expression> "," <expression> "," <label> ")"
+    | "variable_element" "(" <variable> "," <expression> ")"
+    | "variable_element" "(" <variable> "," <expression> "," <expression> ")"
+    | "variable_element" "(" <variable> "," <expression> "," <expression> "," <label> ")"
 
 <multimap-atom> ::=
     | "multimap_assign" "(" <variable> "," <expression> "," <expression> ")"
