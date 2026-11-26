@@ -18,6 +18,7 @@ from constraint_handler.reasoning_modes.reasoning_modes_propagator import (
     UnionReasoningMode,
     _LatticeBound,
     _MultimapVariable,
+    _NotInModel,
     _PairValue,
     _python_value,
     _ScalarVariable,
@@ -464,6 +465,15 @@ def test_infimum_joins_nonnumeric_values(left: object, right: object, expected: 
     assert mode.rm_model == {name: {expected}}
 
 
+def test_extremum_joins_ignore_absent_scalar_candidates() -> None:
+    value = 3
+
+    assert SupremumReasoningMode._supremum(value, _NotInModel.NO_VALUE) == value
+    assert SupremumReasoningMode._supremum(_NotInModel.NO_VALUE, value) == value
+    assert InfimumReasoningMode._infimum(value, _NotInModel.NO_VALUE) == value
+    assert InfimumReasoningMode._infimum(_NotInModel.NO_VALUE, value) == value
+
+
 @pytest.mark.parametrize(
     "current, candidates, blocked",
     [
@@ -735,6 +745,25 @@ def test_intersection_propagator_optional_scalar_has_empty_intersection() -> Non
     propagator.prepare(control)
     assert control.solve(on_model=on_model).satisfiable
     assert reported[-1] == {}
+
+
+@pytest.mark.parametrize("reasoning_mode", [ReasoningMode.UNION, ReasoningMode.SUPREMUM, ReasoningMode.INFIMUM])
+def test_reasoning_mode_builds_missing_variable_defined_atom_and_ignores_absence(reasoning_mode: ReasoningMode) -> None:
+    control = clingo.Control(["0"])
+    propagator = ReasoningModesPropagator(reasoning_mode)
+    control.register_propagator(propagator)
+    control.add(
+        "base",
+        [],
+        _user_variable_interfaces("scalar") + '{ _se_value(variable("scalar"), val(int, 1)) }.',
+    )
+    control.ground([("base", [])])
+    assert control.symbolic_atoms[clingo.Function("variable_defined", [clingo.String("scalar")])] is None
+
+    propagator.prepare(control)
+
+    assert control.solve(on_model=propagator.on_model).satisfiable
+    assert propagator.reasoning_strategy.rm_model == {clingo.String("scalar"): {1}}
 
 
 def test_intersection_propagator_instances_are_independent() -> None:

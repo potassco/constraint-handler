@@ -93,6 +93,9 @@ class _ScalarVariable:
         """
         for candidate in self.possible_values:
             if model.is_true(candidate.literal):
+                if candidate.value is _NotInModel.NO_VALUE:
+                    self.has_value = False
+                    return
                 self.value = candidate.value
                 self.has_value = True
                 return
@@ -490,6 +493,10 @@ class SupremumReasoningMode(ReasoningStrategy):
             Their union for collections, maximum for numbers, or TOP for
             unequal nonnumeric values. Equal nonnumeric values are unchanged.
         """
+        if left is _NotInModel.NO_VALUE:
+            return right
+        if right is _NotInModel.NO_VALUE:
+            return left
         if isinstance(left, frozenset) and isinstance(right, frozenset):
             return left.union(right)
         if isinstance(left, multimap.Multimap) and isinstance(right, multimap.Multimap):
@@ -570,6 +577,10 @@ class InfimumReasoningMode(ReasoningStrategy):
             Their intersection for collections, minimum for numbers, or BOT for
             unequal nonnumeric values. Equal nonnumeric values are unchanged.
         """
+        if left is _NotInModel.NO_VALUE:
+            return right
+        if right is _NotInModel.NO_VALUE:
+            return left
         if isinstance(left, frozenset) and isinstance(right, frozenset):
             return left.intersection(right)
         if isinstance(left, multimap.Multimap) and isinstance(right, multimap.Multimap):
@@ -729,15 +740,26 @@ class ReasoningModesPropagator(clingo.Propagator):
                 variable.possible_values.append(_PairValue(atom.literal, _python_value(key), _python_value(value)))
 
         # add an "absent from model" value to scalars
-        for variable in self._variables.values():
-            if variable.name in self._non_constraint_handler_variables:
-                continue
-            if isinstance(variable, _ScalarVariable):
-                defined = clingo.Function("variable_defined", [variable.name])
-                defined_atom = control.symbolic_atoms[defined]
-                variable.possible_values.append(_Value(-defined_atom.literal, _NotInModel.NO_VALUE))
+        # only for intersection mode as it is the only one that can progress with the "absent from model" value
+        missing_defined_variables: list[_ScalarVariable] = []
+        if isinstance(self.reasoning_strategy, IntersectionReasoningMode):
+            for variable in self._variables.values():
+                if variable.name in self._non_constraint_handler_variables:
+                    continue
+                if isinstance(variable, _ScalarVariable):
+                    defined = clingo.Function("variable_defined", [variable.name])
+                    defined_atom = control.symbolic_atoms[defined]
+                    if defined_atom is not None:
+                        variable.possible_values.append(_Value(-defined_atom.literal, _NotInModel.NO_VALUE))
+                    else:
+                        missing_defined_variables.append(variable)
 
         with control.backend() as backend:
+            for variable in missing_defined_variables:
+                defined_literal = backend.add_atom(clingo.Function("variable_defined", [variable.name]))
+                for candidate in variable.possible_values:
+                    backend.add_rule([defined_literal], [candidate.literal])
+                variable.possible_values.append(_Value(-defined_literal, _NotInModel.NO_VALUE))
             for name, members in set_members.items():
                 variable = self._variables[name]
                 assert isinstance(variable, _SetVariable)
