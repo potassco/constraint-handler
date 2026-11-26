@@ -292,9 +292,11 @@ flat_ch_supported_tests = [
 flat_ch_supported_core_tests = [name for name in flat_ch_supported_tests if name.startswith("core/")]
 flat_ch_supported_non_core_tests = [name for name in flat_ch_supported_tests if not name.startswith("core/")]
 flat_ch_skipped_core_tests = [
-    pytest.param(name, id=name, marks=pytest.mark.skip(reason="join and meet are not supported by FCH"))
-    if name in core_join_tests or name in core_meet_tests
-    else name
+    (
+        pytest.param(name, id=name, marks=pytest.mark.skip(reason="join and meet are not supported by FCH"))
+        if name in core_join_tests or name in core_meet_tests
+        else name
+    )
     for name in flat_ch_supported_core_tests
 ]
 
