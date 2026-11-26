@@ -43,6 +43,7 @@ core_tests = [
     "core/conditional_domain",
     "core/conditional_domain_shared_entry",
     "core/conditional_definitions",
+    "core/conditional_definition_counter_reset",
     "core/conj_bad_none_recovery",
     "core/custom_globals",
     "core/empty_set_execution",

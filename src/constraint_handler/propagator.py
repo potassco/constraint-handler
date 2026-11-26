@@ -669,9 +669,13 @@ class ConstraintHandlerPropagator(clingo.Propagator):
 
         for var in self.variable_manager.get_variables():
             if var.reset(decision_level):
+                was_registered = (
+                    var.var in self.evaluations.evaluations or var.var in self.evaluations.false_assignments
+                )
                 self.evaluations.remove_var_from_evaluations(var)
-                for expr in self.variable_manager.get_var_exprs(var.var):
-                    expr.vars_counter -= 1
+                if was_registered:
+                    for expr in self.variable_manager.get_var_exprs(var.var):
+                        expr.vars_counter -= 1
 
         self.optimization.reset_sums(decision_level)
 
