@@ -7,13 +7,13 @@ import clingo
 
 import constraint_handler.schemas.propagator_atom as prop_atom
 from constraint_handler import myClorm
-from constraint_handler.PropagatorConstants import (
+from constraint_handler.propagator.PropagatorConstants import (
     OPTIMIZATION_HELPER_PROGRAM,
     OPTIMIZATION_STAGE_ATOM,
     OptimizationStrength,
     propagator_warning_t,
 )
-from constraint_handler.PropagatorVariables import OptimizationHandler, VariableValue
+from constraint_handler.propagator.PropagatorVariables import OptimizationHandler, VariableValue
 from constraint_handler.schemas import expression, warning
 
 

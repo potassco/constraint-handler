@@ -6,8 +6,12 @@ from collections.abc import Callable, Iterable
 import clingo
 from clingo import Symbol
 
-from constraint_handler.PropagatorConstants import REASONING_MODE_PROGRAM, REASONING_STAGE_ATOM, ReasoningMode
-from constraint_handler.PropagatorVariables import BoolEvaluateVariable, VariableType
+from constraint_handler.propagator.PropagatorConstants import (
+    REASONING_MODE_PROGRAM,
+    REASONING_STAGE_ATOM,
+    PropagatorReasoningMode,
+)
+from constraint_handler.propagator.PropagatorVariables import BoolEvaluateVariable, VariableType
 from constraint_handler.schemas import result, warning
 
 
@@ -27,7 +31,7 @@ class _ReasoningStrategy(ABC):
         accumulated_model: The accumulated model across model processing.
     """
 
-    mode = ReasoningMode.STANDARD
+    mode = PropagatorReasoningMode.STANDARD
 
     def __init__(self) -> None:
         self.stage_literals: dict[int, int] = {1: -1, 2: -1}
@@ -201,7 +205,7 @@ class StandardReasoningStrategy(_ReasoningStrategy):
 
 
 class BraveReasoningStrategy(_StagedReasoningStrategy):
-    mode = ReasoningMode.BRAVE
+    mode = PropagatorReasoningMode.BRAVE
 
     def accumulate_model(self, previous_model, current_model):
         if previous_model is None:
@@ -244,7 +248,7 @@ class BraveReasoningStrategy(_StagedReasoningStrategy):
 
 
 class CautiousReasoningStrategy(_StagedReasoningStrategy):
-    mode = ReasoningMode.CAUTIOUS
+    mode = PropagatorReasoningMode.CAUTIOUS
 
     def accumulate_model(self, previous_model, current_model):
         if previous_model is None:

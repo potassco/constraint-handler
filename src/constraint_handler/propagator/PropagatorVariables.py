@@ -9,7 +9,7 @@ from typing import Any, Literal, Protocol, runtime_checkable
 import clingo
 
 from constraint_handler import evaluator, multimap, myClorm
-from constraint_handler.PropagatorConstants import (
+from constraint_handler.propagator.PropagatorConstants import (
     DEFAULT_DECISION_LEVEL,
     EvaluationResult,
     ValueStatus,

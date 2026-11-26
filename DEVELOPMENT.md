@@ -130,8 +130,10 @@ The supported suffixes are:
   last model respectively.
 - `none`: atom must occur in no model; it does not assert that the program is
   unsatisfiable.
-- `brave` and `cautious`: atom must occur in the final model with the matching
-  enumeration mode.
+- `brave` `cautious`, `union`, `intersection`, `supremum`, and `infimum`: atom
+  must occur in the final model with the matching enumeration mode.
+- `union.none`, `intersection.none`, `supremum.none`, and `infimum.none`: atom
+  must be absent from the final model with the matching reasoning mode.
 - `optall`, `optany`, and `optnone`: atom must occur in every, any, or no
   optimal model respectively.
 - `stats`: one `key=value` entry per line. All keys are optional.

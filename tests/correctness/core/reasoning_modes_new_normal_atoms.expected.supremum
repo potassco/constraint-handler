@@ -1,0 +1,3 @@
+model_supremum(fixed,val(int,7))
+model_supremum(candidate(a))
+model_supremum(candidate(b))

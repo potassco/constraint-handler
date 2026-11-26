@@ -247,6 +247,14 @@ flat_ch_currently_not_working_tests = {
 flat_ch_unsupported_tests = {
     "core/custom_globals",
     "core/python_set_bool_brave",
+    "core/reasoning_modes_new_strings",
+    "core/reasoning_modes_new_nested_sets",
+    "core/reasoning_modes_new_deeply_nested_sets",
+    "core/reasoning_modes_new_normal_atoms",
+    "core/reasoning_modes_new_bool_int",
+    "core/reasoning_modes_optional_scalar",
+    "core/reasoning_modes_sets",
+    "core/reasoning_modes_sets_alternative_sources",
     "execution/python_integrity_should_be_ignored",
     "execution/python_set_empty_equality",
     "expression/python_extract/bad",
@@ -306,8 +314,8 @@ def solve_with_flat_ch(name: str, test, extra_args: list[str], expected_stats: d
 def run_test(name: str):
     file_name = "tests/correctness/" + name
     expectations, expected_stats = chut.build_expectations(file_name)
-    for test, extra_args in expectations:
-        solve_with_flat_ch(file_name, test, extra_args, expected_stats if not extra_args else {})
+    for test, extra_options in expectations:
+        solve_with_flat_ch(file_name, test, extra_options.clingo_options, expected_stats if not extra_options else {})
         test.assert_()
 
 

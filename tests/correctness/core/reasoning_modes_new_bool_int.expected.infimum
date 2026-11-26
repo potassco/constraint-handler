@@ -1,0 +1,2 @@
+model_infimum(value,val(string,"BOT"))
+model_infimum(zero,val(string,"BOT"))

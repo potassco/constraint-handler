@@ -3,17 +3,18 @@ from collections.abc import Iterable, Sequence
 import clingo
 
 import constraint_handler.schemas.propagator_atom as prop_atom
-from constraint_handler import evaluator, myClorm, variable_loader
-from constraint_handler.model_builder import ModelBuilder
-from constraint_handler.optimization_modes import OptimizationModeHandler
-from constraint_handler.PropagatorConstants import (
+from constraint_handler import evaluator, myClorm
+from constraint_handler.propagator import variable_loader
+from constraint_handler.propagator.model_builder import ModelBuilder
+from constraint_handler.propagator.optimization_modes import OptimizationModeHandler
+from constraint_handler.propagator.PropagatorConstants import (
     OTHER_ENGINE_VAR_NAME,
     PROPAGATOR_CHECK_MODE_ATOM,
     EvaluationResult,
     ValueStatus,
     propagator_warning_t,
 )
-from constraint_handler.PropagatorVariables import (
+from constraint_handler.propagator.PropagatorVariables import (
     EvaluateVariable,
     Evaluations,
     OptimizationHandler,
@@ -23,7 +24,7 @@ from constraint_handler.PropagatorVariables import (
     VariableValue,
     is_evaluation_possible,
 )
-from constraint_handler.reasoning_modes import ReasoningModeHandler
+from constraint_handler.propagator.reasoning_modes import ReasoningModeHandler
 from constraint_handler.schemas import expression, internal, result, warning
 
 
@@ -32,7 +33,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
     Propagator that evaluates constraint_handler variables during solving.
 
     The propagator maintains a mapping from clingo symbols and solver literals to
-    variable objects (see `constraint_handler.PropagatorVariables`). During
+    variable objects (see `constraint_handler.propagator.PropagatorVariables`). During
     propagation/check it evaluates affected variables, checks ensure constraints,
     and can add nogoods for conflicts or for pruning based on optimization or reasoning mode(brave/cautious).
 
