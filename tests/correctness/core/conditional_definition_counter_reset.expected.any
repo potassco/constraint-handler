@@ -1,0 +1,3 @@
+value(z,bad)
+value(z,val(int,2))
+value(z,val(int,3))
