@@ -1,3 +1,5 @@
 value(disabled,val(int,1))
 value(disabled,bad)
 value(dynamic,bad)
+warning(variable(badValue),_label_anonymous,disabled)
+warning(variable(badValue),_label_anonymous,dynamic)
