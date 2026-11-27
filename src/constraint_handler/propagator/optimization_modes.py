@@ -41,6 +41,8 @@ class OptimizationModeHandler:
         self.optimal_models_wanted = 0
         self.optimal_models_found = 0
 
+        self.warnings: list[warning.Warning] = []
+
     @property
     def enabled(self) -> bool:
         """
@@ -51,7 +53,7 @@ class OptimizationModeHandler:
         """
         return self.sums.get_sum_count() > 0
 
-    def configure(self, ctl: clingo.Control) -> warning.Warning | None:
+    def configure(self, ctl: clingo.Control):
         """
         Add optimization support and configure the requested optimal-model count.
 
@@ -70,12 +72,13 @@ class OptimizationModeHandler:
             )  # ty:ignore[invalid-argument-type,unresolved-attribute]
             ctl.configuration.solve.models = 0  # ty:ignore[invalid-assignment]
             if ctl.configuration.solver.heuristic != "Domain":  # ty:ignore[unresolved-attribute]
-                return warning.Warning(
-                    warning.Propagator(),
-                    (),
-                    f"Optimization requires --heuristic=Domain, but {ctl.configuration.solver.heuristic} was set. This may lead to incorrect results.",  # ty:ignore[unresolved-attribute]
+                self.warnings.append(
+                    warning.Warning(
+                        warning.Propagator(),
+                        (),
+                        f"Optimization requires --heuristic=Domain, but {ctl.configuration.solver.heuristic} was set. This may lead to incorrect results.",  # ty:ignore[unresolved-attribute]
+                    )
                 )
-        return None
 
     def reset(self) -> None:
         """

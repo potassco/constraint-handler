@@ -276,15 +276,18 @@ class ReasoningModeHandler:
 
     def __init__(self) -> None:
         self._strategy: _ReasoningStrategy = StandardReasoningStrategy()
+        self.warnings: list[warning.Warning] = []
 
-    def configure(self, ctl: clingo.Control) -> warning.Warning | None:
+    def configure(self, ctl: clingo.Control):
         mode = ctl.configuration.solve.enum_mode  # ty:ignore[unresolved-attribute]
         strategy_type = {
             "brave": BraveReasoningStrategy,
             "cautious": CautiousReasoningStrategy,
         }.get(mode, StandardReasoningStrategy)
         self._strategy = strategy_type()
-        return self._strategy.configure(ctl)
+        warning = self._strategy.configure(ctl)
+        if warning is not None:
+            self.warnings.append(warning)
 
     def reset(self) -> None:
         self._strategy.reset()
