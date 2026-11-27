@@ -6,13 +6,15 @@ variable_defined(X) :- _variable_defined(X), ch_post(variable_interface(X),LBL).
 set_value(X,V) :- _se_value(variable(X),set), _set_contains(variable(X),V), ch_post(variable_interface(X),LBL). %%% for compile2
 set_value(X,V) :- _se_value(variable(X),ref(set,E)), _set_contains(E,V), ch_post(variable_interface(X),LBL).
 value(X,V) :- _se_value(variable(X),V), V != set, V != bad, ch_post(variable_interface(X),LBL).
-value(X,bad) :- _se_value(variable(X),bad), ch_post(variable_interface(X),LBL), _passed(ENG,_,variable_declare(X,D,C)), _bool_evaluated(C,val(bool,true)).
+_conditional_definition_completion(X) :- _variable_definition_completion(X,_), _passed(sugar,_,variable_define(X,_,_)).
+_variable_definition_inactive(X) :- _conditional_definition_completion(X), _se_value(variable(loc(has_active_definition(X))),val(bool,false)).
+value(X,bad) :- _se_value(variable(X),bad), ch_post(variable_interface(X),LBL), _passed(ENG,_,variable_declare(X,D,C)), _bool_evaluated(C,val(bool,true)), not _variable_definition_inactive(X).
 
 _shared_value(E,V)    :- _passed(ENG,LBL,share_value(E)), _se_value(E,V).
 _shared_value(variable(X),bad) :- _passed(ground,LBL,share_value(variable(X))), not _se_value(variable(X),_).
 
 _se_value1(variable(X)) :- _se_value(variable(X),V), ch_post(variable_interface(X),LBL).
-value(X,bad) :- ch_post(variable_interface(X),LBL), _passed(compile,_,variable_declare(X,D,C)), _bool_evaluated(C,val(bool,true)), _expression(compile,variable(X)), not _se_value1(variable(X)).
+value(X,bad) :- ch_post(variable_interface(X),LBL), _passed(compile,_,variable_declare(X,D,C)), _bool_evaluated(C,val(bool,true)), _expression(compile,variable(X)), not _se_value1(variable(X)), not _variable_definition_inactive(X).
 
 _variable_typed(X,T) :- _se_value(variable(X),val(T,V)).
 _variable_typed(X,set) :- _se_value(variable(X),set).
