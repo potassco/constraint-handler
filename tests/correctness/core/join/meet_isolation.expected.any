@@ -1,0 +1,4 @@
+value(join_enabled,val(bool,false))
+value(join_enabled,val(bool,true))
+value(result,val(int,1))
+value(result,val(int,7))

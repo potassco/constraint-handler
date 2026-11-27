@@ -45,6 +45,12 @@ class Variable_domain(NamedTuple):
     condition: expression.Expr
 
 
+class Variable_element(NamedTuple):
+    name: expression.constant
+    value: expression.Expr
+    condition: expression.Expr
+
+
 class Bool_evaluate(NamedTuple):
     expr: expression.Expr
 
@@ -110,7 +116,7 @@ class Warning_raise(NamedTuple):
     condition: expression.Expr
 
 
-type Atom = Bool_evaluate | Check | Engine_request | Ensure | Evaluate | Multimap_assign | Optimize_component | PreferenceAtom | Set_assign | Set_baseDomain | Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain | Warning_raise
+type Atom = Bool_evaluate | Check | Engine_request | Ensure | Evaluate | Multimap_assign | Optimize_component | PreferenceAtom | Set_assign | Set_baseDomain | Variable_assign | Variable_choice | Variable_declare | Variable_default | Variable_define | Variable_domain | Variable_element | Warning_raise
 
 
 class Ch_core(NamedTuple):

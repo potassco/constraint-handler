@@ -76,6 +76,28 @@ core_tests = [
     "core/variable/typed",
 ]
 
+core_join_tests = [
+    "core/join/bad",
+    "core/join/boolean",
+    "core/join/condition",
+    "core/join/float",
+    "core/join/integer",
+    "core/join/meet_isolation",
+    "core/join/nondeterministic",
+    "core/join/set",
+    "core/join/string",
+]
+
+core_meet_tests = [
+    "core/meet/bad",
+    "core/meet/boolean",
+    "core/meet/condition",
+    "core/meet/float",
+    "core/meet/integer",
+    "core/meet/set",
+    "core/meet/string",
+]
+
 datatype_tests = [
     "datatype/casting",
     "datatype/bool/conj_disj/basic",
@@ -519,6 +541,8 @@ warning_tests = [
 
 base_tests = (
     core_tests
+    + core_join_tests
+    + core_meet_tests
     + datatype_tests
     + default_tests
     + engine_tests
@@ -620,6 +644,8 @@ compile2_xfail: set[str] = (
     | set(expression_lambda_tests)
     | set(multimap_tests)
     | set(optimization_multimap_tests)
+    | set(core_join_tests)
+    | set(core_meet_tests)
 )
 
 ground_skip: set[str] = {
@@ -662,52 +688,56 @@ propagator_skip: set[str] = {
     "set/overapprox_boundaries",  ## too slow as it enumerates a lot of sets
     "warning/python_extract/statement_error",
 }
-propagator_xfail: set[str] = {
-    "core/conditional_declare_definition",
-    "core/conditional_declare_set_multiple",
-    "core/reasoning_modes_new_bool_int",
-    "core/reasoning_modes_new_normal_atoms",
-    "core/reasoning_modes_new_nested_sets",
-    "core/reasoning_modes_new_deeply_nested_sets",
-    "core/reasoning_modes_new_strings",
-    "core/reasoning_modes_with_show",
-    "core/reasoning_modes_sets_alternative_sources",
-    "core/variable/defined",
-    "core/variable/typed",
-    "core/reasoning_modes_sets",  # new modes
-    "core/reasoning_modes",  # new modes
-    "datatype/bool/conj_disj_mixed",
-    "datatype/float/mult/recovery",
-    "default/basic_true",
-    "default/define/condition",
-    "default/define/disabled",
-    "default/define/no_domain",
-    "default/define/with_domain",
-    "default/depends/condition",
-    "default/depends/disabled",
-    "default/depends/no_domain",
-    "default/depends/single",
-    "default/depends/with_domain_bydepends",
-    "default/depends/with_domain",
-    "engine/request",
-    "engine/request_mixed_trig",
-    "execution/python_syntax_error",
-    "execution/warning_spurious",
-    "execution/warning_spurious2",
-    "expression/lambda/recursive",
-    "multimap/main",
-    "set/fold_bools",
-    "set/iterations",
-    "set/selfref",
-    "type/bool/with_none_binary",
-    "type/bool/with_none_unary",
-    "warning/bad_interface",
-    "warning/forbid_labeled",
-    "warning/forbid_labeled_match",
-    "warning/ignore_labeled",
-    "warning/mutually_exclusive_declarations",
-    "warning/variables",
-}
+propagator_xfail: set[str] = (
+    {
+        "core/conditional_declare_definition",
+        "core/conditional_declare_set_multiple",
+        "core/reasoning_modes_new_bool_int",
+        "core/reasoning_modes_new_normal_atoms",
+        "core/reasoning_modes_new_nested_sets",
+        "core/reasoning_modes_new_deeply_nested_sets",
+        "core/reasoning_modes_new_strings",
+        "core/reasoning_modes_with_show",
+        "core/reasoning_modes_sets_alternative_sources",
+        "core/variable/defined",
+        "core/variable/typed",
+        "core/reasoning_modes_sets",  # new modes
+        "core/reasoning_modes",  # new modes
+        "datatype/bool/conj_disj_mixed",
+        "datatype/float/mult/recovery",
+        "default/basic_true",
+        "default/define/condition",
+        "default/define/disabled",
+        "default/define/no_domain",
+        "default/define/with_domain",
+        "default/depends/condition",
+        "default/depends/disabled",
+        "default/depends/no_domain",
+        "default/depends/single",
+        "default/depends/with_domain_bydepends",
+        "default/depends/with_domain",
+        "engine/request",
+        "engine/request_mixed_trig",
+        "execution/python_syntax_error",
+        "execution/warning_spurious",
+        "execution/warning_spurious2",
+        "expression/lambda/recursive",
+        "multimap/main",
+        "set/fold_bools",
+        "set/iterations",
+        "set/selfref",
+        "type/bool/with_none_binary",
+        "type/bool/with_none_unary",
+        "warning/bad_interface",
+        "warning/forbid_labeled",
+        "warning/forbid_labeled_match",
+        "warning/ignore_labeled",
+        "warning/mutually_exclusive_declarations",
+        "warning/variables",
+    }
+    | set(core_join_tests)
+    | set(core_meet_tests)
+)
 
 propagator_true_skip: set[str] = propagator_skip | {
     "core/conditional_declare",

@@ -262,7 +262,7 @@ fromList(Values)
 
 **[Declaration]**{.badge .declaration }
 
-Another way to define a domain is to use the `fromFacts/0` function symbol. However, this additionally requires the use of the `variable_domain/2` predicate to extract the possible values from existing facts. An optional condition can restrict which expressions are included.
+Another way to define a domain is to use the `fromFacts/0` function symbol. This uses `variable_domain/2` facts as the possible values. An optional condition can restrict which expressions are included.
 
 ```prolog
 variable_domain(Name, Domain).
@@ -294,6 +294,70 @@ variable_domain(Name, Domain, Condition, Label).
     ```prolog
     value(y, val(int, 3))
     ```
+
+##### Join
+
+Declare a variable with `join/0` and provide its contributing expressions with
+`variable_element/2`. The result combines the values of all active elements:
+booleans use disjunction, integers and floats use maximum, and sets use union.
+A single active element is passed through unchanged, regardless of type. For
+multiple elements, all values must have the same supported type. An empty join,
+a mixed-type join, or a type without a natural join evaluates to `bad`.
+
+```prolog
+variable_declare(Name, join).
+variable_element(Name, Expression).
+variable_element(Name, Expression, Condition).
+variable_element(Name, Expression, Condition, Label).
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Name` | The declared variable. |
+| `Expression` | An expression whose value contributes to the join. |
+| `Condition` | An optional Boolean expression that activates the element. |
+| `Label` | An optional label for the element. |
+
+!!! Example
+    ```prolog
+    variable_declare(largest, join).
+    variable_element(largest, val(int, 4)).
+    variable_element(largest, val(int, 9)).
+    ```
+
+    The resulting value is `value(largest,val(int,9))`.
+
+##### Meet
+
+Declare a variable with `meet/0` and provide its contributing expressions with
+`variable_element/2`. The result combines the values of all active elements:
+booleans use conjunction, integers and floats use minimum, and sets use
+intersection. A single active element is passed through unchanged, regardless
+of type. An empty meet, a mixed-type meet, or a type without a natural meet
+evaluates to `bad`.
+
+```prolog
+variable_declare(Name, meet).
+variable_element(Name, Expression).
+variable_element(Name, Expression, Condition).
+variable_element(Name, Expression, Condition, Label).
+```
+
+| Name | Description |
+| :--- | :--- |
+| `Name` | The declared variable. |
+| `Expression` | An expression whose value contributes to the meet. |
+| `Condition` | An optional Boolean expression that activates the element. |
+| `Label` | An optional label for the element. |
+
+!!! Example
+    ```prolog
+    variable_declare(smallest, meet).
+    variable_element(smallest, val(int, 4)).
+    variable_element(smallest, val(int, 9)).
+    ```
+
+    The resulting value is `value(smallest,val(int,4))`.
 
 #### Optional
 

@@ -20,6 +20,7 @@ type Atom = (
     | core.Variable_default
     | core.Variable_define
     | core.Variable_domain
+    | core.Variable_element
     | Share_value
 )
 

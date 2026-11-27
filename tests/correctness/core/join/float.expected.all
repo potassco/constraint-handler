@@ -1,0 +1,2 @@
+value(floating,val(float,float("20.25")))
+variable_typed(floating,float)

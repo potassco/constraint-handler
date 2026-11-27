@@ -14,6 +14,7 @@ _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_cho
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_default(X,E,C,P)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_define(X,E,C)), _type_expression(E,T).
 _type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_domain(X,E,C)), _type_expression(E,T).
+_type_variable(X,T) :- _phase_active(type_check), _passed(sugar,LBL,variable_element(X,E,C)), _type_expression(E,T).
 _type_variable(X,set) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,set,C)).
 _type_variable(X,multimap) :- _phase_active(type_check), _passed(sugar,LBL,variable_declare(X,multimap,C)).
 type_variable(X,T) :- _type_variable(X,T).

@@ -5,6 +5,7 @@ _variable_declareRequired(LBL,X,open) :- _passed(sugar,LBL,variable_choice(X,E,C
 _variable_declareRequired(LBL,X,open) :- _passed(sugar,LBL,variable_default(X,E,C,P)), not _variable_declared(X,open).
 _variable_declareRequired(LBL,X,definition) :- _passed(sugar,LBL,variable_define(X,E,C)), not _variable_declared(X,definition).
 _variable_declareRequired(LBL,X,fromFacts) :- _passed(sugar,LBL,variable_domain(X,E,C)), not _variable_declared(X,fromFacts).
+_variable_declareRequired(LBL,X,join) :- _passed(sugar,LBL,variable_element(X,E,C)), not _variable_declared(X,join), not _variable_declared(X,meet).
 _variable_declareRequired(LBL,X,set) :- _passed(sugar,LBL,set_baseDomain(X,E,C)), not _variable_declared(X,set).
 _variable_declareRequired(LBL,X,set) :- _passed(sugar,LBL,set_assign(X,E,C)), not _variable_declared(X,set).
 _variable_declareRequired(LBL,X,multimap) :- _passed(sugar,LBL,multimap_assign(X,K,V,C)), not _variable_declared(X,multimap).

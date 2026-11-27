@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- introduce `join` and `meet` variable declarations
+
 ## v0.0.11
 
 - - replace `type_variableD(X,T)` with `variable_typed(X,T)`.

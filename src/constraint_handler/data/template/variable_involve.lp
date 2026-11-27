@@ -4,6 +4,7 @@ _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_default(X,D,C,P).
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_define(X,D,C).
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_domain(X,D,C).
+_variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=variable_element(X,D,C).
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=set_assign(X,D,C).
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=set_baseDomain(X,D,C).
 _variable_involve(defaultArgs,LBL,X,DECL) :- _passed(defaultArgs,LBL,DECL), DECL=multimap_assign(X,D,E,C).
@@ -14,6 +15,7 @@ _variable_involve(sugar,LBL,X,DECL) :- _passed(sugar,LBL,DECL), DECL=variable_de
 _variable_involve(sugar,LBL,X,DECL) :- _passed(sugar,LBL,DECL), DECL=variable_default(X,D,C,P).
 _variable_involve(sugar,LBL,X,DECL) :- _passed(sugar,LBL,DECL), DECL=variable_define(X,D,C).
 _variable_involve(sugar,LBL,X,DECL) :- _passed(sugar,LBL,DECL), DECL=variable_domain(X,D,C).
+_variable_involve(sugar,LBL,X,DECL) :- _passed(sugar,LBL,DECL), DECL=variable_element(X,D,C).
 _variable_involve(sugar,LBL,X,DECL) :- _passed(sugar,LBL,DECL), DECL=set_assign(X,D,C).
 _variable_involve(sugar,LBL,X,DECL) :- _passed(sugar,LBL,DECL), DECL=set_baseDomain(X,D,C).
 _variable_involve(sugar,LBL,X,DECL) :- _passed(sugar,LBL,DECL), DECL=multimap_assign(X,D,E,C).

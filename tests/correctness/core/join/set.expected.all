@@ -1,0 +1,8 @@
+set_value(joined,val(int,1))
+set_value(joined,val(int,2))
+set_value(joined,val(int,3))
+set_value(joined,val(int,4))
+set_value(joined,val(int,5))
+variable_typed(joined,set)
+set_value(single,val(int,1))
+set_value(single,val(int,2))

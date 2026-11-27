@@ -1,0 +1,4 @@
+value(integer,val(int,7))
+value(implicit,val(int,8))
+variable_typed(integer,int)
+variable_typed(implicit,int)

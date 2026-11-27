@@ -1,0 +1,3 @@
+set_value(intersection,val(int,2))
+set_value(single,val(int,1))
+set_value(single,val(int,2))
