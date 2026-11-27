@@ -1,303 +1,132 @@
 # Copilot Instructions for constraint-handler
 
-## Project Overview
+## Scope and Sources of Truth
 
-**constraint_handler** is a Python library built on top of Clingo (Answer Set
-Programming solver) for solving discrete combinatorial decision or optimization
-problems where constraints and variables are defined through expressions. The
-project is part of the Potassco suite.
+This Python library implements expression-based constraints over Clingo, with
+ASP preprocessing and multiple solving engines. Python requirements,
+dependencies, and tool settings are defined in
+[pyproject.toml](../pyproject.toml).
 
-- **Language**: Python 3.12+
-- **Primary Dependency**: clingo>=5.7.1
-- **Project Type**: Python library with ASP (Answer Set Programming) logic
-  files
-- **Size**: Small to medium (~20 Python files in src/, ~150 test cases)
-- **Build System**: setuptools with setuptools-scm for versioning
-- **Documentation**: MkDocs with Material theme
+Verify implementation details against current code and configuration. These
+instructions describe conventions, not proof that commands or behavior have
+been validated. Report specific discrepancies between guidance and observed
+behavior rather than assuming an environment problem.
 
-## Build and Test Commands
+Keep changes scoped to the request and preserve unrelated worktree changes,
+names, and ordering. Add tests only when requested. Ask before changing Python
+requirements, CI workflows, or the testing architecture.
 
-### Initial Setup
+## Implementation Layout
 
-**ALWAYS install nox first** before running any build/test commands:
+- `src/constraint_handler/main.py` registers ASP modules and templates and
+  configures controls through `add_to_control`.
+- `src/constraint_handler/data/` contains numbered context, default-argument,
+  SSA, sugar, analysis, presolve, module, solve, and output stages. `template/`
+  holds phase-instantiated rules. Inspect the owning stage and registration
+  before changing a preprocessing rule.
+- `evaluator.py`, `python_externals/`, `schemas/`, and `myClorm.py` under
+  `src/constraint_handler/` handle evaluation, callbacks, and conversion.
+  `propagator/` and `reasoning_modes/` handle propagator evaluation and model
+  accumulation.
+- `src/flat_ch/` has its own registration, intermediate representation, and
+  encodings. `src/clingspector/` contains the diagnostic CLI.
 
-```bash
-python -m pip install nox
-```
+Consult [design.md](../design.md) and [docs/developer/](../docs/developer/) for
+architecture. ASP-directory README files are predicate inventories; keep
+explanatory semantics in developer documentation.
 
-For development with all tools (recommended):
+## Test Placement
 
-```bash
-pip install -e .[dev]
-```
+Before adding a test, inspect a neighboring test for the same behavioral layer
+and the existing harness. Choose placement by behavior, not by whether Python
+drives Clingo.
 
-### Running Tests
+- ASP correctness cases belong under `tests/correctness/`, paired as
+  `[name].lp` and `[name].expected.*` in the appropriate category directory.
+- `tests/test_encoding.py` is the shared fixture registry and generic runner.
+  Register names in the appropriate category list, preserving alphabetical
+  order for entries touched. Keep individual test programs, assertions, and
+  test-specific helpers out of this file. Change runner behavior only for an
+  explicitly requested harness change.
+- Shared expectation fixtures assert public output predicates, not internal
+  `_variable_declared`, `_passed(...)`, or generated `loc(...)` details that
+  other engines may not expose.
+- Prefer a public-behavior fixture that exhibits the bug. If internal
+  preprocessing inspection is necessary and no existing focused test module
+  fits, explain the conflict and ask about placement before adding a new
+  testing structure. Do not put the case in the generic runner.
+- `tests/test_api.py` is for Python API behavior, not general ASP regressions.
+  Other Python test modules cover their named subsystem or interface.
+- `tests/utils/testing.py` owns shared encoding utilities.
+  `tests/flat_ch/test_correctness.py` consumes shared fixtures with
+  FCH-specific exclusions; do not add fixture-specific FCH parameters to the CH
+  matrix.
+- Preserve skip/xfail reasons and do not mask unrelated engine failures.
 
-**Default test command** (runs pytest with Python 3.12):
+Read
+[DEVELOPMENT.md#expectation-fixtures](../DEVELOPMENT.md#expectation-fixtures)
+for the complete contract. Each nonblank expectation line is one complete
+Clingo atom. Unlisted fixtures are not run. `.expected.none` asserts atom
+absence, not unsatisfiability; `models=0` in `.expected.stats` asserts no
+models. Include model counts and structural statistics only when relevant to
+the case.
 
-```bash
-nox
-# OR explicitly:
-nox -s test
-```
+## Local Validation
 
-- Tests take ~20-25 seconds to complete
-- 149 tests across test_api.py, test_encoding.py, test_operator_validation.py,
-  and clingspector tests
-- **All tests must pass** before submitting changes
-
-### Linting and Type Checking
-
-**Pylint** (currently has many warnings - existing baseline is 7.97/10):
-
-```bash
-nox -s lint_pylint
-```
-
-**Mypy type checking** (currently has type errors - not enforced in CI):
-
-```bash
-nox -s typecheck
-```
-
-**Pre-commit hooks** (formatting with black, isort, autoflake):
-
-```bash
-# Install pre-commit (one time):
-python -m pip install pre-commit
-pre-commit install
-
-# Run manually on all files:
-pre-commit run --all
-```
-
-### Documentation
-
-**Build documentation**:
-
-```bash
-nox -s doc
-```
-
-**Serve documentation locally** (runs on
-http://localhost:8000/systems/constraint_handler/):
+Use the existing selected Python environment and pytest directly for focused
+local tests. Nox is available for CI and session-based workflows; do not
+install nox or recreate environments just to run a local regression.
 
 ```bash
-mkdocs serve
+python -m pytest tests/test_encoding.py -k 'fixture_name' -m 'not performance'
+python -m pytest tests/test_python_domain.py -k 'test_name'
 ```
 
-Note: The documentation build takes ~2-3 seconds and uses mkdocs-material
-theme.
+Inspect test IDs or parametrization when selecting engines. Verify that the
+requested tests actually ran. After an edit, run the smallest meaningful check
+before expanding scope. For a reproducer, confirm failure for the intended
+reason and report it; do not implement a fix unless requested.
 
-## CI/CD Pipeline
+The full suite can take over ten minutes. Use focused tests for small changes;
+run the full suite or performance benchmarks only when explicitly requested.
+The per-test encoding timeout is not a suite-duration estimate. Disclose checks
+that could not run and distinguish existing failures from new ones. Do not fix
+unrelated lint/type errors or rely on historical scores.
 
-### GitHub Actions Workflows
+If dependencies are missing, consult the extras in pyproject.toml; test setup
+uses `python -m pip install -e '.[test]'`. Ask before changing a shared
+environment. Reuse existing testing and linting tools. Consult
+[noxfile.py](../noxfile.py) and [DEVELOPMENT.md](../DEVELOPMENT.md) for session
+definitions and benchmark workflows.
 
-**Test workflow** (.github/workflows/test.yml):
+## Formatting and Documentation
 
-- Triggered on: push to devel/main/master/wip branches, all pull requests
-- Runs on: ubuntu-latest, macos-latest, windows-latest
-- Python versions: 3.9, 3.11 (note: project requires 3.12+, but CI uses
-  3.9/3.11)
-- Steps:
-  1. Checkout code
-  1. Setup Python 3.9 and 3.11
-  1. Install nox and pre-commit
-  1. Run pre-commit on all files (ubuntu-latest only)
-  1. Run `nox` (executes test session)
+Python uses Black and isort with a 120-character line length. Pre-commit also
+configures autoflake, whitespace checks, and mdformat; inspect
+[.pre-commit-config.yaml](../.pre-commit-config.yaml) for exclusions.
 
-**IMPORTANT**: On ubuntu-latest, pre-commit formatting checks run first. If
-formatting is incorrect, the CI will fail. Always run `pre-commit run --all`
-before committing.
+Use focused formatting checks while editing. Before a requested commit, run
+`pre-commit run --all --show-diff-on-failure` and preserve unrelated changes.
+Do not commit unless requested.
 
-**Deploy workflow** (.github/workflows/deploy.yml):
+Documentation lives in `docs/` and uses MkDocs Material. Validate with
+`mkdocs build` or preview with `mkdocs serve`. Reference and user-guide pages
+describe current behavior; migration history belongs in changelogs or dedicated
+migration documents. Keep engine-specific failures in tests or engine-support
+documentation rather than core syntax descriptions.
 
-- Triggered on: version tags (v\*.*.*) or manual workflow_dispatch
-- Calls test workflow first, then builds and deploys to PyPI/TestPyPI
+## CI and Runtime Integration
 
-## Project Structure
+Consult [.github/workflows/test.yml](workflows/test.yml) for the current matrix
+and gates; do not copy version lists, test counts, or timing baselines here. CI
+uses nox, checks formatting on Linux, and has a separate performance job.
 
-### Source Code Layout
+ASP programs are package data loaded at runtime. Register new modules in the
+owning loader/template list. Use a neighboring boilerplate or
+`constraint_handler.add_to_control` to enable Clingo integration; do not assume
+every `python -m clingo` invocation enables embedded Python.
 
-```
-src/
-├── constraint_handler/          # Main library
-│   ├── __init__.py             # Main entry point with add_to_control()
-│   ├── data/                   # ASP logic programs (*.lp files)
-│   │   ├── main.lp            # Main ASP encoding
-│   │   ├── int.lp, bool.lp, float.lp, string.lp  # Type handlers
-│   │   ├── set.lp, multimap.lp                   # Data structures
-│   │   ├── execution.lp, conditionals.lp         # Control flow
-│   │   └── propagator.lp, pythonHelper.lp        # Solver integration
-│   ├── propagator/             # Constraint handler propagator subsystem
-│   │   ├── handler.py          # Main propagator implementation
-│   │   ├── model_builder.py
-│   │   ├── optimization_modes.py
-│   │   ├── reasoning_modes.py
-│   │   ├── variable_loader.py
-│   ├── evaluator.py            # Expression evaluator
-│   ├── schemas/                # Data schemas (Clorm-based)
-│   └── utils/                  # Utility modules
-└── clingspector/                # Diagnostic tool
-    ├── main.py                  # CLI entry point
-    └── diagnostic.py            # Diagnostics engine
-```
-
-### Test Structure
-
-```
-tests/
-├── test_api.py                  # API integration tests
-├── test_encoding.py             # Main test suite with parametrized tests
-├── test_operator_validation.py  # Operator validation tests
-├── clingspector/                # Clingspector-specific tests
-└── example/                     # Test fixtures (*.lp files)
-    ├── boilerplate.lp          # Standard test boilerplate
-    ├── boilerplate_ground.lp
-    ├── boilerplate_propagator.lp
-    └── [test_name].lp          # Test case files
-    └── [test_name].expected.*  # Expected outputs
-```
-
-### Configuration Files
-
-- **pyproject.toml**: Main project config (dependencies, build system, tool
-  configs)
-- **noxfile.py**: Nox session definitions for testing, linting, docs
-- **.pre-commit-config.yaml**: Pre-commit hook config (autoflake, isort, black,
-  mdformat)
-- **mkdocs.yml**: Documentation configuration
-- **.envrc**: direnv configuration (optional)
-
-## Important Development Notes
-
-### Python and Clingo Integration
-
-- The library uses clingo.script.enable_python() to enable Python expressions
-  in ASP
-- Logic program files in src/constraint_handler/data/ are loaded at runtime
-- The main API is `constraint_handler.add_to_control(ctrl)` which configures a
-  Clingo Control instance
-
-### Testing Patterns
-
-Tests use clintest library for ASP testing. Test files under tests/correctness/
-pair `[name].lp` with `[name].expected.*` files. Each nonblank line in an
-expectation file is one complete Clingo atom; atoms may contain whitespace but
-must not share a line.
-
-Add each new fixture name to the appropriate category list in
-tests/test_encoding.py; unlisted fixtures are not run.
-
-- `[name].expected.all`: Expected atoms in all models
-- `[name].expected.any`: Expected atoms in any model
-- `[name].expected.first`: Expected atoms in first model
-- `[name].expected.last`: Expected atoms in last model
-- `[name].expected.none`: Atoms absent from all models
-- `[name].expected.brave` and `.cautious`: Expected atoms in the matching
-  enumeration mode
-- `[name].expected.optall`, `.optany`, and `.optnone`: Expectations over
-  optimal models
-- `[name].expected.stats`: `key=value` entries; `models=<count>` asserts the
-  exact model count
-
-See DEVELOPMENT.md for the complete expectation-fixture contract.
-
-### Editable Installs
-
-The project uses **editable installs** (`pip install -e .`) for development:
-
-- Nox sessions create editable installs by default (controlled by
-  EDITABLE_TESTS variable)
-- In GitHub Actions, EDITABLE_TESTS is set to False for non-editable installs
-- If you encounter import issues, try recreating the nox environment:
-  `nox -Rs [session]` (without -R to force recreate)
-
-### Common Issues and Workarounds
-
-1. **Pre-commit formatting failures**: Always run `pre-commit run --all` before
-   committing to avoid CI failures
-
-1. **Pylint warnings**: The codebase has ~100+ pylint warnings. Don't aim for a
-   perfect score - maintain existing quality level (7.97/10)
-
-1. **Mypy errors**: Type checking has many errors and is not enforced in CI.
-   Type annotations are partial.
-
-1. **Clingo Python support**: When running examples manually with
-   `python -m clingo`, you may see "python support not available" errors. Use
-   the Python API with `constraint_handler.add_to_control()` instead.
-
-1. **Nox session reuse**: Use `nox -Rs [session]` to reuse existing virtualenv.
-   Drop `-R` if you need to recreate the environment.
-
-## Making Changes
-
-### Workflow
-
-1. **Install nox and dev dependencies**:
-
-   ```bash
-   python -m pip install nox
-   pip install -e .[dev]
-   ```
-
-1. **Make your changes** to Python or ASP files
-
-1. **Run tests** immediately after changes:
-
-   ```bash
-   nox -Rs test  # Reuse environment for speed
-   ```
-
-1. **Format code** before committing:
-
-   ```bash
-   pre-commit run --all
-   ```
-
-1. **Verify tests pass**:
-
-   ```bash
-   nox  # Full test run
-   ```
-
-### File Modification Guidelines
-
-- **Python files**: Located in src/constraint_handler/ and src/clingspector/
-- **ASP logic files**: Located in src/constraint_handler/data/ (\*.lp files)
-- **Tests**: Add test cases to tests/example/ following the naming convention
-- **Documentation**: Edit files in docs/ and test with `mkdocs serve`
-
-### Do NOT Modify
-
-- Do not add new linting or testing tools unless necessary
-- Do not aim to fix all pylint/mypy warnings unless related to your changes
-- Do not modify .github/workflows/ unless specifically required
-- Do not change Python version requirements in pyproject.toml without
-  discussion
-
-## Key Facts to Remember
-
-- **ALWAYS run nox for testing**, not pytest directly
-- **ALWAYS run pre-commit** before committing
-- **Tests must complete in ~20-25 seconds** - if they take much longer,
-  something is wrong
-- **CI runs pre-commit on ubuntu-latest** - formatting issues will fail CI
-- **The project requires Python 3.12+** but CI tests with 3.9/3.11 (legacy
-  compatibility)
-- **Clingo is the core dependency** - the library cannot work without it
-- **ASP logic files are part of the package** - they're installed as package
-  data
-
-## Trust These Instructions
-
-These instructions have been validated by running all commands and examining
-the codebase thoroughly. If you encounter behavior that differs from what's
-documented here, investigate the specific issue rather than assuming these
-instructions are incorrect. The most likely causes of differences are:
-
-1. Missing nox installation
-1. Using pytest directly instead of nox
-1. Not running pre-commit before committing
-1. Environment/cache issues (solved by recreating nox environments without -R)
+In callback optimizations, explicitly project relevant keys before invocation;
+do not rely on anonymous variables for projection. Shared ASP callback staging
+can introduce positive support cycles: preserve stage ownership and validate
+relevant tightness expectations when changing it.
