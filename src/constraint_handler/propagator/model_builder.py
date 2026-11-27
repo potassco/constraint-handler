@@ -14,13 +14,19 @@ from constraint_handler.schemas import expression, result, warning
 class ModelBuilder:
     """Convert evaluated values and warnings into a fresh Python-side model."""
 
-    def __init__(self, ignored_warnings: dict[warning.Kind, tuple[int, bool]]) -> None:
+    def __init__(
+        self,
+        ignored_warnings: dict[warning.Kind, tuple[int, bool]],
+        conditional_definition_completions: set[clingo.Symbol],
+    ) -> None:
         """Initialize warning filtering.
 
         Args:
             ignored_warnings: Warning kinds mapped to their literal and active-ignore flag.
+            conditional_definition_completions: Variables with definitions and a generated fallback.
         """
         self.ignored_warnings = ignored_warnings
+        self.conditional_definition_completions = conditional_definition_completions
         self.atoms: set[result.ResultAtom] = set()
 
     def build(
@@ -40,7 +46,26 @@ class ModelBuilder:
             A set of result atoms and non-ignored warnings.
         """
         self.atoms = set()
+        inactive_definitions = set()
+        if self.conditional_definition_completions:
+            variables = tuple(variables)
+            for variable in variables:
+                symbol = variable.var
+                if isinstance(symbol, clingo.Symbol) and symbol.match("loc", 1):
+                    marker = symbol.arguments[0]
+                    if marker.match("has_active_definition", 1) and variable.get_value() is False:
+                        name = marker.arguments[0]
+                        if name in self.conditional_definition_completions:
+                            inactive_definitions.add(name)
+
         for variable in variables:
+            if variable.var in inactive_definitions:
+                self.add_warnings(
+                    error
+                    for error in variable.get_errors()
+                    if not (isinstance(error.id, warning.Variable) and str(error.id.symbol) == "badValue")
+                )
+                continue
             self.add_warnings(variable.get_errors())
             if isinstance(variable, BoolEvaluateVariable):
                 continue

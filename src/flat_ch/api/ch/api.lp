@@ -304,7 +304,8 @@ value(NAME, bad) :- _fch_empty_var_domain(NAME).
 value(NAME, bad) :-
 	variable_declared(NAME),
 	_fch_var_active(NAME, definition),
-	not _fch_dynamic_var_def(NAME, _).
+	not _fch_dynamic_var_def(NAME, _),
+	not _fch_var_def(NAME, _, _).
 
 _fch_execution_input_declared(EXEC, VAR) :- _fch_flat(var_decl((EXEC, VAR, in))).
 _fch_execution_input_defined(EXEC, VAR) :- _fch_flat(var_def((EXEC, VAR, in), _)).

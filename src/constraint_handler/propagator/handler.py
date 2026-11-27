@@ -128,6 +128,10 @@ class ConstraintHandlerPropagator(clingo.Propagator):
             init: Clingo PropagateInit object
         """
         self._reset_init_state(PROPAGATOR_CHECK_MODE_ATOM in init.symbolic_atoms)
+        self.conditional_definition_completions = {
+            atom.symbol.arguments[0]
+            for atom in init.symbolic_atoms.by_signature("_conditional_definition_completion", 1)
+        }
 
         init.check_mode = clingo.PropagatorCheckMode.Total
 
@@ -768,7 +772,7 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         if self.optimization.enabled:
             errors.extend(self.optimization.get_errors())
         errors.extend(self.errors)
-        self.python_model = ModelBuilder(self.ignored_warnings).build(
+        self.python_model = ModelBuilder(self.ignored_warnings, self.conditional_definition_completions).build(
             self.variable_manager.get_variables(), self.evaluatevars, errors
         )
 
