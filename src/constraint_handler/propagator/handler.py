@@ -93,13 +93,8 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         Args:
             ctl: Clingo control instance.
         """
-        reasoning_warning = self.reasoning_mode_handler.configure(ctl)
-        if reasoning_warning is not None:
-            self.configuration_errors.append(reasoning_warning)
-
-        optimization_warning = self.optimization.configure(ctl)
-        if optimization_warning is not None:
-            self.configuration_errors.append(optimization_warning)
+        self.reasoning_mode_handler.configure(ctl)
+        self.optimization.configure(ctl)
 
     def _reset_init_state(self, check_only: bool) -> None:
         """Reset state derived from the current solver initialization."""
@@ -160,6 +155,16 @@ class ConstraintHandlerPropagator(clingo.Propagator):
         # run propagate with literal 1
         # We do this explicitly here since it does not happen on solve calls after the first one
         self.propagate(init, [1])
+
+        # if optimization is used add the arning to the configuration warnings
+        if self.optimization.enabled:
+            for _warning in self.optimization.warnings:
+                self.configuration_errors.append(_warning)
+
+        # if we handle any variables, then we add the reasoning mode warnings
+        if len(self.variable_manager) > 0:
+            for _warning in self.reasoning_mode_handler.warnings:
+                self.configuration_errors.append(_warning)
 
     def add_watch(self, lit: int) -> None:
         """
