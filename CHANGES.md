@@ -2,6 +2,8 @@
 
 ## Ongoing
 
+- add an optional argument to `add_to_control` to dump readable programs after
+  grounding
 - introduce `join` and `meet` variable declarations
 
 ## v0.0.11

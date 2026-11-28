@@ -17,6 +17,7 @@ import constraint_handler.schemas.solve as solve
 import constraint_handler.solver_environment as solver_environment
 import flat_ch.main as flat_main
 from constraint_handler.engine import Engine, compile
+from constraint_handler.ground_output import GroundProgramObserver
 from constraint_handler.reasoning_modes.reasoning_modes_propagator import ReasoningMode, ReasoningModesPropagator
 from constraint_handler.schemas.type_ import BaseType
 
@@ -181,11 +182,22 @@ def add_to_control(
     _environment_ids=dict(),
     engine: Engine = compile,
     reasoning_mode: ReasoningMode = ReasoningMode.STANDARD,
+    ground_output: typing.TextIO | None = None,
 ):
-    """Adds encoding logic to the provided Control instance. The environment argumennt specifies the locals used in the python statements and expressions."""
+    """Add encoding logic to the provided Control instance.
+
+    The environment supplies locals for Python statements and expressions.
+    Pass an open text stream as ``ground_output`` to dump ground statements
+    at the end of each ``ground()`` call.
+    """
     if engine.name == "fch":
         flat_main.add_to_control(ctrl, _build_fch_environment(environment), api="ch")
         return
+
+    if ground_output is not None:
+        observer = GroundProgramObserver(ctrl, ground_output)
+        ctrl.register_observer(observer)
+        ctrl.ground = observer.ground
 
     global python_enabled
     if not python_enabled:
